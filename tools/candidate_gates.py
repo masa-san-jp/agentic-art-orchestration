@@ -14,6 +14,7 @@ try:
     from tools.candidate_space import (
         DEFAULT_FIXTURE_DIR,
         DEFAULT_OUTPUT_PATH as DEFAULT_CANDIDATE_PATH,
+        build_candidate_space,
         canonical_json,
         load_fixture,
     )
@@ -33,6 +34,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     from tools.candidate_space import (
         DEFAULT_FIXTURE_DIR,
         DEFAULT_OUTPUT_PATH as DEFAULT_CANDIDATE_PATH,
+        build_candidate_space,
         canonical_json,
         load_fixture,
     )

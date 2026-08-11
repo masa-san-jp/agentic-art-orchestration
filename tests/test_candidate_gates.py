@@ -15,9 +15,9 @@ SPEC.loader.exec_module(MODULE)
 
 class CandidateGateTests(unittest.TestCase):
     def load_inputs(self) -> tuple[dict, list[dict], dict]:
-        candidate_space = MODULE.load_json(ROOT / "data/candidate-space.json")
         signals = MODULE.load_fixture(ROOT / "tests/fixtures/v12-candidates")
         registry = MODULE.load_yaml(ROOT / "config/transformation-rules.yaml")
+        candidate_space = MODULE.build_candidate_space(signals, registry)
         return candidate_space, signals, registry
 
     def test_gate_schema_is_explicit_and_reference_only(self):
