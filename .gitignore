@@ -1,4 +1,4 @@
-workspace/
+repos/
 .venv/
 __pycache__/
 *.pyc
