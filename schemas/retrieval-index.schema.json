@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/retrieval-index.schema.json",
+  "title": "Repository-aware retrieval index v1",
+  "description": "Boundary metadata emitted by repository adapters; canonical child knowledge remains in the child repository.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "entries"],
+  "properties": {
+    "contract_version": {
+      "const": "retrieval-index/v1"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "repository",
+        "source_commit",
+        "locator",
+        "evidence_kind",
+        "freshness_status",
+        "unknowns",
+        "domain_constraints",
+        "capability_codes"
+      ],
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "repository": {
+          "$ref": "#/$defs/repository_id"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:/-]+$"
+        },
+        "evidence_kind": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+$"
+        },
+        "freshness_status": {
+          "type": "string",
+          "enum": ["current", "stale", "unknown", "not-applicable"]
+        },
+        "unknowns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "domain_constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "capability_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stable_id"
+          }
+        }
+      }
+    }
+  }
+}

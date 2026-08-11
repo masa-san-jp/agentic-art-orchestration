@@ -1,0 +1,54 @@
+{
+  "contract_version": "normalized-research-signal/v1",
+  "signal_id": "self:derived-001",
+  "signal_kind": "self",
+  "source": {
+    "repository": "self-model",
+    "commit": "2ac31805ed8a6c3361822c7351becba465c8769a",
+    "entity_ids": ["self-entity-001"],
+    "locators": ["derived/self-entity-001"]
+  },
+  "statement": "An approved derived signal is available for the research context.",
+  "evidence_refs": [
+    {
+      "locator": "self-model/claims/claim-001",
+      "kind": "derived",
+      "entity_id": "self-entity-001"
+    }
+  ],
+  "certainty": {
+    "level": "inferred",
+    "basis": "The child repository approved this derived claim for export."
+  },
+  "unknowns": ["The source does not establish whether the signal applies outside this context."],
+  "constraints": ["Use only within the approved export scope."],
+  "validity": {
+    "status": "valid",
+    "checked_at": "2026-08-11T15:00:00+09:00"
+  },
+  "freshness": {
+    "status": "current",
+    "retrieved_at": "2026-08-11T15:00:00+09:00",
+    "revalidate_at": "2026-09-11T15:00:00+09:00"
+  },
+  "adapter": {
+    "name": "self-model-export",
+    "version": "1.0.0"
+  },
+  "generated_at": "2026-08-11T15:00:00+09:00",
+  "domain": {
+    "self_model": {
+      "consent_scope": "approved-derived-only",
+      "export_permitted": true,
+      "seeks": ["clear research framing"],
+      "protects": ["source privacy"],
+      "avoids": ["unapproved inference"],
+      "tensions": ["specificity versus privacy"],
+      "recurring_patterns": ["review before reuse"],
+      "raw_voice_locator": "self-model/approved-locator/voice-001",
+      "traits": ["reflective"],
+      "states": ["focused"],
+      "contexts": ["research planning"]
+    }
+  }
+}

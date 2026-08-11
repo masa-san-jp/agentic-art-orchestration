@@ -1,0 +1,36 @@
+{
+  "signal_id": "marketing:trend-001",
+  "commit": "edcb49c4522364ae69f627bea996754dcc8cfe56",
+  "entity_id": "trend-entity-001",
+  "source_locator": "trends/trend-entity-001",
+  "evidence_locator": "marketing-trends/evidence/report-001",
+  "evidence_kind": "secondary",
+  "statement": "A documented trend signal is available with explicit freshness metadata.",
+  "certainty": {
+    "level": "uncertain",
+    "basis": "The trend is documented but requires continued validation."
+  },
+  "unknowns": ["The signal does not establish future adoption."],
+  "constraints": ["Revalidate before relying on the trend for a new release."],
+  "validity": {
+    "status": "valid",
+    "checked_at": "2026-08-11T15:00:00+09:00"
+  },
+  "freshness": {
+    "status": "current",
+    "retrieved_at": "2026-08-11T15:00:00+09:00",
+    "revalidate_at": "2026-08-25T15:00:00+09:00"
+  },
+  "generated_at": "2026-08-11T15:00:00+09:00",
+  "adapter_version": "1.0.0",
+  "stage": "emerging",
+  "revalidate_at": "2026-08-25T15:00:00+09:00",
+  "expires_at": "2026-09-01T15:00:00+09:00",
+  "retrieved": {
+    "at": "2026-08-11T15:00:00+09:00",
+    "method": "secondary"
+  },
+  "vendor_interest": "declared",
+  "counterevidence": ["The source reports limited longitudinal evidence."],
+  "prediction_status": "pending"
+}

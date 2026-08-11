@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/retrieval-result.schema.json",
+  "title": "Repository-aware retrieval result v1",
+  "description": "Evidence metadata for a conversational agent without raw query or child-repository content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "retrieval_run_id",
+    "lane",
+    "generated_at",
+    "interaction_blocking",
+    "user_artifact_policy",
+    "request_ref",
+    "intent_code",
+    "capability_codes",
+    "status",
+    "selected_repositories",
+    "evidence",
+    "unknowns",
+    "domain_constraints",
+    "privacy",
+    "retrieval_operations"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "retrieval-result/v1"
+    },
+    "retrieval_run_id": {
+      "$ref": "#/$defs/execution_id"
+    },
+    "lane": {
+      "const": "FRONTSTAGE_RETRIEVAL"
+    },
+    "generated_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "interaction_blocking": {
+      "const": false
+    },
+    "user_artifact_policy": {
+      "const": "READ_ONLY"
+    },
+    "request_ref": {
+      "$ref": "#/$defs/stable_id"
+    },
+    "intent_code": {
+      "type": "string",
+      "enum": ["research", "create", "revise", "compare", "plan", "reflect", "continue", "other"]
+    },
+    "capability_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/stable_id"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["COMPLETE", "COMPLETE_WITH_GAPS", "NO_MATCH", "BLOCKED"]
+    },
+    "selected_repositories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/selected_repository"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "domain_constraints": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "retrieval_operations": {
+      "const": []
+    }
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "selected_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "role",
+        "authority",
+        "source_commit",
+        "matched_capability_codes",
+        "selection_reason",
+        "evidence_policy",
+        "freshness_policy"
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/repository_id"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["input-kb", "consumer-runtime", "control-plane-extension"]
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "matched_capability_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stable_id"
+          }
+        },
+        "selection_reason": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:/, -]+$"
+        },
+        "evidence_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimum_quality", "requires_locator"],
+          "properties": {
+            "minimum_quality": {
+              "type": "string",
+              "enum": ["observed", "scholarly", "independent", "derived", "explicit"]
+            },
+            "requires_locator": {
+              "const": true
+            }
+          }
+        },
+        "freshness_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "revalidation_required"],
+          "properties": {
+            "policy": {
+              "type": "string",
+              "enum": ["domain-defined", "explicit", "not-applicable"]
+            },
+            "revalidation_required": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "repository",
+        "source_commit",
+        "locator",
+        "evidence_kind",
+        "freshness_status",
+        "matched_capability_codes",
+        "unknowns",
+        "domain_constraints"
+      ],
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "repository": {
+          "$ref": "#/$defs/repository_id"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:/-]+$"
+        },
+        "evidence_kind": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+$"
+        },
+        "freshness_status": {
+          "type": "string",
+          "enum": ["current", "stale", "unknown", "not-applicable"]
+        },
+        "matched_capability_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stable_id"
+          }
+        },
+        "unknowns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "domain_constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consent_scope", "retention", "raw_query_stored", "direct_identifiers_stored"],
+      "properties": {
+        "consent_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retention": {
+          "const": "reference-only"
+        },
+        "raw_query_stored": {
+          "const": false
+        },
+        "direct_identifiers_stored": {
+          "const": false
+        }
+      }
+    }
+  }
+}

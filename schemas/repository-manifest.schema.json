@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/repository-manifest.schema.json",
+  "title": "Agentic Art Orchestration repository manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "workspace_root", "repositories"],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "workspace_root": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "$ref": "#/$defs/repository"
+      }
+    }
+  },
+  "$defs": {
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "full_name",
+        "url",
+        "path",
+        "role",
+        "authority",
+        "default_branch",
+        "observed_commit",
+        "instructions",
+        "requirement_ssot",
+        "quality_gates",
+        "knowledge_profile"
+      ],
+      "oneOf": [
+        {"required": ["export_contract"]},
+        {"required": ["import_contract"]}
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "full_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\\.git$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["input-kb", "consumer-runtime", "control-plane-extension"]
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._/-]+$"
+        },
+        "observed_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "instructions": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._/-]+$"
+        },
+        "requirement_ssot": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[1-9][0-9]*$"
+        },
+        "quality_gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "knowledge_profile": {
+          "$ref": "#/$defs/knowledge_profile"
+        },
+        "export_contract": {
+          "type": "string",
+          "pattern": "^normalized-research-signal/v[1-9][0-9]*$"
+        },
+        "import_contract": {
+          "type": "string",
+          "pattern": "^normalized-research-signal/v[1-9][0-9]*$"
+        }
+      }
+    },
+    "knowledge_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "answerable_questions",
+        "canonical_entities",
+        "retrieval_entry_points",
+        "evidence_rules",
+        "freshness_rules",
+        "feedback_owner",
+        "write_scope",
+        "forbidden_data"
+      ],
+      "properties": {
+        "answerable_questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "canonical_entities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "retrieval_entry_points": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/retrieval_entry_point"}
+        },
+        "evidence_rules": {
+          "$ref": "#/$defs/evidence_rules"
+        },
+        "freshness_rules": {
+          "$ref": "#/$defs/freshness_rules"
+        },
+        "feedback_owner": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "write_scope": {
+          "$ref": "#/$defs/write_scope"
+        },
+        "forbidden_data": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "retrieval_entry_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "locator", "purpose"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["file", "directory", "signal", "command", "issue"]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_kinds", "requires_locator", "minimum_quality"],
+      "properties": {
+        "allowed_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "requires_locator": {
+          "const": true
+        },
+        "minimum_quality": {
+          "type": "string",
+          "enum": ["observed", "scholarly", "independent", "derived", "explicit"]
+        }
+      }
+    },
+    "freshness_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "allowed_statuses", "revalidation_required"],
+      "properties": {
+        "policy": {
+          "type": "string",
+          "enum": ["domain-defined", "explicit", "not-applicable"]
+        },
+        "allowed_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["current", "stale", "unknown", "not-applicable"]
+          }
+        },
+        "revalidation_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "write_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "allowed_paths"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["issue-only", "issue-or-draft-pr"]
+        },
+        "allowed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

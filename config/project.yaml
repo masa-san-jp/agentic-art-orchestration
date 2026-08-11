@@ -1,0 +1,19 @@
+version: 1
+project_number: 4
+status_map:
+  BACKLOG: Backlog
+  READY: Ready
+  IN_PROGRESS: In Progress
+  DONE: Done
+  BLOCKED: Blocked
+priority_by_milestone:
+  M0: 10
+  M1: 20
+  M2: 30
+  M3: 40
+  M4: 50
+  M5: 60
+  M6: 70
+default_target_repositories:
+  - agentic-art-orchestration
+default_human_gate: false

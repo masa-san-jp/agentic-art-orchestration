@@ -1,0 +1,37 @@
+cases:
+  - name: invalid_id
+    path: [repositories, 0, id]
+    value: Self_Model
+    expected: "id"
+  - name: invalid_role
+    path: [repositories, 0, role]
+    value: unknown-role
+    expected: "role"
+  - name: invalid_path
+    path: [repositories, 0, path]
+    value: ../outside
+    expected: "path"
+  - name: short_sha
+    path: [repositories, 0, observed_commit]
+    value: abc123
+    expected: "observed_commit"
+  - name: unknown_contract
+    path: [repositories, 0, export_contract]
+    value: normalized-research-signal/v9
+    expected: "contract"
+  - name: empty_quality_gate
+    path: [repositories, 0, quality_gates]
+    value: [""]
+    expected: "quality_gates"
+  - name: invalid_command
+    path: [repositories, 0, quality_gates]
+    value: ["python3 tools/check.py; rm -rf output"]
+    expected: "command"
+  - name: duplicate_path_ownership
+    path: [repositories, 1, path]
+    value: self-model-notes
+    expected: "duplicate path"
+  - name: duplicate_full_name_ownership
+    path: [repositories, 1, full_name]
+    value: masa-san-jp/self-model-notes
+    expected: "duplicate full_name"

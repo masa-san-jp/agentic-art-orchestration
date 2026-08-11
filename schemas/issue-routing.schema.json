@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/issue-routing.schema.json",
+  "title": "Feedback issue routing v1",
+  "description": "A deterministic, metadata-only routing result for explicit and inferred feedback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "routing_run_id",
+    "lane",
+    "generated_at",
+    "interaction_blocking",
+    "user_artifact_policy",
+    "input_feedback_ids",
+    "routes",
+    "duplicate_suppressions",
+    "issue_operations"
+  ],
+  "properties": {
+    "contract_version": {"const": "issue-routing/v1"},
+    "routing_run_id": {"$ref": "#/$defs/stable_id"},
+    "lane": {"const": "FEEDBACK_ROUTING"},
+    "generated_at": {"$ref": "#/$defs/timestamp"},
+    "interaction_blocking": {"const": false},
+    "user_artifact_policy": {"const": "READ_ONLY"},
+    "input_feedback_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/stable_id"}
+    },
+    "routes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/route"}
+    },
+    "duplicate_suppressions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/duplicate"}
+    },
+    "issue_operations": {"const": []}
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["interaction_id", "event_id", "artifact_refs"],
+      "properties": {
+        "interaction_id": {"$ref": "#/$defs/stable_id"},
+        "event_id": {"$ref": "#/$defs/stable_id"},
+        "artifact_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "score"],
+      "properties": {
+        "level": {"type": "string", "enum": ["explicit", "high", "medium", "low"]},
+        "score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "inference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_inferred", "hypothesis_status"],
+      "properties": {
+        "is_inferred": {"type": "boolean"},
+        "hypothesis_status": {"type": "string", "enum": ["unconfirmed", "confirmed", "rejected", "not-applicable"]}
+      }
+    },
+    "issue_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issue_key",
+        "target_repository",
+        "summary_code",
+        "privacy_safe_summary",
+        "source_feedback_ids",
+        "acceptance",
+        "creation_permitted",
+        "human_gate",
+        "side_effect"
+      ],
+      "properties": {
+        "issue_key": {"$ref": "#/$defs/stable_id"},
+        "target_repository": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "summary_code": {"$ref": "#/$defs/stable_id"},
+        "privacy_safe_summary": {"type": "string", "minLength": 1},
+        "source_feedback_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        },
+        "acceptance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "creation_permitted": {"type": "boolean"},
+        "human_gate": {"const": true},
+        "side_effect": {"const": "NONE"}
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "feedback_id",
+        "kind",
+        "source",
+        "summary_code",
+        "evidence_refs",
+        "confidence",
+        "inference",
+        "candidate_repositories",
+        "target_repository",
+        "target_role",
+        "routing_status",
+        "reason",
+        "issue_candidate"
+      ],
+      "properties": {
+        "feedback_id": {"$ref": "#/$defs/stable_id"},
+        "kind": {
+          "type": "string",
+          "enum": ["explicit_request", "explicit_dissatisfaction", "output_correction", "knowledge_gap", "inferred_friction", "inferred_need"]
+        },
+        "source": {"$ref": "#/$defs/source"},
+        "summary_code": {"$ref": "#/$defs/stable_id"},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        },
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "inference": {"$ref": "#/$defs/inference"},
+        "candidate_repositories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        },
+        "target_repository": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "target_role": {"type": "string", "enum": ["CHILD", "PARENT", "TRIAGE"]},
+        "routing_status": {"type": "string", "enum": ["ROUTED", "TRIAGE", "BLOCKED", "DUPLICATE_SUPPRESSED"]},
+        "reason": {"type": "string", "minLength": 1},
+        "issue_candidate": {
+          "type": ["object", "null"],
+          "oneOf": [
+            {"$ref": "#/$defs/issue_candidate"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "duplicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issue_key", "canonical_feedback_id", "suppressed_feedback_id"],
+      "properties": {
+        "issue_key": {"$ref": "#/$defs/stable_id"},
+        "canonical_feedback_id": {"$ref": "#/$defs/stable_id"},
+        "suppressed_feedback_id": {"$ref": "#/$defs/stable_id"}
+      }
+    }
+  }
+}

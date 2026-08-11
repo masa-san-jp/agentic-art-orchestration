@@ -1,0 +1,67 @@
+version: 1
+id: WORKITEM-001
+title: Define cross-repository work item schema
+owner_repository: agentic-art-orchestration
+target_repositories:
+  - agentic-art-orchestration
+allowed_paths:
+  - schemas/work-item.schema.json
+  - tools/validate.py
+  - tests/fixtures/work-items
+  - tests/test_work_items.py
+depends_on:
+  - TRACE-001
+context:
+  required_files:
+    - AGENTS.md
+    - execution/task-queue.yaml
+    - execution/state.yaml
+    - docs/20260811-agentic-art-orchestration-system-design-specification.md
+  contracts:
+    - normalized-research-signal/v1
+  source_commits:
+    self-model: 2ac31805ed8a6c3361822c7351becba465c8769a
+    art-history: 83703055f11019f905ffdfa23cdd674d48522698
+    marketing-trends: edcb49c4522364ae69f627bea996754dcc8cfe56
+    agentic-art-research: 9bfa07d80c7962840031e0607f431c3bb997245f
+acceptance:
+  - id: schema-validates
+    description: Work item fields validate against the v1 schema and semantic policy.
+    observable: python3 -m unittest tests.test_work_items -v exits 0
+  - id: safe-scope
+    description: Ownership, allowed paths, dependencies, and checks have explicit boundaries.
+    observable: Invalid work-item matrix returns remediation for each violated rule.
+checks:
+  - repository: agentic-art-orchestration
+    command: .venv/bin/python -m unittest tests.test_work_items -v
+    required: true
+  - repository: agentic-art-orchestration
+    command: .venv/bin/python tools/validate.py --check
+    required: true
+risk:
+  level: medium
+  data_boundary: no-sensitive
+  mitigations:
+    - Keep work-item inputs to repository metadata and opaque paths.
+    - Reject shell control syntax and unsafe paths before execution.
+attempts:
+  used: 0
+  max: 3
+lease:
+  status: available
+  owner: unassigned
+  expires_at: "2026-08-11T17:27:02+09:00"
+checkpoint:
+  start_point: e8f7fdf
+  next_action: Implement schema and semantic validation, then run the declared checks.
+  last_result: not_started
+terminal_criteria:
+  - All required work-item fields validate.
+  - Invalid ownership, scope, command, dependency, retry, lease, and terminal evidence cases fail with remediation.
+  - Declared checks pass and the result is recorded in execution/state.yaml and execution/handoff.md.
+terminal_state: READY
+evidence:
+  commits: []
+  pull_requests: []
+  tests: []
+  changed_paths: []

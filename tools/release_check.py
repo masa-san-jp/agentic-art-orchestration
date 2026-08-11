@@ -1,0 +1,321 @@
+#!/usr/bin/env python3
+"""Run read-only v1.0/v1.1 qualification checks without releasing anything."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+ASYNC_AUDIT_FIXTURE_STATE = ROOT / "tests/fixtures/async-audit/state.yaml"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.e2e import run_e2e
+from tools.interaction_e2e import run_interaction_e2e
+
+
+class ReleaseCheckError(ValueError):
+    """A release qualification request or result is invalid."""
+
+
+SECRET_ASSIGNMENT = re.compile(
+    r"(?i)\b(?:password|secret|api[_-]?key|private[_-]?key|credential)\b\s*[:=]\s*([^\s,;\"'{}()\[\]]+)"
+)
+TOKEN_VALUE = re.compile(r"\b(?:ghp|github_pat|sk)-[A-Za-z0-9_-]{8,}\b")
+FORBIDDEN_ASSIGNMENT = re.compile(
+    r"(?im)^\s*(?:PRIVATE_RAW|RESTRICTED|direct_identifier|raw_voice_body|raw_voice_text|raw_audio)\s*[:=]"
+)
+HISTORY_EXEMPT_PREFIXES = ("docs/", "execution/", "tests/")
+HISTORY_EXEMPT_VALUES = {"supersecret", "synthetic-value", "synthetic-secret"}
+
+
+def _run(command: list[str]) -> tuple[int, str, str]:
+    completed = subprocess.run(
+        command,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return completed.returncode, completed.stdout, completed.stderr
+
+
+def _git(command: list[str]) -> str:
+    code, stdout, stderr = _run(["git", *command])
+    if code:
+        raise ReleaseCheckError(f"git inspection failed: {command[0]}")
+    return stdout
+
+
+def validate_request(version: str, runs: int) -> None:
+    if version not in {"1.0.0", "1.1.0"}:
+        raise ReleaseCheckError("only versions 1.0.0 and 1.1.0 are supported; remediation: qualify the declared task version")
+    if runs <= 0:
+        raise ReleaseCheckError("runs must be positive; remediation: use at least one deterministic E2E run")
+
+
+def _history_paths(commit: str) -> list[str]:
+    output = _git(["diff-tree", "--root", "--no-commit-id", "--name-only", "-r", commit])
+    return [line for line in output.splitlines() if line]
+
+
+def _history_forbidden_findings() -> dict:
+    """Scan committed non-fixture content without returning sensitive values."""
+    commits = [line for line in _git(["rev-list", "--all"]).splitlines() if line]
+    findings: list[dict] = []
+    for commit in commits:
+        for path in _history_paths(commit):
+            if path.startswith(HISTORY_EXEMPT_PREFIXES):
+                continue
+            code, stdout, _ = _run(["git", "show", f"{commit}:{path}"])
+            if code:
+                continue
+            text = stdout
+            secret_match = SECRET_ASSIGNMENT.search(text)
+            token_match = TOKEN_VALUE.search(text)
+            forbidden_match = FORBIDDEN_ASSIGNMENT.search(text)
+            if secret_match and secret_match.group(1) in HISTORY_EXEMPT_VALUES:
+                secret_match = None
+            if secret_match or token_match or forbidden_match:
+                findings.append(
+                    {
+                        "commit": commit,
+                        "path": path,
+                        "reason": "credential-like or forbidden assignment pattern",
+                    }
+                )
+    return {
+        "status": "PASSED" if not findings else "FAILED",
+        "commit_count": len(commits),
+        "finding_count": len(findings),
+        "findings": findings,
+    }
+
+
+def _command_check(identifier: str, command: list[str]) -> dict:
+    code, _, _ = _run(command)
+    return {
+        "id": identifier,
+        "status": "PASSED" if code == 0 else "FAILED",
+        "exit_code": code,
+    }
+
+
+def _e2e_check(runs: int) -> dict:
+    results: list[dict] = []
+    error_types: list[str] = []
+    for _ in range(runs):
+        try:
+            results.append(run_e2e())
+        except Exception as exc:  # qualification report must remain sanitized
+            error_types.append(type(exc).__name__)
+    deterministic = bool(results) and len(results) == runs and all(result == results[0] for result in results[1:])
+    clean_complete = bool(results) and all(result.get("clean", {}).get("status") == "COMPLETE" for result in results)
+    failure_cases = [
+        len(result.get("failure_injections", []))
+        for result in results
+        if isinstance(result, dict)
+    ]
+    passed = deterministic and clean_complete and failure_cases and all(count == 9 for count in failure_cases)
+    return {
+        "id": "offline-e2e",
+        "status": "PASSED" if passed else "FAILED",
+        "runs": runs,
+        "deterministic": deterministic,
+        "clean_complete": clean_complete,
+        "failure_case_counts": failure_cases,
+        "error_types": sorted(set(error_types)),
+    }
+
+
+def _interaction_e2e_check(runs: int) -> dict:
+    """Qualify the v1.1 frontstage/backstage scenario without retaining content."""
+    summaries: list[dict] = []
+    error_types: list[str] = []
+    for _ in range(runs):
+        try:
+            result = run_interaction_e2e()
+            acceptance = result.get("acceptance", {})
+            summaries.append(
+                {
+                    "acceptance": {
+                        key: acceptance.get(key) is True
+                        for key in sorted(acceptance)
+                    },
+                    "artifact_operation": result.get("artifact", {}).get("operation"),
+                    "security_status": result.get("security", {}).get("status"),
+                    "remote_operation_count": len(result.get("remote_operations", [])),
+                    "routing_operation_count": len(result.get("routing", {}).get("issue_operations", [])),
+                    "improvement_operation_count": len(result.get("improvement", {}).get("remote_operations", [])),
+                    "audit_operation_count": len(result.get("audit", {}).get("artifact_operations", [])),
+                }
+            )
+        except Exception as exc:  # qualification report must remain sanitized
+            error_types.append(type(exc).__name__)
+    deterministic = bool(summaries) and len(summaries) == runs and all(
+        summary == summaries[0] for summary in summaries[1:]
+    )
+    required_acceptance = {
+        "retrieval_versioned",
+        "artifact_immutable",
+        "feedback_captured",
+        "issue_routed",
+        "improvement_checkpointed",
+        "audit_independent",
+        "no_remote_mutation",
+    }
+    acceptance_passed = bool(summaries) and all(
+        required_acceptance.issubset(summary["acceptance"])
+        and all(summary["acceptance"].get(key) is True for key in required_acceptance)
+        for summary in summaries
+    )
+    no_remote_mutation = bool(summaries) and all(
+        summary["artifact_operation"] == "CREATE"
+        and summary["security_status"] == "PASSED"
+        and summary["remote_operation_count"] == 0
+        and summary["routing_operation_count"] == 0
+        and summary["improvement_operation_count"] == 0
+        and summary["audit_operation_count"] == 0
+        for summary in summaries
+    )
+    passed = deterministic and acceptance_passed and no_remote_mutation
+    return {
+        "id": "interaction-e2e",
+        "status": "PASSED" if passed else "FAILED",
+        "runs": runs,
+        "deterministic": deterministic,
+        "acceptance_passed": acceptance_passed,
+        "no_remote_mutation": no_remote_mutation,
+        "error_types": sorted(set(error_types)),
+    }
+
+
+def qualify(version: str = "1.0.0", runs: int = 3) -> dict:
+    """Return a deterministic qualification report; never create a tag, commit, or release."""
+    validate_request(version, runs)
+    python = sys.executable
+    checks = [
+        _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
+        _command_check("audit-materialize", [python, "tools/audit.py", "--offline-fixture"]),
+    ]
+    if version == "1.1.0":
+        checks.extend(
+            [
+                _command_check("retrieval-materialize", [python, "tools/retrieval.py"]),
+                _command_check("feedback-routing-materialize", [python, "tools/issue_router.py"]),
+                _command_check("improvement-materialize", [python, "tools/improvement_loop.py"]),
+                _command_check(
+                    "async-audit-materialize",
+                    [python, "tools/async_auditor.py", "--state", str(ASYNC_AUDIT_FIXTURE_STATE)],
+                ),
+                _command_check("interaction-e2e-materialize", [python, "tools/interaction_e2e.py"]),
+            ]
+        )
+    checks.extend(
+        [
+            _command_check("parent-validator", [python, "tools/validate.py", "--check"]),
+            _command_check("parent-tests", [python, "-m", "unittest", "discover", "-s", "tests", "-v"]),
+            _command_check("offline-fixture", [python, "tests/fixtures/build_fixture.py", "--check"]),
+            _command_check("status", [python, "tools/status.py", "--check", "--offline-fixture"]),
+            _command_check("audit", [python, "tools/audit.py", "--check", "--offline-fixture"]),
+            _command_check("security", [python, "tools/security.py", "--offline-fixture"]),
+        ]
+    )
+    if version == "1.1.0":
+        checks.extend(
+            [
+                _command_check("retrieval", [python, "tools/retrieval.py", "--check"]),
+                _command_check("feedback-routing", [python, "tools/issue_router.py", "--check"]),
+                _command_check("improvement", [python, "tools/improvement_loop.py", "--check"]),
+                _command_check(
+                    "async-audit",
+                    [
+                        python,
+                        "tools/async_auditor.py",
+                        "--state",
+                        str(ASYNC_AUDIT_FIXTURE_STATE),
+                        "--check",
+                    ],
+                ),
+                _command_check("interaction-e2e", [python, "tools/interaction_e2e.py", "--check"]),
+                _command_check(
+                    "v1.1-contract-tests",
+                    [
+                        python,
+                        "-m",
+                        "unittest",
+                        "tests.test_retrieval",
+                        "tests.test_drive_adapter",
+                        "tests.test_issue_router",
+                        "tests.test_improvement_loop",
+                        "tests.test_async_auditor",
+                        "tests.test_interaction_e2e",
+                    ],
+                ),
+            ]
+        )
+    e2e = _e2e_check(runs)
+    interaction_e2e = _interaction_e2e_check(runs) if version == "1.1.0" else None
+    history = _history_forbidden_findings()
+    passed = (
+        all(item["status"] == "PASSED" for item in checks)
+        and e2e["status"] == "PASSED"
+        and (interaction_e2e is None or interaction_e2e["status"] == "PASSED")
+        and history["status"] == "PASSED"
+    )
+    report_checks = checks + [e2e]
+    if interaction_e2e is not None:
+        report_checks.append(interaction_e2e)
+    return {
+        "version": version,
+        "network": "disabled",
+        "status": "PASSED" if passed else "FAILED",
+        "blocking": not passed,
+        "checks": report_checks,
+        "history": history,
+        "remote_operations": [],
+        "merge_operation": "NOT_PERFORMED",
+        "tag_operation": "NOT_PERFORMED",
+        "release_operation": "NOT_PERFORMED",
+        "human_gate": "merge/release requires human approval",
+    }
+
+
+def _write_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    os.close(descriptor)
+    temporary = Path(temporary_name)
+    try:
+        temporary.write_text(content, encoding="utf-8")
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Qualify v1.0.0 or v1.1.0 without performing release operations")
+    parser.add_argument("--version", required=True)
+    parser.add_argument("--runs", type=int, default=3)
+    parser.add_argument("--output", type=Path, default=ROOT / "data/release-check.json")
+    args = parser.parse_args()
+    try:
+        result = qualify(args.version, args.runs)
+        output = args.output if args.output.is_absolute() else Path.cwd() / args.output
+        _write_atomic(output.resolve(), json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    except (OSError, ReleaseCheckError, ValueError, KeyError):
+        print("ERROR: release qualification could not run; remediation: inspect the declared v1 gates", file=sys.stderr)
+        return 2
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if not result["blocking"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

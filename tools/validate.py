@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -9,21 +10,67 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+MANIFEST_PATH = ROOT / "config/repositories.yaml"
+MANIFEST_SCHEMA_PATH = ROOT / "schemas/repository-manifest.schema.json"
+SIGNAL_SCHEMA_PATH = ROOT / "schemas/normalized-research-signal.schema.json"
+WORKITEM_SCHEMA_PATH = ROOT / "schemas/work-item.schema.json"
+EXTERNAL_ARTIFACT_SCHEMA_PATH = ROOT / "schemas/external-artifact.schema.json"
+INTERACTION_SCHEMA_PATH = ROOT / "schemas/interaction-event.schema.json"
+FEEDBACK_SCHEMA_PATH = ROOT / "schemas/feedback-signal.schema.json"
+ASYNC_AUDIT_SCHEMA_PATH = ROOT / "schemas/async-audit.schema.json"
+ISSUE_ROUTING_SCHEMA_PATH = ROOT / "schemas/issue-routing.schema.json"
+RETRIEVAL_REQUEST_SCHEMA_PATH = ROOT / "schemas/retrieval-request.schema.json"
+RETRIEVAL_INDEX_SCHEMA_PATH = ROOT / "schemas/retrieval-index.schema.json"
+RETRIEVAL_RESULT_SCHEMA_PATH = ROOT / "schemas/retrieval-result.schema.json"
+IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
+INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+DATE_TIME = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+)
 REQUIRED_FILES = [
     "README.md",
     "AGENTS.md",
     "PLANS.md",
     "config/repositories.yaml",
     "config/orchestration.yaml",
+    "schemas/repository-manifest.schema.json",
+    "schemas/normalized-research-signal.schema.json",
+    "schemas/work-item.schema.json",
+    "schemas/external-artifact.schema.json",
+    "schemas/interaction-event.schema.json",
+    "schemas/feedback-signal.schema.json",
+    "schemas/async-audit.schema.json",
+    "schemas/issue-routing.schema.json",
+    "schemas/retrieval-request.schema.json",
+    "schemas/retrieval-index.schema.json",
+    "schemas/retrieval-result.schema.json",
+    "schemas/improvement-loop.schema.json",
+    "schemas/interaction-e2e.schema.json",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
     "docs/20260811-agentic-art-orchestration-system-design-specification.md",
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
+    "docs/interaction-improvement-runbook.md",
 ]
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}
+CONTRACTS = {"normalized-research-signal/v1"}
+CORE_REPOSITORY_IDS = {
+    "self-model",
+    "art-history",
+    "marketing-trends",
+    "agentic-art-research",
+}
+REQUIRED_PROFILE_FORBIDDEN_DATA = {
+    "PRIVATE_RAW",
+    "RESTRICTED",
+    "credential",
+    "direct_identifier",
+}
+COMMAND_FORBIDDEN_TOKENS = ("\x00", "\r", "\n", ";", "&&", "||", "|", ">", "<", "`")
 
 
 def load_yaml(path: Path):
@@ -34,36 +81,1726 @@ def load_yaml(path: Path):
         raise ValueError(f"{path.relative_to(ROOT)}: YAML parse failed: {exc}") from exc
 
 
-def validate_repositories(errors: list[str]) -> None:
-    data = load_yaml(ROOT / "config/repositories.yaml")
-    repos = data.get("repositories", []) if isinstance(data, dict) else []
-    if len(repos) != 4:
-        errors.append("config/repositories.yaml: expected exactly four v1 repositories")
-        return
-    seen_ids: set[str] = set()
-    seen_paths: set[str] = set()
-    seen_names: set[str] = set()
-    required = ("id", "full_name", "url", "path", "role", "authority",
-                "default_branch", "observed_commit", "quality_gates")
-    for index, repo in enumerate(repos):
-        prefix = f"config/repositories.yaml: repositories[{index}]"
-        for field in required:
-            if field not in repo or repo[field] in (None, "", []):
-                errors.append(f"{prefix}.{field}: required; add a non-empty value")
-        for value, seen, label in (
-            (repo.get("id"), seen_ids, "id"),
-            (repo.get("path"), seen_paths, "path"),
-            (repo.get("full_name"), seen_names, "full_name"),
-        ):
-            if value in seen:
-                errors.append(f"{prefix}.{label}: duplicate {value!r}")
-            seen.add(value)
-        if repo.get("role") not in ROLES:
-            errors.append(f"{prefix}.role: unknown role {repo.get('role')!r}")
+def load_json(path: Path):
+    try:
+        with path.open(encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception as exc:
+        raise ValueError(f"{path.relative_to(ROOT)}: JSON parse failed: {exc}") from exc
+
+
+def _type_matches(value, expected: str | list[str]) -> bool:
+    if isinstance(expected, list):
+        return any(_type_matches(value, item) for item in expected)
+    if expected == "object":
+        return isinstance(value, dict)
+    if expected == "array":
+        return isinstance(value, list)
+    if expected == "string":
+        return isinstance(value, str)
+    if expected == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if expected == "boolean":
+        return isinstance(value, bool)
+    if expected == "null":
+        return value is None
+    return True
+
+
+def _schema_errors(value, schema: dict, path: str = "$", root_schema: dict | None = None) -> list[str]:
+    """Validate the repository schemas' small JSON Schema subset without a dependency."""
+    root_schema = root_schema or schema
+    errors: list[str] = []
+
+    if "$ref" in schema:
+        ref = schema["$ref"]
+        if not ref.startswith("#/$defs/"):
+            return [f"{path}: unsupported schema reference {ref!r}"]
+        definition = root_schema.get("$defs", {}).get(ref.removeprefix("#/$defs/"))
+        if definition is None:
+            return [f"{path}: schema reference {ref!r} is undefined"]
+        return _schema_errors(value, definition, path, root_schema)
+
+    expected_type = schema.get("type")
+    if expected_type and not _type_matches(value, expected_type):
+        return [f"{path}: expected type {expected_type}, got {type(value).__name__}"]
+
+    if "const" in schema and value != schema["const"]:
+        errors.append(f"{path}: must equal {schema['const']!r}")
+    if "enum" in schema and value not in schema["enum"]:
+        errors.append(f"{path}: must be one of {schema['enum']!r}")
+
+    if isinstance(value, dict):
+        minimum = schema.get("minProperties")
+        if minimum is not None and len(value) < minimum:
+            errors.append(f"{path}: requires at least {minimum} properties")
+        maximum = schema.get("maxProperties")
+        if maximum is not None and len(value) > maximum:
+            errors.append(f"{path}: allows at most {maximum} properties")
+        required = schema.get("required", [])
+        for key in required:
+            if key not in value:
+                errors.append(f"{path}.{key}: required; add the manifest field")
+        properties = schema.get("properties", {})
+        if schema.get("additionalProperties") is False:
+            for key in value:
+                if key not in properties:
+                    errors.append(f"{path}.{key}: unknown field; remove it or add it to the schema")
+        elif isinstance(schema.get("additionalProperties"), dict):
+            additional_schema = schema["additionalProperties"]
+            for key, item in value.items():
+                if key not in properties:
+                    errors.extend(_schema_errors(item, additional_schema, f"{path}.{key}", root_schema))
+        for key, property_schema in properties.items():
+            if key in value:
+                errors.extend(_schema_errors(value[key], property_schema, f"{path}.{key}", root_schema))
+
+    if isinstance(value, list):
+        minimum = schema.get("minItems")
+        if minimum is not None and len(value) < minimum:
+            errors.append(f"{path}: requires at least {minimum} items")
+        if schema.get("uniqueItems"):
+            for index, item in enumerate(value):
+                if item in value[:index]:
+                    errors.append(f"{path}[{index}]: must be unique")
+        item_schema = schema.get("items")
+        if item_schema:
+            for index, item in enumerate(value):
+                errors.extend(_schema_errors(item, item_schema, f"{path}[{index}]", root_schema))
+
+    if isinstance(value, str):
+        minimum = schema.get("minLength")
+        if minimum is not None and len(value) < minimum:
+            errors.append(f"{path}: must not be empty")
+        pattern = schema.get("pattern")
+        if pattern and re.fullmatch(pattern, value) is None:
+            errors.append(f"{path}: value {value!r} does not match required pattern")
+        if schema.get("format") == "date-time" and DATE_TIME.fullmatch(value) is None:
+            errors.append(f"{path}: must be an ISO-8601 date-time")
+
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        minimum = schema.get("minimum")
+        if minimum is not None and value < minimum:
+            errors.append(f"{path}: must be at least {minimum}")
+        maximum = schema.get("maximum")
+        if maximum is not None and value > maximum:
+            errors.append(f"{path}: must be at most {maximum}")
+
+    alternatives = schema.get("oneOf", [])
+    if alternatives:
+        matches = [
+            branch for branch in alternatives
+            if not _schema_errors(value, branch, path, root_schema)
+        ]
+        if len(matches) != 1:
+            errors.append(
+                f"{path}: must satisfy exactly one schema alternative"
+            )
+    return errors
+
+
+def _source_label(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _is_safe_relative_path(value) -> bool:
+    if not isinstance(value, str) or not value or value.startswith(("/", "\\")):
+        return False
+    parts = value.replace("\\", "/").split("/")
+    return all(part not in {"", ".", ".."} for part in parts)
+
+
+def validate_manifest(data: dict, source: str = "config/repositories.yaml") -> list[str]:
+    errors: list[str] = []
+    schema = load_json(MANIFEST_SCHEMA_PATH)
+    for schema_error in _schema_errors(data, schema):
+        errors.append(f"{source}: {schema_error}; remediation: correct the manifest field")
+
+    if not isinstance(data, dict):
+        return errors
+    repositories = data.get("repositories")
+    if not isinstance(repositories, list):
+        return errors
+    if len(repositories) < len(CORE_REPOSITORY_IDS):
+        errors.append(
+            f"{source}: expected at least {len(CORE_REPOSITORY_IDS)} repositories; "
+            "remediation: retain the four core repositories and append new repositories through the manifest"
+        )
+
+    seen: dict[str, set[str]] = {
+        "id": set(),
+        "path": set(),
+        "full_name": set(),
+        "authority": set(),
+    }
+    role_counts: dict[str, int] = {}
+    for index, repo in enumerate(repositories):
+        prefix = f"{source}: repositories[{index}]"
+        if not isinstance(repo, dict):
+            continue
+        for field in seen:
+            value = repo.get(field)
+            if isinstance(value, str):
+                if value in seen[field]:
+                    errors.append(
+                        f"{prefix}.{field}: duplicate {field} ownership {value!r}; "
+                        "remediation: assign unique repository ownership metadata"
+                    )
+                seen[field].add(value)
+
+        role = repo.get("role")
+        if isinstance(role, str):
+            role_counts[role] = role_counts.get(role, 0) + 1
+        if role not in ROLES:
+            errors.append(
+                f"{prefix}.role: unknown role {role!r}; "
+                f"remediation: use one of {sorted(ROLES)!r}"
+            )
+
         if not SHA40.fullmatch(str(repo.get("observed_commit", ""))):
-            errors.append(f"{prefix}.observed_commit: expected lowercase 40-character SHA")
-        if not str(repo.get("url", "")).startswith("https://github.com/"):
-            errors.append(f"{prefix}.url: expected HTTPS github.com clone URL")
+            errors.append(
+                f"{prefix}.observed_commit: expected lowercase 40-character SHA; "
+                "remediation: record the complete immutable source commit"
+            )
+        if not _is_safe_relative_path(repo.get("path")):
+            errors.append(
+                f"{prefix}.path: must be a safe relative workspace path; "
+                "remediation: remove absolute paths and . or .. segments"
+            )
+        full_name = repo.get("full_name")
+        url = repo.get("url")
+        if isinstance(full_name, str) and isinstance(url, str):
+            expected_url = f"https://github.com/{full_name}.git"
+            if url != expected_url:
+                errors.append(
+                    f"{prefix}.url: must match full_name as {expected_url!r}; "
+                    "remediation: correct the HTTPS GitHub clone URL"
+                )
+        requirement_ssot = repo.get("requirement_ssot")
+        if isinstance(full_name, str) and isinstance(requirement_ssot, str):
+            expected_prefix = f"https://github.com/{full_name}/issues/"
+            if not requirement_ssot.startswith(expected_prefix):
+                errors.append(
+                    f"{prefix}.requirement_ssot: must belong to {full_name!r}; "
+                    "remediation: point to the authoritative Issue in the same repository"
+                )
+
+        contract_fields = [
+            field for field in ("export_contract", "import_contract")
+            if field in repo
+        ]
+        if len(contract_fields) == 1:
+            contract = repo.get(contract_fields[0])
+            if contract not in CONTRACTS:
+                errors.append(
+                    f"{prefix}.{contract_fields[0]}: unknown contract {contract!r}; "
+                    f"remediation: use one of {sorted(CONTRACTS)!r}"
+                )
+            if role == "input-kb" and contract_fields[0] != "export_contract":
+                errors.append(
+                    f"{prefix}: input-kb must export a contract; "
+                    "remediation: use export_contract"
+                )
+            if role == "consumer-runtime" and contract_fields[0] != "import_contract":
+                errors.append(
+                    f"{prefix}: consumer-runtime must import a contract; "
+                    "remediation: use import_contract"
+                )
+
+        quality_gates = repo.get("quality_gates")
+        if isinstance(quality_gates, list):
+            for gate_index, command in enumerate(quality_gates):
+                if not isinstance(command, str) or not command.strip():
+                    errors.append(
+                        f"{prefix}.quality_gates[{gate_index}]: command must be non-empty; "
+                        "remediation: declare one executable quality-gate command"
+                    )
+                elif any(token in command for token in COMMAND_FORBIDDEN_TOKENS):
+                    errors.append(
+                        f"{prefix}.quality_gates[{gate_index}]: command contains shell control syntax; "
+                        "remediation: split it into a separate non-shell quality-gate command"
+                    )
+
+        profile = repo.get("knowledge_profile")
+        if isinstance(profile, dict):
+            known_profile_owners = {
+                item.get("id")
+                for item in repositories
+                if isinstance(item, dict) and isinstance(item.get("id"), str)
+            } | {"agentic-art-orchestration"}
+            feedback_owner = profile.get("feedback_owner")
+            if feedback_owner not in known_profile_owners:
+                errors.append(
+                    f"{prefix}.knowledge_profile.feedback_owner: unknown repository {feedback_owner!r}; "
+                    "remediation: route feedback to a declared repository or the parent control plane"
+                )
+
+            forbidden_data = profile.get("forbidden_data")
+            if isinstance(forbidden_data, list):
+                missing_forbidden = sorted(REQUIRED_PROFILE_FORBIDDEN_DATA - set(forbidden_data))
+                if missing_forbidden:
+                    errors.append(
+                        f"{prefix}.knowledge_profile.forbidden_data: missing baseline classes {missing_forbidden!r}; "
+                        "remediation: keep the aggregate privacy and credential boundary explicit"
+                    )
+
+            evidence_rules = profile.get("evidence_rules")
+            if isinstance(evidence_rules, dict) and evidence_rules.get("requires_locator") is not True:
+                errors.append(
+                    f"{prefix}.knowledge_profile.evidence_rules.requires_locator: must be true; "
+                    "remediation: require an opaque or repository-local evidence locator"
+                )
+
+            write_scope = profile.get("write_scope")
+            if isinstance(write_scope, dict):
+                allowed_paths = write_scope.get("allowed_paths")
+                if isinstance(allowed_paths, list):
+                    for path_index, path in enumerate(allowed_paths):
+                        if not _is_safe_relative_path(path):
+                            errors.append(
+                                f"{prefix}.knowledge_profile.write_scope.allowed_paths[{path_index}]: unsafe path; "
+                                "remediation: use a relative path without ., .., or an absolute prefix"
+                            )
+
+            entry_points = profile.get("retrieval_entry_points")
+            if isinstance(entry_points, list):
+                for point_index, point in enumerate(entry_points):
+                    if not isinstance(point, dict):
+                        continue
+                    kind = point.get("kind")
+                    locator = point.get("locator")
+                    if kind in {"file", "directory", "command"} and not _is_safe_relative_path(locator):
+                        errors.append(
+                            f"{prefix}.knowledge_profile.retrieval_entry_points[{point_index}].locator: unsafe local locator; "
+                            "remediation: use a safe relative repository path"
+                        )
+
+    missing_core = sorted(CORE_REPOSITORY_IDS - seen["id"])
+    if missing_core:
+        errors.append(
+            f"{source}: missing core repository IDs {missing_core!r}; "
+            "remediation: preserve the core repositories and add new entries instead of replacing them"
+        )
+    if role_counts.get("input-kb", 0) < 3 or role_counts.get("consumer-runtime", 0) < 1:
+        errors.append(
+            f"{source}: role ownership requires at least 3 input-kb and 1 consumer-runtime; "
+            "remediation: preserve the core role assignments and declare an explicit role for additions"
+        )
+    return errors
+
+
+def _known_input_repository_ids() -> set[str]:
+    manifest = load_yaml(MANIFEST_PATH)
+    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
+    return {
+        repo.get("id")
+        for repo in repositories
+        if isinstance(repo, dict) and repo.get("role") == "input-kb"
+    }
+
+
+def _known_repository_ids() -> set[str]:
+    manifest = load_yaml(MANIFEST_PATH)
+    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
+    return {
+        repo.get("id")
+        for repo in repositories
+        if isinstance(repo, dict) and isinstance(repo.get("id"), str)
+    }
+
+
+def _signal_error(source: str, detail: str, remediation: str) -> str:
+    return f"{source}: {detail}; remediation: {remediation}"
+
+
+def validate_signal(data: dict, source: str = "signal") -> list[str]:
+    """Validate the v1 boundary envelope and its domain-preserving invariants."""
+    errors: list[str] = []
+    schema = load_json(SIGNAL_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the signal field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    if data.get("contract_version") != "normalized-research-signal/v1":
+        errors.append(
+            _signal_error(
+                source,
+                "contract_version must be normalized-research-signal/v1",
+                "use the supported major contract version or reject the signal",
+            )
+        )
+
+    source_data = data.get("source")
+    if isinstance(source_data, dict):
+        repository = source_data.get("repository")
+        if repository not in _known_input_repository_ids():
+            errors.append(
+                _signal_error(
+                    source,
+                    f"source.repository {repository!r} is not a declared input repository",
+                    "use a repository ID from config/repositories.yaml",
+                )
+            )
+        entity_ids = source_data.get("entity_ids")
+        if isinstance(entity_ids, list) and len(entity_ids) != len(set(entity_ids)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "source.entity_ids must be unique",
+                    "retain stable source entity IDs without duplicates",
+                )
+            )
+        locators = source_data.get("locators")
+        if isinstance(locators, list) and len(locators) != len(set(locators)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "source.locators must be unique",
+                    "retain distinct opaque source locators",
+                )
+            )
+
+    evidence_refs = data.get("evidence_refs")
+    if isinstance(evidence_refs, list):
+        evidence_locators = [
+            ref.get("locator")
+            for ref in evidence_refs
+            if isinstance(ref, dict) and isinstance(ref.get("locator"), str)
+        ]
+        if len(evidence_locators) != len(set(evidence_locators)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "evidence_refs locators must be unique",
+                    "retain each evidence reference once",
+                )
+            )
+        entity_ids = source_data.get("entity_ids", []) if isinstance(source_data, dict) else []
+        for index, ref in enumerate(evidence_refs):
+            if not isinstance(ref, dict):
+                continue
+            entity_id = ref.get("entity_id")
+            if entity_id is not None and entity_id not in entity_ids:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"evidence_refs[{index}].entity_id {entity_id!r} is not in source.entity_ids",
+                        "reference a declared source entity or omit entity_id",
+                    )
+                )
+
+    freshness = data.get("freshness")
+    validity = data.get("validity")
+    if isinstance(freshness, dict) and isinstance(validity, dict):
+        if freshness.get("status") == "stale" and validity.get("status") == "valid":
+            errors.append(
+                _signal_error(
+                    source,
+                    "stale freshness cannot have valid validity status",
+                    "propagate stale state as stale or unknown and retain it as a constraint",
+                )
+            )
+        if freshness.get("status") == "stale":
+            constraints = data.get("constraints", [])
+            if not any("stale" in constraint.lower() for constraint in constraints if isinstance(constraint, str)):
+                errors.append(
+                    _signal_error(
+                        source,
+                        "stale freshness must be represented in constraints",
+                        "add an explicit stale/revalidation constraint; do not silently drop the signal",
+                    )
+                )
+
+    signal_kind = data.get("signal_kind")
+    domain = data.get("domain")
+    expected_domain = {
+        "self": "self_model",
+        "art-history": "art_history",
+        "marketing": "marketing",
+    }.get(signal_kind)
+    if expected_domain and isinstance(domain, dict):
+        if expected_domain not in domain:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"signal_kind {signal_kind!r} requires domain.{expected_domain}",
+                    "use the domain extension matching signal_kind",
+                )
+            )
+        if len(domain) == 1 and expected_domain not in domain:
+            errors.append(
+                _signal_error(
+                    source,
+                    "domain extension does not match signal_kind",
+                    "keep exactly one matching domain extension",
+                )
+            )
+
+    if signal_kind == "self" and isinstance(domain, dict):
+        self_model = domain.get("self_model")
+        if isinstance(self_model, dict):
+            if self_model.get("export_permitted") is not True:
+                errors.append(
+                    _signal_error(
+                        source,
+                        "self-model signal export_permitted must be true",
+                        "export only approved derived content within consent_scope",
+                    )
+                )
+            forbidden_raw_fields = {"raw_voice", "raw_voice_text", "raw_voice_body", "raw_audio"}
+            leaked = sorted(forbidden_raw_fields.intersection(self_model))
+            if leaked:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"self-model signal contains forbidden raw field(s) {leaked!r}",
+                        "export an approved raw_voice_locator only; keep raw voice in the child repository",
+                    )
+                )
+
+    if signal_kind == "art-history" and isinstance(domain, dict):
+        art_history = domain.get("art_history")
+        if isinstance(art_history, dict):
+            source_entity_ids = source_data.get("entity_ids", []) if isinstance(source_data, dict) else []
+            for index, relation in enumerate(art_history.get("relations", [])):
+                if isinstance(relation, dict) and relation.get("target_entity_id") in source_entity_ids:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"domain.art_history.relations[{index}] copies a source entity as target",
+                            "reference a stable external entity ID rather than copying the canonical graph",
+                        )
+                    )
+
+    if signal_kind == "marketing" and isinstance(domain, dict):
+        marketing = domain.get("marketing")
+        if isinstance(marketing, dict) and isinstance(freshness, dict):
+            if marketing.get("freshness") != freshness.get("status"):
+                errors.append(
+                    _signal_error(
+                        source,
+                        "marketing freshness must match the common freshness status",
+                        "preserve one machine-checkable freshness value across the envelope",
+                    )
+                )
+            if marketing.get("freshness") == "stale" and marketing.get("prediction_status") == "confirmed":
+                errors.append(
+                    _signal_error(
+                        source,
+                        "stale marketing evidence cannot be marked prediction_status confirmed",
+                        "retain stale status and require revalidation before confirmation",
+                    )
+                )
+            if (
+                marketing.get("prediction_status") == "confirmed"
+                and isinstance(evidence_refs, list)
+                and any(
+                    isinstance(ref, dict) and ref.get("kind") == "anecdotal"
+                    for ref in evidence_refs
+                )
+            ):
+                errors.append(
+                    _signal_error(
+                        source,
+                        "anecdotal marketing evidence cannot be marked prediction_status confirmed",
+                        "retain anecdotal evidence status and require non-anecdotal corroboration",
+                    )
+                )
+    return errors
+
+
+def _artifact_error(source: str, detail: str, remediation: str) -> str:
+    return f"{source}: {detail}; remediation: {remediation}"
+
+
+def validate_external_artifact(data: dict, source: str = "external-artifact") -> list[str]:
+    """Validate a create-only Google Drive artifact reference without reading its content."""
+    errors: list[str] = []
+    schema = load_json(EXTERNAL_ARTIFACT_SCHEMA_PATH)
+    errors.extend(
+        _artifact_error(source, schema_error, "correct the external artifact field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    if data.get("contract_version") != "external-artifact/v1":
+        errors.append(
+            _artifact_error(
+                source,
+                "contract_version must be external-artifact/v1",
+                "use the supported major contract version or reject the artifact",
+            )
+        )
+    if data.get("operation") != "CREATE":
+        errors.append(
+            _artifact_error(
+                source,
+                "operation must be CREATE; UPDATE and DELETE are forbidden",
+                "create a new artifact and link it with derived_from or supersedes",
+            )
+        )
+    if data.get("provider") != "google-drive":
+        errors.append(
+            _artifact_error(
+                source,
+                "provider must be google-drive",
+                "store the user artifact in the approved Google Drive location",
+            )
+        )
+
+    snapshots = data.get("source_snapshots")
+    if isinstance(snapshots, list):
+        known = _known_repository_ids()
+        repositories: list[str] = []
+        for index, snapshot in enumerate(snapshots):
+            if not isinstance(snapshot, dict):
+                continue
+            repository = snapshot.get("repository")
+            if isinstance(repository, str):
+                repositories.append(repository)
+                if repository not in known:
+                    errors.append(
+                        _artifact_error(
+                            source,
+                            f"source_snapshots[{index}].repository {repository!r} is not declared",
+                            "use a repository ID from config/repositories.yaml",
+                        )
+                    )
+        if len(repositories) != len(set(repositories)):
+            errors.append(
+                _artifact_error(
+                    source,
+                    "source_snapshots repositories must be unique",
+                    "record one immutable commit per consulted repository",
+                )
+            )
+
+    artifact_id = data.get("artifact_id")
+    lineage = data.get("lineage")
+    if isinstance(artifact_id, str) and isinstance(lineage, dict):
+        for field in ("derived_from", "supersedes"):
+            references = lineage.get(field)
+            if isinstance(references, list) and artifact_id in references:
+                errors.append(
+                    _artifact_error(
+                        source,
+                        f"lineage.{field} must not reference itself",
+                        "reference an earlier immutable artifact ID",
+                    )
+                )
+    return errors
+
+
+def _interaction_error(source: str, detail: str, remediation: str) -> str:
+    return f"{source}: {detail}; remediation: {remediation}"
+
+
+def validate_interaction_event(data: dict, source: str = "interaction-event") -> list[str]:
+    """Validate experience metadata while excluding raw conversation and identifiers."""
+    errors: list[str] = []
+    schema = load_json(INTERACTION_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the interaction event field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    forbidden_fields = {
+        "conversation",
+        "transcript",
+        "prompt",
+        "message",
+        "raw_text",
+        "raw_conversation",
+        "user_text",
+        "assistant_text",
+        "body",
+        "content",
+    }
+
+    def scan(value, path: str = "$") -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = f"{path}.{key}"
+                if key.lower() in forbidden_fields:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"{child_path} is a forbidden raw conversation field",
+                            "store only intent categories and opaque external references",
+                        )
+                    )
+                scan(child, child_path)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                scan(child, f"{path}[{index}]")
+
+    scan(data)
+
+    snapshots = data.get("source_snapshots")
+    if isinstance(snapshots, list):
+        known = _known_repository_ids()
+        repositories: list[str] = []
+        for index, snapshot in enumerate(snapshots):
+            if not isinstance(snapshot, dict):
+                continue
+            repository = snapshot.get("repository")
+            if isinstance(repository, str):
+                repositories.append(repository)
+                if repository not in known:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"source_snapshots[{index}].repository {repository!r} is not declared",
+                            "use a repository ID from config/repositories.yaml",
+                        )
+                    )
+        if len(repositories) != len(set(repositories)):
+            errors.append(
+                _interaction_error(
+                    source,
+                    "source_snapshots repositories must be unique",
+                    "record one immutable commit per consulted repository",
+                )
+            )
+
+    privacy = data.get("privacy")
+    if isinstance(privacy, dict):
+        if privacy.get("raw_conversation_stored") is not False:
+            errors.append(
+                _interaction_error(
+                    source,
+                    "privacy.raw_conversation_stored must be false",
+                    "retain only privacy-minimal interaction metadata in Git",
+                )
+            )
+        if privacy.get("direct_identifiers_stored") is not False:
+            errors.append(
+                _interaction_error(
+                    source,
+                    "privacy.direct_identifiers_stored must be false",
+                    "remove direct identifiers and retain an approved opaque reference",
+                )
+            )
+    return errors
+
+
+def validate_feedback_signal(data: dict, source: str = "feedback-signal") -> list[str]:
+    """Validate explicit and inferred feedback without treating inference as user truth."""
+    errors: list[str] = []
+    schema = load_json(FEEDBACK_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the feedback signal field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    forbidden_fields = {"conversation", "transcript", "prompt", "message", "raw_text", "body", "content"}
+
+    def scan(value, path: str = "$") -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = f"{path}.{key}"
+                if key.lower() in forbidden_fields:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"{child_path} is a forbidden raw feedback field",
+                            "retain a privacy-safe summary_code and opaque evidence reference",
+                        )
+                    )
+                scan(child, child_path)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                scan(child, f"{path}[{index}]")
+
+    scan(data)
+
+    explicit_kinds = {"explicit_request", "explicit_dissatisfaction", "output_correction", "knowledge_gap"}
+    inferred_kinds = {"inferred_friction", "inferred_need"}
+    kind = data.get("kind")
+    hypothesis = data.get("hypothesis")
+    confidence = data.get("confidence")
+    confidence_level = confidence.get("level") if isinstance(confidence, dict) else None
+    if kind in inferred_kinds:
+        if not isinstance(hypothesis, dict):
+            errors.append(
+                _interaction_error(source, "inferred feedback requires a hypothesis", "record an unconfirmed claim_code with evidence and confidence")
+            )
+        elif hypothesis.get("confirmation_status") != "unconfirmed":
+            errors.append(
+                _interaction_error(source, "inferred feedback hypothesis must start unconfirmed", "require explicit confirmation before changing its status")
+            )
+        if confidence_level == "explicit":
+            errors.append(
+                _interaction_error(source, "inferred feedback cannot use explicit confidence", "use high, medium, or low confidence")
+            )
+    if kind in explicit_kinds:
+        if hypothesis is not None:
+            errors.append(
+                _interaction_error(source, "explicit feedback must not carry an inferred hypothesis", "set hypothesis to null")
+            )
+        if confidence_level != "explicit":
+            errors.append(
+                _interaction_error(source, "explicit feedback requires explicit confidence", "set confidence.level to explicit and score to 1")
+            )
+
+    target = data.get("target")
+    if isinstance(target, dict):
+        owner = target.get("owner_repository")
+        known = _known_repository_ids() | {"agentic-art-orchestration"}
+        if owner not in known:
+            errors.append(
+                _interaction_error(source, f"target.owner_repository {owner!r} is not declared", "route to the parent or an owning repository from config/repositories.yaml")
+            )
+    return errors
+
+
+def validate_async_audit(data: dict, source: str = "async-audit") -> list[str]:
+    """Validate a non-blocking audit result and its gated repair proposals."""
+    errors: list[str] = []
+    schema = load_json(ASYNC_AUDIT_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the asynchronous audit field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    forbidden_fields = {
+        "conversation",
+        "transcript",
+        "prompt",
+        "message",
+        "raw_text",
+        "raw_conversation",
+        "user_text",
+        "assistant_text",
+        "body",
+        "content",
+        "PRIVATE_RAW",
+        "RESTRICTED",
+        "credential",
+        "direct_identifier",
+    }
+
+    def scan(value, path: str = "$") -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if str(key).lower() in {item.lower() for item in forbidden_fields}:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"{path}.{key} is a forbidden raw or sensitive audit field",
+                            "retain privacy-safe finding metadata and opaque references only",
+                        )
+                    )
+                scan(child, f"{path}.{key}")
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                scan(child, f"{path}[{index}]")
+
+    scan(data)
+    if data.get("lane") != "ASYNC_AUDIT":
+        errors.append(
+            _interaction_error(source, "lane must be ASYNC_AUDIT", "keep audit work on the independent asynchronous lane")
+        )
+    if data.get("interaction_blocking") is not False:
+        errors.append(
+            _interaction_error(source, "interaction_blocking must be false", "never wait for audit/refactoring in the interaction request path")
+        )
+    if data.get("user_artifact_policy") != "READ_ONLY" or data.get("artifact_operations") != []:
+        errors.append(
+            _interaction_error(source, "user artifacts must be read-only with no operations", "create no update/delete operation for user artifacts")
+        )
+
+    snapshot = data.get("source_snapshot")
+    source_commits: dict[str, str] = {}
+    known = _known_repository_ids() | {"agentic-art-orchestration"}
+    if isinstance(snapshot, dict):
+        repositories = snapshot.get("repositories")
+        if isinstance(repositories, list):
+            for index, repository in enumerate(repositories):
+                if not isinstance(repository, dict):
+                    continue
+                repository_id = repository.get("repository")
+                commit = repository.get("source_commit")
+                if repository_id in source_commits:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"source_snapshot.repositories[{index}] duplicates {repository_id!r}",
+                            "record one immutable commit per repository",
+                        )
+                    )
+                if isinstance(repository_id, str):
+                    source_commits[repository_id] = commit
+                    if repository_id not in known:
+                        errors.append(
+                            _interaction_error(
+                                source,
+                                f"source snapshot repository {repository_id!r} is not declared",
+                                "use manifest repository IDs",
+                            )
+                        )
+        parent_commit = snapshot.get("parent_commit")
+        if isinstance(parent_commit, str):
+            source_commits["agentic-art-orchestration"] = parent_commit
+
+    lease = data.get("lease")
+    if isinstance(lease, dict):
+        if lease.get("lane") != "ASYNC_AUDIT" or lease.get("status") != "held":
+            errors.append(
+                _interaction_error(
+                    source,
+                    "lease must be held on ASYNC_AUDIT",
+                    "acquire the independent audit lane lease before emitting proposals",
+                )
+            )
+        if lease.get("owner") == "unassigned":
+            errors.append(
+                _interaction_error(source, "held audit lease cannot be unassigned", "record the worker owner and execution ID")
+            )
+
+    gates: dict[str, str] = {}
+    quality_gates = data.get("quality_gates")
+    if isinstance(quality_gates, list):
+        for index, gate in enumerate(quality_gates):
+            if not isinstance(gate, dict):
+                continue
+            repository = gate.get("repository")
+            status = gate.get("status")
+            if repository in gates:
+                errors.append(
+                    _interaction_error(source, f"quality_gates[{index}] duplicates {repository!r}", "record one gate result per repository")
+                )
+            if isinstance(repository, str):
+                gates[repository] = status
+                if repository not in source_commits:
+                    errors.append(
+                        _interaction_error(source, f"quality gate names unknown repository {repository!r}", "use a repository in the source snapshot")
+                    )
+                if gate.get("observed_commit") != source_commits.get(repository):
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"quality gate for {repository!r} is not tied to its source commit",
+                            "run or record the gate against the audited immutable commit",
+                        )
+                    )
+
+    proposals = data.get("proposals")
+    proposal_ids: set[str] = set()
+    deduplication_keys: set[str] = set()
+    audit_hash = data.get("audit_observation", {}).get("audit_hash") if isinstance(data.get("audit_observation"), dict) else None
+    if isinstance(proposals, list):
+        for index, proposal in enumerate(proposals):
+            if not isinstance(proposal, dict):
+                continue
+            proposal_id = proposal.get("proposal_id")
+            key = proposal.get("deduplication_key")
+            if proposal_id in proposal_ids:
+                errors.append(_interaction_error(source, f"proposals[{index}] duplicates proposal_id {proposal_id!r}", "preserve one proposal per stable ID"))
+            if key in deduplication_keys:
+                errors.append(_interaction_error(source, f"proposals[{index}] duplicates deduplication_key {key!r}", "suppress duplicate issue or draft-PR proposals"))
+            if isinstance(proposal_id, str):
+                proposal_ids.add(proposal_id)
+            if isinstance(key, str):
+                deduplication_keys.add(key)
+            repository = proposal.get("repository")
+            if repository not in source_commits:
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} targets unknown repository {repository!r}", "route to a source snapshot repository or the parent"))
+                continue
+            if proposal.get("source_commit") != source_commits[repository]:
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} source commit does not match snapshot", "rebase the proposal on the observed commit"))
+            gate_status = proposal.get("quality_gate_status")
+            if gate_status != gates.get(repository):
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} gate status is not the recorded repository gate", "do not bypass a missing or failed quality gate"))
+            if proposal.get("kind") == "DRAFT_PR" and gate_status != "PASSED":
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} is a draft PR without a passed gate", "keep it as a triage issue until the gate passes"))
+            if proposal.get("kind") == "DRAFT_PR" and proposal.get("status") != "READY":
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} draft PR plan is not READY", "make a gated draft plan explicitly READY"))
+            finding = proposal.get("finding")
+            if isinstance(finding, dict) and finding.get("audit_hash") != audit_hash:
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} is not traceable to this audit", "retain the source audit hash in each proposal"))
+            if proposal.get("human_gate") is not True:
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} must retain the human gate", "do not merge or release automatically"))
+            if proposal.get("artifact_operations") != []:
+                errors.append(_interaction_error(source, f"proposal {proposal_id!r} mutates a user artifact", "keep user artifact operations empty"))
+    return errors
+
+
+def validate_issue_routing(data: dict, source: str = "issue-routing") -> list[str]:
+    """Validate authority-based feedback routes without creating remote Issues."""
+    errors: list[str] = []
+    schema = load_json(ISSUE_ROUTING_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the feedback routing field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    forbidden_fields = {
+        "conversation",
+        "transcript",
+        "prompt",
+        "message",
+        "raw_text",
+        "raw_conversation",
+        "user_text",
+        "assistant_text",
+        "body",
+        "content",
+        "PRIVATE_RAW",
+        "RESTRICTED",
+        "credential",
+        "direct_identifier",
+    }
+
+    def scan(value, path: str = "$") -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if str(key).lower() in {item.lower() for item in forbidden_fields}:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"{path}.{key} is a forbidden raw or sensitive routing field",
+                            "retain summary codes and opaque evidence references only",
+                        )
+                    )
+                scan(child, f"{path}.{key}")
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                scan(child, f"{path}[{index}]")
+
+    scan(data)
+    if data.get("lane") != "FEEDBACK_ROUTING":
+        errors.append(_interaction_error(source, "lane must be FEEDBACK_ROUTING", "keep routing on the feedback lane"))
+    if data.get("interaction_blocking") is not False:
+        errors.append(_interaction_error(source, "interaction_blocking must be false", "do not make the user wait for Issue routing"))
+    if data.get("user_artifact_policy") != "READ_ONLY" or data.get("issue_operations") != []:
+        errors.append(_interaction_error(source, "routing must not mutate user artifacts or create remote Issues", "return metadata-only Issue candidates"))
+
+    known = _known_repository_ids() | {"agentic-art-orchestration"}
+    parent = "agentic-art-orchestration"
+    feedback_ids = data.get("input_feedback_ids")
+    routes = data.get("routes")
+    route_ids: set[str] = set()
+    if isinstance(routes, list):
+        for index, route in enumerate(routes):
+            if not isinstance(route, dict):
+                continue
+            feedback_id = route.get("feedback_id")
+            if feedback_id in route_ids:
+                errors.append(_interaction_error(source, f"routes[{index}] duplicates feedback_id {feedback_id!r}", "route each feedback signal once"))
+            if isinstance(feedback_id, str):
+                route_ids.add(feedback_id)
+            target = route.get("target_repository")
+            target_role = route.get("target_role")
+            if isinstance(target, str) and target not in known:
+                errors.append(_interaction_error(source, f"route {feedback_id!r} targets unknown repository {target!r}", "use a manifest repository or the parent"))
+            if target_role == "PARENT" and target != parent:
+                errors.append(_interaction_error(source, f"route {feedback_id!r} marks a non-parent target as PARENT", "route orchestration and UX feedback to the parent"))
+            if target_role == "CHILD" and (target is None or target == parent):
+                errors.append(_interaction_error(source, f"route {feedback_id!r} marks the parent as CHILD", "route domain feedback to its owning child"))
+            candidates = route.get("candidate_repositories")
+            if isinstance(candidates, list):
+                for candidate in candidates:
+                    if candidate not in known:
+                        errors.append(_interaction_error(source, f"route {feedback_id!r} has unknown candidate {candidate!r}", "use manifest repository IDs"))
+            inference = route.get("inference")
+            kind = route.get("kind")
+            if isinstance(inference, dict):
+                if kind in {"inferred_friction", "inferred_need"}:
+                    if inference.get("is_inferred") is not True or inference.get("hypothesis_status") != "unconfirmed":
+                        errors.append(_interaction_error(source, f"inferred route {feedback_id!r} lost its unconfirmed hypothesis", "keep inference separate from user truth"))
+                elif inference.get("is_inferred") is not False or inference.get("hypothesis_status") != "not-applicable":
+                    errors.append(_interaction_error(source, f"explicit route {feedback_id!r} carries inference state", "mark explicit feedback as not-applicable for inference"))
+            status = route.get("routing_status")
+            candidate = route.get("issue_candidate")
+            if status in {"ROUTED", "TRIAGE"} and not isinstance(candidate, dict):
+                errors.append(_interaction_error(source, f"route {feedback_id!r} lacks a metadata-only Issue candidate", "retain a triageable candidate without creating it remotely"))
+            if status in {"BLOCKED", "DUPLICATE_SUPPRESSED"} and candidate is not None:
+                errors.append(_interaction_error(source, f"route {feedback_id!r} has a candidate after {status}", "suppress or block the candidate without side effects"))
+            if isinstance(candidate, dict):
+                if candidate.get("target_repository") != target:
+                    errors.append(_interaction_error(source, f"Issue candidate for {feedback_id!r} does not match route target", "keep target authority consistent"))
+                if feedback_id not in candidate.get("source_feedback_ids", []):
+                    errors.append(_interaction_error(source, f"Issue candidate for {feedback_id!r} lost its source reference", "retain the feedback ID in the candidate"))
+                if candidate.get("human_gate") is not True or candidate.get("side_effect") != "NONE":
+                    errors.append(_interaction_error(source, f"Issue candidate for {feedback_id!r} bypasses the human/no-side-effect boundary", "create no remote Issue automatically"))
+                if status == "ROUTED" and candidate.get("creation_permitted") is not True:
+                    errors.append(_interaction_error(source, f"routed candidate for {feedback_id!r} is not marked permitted", "keep explicit consent and routing state aligned"))
+                if status == "TRIAGE" and candidate.get("creation_permitted") is not False:
+                    errors.append(_interaction_error(source, f"triage candidate for {feedback_id!r} is marked creatable", "keep uncertain routing in triage"))
+    if isinstance(feedback_ids, list) and set(feedback_ids) != route_ids:
+        errors.append(_interaction_error(source, "input_feedback_ids and routes do not cover the same feedback", "retain one traceable route for every input signal"))
+
+    suppressions = data.get("duplicate_suppressions")
+    seen_suppressions: set[tuple[object, object]] = set()
+    if isinstance(suppressions, list):
+        for suppression in suppressions:
+            if not isinstance(suppression, dict):
+                continue
+            pair = (suppression.get("issue_key"), suppression.get("suppressed_feedback_id"))
+            if pair in seen_suppressions:
+                errors.append(_interaction_error(source, f"duplicate suppression {pair!r} appears twice", "record one suppression per feedback and Issue key"))
+            seen_suppressions.add(pair)
+            if suppression.get("canonical_feedback_id") not in route_ids or suppression.get("suppressed_feedback_id") not in route_ids:
+                errors.append(_interaction_error(source, "duplicate suppression references an unknown feedback ID", "retain the canonical and suppressed route records"))
+    return errors
+
+
+def _scan_forbidden_retrieval_fields(data: object, source: str) -> list[str]:
+    errors: list[str] = []
+    forbidden_fields = {
+        "conversation",
+        "transcript",
+        "prompt",
+        "message",
+        "raw_text",
+        "raw_query",
+        "query",
+        "question",
+        "user_text",
+        "assistant_text",
+        "statement",
+        "body",
+        "content",
+        "PRIVATE_RAW",
+        "RESTRICTED",
+        "credential",
+        "direct_identifier",
+    }
+    forbidden_lower = {field.lower() for field in forbidden_fields}
+
+    def scan(value: object, path: str = "$") -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if str(key).lower() in forbidden_lower:
+                    errors.append(
+                        _interaction_error(
+                            source,
+                            f"{path}.{key} is a forbidden raw or sensitive retrieval field",
+                            "store structured capability codes and opaque evidence locators only",
+                        )
+                    )
+                scan(child, f"{path}.{key}")
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                scan(child, f"{path}[{index}]")
+
+    scan(data)
+    return errors
+
+
+def _retrieval_manifest_index(manifest: dict | None = None) -> dict[str, dict]:
+    loaded = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
+    repositories = loaded.get("repositories") if isinstance(loaded, dict) else None
+    return {
+        repository.get("id"): repository
+        for repository in repositories or []
+        if isinstance(repository, dict) and isinstance(repository.get("id"), str)
+    }
+
+
+def _safe_retrieval_locator(value: object) -> bool:
+    return (
+        _is_safe_relative_path(value)
+        and isinstance(value, str)
+        and "://" not in value
+        and all(character not in value for character in (" ", "\n", "\r"))
+    )
+
+
+def validate_retrieval_request(
+    data: dict,
+    source: str = "retrieval-request",
+    manifest: dict | None = None,
+) -> list[str]:
+    """Validate a structured request without retaining its conversational wording."""
+    errors: list[str] = []
+    schema = load_json(RETRIEVAL_REQUEST_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the retrieval request field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+    known = set(_retrieval_manifest_index(manifest))
+    preferred = data.get("preferred_repositories")
+    if isinstance(preferred, list):
+        for repository in preferred:
+            if repository not in known:
+                errors.append(
+                    _interaction_error(
+                        source,
+                        f"preferred repository {repository!r} is not declared",
+                        "use a repository ID from config/repositories.yaml",
+                    )
+                )
+    privacy = data.get("privacy")
+    if isinstance(privacy, dict):
+        if privacy.get("raw_query_stored") is not False:
+            errors.append(
+                _interaction_error(
+                    source,
+                    "privacy.raw_query_stored must be false",
+                    "derive capability codes transiently and do not persist raw query text",
+                )
+            )
+        if privacy.get("direct_identifiers_stored") is not False:
+            errors.append(
+                _interaction_error(
+                    source,
+                    "privacy.direct_identifiers_stored must be false",
+                    "remove direct identifiers from the retrieval envelope",
+                )
+            )
+    return errors
+
+
+def validate_retrieval_index(data: dict, manifest: dict | None = None, source: str = "retrieval-index") -> list[str]:
+    """Validate adapter-provided evidence metadata against immutable manifest pins."""
+    errors: list[str] = []
+    schema = load_json(RETRIEVAL_INDEX_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the retrieval index field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+    repositories = _retrieval_manifest_index(manifest)
+    seen_evidence: set[str] = set()
+    entries = data.get("entries")
+    if not isinstance(entries, list):
+        return errors
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue
+        prefix = f"{source}: entries[{index}]"
+        evidence_id = entry.get("evidence_id")
+        if evidence_id in seen_evidence:
+            errors.append(_interaction_error(source, f"entries[{index}] duplicates evidence_id {evidence_id!r}", "retain one immutable evidence entry per ID"))
+        if isinstance(evidence_id, str):
+            seen_evidence.add(evidence_id)
+        repository_id = entry.get("repository")
+        repository = repositories.get(repository_id)
+        if repository is None:
+            errors.append(_interaction_error(source, f"entries[{index}] names unknown repository {repository_id!r}", "use a repository declared in the manifest"))
+            continue
+        observed_commit = repository.get("observed_commit")
+        if entry.get("source_commit") != observed_commit:
+            errors.append(
+                _interaction_error(
+                    source,
+                    f"entries[{index}] source_commit is not the manifest observed commit",
+                    "refresh the adapter index from the immutable repository snapshot",
+                )
+            )
+        if not _safe_retrieval_locator(entry.get("locator")):
+            errors.append(_interaction_error(source, f"entries[{index}].locator is unsafe", "use a repository-local or opaque relative locator"))
+        profile = repository.get("knowledge_profile", {})
+        evidence_rules = profile.get("evidence_rules", {}) if isinstance(profile, dict) else {}
+        allowed_kinds = evidence_rules.get("allowed_kinds", []) if isinstance(evidence_rules, dict) else []
+        if entry.get("evidence_kind") not in allowed_kinds:
+            errors.append(
+                _interaction_error(
+                    source,
+                    f"entries[{index}].evidence_kind is outside the repository profile",
+                    "retain the child repository evidence policy at the parent boundary",
+                )
+            )
+        freshness_rules = profile.get("freshness_rules", {}) if isinstance(profile, dict) else {}
+        allowed_statuses = freshness_rules.get("allowed_statuses", []) if isinstance(freshness_rules, dict) else []
+        if entry.get("freshness_status") not in allowed_statuses:
+            errors.append(
+                _interaction_error(
+                    source,
+                    f"entries[{index}].freshness_status is outside the repository profile",
+                    "preserve stale or unknown state and follow the child freshness policy",
+                )
+            )
+        capability_codes = entry.get("capability_codes")
+        if isinstance(capability_codes, list) and len(capability_codes) != len(set(capability_codes)):
+            errors.append(_interaction_error(source, f"entries[{index}].capability_codes are duplicated", "declare each retrieval capability once"))
+    return errors
+
+
+def validate_retrieval_result(
+    data: dict,
+    manifest: dict | None = None,
+    request: dict | None = None,
+    source: str = "retrieval-result",
+) -> list[str]:
+    """Validate selected repositories and evidence provenance in a retrieval result."""
+    errors: list[str] = []
+    schema = load_json(RETRIEVAL_RESULT_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the retrieval result field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+    repositories = _retrieval_manifest_index(manifest)
+    known = set(repositories)
+    requested = set(data.get("capability_codes", [])) if isinstance(data.get("capability_codes"), list) else set()
+    selected = data.get("selected_repositories")
+    selected_by_id: dict[str, dict] = {}
+    if isinstance(selected, list):
+        for index, record in enumerate(selected):
+            if not isinstance(record, dict):
+                continue
+            repository_id = record.get("repository")
+            if repository_id in selected_by_id:
+                errors.append(_interaction_error(source, f"selected_repositories[{index}] duplicates {repository_id!r}", "select each repository once"))
+            if isinstance(repository_id, str):
+                selected_by_id[repository_id] = record
+            repository = repositories.get(repository_id)
+            if repository is None:
+                errors.append(_interaction_error(source, f"selected repository {repository_id!r} is unknown", "use a repository declared in the manifest"))
+                continue
+            if record.get("source_commit") != repository.get("observed_commit"):
+                errors.append(_interaction_error(source, f"selected repository {repository_id!r} is not tied to its observed commit", "return the immutable source commit used for retrieval"))
+            matched = record.get("matched_capability_codes")
+            if isinstance(matched, list) and not set(matched).issubset(requested):
+                errors.append(_interaction_error(source, f"selected repository {repository_id!r} reports an unrequested capability", "keep selection evidence tied to the structured request"))
+    evidence = data.get("evidence")
+    seen_evidence: set[str] = set()
+    if isinstance(evidence, list):
+        for index, record in enumerate(evidence):
+            if not isinstance(record, dict):
+                continue
+            evidence_id = record.get("evidence_id")
+            if evidence_id in seen_evidence:
+                errors.append(_interaction_error(source, f"evidence[{index}] duplicates evidence_id {evidence_id!r}", "return each evidence reference once"))
+            if isinstance(evidence_id, str):
+                seen_evidence.add(evidence_id)
+            repository_id = record.get("repository")
+            if repository_id not in selected_by_id:
+                errors.append(_interaction_error(source, f"evidence[{index}] is outside selected repositories", "return evidence only from the minimum selected set"))
+                continue
+            repository = repositories.get(repository_id)
+            if repository is not None and record.get("source_commit") != repository.get("observed_commit"):
+                errors.append(_interaction_error(source, f"evidence[{index}] source_commit does not match its repository pin", "preserve immutable evidence provenance"))
+            if not _safe_retrieval_locator(record.get("locator")):
+                errors.append(_interaction_error(source, f"evidence[{index}].locator is unsafe", "return a repository-local or opaque relative locator"))
+            profile = repository.get("knowledge_profile", {}) if repository else {}
+            evidence_rules = profile.get("evidence_rules", {}) if isinstance(profile, dict) else {}
+            if record.get("evidence_kind") not in evidence_rules.get("allowed_kinds", []):
+                errors.append(_interaction_error(source, f"evidence[{index}] violates its repository evidence policy", "retain the child repository evidence rule"))
+            freshness_rules = profile.get("freshness_rules", {}) if isinstance(profile, dict) else {}
+            if record.get("freshness_status") not in freshness_rules.get("allowed_statuses", []):
+                errors.append(_interaction_error(source, f"evidence[{index}] violates its repository freshness policy", "preserve the source freshness state"))
+            matched = record.get("matched_capability_codes")
+            if isinstance(matched, list) and not set(matched).issubset(requested):
+                errors.append(_interaction_error(source, f"evidence[{index}] reports an unrequested capability", "keep evidence tied to the structured request"))
+    if data.get("status") == "NO_MATCH" and (selected_by_id or seen_evidence):
+        errors.append(_interaction_error(source, "NO_MATCH result contains selected repositories or evidence", "use COMPLETE_WITH_GAPS when partial evidence exists"))
+    if request is not None:
+        if data.get("request_ref") != request.get("request_id"):
+            errors.append(_interaction_error(source, "request_ref does not match the retrieval request", "retain the request ID for traceability"))
+        if data.get("intent_code") != request.get("intent_code") or data.get("capability_codes") != request.get("capability_codes"):
+            errors.append(_interaction_error(source, "result request fields do not match the retrieval request", "preserve structured request intent and capability codes"))
+    return errors
+
+
+def validate_improvement_loop(
+    data: dict,
+    manifest: dict | None = None,
+    source: str = "improvement-loop",
+) -> list[str]:
+    """Validate resumable improvement outcomes without permitting remote side effects."""
+    errors: list[str] = []
+    schema = load_json(IMPROVEMENT_LOOP_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the improvement loop field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+
+    repositories = _retrieval_manifest_index(manifest)
+    known = set(repositories) | {"agentic-art-orchestration"}
+    if data.get("lane") != "AUTONOMOUS_IMPROVEMENT":
+        errors.append(_interaction_error(source, "lane must be AUTONOMOUS_IMPROVEMENT", "keep improvement work on its independent backstage lane"))
+    if data.get("interaction_blocking") is not False:
+        errors.append(_interaction_error(source, "interaction_blocking must be false", "never delay the frontstage response for improvement work"))
+    if data.get("user_artifact_policy") != "READ_ONLY" or data.get("remote_operations") != []:
+        errors.append(_interaction_error(source, "improvement must not mutate user artifacts or perform remote operations", "return a human-gated metadata-only draft plan"))
+
+    input_issue_keys = data.get("input_issue_keys")
+    input_keys = set(input_issue_keys) if isinstance(input_issue_keys, list) else set()
+    outcomes = data.get("outcomes")
+    outcome_by_key: dict[str, dict] = {}
+    plan_ids: set[str] = set()
+    expected_plan_ids: set[str] = set()
+    for index, outcome in enumerate(outcomes if isinstance(outcomes, list) else []):
+        if not isinstance(outcome, dict):
+            continue
+        issue_key = outcome.get("issue_key")
+        if issue_key in outcome_by_key:
+            errors.append(_interaction_error(source, f"outcomes[{index}] duplicates issue_key {issue_key!r}", "select each canonical Issue once"))
+        if isinstance(issue_key, str):
+            outcome_by_key[issue_key] = outcome
+        if isinstance(issue_key, str) and issue_key not in input_keys:
+            errors.append(_interaction_error(source, f"outcome {issue_key!r} is not in input_issue_keys", "retain the Issue routing trace"))
+        target = outcome.get("target_repository")
+        repository = repositories.get(target) if isinstance(target, str) else None
+        if target is not None and target not in known:
+            errors.append(_interaction_error(source, f"outcome {issue_key!r} targets unknown repository {target!r}", "route only to a manifest repository or the parent"))
+            repository = None
+        base_commit = outcome.get("base_commit")
+        if repository is not None and base_commit != repository.get("observed_commit"):
+            errors.append(_interaction_error(source, f"outcome {issue_key!r} is not tied to the target observed commit", "rebase the improvement plan on the immutable source commit"))
+        if target is None and base_commit is not None:
+            errors.append(_interaction_error(source, f"outcome {issue_key!r} has a commit without a target repository", "keep unresolved triage metadata unbound"))
+
+        changed_paths = outcome.get("changed_paths")
+        if isinstance(changed_paths, list) and repository is not None:
+            profile = repository.get("knowledge_profile", {}) if isinstance(repository, dict) else {}
+            write_scope = profile.get("write_scope", {}) if isinstance(profile, dict) else {}
+            allowed_scope = write_scope.get("allowed_paths", []) if isinstance(write_scope, dict) else []
+            if target == "agentic-art-orchestration":
+                allowed_scope = ["docs", "execution", "schemas", "tools", "tests", "config"]
+            for path in changed_paths:
+                if not _is_safe_relative_path(path):
+                    errors.append(_interaction_error(source, f"outcome {issue_key!r} has an unsafe changed path", "limit implementation scope to safe relative paths"))
+                elif not any(path == root or path.startswith(f"{root}/") for root in allowed_scope):
+                    errors.append(_interaction_error(source, f"outcome {issue_key!r} changes a path outside write_scope", "respect the target knowledge profile write scope"))
+
+        work_item = outcome.get("work_item")
+        if isinstance(work_item, dict):
+            if work_item.get("owner_repository") != target:
+                errors.append(_interaction_error(source, f"work item for {issue_key!r} has a different owner", "keep scheduler and Issue authority aligned"))
+            if work_item.get("source_commit") != base_commit:
+                errors.append(_interaction_error(source, f"work item for {issue_key!r} is not tied to the outcome commit", "retain one immutable base commit across runtime checkpoints"))
+            if work_item.get("scheduler_status") != "SELECTED":
+                errors.append(_interaction_error(source, f"work item for {issue_key!r} was not scheduler-selected", "do not progress an excluded work item"))
+
+        draft = outcome.get("draft_pr_plan")
+        delivery = outcome.get("delivery_status")
+        if delivery == "DRAFT_PR_READY":
+            if outcome.get("implementation_status") != "PASSED" or outcome.get("test_status") != "PASSED" or outcome.get("quality_gate_status") != "PASSED":
+                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} lacks implementation/test/gate evidence", "keep failed or missing evidence out of draft PR planning"))
+            if not isinstance(draft, dict):
+                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} is missing", "emit a human-gated plan only after all checks pass"))
+        elif draft is not None:
+            errors.append(_interaction_error(source, f"non-ready outcome {issue_key!r} has a draft PR plan", "keep triage and blocked work without a draft plan"))
+        if isinstance(draft, dict):
+            plan_id = draft.get("plan_id")
+            if plan_id in plan_ids:
+                errors.append(_interaction_error(source, f"draft plan {plan_id!r} is duplicated", "emit one plan per canonical Issue"))
+            if isinstance(plan_id, str):
+                plan_ids.add(plan_id)
+                expected_plan_ids.add(plan_id)
+            if draft.get("issue_key") != issue_key or draft.get("target_repository") != target:
+                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} lost its Issue authority", "keep plan and outcome targets identical"))
+            if draft.get("base_commit") != base_commit or draft.get("changed_paths") != changed_paths:
+                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} lost its source or path scope", "preserve the checkpointed implementation scope"))
+            if draft.get("quality_gate_status") != "PASSED" or draft.get("human_gate") is not True or draft.get("merge_permitted") is not False or draft.get("release_permitted") is not False or draft.get("side_effect") != "NONE":
+                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} bypasses a human or side-effect gate", "do not merge, release, or create a remote PR automatically"))
+
+        checkpoints = outcome.get("checkpoints")
+        if isinstance(checkpoints, list):
+            checkpoint_keys: set[str] = set()
+            checkpoint_steps: set[str] = set()
+            for checkpoint in checkpoints:
+                if not isinstance(checkpoint, dict):
+                    continue
+                key = checkpoint.get("idempotency_key")
+                step = checkpoint.get("step")
+                if key in checkpoint_keys:
+                    errors.append(_interaction_error(source, f"outcome {issue_key!r} duplicates checkpoint idempotency key", "resume the same checkpoint instead of duplicating side effects"))
+                if step in checkpoint_steps:
+                    errors.append(_interaction_error(source, f"outcome {issue_key!r} duplicates checkpoint step {step!r}", "record one terminal observation per improvement step"))
+                if isinstance(key, str):
+                    checkpoint_keys.add(key)
+                if isinstance(step, str):
+                    checkpoint_steps.add(step)
+    if input_keys and not input_keys.issuperset(outcome_by_key):
+        errors.append(_interaction_error(source, "outcomes do not have a matching input Issue key", "retain one outcome for each canonical input candidate"))
+
+    plans = data.get("draft_pr_plans")
+    actual_plan_ids = {plan.get("plan_id") for plan in plans if isinstance(plan, dict)} if isinstance(plans, list) else set()
+    if actual_plan_ids != expected_plan_ids:
+        errors.append(_interaction_error(source, "top-level draft_pr_plans do not match outcome plans", "keep the plan index deterministic and traceable"))
+    return errors
+
+
+def validate_interaction_e2e(
+    data: dict,
+    manifest: dict | None = None,
+    source: str = "interaction-e2e",
+) -> list[str]:
+    """Validate the networkless frontstage/backstage integration proof."""
+    errors: list[str] = []
+    schema = load_json(INTERACTION_E2E_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the interaction E2E field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+    repositories = _retrieval_manifest_index(manifest)
+    known = set(repositories)
+    snapshots: dict[str, str] = {}
+    retrieval = data.get("retrieval", {})
+    if isinstance(retrieval, dict):
+        for index, snapshot in enumerate(retrieval.get("source_snapshots", [])):
+            if not isinstance(snapshot, dict):
+                continue
+            repository = snapshot.get("repository")
+            commit = snapshot.get("commit")
+            if repository in snapshots:
+                errors.append(_interaction_error(source, f"retrieval source snapshot duplicates {repository!r}", "record one immutable snapshot per repository"))
+            if repository not in known:
+                errors.append(_interaction_error(source, f"retrieval source snapshot names unknown repository {repository!r}", "use manifest repository IDs"))
+            if isinstance(repository, str):
+                snapshots[repository] = commit
+                if repository in repositories and commit != repositories[repository].get("observed_commit"):
+                    errors.append(_interaction_error(source, f"retrieval source snapshot {repository!r} is not pinned to the manifest commit", "preserve the immutable input snapshot"))
+    artifact = data.get("artifact", {})
+    artifact_snapshots = artifact.get("source_snapshots", []) if isinstance(artifact, dict) else []
+    for snapshot in artifact_snapshots:
+        if not isinstance(snapshot, dict):
+            continue
+        repository = snapshot.get("repository")
+        commit = snapshot.get("commit")
+        if repository not in snapshots or snapshots.get(repository) != commit:
+            errors.append(_interaction_error(source, f"artifact snapshot {repository!r} does not match retrieval provenance", "carry the same repository@commit into the artifact envelope"))
+    if isinstance(artifact, dict):
+        if artifact.get("artifact_id") not in data.get("interaction", {}).get("artifact_refs", []):
+            errors.append(_interaction_error(source, "artifact is not referenced by the interaction outcome", "retain the immutable artifact reference in the experience event"))
+        evidence_refs = artifact.get("evidence_refs", [])
+        retrieval_evidence = set(retrieval.get("evidence_ids", [])) if isinstance(retrieval, dict) else set()
+        if not set(evidence_refs).issubset(retrieval_evidence):
+            errors.append(_interaction_error(source, "artifact evidence is not present in retrieval output", "preserve evidence lineage from retrieval to artifact"))
+    interaction = data.get("interaction", {})
+    if isinstance(interaction, dict):
+        if set(interaction.get("artifact_refs", [])) != {artifact.get("artifact_id")}:
+            errors.append(_interaction_error(source, "interaction artifact references are inconsistent", "record exactly the created immutable artifact"))
+        if interaction.get("raw_conversation_stored") is not False or interaction.get("direct_identifiers_stored") is not False:
+            errors.append(_interaction_error(source, "interaction privacy boundary is not closed", "keep raw conversation and direct identifiers outside Git"))
+    feedback = data.get("feedback", {})
+    if isinstance(feedback, dict) and feedback.get("promoted_to_user_fact") is not False:
+        errors.append(_interaction_error(source, "feedback was promoted to user fact", "keep inferred feedback as an unconfirmed hypothesis"))
+    routing = data.get("routing", {})
+    if isinstance(routing, dict) and routing.get("issue_operations") != []:
+        errors.append(_interaction_error(source, "interaction E2E attempted a remote Issue operation", "keep Issue routing metadata-only until a human gate"))
+    improvement = data.get("improvement", {})
+    if isinstance(improvement, dict) and improvement.get("remote_operations") != []:
+        errors.append(_interaction_error(source, "interaction E2E attempted a remote improvement operation", "keep draft PR planning metadata-only"))
+    audit = data.get("audit", {})
+    if isinstance(audit, dict) and (audit.get("lane") != "ASYNC_AUDIT" or audit.get("interaction_blocking") is not False or audit.get("artifact_operations") != []):
+        errors.append(_interaction_error(source, "audit is not independent and read-only", "run audit on its own non-blocking lane"))
+    acceptance = data.get("acceptance", {})
+    if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
+        errors.append(_interaction_error(source, "interaction E2E acceptance is incomplete", "preserve every frontstage/backstage safety invariant"))
+    return errors
+
+
+def validate_work_item(data: dict, source: str = "work-item") -> list[str]:
+    """Validate a resumable cross-repository work item and its safety rules."""
+    errors: list[str] = []
+    schema = load_json(WORKITEM_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the work item field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    manifest = load_yaml(MANIFEST_PATH)
+    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
+    known_repositories = {
+        repo.get("id") for repo in repositories if isinstance(repo, dict)
+    }
+    known_repositories.add("agentic-art-orchestration")
+    owner = data.get("owner_repository")
+    targets = data.get("target_repositories")
+    if owner not in known_repositories:
+        errors.append(
+            _signal_error(
+                source,
+                f"owner_repository {owner!r} is not declared",
+                "use a repository ID from config/repositories.yaml",
+            )
+        )
+    if isinstance(targets, list):
+        for index, repository in enumerate(targets):
+            if repository not in known_repositories:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"target_repositories[{index}] {repository!r} is not declared",
+                        "use only manifest repository IDs",
+                    )
+                )
+        if owner not in targets:
+            errors.append(
+                _signal_error(
+                    source,
+                    "owner_repository must be included in target_repositories",
+                    "make the owner an explicit target of the work item",
+                )
+            )
+
+    allowed_paths = data.get("allowed_paths")
+    if isinstance(allowed_paths, list):
+        if len(allowed_paths) != len(set(allowed_paths)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "allowed_paths must be unique",
+                    "declare each writable path once",
+                )
+            )
+        for index, path in enumerate(allowed_paths):
+            if not _is_safe_relative_path(path):
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"allowed_paths[{index}] is not a safe relative path",
+                        "remove absolute paths and . or .. segments",
+                    )
+                )
+
+    dependencies = data.get("depends_on")
+    if isinstance(dependencies, list):
+        if len(dependencies) != len(set(dependencies)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "depends_on must be unique",
+                    "declare each dependency once",
+                )
+            )
+        if data.get("id") in dependencies:
+            errors.append(
+                _signal_error(
+                    source,
+                    "work item cannot depend on itself",
+                    "remove the self dependency and keep the task DAG acyclic",
+                )
+            )
+
+    checks = data.get("checks")
+    if isinstance(checks, list):
+        for index, check in enumerate(checks):
+            if not isinstance(check, dict):
+                continue
+            repository = check.get("repository")
+            if repository not in known_repositories:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"checks[{index}].repository {repository!r} is not declared",
+                        "run each check in a manifest repository",
+                    )
+                )
+            command = check.get("command")
+            if isinstance(command, str) and any(token in command for token in COMMAND_FORBIDDEN_TOKENS):
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"checks[{index}].command contains shell control syntax",
+                        "split checks into separate safe commands",
+                    )
+                )
+
+    attempts = data.get("attempts")
+    if isinstance(attempts, dict):
+        used = attempts.get("used")
+        maximum = attempts.get("max")
+        if isinstance(used, int) and isinstance(maximum, int) and used > maximum:
+            errors.append(
+                _signal_error(
+                    source,
+                    "attempts.used cannot exceed attempts.max",
+                    "record the actual retry count within the declared retry budget",
+                )
+            )
+        config = load_yaml(ROOT / "config/orchestration.yaml")
+        configured_max = config.get("execution", {}).get("max_attempts")
+        if isinstance(maximum, int) and isinstance(configured_max, int) and maximum > configured_max:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"attempts.max {maximum} exceeds configured max_attempts {configured_max}",
+                    "use the repository retry budget or update policy explicitly",
+                )
+            )
+
+    lease = data.get("lease")
+    terminal_state = data.get("terminal_state")
+    if isinstance(lease, dict):
+        if lease.get("status") == "available" and lease.get("owner") != "unassigned":
+            errors.append(
+                _signal_error(
+                    source,
+                    "available lease must have owner 'unassigned'",
+                    "clear the lease owner before returning the item to the queue",
+                )
+            )
+        if lease.get("status") == "held" and lease.get("owner") == "unassigned":
+            errors.append(
+                _signal_error(
+                    source,
+                    "held lease must identify its owner",
+                    "record the active worker owner and expiry",
+                )
+            )
+        if terminal_state in {"READY", "BACKLOG"} and lease.get("status") == "held":
+            errors.append(
+                _signal_error(
+                    source,
+                    "queued work item cannot retain a held lease",
+                    "release the lease before returning to BACKLOG or READY",
+                )
+            )
+
+    evidence = data.get("evidence")
+    if terminal_state == "DONE" and isinstance(evidence, dict):
+        if not evidence.get("tests"):
+            errors.append(
+                _signal_error(
+                    source,
+                    "DONE work item requires test evidence",
+                    "record the observed test commands before marking DONE",
+                )
+            )
+        if not evidence.get("commits"):
+            errors.append(
+                _signal_error(
+                    source,
+                    "DONE work item requires commit evidence",
+                    "record the repository commit SHA or keep the item non-terminal",
+                )
+            )
+    return errors
+
+
+def validate_repositories(errors: list[str], manifest_path: Path = MANIFEST_PATH) -> None:
+    data = load_yaml(manifest_path)
+    errors.extend(validate_manifest(data, _source_label(manifest_path)))
 
 
 def validate_tasks(errors: list[str]) -> None:
@@ -108,7 +1845,7 @@ def validate_tasks(errors: list[str]) -> None:
         visit(task_id, [])
 
 
-def validate() -> list[str]:
+def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
     errors: list[str] = []
     for rel in REQUIRED_FILES:
         if not (ROOT / rel).is_file():
@@ -116,7 +1853,7 @@ def validate() -> list[str]:
     if errors:
         return errors
     try:
-        validate_repositories(errors)
+        validate_repositories(errors, manifest_path)
         validate_tasks(errors)
         state = load_yaml(ROOT / "execution/state.yaml")
         if state.get("last_completed_task") is None:
@@ -129,8 +1866,15 @@ def validate() -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate orchestration bootstrap")
     parser.add_argument("--check", action="store_true", help="validate without writing")
-    parser.parse_args()
-    errors = validate()
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=MANIFEST_PATH,
+        help="manifest YAML to validate (defaults to config/repositories.yaml)",
+    )
+    args = parser.parse_args()
+    manifest_path = args.manifest if args.manifest.is_absolute() else Path.cwd() / args.manifest
+    errors = validate(manifest_path)
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)

@@ -18,4 +18,16 @@ jobs:
           python-version: "3.11"
       - run: python3 -m pip install -r requirements-dev.txt
       - run: python3 tools/validate.py --check
+      - name: Materialize deterministic offline inputs
+        run: |
+          python3 tools/workspace.py init --offline-fixture
+          python3 tools/workspace.py snapshot
+          python3 tools/status.py --offline-fixture
+          python3 tools/audit.py --offline-fixture
+          python3 tools/retrieval.py
+          python3 tools/issue_router.py
+          python3 tools/improvement_loop.py
+          python3 tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml
+          python3 tools/interaction_e2e.py
+          python3 tools/security.py --offline-fixture
       - run: python3 -m unittest discover -s tests -v

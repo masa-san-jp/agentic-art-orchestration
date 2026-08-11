@@ -1,5 +1,5 @@
-version: 1
-updated_at: "2026-08-11T15:00:00+09:00"
+version: 2
+updated_at: "2026-08-12T00:36:57+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -14,7 +14,7 @@ tasks:
   - id: MANIFEST-001
     milestone: M1
     title: Implement repository manifest schema and strict validation
-    status: READY
+    status: DONE
     depends_on: [BOOTSTRAP-001]
     acceptance: Invalid IDs, roles, paths, SHAs, contracts, commands, and duplicate ownership fail with remediation.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
@@ -22,7 +22,7 @@ tasks:
   - id: WORKSPACE-001
     milestone: M1
     title: Implement idempotent workspace init and fetch
-    status: BACKLOG
+    status: DONE
     depends_on: [MANIFEST-001]
     acceptance: A clean machine clones all repositories and a second run changes nothing.
     checks: [python3 tools/workspace.py init --offline-fixture, python3 tools/workspace.py status --json]
@@ -30,7 +30,7 @@ tasks:
   - id: WORKSPACE-002
     milestone: M1
     title: Implement non-destructive Git state guards
-    status: BACKLOG
+    status: DONE
     depends_on: [WORKSPACE-001]
     acceptance: Dirty, detached, mismatched, unpushed, and divergent states block without mutation.
     checks: [python3 -m unittest tests.test_workspace_guards -v]
@@ -38,7 +38,7 @@ tasks:
   - id: SNAPSHOT-001
     milestone: M1
     title: Generate reproducible repository snapshot
-    status: BACKLOG
+    status: DONE
     depends_on: [WORKSPACE-002]
     acceptance: Snapshot deterministically records branch, HEAD, upstream, dirty state, SSOT, and contract.
     checks: [python3 tools/workspace.py snapshot --check]
@@ -46,7 +46,7 @@ tasks:
   - id: CONTRACT-001
     milestone: M2
     title: Complete normalized research signal schema
-    status: BACKLOG
+    status: DONE
     depends_on: [SNAPSHOT-001]
     acceptance: Signal v1 preserves source repo, commit, entity, evidence, certainty, freshness, consent, unknowns, and adapter.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_signal_contract -v]
@@ -54,7 +54,7 @@ tasks:
   - id: ADAPTER-SELF-001
     milestone: M2
     title: Implement self-model signal adapter contract test
-    status: BACKLOG
+    status: DONE
     depends_on: [CONTRACT-001]
     acceptance: Approved derived signals export without raw voice or consent violations and retain evidence locators.
     checks: [python3 -m unittest tests.test_adapter_self_model -v]
@@ -62,7 +62,7 @@ tasks:
   - id: ADAPTER-ART-001
     milestone: M2
     title: Implement art-history signal adapter contract test
-    status: BACKLOG
+    status: DONE
     depends_on: [CONTRACT-001]
     acceptance: Entities and relations export by stable ID and commit without copying the canonical graph.
     checks: [python3 -m unittest tests.test_adapter_art_history -v]
@@ -70,7 +70,7 @@ tasks:
   - id: ADAPTER-MARKETING-001
     milestone: M2
     title: Implement marketing signal adapter contract test
-    status: BACKLOG
+    status: DONE
     depends_on: [CONTRACT-001]
     acceptance: Freshness, stage, vendor interest, retrieval, counterevidence, and expiry remain machine-checkable.
     checks: [python3 -m unittest tests.test_adapter_marketing -v]
@@ -78,7 +78,7 @@ tasks:
   - id: CONSUMER-001
     milestone: M2
     title: Implement agentic-art-research import compatibility test
-    status: BACKLOG
+    status: DONE
     depends_on: [ADAPTER-SELF-001, ADAPTER-ART-001, ADAPTER-MARKETING-001]
     acceptance: Consumer accepts valid signals, rejects incompatible versions, and records source commits.
     checks: [python3 -m unittest tests.test_consumer_contract -v]
@@ -86,7 +86,7 @@ tasks:
   - id: TRACE-001
     milestone: M2
     title: Build cross-repository provenance trace
-    status: BACKLOG
+    status: DONE
     depends_on: [CONSUMER-001]
     acceptance: Every research requirement traces to signal, source entity, repository, and immutable commit.
     checks: [python3 tools/trace.py --check --fixture tests/fixtures/portfolio]
@@ -94,7 +94,7 @@ tasks:
   - id: WORKITEM-001
     milestone: M3
     title: Define cross-repository work item schema
-    status: BACKLOG
+    status: DONE
     depends_on: [TRACE-001]
     acceptance: Work items declare owner repo, paths, dependencies, checks, risk, attempts, and terminal criteria.
     checks: [python3 -m unittest tests.test_work_items -v]
@@ -102,7 +102,7 @@ tasks:
   - id: SCHEDULER-001
     milestone: M3
     title: Implement deterministic cross-repository scheduler
-    status: BACKLOG
+    status: DONE
     depends_on: [WORKITEM-001]
     acceptance: Scheduler selects only dependency-ready non-conflicting work and explains all exclusions.
     checks: [python3 -m unittest tests.test_scheduler -v]
@@ -110,7 +110,7 @@ tasks:
   - id: RUNTIME-001
     milestone: M3
     title: Implement leases, retry, checkpoint, and resume
-    status: BACKLOG
+    status: DONE
     depends_on: [SCHEDULER-001]
     acceptance: Kill-and-resume completes without duplicate commit, PR, or lost decision.
     checks: [python3 -m unittest tests.test_runtime_recovery -v]
@@ -118,7 +118,7 @@ tasks:
   - id: GATES-001
     milestone: M3
     title: Implement per-repository quality gate runner
-    status: BACKLOG
+    status: DONE
     depends_on: [RUNTIME-001]
     acceptance: Changed repositories run declared gates and failures block with captured output.
     checks: [python3 -m unittest tests.test_quality_gates -v]
@@ -126,7 +126,7 @@ tasks:
   - id: DISPATCH-001
     milestone: M3
     title: Implement safe context pack and dispatcher
-    status: BACKLOG
+    status: DONE
     depends_on: [GATES-001]
     acceptance: Worker receives only required rules, files, contracts, acceptance, and recovery context.
     checks: [python3 -m unittest tests.test_dispatcher -v]
@@ -134,7 +134,7 @@ tasks:
   - id: STATUS-001
     milestone: M4
     title: Build portfolio status and drift report
-    status: BACKLOG
+    status: DONE
     depends_on: [DISPATCH-001]
     acceptance: Markdown and JSON show commits, drift, child progress, compatibility, blockers, and next work.
     checks: [python3 tools/status.py --check --offline-fixture]
@@ -142,7 +142,7 @@ tasks:
   - id: PROJECT-001
     milestone: M4
     title: Implement idempotent GitHub Projects number 4 synchronization
-    status: BACKLOG
+    status: DONE
     depends_on: [STATUS-001]
     acceptance: Priority and human-visible status map without duplicate items, while API unavailability leaves local execution usable.
     checks: [python3 -m unittest tests.test_project_sync -v]
@@ -150,7 +150,7 @@ tasks:
   - id: AUDIT-001
     milestone: M4
     title: Implement non-blocking cross-repository audit
-    status: BACKLOG
+    status: DONE
     depends_on: [PROJECT-001]
     acceptance: Audit reports stale pins, schema drift, orphan signals, freshness, consent, duplicates, and untested boundaries.
     checks: [python3 tools/audit.py --check --offline-fixture]
@@ -158,7 +158,7 @@ tasks:
   - id: SECURITY-001
     milestone: M4
     title: Enforce aggregate data and credential boundary
-    status: BACKLOG
+    status: DONE
     depends_on: [AUDIT-001]
     acceptance: Forbidden classes, secrets, raw personal evidence, and unapproved export fail before commit.
     checks: [python3 -m unittest tests.test_security_boundary -v]
@@ -166,7 +166,7 @@ tasks:
   - id: FIXTURE-001
     milestone: M5
     title: Build four-repository offline fixture
-    status: BACKLOG
+    status: DONE
     depends_on: [SECURITY-001]
     acceptance: Synthetic repos reproduce valid, stale, dirty, divergent, incompatible, and privacy-violating scenarios.
     checks: [python3 tests/fixtures/build_fixture.py --check]
@@ -174,7 +174,7 @@ tasks:
   - id: E2E-001
     milestone: M5
     title: Complete end-to-end orchestration evaluation
-    status: BACKLOG
+    status: DONE
     depends_on: [FIXTURE-001]
     acceptance: Clean setup reaches traceable output and each injected failure reaches its terminal state and recovery path.
     checks: [python3 -m unittest tests.test_e2e -v]
@@ -182,7 +182,7 @@ tasks:
   - id: DOCS-001
     milestone: M6
     title: Complete operator and incident runbooks
-    status: BACKLOG
+    status: DONE
     depends_on: [E2E-001]
     acceptance: A new agent can initialize, inspect, execute, recover, and hand off using repository documents only.
     checks: [python3 tools/validate.py --check]
@@ -190,7 +190,146 @@ tasks:
   - id: RELEASE-001
     milestone: M6
     title: Qualify v1.0.0
-    status: BACKLOG
+    status: DONE
     depends_on: [DOCS-001]
     acceptance: All v1 gates pass, E2E succeeds three times, and no forbidden data exists in Git history.
     checks: [python3 tools/release_check.py --version 1.0.0 --runs 3]
+
+  - id: V11-DESIGN-001
+    milestone: M7
+    title: Define the v1.1 interaction and continuous-improvement architecture
+    status: DONE
+    depends_on: [RELEASE-001]
+    acceptance: The parent specification defines the conversational interface, repository-aware retrieval, append-only external artifacts, explicit and inferred feedback, autonomous issue delivery, asynchronous audit, authority boundaries, and an executable dependency-ordered v1.1 queue.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: INTERACTION-001
+    milestone: M7
+    title: Define interaction event and experience outcome contracts
+    status: DONE
+    depends_on: [V11-DESIGN-001]
+    acceptance: Interaction events preserve intent, outcome, source snapshots, explicit feedback, privacy scope, and opaque artifact references without storing raw conversation text in Git.
+    checks: [python3 -m unittest tests.test_interaction_contract -v]
+
+  - id: ARTIFACT-001
+    milestone: M7
+    title: Define append-only external artifact contract
+    status: DONE
+    depends_on: [V11-DESIGN-001]
+    acceptance: External artifacts have immutable IDs, Drive references, hashes, provenance, access scope, and derived-from or supersedes relations while update and delete operations are rejected.
+    checks: [python3 -m unittest tests.test_external_artifact_contract -v]
+
+  - id: FEEDBACK-001
+    milestone: M7
+    title: Define explicit and inferred feedback signal contract
+    status: DONE
+    depends_on: [INTERACTION-001, ARTIFACT-001]
+    acceptance: Feedback distinguishes explicit requests from inferred friction or needs, records evidence and confidence, preserves consent, and never promotes an inference to a user fact.
+    checks: [python3 -m unittest tests.test_feedback_contract -v]
+
+  - id: REPOSITORY-ONBOARDING-001
+    milestone: M7
+    title: Generalize repository onboarding without weakening the core boundary
+    status: DONE
+    depends_on: [V11-DESIGN-001]
+    acceptance: The manifest accepts additional repositories while preserving the four core repository IDs, unique ownership, role-contract compatibility, immutable observed commits, requirement SSOT, quality gates, and deterministic workspace behavior.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_validate tests.test_workspace tests.test_snapshot -v]
+
+  - id: KNOWLEDGE-PROFILE-001
+    milestone: M7
+    title: Add machine-readable knowledge profiles to repository manifest
+    status: DONE
+    depends_on: [V11-DESIGN-001, REPOSITORY-ONBOARDING-001]
+    acceptance: Every repository declares answerable questions, canonical entities, retrieval entry points, evidence and freshness rules, feedback ownership, write scope, quality gates, and forbidden data.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_knowledge_profiles -v]
+
+  - id: RETRIEVAL-001
+    milestone: M8
+    title: Implement repository-aware conversational retrieval
+    status: DONE
+    lane: FRONTSTAGE_RETRIEVAL
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [INTERACTION-001, KNOWLEDGE-PROFILE-001]
+    acceptance: A query is routed to the minimum relevant repositories and returns evidence with repository, immutable commit, freshness, unknowns, and domain constraints.
+    checks: [python3 -m unittest tests.test_retrieval -v]
+
+  - id: DRIVE-001
+    milestone: M8
+    title: Implement append-only Google Drive artifact adapter
+    status: DONE
+    lane: DRIVE_ARTIFACT
+    user_artifact_policy: CREATE_ONLY
+    depends_on: [ARTIFACT-001, INTERACTION-001]
+    acceptance: The adapter creates new artifacts, never updates or deletes existing artifacts, stores only opaque references and hashes in Git, and remains testable with a networkless fake Drive.
+    checks: [python3 -m unittest tests.test_drive_adapter -v]
+
+  - id: ISSUE-ROUTER-001
+    milestone: M8
+    title: Route interaction feedback to the authoritative repository
+    status: DONE
+    lane: FEEDBACK_ROUTING
+    user_artifact_policy: READ_ONLY
+    depends_on: [FEEDBACK-001, KNOWLEDGE-PROFILE-001]
+    acceptance: Domain feedback routes to the owning child repository, orchestration and experience feedback routes to the parent, uncertain routing remains triageable, and duplicate issues are suppressed.
+    checks: [python3 -m unittest tests.test_issue_router -v]
+
+  - id: IMPROVEMENT-001
+    milestone: M8
+    title: Implement autonomous issue-to-draft-PR improvement loop
+    status: DONE
+    lane: AUTONOMOUS_IMPROVEMENT
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-ROUTER-001, RETRIEVAL-001, DRIVE-001]
+    acceptance: Eligible issues are selected, implemented, tested, and prepared as draft PRs with checkpoints and no duplicate side effects; merge and release remain human gates.
+    checks: [python3 -m unittest tests.test_improvement_loop -v]
+
+  - id: AUDITOR-002
+    milestone: M8
+    title: Implement asynchronous refactoring audit lane
+    status: DONE
+    lane: ASYNC_AUDIT
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [KNOWLEDGE-PROFILE-001, FEEDBACK-001]
+    acceptance: Audit and refactoring work runs independently of interaction latency, respects leases and repository gates, and produces traceable issues or draft PRs without changing user artifacts.
+    checks: [python3 -m unittest tests.test_async_auditor -v]
+
+  - id: INTERACTION-E2E-001
+    milestone: M9
+    title: Evaluate the conversational knowledge and improvement loop end to end
+    status: DONE
+    lane: INTERACTION_E2E
+    interaction_blocking: false
+    user_artifact_policy: CREATE_ONLY
+    depends_on: [IMPROVEMENT-001, AUDITOR-002]
+    acceptance: A networkless scenario answers from versioned child knowledge, creates an immutable external artifact, captures explicit and inferred feedback, routes an issue, resumes autonomous improvement, and preserves all safety gates.
+    checks: [python3 -m unittest tests.test_interaction_e2e -v]
+
+  - id: DOCS-002
+    milestone: M9
+    title: Document interaction, artifact, improvement, and audit operations
+    status: DONE
+    lane: OPERATIONS_DOCUMENTATION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [INTERACTION-E2E-001]
+    acceptance: A new agent can operate the interaction and improvement loops, inspect Drive references, recover partial work, and explain human gates using repository documents only.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_docs -v]
+
+  - id: RELEASE-002
+    milestone: M9
+    title: Qualify v1.1.0
+    status: DONE
+    depends_on: [DOCS-002]
+    acceptance: Conversational retrieval, append-only artifacts, feedback routing, autonomous improvement, asynchronous audit, privacy boundaries, and deterministic E2E all pass without performing merge or release operations.
+    checks: [python3 tools/release_check.py --version 1.1.0 --runs 3]
+
+  - id: V12-ISSUE2-001
+    milestone: M10
+    title: Scope remote Issue #2 for v1.2 semi-deterministic research execution
+    status: BACKLOG
+    depends_on: [RELEASE-002]
+    acceptance: Parent Issue #2 and agentic-art-research Issue #2 are decomposed into authority-preserving v1.2 tasks for explicit transformation rules, candidate generation, seeded selection, specificity/genericness gates, provenance, and child quality gates without changing v1.1 release acceptance or copying child canonical data.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]

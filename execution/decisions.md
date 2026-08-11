@@ -32,3 +32,46 @@
 - 決定: GitHub Projects #4は人間向け優先順位と可視化の正本、task-queue.yamlは自律実行順と再開の正本とする。
 - 理由: Project API障害時もローカル実行を継続しつつ、人間の優先順位を失わないため。
 - 実装: project syncは冪等とし、接続不能を全体停止へ変換しない。
+
+## D-006 — v1.1の利用エージェントを会話型UIとする
+
+- 日付: 2026-08-11
+- 決定: 利用エージェントを単なる検索窓ではなく、人間が目的を達成するためのユーザーインターフェースとして扱う。
+- 理由: repoやGit操作を利用者へ要求せず、会話から知識利用、成果物作成、feedback取得までを一つのinteractionとして成立させるため。
+- 影響: interaction eventとexperience outcomeをv1.1の第一級contractにする。改善・監査の遅延は通常の会話応答をblockしない。
+
+## D-007 — ユーザー成果物はGoogle Driveへ追記保存する
+
+- 日付: 2026-08-11
+- 決定: ユーザー体験から生まれた成果物はGoogle Driveを外部artifact正本とし、既存artifactを上書き・削除しない。
+- 理由: 成果物履歴とfeedbackを失わず、Gitへ会話全文や機微本文を集約しないため。
+- 実装: 親GitはDrive file ID、artifact ID、hash、provenance、access scope、derived_from/supersedesだけを保持する。Drive書込みは保存先と同意を確認したcreate-only adapter経由に限定する。
+
+## D-008 — 暗黙feedbackは検証可能な仮説として扱う
+
+- 日付: 2026-08-11
+- 決定: 言語化されていない不満・欲求は、観測根拠とconfidenceを持つinferred feedbackとしてIssue候補化し、ユーザー事実へ自動昇格させない。
+- 理由: UX改善の兆候を失わず、過剰推論や同意範囲外のself-model更新を防ぐため。
+
+## D-009 — 改善と監査を非同期の独立laneにする
+
+- 日付: 2026-08-11
+- 決定: feedback由来の改善laneと、構造・品質を扱うaudit/refactoring laneをinteraction laneから分離する。
+- 理由: ユーザー応答の待ち時間へ実装・監査を持ち込まず、Issue、lease、checkpoint、quality gateで独立再開できるようにするため。
+- 影響: Issue選択、実装、test、draft PRまでは自律化できる。D-004のmerge/release人間gateは維持する。
+
+## D-010 — 4repoをcore setとして追加型onboardingを許可する
+
+- 日付: 2026-08-11
+- 決定: manifestをexactly 4から4以上へ一般化する。既存4 IDはcore setとして必須とし、新規repoはentryをappendする。
+- 理由: 将来のKB・consumer・control-plane extension追加に対応しつつ、既存の正本と依存関係を黙って置換しないため。
+- 安全条件: unique ID/path/full_name/authority、role-contract整合、同一repoのIssue SSOT、immutable observed commit、instructions、quality gateを追加repoにも必須とする。
+- 影響: fixtureの4repoは最小core scenarioとして維持する。実repoの追加、clone、branch、PRは別taskで明示された場合だけ行う。
+
+## D-011 — リモートIssue #2はv1.2へ切り分ける
+
+- 日付: 2026-08-12
+- 決定: 親`agentic-art-orchestration#2`（半決定論的な制作研究パイプライン）と子`agentic-art-research#2`（自律実行v1.0 Epic）は、v1.1のrelease acceptanceには含めず、v1.2の設計・実装バックログへ切り分ける。
+- 理由: v1.1はrepository-aware retrieval、append-only artifact、feedback routing、improvement、async auditのinteraction基盤を対象とし、rule engine、candidate space、seeded selection、specificity/genericness gateは別の大きな設計変更だからである。
+- 安全条件: v1.1 qualification結果は変更せず、子repoのIssue・schema・canonical dataも変更しない。v1.2開始時に親Issueと子Issueをauthority、依存、quality gate、migration境界付きのtaskへ分解する。
+- リモート操作: Issueのclose、label、comment、編集はこの決定では行わない。

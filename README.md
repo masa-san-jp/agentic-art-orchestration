@@ -1,6 +1,6 @@
 # Agentic Art Orchestration
 
-Self Model × Art History × Marketing Trends → Agentic Art Research を、独立した4リポジトリの正本性を壊さず、単一ワークスペースから横断運用するメタ・リポジトリ。
+Self Model × Art History × Marketing Trends → Agentic Art Research を、独立した4リポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
 
 ## 現在地
 
@@ -8,10 +8,25 @@ Self Model × Art History × Marketing Trends → Agentic Art Research を、独
 - 構想・要求の起点: [先行リポジトリ設計仕様書](docs/20260811-agentic-art-orchestration-repository-design-specification.md)
 - 完成実行計画: [実行計画](docs/20260811-agentic-art-orchestration-repository-execution-plan.md)
 - エージェント規則: [AGENTS.md](AGENTS.md)
+- 運用runbook: [operator-runbook.md](docs/operator-runbook.md)
+- 障害・復旧runbook: [incident-runbook.md](docs/incident-runbook.md)
+- v1.1 interaction/improvement runbook: [interaction-improvement-runbook.md](docs/interaction-improvement-runbook.md)
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
 - 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 
-初期ブートストラップはM0を完了し、M1の MANIFEST-001 から実装を開始できる状態にする。v1.0の完成とは、4リポジトリを再現可能に展開し、互換性・鮮度・依存関係・品質ゲートを検査し、入力シグナルから agentic-art-research の成果物まで出典commitを逆引きできることをいう。
+初期ブートストラップからM9のv1.1.0 qualificationまでを完了した。qualificationはread-onlyでPASSEDだが、merge、tag、release、公開、共有範囲拡張は人間gateとして未実行である。v1.0は、4リポジトリを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
+
+親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2バックログ`V12-ISSUE2-001`で扱う。v1.2ではrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance拡張を設計・実装する。
+
+v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加する。現在の4repoはcore setであり、新規repoは置換ではなくmanifestへ追加し、同じ正本・契約・snapshot・品質ゲートを要求する。
+
+~~~text
+User <-> Interaction Agent -> Child Knowledge Repositories
+                    |       -> Append-only Google Drive Artifacts
+                    +------ -> Feedback -> Issue -> Improvement -> Draft PR
+
+Asynchronous Auditor ------ -> Refactoring Issue / Draft PR
+~~~
 
 ## 統合対象
 
@@ -27,6 +42,10 @@ Self Model × Art History × Marketing Trends → Agentic Art Research を、独
 - 親は横断契約、workspace再現、依存DAG、実行状態、監査結果だけを正本として持つ。
 - 子の変更は子repoのbranch/PRで行い、親のcommitへ混ぜない。
 - repos/ はローカル生成物でありGit管理しない。
+- 会話全文とDrive成果物本文を親Gitへ保存せず、opaque参照・hash・source commitだけを保持する。
+- Drive成果物は上書き・削除せず、修正版を新規作成してderived_from/supersedesで結ぶ。
+- 推定された不満や欲求はfeedback仮説であり、明示要求やユーザー属性として扱わない。
+- 改善・監査は会話応答と非同期に進め、merge・release・公開・同意拡張は人間gateを維持する。
 
 ## エージェントの開始手順
 
@@ -49,11 +68,11 @@ python3 -m unittest discover -s tests -v
 
 ~~~text
 config/       リポジトリ一覧、横断ポリシー、品質ゲート
-schemas/      manifest・signal・work item・run stateの契約
+schemas/      manifest・signal・work item・retrieval・interaction・artifact・feedback・routing・improvement・E2E・async auditの契約
 docs/         設計、実行計画、横断契約、実行ガイド
 execution/    task queue、状態、判断、引継ぎ
-tools/        workspace、検証、status、audit、dispatcher
+tools/        workspace、検証、status、audit、retrieval、issue router、improvement、interaction E2E、async auditor、dispatcher
 tests/        offline fixtureと障害試験
-data/         生成されたstatus・audit・trace。手編集禁止
+data/         生成されたstatus・audit・retrieval-result・feedback-routing・improvement-loop・interaction-e2e・async-audit・trace。手編集禁止
 repos/        ローカルの子repo展開先。Git管理外
 ~~~
