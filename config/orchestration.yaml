@@ -25,4 +25,4 @@ data_boundary:
   require_source_repository: true
   require_source_commit: true
   preserve_unknown: true
-  generated_directories: [data, workspace]
+  generated_directories: [data, repos]
