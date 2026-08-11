@@ -4,6 +4,8 @@
 対象: masa-san-jp/agentic-art-orchestration  
 状態: v0.1 / 実装用正本
 
+本書は、先行する repository-design-specification.md の構想・要求を、現在の4repoを実測した実行契約へ具体化した文書である。意図・スコープは先行文書、実装ファイル名・検証・タスク順は本書を正とする。
+
 ## 1. 目的
 
 本システムは、以下4つの独立GitHubリポジトリを、人間とAIエージェントが単一ルートから安全かつ再現可能に扱うオーケストレーション基盤である。
@@ -35,13 +37,14 @@ Self Model × Art History × Marketing Trends
 - cross-repository work item、DAG、lease、checkpoint
 - child quality gate runner
 - portfolio status、audit、provenance trace
+- GitHub Projects #4との冪等な優先順位・状態同期
 - offline fixture、障害・回復・privacy E2E
 
 ### 2.2 スコープ外
 
 - 子repoのcore schemaを親で再定義すること
 - 各KBのデータそのものを親へ集約すること
-- GitHub Projectsをデータ正本にすること
+- GitHub Projectsを子repoデータまたは実行再開状態の正本にすること
 - LLM provider、model ID、API keyの固定
 - 自動merge、自動release、強制push
 - Self Modelの心理診断利用
@@ -91,7 +94,7 @@ agentic-art-orchestration/
                      |
               workspace manager
                      |
-  workspace/repos/{four independent git repositories}
+  repos/{four independent git repositories}
                      |
              adapters / contracts
                      |
@@ -235,6 +238,8 @@ auditはcommitを止めず、stale pin、SSOT変更後の未検証、orphan sign
 
 各子では低リスクでも、内面・行動・制作関心・トレンドを結合すると再識別と過剰推論のリスクが上がる。親はraw dataを集約せず、最小signalとopaque locatorだけを扱う。
 
+GitHub Projects #4は人間向け優先順位と可視化の正本とする。task-queue.yamlは機械実行と再開の正本とし、同期は冪等にする。Project APIが利用不能でもローカルqueueは継続し、復旧後に差分同期する。
+
 禁止対象はsecret/token/private key、PRIVATE_RAW、RESTRICTED、個人メール本文、非公開音声、カレンダー詳細、直接識別情報を伴う心理・行動推論、同意範囲外signalである。
 
 ## 18. 非機能要件
@@ -264,6 +269,7 @@ auditはcommitを止めず、stale pin、SSOT変更後の未検証、orphan sign
 - scheduler、lease、retry、resumeが障害testを通る
 - 変更repoのquality gateが必ず実行される
 - status/auditがJSONとMarkdownで再現生成される
+- GitHub Projects #4同期が重複itemを作らず、接続不能でもローカル実行が継続する
 - forbidden dataがworking tree、bundle、Git historyにない
 - offline E2Eが3回連続成功
 - 新規Luna/Sonnet級agentが文書だけで次taskを完了
