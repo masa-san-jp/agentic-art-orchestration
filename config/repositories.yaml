@@ -14,6 +14,28 @@ repositories:
     quality_gates:
       - python3 tools/build_graph.py --check
       - python3 -m unittest discover -s tests -p "test_*.py"
+    knowledge_profile:
+      answerable_questions:
+        - "What self-model claims, patterns, tensions, or states are explicitly supported?"
+        - "What consent scope and unknowns constrain use of this self-model knowledge?"
+      canonical_entities: [entity, claim, pattern, tension, state, evidence]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: repository scope and export boundary}
+        - {kind: directory, locator: entities, purpose: canonical self-model entities}
+        - {kind: signal, locator: normalized-research-signal/v1, purpose: approved derived export}
+      evidence_rules:
+        allowed_kinds: [observed, inferred, derived]
+        requires_locator: true
+        minimum_quality: observed
+      freshness_rules:
+        policy: explicit
+        allowed_statuses: [current, stale, unknown]
+        revalidation_required: true
+      feedback_owner: self-model
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [entities, evidence, README.md, AGENTS.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier, raw_voice_body]
     export_contract: normalized-research-signal/v1
 
   - id: art-history
@@ -29,6 +51,28 @@ repositories:
     quality_gates:
       - python3 tools/build_graph.py --check
       - python3 -m unittest discover -s tests -p "test_*.py"
+    knowledge_profile:
+      answerable_questions:
+        - "What entities, relations, periods, regions, and evidence are recorded?"
+        - "What is the strength and limitation of an art-history relation?"
+      canonical_entities: [entity, movement, person, relation, source, evidence]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: repository scope and evidence rules}
+        - {kind: directory, locator: entities, purpose: canonical art-history entities}
+        - {kind: signal, locator: normalized-research-signal/v1, purpose: stable entity and relation export}
+      evidence_rules:
+        allowed_kinds: [primary, secondary, scholarly, derived]
+        requires_locator: true
+        minimum_quality: scholarly
+      freshness_rules:
+        policy: explicit
+        allowed_statuses: [current, stale, unknown]
+        revalidation_required: true
+      feedback_owner: art-history
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [entities, sources, overviews, README.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier]
     export_contract: normalized-research-signal/v1
 
   - id: marketing-trends
@@ -44,6 +88,28 @@ repositories:
     quality_gates:
       - python3 tools/build_graph.py --check
       - python3 -m unittest discover -s tests -p "test_*.py"
+    knowledge_profile:
+      answerable_questions:
+        - "What external trends, practices, and evidence are currently recorded?"
+        - "What freshness, retrieval, vendor-interest, and counterevidence constraints apply?"
+      canonical_entities: [trend, practice, evidence, source, counterevidence, prediction]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: collection scope and freshness boundary}
+        - {kind: directory, locator: trends, purpose: canonical external trends}
+        - {kind: signal, locator: normalized-research-signal/v1, purpose: freshness-aware trend export}
+      evidence_rules:
+        allowed_kinds: [primary, secondary, summary, anecdotal, derived]
+        requires_locator: true
+        minimum_quality: independent
+      freshness_rules:
+        policy: domain-defined
+        allowed_statuses: [current, stale, unknown]
+        revalidation_required: true
+      feedback_owner: marketing-trends
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [trends, sources, overviews, README.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier]
     export_contract: normalized-research-signal/v1
 
   - id: agentic-art-research
@@ -59,4 +125,26 @@ repositories:
     quality_gates:
       - python3 tools/validate.py --check
       - python3 -m unittest discover -s tests -v
+    knowledge_profile:
+      answerable_questions:
+        - "What research requirements, decisions, and normalized signals are available?"
+        - "What outputs can be produced with complete source provenance and known gaps?"
+      canonical_entities: [requirement, signal, decision, research-run, output, evidence]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: consumer runtime scope}
+        - {kind: directory, locator: requirements, purpose: research requirements and acceptance}
+        - {kind: signal, locator: normalized-research-signal/v1, purpose: compatible cross-repository inputs}
+      evidence_rules:
+        allowed_kinds: [primary, secondary, scholarly, independent, derived]
+        requires_locator: true
+        minimum_quality: derived
+      freshness_rules:
+        policy: domain-defined
+        allowed_statuses: [current, stale, unknown, not-applicable]
+        revalidation_required: true
+      feedback_owner: agentic-art-research
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [requirements, decisions, projects, outputs, README.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier, unapproved_export]
     import_contract: normalized-research-signal/v1

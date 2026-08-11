@@ -1,0 +1,8 @@
+{
+  "contract_version": "interaction-e2e-fixture/v1",
+  "retrieval_request": "tests/fixtures/retrieval/valid_art.json",
+  "retrieval_index": "tests/fixtures/retrieval/index.json",
+  "improvement_execution": "tests/fixtures/improvement/execution.json",
+  "network": "disabled",
+  "user_artifact_policy": "CREATE_ONLY"
+}

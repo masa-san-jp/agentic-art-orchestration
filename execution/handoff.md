@@ -2,18 +2,487 @@
 
 ## Current state
 
-- 完了: BOOTSTRAP-001
-- 次: MANIFEST-001
+- 完了: BOOTSTRAP-001、MANIFEST-001、WORKSPACE-001、WORKSPACE-002、SNAPSHOT-001、CONTRACT-001、ADAPTER-SELF-001、ADAPTER-ART-001、ADAPTER-MARKETING-001、CONSUMER-001、TRACE-001、WORKITEM-001、SCHEDULER-001、RUNTIME-001、GATES-001、DISPATCH-001、STATUS-001、PROJECT-001、AUDIT-001、SECURITY-001、FIXTURE-001、E2E-001、DOCS-001、RELEASE-001、V11-DESIGN-001、ARTIFACT-001、INTERACTION-001、FEEDBACK-001、REPOSITORY-ONBOARDING-001、KNOWLEDGE-PROFILE-001、AUDITOR-002、DRIVE-001
+- 次: ISSUE-ROUTER-001（READY、依存完了済み、最小ID）
 - blocker: なし
 - active lease: なし
+- 親repo: `main` / `e8f7fdf`開始点 / working treeは意図したtask差分のみ
+
+## MANIFEST-001 evidence
+
+- `schemas/repository-manifest.schema.json` を追加し、Draft 2020-12のmanifest項目、role、契約、品質ゲートを固定。
+- `tests/fixtures/manifest/invalid_cases.yaml` にID、role、path、SHA、contract、空/不正command、重複ownershipの9ケースを定義。
+- `tools/validate.py` をschema読込 + semantic checksへ拡張。違反にはremediationを付与。
+- `.venv/bin/python tools/validate.py --check`: pass
+- `.venv/bin/python -m unittest discover -s tests -v`: 6 tests pass
+- 変更子repo: なし。子repo品質ゲート: 対象なし。
+- 機微情報: 新規変更内にPRIVATE_RAW、RESTRICTED、credential、direct identifier、秘密鍵なし。
+
+## WORKSPACE-001 evidence
+
+- `tools/workspace.py` を追加し、manifest検証、offline bare remote生成、atomic staging clone、idempotent init、fetch、JSON statusを実装。
+- 初回 `init --offline-fixture`: 4 repositories cloned、`changed_count: 4`。
+- 2回目 `init --offline-fixture`: 全件 unchanged、`changed_count: 0`。
+- `status --json`: 4件すべて `main / clean / ahead=0 / behind=0`。
+- offline fetch: 4件実行、安定ref変更なし、checkoutなし。
+- `.venv/bin/python -m unittest discover -s tests -v`: 8 tests pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（synthetic offline fixtureのみ）。
+- offline fixture heads: self-model `f3c97f5c9b75ce6d09438d04c0b483cfcffe0786`、art-history `c306799d5070074c8515a36cedaeffd7c5db0453`、marketing-trends `d77ed2506632846208d16cd90c3bbf9ac3abc34c`、agentic-art-research `e0a833b310072b30af48b3fde707fd3a54d802cb`。
+
+## WORKSPACE-002 evidence
+
+- `guard` subcommandを追加し、read-onlyにremote、repository identity、dirty、detached、upstream、ahead/behindを検査。
+- dirty、detached、remote mismatch、unpushed、behind、divergedの7 fixture testがpass。
+- blocked時のexit codeは2。各reasonに観測事実とremediationを含める。
+- `init`と`fetch`も既存checkoutのguardを通過しない限り実行せず、checkout、reset、rebase、merge、push、fetchを検出時に行わない。
+- `.venv/bin/python -m unittest discover -s tests -v`: 15 tests pass。
+- clean default workspace `guard --offline-fixture --json`: `blocked_count: 0`。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。
+
+## SNAPSHOT-001 evidence
+
+- `snapshot` subcommandを追加し、`data/snapshot.json`と`data/snapshot.md`をatomicに生成。
+- 各repoにbranch、HEAD、upstream、dirty、untracked、detached、ahead/behind、SSOT、contract、quality-gate hashを記録。
+- `captured_at`はHEAD committer timestampの最大値から導出し、wall-clockによる非決定性を排除。
+- 初回生成 hash: `e9eb63661d1a136600e8e3d51af2d88d57fdb1f1321f406ceb8bc436d67f548a`。
+- 2回目生成はbyte一致・`changed: false`。`snapshot --check` pass。
+- dirty/detached snapshot、stale snapshot拒否、未生成状態のdeterministic checkをテスト。
+- `.venv/bin/python -m unittest discover -s tests -v`: 18 tests pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。
+
+## CONTRACT-001 evidence
+
+- `schemas/normalized-research-signal.schema.json` を追加し、Draft 2020-12の共通envelopeとself/art-history/marketingのdomain拡張を定義。
+- 必須provenance（repository、40桁commit、entity IDs、locators、evidence refs）、certainty、unknowns、constraints、validity/freshness、adapter、generated timestampを固定。
+- `tools/validate.py` にschema subset検証とsemantic checksを追加。source repository、entity/evidence重複、staleのconstraint伝播、signal kind/domain整合、self consent/export/raw voice、art stable relation、marketing freshnessを検査。
+- `tests/fixtures/signal/valid_*.json` に3 domainの正常例、`invalid_cases.yaml` に11件の失敗matrixを追加。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest tests.test_signal_contract -v`: 5 tests pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 23 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親の契約境界とoffline fixtureのみ）。
+- 機微情報: raw voice本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。self fixtureはopaque locatorとsynthetic derived wordingのみ。
+
+## ADAPTER-SELF-001 evidence
+
+- `tools/adapters.py` に `adapt_self_model_signal` を追加。approved derived recordの明示値だけをnormalized signalへcopyし、child repository内部schemaへ結合しない。
+- `export_permitted`、`consent_scope`、commit、entity、source locator、evidence locator、certainty、unknowns、freshnessを必須入力として扱い、欠落・同意違反をremediation付きで拒否。
+- `raw_voice`、`raw_voice_body`、`raw_voice_text`、`raw_audio`、`private_raw`、`restricted`を入力段階で拒否し、出力にはopaque `raw_voice_locator`だけを保持。
+- `tests/fixtures/signal/self_adapter_input.json` と `tests/test_adapter_self_model.py` を追加。approved export、consent violation、raw voice body、provenance/evidence欠落、unknown/freshness無変換の5ケースを検証。
+- `.venv/bin/python -m unittest tests.test_adapter_self_model -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 28 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（実体はsynthetic offline fixtureで、self-model childはREADMEとfixture IDのみ）。
+- 機微情報: raw voice本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## ADAPTER-ART-001 evidence
+
+- `tools/adapters.py` に `adapt_art_history_signal` を追加。entity kind/time/geoとstable target IDsを出力し、canonical graphはopaque locatorだけを保持。
+- relationごとのevidence_refsとcertaintyを必須化し、relationの解釈確度・unknownsを無変換で転送。
+- `graph`、`nodes`、`edges`、`canonical_graph`、`graph_data`、`entity_payload`のcanonical graph payloadを入力段階で拒否。
+- source entityをrelation targetへコピーするケース、relation evidence欠落、canonical graph payloadを検証する5テストを追加。
+- `.venv/bin/python -m unittest tests.test_adapter_art_history -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: queue期待値更新後に全33 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（synthetic offline fixtureのみ）。
+- 機微情報: canonical graph本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## ADAPTER-MARKETING-001 evidence
+
+- `tools/adapters.py` に `adapt_marketing_signal` を追加。stage、common/domain freshness、retrieved、vendor_interest、counterevidence、prediction status、revalidate/expiryを明示値のまま出力。
+- `revalidate_at`をcommon freshnessとdomain extensionで一致させ、retrievalをcertaintyと別軸で保持。
+- stale signalはvalid/confirmedへ昇格させず、validityとconstraintへstaleを伝播。anecdotal evidenceもconfirmedへ昇格させない。
+- `schemas/normalized-research-signal.schema.json` に `anecdotal` evidence kindを追加し、`tools/validate.py` のmarketing semantic ruleでmachine-checkableに拒否。
+- `tests/fixtures/signal/marketing_adapter_input.json` と専用5テストを追加。current、stale、stale-confirmed、anecdotal-confirmed、必須freshness/retrieval/expiry整合を検証。
+- `.venv/bin/python -m unittest tests.test_adapter_marketing -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 38 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（synthetic offline fixtureのみ）。
+- 機微情報: vendor raw content、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## CONSUMER-001 evidence
+
+- `tools/consumer.py` にread-only `import_signals` projectionを追加。入力を`validate_signal`で検証し、既知のv1 envelope/domain fieldsだけをconsumer packageへ保存。
+- major version mismatch、invalid source commit、duplicate signal IDをremediation付きで拒否。
+- unknowns、constraints、domain、signal ID、source repository/commit、adapter provenanceをprojectionとprovenance listへ保持。
+- top-level minor extensionはprojectionへ持ち込まず無視する5テストを追加。
+- `.venv/bin/python -m unittest tests.test_consumer_contract -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 43 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（synthetic offline fixtureのみ）。
+- 機微情報: consumer packageはraw本文を保持せず、opaque locatorとprovenanceだけを扱う。
+
+## TRACE-001 evidence
+
+- `tools/trace.py` を追加。portfolio fixtureの各signalをv1 validatorで検証し、requirementからsignal ID、signal kind、source entity IDs、source repository@commit、source/evidence locatorsまでdeterministic traceを生成。
+- `tests/fixtures/portfolio/portfolio.json` にself/art-history/marketingの3 requirement edgeを定義。
+- `python3 tools/trace.py --check --fixture tests/fixtures/portfolio`: pass。trace hashは `a56abb46a6e3dd717d736705ba6a117e248eb0a8973e5fcdcb77e68a2320270c`。
+- `tests/test_trace.py`: 4 tests pass（edge、determinism、未リンクrequirement、invalid commit）。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 47 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（synthetic offline fixtureのみ）。
+- 機微情報: traceはsource locatorとsynthetic entity IDのみを保持し、raw本文・PRIVATE_RAW・RESTRICTED・credentialを追加していない。
+
+## WORKITEM-001 evidence
+
+- `schemas/work-item.schema.json` を追加。owner repo、target repos、allowed paths、dependencies、context、acceptance、checks、risk、attempts、lease、checkpoint、terminal criteria/state、evidenceを必須化。
+- `tools/validate.py` にwork item schema subsetとsemantic checksを追加。manifest repository ownership（親control-planeを含む）、safe path、DAG self dependency、shell-safe checks、retry budget、lease state、DONE evidenceを検証。
+- `tests/fixtures/work-items/valid.yaml` と10件のinvalid matrix、`tests/test_work_items.py` 4件を追加。
+- `.venv/bin/python -m unittest tests.test_work_items -v`: 4 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 51 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（parent control-plane schemaのみ）。
+- 機微情報: work itemはmetadata、opaque paths、commit referencesのみ。PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## SCHEDULER-001 evidence
+
+- `tools/scheduler.py` を追加。work itemをID順に評価し、terminal_state READY、依存DONE、selected/active work itemとのtarget repository + allowed path conflictなしだけを選択。
+- 非選択理由にstate、missing/incomplete dependency、selected/active path conflict、selection limit、invalid work item remediationを含める。
+- schedulerは入力work itemを変更せず、同一入力で同一JSON resultを返す。
+- `tests/test_scheduler.py`: 4 tests pass（依存選択/conflict、determinism/non-mutation、limit、invalid item）。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 55 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（parent schedulerのみ）。
+- 機微情報: schedulerはwork item metadataとpathだけを扱い、raw/credential/direct identifierを追加していない。
+
+## RUNTIME-001 evidence
+
+- `tools/runtime.py` を追加。lease取得/解放、期限切れ、checkpoint、retry budget、READY/BLOCKED/DONE遷移、resumeをdeep-copy state transitionとして実装。
+- interrupted checkpointのexecution IDとdecisionを再利用し、`record_evidence`はcommit/PR/test/pathを重複追加しない。
+- terminal DONEはpassed checkpoint、commit evidence、test evidenceが揃わない限り許可しない。
+- `tests/test_runtime_recovery.py`: 5 tests pass（lease/reacquire、kill-resume重複防止、retry BLOCKED、lease保護、入力不変性）。
+- `schemas/work-item.schema.json` にlease/checkpointのexecution_id、decision、runtime resultを追加。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 60 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（parent runtime state machineのみ）。
+- 機微情報: runtime stateはcommit SHA/PR URL/test metadataのみ。raw本文、PRIVATE_RAW、RESTRICTED、credentialは追加していない。
+
+## GATES-001 evidence
+
+- `tools/quality_gates.py` を追加。manifest記載commandを `shlex.split` + `subprocess.run(..., shell=False)` で実行し、変更repoだけを実行、未変更repoは `NOT_RUN` として明示。
+- shell制御構文、空command、未知repo、timeout、欠落repo pathを失敗としてblockingにし、stdout/stderrはcredential-like値をredactして出力、元のredacted全文をSHA-256化、truncationとremediationを記録。
+- `tests/test_quality_gates.py`: 4 tests pass（changed-only/NOT_RUN、failure blocking + redaction/hash、shell syntax拒否、unknown repo拒否）。
+- `.venv/bin/python tools/quality_gates.py`: 4 repositoriesが `NOT_RUN`、`blocking: false`、status `NOT_RUN`。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 64 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親quality gate runnerのみ）。
+- 機微情報: 新規変更内にPRIVATE_RAW、RESTRICTED、raw voice本文、canonical graph本文、credential、direct identifierなし。runnerのテストsecretはredaction検証用のsynthetic文字列のみ。
+
+## DISPATCH-001 evidence
+
+- `tools/dispatcher.py` を追加。validated work itemからtask metadata、rules、required files、contracts、acceptance、checks、allowed paths、recoveryだけを取り出すtask-minimal context packを生成。
+- required filesは相対path、context root内、UTF-8 textだけを許可し、未要求fileはpackへ含めない。dot segment、root escape、missing file、sensitive assignmentをremediation付きで拒否。
+- recoveryはterminal state、attempts、lease、checkpoint、decision、execution ID、evidenceを保持し、rules/files/contractsをsortして同じ入力から同じJSONを生成。
+- `tests/test_dispatcher.py`: 4 tests pass（最小pack/recovery、determinism/non-mutation、sensitive/unsafe拒否、loader missing/root guard）。
+- `.venv/bin/python tools/dispatcher.py --work-item tests/fixtures/work-items/valid.yaml --context-root .`: version 1、WORKITEM-001、4 required files、recovery READYを確認。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 68 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親dispatcherのみ）。
+- 機微情報: packはsynthetic metadata/instructionsのみ。PRIVATE_RAW、RESTRICTED、raw voice本文、canonical graph本文、credential、direct identifierは追加していない。
+
+## STATUS-001 evidence
+
+- `tools/status.py` を追加。snapshot、live child Git status、task queue、runtime state、manifest contractを同一modelへ投影し、commits、drift、child progress、compatibility、blockers、next workをJSON/Markdownへ出力。
+- liveとsnapshotのbranch/head/upstream/dirty/untracked/detached/ahead/behind、manifest hashを比較。dirty/detached/未push/behind等はdriftとblockerへ観測事実を保持し、契約version不一致もblocking。
+- `data/status.json` と `data/status.md` はatomicに生成し、`--check` は二重生成と既存ファイル一致を検証。offline fixtureでは4 child clean、contract COMPATIBLE、blocker 0、次task STATUS-001を確認。
+- `tests/test_status.py`: 4 tests pass（主要項目、drift/guard blocker、incompatible contract、determinism/non-mutation）。
+- `.venv/bin/python tools/status.py --offline-fixture`: JSON/Markdownをmaterialize、`drift: CLEAN`、`blocker_count: 0`。
+- `.venv/bin/python tools/status.py --check --offline-fixture`: pass、`changed: false`。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 72 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親status/reportのみ）。
+- 機微情報: statusはrepo ID、source commit、Git状態、契約metadataのみ。PRIVATE_RAW、RESTRICTED、raw本文、credential、direct identifierは追加していない。
+
+## PROJECT-001 evidence
+
+- `config/project.yaml` を追加し、Project #4、queue state→human-visible Status、milestone→Priority、default target repository、human gate policyを固定。
+- `tools/project_sync.py` を追加。stable task IDをitem keyとして、title/status/priority/target_repositories/human_gate/run_idをprojectionし、remoteとの差分をCREATE/UPDATE/UNCHANGEDで計画。remote orphanは削除せずMANUAL_REVIEW、duplicate itemは安全に拒否。
+- API unavailable時は `LOCAL_ONLY`、`local_execution: CONTINUE`、operations空でlocal queueを止めず、認証情報やraw dataを扱わない。
+- `tests/test_project_sync.py`: 5 tests pass（mapping、create/update/orphan、idempotence、API fallback、duplicate拒否）。
+- `.venv/bin/python tools/project_sync.py --api-unavailable`: Project #4の全task metadataをlocal-only計画としてmaterialize、operations空を確認。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 77 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親Project syncのみ、外部Projectへの書込みなし）。
+- 機微情報: project mapping/planはtask ID、状態、優先度、repo ID、run IDのみ。PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## AUDIT-001 evidence
+
+- `tools/audit.py` を追加。manifest/snapshot pin、export/import contract、signal source/freshness/consent/orphan、queue duplicate、boundary test coverageをread-onlyで監査。
+- findingは`code/severity/subject/observed/remediation`で保持し、監査結果は常に`blocking: false`。stale、schema drift、orphan、freshness、consent、duplicate、untested-boundaryを正常値へ変換しない。
+- `data/audit.json` と `data/audit.md` をatomic生成し、`--check` は二重生成と既存ファイル一致を検証。offline fixtureは`CLEAN`、finding 0。
+- `tests/test_audit.py`: 5 tests pass（clean dimensions、pin/schema、orphan/freshness/consent/duplicate、untested、determinism/Markdown）。
+- `.venv/bin/python tools/audit.py --offline-fixture`: `status: CLEAN`、`finding_count: 0`。
+- `.venv/bin/python tools/audit.py --check --offline-fixture`: pass、`changed: false`。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 82 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親auditのみ）。
+- 機微情報: auditはcommit、contract、opaque signal ID、状態、remediationのみ。raw本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## SECURITY-001 evidence
+
+- `tools/security.py` を追加。parent payloadとnormalized signalを再帰的にscanし、`PRIVATE_RAW`、`RESTRICTED`、credential、direct identifier、raw personal evidence、likely secretを検出。
+- signal exportではnormalized validatorとself-model `export_permitted`/`consent_scope`を確認し、unapproved exportをblocking。findingはlocation/remediationだけで、secret/raw値を出力しない。
+- `.venv/bin/python tools/security.py --offline-fixture`: parent generated JSONとvalid signal fixturesをscanし、`PASSED`、findings空、blocking falseを確認。
+- `tests/test_security_boundary.py`: 5 tests pass（clean export、forbidden data、secret sanitization、unapproved consent、determinism/non-mutation）。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 87 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（親security boundaryのみ）。
+- 機微情報: 注入テストのsynthetic raw/secretはテスト実行時のみで、生成物とGit変更へ値を保存していない。
+
+## FIXTURE-001 evidence
+
+- `tests/fixtures/build_fixture.py` を追加。既存checkoutを触らず、一時rootへ4 synthetic repoをnetwork disabledでcloneし、fixture実行結果だけを返す。
+- clean、stale、dirty、diverged、incompatible、privacyの6 scenarioを再現。dirty/divergedはGit guardのreason code、stale/incompatibleはsignal validator、privacyはsecurity boundaryで観測。
+- `.venv/bin/python tests/fixtures/build_fixture.py --check`: 4 repositories、network `disabled`、全scenario observed、audit non-blockingを2回比較しpass。
+- `tests/test_fixture_builder.py`: 1 test pass（4 repo、全scenario、determinism）。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 88 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（一時synthetic fixtureのみ）。
+- 機微情報: fixtureはsynthetic README/markerと一時Git metadataのみ。raw personal evidence、PRIVATE_RAW、RESTRICTED、credential、direct identifierは保存していない。
+
+## E2E-001 evidence
+
+- `tools/e2e.py` と `tests/test_e2e.py` を追加。network disabledの4-repository fixtureを起点に、consumer import、research package、prototype verification、逆引きtrace、security boundaryを一つのdeterministic evaluationへ接続。
+- clean scenarioは3 normalized signals、3 requirements、source repository@commit、trace hashを保持したtraceable outputへ到達し、状態`COMPLETE`、security `PASSED`を確認。
+- stale、dirty、diverged、major contract mismatch、child quality gate failure、secret、consent violation、lease expiry、worker process interruptionの9 injectionを観測し、各々にterminal stateとrecovery pathを記録。staleは`COMPLETE_WITH_GAPS`、契約/品質は`NEEDS_REPAIR`、Gitは`BLOCKED_EXTERNAL`、security/consentは`BLOCKED_HUMAN`、interruptionsはcheckpoint-preserving `READY`から再開する。
+- `.venv/bin/python tools/e2e.py --offline-fixture --check`: pass（2回実行結果一致）。
+- `.venv/bin/python -m unittest tests.test_e2e -v`: 4 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 92 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし（temporary synthetic child fixtureのみ）。親repo commit SHA: `e8f7fdf`（未commitの作業差分）。
+- 機微情報: e2e生成物はsignal ID、source commit、opaque locator相当のtrace metadataとremediationのみ。secret/consent注入値、PRIVATE_RAW、RESTRICTED、direct identifierは生成物へ保存していない。
+
+## DOCS-001 evidence
+
+- `docs/operator-runbook.md` を追加。新規agentの最初の1操作、正本と安全境界、networkless/実repo初期化、status/guard/snapshot/audit/security/E2E検査、task実行、quality gate、trace、handoff必須項目を実コマンド付きで記録。
+- `docs/incident-runbook.md` を追加。dirty/detached/diverged、contract mismatch、freshness、同意、art evidence、quality gate、secret、lease expiry、process kill、Project API障害を終端状態・禁止操作・復旧条件へ対応付け、BLOCKED停止条件と再検証手順を記録。
+- `README.md`からoperator/incident runbookをリンクし、現在地をM5完了・M6運用文書完了からRELEASE-001判定へ更新。
+- `tests/test_docs.py`: 3 tests pass（lifecycle、安全境界、障害復旧、README導線）。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 95 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。親repo commit SHA: `e8f7fdf`（未commitの作業差分）。
+- 機微情報: runbookは安全境界、opaque metadata、synthetic commandのみ。PRIVATE_RAW、RESTRICTED、credential、direct identifierの実値は追加していない。
+
+## RELEASE-001 evidence
+
+- `tools/release_check.py` を追加。v1.0.0の親validator、親test、offline fixture、status/audit、security、Git history scan、offline E2Eを実行するread-only qualification CLI。status/audit生成物は正規CLIでmaterializeしてからcheckし、判定の順序依存を除去。
+- `tests/test_release_check.py`: 3 tests pass（version/runs入力、sanitized history observation、E2E run evidence）。
+- `.venv/bin/python tools/release_check.py --version 1.0.0 --runs 3`: pass。親checks全件pass、E2E `runs: 3`・各回9 failure cases・deterministic、history `commit_count: 14`・`finding_count: 0`、`release_operation: NOT_PERFORMED`。
+- `.venv/bin/python tools/security.py --offline-fixture`: pass、release-check生成物を含む全parent payload findings 0。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -v`: 98 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。親repo commit SHA: `e8f7fdf`（未commitの作業差分）。
+- 機微情報: history scan finding 0、security boundary finding 0。synthetic failure注入値はテスト実行時のみで、実secret、PRIVATE_RAW、RESTRICTED、direct identifierは生成物へ保存していない。
+- 未解決: merge、tag、releaseは人間承認が必要なため未実行。推奨はqualification report確認後に人間が明示判断すること。
+
+## V11-DESIGN-001 evidence
+
+- 親repoの役割をv1.0 control planeから、会話型interaction、repository-aware knowledge、Google Drive external artifact、feedback-driven improvement、非同期audit/refactoringを統合するv1.1 control planeへ拡張した。
+- `docs/20260811-agentic-art-orchestration-system-design-specification.md` にinteraction event、append-only artifact、explicit/inferred feedback、Issue routing、自律issue-to-draft-PR、asynchronous auditとv1.1完了条件を追加した。
+- `execution/decisions.md` にD-006〜D-009を追加。利用agentをUIとすること、Drive create-only、推定を事実化しないこと、improvement/auditを非同期laneにすることを固定した。
+- `execution/task-queue.yaml` をversion 2へ更新し、M7〜M9の13 taskをdependency付きで追加した。最小IDの次taskは`ARTIFACT-001`。
+- `tests/test_docs.py` にv1.1境界の文書testを追加。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest tests.test_docs -v`: 4 tests pass。
+- `.venv/bin/python -m unittest discover -s tests`: 99 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。Google Drive書込み: なし。親repo commit SHA: `e8f7fdf`（既存の未commit作業差分を保持）。
+- 機微情報: 会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## ARTIFACT-001 evidence
+
+- `schemas/external-artifact.schema.json`を追加。`external-artifact/v1`、Google Drive opaque file ID、SHA-256 hash、creator、interaction、source repository@commit、evidence、access/consent、retention、lineage、feedback参照を必須化した。
+- 通常operationは`CREATE`だけを許し、`UPDATE`、`DELETE`、本文field、Drive URL、未知repo、重複snapshot、自己参照lineageをremediation付きで拒否する`validate_external_artifact`を追加した。
+- `tests/fixtures/artifacts/valid.json`と`tests/test_external_artifact_contract.py`を追加。
+- `.venv/bin/python -m unittest tests.test_external_artifact_contract -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests`: 104 tests pass。
+- `.venv/bin/python tools/security.py --offline-fixture`: pass、finding 0。
+- `git diff --check`: pass。
+- 変更子repo: なし。Google Drive書込み: なし。親repo commit SHA: `e8f7fdf`（既存の未commit作業差分を保持）。
+- 機微情報: artifact fixtureはsynthetic opaque ID/hashのみ。Drive本文、会話全文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## INTERACTION-001 evidence
+
+- `schemas/interaction-event.schema.json`を追加。intent category/goal、agent/version、source repository@commit、signal、experience outcome、Drive artifact、explicit feedback、privacy/consentを持つ`interaction-event/v1`を定義した。
+- raw conversation、transcript、prompt、message、body/content等を階層に関係なく拒否し、`raw_conversation_stored`と`direct_identifiers_stored`をfalseに固定する`validate_interaction_event`を追加した。
+- interaction outcomeは少なくとも1つのexternal artifact参照を要求し、未知repoと重複snapshotを拒否する。
+- `tests/fixtures/interactions/valid.json`と`tests/test_interaction_contract.py`を追加。
+- `.venv/bin/python -m unittest tests.test_interaction_contract -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests`: 109 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。Google Drive書込み: なし。親repo commit SHA: `e8f7fdf`（既存の未commit作業差分を保持）。
+- 機微情報: fixtureは分類値とopaque referenceのみ。会話全文、prompt、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## FEEDBACK-001 evidence
+
+- `schemas/feedback-signal.schema.json`を追加。explicit request/dissatisfaction/output correction/knowledge gapと、inferred friction/needを別kindとして定義した。
+- inferred feedbackは未確認hypothesis、evidence、high/medium/low confidenceを必須とし、explicit confidence、user fact昇格、profile updateを拒否する。explicit feedbackはhypothesisを持たずexplicit confidenceを要求する。
+- target ownerは親またはmanifest記載子repoだけを許し、raw feedback本文を拒否する`validate_feedback_signal`を追加した。
+- explicit/inferredのsynthetic fixture 2件と`tests/test_feedback_contract.py`を追加。
+- `.venv/bin/python -m unittest tests.test_feedback_contract -v`: 5 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests`: 114 tests pass。
+- `.venv/bin/python tools/status.py --check --offline-fixture`: pass、next task `KNOWLEDGE-PROFILE-001`。
+- `.venv/bin/python tools/audit.py --check --offline-fixture`: pass、finding 0。
+- `.venv/bin/python tools/security.py --offline-fixture`: pass、finding 0。
+- `git diff --check`: pass。
+- 変更子repo: なし。Google Drive書込み: なし。親repo commit SHA: `e8f7fdf`（既存の未commit作業差分を保持）。
+- 機微情報: fixtureはsummary code、opaque evidence/artifact referenceのみ。会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## REPOSITORY-ONBOARDING-001 evidence
+
+- 固定`exactly 4` validatorを、core 4 IDを必須保持する`4以上`へ変更した。追加repoは既存entryの置換ではなくappendする。
+- 追加repoにもunique ID/path/full_name/authority、role-contract、同一repoのIssue SSOT、40桁observed commit、instructions、quality gateを要求する。
+- 5件目のsynthetic input-kbをmanifestへ追加したvalidator testと、5repo offline initの二回目がno-opになるworkspace testを追加した。
+- `.venv/bin/python -m unittest tests.test_validate -v`: 8 tests pass。
+- `.venv/bin/python -m unittest tests.test_workspace -v`: 3 tests pass。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests`: 117 tests pass。
+- `git diff --check`: pass。
+- 変更子repo: なし。実repo追加・clone: なし。Google Drive書込み: なし。親repo commit SHA: `e8f7fdf`（既存の未commit作業差分を保持）。
+- 機微情報: 追加fixtureはsynthetic repo metadataのみ。会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+
+## KNOWLEDGE-PROFILE-001 evidence
+
+- `schemas/repository-manifest.schema.json`に`knowledge_profile`を追加し、answerable questions、canonical entities、retrieval entry points、evidence/freshness rules、feedback owner、write scope、forbidden dataを全entryの必須機械可読契約にした。既存のquality gate契約は維持した。
+- `config/repositories.yaml`のcore 4 repositoryすべてにprofileを追加した。retrieval locatorは必須、feedback ownerは親または宣言済みrepository、write pathとlocal locatorは安全な相対path、baseline forbidden classesは欠落不可とした。
+- `tools/validate.py`にprofile owner、evidence locator、safe path、forbidden dataのsemantic checksを追加。追加repositoryも同じprofile契約を満たす構造にした。
+- `tests/test_knowledge_profiles.py`: 4 tests pass。欠落field、未知owner、locator false、unsafe path、forbidden baseline欠落を拒否する。
+- `.venv/bin/python tools/validate.py --check`: pass。
+- `.venv/bin/python -m unittest discover -s tests -q`: 121 tests pass。
+- `.venv/bin/python tools/workspace.py snapshot`: manifest変更を反映してsnapshotを再生成。
+- `.venv/bin/python tools/status.py --check --offline-fixture`: pass、drift CLEAN、blocker 0。
+- `.venv/bin/python tools/workspace.py status --json`: core 4 repositoriesがすべて`main / clean / ahead=0 / behind=0`。
+- `.venv/bin/python tools/audit.py --check --offline-fixture`: pass、finding 0。
+- `.venv/bin/python tools/security.py --offline-fixture`: pass、finding 0。`git diff --check`: pass。
+- 変更子repo: なし。実repo追加・clone: なし。Google Drive書込み: なし。親repo commit SHA: `e8f7fdf`（既存の未commit作業差分）。
+- 機微情報: profileとfixtureは分類値、相対locator、opaque metadataのみ。会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+- 実行環境注記: 指定のsystem `python3 -m unittest`はPyYAML未導入でimport errorとなるため、依存関係を持つrepo `.venv/bin/python`で同一全テストを実行し121件pass。system Pythonへのインストールやrepo外変更は行っていない。
+
+## AUDITOR-002 evidence
+
+- Added schemas/async-audit.schema.json and tools/async_auditor.py. The contract fixes the independent ASYNC_AUDIT lane, non-blocking interaction behavior, qualified source snapshot, lease, repository quality-gate status, and traceable issue or draft-PR proposals.
+- The queue task records lane ASYNC_AUDIT, interaction_blocking false, and user_artifact_policy READ_ONLY. The state lease was claimed with execution ID AUDITOR-002:attempt-1 and released as available/unassigned after completion.
+- NOT_RUN gates produce triage Issue candidates, FAILED/BLOCKED gates produce blocked Issue candidates, and only PASSED gates produce a human-gated draft-PR plan. Duplicate deduplication keys are suppressed; no GitHub Issue/PR was created.
+- Top-level and proposal artifact_operations are fixed to empty arrays. Drive content, conversation text, raw/sensitive fields, dirty or diverged snapshots, another lane, and expired leases are rejected. User artifact inputs remain unchanged.
+- Added knowledge-profile and async-auditor boundary coverage to tools/audit.py. Generated data/async-audit.json is CLEAN with zero proposals, source snapshot and parent/child commits, the audit hash, the held execution record, and NOT_RUN gate metadata; its deterministic --check passed before lease release.
+- tests/test_async_auditor.py: 6 tests pass. The suite covers clean/deterministic output, duplicate suppression, gate branching, lease/lane/snapshot/privacy boundaries, and the schema.
+- .venv/bin/python -m unittest discover -s tests -q: 127 tests pass.
+- .venv/bin/python tools/validate.py --check: pass. .venv/bin/python tools/audit.py --check --offline-fixture: pass, finding 0.
+- .venv/bin/python tools/security.py --offline-fixture: pass, including async-audit payload, finding 0. .venv/bin/python tools/workspace.py status --json: all four core repositories clean on main with ahead/behind 0. git diff --check: pass.
+- Changed child repositories: none. No real repository change, branch, commit, Issue/PR, or Google Drive write. Parent commit remains e8f7fdf with the existing uncommitted worktree changes.
+- Sensitive data: async-audit output contains metadata, hashes, commits, and opaque scopes only. No PRIVATE_RAW, RESTRICTED, credential, direct identifier, Drive content, or conversation text was added.
+- Environment note: system python3 lacks PyYAML, so the full 127-test run used the dependency-complete repository .venv; system Python was not modified.
+
+## DRIVE-001 evidence
+
+- Added tools/drive_adapter.py with DriveArtifactAdapter and networkless FakeDrive. CREATE sends payload bytes only to the fake external store and returns a validated external-artifact/v1 envelope with an opaque provider file ID, SHA-256 content hash, source snapshots, access/consent, retention, and lineage metadata.
+- Same idempotency key plus identical content/metadata replays the prior metadata-only artifact without a second CREATE. Reusing a key with different content/metadata and reusing an artifact ID with another key are rejected before a new file is created.
+- UPDATE and DELETE are rejected by both adapter and fake service. Invalid provider, operation, existing file ID, content metadata, and contract inputs fail preflight before any external CREATE. Registry snapshots are append-only metadata copies and contain no payload content.
+- Added tests/fixtures/drive/create_metadata.json and tests/test_drive_adapter.py: 7 tests pass. Tests cover opaque/hash output, external content isolation, replay, conflict, append-only multiple artifacts, invalid preflight, forbidden operations, and input/output immutability.
+- Added Drive adapter boundary coverage to tools/audit.py and documented create-only operation, fake-only validation, idempotency, consent/access, and no Git/Drive body storage in docs/operator-runbook.md.
+- .venv/bin/python -m unittest discover -s tests -q: 134 tests pass. .venv/bin/python tools/validate.py --check: pass.
+- .venv/bin/python tools/status.py --check --offline-fixture: pass, drift CLEAN, blocker 0. .venv/bin/python tools/audit.py --check --offline-fixture: pass, finding 0. .venv/bin/python tools/security.py --offline-fixture: pass, finding 0. .venv/bin/python tools/workspace.py status --json: core 4 repositories clean on main with ahead/behind 0. git diff --check: pass.
+- Changed child repositories: none. Real Google Drive write, repository change, branch, commit, Issue/PR: none. Parent commit remains e8f7fdf with the existing uncommitted worktree changes.
+- Sensitive data: FakeDrive holds only synthetic test bytes outside the artifact envelope; Git-facing metadata contains opaque references, hashes, and provenance only. No PRIVATE_RAW, RESTRICTED, credential, direct identifier, Drive content, or conversation text was added.
+- Environment note: system python3 lacks PyYAML, so the full 134-test run used the dependency-complete repository .venv; system Python was not modified.
+
+## ISSUE-ROUTER-001 evidence
+
+- Added `schemas/issue-routing.schema.json` and `tools/issue_router.py`. The router uses summary-code authority, manifest knowledge profiles, target confirmation, confidence, and consent to route domain feedback to the owning child repository and UX/retrieval/adapter/artifact/orchestration feedback to the parent.
+- Explicit confirmed feedback produces a human-gated, metadata-only Issue candidate. Medium or unresolved inferred feedback remains `TRIAGE`; high-confidence inferred feedback may route while its hypothesis status stays `unconfirmed`. Authority conflicts retain all candidate repositories for triage, and consent denial becomes `BLOCKED` with no candidate.
+- Duplicate Issue keys are canonicalized deterministically by sorted feedback ID and later signals become `DUPLICATE_SUPPRESSED`; `issue_operations` is fixed to an empty list. No GitHub Issue/PR or repository write was performed.
+- Added `tests/test_issue_router.py`: 8 tests pass, including explicit/inferred routing, authority conflict, consent, duplicate suppression, determinism, raw-field rejection, and schema boundaries. Added issue-router coverage to `tools/audit.py` and documented the lane in `docs/operator-runbook.md`.
+- `.venv/bin/python tools/issue_router.py --check`: pass; generated `data/feedback-routing.json` contains two synthetic metadata-only routes and zero duplicate suppressions.
+- `.venv/bin/python tools/validate.py --check`: pass. `.venv/bin/python -m unittest discover -s tests -q`: 142 tests pass. `.venv/bin/python tools/audit.py --check --offline-fixture`: pass, finding 0. `.venv/bin/python tools/security.py --offline-fixture`: pass, findings 0. `git diff --check`: pass.
+- Changed child repositories: none. Child quality gates: not applicable. Parent commit remains `e8f7fdf` with the existing uncommitted worktree changes. No real Google Drive write, branch, commit, Issue, or PR was made.
+- Sensitive data: route payload and issue candidates contain summary codes, source references, confidence, hashes/metadata, and opaque repository references only. No raw conversation, Drive content, PRIVATE_RAW, RESTRICTED, credential, or direct identifier was added.
+- Environment note: system python3 lacks PyYAML, so the full 142-test run used the dependency-complete repository `.venv`; system Python was not modified.
+
+## RETRIEVAL-001 evidence
+
+- Added `schemas/retrieval-request.schema.json`, `schemas/retrieval-index.schema.json`, `schemas/retrieval-result.schema.json`, and `tools/retrieval.py`. The frontstage retrieval lane receives structured intent/capability codes, never persists raw conversational wording, and selects the exact minimum repository set that covers the requested capabilities.
+- Adapter index entries are checked against manifest repository IDs, immutable observed commits, child evidence-kind rules, freshness statuses, safe locators, and domain constraints. The result preserves repository role/authority, source commit, local or opaque evidence locator, freshness, unknowns, and revalidation constraints without copying child canonical content.
+- `current-only` filters stale evidence to `NO_MATCH`; `any` preserves stale/unknown state as `COMPLETE_WITH_GAPS` and returns explicit unknowns. Missing capabilities are reported as gaps, not inferred or normalized. Retrieval is non-blocking, user artifacts are read-only, and `retrieval_operations` is empty.
+- Added `tests/fixtures/retrieval` and `tests/test_retrieval.py`: 9 tests pass, covering minimum child selection, multi-domain minimum cover, stale/unknown preservation, freshness filtering, no-match gaps, commit/repository rejection, raw query rejection, determinism, immutability, and schema validators. Added retrieval boundary coverage to `tools/audit.py` and documented the operator lane.
+- `.venv/bin/python tools/retrieval.py --check`: pass; generated `data/retrieval-result.json` has one art-history evidence reference, its pinned source commit, and `COMPLETE_WITH_GAPS` due the source unknown.
+- `.venv/bin/python tools/validate.py --check`: pass. `.venv/bin/python -m unittest discover -s tests -q`: 151 tests pass. `.venv/bin/python tools/audit.py --check --offline-fixture`: pass, finding 0. `.venv/bin/python tools/security.py --offline-fixture`: pass, findings 0. `.venv/bin/python tools/workspace.py status --json`: all four core repositories clean on main with ahead/behind 0. `git diff --check`: pass.
+- Changed child repositories: none. Child quality gates: not applicable. Parent commit remains `e8f7fdf` with the existing uncommitted worktree changes. No real Google Drive write, branch, commit, Issue, or PR was made.
+- Sensitive data: retrieval request/result and index fixture contain structured codes, metadata, opaque/local locators, commits, freshness, unknowns, and constraints only. No raw query, conversation text, child canonical body, PRIVATE_RAW, RESTRICTED, credential, or direct identifier was added.
+- Environment note: system python3 lacks PyYAML, so the full 151-test run used the dependency-complete repository `.venv`; system Python was not modified.
+
+## IMPROVEMENT-001 evidence
+
+- Added `schemas/improvement-loop.schema.json` and `tools/improvement_loop.py`. The loop consumes routed metadata-only Issue candidates, selects only confirmed/human-gated canonical candidates, builds a validated work item, runs scheduler path/dependency selection, and creates a resumable runtime lease/checkpoint without remote writes.
+- Worker evidence is keyed by Issue and immutable base commit. `PASSED` implementation + `PASSED` tests + `PASSED` quality gate + in-scope changed paths yields a `DRAFT_PR_READY` metadata plan with deterministic branch suggestion, `human_gate=true`, `merge_permitted=false`, `release_permitted=false`, and `side_effect=NONE`.
+- Missing evidence yields `WAITING`; failed or blocked evidence yields `BLOCKED`; triage/inferred/consent-ineligible candidates never reach the worker. Duplicate Issue keys are suppressed before scheduler execution. `remote_operations` remains an empty array.
+- Added `tests/fixtures/improvement/execution.json` and `tests/test_improvement_loop.py`: 7 tests pass, covering draft readiness, waiting checkpoint, gate failure, duplicate suppression, source/write-scope rejection, determinism/immutability, raw-field and remote-operation rejection. Added improvement-loop boundary coverage to `tools/audit.py` and documented the lane in `docs/operator-runbook.md`.
+- `.venv/bin/python tools/improvement_loop.py --check`: pass; generated `data/improvement-loop.json` contains two outcomes, one human-gated draft plan, one triage outcome, and zero remote operations.
+- `.venv/bin/python tools/validate.py --check`: pass. `.venv/bin/python -m unittest discover -s tests -q`: 158 tests pass. `.venv/bin/python tools/audit.py --check --offline-fixture`: pass, finding 0. `.venv/bin/python tools/security.py --offline-fixture`: pass, findings 0. `.venv/bin/python tools/workspace.py status --json`: all four core repositories clean on main with ahead/behind 0. `git diff --check`: pass.
+- Changed child repositories: none. Child quality gates: not applicable; the worker evidence fixture is metadata-only and no child files were edited. Parent commit remains `e8f7fdf` with the existing uncommitted worktree changes. No real Google Drive write, branch, commit, Issue, or PR was made.
+- Sensitive data: improvement output contains Issue keys, source feedback IDs, source commits, safe paths, checkpoint IDs, gate/test statuses, and draft plan metadata only. No raw feedback, conversation text, Drive content, PRIVATE_RAW, RESTRICTED, credential, or direct identifier was added.
+- Environment note: system python3 lacks PyYAML, so the full 158-test run used the dependency-complete repository `.venv`; system Python was not modified.
+
+## INTERACTION-E2E-001 evidence
+
+- Added `schemas/interaction-e2e.schema.json`, `tools/interaction_e2e.py`, and `tests/fixtures/interaction-e2e/scenario.json`. The networkless scenario connects structured repository-aware retrieval, evidence-backed interaction outcome, create-only Fake Drive artifact, explicit/inferred feedback, authority routing, improvement planning, runtime recovery, and independent async audit.
+- Fake Drive stores the synthetic output bytes outside the Git-facing envelope. The scenario proves one CREATE plus same-payload REPLAY, one opaque provider file ID, immutable content hash, source repository@commit, evidence lineage, and no update/delete/remote Issue/PR operation.
+- `interaction-event/v1`, feedback signals, routing, and improvement outputs are validated in sequence. Inferred feedback remains unconfirmed; the scenario produces one triage outcome and one human-gated draft PR plan without merge/release permission.
+- Lease expiry and process interruption both recover to `IN_PROGRESS` with the same execution ID. The asynchronous audit uses a separate `ASYNC_AUDIT` lease, remains non-blocking, and does not mutate the external artifact.
+- Added `tests/test_interaction_e2e.py`: 5 tests pass, covering complete stage connection, artifact reference-only/recovery behavior, determinism, validator rejection of remote mutation/incomplete acceptance, and schema boundaries. Added interaction-E2E boundary coverage to `tools/audit.py` and documented the runbook section.
+- `.venv/bin/python tools/interaction_e2e.py --check`: pass; `network=disabled`, one draft PR plan, zero remote operations. `.venv/bin/python tools/validate.py --check`: pass. `.venv/bin/python -m unittest discover -s tests -q`: 163 tests pass. `.venv/bin/python tools/audit.py --check --offline-fixture`: pass, finding 0. `.venv/bin/python tools/security.py --offline-fixture`: pass, findings 0. `git diff --check`: pass.
+- Changed child repositories: none. Child quality gates: not applicable. Parent commit remains `e8f7fdf` with the existing uncommitted worktree changes. No real Google Drive write, branch, commit, Issue, or PR was made.
+- Sensitive data: E2E output contains stage statuses, opaque artifact/provider references, hashes, source commits, feedback IDs, and recovery evidence only. The synthetic artifact body is held transiently by Fake Drive and is not written to the result. No raw conversation, PRIVATE_RAW, RESTRICTED, credential, or direct identifier was added.
+- Environment note: system python3 lacks PyYAML, so the full 163-test run used the dependency-complete repository `.venv`; system Python was not modified.
+
+## DOCS-002 evidence
+
+- `docs/interaction-improvement-runbook.md`を追加し、会話履歴なしで新しいagentがv1.1の正本、lane topology、repository-aware retrieval、Google Drive create-only artifact、explicit/inferred feedbackとIssue routing、自律改善、非同期audit、E2E、lease expiry/process interruption recovery、最終検査とhandoffを実行できるようにした。
+- `README.md`のv1.1導線を追加し、`tools/validate.py`のrequired filesと`tests/test_docs.py`の自己完結運用検査を更新した。raw conversationをGitへ保存しないこと、`remote_operations=[]`、merge/releaseのhuman gate、同じexecution IDでの再開を明記した。
+- `.venv/bin/python -m unittest tests.test_docs -v`: 5 tests pass。`.venv/bin/python -m unittest discover -s tests -q`: 164 tests pass。`.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python tools/status.py --check --offline-fixture`: pass、drift CLEAN、blocker 0。`.venv/bin/python tools/audit.py --check --offline-fixture`: pass、finding 0。`.venv/bin/python tools/security.py --offline-fixture`: pass。`git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。Google Drive、GitHub Issue/PR、branch、commit、merge、releaseは実行していない。親repoは`e8f7fdf`を起点とする意図した未commit差分のまま。
+- 機微情報: runbook、テスト、生成物へ会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierを追加していない。
+- acceptance: 1/1達成。leaseを解放し、依存完了済み最小IDの`RELEASE-002`をREADYへ進めてclaimした。
+
+## RELEASE-002 evidence
+
+- `tools/release_check.py`をv1.0.0/v1.1.0のread-only qualificationへ拡張した。v1.1.0はstatus/auditの正規生成、retrieval、feedback routing、improvement、非同期audit、interaction E2Eの生成・check、親validator、親全体test、offline fixture、status/audit/security、v1.1 contract tests、Git history scanを一つの判定へ接続する。
+- `tests/test_release_check.py`にv1.1 version acceptanceとinteraction E2E boundary検査を追加した。`data/release-check.json`は`version=1.1.0`、`status=PASSED`、21 checks全件pass、旧offline E2E `runs=3`・failure cases `9,9,9`、interaction E2E `runs=3`・deterministic、history finding 0を記録する。
+- `.venv/bin/python tools/release_check.py --version 1.1.0 --runs 3`: pass。`network=disabled`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`。`.venv/bin/python -m unittest tests.test_release_check -v`: 4 tests pass。`.venv/bin/python -m unittest discover -s tests -q`: 165 tests pass。
+- `.venv/bin/python tools/workspace.py status --json`: 4 child repoすべて`main / clean / ahead=0 / behind=0`（self-model `f3c97f5c9b75ce6d09438d04c0b483cfcffe0786`、art-history `c306799d5070074c8515a36cedaeffd7c5db0453`、marketing `d77ed2506632846208d16cd90c3bbf9ac3abc34c`、agentic-art-research `e0a833b310072b30af48b3fde707fd3a54d802cb`）。`.venv/bin/python tools/status.py --check --offline-fixture`: pass、drift CLEAN、blocker 0。`.venv/bin/python tools/audit.py --check --offline-fixture`: pass、finding 0。`.venv/bin/python tools/security.py --offline-fixture`: pass。`.venv/bin/python tools/validate.py --check`: pass。`git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。実Google Drive、GitHub Issue/PR、branch、commit、merge、tag、releaseは実行していない。親repoは`e8f7fdf`を起点とする意図した未commit差分のまま。
+- 機微情報: qualification report、runbook、テスト、生成物へ会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierを追加していない。history scan finding 0、security finding 0。
+- acceptance: 1/1達成。RELEASE-002のleaseを解放し、全taskをDONEとして記録した。
+
+## V1.2 scope decision
+
+- リモート確認結果: 親[Issue #2](https://github.com/masa-san-jp/agentic-art-orchestration/issues/2)はOPEN、[agentic-art-research Issue #2](https://github.com/masa-san-jp/agentic-art-research/issues/2)もOPEN。self-modelとmarketingの#2はclosed PR、art-historyの#2はclosed Issueだった。
+- `execution/decisions.md`のD-011として、親Issue #2とagentic-art-research Issue #2をv1.2へ切り分けた。v1.1 qualificationは変更せず、リモートIssueへのclose、label、comment、編集も行っていない。
+- `execution/task-queue.yaml`に`V12-ISSUE2-001`を`M10 / BACKLOG`で追加した。次のREADY taskにはせず、v1.1の人間release判断後に、Issue SSOT・authority・依存・quality gate・migration境界を分解してから開始する。
 
 ## Next exact action
 
-1. AGENTS.mdと設計仕様のmanifest・validation節を読む。
-2. repositories.yamlを対象にDraft 2020-12のrepository-manifest schemaを作る。
-3. duplicate ID/path、不正role、短いSHA、空quality gate、未知contractを各1件失敗させるfixtureを作る。
-4. validate.pyをschema駆動へ置き換える。
-5. acceptanceとchecksを満たしたらqueue/state/計画Progressを更新する。
+1. 現在のREADY taskはなし。人間が`data/release-check.json`を確認してv1.1のmerge、tag、releaseを個別に判断する。v1.2を開始するときの最初の操作は、`V12-ISSUE2-001`をclaimする前に親Issue #2とagentic-art-research Issue #2の最新本文・Issue SSOT・依存を再確認すること。
 
 ## Observed child heads at bootstrap
 

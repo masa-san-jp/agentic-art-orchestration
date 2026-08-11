@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/normalized-research-signal.schema.json",
+  "title": "Normalized research signal v1",
+  "description": "A provenance-preserving boundary envelope. Child repository schemas remain authoritative.",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "signal_id",
+    "signal_kind",
+    "source",
+    "statement",
+    "evidence_refs",
+    "certainty",
+    "unknowns",
+    "constraints",
+    "validity",
+    "freshness",
+    "adapter",
+    "generated_at",
+    "domain"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "normalized-research-signal/v1"
+    },
+    "signal_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "signal_kind": {
+      "type": "string",
+      "enum": ["self", "art-history", "marketing"]
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "certainty": {
+      "$ref": "#/$defs/certainty"
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validity": {
+      "$ref": "#/$defs/validity"
+    },
+    "freshness": {
+      "$ref": "#/$defs/freshness"
+    },
+    "adapter": {
+      "$ref": "#/$defs/adapter"
+    },
+    "generated_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "domain": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "self_model": {
+          "$ref": "#/$defs/self_model"
+        },
+        "art_history": {
+          "$ref": "#/$defs/art_history"
+        },
+        "marketing": {
+          "$ref": "#/$defs/marketing"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "entity_ids", "locators"],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "entity_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "locators": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "kind"],
+      "properties": {
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["primary", "secondary", "derived", "anecdotal", "unknown"]
+        },
+        "entity_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "certainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["observed", "inferred", "uncertain", "unknown"]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checked_at"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["valid", "stale", "unknown"]
+        },
+        "checked_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "retrieved_at", "revalidate_at"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["current", "stale", "unknown"]
+        },
+        "retrieved_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "revalidate_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
+      }
+    },
+    "string_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "self_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "consent_scope",
+        "export_permitted",
+        "seeks",
+        "protects",
+        "avoids",
+        "tensions",
+        "recurring_patterns",
+        "raw_voice_locator",
+        "traits",
+        "states",
+        "contexts"
+      ],
+      "properties": {
+        "consent_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "export_permitted": {
+          "type": "boolean"
+        },
+        "seeks": {
+          "$ref": "#/$defs/string_list"
+        },
+        "protects": {
+          "$ref": "#/$defs/string_list"
+        },
+        "avoids": {
+          "$ref": "#/$defs/string_list"
+        },
+        "tensions": {
+          "$ref": "#/$defs/string_list"
+        },
+        "recurring_patterns": {
+          "$ref": "#/$defs/string_list"
+        },
+        "raw_voice_locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "traits": {
+          "$ref": "#/$defs/string_list"
+        },
+        "states": {
+          "$ref": "#/$defs/string_list"
+        },
+        "contexts": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_entity_id", "relation", "certainty", "evidence_refs"],
+      "properties": {
+        "target_entity_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "certainty": {
+          "$ref": "#/$defs/certainty"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "art_history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_kind", "time", "geo", "relations", "canonical_graph_locator"],
+      "properties": {
+        "entity_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "time": {
+          "type": "string",
+          "minLength": 1
+        },
+        "geo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+        "canonical_graph_locator": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "retrieved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "method"],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["direct", "secondary", "inferred", "unknown"]
+        }
+      }
+    },
+    "marketing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "freshness",
+        "revalidate_at",
+        "expires_at",
+        "retrieved",
+        "vendor_interest",
+        "counterevidence",
+        "prediction_status"
+      ],
+      "properties": {
+        "stage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "freshness": {
+          "type": "string",
+          "enum": ["current", "stale", "unknown"]
+        },
+        "revalidate_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "retrieved": {
+          "$ref": "#/$defs/retrieved"
+        },
+        "vendor_interest": {
+          "type": "string",
+          "enum": ["none", "declared", "unknown"]
+        },
+        "counterevidence": {
+          "$ref": "#/$defs/string_list"
+        },
+        "prediction_status": {
+          "type": "string",
+          "enum": ["none", "pending", "confirmed", "refuted", "unknown"]
+        }
+      }
+    }
+  }
+}

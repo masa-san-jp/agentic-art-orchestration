@@ -1,0 +1,6 @@
+version: 1
+lease:
+  status: held
+  owner: offline-auditor
+  execution_id: AUDITOR-002:attempt-1
+  expires_at: "2099-01-01T00:00:00Z"

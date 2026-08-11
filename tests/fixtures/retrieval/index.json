@@ -1,0 +1,49 @@
+{
+  "contract_version": "retrieval-index/v1",
+  "entries": [
+    {
+      "evidence_id": "evidence:self-model:claim-001",
+      "repository": "self-model",
+      "source_commit": "2ac31805ed8a6c3361822c7351becba465c8769a",
+      "locator": "entities/claim-001",
+      "evidence_kind": "observed",
+      "freshness_status": "current",
+      "unknowns": ["The claim does not establish applicability outside its consent scope."],
+      "domain_constraints": ["Use only within the declared self-model consent scope."],
+      "capability_codes": ["self-model", "claims", "consent"]
+    },
+    {
+      "evidence_id": "evidence:art-history:relation-001",
+      "repository": "art-history",
+      "source_commit": "83703055f11019f905ffdfa23cdd674d48522698",
+      "locator": "entities/relation-001",
+      "evidence_kind": "scholarly",
+      "freshness_status": "current",
+      "unknowns": ["The relation is not a complete reconstruction of the canonical graph."],
+      "domain_constraints": ["Interpret the relation with its cited scholarly evidence."],
+      "capability_codes": ["art-history", "relations", "evidence"]
+    },
+    {
+      "evidence_id": "evidence:marketing-trends:trend-001",
+      "repository": "marketing-trends",
+      "source_commit": "edcb49c4522364ae69f627bea996754dcc8cfe56",
+      "locator": "trends/trend-001",
+      "evidence_kind": "secondary",
+      "freshness_status": "stale",
+      "unknowns": ["The stale source does not establish current adoption."],
+      "domain_constraints": ["Revalidate freshness before treating this trend as current."],
+      "capability_codes": ["marketing-trends", "freshness", "trends"]
+    },
+    {
+      "evidence_id": "evidence:agentic-art-research:requirement-001",
+      "repository": "agentic-art-research",
+      "source_commit": "9bfa07d80c7962840031e0607f431c3bb997245f",
+      "locator": "requirements/requirement-001",
+      "evidence_kind": "derived",
+      "freshness_status": "current",
+      "unknowns": ["The requirement does not guarantee complete evidence for every downstream question."],
+      "domain_constraints": ["Preserve source provenance when consuming the normalized signal."],
+      "capability_codes": ["agentic-art-research", "requirements", "provenance"]
+    }
+  ]
+}

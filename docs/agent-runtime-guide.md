@@ -16,7 +16,7 @@ state、handoff、ExecPlanを更新し、次のREADYタスクへ進んでくだ�
 
 ## Context loading
 
-全4repoを無条件に全文読込しない。task context packは次だけを含める。
+manifest記載の全repoを無条件に全文読込しない。task context packは次だけを含める。
 
 1. 親のAGENTS、task、関連contract、state。
 2. owner repoのinstructionsとrequirement SSOT。

@@ -1,0 +1,41 @@
+{
+  "signal_id": "art-history:entity-001",
+  "commit": "83703055f11019f905ffdfa23cdd674d48522698",
+  "entity_id": "art-entity-001",
+  "source_locator": "entities/art-entity-001",
+  "evidence_locator": "art-history/evidence/source-001",
+  "evidence_kind": "primary",
+  "statement": "The canonical art-history entity has a documented relation.",
+  "certainty": {
+    "level": "observed",
+    "basis": "The relation is recorded with a source evidence locator."
+  },
+  "unknowns": ["The signal does not reproduce the complete canonical graph."],
+  "constraints": ["Use the canonical graph locator for additional context."],
+  "validity": {
+    "status": "valid",
+    "checked_at": "2026-08-11T15:00:00+09:00"
+  },
+  "freshness": {
+    "status": "current",
+    "retrieved_at": "2026-08-11T15:00:00+09:00",
+    "revalidate_at": "2026-12-11T15:00:00+09:00"
+  },
+  "generated_at": "2026-08-11T15:00:00+09:00",
+  "adapter_version": "1.0.0",
+  "entity_kind": "artwork",
+  "time": "20th-century",
+  "geo": "unspecified-region",
+  "relations": [
+    {
+      "target_entity_id": "artist-entity-001",
+      "relation": "created-by",
+      "certainty": {
+        "level": "inferred",
+        "basis": "The child graph records the relation with evidence."
+      },
+      "evidence_refs": ["art-history/evidence/source-001"]
+    }
+  ],
+  "canonical_graph_locator": "art-history/graph/art-entity-001"
+}

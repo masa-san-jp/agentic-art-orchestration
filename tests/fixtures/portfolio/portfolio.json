@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "signal_files": [
+    "../signal/valid_self.json",
+    "../signal/valid_art_history.json",
+    "../signal/valid_marketing.json"
+  ],
+  "requirements": [
+    {
+      "id": "research-requirement-self-001",
+      "statement": "Trace the approved derived research context.",
+      "signal_ids": ["self:derived-001"]
+    },
+    {
+      "id": "research-requirement-art-001",
+      "statement": "Trace the historical context and relation evidence.",
+      "signal_ids": ["art-history:entity-001"]
+    },
+    {
+      "id": "research-requirement-marketing-001",
+      "statement": "Trace the trend signal with explicit freshness constraints.",
+      "signal_ids": ["marketing:trend-001"]
+    }
+  ]
+}

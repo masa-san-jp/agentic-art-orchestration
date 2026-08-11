@@ -1,0 +1,15 @@
+{
+  "contract_version": "retrieval-request/v1",
+  "request_id": "request:portfolio-art",
+  "intent_code": "create",
+  "capability_codes": ["art-history", "relations"],
+  "selection_mode": "minimum-relevant",
+  "freshness_preference": "any",
+  "observed_at": "2026-08-11T21:00:00+09:00",
+  "privacy": {
+    "consent_scope": "user-requested-output",
+    "retention": "reference-only",
+    "raw_query_stored": false,
+    "direct_identifiers_stored": false
+  }
+}

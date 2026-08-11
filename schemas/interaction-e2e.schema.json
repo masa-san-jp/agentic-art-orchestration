@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/interaction-e2e.schema.json",
+  "title": "Interaction and continuous-improvement E2E v1",
+  "description": "A networkless proof of the frontstage and backstage lanes without storing user artifact content or raw conversation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "generated_at",
+    "network",
+    "interaction_blocking",
+    "user_artifact_policy",
+    "retrieval",
+    "artifact",
+    "interaction",
+    "feedback",
+    "routing",
+    "improvement",
+    "recovery",
+    "audit",
+    "security",
+    "acceptance",
+    "remote_operations"
+  ],
+  "properties": {
+    "contract_version": {"const": "interaction-e2e/v1"},
+    "run_id": {"$ref": "#/$defs/execution_id"},
+    "generated_at": {"$ref": "#/$defs/timestamp"},
+    "network": {"const": "disabled"},
+    "interaction_blocking": {"const": false},
+    "user_artifact_policy": {"const": "CREATE_ONLY"},
+    "retrieval": {"$ref": "#/$defs/retrieval"},
+    "artifact": {"$ref": "#/$defs/artifact"},
+    "interaction": {"$ref": "#/$defs/interaction"},
+    "feedback": {"$ref": "#/$defs/feedback"},
+    "routing": {"$ref": "#/$defs/routing"},
+    "improvement": {"$ref": "#/$defs/improvement"},
+    "recovery": {"$ref": "#/$defs/recovery"},
+    "audit": {"$ref": "#/$defs/audit"},
+    "security": {"$ref": "#/$defs/security"},
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "remote_operations": {"const": []}
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "source_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/repository_id"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "retrieval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "selected_repositories", "source_snapshots", "evidence_ids", "unknowns"],
+      "properties": {
+        "status": {"type": "string", "enum": ["COMPLETE", "COMPLETE_WITH_GAPS", "NO_MATCH"]},
+        "selected_repositories": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/repository_id"}},
+        "source_snapshots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_snapshot"}},
+        "evidence_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "provider_file_id", "operation", "content_hash", "source_snapshots", "evidence_refs"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/stable_id"},
+        "provider_file_id": {"type": "string", "minLength": 3, "pattern": "^[A-Za-z0-9_-]+$"},
+        "operation": {"const": "CREATE"},
+        "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_snapshots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_snapshot"}},
+        "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}}
+      }
+    },
+    "interaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["interaction_id", "event_id", "artifact_refs", "source_snapshots", "raw_conversation_stored", "direct_identifiers_stored"],
+      "properties": {
+        "interaction_id": {"$ref": "#/$defs/stable_id"},
+        "event_id": {"$ref": "#/$defs/stable_id"},
+        "artifact_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "source_snapshots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_snapshot"}},
+        "raw_conversation_stored": {"const": false},
+        "direct_identifiers_stored": {"const": false}
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feedback_ids", "inferred_feedback_ids", "promoted_to_user_fact"],
+      "properties": {
+        "feedback_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "inferred_feedback_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "promoted_to_user_fact": {"const": false}
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route_count", "statuses", "duplicate_suppression_count", "issue_operations"],
+      "properties": {
+        "route_count": {"type": "integer", "minimum": 1},
+        "statuses": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "enum": ["ROUTED", "TRIAGE", "BLOCKED", "DUPLICATE_SUPPRESSED"]}},
+        "duplicate_suppression_count": {"type": "integer", "minimum": 0},
+        "issue_operations": {"const": []}
+      }
+    },
+    "improvement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome_count", "statuses", "draft_pr_plan_count", "remote_operations"],
+      "properties": {
+        "outcome_count": {"type": "integer", "minimum": 1},
+        "statuses": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "enum": ["WAITING", "TRIAGE", "BLOCKED", "DRAFT_PR_READY", "DUPLICATE_SUPPRESSED"]}},
+        "draft_pr_plan_count": {"type": "integer", "minimum": 0},
+        "remote_operations": {"const": []}
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lease_expiry_recovered", "process_interruption_recovered", "execution_id_preserved"],
+      "properties": {
+        "lease_expiry_recovered": {"const": true},
+        "process_interruption_recovered": {"const": true},
+        "execution_id_preserved": {"const": true}
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lane", "interaction_blocking", "proposal_count", "artifact_operations"],
+      "properties": {
+        "lane": {"const": "ASYNC_AUDIT"},
+        "interaction_blocking": {"const": false},
+        "proposal_count": {"type": "integer", "minimum": 0},
+        "artifact_operations": {"const": []}
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "blocking"],
+      "properties": {
+        "status": {"const": "PASSED"},
+        "blocking": {"const": false}
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retrieval_versioned", "artifact_immutable", "feedback_captured", "issue_routed", "improvement_checkpointed", "audit_independent", "no_remote_mutation"],
+      "properties": {
+        "retrieval_versioned": {"const": true},
+        "artifact_immutable": {"const": true},
+        "feedback_captured": {"const": true},
+        "issue_routed": {"const": true},
+        "improvement_checkpointed": {"const": true},
+        "audit_independent": {"const": true},
+        "no_remote_mutation": {"const": true}
+      }
+    }
+  }
+}

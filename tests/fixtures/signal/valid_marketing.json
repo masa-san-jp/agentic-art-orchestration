@@ -1,0 +1,54 @@
+{
+  "contract_version": "normalized-research-signal/v1",
+  "signal_id": "marketing:trend-001",
+  "signal_kind": "marketing",
+  "source": {
+    "repository": "marketing-trends",
+    "commit": "edcb49c4522364ae69f627bea996754dcc8cfe56",
+    "entity_ids": ["trend-entity-001"],
+    "locators": ["trends/trend-entity-001"]
+  },
+  "statement": "A documented trend signal is available with explicit freshness metadata.",
+  "evidence_refs": [
+    {
+      "locator": "marketing-trends/evidence/report-001",
+      "kind": "secondary",
+      "entity_id": "trend-entity-001"
+    }
+  ],
+  "certainty": {
+    "level": "uncertain",
+    "basis": "The trend is documented but requires continued validation."
+  },
+  "unknowns": ["The signal does not establish future adoption."],
+  "constraints": ["Revalidate before relying on the trend for a new release."],
+  "validity": {
+    "status": "valid",
+    "checked_at": "2026-08-11T15:00:00+09:00"
+  },
+  "freshness": {
+    "status": "current",
+    "retrieved_at": "2026-08-11T15:00:00+09:00",
+    "revalidate_at": "2026-08-25T15:00:00+09:00"
+  },
+  "adapter": {
+    "name": "marketing-trends-export",
+    "version": "1.0.0"
+  },
+  "generated_at": "2026-08-11T15:00:00+09:00",
+  "domain": {
+    "marketing": {
+      "stage": "emerging",
+      "freshness": "current",
+      "revalidate_at": "2026-08-25T15:00:00+09:00",
+      "expires_at": "2026-09-01T15:00:00+09:00",
+      "retrieved": {
+        "at": "2026-08-11T15:00:00+09:00",
+        "method": "secondary"
+      },
+      "vendor_interest": "declared",
+      "counterevidence": ["The source reports limited longitudinal evidence."],
+      "prediction_status": "pending"
+    }
+  }
+}

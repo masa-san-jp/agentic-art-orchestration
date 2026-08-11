@@ -1,14 +1,31 @@
-version: 1
-updated_at: "2026-08-11T15:00:00+09:00"
+version: 2
+updated_at: "2026-08-11T22:17:22+09:00"
 active_task: null
-active_repository: null
-lease: null
-last_completed_task: BOOTSTRAP-001
+active_repository: agentic-art-orchestration
+lease:
+  status: available
+  owner: unassigned
+  acquired_at: "2026-08-11T22:12:16+09:00"
+  expires_at: "2026-08-11T22:57:16+09:00"
+  lane: RELEASE_QUALIFICATION
+  execution_id: RELEASE-002:attempt-1
+  scope:
+    repository: agentic-art-orchestration
+    paths: [tools/release_check.py, tests/test_release_check.py, data/release-check.json, README.md, docs/operator-runbook.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, execution]
+  released_at: "2026-08-11T22:17:22+09:00"
+checkpoint:
+  task: RELEASE-002
+  repository: agentic-art-orchestration
+  start_point: e8f7fdf
+  expected_changes: Qualify v1.1.0 retrieval, append-only artifacts, feedback routing, autonomous improvement, asynchronous audit, privacy boundaries, and deterministic E2E without merge or release operations.
+  completed_at: "2026-08-11T22:17:22+09:00"
+  result: completed
+last_completed_task: RELEASE-002
 resume_from:
-  task: MANIFEST-001
-  action: Add the repository manifest schema and failing fixtures, then make validation schema-driven.
-  command: python3 tools/validate.py --check
+  task: null
+  action: No READY task remains; human review is required before any merge, tag, or release decision.
+  command: .venv/bin/python tools/release_check.py --version 1.1.0 --runs 3
 blocked: []
 last_validation:
-  command: python3 tools/validate.py --check && python3 -m unittest discover -s tests -v
-  result: passed-local-and-remote-files-verified
+  command: .venv/bin/python tools/release_check.py --version 1.1.0 --runs 3; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; git diff --check
+  result: passed; RELEASE-002 v1.1.0 qualification report has 21 passing checks, deterministic offline E2E runs 3/3 for both legacy and interaction paths, history findings 0, remote operations empty, merge/tag/release not performed; full suite 165 tests passes; workspace 4 clean, status CLEAN, audit CLEAN, security PASSED, validator and diff clean; no child repositories changed; system python3 lacks PyYAML so equivalent checks used repository .venv; 2026-08-11T22:17:22+09:00

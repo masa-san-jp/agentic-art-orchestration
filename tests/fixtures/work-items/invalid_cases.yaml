@@ -1,0 +1,41 @@
+cases:
+  - name: unknown_owner
+    path: [owner_repository]
+    value: unknown-repository
+    expected: owner_repository
+  - name: owner_not_target
+    path: [target_repositories]
+    value: [agentic-art-research]
+    expected: owner_repository
+  - name: duplicate_allowed_path
+    path: [allowed_paths]
+    value: [schemas/work-item.schema.json, schemas/work-item.schema.json]
+    expected: allowed_paths
+  - name: unsafe_allowed_path
+    path: [allowed_paths]
+    value: [../outside]
+    expected: allowed_paths
+  - name: shell_control_check
+    path: [checks, 0, command]
+    value: 'python3 check.py; rm -rf output'
+    expected: shell control
+  - name: self_dependency
+    path: [depends_on]
+    value: [WORKITEM-001]
+    expected: self
+  - name: retry_budget_exceeded
+    path: [attempts, max]
+    value: 4
+    expected: max_attempts
+  - name: used_attempts_over_max
+    path: [attempts]
+    value: {used: 4, max: 3}
+    expected: used
+  - name: held_unassigned_lease
+    path: [lease, status]
+    value: held
+    expected: held lease
+  - name: done_without_evidence
+    path: [terminal_state]
+    value: DONE
+    expected: DONE work item

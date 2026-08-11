@@ -1,0 +1,45 @@
+cases:
+  - name: unsupported_contract_major
+    path: [contract_version]
+    value: normalized-research-signal/v9
+    expected: contract_version
+  - name: missing_source_commit
+    path: [source, commit]
+    remove: true
+    expected: source.commit
+  - name: unknown_source_repository
+    path: [source, repository]
+    value: unknown-repository
+    expected: source.repository
+  - name: duplicate_entity_id
+    path: [source, entity_ids]
+    value: [self-entity-001, self-entity-001]
+    expected: entity_ids
+  - name: empty_evidence_refs
+    path: [evidence_refs]
+    value: []
+    expected: evidence_refs
+  - name: invalid_generated_at
+    path: [generated_at]
+    value: not-a-timestamp
+    expected: generated_at
+  - name: missing_adapter_version
+    path: [adapter, version]
+    remove: true
+    expected: adapter.version
+  - name: self_export_not_permitted
+    path: [domain, self_model, export_permitted]
+    value: false
+    expected: export_permitted
+  - name: raw_voice_body
+    path: [domain, self_model, raw_voice_body]
+    value: synthetic raw voice must not cross the boundary
+    expected: raw_voice
+  - name: mismatched_domain
+    path: [signal_kind]
+    value: art-history
+    expected: domain
+  - name: stale_not_propagated
+    path: [freshness, status]
+    value: stale
+    expected: stale

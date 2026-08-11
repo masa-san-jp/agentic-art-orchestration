@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/retrieval-request.schema.json",
+  "title": "Repository-aware retrieval request v1",
+  "description": "A structured retrieval request. Raw conversational text is transient and is never stored in this contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "request_id",
+    "intent_code",
+    "capability_codes",
+    "selection_mode",
+    "freshness_preference",
+    "observed_at",
+    "privacy"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "retrieval-request/v1"
+    },
+    "request_id": {
+      "$ref": "#/$defs/stable_id"
+    },
+    "intent_code": {
+      "type": "string",
+      "enum": ["research", "create", "revise", "compare", "plan", "reflect", "continue", "other"]
+    },
+    "capability_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/stable_id"
+      }
+    },
+    "selection_mode": {
+      "const": "minimum-relevant"
+    },
+    "preferred_repositories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/repository_id"
+      }
+    },
+    "freshness_preference": {
+      "type": "string",
+      "enum": ["any", "current-or-unknown", "current-only"]
+    },
+    "observed_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    }
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consent_scope", "retention", "raw_query_stored", "direct_identifiers_stored"],
+      "properties": {
+        "consent_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retention": {
+          "const": "reference-only"
+        },
+        "raw_query_stored": {
+          "const": false
+        },
+        "direct_identifiers_stored": {
+          "const": false
+        }
+      }
+    }
+  }
+}

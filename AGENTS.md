@@ -2,7 +2,7 @@
 
 ## Mission
 
-4つの独立repoを、正本性・機密境界・個別の品質ゲートを壊さず、再現可能な単一ワークスペースとして自律運用できるv1.0へ完成させる。
+v1.0の再現可能な4repo core control planeを基盤に、安全に追加可能な独立repo群を人間が利用エージェントとの会話だけで利用し、その体験から得たfeedbackをIssue化・自律改善できるv1.1へ完成させる。
 
 ## Read order
 
@@ -39,11 +39,14 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 ## Ownership and authority
 
 - repositories.yamlは統合対象と取得方針の正本。
+- 既存4repoはcore setとして保持し、追加repoはmanifest validation、knowledge profile、snapshot、個別quality gateを通してappendする。既存entryとの置換で追加しない。
 - 子repoの要件・schema・データは常に子repoが正本。
 - normalized research signalは境界形式だけを規定し、子の内部schemaを上書きしない。
 - task-queue.yamlは親repo実装順の正本。
 - state.yamlは現在の再開点、handoff.mdは人間可読の引継ぎ。
 - data/とrepos/は生成物。手編集しない。
+- Google Drive上の成果物は外部artifactの正本。親はopaque ID、hash、provenance、access scopeだけを保持する。
+- 明示・推定feedbackの実行順はtask-queue.yaml、domain内容の採否は対象子repoのIssue/PRが正本。
 
 ## Safety invariants
 
@@ -55,6 +58,9 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 - marketingの鮮度切れ、self-modelの同意範囲外、art-historyの根拠不足を正常値へ変換しない。
 - 失敗した品質ゲートをskip・削除して通したことにしない。
 - branch作成・commit・draft PRまではtaskで明示された場合に限る。merge、release、削除は人間承認を要する。
+- 利用エージェントはユーザー体験を優先し、改善・監査処理を同期実行して応答を不必要に待たせない。
+- Drive artifactはcreate-onlyとし、修正は新artifact + derived_from/supersedesで表す。既存artifactを上書き・削除しない。
+- 会話全文をGitへ保存しない。暗黙の不満・欲求は根拠とconfidenceを持つ仮説として扱い、ユーザー事実へ昇格させない。
 
 ## Stop conditions
 
@@ -66,6 +72,8 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 - データ損失または不可逆なschema migrationの可能性がある。
 - 認証・権限がなく、read-onlyの代替でも受入条件を満たせない。
 - acceptanceが相互矛盾し、保守的既定値でも解消できない。
+- Driveへの外部送信に必要な同意・保存先・権限が確定していない。
+- 推定feedbackだけを根拠に同意範囲、公開範囲、ユーザー属性を変更する必要がある。
 
 ## Required checks
 
@@ -75,6 +83,7 @@ python3 -m unittest discover -s tests -v
 ~~~
 
 workspace実装後は workspace status、audit、変更子repoのmanifest記載commandも実行する。
+interaction実装後はnetworkless fake Drive、append-only artifact、feedback routing、interaction E2Eも実行する。
 
 ## Completion report
 
@@ -85,5 +94,7 @@ workspace実装後は workspace status、audit、変更子repoのmanifest記載c
 - 親検証と子品質ゲート
 - repoごとのcommit SHA
 - 機微情報確認
+- 外部artifactのcreate-only確認とopaque参照
+- explicit/inferred feedbackの区別
 - 未解決
 - 次taskと最初の1操作

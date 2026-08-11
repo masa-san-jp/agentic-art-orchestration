@@ -1,0 +1,31 @@
+{
+  "artifact_id": "artifact:drive-test:001",
+  "mime_type": "application/vnd.google-apps.document",
+  "category": "document",
+  "created_at": "2026-08-11T21:11:00+09:00",
+  "creator": {
+    "agent_id": "interaction-agent",
+    "version": "1.1.0"
+  },
+  "interaction_id": "interaction:drive-test:001",
+  "source_snapshots": [
+    {
+      "repository": "self-model",
+      "commit": "2ac31805ed8a6c3361822c7351becba465c8769a"
+    }
+  ],
+  "evidence_refs": ["signal:self:drive-test"],
+  "access": {
+    "scope": "private",
+    "consent_scope": "user-requested-output"
+  },
+  "retention": {
+    "policy": "keep",
+    "review_at": null
+  },
+  "lineage": {
+    "derived_from": [],
+    "supersedes": []
+  },
+  "feedback_refs": []
+}

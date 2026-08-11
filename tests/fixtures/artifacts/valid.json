@@ -1,0 +1,40 @@
+{
+  "contract_version": "external-artifact/v1",
+  "artifact_id": "artifact:interaction-001:001",
+  "operation": "CREATE",
+  "provider": "google-drive",
+  "provider_file_id": "1SyntheticDriveFile_001",
+  "mime_type": "application/vnd.google-apps.document",
+  "category": "document",
+  "created_at": "2026-08-11T20:30:00+09:00",
+  "creator": {
+    "agent_id": "interaction-agent",
+    "version": "1.1.0"
+  },
+  "interaction_id": "interaction:001",
+  "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "source_snapshots": [
+    {
+      "repository": "art-history",
+      "commit": "83703055f11019f905ffdfa23cdd674d48522698"
+    },
+    {
+      "repository": "marketing-trends",
+      "commit": "edcb49c4522364ae69f627bea996754dcc8cfe56"
+    }
+  ],
+  "evidence_refs": ["signal:art:001", "signal:marketing:001"],
+  "access": {
+    "scope": "private",
+    "consent_scope": "user-requested-output"
+  },
+  "retention": {
+    "policy": "keep",
+    "review_at": null
+  },
+  "lineage": {
+    "derived_from": [],
+    "supersedes": []
+  },
+  "feedback_refs": []
+}

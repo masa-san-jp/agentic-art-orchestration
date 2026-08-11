@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/improvement-loop.schema.json",
+  "title": "Autonomous improvement loop v1",
+  "description": "A resumable, metadata-only Issue-to-draft-PR plan. Remote writes, merge, and release remain human-gated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "lane",
+    "generated_at",
+    "interaction_blocking",
+    "user_artifact_policy",
+    "input_issue_keys",
+    "outcomes",
+    "duplicate_suppressions",
+    "draft_pr_plans",
+    "remote_operations"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "improvement-loop/v1"
+    },
+    "run_id": {
+      "$ref": "#/$defs/execution_id"
+    },
+    "lane": {
+      "const": "AUTONOMOUS_IMPROVEMENT"
+    },
+    "generated_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "interaction_blocking": {
+      "const": false
+    },
+    "user_artifact_policy": {
+      "const": "READ_ONLY"
+    },
+    "input_issue_keys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/stable_id"
+      }
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/outcome"
+      }
+    },
+    "duplicate_suppressions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/duplicate_suppression"
+      }
+    },
+    "draft_pr_plans": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/draft_pr_plan"
+      }
+    },
+    "remote_operations": {
+      "const": []
+    }
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "status", "idempotency_key", "evidence_refs"],
+      "properties": {
+        "step": {
+          "type": "string",
+          "enum": ["SELECT", "IMPLEMENT", "TEST", "QUALITY_GATE", "DRAFT_PR"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["NOT_STARTED", "RUNNING", "PASSED", "FAILED", "BLOCKED", "SKIPPED"]
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/execution_id"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stable_id"
+          }
+        }
+      }
+    },
+    "work_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "owner_repository",
+        "allowed_paths",
+        "source_commit",
+        "scheduler_status",
+        "runtime_execution_id",
+        "terminal_state"
+      ],
+      "properties": {
+        "work_item_id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9-]+-[0-9]{3}$"
+        },
+        "owner_repository": {
+          "$ref": "#/$defs/repository_id"
+        },
+        "allowed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+          }
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "scheduler_status": {
+          "type": "string",
+          "enum": ["SELECTED", "EXCLUDED"]
+        },
+        "runtime_execution_id": {
+          "$ref": "#/$defs/execution_id"
+        },
+        "terminal_state": {
+          "type": "string",
+          "enum": ["READY", "IN_PROGRESS", "BLOCKED"]
+        }
+      }
+    },
+    "draft_pr_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "issue_key",
+        "target_repository",
+        "base_commit",
+        "branch_name",
+        "changed_paths",
+        "title_code",
+        "quality_gate_status",
+        "human_gate",
+        "merge_permitted",
+        "release_permitted",
+        "side_effect"
+      ],
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "issue_key": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "target_repository": {
+          "$ref": "#/$defs/repository_id"
+        },
+        "base_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "branch_name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._/-]+$"
+        },
+        "changed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+          }
+        },
+        "title_code": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "quality_gate_status": {
+          "const": "PASSED"
+        },
+        "human_gate": {
+          "const": true
+        },
+        "merge_permitted": {
+          "const": false
+        },
+        "release_permitted": {
+          "const": false
+        },
+        "side_effect": {
+          "const": "NONE"
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issue_key",
+        "summary_code",
+        "target_repository",
+        "source_feedback_ids",
+        "delivery_status",
+        "implementation_status",
+        "test_status",
+        "quality_gate_status",
+        "base_commit",
+        "changed_paths",
+        "checkpoints",
+        "reason",
+        "work_item",
+        "draft_pr_plan"
+      ],
+      "properties": {
+        "issue_key": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "summary_code": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "target_repository": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "source_feedback_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stable_id"
+          }
+        },
+        "delivery_status": {
+          "type": "string",
+          "enum": ["WAITING", "TRIAGE", "BLOCKED", "DRAFT_PR_READY", "DUPLICATE_SUPPRESSED"]
+        },
+        "implementation_status": {
+          "type": "string",
+          "enum": ["NOT_STARTED", "PASSED", "FAILED", "BLOCKED"]
+        },
+        "test_status": {
+          "type": "string",
+          "enum": ["NOT_RUN", "PASSED", "FAILED"]
+        },
+        "quality_gate_status": {
+          "type": "string",
+          "enum": ["NOT_RUN", "PASSED", "FAILED", "BLOCKED"]
+        },
+        "base_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "changed_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+          }
+        },
+        "checkpoints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/checkpoint"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "work_item": {
+          "oneOf": [
+            {"$ref": "#/$defs/work_item"},
+            {"type": "null"}
+          ]
+        },
+        "draft_pr_plan": {
+          "oneOf": [
+            {"$ref": "#/$defs/draft_pr_plan"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "duplicate_suppression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issue_key", "canonical_issue_key", "suppressed_feedback_ids"],
+      "properties": {
+        "issue_key": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "canonical_issue_key": {
+          "$ref": "#/$defs/stable_id"
+        },
+        "suppressed_feedback_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stable_id"
+          }
+        }
+      }
+    }
+  }
+}

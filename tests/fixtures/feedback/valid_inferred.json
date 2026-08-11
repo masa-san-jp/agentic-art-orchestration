@@ -1,0 +1,29 @@
+{
+  "contract_version": "feedback-signal/v1",
+  "feedback_id": "feedback:interaction-001:001",
+  "kind": "inferred_friction",
+  "observed_at": "2026-08-11T20:40:00+09:00",
+  "source": {
+    "interaction_id": "interaction:001",
+    "event_id": "interaction:001:outcome:001",
+    "artifact_refs": ["artifact:interaction-001:001"]
+  },
+  "summary_code": "friction:repeated-context-request",
+  "evidence_refs": ["interaction:001:outcome:001"],
+  "confidence": {"level": "medium", "score": 0.6},
+  "hypothesis": {
+    "claim_code": "need:reuse-prior-context",
+    "confirmation_status": "unconfirmed",
+    "counterevidence_refs": []
+  },
+  "target": {
+    "owner_repository": "agentic-art-orchestration",
+    "routing_status": "candidate"
+  },
+  "consent": {
+    "scope": "interaction-improvement",
+    "issue_creation_permitted": true,
+    "profile_update_permitted": false
+  },
+  "promoted_to_user_fact": false
+}

@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/async-audit.schema.json",
+  "title": "Asynchronous audit and refactoring lane v1",
+  "description": "A deterministic, non-blocking audit result that can produce an issue candidate or a gated draft-PR plan without mutating user artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "lane",
+    "generated_at",
+    "interaction_blocking",
+    "user_artifact_policy",
+    "source_snapshot",
+    "audit_observation",
+    "lease",
+    "quality_gates",
+    "proposals",
+    "artifact_operations"
+  ],
+  "properties": {
+    "contract_version": {"const": "async-audit/v1"},
+    "run_id": {"$ref": "#/$defs/stable_id"},
+    "lane": {"const": "ASYNC_AUDIT"},
+    "generated_at": {"$ref": "#/$defs/timestamp"},
+    "interaction_blocking": {"const": false},
+    "user_artifact_policy": {"const": "READ_ONLY"},
+    "source_snapshot": {"$ref": "#/$defs/source_snapshot"},
+    "audit_observation": {"$ref": "#/$defs/audit_observation"},
+    "lease": {"$ref": "#/$defs/lease"},
+    "quality_gates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/quality_gate"}
+    },
+    "proposals": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/proposal"}
+    },
+    "artifact_operations": {"const": []}
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "safe_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+    },
+    "source_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "source_commit"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/stable_id"},
+        "source_commit": {"$ref": "#/$defs/sha40"}
+      }
+    },
+    "source_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_hash", "captured_at", "parent_commit", "repositories"],
+      "properties": {
+        "snapshot_hash": {"$ref": "#/$defs/sha64"},
+        "captured_at": {"$ref": "#/$defs/timestamp"},
+        "parent_commit": {"$ref": "#/$defs/sha40"},
+        "repositories": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/source_repository"}
+        }
+      }
+    },
+    "audit_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audit_hash", "status", "blocking", "finding_count", "finding_ids"],
+      "properties": {
+        "audit_hash": {"$ref": "#/$defs/sha64"},
+        "status": {"type": "string", "enum": ["CLEAN", "FINDINGS"]},
+        "blocking": {"const": false},
+        "finding_count": {"type": "integer", "minimum": 0},
+        "finding_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        }
+      }
+    },
+    "lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lane", "status", "owner", "execution_id", "expires_at"],
+      "properties": {
+        "lane": {"const": "ASYNC_AUDIT"},
+        "status": {"type": "string", "enum": ["held", "available"]},
+        "owner": {"type": "string", "minLength": 1},
+        "execution_id": {"$ref": "#/$defs/stable_id"},
+        "expires_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "quality_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "status", "required", "observed_commit"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/stable_id"},
+        "status": {"type": "string", "enum": ["NOT_RUN", "PASSED", "FAILED", "BLOCKED"]},
+        "required": {"type": "boolean"},
+        "observed_commit": {"$ref": "#/$defs/sha40"},
+        "command": {"type": "string", "minLength": 1}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "subject", "audit_hash"],
+      "properties": {
+        "code": {"$ref": "#/$defs/stable_id"},
+        "subject": {"$ref": "#/$defs/stable_id"},
+        "audit_hash": {"$ref": "#/$defs/sha64"}
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "side_effect"],
+      "properties": {
+        "type": {"type": "string", "enum": ["ISSUE_CANDIDATE", "DRAFT_PR_PLAN"]},
+        "side_effect": {"const": "NONE"}
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_id",
+        "kind",
+        "status",
+        "repository",
+        "source_commit",
+        "quality_gate_status",
+        "finding",
+        "deduplication_key",
+        "privacy_safe_summary",
+        "acceptance",
+        "allowed_paths",
+        "human_gate",
+        "delivery",
+        "artifact_operations"
+      ],
+      "properties": {
+        "proposal_id": {"$ref": "#/$defs/stable_id"},
+        "kind": {"type": "string", "enum": ["ISSUE", "DRAFT_PR"]},
+        "status": {"type": "string", "enum": ["TRIAGE", "READY", "BLOCKED"]},
+        "repository": {"$ref": "#/$defs/stable_id"},
+        "source_commit": {"$ref": "#/$defs/sha40"},
+        "quality_gate_status": {"type": "string", "enum": ["NOT_RUN", "PASSED", "FAILED", "BLOCKED"]},
+        "finding": {"$ref": "#/$defs/finding"},
+        "deduplication_key": {"$ref": "#/$defs/stable_id"},
+        "privacy_safe_summary": {"type": "string", "minLength": 1},
+        "acceptance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "allowed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/safe_path"}
+        },
+        "human_gate": {"const": true},
+        "delivery": {"$ref": "#/$defs/delivery"},
+        "artifact_operations": {"const": []}
+      }
+    }
+  }
+}

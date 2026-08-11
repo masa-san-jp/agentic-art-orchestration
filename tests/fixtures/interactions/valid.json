@@ -1,0 +1,40 @@
+{
+  "contract_version": "interaction-event/v1",
+  "interaction_id": "interaction:001",
+  "event_id": "interaction:001:outcome:001",
+  "event_type": "experience-outcome",
+  "occurred_at": "2026-08-11T20:35:00+09:00",
+  "session_ref": "session:001",
+  "agent": {
+    "agent_id": "interaction-agent",
+    "version": "1.1.0"
+  },
+  "intent": {
+    "category": "create",
+    "goal_ref": "goal:portfolio-concept",
+    "requested_capabilities": ["knowledge-retrieval", "artifact-creation"]
+  },
+  "source_snapshots": [
+    {
+      "repository": "self-model",
+      "commit": "2ac31805ed8a6c3361822c7351becba465c8769a"
+    },
+    {
+      "repository": "art-history",
+      "commit": "83703055f11019f905ffdfa23cdd674d48522698"
+    }
+  ],
+  "signal_refs": ["signal:self:001", "signal:art:001"],
+  "outcome": {
+    "status": "completed-with-gaps",
+    "artifact_refs": ["artifact:interaction-001:001"],
+    "unresolved_codes": ["marketing-freshness-review"]
+  },
+  "explicit_feedback_refs": [],
+  "privacy": {
+    "consent_scope": "user-requested-output",
+    "retention": "external-artifact",
+    "raw_conversation_stored": false,
+    "direct_identifiers_stored": false
+  }
+}
