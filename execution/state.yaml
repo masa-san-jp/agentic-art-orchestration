@@ -1,29 +1,30 @@
 version: 2
-updated_at: "2026-08-12T08:16:59+09:00"
+updated_at: "2026-08-12T08:24:19+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-12T08:13:28+09:00"
-  expires_at: "2026-08-12T08:58:28+09:00"
-  lane: V12_GATES
-  execution_id: V12-GATES-001:attempt-1
+  acquired_at: "2026-08-12T08:21:22+09:00"
+  expires_at: "2026-08-12T09:06:22+09:00"
+  lane: V12_SELECTION
+  execution_id: V12-SELECTION-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/research-candidate-gates.schema.json, tools/candidate_gates.py, tools/validate.py, tests/fixtures/v12-candidates, tests/test_candidate_gates.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+    paths: [schemas/research-selection.schema.json, tools/candidate_selection.py, tools/validate.py, tests/fixtures/v12-candidates, tests/test_candidate_selection.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+  released_at: "2026-08-12T08:24:19+09:00"
   released_at: "2026-08-12T08:16:59+09:00"
 checkpoint:
-  task: V12-GATES-001
-  repository: agentic-art-orchestration
-  start_point: 430863630e6ad4759de8ff2f09955b10928dab7d
-  expected_changes: Add deterministic personal, historical, contemporary, provenance, genericness, and counterfactual gates for candidate references with explicit PASS or REJECT evidence.
-  completed_at: "2026-08-12T08:16:59+09:00"
-  result: completed
-last_completed_task: V12-GATES-001
-resume_from:
   task: V12-SELECTION-001
-  action: Claim the READY selection task and implement stable seeded candidate selection without changing facts or provenance.
+  repository: agentic-art-orchestration
+  start_point: fe443b5057739611470c55438763b8cdcc267599
+  expected_changes: Derive a stable seed from project and snapshot inputs and select a deterministic candidate package without changing facts or provenance.
+  completed_at: "2026-08-12T08:24:19+09:00"
+  result: completed
+last_completed_task: V12-SELECTION-001
+resume_from:
+  task: V12-CHILD-GATES-001
+  action: Claim the lowest-ID dependency-complete child-gates task and run manifest-declared gates against immutable observed child commits.
   command: .venv/bin/python tools/validate.py --check
 release:
   status: released
@@ -35,5 +36,5 @@ release:
   released_at: "2026-08-12T07:13:18+09:00"
 blocked: []
 last_validation:
-  command: .venv/bin/python tools/candidate_space.py --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/candidate_gates.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
-  result: passed; V12-GATES-001 added and validated research-candidate-gates/v1 with six explicit PASS/REJECT gates for personal, historical, contemporary, provenance, genericness, and counterfactual specificity; clean candidate passed all gates, generic and source-commit-mismatch fixtures were rejected with evidence; candidate-gates check passed, parent validator passed, full suite 187 tests passed, status drift CLEAN, audit CLEAN with 0 findings, security PASSED, diff clean; no child repositories, Issues, schemas, canonical data, or external artifacts were changed; 2026-08-12T08:16:59+09:00
+  command: .venv/bin/python tools/candidate_space.py --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/candidate_gates.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/candidate_selection.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates --project-id agentic-art-orchestration --seed-input default --limit 1 --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
+  result: passed; V12-SELECTION-001 added and validated research-selection/v1 with a SHA-256 seed derived from project, snapshot, rule set, and seed input; same inputs produced byte-identical selection, different seed changed only seed/score metadata, selected candidates retained facts and source provenance, and rejected candidates were excluded; selection check passed, parent validator passed, full suite 193 tests passed, status drift CLEAN, audit CLEAN with 0 findings, security PASSED, diff clean; no child repositories, Issues, schemas, canonical data, or external artifacts were changed; 2026-08-12T08:24:19+09:00

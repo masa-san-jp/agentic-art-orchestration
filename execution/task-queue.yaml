@@ -369,7 +369,7 @@ tasks:
   - id: V12-SELECTION-001
     milestone: M10
     title: Implement seeded candidate selection
-    status: READY
+    status: DONE
     depends_on: [V12-GATES-001]
     acceptance: Selection derives a stable seed from project and snapshot inputs, returns the same selected package for the same snapshot, rules, and seed, and limits different-seed variation to candidate ordering or selection while preserving facts and provenance.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
@@ -385,7 +385,7 @@ tasks:
   - id: V12-CHILD-GATES-001
     milestone: M10
     title: Bind v1.2 execution to independent child quality gates
-    status: BACKLOG
+    status: READY
     depends_on: [V12-BOUNDARY-001]
     acceptance: The parent runs each manifest-declared child quality gate against the observed immutable commit, records repository-specific results, and preserves stale, unknown, or failed states without editing child repositories or copying canonical data.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]

@@ -30,6 +30,7 @@ TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.jso
 TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
+SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -64,6 +65,8 @@ REQUIRED_FILES = [
     "tools/candidate_space.py",
     "schemas/research-candidate-gates.schema.json",
     "tools/candidate_gates.py",
+    "schemas/research-selection.schema.json",
+    "tools/candidate_selection.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -856,6 +859,84 @@ def validate_candidate_gates(data: dict, source: str = "candidate-gates") -> lis
                     "derive overall PASS only when every explicit gate passes",
                 )
             )
+    return errors
+
+
+def validate_selection(data: dict, source: str = "selection") -> list[str]:
+    """Validate seeded selection ranks and ensure selected references retain provenance."""
+    errors: list[str] = []
+    schema = load_json(SELECTION_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the research-selection field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    selected = data.get("selected_candidates")
+    if not isinstance(selected, list):
+        return errors
+    if data.get("selected_count") != len(selected):
+        errors.append(
+            _signal_error(
+                source,
+                "selected_count does not equal selected_candidates length",
+                "derive selected_count from the emitted selection package",
+            )
+        )
+    selection_limit = data.get("selection_limit")
+    if isinstance(selection_limit, int) and isinstance(data.get("selected_count"), int) and data["selected_count"] > selection_limit:
+        errors.append(
+            _signal_error(
+                source,
+                "selected_count exceeds selection_limit",
+                "return no more candidates than the requested selection limit",
+            )
+        )
+    candidate_ids: set[str] = set()
+    ranks: list[int] = []
+    scores: set[str] = set()
+    for index, candidate in enumerate(selected):
+        if not isinstance(candidate, dict):
+            continue
+        candidate_id = candidate.get("candidate_id")
+        if candidate_id in candidate_ids:
+            errors.append(_signal_error(source, f"selected_candidates[{index}] duplicates candidate_id {candidate_id!r}", "select each candidate at most once"))
+        if isinstance(candidate_id, str):
+            candidate_ids.add(candidate_id)
+        rank = candidate.get("rank")
+        if isinstance(rank, int) and not isinstance(rank, bool):
+            ranks.append(rank)
+        score = candidate.get("selection_score")
+        if isinstance(score, str):
+            if score in scores:
+                errors.append(_signal_error(source, f"selected_candidates[{index}] duplicates selection_score", "use the deterministic candidate score for each ranked candidate"))
+            scores.add(score)
+        inputs = candidate.get("inputs")
+        input_refs: dict[tuple[str, str, str], dict] = {}
+        if isinstance(inputs, dict):
+            for kind, refs in inputs.items():
+                if not isinstance(refs, list):
+                    continue
+                for ref in refs:
+                    if not isinstance(ref, dict):
+                        continue
+                    input_refs[(kind, ref.get("signal_id"), ref.get("attribute"))] = ref
+        composition = candidate.get("composition")
+        if isinstance(composition, dict):
+            for slot_name, slot in composition.items():
+                if not isinstance(slot, dict):
+                    continue
+                key = (slot.get("signal_kind"), slot.get("signal_id"), slot.get("attribute"))
+                if key not in input_refs:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"selected_candidates[{index}].composition.{slot_name} is not traceable to inputs",
+                            "preserve candidate composition references through selection",
+                        )
+                    )
+    if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
+        errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
     return errors
 
 
