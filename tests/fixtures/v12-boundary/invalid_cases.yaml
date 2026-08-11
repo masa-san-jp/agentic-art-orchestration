@@ -1,0 +1,17 @@
+cases:
+  - name: wrong-input-contract
+    path: [input_contract, contract_version]
+    value: normalized-research-signal/v2
+    expected: input_contract.contract_version
+  - name: free-form-ideation-enabled
+    path: [worker_policy, free_form_artistic_ideation]
+    value: true
+    expected: worker_policy.free_form_artistic_ideation
+  - name: raw-input-export-enabled
+    path: [output_policy, raw_input_export]
+    value: true
+    expected: output_policy.raw_input_export
+  - name: parent-owns-child-data
+    path: [child_authority, parent_may_change]
+    value: true
+    expected: child_authority.parent_may_change

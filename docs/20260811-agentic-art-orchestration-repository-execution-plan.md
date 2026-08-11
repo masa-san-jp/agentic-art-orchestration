@@ -31,7 +31,7 @@ python3 -m unittest discover -s tests -v
 - [x] M7: v1.1 interaction、artifact、feedback、knowledge profile契約を完成
 - [x] M8: retrieval、Drive adapter、Issue routing、自律改善、非同期auditorを完成
 - [x] M9: interaction E2E、runbook、v1.1 qualificationを完成（RELEASE-002。merge/releaseはhuman gate）
-- [ ] M10: v1.2 Issue #2の半決定論的制作研究実行を設計・分解（V12-ISSUE2-001）
+- [ ] M10: v1.2 Issue #2の半決定論的制作研究実行を設計・分解・実装（V12-ISSUE2-001、V12-BOUNDARY-001、V12-TRANSFORM-001完了。次はV12-CANDIDATE-001）
 
 ## Surprises & Discoveries
 

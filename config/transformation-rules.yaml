@@ -1,0 +1,26 @@
+version: 1
+contract_version: transformation-rule/v1
+rules:
+  - rule_id: R17
+    name: tension-operation-condition
+    status: active
+    required_signal_kinds: [self, art-history, marketing]
+    attribute_bindings:
+      self: [tensions, recurring_patterns]
+      art-history: [relations, canonical_graph_locator]
+      marketing: [stage, freshness, counterevidence]
+    composition:
+      output_type: research_proposition
+      slots:
+        personal_tension:
+          signal_kind: self
+          attribute: tensions
+        historical_operation:
+          signal_kind: art-history
+          attribute: relations
+        contemporary_condition:
+          signal_kind: marketing
+          attribute: stage
+      template: "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"
+    constraints: [require_all_inputs, require_source_provenance, no_unproven_concepts]
+    rejection_reasons: [missing-required-signal, unknown-attribute, missing-provenance, constraint-failure]

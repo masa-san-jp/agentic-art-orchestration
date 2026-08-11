@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/transformation-rule.schema.json",
+  "title": "Explicit transformation rule registry v1",
+  "description": "A finite rule that maps declared normalized signal attributes to a structured proposition without free-form ideation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "contract_version", "rules"],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contract_version": {
+      "const": "transformation-rule/v1"
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "name",
+        "status",
+        "required_signal_kinds",
+        "attribute_bindings",
+        "composition",
+        "constraints",
+        "rejection_reasons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^R[0-9]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "disabled"]
+        },
+        "required_signal_kinds": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["self", "art-history", "marketing"]
+          }
+        },
+        "attribute_bindings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["self", "art-history", "marketing"],
+          "properties": {
+            "self": {"$ref": "#/$defs/attribute_list"},
+            "art-history": {"$ref": "#/$defs/attribute_list"},
+            "marketing": {"$ref": "#/$defs/attribute_list"}
+          }
+        },
+        "composition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["output_type", "slots", "template"],
+          "properties": {
+            "output_type": {
+              "const": "research_proposition"
+            },
+            "slots": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["personal_tension", "historical_operation", "contemporary_condition"],
+              "properties": {
+                "personal_tension": {"$ref": "#/$defs/slot"},
+                "historical_operation": {"$ref": "#/$defs/slot"},
+                "contemporary_condition": {"$ref": "#/$defs/slot"}
+              }
+            },
+            "template": {
+              "const": "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["require_all_inputs", "require_source_provenance", "no_unproven_concepts"]
+          }
+        },
+        "rejection_reasons": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["missing-required-signal", "unknown-attribute", "missing-provenance", "constraint-failure"]
+          }
+        }
+      }
+    },
+    "attribute_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_kind", "attribute"],
+      "properties": {
+        "signal_kind": {
+          "type": "string",
+          "enum": ["self", "art-history", "marketing"]
+        },
+        "attribute": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        }
+      }
+    }
+  }
+}
