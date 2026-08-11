@@ -1,0 +1,36 @@
+contract_version: research-execution-boundary/v1
+input_contract:
+  contract_version: normalized-research-signal/v1
+  accepted_signal_kinds: [self, art-history, marketing]
+  required_fields:
+    - contract_version
+    - signal_id
+    - signal_kind
+    - source
+    - statement
+    - evidence_refs
+    - certainty
+    - unknowns
+    - constraints
+    - validity
+    - freshness
+    - adapter
+    - generated_at
+source_requirements:
+  required_fields: [repository, commit, entity_ids, locators]
+  commit_pattern: "^[0-9a-f]{40}$"
+  locator_required: true
+worker_policy:
+  allowed_operations: [retrieve, normalize, classify, match, execute, verify]
+  forbidden_operations: [invent, free_form_ideation, open_ended_artistic_synthesis, add_unproven_concept, alter_source_provenance, bypass_gate]
+  free_form_artistic_ideation: false
+  mutation_policy: parent-contract-only
+child_authority:
+  canonical_owner: child-repository
+  parent_may_change: false
+  preserve_canonical_data: true
+  quality_gate_statuses: [NOT_RUN, PASSED, FAILED, BLOCKED]
+output_policy:
+  required_provenance: [signal_id, rule_id, source_repository, source_commit, evidence_locator]
+  raw_input_export: false
+  proposition_requires_all_signal_kinds: true

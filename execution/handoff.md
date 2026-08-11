@@ -478,7 +478,7 @@
 
 - リモート確認結果: 親[Issue #2](https://github.com/masa-san-jp/agentic-art-orchestration/issues/2)はOPEN、[agentic-art-research Issue #2](https://github.com/masa-san-jp/agentic-art-research/issues/2)もOPEN。self-modelとmarketingの#2はclosed PR、art-historyの#2はclosed Issueだった。
 - `execution/decisions.md`のD-011として、親Issue #2とagentic-art-research Issue #2をv1.2へ切り分けた。v1.1 qualificationは変更せず、リモートIssueへのclose、label、comment、編集も行っていない。
-- `execution/task-queue.yaml`に`V12-ISSUE2-001`を`M10 / DONE`として記録し、依存完了後の`V12-BOUNDARY-001`を`READY`へ進めた。Issue SSOT・authority・依存・quality gate・migration境界は親側のv1.2 task DAGへ分解済みである。
+- `execution/task-queue.yaml`に`V12-ISSUE2-001`と`V12-BOUNDARY-001`を`M10 / DONE`として記録し、依存完了後の`V12-TRANSFORM-001`を`READY`へ進めた。Issue SSOT・authority・依存・quality gate・migration境界は親側のv1.2 task DAGへ分解済みである。
 
 ## RELEASE-APPROVAL evidence
 
@@ -495,11 +495,20 @@
 - 親IssueのLLM境界（retrieve / normalize / classify / match / execute / verify）と、子Issueのsource provenance・有限実行・quality gateを親のcontrol-plane taskへ翻訳した。child core schema、canonical data、Issue、外部artifactは変更していない。
 - `execution/decisions.md`にD-012を追加し、normalized signalとsource repo@commitを入力正本とすること、v1.1 release acceptanceを変更しないこと、子repo変更が必要なら別task・別PR・子repo正本に従うことを固定した。
 - `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: 165 tests pass。`git diff --check`: pass。変更子repoなし、子repo quality gateは未実行（親のみのscope taskのため）。
-- acceptance: 1/1達成。leaseを解放し、`V12-BOUNDARY-001`をREADYへ進めた。
+- acceptance: 1/1達成。leaseを解放し、`V12-TRANSFORM-001`をREADYへ進めた。
+
+## V12-BOUNDARY-001 evidence
+
+- `schemas/research-execution-boundary.schema.json`と`config/research-execution-boundary.yaml`を追加し、`normalized-research-signal/v1`、source repository/commit/entity/locator、worker allowed/forbidden operations、child-repository authority、required proposition provenanceをversioned metadata-only contractとして固定した。
+- `tools/validate.py`へfail-closed boundary validationを追加し、操作語彙の重複、信号・source・provenance必須項目の欠落、自由なartistic ideation、raw input export、親によるchild canonical data変更を拒否する。`tools/v12_boundary.py --check`を追加した。
+- `tests/test_v12_boundary.py`とinvalid fixtureを追加した。正常系、schema違反、allowed/forbidden overlap、source/provenance不足を検証する。
+- `.venv/bin/python tools/v12_boundary.py --check`: pass。`.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: 170 tests pass。`.venv/bin/python tools/status.py --check --offline-fixture`: pass、drift CLEAN。`.venv/bin/python tools/audit.py --check --offline-fixture`: pass、finding 0。`.venv/bin/python tools/security.py --offline-fixture`: pass。`git diff --check`: pass。
+- 変更子repo: なし。子repoのIssue、AGENTS、schema、canonical data、品質ゲートはread-only観測のみ。Google Driveへの実書込みなし。機微情報findingなし。
+- acceptance: 1/1達成。leaseを解放し、`V12-TRANSFORM-001`をREADYへ進めた。
 
 ## Next exact action
 
-1. `V12-BOUNDARY-001`をclaimし、metadata-onlyのv1.2 signal / rule / worker boundaryをschemaとvalidatorへ落とし込む。最初の操作は`.venv/bin/python tools/validate.py --check`。
+1. `V12-TRANSFORM-001`をclaimし、明示的なtransformation rule registryを定義する。最初の操作は`.venv/bin/python tools/validate.py --check`。
 
 ## Observed child heads at bootstrap
 

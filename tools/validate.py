@@ -24,6 +24,8 @@ RETRIEVAL_INDEX_SCHEMA_PATH = ROOT / "schemas/retrieval-index.schema.json"
 RETRIEVAL_RESULT_SCHEMA_PATH = ROOT / "schemas/retrieval-result.schema.json"
 IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
 INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
+V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.json"
+V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -48,6 +50,9 @@ REQUIRED_FILES = [
     "schemas/retrieval-result.schema.json",
     "schemas/improvement-loop.schema.json",
     "schemas/interaction-e2e.schema.json",
+    "schemas/research-execution-boundary.schema.json",
+    "config/research-execution-boundary.yaml",
+    "tools/v12_boundary.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -416,6 +421,122 @@ def _known_repository_ids() -> set[str]:
 
 def _signal_error(source: str, detail: str, remediation: str) -> str:
     return f"{source}: {detail}; remediation: {remediation}"
+
+
+def validate_research_execution_boundary(data: dict, source: str = "research-execution-boundary") -> list[str]:
+    """Validate the metadata-only v1.2 worker and authority boundary."""
+    errors: list[str] = []
+    schema = load_json(V12_BOUNDARY_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the v1.2 boundary field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    def require_exact_set(path: str, value: object, expected: set[str], label: str) -> None:
+        if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+            return
+        actual = set(value)
+        if actual != expected:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"{path} must define {label} exactly; missing={sorted(expected - actual)!r}, unexpected={sorted(actual - expected)!r}",
+                    f"use the v1.2 boundary vocabulary for {label}",
+                )
+            )
+
+    input_contract = data.get("input_contract")
+    if isinstance(input_contract, dict):
+        require_exact_set(
+            "input_contract.accepted_signal_kinds",
+            input_contract.get("accepted_signal_kinds"),
+            {"self", "art-history", "marketing"},
+            "accepted normalized signal kinds",
+        )
+        require_exact_set(
+            "input_contract.required_fields",
+            input_contract.get("required_fields"),
+            {
+                "contract_version",
+                "signal_id",
+                "signal_kind",
+                "source",
+                "statement",
+                "evidence_refs",
+                "certainty",
+                "unknowns",
+                "constraints",
+                "validity",
+                "freshness",
+                "adapter",
+                "generated_at",
+            },
+            "normalized signal envelope fields",
+        )
+
+    source_requirements = data.get("source_requirements")
+    if isinstance(source_requirements, dict):
+        require_exact_set(
+            "source_requirements.required_fields",
+            source_requirements.get("required_fields"),
+            {"repository", "commit", "entity_ids", "locators"},
+            "source provenance fields",
+        )
+
+    worker_policy = data.get("worker_policy")
+    if isinstance(worker_policy, dict):
+        allowed = worker_policy.get("allowed_operations")
+        forbidden = worker_policy.get("forbidden_operations")
+        require_exact_set(
+            "worker_policy.allowed_operations",
+            allowed,
+            {"retrieve", "normalize", "classify", "match", "execute", "verify"},
+            "allowed worker operations",
+        )
+        require_exact_set(
+            "worker_policy.forbidden_operations",
+            forbidden,
+            {
+                "invent",
+                "free_form_ideation",
+                "open_ended_artistic_synthesis",
+                "add_unproven_concept",
+                "alter_source_provenance",
+                "bypass_gate",
+            },
+            "forbidden worker operations",
+        )
+        if isinstance(allowed, list) and isinstance(forbidden, list):
+            overlap = sorted(set(allowed) & set(forbidden))
+            if overlap:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"worker operation vocabularies overlap: {overlap!r}",
+                        "keep allowed execution operations disjoint from forbidden artistic or provenance mutations",
+                    )
+                )
+
+    child_authority = data.get("child_authority")
+    if isinstance(child_authority, dict):
+        require_exact_set(
+            "child_authority.quality_gate_statuses",
+            child_authority.get("quality_gate_statuses"),
+            {"NOT_RUN", "PASSED", "FAILED", "BLOCKED"},
+            "child quality gate statuses",
+        )
+
+    output_policy = data.get("output_policy")
+    if isinstance(output_policy, dict):
+        require_exact_set(
+            "output_policy.required_provenance",
+            output_policy.get("required_provenance"),
+            {"signal_id", "rule_id", "source_repository", "source_commit", "evidence_locator"},
+            "proposition provenance fields",
+        )
+    return errors
 
 
 def validate_signal(data: dict, source: str = "signal") -> list[str]:
@@ -1855,6 +1976,12 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
     try:
         validate_repositories(errors, manifest_path)
         validate_tasks(errors)
+        errors.extend(
+            validate_research_execution_boundary(
+                load_yaml(V12_BOUNDARY_CONFIG_PATH),
+                _source_label(V12_BOUNDARY_CONFIG_PATH),
+            )
+        )
         state = load_yaml(ROOT / "execution/state.yaml")
         if state.get("last_completed_task") is None:
             errors.append("execution/state.yaml: last_completed_task is required")

@@ -337,7 +337,7 @@ tasks:
   - id: V12-BOUNDARY-001
     milestone: M10
     title: Define v1.2 signal, rule, and worker boundary contracts
-    status: READY
+    status: DONE
     depends_on: [V12-ISSUE2-001]
     acceptance: The parent defines versioned metadata-only boundaries for normalized signals, transformation rules, source provenance, allowed worker operations, and forbidden free-form artistic invention; child core schemas and canonical data remain owned by their repositories.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
@@ -345,7 +345,7 @@ tasks:
   - id: V12-TRANSFORM-001
     milestone: M10
     title: Implement explicit transformation rule registry
-    status: BACKLOG
+    status: READY
     depends_on: [V12-BOUNDARY-001]
     acceptance: Validated rules select declared signal attributes and compose a Research Proposition structure without adding unproven concepts; rule IDs, required inputs, constraints, and rejection reasons are deterministic and testable.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]

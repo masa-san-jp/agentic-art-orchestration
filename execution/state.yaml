@@ -1,29 +1,29 @@
 version: 2
-updated_at: "2026-08-12T07:19:06+09:00"
+updated_at: "2026-08-12T07:27:35+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-12T07:17:03+09:00"
-  expires_at: "2026-08-12T08:02:03+09:00"
-  lane: V12_SCOPE
-  execution_id: V12-ISSUE2-001:attempt-1
+  acquired_at: "2026-08-12T07:26:09+09:00"
+  expires_at: "2026-08-12T08:11:09+09:00"
+  lane: V12_BOUNDARY
+  execution_id: V12-BOUNDARY-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, execution/decisions.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md]
-  released_at: "2026-08-12T07:19:06+09:00"
+    paths: [config/research-execution-boundary.yaml, schemas/research-execution-boundary.schema.json, tools/v12_boundary.py, tools/validate.py, tests/fixtures/v12-boundary, tests/test_v12_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+  released_at: "2026-08-12T07:27:35+09:00"
 checkpoint:
-  task: V12-ISSUE2-001
-  repository: agentic-art-orchestration
-  start_point: ae51ccc043c0463eabbdbf9ec07ea35dcbe1fdac
-  expected_changes: Decompose parent Issue #2 and agentic-art-research Issue #2 into authority-preserving v1.2 tasks without changing child canonical data or v1.1 release acceptance.
-  completed_at: "2026-08-12T07:19:06+09:00"
-  result: completed
-last_completed_task: V12-ISSUE2-001
-resume_from:
   task: V12-BOUNDARY-001
-  action: Claim the READY boundary-contract task and define the metadata-only v1.2 input and worker boundaries before implementing transformation rules.
+  repository: agentic-art-orchestration
+  start_point: 88b4c56a25838cc0b1712dea7d7962f0ac16ecf5
+  expected_changes: Define and validate metadata-only v1.2 input, source provenance, worker-operation, child-authority, and output-provenance boundaries without changing child repositories.
+  completed_at: "2026-08-12T07:27:35+09:00"
+  result: completed
+last_completed_task: V12-BOUNDARY-001
+resume_from:
+  task: V12-TRANSFORM-001
+  action: Claim the READY transformation-rule task and define the explicit rule registry without allowing free-form artistic synthesis.
   command: .venv/bin/python tools/validate.py --check
 release:
   status: released
@@ -35,5 +35,5 @@ release:
   released_at: "2026-08-12T07:13:18+09:00"
 blocked: []
 last_validation:
-  command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; git diff --check
-  result: passed; V12-ISSUE2-001 decomposed the latest parent Issue #2 and agentic-art-research Issue #2 into 8 ordered parent tasks; validator passed, full suite 165 tests passed, diff clean; no child repositories, Issues, schemas, canonical data, or external artifacts changed; child AGENTS SHA 85d9584536f6e5ecea151d968c9783557b9d46b3 and child task-queue SHA 4f71c1b5648730ec41e15182765ba3031185157f were observed read-only; 2026-08-12T07:19:06+09:00
+  command: .venv/bin/python tools/v12_boundary.py --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
+  result: passed; V12-BOUNDARY-001 added and validated the metadata-only v1.2 boundary for normalized signals, source commits/locators, worker operations, child authority, and proposition provenance; boundary CLI passed, parent validator passed, full suite 170 tests passed, status drift CLEAN, audit CLEAN with 0 findings, security PASSED, diff clean; no child repositories, Issues, schemas, canonical data, or external artifacts were changed; 2026-08-12T07:27:35+09:00

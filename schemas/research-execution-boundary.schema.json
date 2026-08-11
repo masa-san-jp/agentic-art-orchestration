@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/research-execution-boundary.schema.json",
+  "title": "Semi-deterministic research execution boundary v1",
+  "description": "Metadata-only parent boundary for explicit research execution. Child repository schemas and canonical data remain authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "input_contract",
+    "source_requirements",
+    "worker_policy",
+    "child_authority",
+    "output_policy"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "research-execution-boundary/v1"
+    },
+    "input_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "accepted_signal_kinds", "required_fields"],
+      "properties": {
+        "contract_version": {
+          "const": "normalized-research-signal/v1"
+        },
+        "accepted_signal_kinds": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["self", "art-history", "marketing"]
+          }
+        },
+        "required_fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "contract_version",
+              "signal_id",
+              "signal_kind",
+              "source",
+              "statement",
+              "evidence_refs",
+              "certainty",
+              "unknowns",
+              "constraints",
+              "validity",
+              "freshness",
+              "adapter",
+              "generated_at"
+            ]
+          }
+        }
+      }
+    },
+    "source_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_fields", "commit_pattern", "locator_required"],
+      "properties": {
+        "required_fields": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["repository", "commit", "entity_ids", "locators"]
+          }
+        },
+        "commit_pattern": {
+          "const": "^[0-9a-f]{40}$"
+        },
+        "locator_required": {
+          "const": true
+        }
+      }
+    },
+    "worker_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_operations",
+        "forbidden_operations",
+        "free_form_artistic_ideation",
+        "mutation_policy"
+      ],
+      "properties": {
+        "allowed_operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["retrieve", "normalize", "classify", "match", "execute", "verify"]
+          }
+        },
+        "forbidden_operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "invent",
+              "free_form_ideation",
+              "open_ended_artistic_synthesis",
+              "add_unproven_concept",
+              "alter_source_provenance",
+              "bypass_gate"
+            ]
+          }
+        },
+        "free_form_artistic_ideation": {
+          "const": false
+        },
+        "mutation_policy": {
+          "const": "parent-contract-only"
+        }
+      }
+    },
+    "child_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_owner", "parent_may_change", "preserve_canonical_data", "quality_gate_statuses"],
+      "properties": {
+        "canonical_owner": {
+          "const": "child-repository"
+        },
+        "parent_may_change": {
+          "const": false
+        },
+        "preserve_canonical_data": {
+          "const": true
+        },
+        "quality_gate_statuses": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["NOT_RUN", "PASSED", "FAILED", "BLOCKED"]
+          }
+        }
+      }
+    },
+    "output_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_provenance", "raw_input_export", "proposition_requires_all_signal_kinds"],
+      "properties": {
+        "required_provenance": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["signal_id", "rule_id", "source_repository", "source_commit", "evidence_locator"]
+          }
+        },
+        "raw_input_export": {
+          "const": false
+        },
+        "proposition_requires_all_signal_kinds": {
+          "const": true
+        }
+      }
+    }
+  }
+}
