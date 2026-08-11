@@ -480,9 +480,17 @@
 - `execution/decisions.md`のD-011として、親Issue #2とagentic-art-research Issue #2をv1.2へ切り分けた。v1.1 qualificationは変更せず、リモートIssueへのclose、label、comment、編集も行っていない。
 - `execution/task-queue.yaml`に`V12-ISSUE2-001`を`M10 / BACKLOG`で追加した。次のREADY taskにはせず、v1.1の人間release判断後に、Issue SSOT・authority・依存・quality gate・migration境界を分解してから開始する。
 
+## RELEASE-APPROVAL evidence
+
+- リリース承認後、PR [#3](https://github.com/masa-san-jp/agentic-art-orchestration/pull/3)をGitHub Actions run 15成功（commit `7726d4c`、bootstrap success）・MERGEABLE確認後にsquash mergeした。マージSHAは`807a327c9aca62837c2810962439946dda4d8b64`。
+- マージ後mainで`.venv/bin/python tools/release_check.py --version 1.1.0 --runs 3`を再実行し、21 checks、旧offline E2E 3/3、interaction E2E 3/3、history finding 0、全165 testsを確認した。
+- [v1.1.0 GitHub Release](https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.1.0)を`807a327c9aca62837c2810962439946dda4d8b64`へ作成した。タグは`v1.1.0`、draft/prereleaseではない。
+- 変更子repoはなく、Google Driveへの実書込み、Issue編集、子repoのcanonical data変更は行っていない。history/securityともに機微情報findingは0。
+- acceptance: release承認からmerge、tag、releaseまで1/1達成。次の依存完了済み`V12-ISSUE2-001`をREADYへ進めた。
+
 ## Next exact action
 
-1. 現在のREADY taskはなし。人間が`data/release-check.json`を確認してv1.1のmerge、tag、releaseを個別に判断する。v1.2を開始するときの最初の操作は、`V12-ISSUE2-001`をclaimする前に親Issue #2とagentic-art-research Issue #2の最新本文・Issue SSOT・依存を再確認すること。
+1. `V12-ISSUE2-001`をclaimし、親Issue #2とagentic-art-research Issue #2の最新本文・Issue SSOT・依存・quality gateを再確認してv1.2分解を開始する。
 
 ## Observed child heads at bootstrap
 
