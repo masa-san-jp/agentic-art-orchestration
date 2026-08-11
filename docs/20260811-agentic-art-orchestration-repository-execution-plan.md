@@ -25,7 +25,7 @@ python3 -m unittest discover -s tests -v
 - [ ] M1: manifestとworkspace lifecycleを完成
 - [ ] M2: signal契約、adapter、consumer、traceを完成
 - [ ] M3: work item、scheduler、runtime、quality gate、dispatcherを完成
-- [ ] M4: status、audit、security boundaryを完成
+- [ ] M4: status、Project #4同期、audit、security boundaryを完成
 - [ ] M5: offline fixtureとE2E障害試験を完成
 - [ ] M6: runbookとv1.0判定を完成
 
@@ -81,7 +81,7 @@ M3の中核受入は、kill-and-resumeでcommit/PRを重複させず、同じall
 
 ### M4 — Visibility and safety
 
-STATUS-001は人間向けMarkdownと機械向けJSONを同一モデルから出す。AUDIT-001はstale pin、contract drift、orphan、freshness、consent、重複task、長期blockerを非blockingで報告する。SECURITY-001はsecretだけでなく、aggregate repo固有のPRIVATE_RAW/RESTRICTED/direct identifierを検知し、context packとbundleから排除する。
+STATUS-001は人間向けMarkdownと機械向けJSONを同一モデルから出す。PROJECT-001はGitHub Projects #4の優先順位・状態とローカルqueueを重複なく同期し、API障害時もローカル実行を継続する。AUDIT-001はstale pin、contract drift、orphan、freshness、consent、重複task、長期blockerを非blockingで報告する。SECURITY-001はsecretだけでなく、aggregate repo固有のPRIVATE_RAW/RESTRICTED/direct identifierを検知し、context packとbundleから排除する。
 
 ### M5 — Offline E2E
 
