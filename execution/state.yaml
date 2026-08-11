@@ -11,4 +11,4 @@ resume_from:
 blocked: []
 last_validation:
   command: python3 tools/validate.py --check && python3 -m unittest discover -s tests -v
-  result: pending-github-verification
+  result: passed-local-and-remote-files-verified
