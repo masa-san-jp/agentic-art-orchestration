@@ -29,6 +29,7 @@ V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
 TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
+CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -61,6 +62,8 @@ REQUIRED_FILES = [
     "tools/transformation_rules.py",
     "schemas/research-candidate.schema.json",
     "tools/candidate_space.py",
+    "schemas/research-candidate-gates.schema.json",
+    "tools/candidate_gates.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -750,6 +753,109 @@ def validate_candidate_space(data: dict, source: str = "candidate-space") -> lis
                             "preserve the selected normalized signal ID through composition",
                         )
                     )
+    return errors
+
+
+def validate_candidate_gates(data: dict, source: str = "candidate-gates") -> list[str]:
+    """Validate six explicit gate outcomes and their fail-closed status semantics."""
+    errors: list[str] = []
+    schema = load_json(CANDIDATE_GATES_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the research-candidate-gates field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    expected_gate_ids = {
+        "personal-specificity",
+        "historical-specificity",
+        "contemporary-specificity",
+        "provenance",
+        "genericness",
+        "counterfactual",
+    }
+    expected_reasons = {
+        "personal-specificity": "missing-personal-signal",
+        "historical-specificity": "missing-historical-signal",
+        "contemporary-specificity": "missing-contemporary-signal",
+        "provenance": "missing-provenance",
+        "genericness": "generic-candidate",
+        "counterfactual": "counterfactual-failure",
+    }
+    evaluations = data.get("evaluations")
+    if not isinstance(evaluations, list):
+        return errors
+    seen_candidate_ids: set[str] = set()
+    for index, evaluation in enumerate(evaluations):
+        if not isinstance(evaluation, dict):
+            continue
+        candidate_id = evaluation.get("candidate_id")
+        if candidate_id in seen_candidate_ids:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"evaluations[{index}] duplicates candidate_id {candidate_id!r}",
+                    "return exactly one gate evaluation per candidate",
+                )
+            )
+        if isinstance(candidate_id, str):
+            seen_candidate_ids.add(candidate_id)
+        gates = evaluation.get("gates")
+        if not isinstance(gates, list):
+            continue
+        observed_ids = [gate.get("gate_id") for gate in gates if isinstance(gate, dict)]
+        if set(observed_ids) != expected_gate_ids or len(observed_ids) != len(expected_gate_ids):
+            errors.append(
+                _signal_error(
+                    source,
+                    f"evaluations[{index}].gates must contain each gate exactly once; observed {sorted(observed_ids)!r}",
+                    "emit personal, historical, contemporary, provenance, genericness, and counterfactual gates",
+                )
+            )
+        statuses: list[str] = []
+        for gate_index, gate in enumerate(gates):
+            if not isinstance(gate, dict):
+                continue
+            gate_id = gate.get("gate_id")
+            status = gate.get("status")
+            reason = gate.get("reason_code")
+            if isinstance(status, str):
+                statuses.append(status)
+            if status == "PASS" and reason is not None:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"evaluations[{index}].gates[{gate_index}] PASS carries reason_code {reason!r}",
+                        "set reason_code to null for a passing gate",
+                    )
+                )
+            if status == "REJECT":
+                if reason != expected_reasons.get(gate_id):
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"evaluations[{index}].gates[{gate_index}] has inconsistent reason_code",
+                            "use the deterministic reason code assigned to the gate ID",
+                        )
+                    )
+            if isinstance(gate.get("evidence"), list) and not gate["evidence"]:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"evaluations[{index}].gates[{gate_index}] has no evidence",
+                        "retain source repository, commit, and evidence locators for every gate result",
+                    )
+                )
+        expected_overall = "PASS" if statuses and all(status == "PASS" for status in statuses) else "REJECT"
+        if evaluation.get("overall_status") != expected_overall:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"evaluations[{index}].overall_status does not match gate statuses",
+                    "derive overall PASS only when every explicit gate passes",
+                )
+            )
     return errors
 
 

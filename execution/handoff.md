@@ -478,7 +478,7 @@
 
 - リモート確認結果: 親[Issue #2](https://github.com/masa-san-jp/agentic-art-orchestration/issues/2)はOPEN、[agentic-art-research Issue #2](https://github.com/masa-san-jp/agentic-art-research/issues/2)もOPEN。self-modelとmarketingの#2はclosed PR、art-historyの#2はclosed Issueだった。
 - `execution/decisions.md`のD-011として、親Issue #2とagentic-art-research Issue #2をv1.2へ切り分けた。v1.1 qualificationは変更せず、リモートIssueへのclose、label、comment、編集も行っていない。
-- `execution/task-queue.yaml`に`V12-ISSUE2-001`、`V12-BOUNDARY-001`、`V12-TRANSFORM-001`、`V12-CANDIDATE-001`を`M10 / DONE`として記録し、依存完了済みの`V12-GATES-001`を`READY`へ進めた。Issue SSOT・authority・依存・quality gate・migration境界は親側のv1.2 task DAGへ分解済みである。
+- `execution/task-queue.yaml`に`V12-ISSUE2-001`、`V12-BOUNDARY-001`、`V12-TRANSFORM-001`、`V12-CANDIDATE-001`、`V12-GATES-001`を`M10 / DONE`として記録し、依存完了済みの`V12-SELECTION-001`を`READY`へ進めた。Issue SSOT・authority・依存・quality gate・migration境界は親側のv1.2 task DAGへ分解済みである。
 
 ## RELEASE-APPROVAL evidence
 
@@ -524,9 +524,18 @@
 - 変更子repo: なし。子repo品質ゲート: 対象なし。子repoのIssue、schema、canonical data、Google Drive、GitHub remote operationは変更していない。機微情報findingなし。
 - acceptance: 1/1達成。leaseを解放し、`V12-GATES-001`をREADYへ進めた。
 
+## V12-GATES-001 evidence
+
+- `schemas/research-candidate-gates.schema.json`と`tools/candidate_gates.py`を追加し、personal-specificity、historical-specificity、contemporary-specificity、provenance、genericness、counterfactualの6 gateを必ず一件ずつ出力する契約にした。各gateはPASS/REJECT、deterministic reason code、source repository@commit/evidence locatorを保持する。
+- personalはapproved export・validity・tension、historicalはcanonical graph locator・relation evidence、contemporaryはcurrent freshness・stage・expiry、provenanceはsignal sourceとの完全一致、genericnessは3 signal IDの固有性、counterfactualはrequired signal kindを一つずつ必要とする構造を検査する。候補やゲート結果に自由記述・LLM概念を追加しない。
+- offline fixtureでclean candidateは6/6 PASS、同一signalへの置換はgeneric-candidate / counterfactual-failureでREJECT、source commit不一致はmissing-provenanceでREJECTとなることを確認した。gate validatorはoverall statusと個別reason codeの不整合も拒否する。
+- `.venv/bin/python tools/candidate_gates.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates`: pass。`--check`: pass。`.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: 187 tests pass。`.venv/bin/python tools/status.py --check --offline-fixture`: pass、drift CLEAN。`.venv/bin/python tools/audit.py --check --offline-fixture`: pass、finding 0。`.venv/bin/python tools/security.py --offline-fixture`: pass。`git diff --check`: pass。
+- 変更子repo: なし。子repo品質ゲート: 対象なし。子repoのIssue、schema、canonical data、Google Drive、GitHub remote operationは変更していない。機微情報findingなし。
+- acceptance: 1/1達成。leaseを解放し、`V12-SELECTION-001`をREADYへ進めた。
+
 ## Next exact action
 
-1. `V12-GATES-001`をclaimし、specificity / genericness / counterfactual gateを追加する。最初の操作は`.venv/bin/python tools/validate.py --check`。
+1. `V12-SELECTION-001`をclaimし、project/snapshot inputsからstable seedを導出する候補選択を追加する。最初の操作は`.venv/bin/python tools/validate.py --check`。
 
 ## Observed child heads at bootstrap
 
