@@ -122,6 +122,8 @@ INTERACTION-E2E-001は、versioned child knowledgeからの回答、append-only 
 
 親のリモートIssue #2と`agentic-art-research#2`はv1.1のrelease blockerではなく、v1.2の設計・実装対象とする。V12-ISSUE2-001で、normalized signalを正本とするexplicit transformation rules、candidate space、seeded selection、specificity/genericness gates、counterfactual test、provenance拡張、LLMのretrieve/normalize/classify/match/execute/verify境界、子repo個別quality gateを分解する。v1.2開始前にIssue SSOT、対象repo、migration、rollback、human gateを明記し、子repoの内部schemaを親から変更しない。
 
+分解後の実装順は、`V12-BOUNDARY-001`（境界契約）→ `V12-TRANSFORM-001`（明示rule）→ `V12-CANDIDATE-001`（候補空間）→ `V12-GATES-001`（specificity / genericness / counterfactual）→ `V12-SELECTION-001`（seed付き選択）→ `V12-PROVENANCE-001`（逆引きtrace）とする。`V12-CHILD-GATES-001`は境界契約後に独立実行でき、最後に`V12-E2E-001`で統合する。各taskは親control planeだけを変更対象とし、子repoのIssue・schema・canonical data変更は別task・別PR・子repo側の正本に従う。
+
 ## Concrete Steps
 
 ### Every session

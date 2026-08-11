@@ -478,7 +478,7 @@
 
 - リモート確認結果: 親[Issue #2](https://github.com/masa-san-jp/agentic-art-orchestration/issues/2)はOPEN、[agentic-art-research Issue #2](https://github.com/masa-san-jp/agentic-art-research/issues/2)もOPEN。self-modelとmarketingの#2はclosed PR、art-historyの#2はclosed Issueだった。
 - `execution/decisions.md`のD-011として、親Issue #2とagentic-art-research Issue #2をv1.2へ切り分けた。v1.1 qualificationは変更せず、リモートIssueへのclose、label、comment、編集も行っていない。
-- `execution/task-queue.yaml`に`V12-ISSUE2-001`を`M10 / BACKLOG`で追加した。次のREADY taskにはせず、v1.1の人間release判断後に、Issue SSOT・authority・依存・quality gate・migration境界を分解してから開始する。
+- `execution/task-queue.yaml`に`V12-ISSUE2-001`を`M10 / DONE`として記録し、依存完了後の`V12-BOUNDARY-001`を`READY`へ進めた。Issue SSOT・authority・依存・quality gate・migration境界は親側のv1.2 task DAGへ分解済みである。
 
 ## RELEASE-APPROVAL evidence
 
@@ -488,9 +488,18 @@
 - 変更子repoはなく、Google Driveへの実書込み、Issue編集、子repoのcanonical data変更は行っていない。history/securityともに機微情報findingは0。
 - acceptance: release承認からmerge、tag、releaseまで1/1達成。次の依存完了済み`V12-ISSUE2-001`をREADYへ進めた。
 
+## V12-ISSUE2-001 evidence
+
+- 最新の親[Issue #2](https://github.com/masa-san-jp/agentic-art-orchestration/issues/2)と[agentic-art-research Issue #2](https://github.com/masa-san-jp/agentic-art-research/issues/2)を再取得し、親は半決定論的な制作研究経路、子はv1.0 runtime・quality gate・再開可能性の完成を要求していることを確認した。子repoのIssue、AGENTS、仕様、実行計画、task queueはread-onlyで観測した。
+- 親`execution/task-queue.yaml`へ8 taskを追加し、`V12-BOUNDARY-001`を最初のREADYとした。順序はboundary → transformation rule → candidate space → specificity/genericness/counterfactual gates → seeded selection → provenanceで、child quality gatesはboundary後、統合E2Eはprovenanceとchild gates後である。
+- 親IssueのLLM境界（retrieve / normalize / classify / match / execute / verify）と、子Issueのsource provenance・有限実行・quality gateを親のcontrol-plane taskへ翻訳した。child core schema、canonical data、Issue、外部artifactは変更していない。
+- `execution/decisions.md`にD-012を追加し、normalized signalとsource repo@commitを入力正本とすること、v1.1 release acceptanceを変更しないこと、子repo変更が必要なら別task・別PR・子repo正本に従うことを固定した。
+- `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: 165 tests pass。`git diff --check`: pass。変更子repoなし、子repo quality gateは未実行（親のみのscope taskのため）。
+- acceptance: 1/1達成。leaseを解放し、`V12-BOUNDARY-001`をREADYへ進めた。
+
 ## Next exact action
 
-1. `V12-ISSUE2-001`をclaimし、親Issue #2とagentic-art-research Issue #2の最新本文・Issue SSOT・依存・quality gateを再確認してv1.2分解を開始する。
+1. `V12-BOUNDARY-001`をclaimし、metadata-onlyのv1.2 signal / rule / worker boundaryをschemaとvalidatorへ落とし込む。最初の操作は`.venv/bin/python tools/validate.py --check`。
 
 ## Observed child heads at bootstrap
 

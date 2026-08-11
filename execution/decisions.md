@@ -75,3 +75,11 @@
 - 理由: v1.1はrepository-aware retrieval、append-only artifact、feedback routing、improvement、async auditのinteraction基盤を対象とし、rule engine、candidate space、seeded selection、specificity/genericness gateは別の大きな設計変更だからである。
 - 安全条件: v1.1 qualification結果は変更せず、子repoのIssue・schema・canonical dataも変更しない。v1.2開始時に親Issueと子Issueをauthority、依存、quality gate、migration境界付きのtaskへ分解する。
 - リモート操作: Issueのclose、label、comment、編集はこの決定では行わない。
+
+## D-012 — v1.2は境界固定から始め、実装を依存DAGへ分解する
+
+- 日付: 2026-08-12
+- 決定: v1.2は、境界契約、明示的変換rule、candidate space、specificity / genericness / counterfactual gate、seed付きselection、provenance、子repo品質gate、統合E2Eの順に親taskへ分解する。境界契約後に子repo品質gateを独立実行できる。
+- 理由: 親Issue #2の「LLMを創作者ではなく実行系に限定する」要件と、agentic-art-research Issue #2の既存runtime/quality gateの正本性を同時に守るには、生成・選択・検証を一つの自由推論taskへまとめてはならないため。
+- 安全条件: normalized research signalとsource repo@commitを入力の正本とし、子repoのcore schema・canonical data・Issueを親から変更しない。v1.1 interaction、append-only artifact、feedback、auditのrelease acceptanceは変更しない。
+- 実装順: `V12-BOUNDARY-001` → `V12-TRANSFORM-001` → `V12-CANDIDATE-001` → `V12-GATES-001` → `V12-SELECTION-001` → `V12-PROVENANCE-001`。`V12-CHILD-GATES-001`はboundary後、`V12-E2E-001`はprovenanceとchild gates後に実行する。
