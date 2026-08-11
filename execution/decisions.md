@@ -3,7 +3,7 @@
 ## D-001 — 子repoをvendor copyしない
 
 - 日付: 2026-08-11
-- 決定: 親はmanifestからworkspace/reposへ独立cloneを展開する。
+- 決定: 親はmanifestからrepos/へ独立cloneを展開する。
 - 理由: 正本、履歴、PR、権限、Issueを各repoに維持し、二重管理を避ける。
 - 却下: subtreeによる複製。同期方向と正本が曖昧になる。
 
@@ -25,3 +25,10 @@
 - 日付: 2026-08-11
 - 決定: エージェントはbranch、commit、draft PRまで。merge、release、破壊的Git操作は人間承認を要する。
 - 理由: 複数repoへ波及する不可逆変更と公開操作を分離する。
+
+## D-005 — Project #4とローカルqueueの責任分離
+
+- 日付: 2026-08-11
+- 決定: GitHub Projects #4は人間向け優先順位と可視化の正本、task-queue.yamlは自律実行順と再開の正本とする。
+- 理由: Project API障害時もローカル実行を継続しつつ、人間の優先順位を失わないため。
+- 実装: project syncは冪等とし、接続不能を全体停止へ変換しない。
