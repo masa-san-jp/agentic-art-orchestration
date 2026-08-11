@@ -1,0 +1,20 @@
+cases:
+  - name: duplicate-rule-id
+    mutation: duplicate_rule
+    expected: duplicate rule_id
+  - name: unknown-bound-attribute
+    path: [rules, 0, attribute_bindings, self]
+    value: [tensions, invented_concept]
+    expected: attribute_bindings.self
+  - name: missing-signal-kind
+    path: [rules, 0, required_signal_kinds]
+    value: [self, art-history]
+    expected: required_signal_kinds
+  - name: incomplete-template
+    path: [rules, 0, composition, template]
+    value: "{personal_tension} is freely imagined"
+    expected: composition.template
+  - name: missing-constraint
+    path: [rules, 0, constraints]
+    value: [require_all_inputs, no_unproven_concepts]
+    expected: constraints

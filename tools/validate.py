@@ -26,6 +26,8 @@ IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
 INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
 V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.json"
 V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
+TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
+TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -53,6 +55,9 @@ REQUIRED_FILES = [
     "schemas/research-execution-boundary.schema.json",
     "config/research-execution-boundary.yaml",
     "tools/v12_boundary.py",
+    "schemas/transformation-rule.schema.json",
+    "config/transformation-rules.yaml",
+    "tools/transformation_rules.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -536,6 +541,118 @@ def validate_research_execution_boundary(data: dict, source: str = "research-exe
             {"signal_id", "rule_id", "source_repository", "source_commit", "evidence_locator"},
             "proposition provenance fields",
         )
+    return errors
+
+
+def validate_transformation_rule_registry(data: dict, source: str = "transformation-rules") -> list[str]:
+    """Validate finite rule composition without authorizing free-form synthesis."""
+    errors: list[str] = []
+    schema = load_json(TRANSFORMATION_RULE_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the transformation-rule field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    rules = data.get("rules")
+    if not isinstance(rules, list):
+        return errors
+
+    expected_kinds = {"self", "art-history", "marketing"}
+    expected_constraints = {"require_all_inputs", "require_source_provenance", "no_unproven_concepts"}
+    expected_rejections = {"missing-required-signal", "unknown-attribute", "missing-provenance", "constraint-failure"}
+    allowed_attributes = {
+        "self": {"tensions", "recurring_patterns", "seeks", "protects", "avoids", "traits", "states", "contexts"},
+        "art-history": {"relations", "canonical_graph_locator", "entity_kind", "time", "geo"},
+        "marketing": {"stage", "freshness", "vendor_interest", "counterevidence", "prediction_status"},
+    }
+    seen_rule_ids: set[str] = set()
+    for index, rule in enumerate(rules):
+        prefix = f"rules[{index}]"
+        if not isinstance(rule, dict):
+            continue
+        rule_id = rule.get("rule_id")
+        if isinstance(rule_id, str):
+            if rule_id in seen_rule_ids:
+                errors.append(_signal_error(source, f"duplicate rule_id {rule_id!r}", "give every transformation rule a unique stable ID"))
+            seen_rule_ids.add(rule_id)
+
+        required_kinds = rule.get("required_signal_kinds")
+        if isinstance(required_kinds, list) and set(required_kinds) != expected_kinds:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"{prefix}.required_signal_kinds must include each normalized signal kind exactly",
+                    "require self, art-history, and marketing inputs before composing a proposition",
+                )
+            )
+
+        bindings = rule.get("attribute_bindings")
+        if isinstance(bindings, dict):
+            for kind, values in bindings.items():
+                if kind not in allowed_attributes or not isinstance(values, list):
+                    continue
+                unknown = sorted(set(values) - allowed_attributes[kind])
+                if unknown:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"{prefix}.attribute_bindings.{kind} contains undeclared attributes {unknown!r}",
+                            "bind only attributes exposed by the normalized signal contract",
+                        )
+                    )
+
+        composition = rule.get("composition")
+        if isinstance(composition, dict):
+            slots = composition.get("slots")
+            if isinstance(slots, dict) and isinstance(bindings, dict):
+                for slot_name, slot in slots.items():
+                    if not isinstance(slot, dict):
+                        continue
+                    kind = slot.get("signal_kind")
+                    attribute = slot.get("attribute")
+                    if kind in allowed_attributes and isinstance(attribute, str):
+                        bound = bindings.get(kind, [])
+                        if attribute not in bound:
+                            errors.append(
+                                _signal_error(
+                                    source,
+                                    f"{prefix}.composition.slots.{slot_name} references unbound attribute {attribute!r}",
+                                    "select a declared attribute from the rule binding for that signal kind",
+                                )
+                            )
+                slot_kinds = {
+                    slot.get("signal_kind")
+                    for slot in slots.values()
+                    if isinstance(slot, dict)
+                }
+                if slot_kinds != expected_kinds:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"{prefix}.composition.slots must cover all signal kinds; observed {sorted(slot_kinds)!r}",
+                            "declare one explicit composition slot for self, art-history, and marketing",
+                        )
+                    )
+
+        constraints = rule.get("constraints")
+        if isinstance(constraints, list) and set(constraints) != expected_constraints:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"{prefix}.constraints must preserve the finite safety constraints",
+                    "require all inputs, source provenance, and no unproven concepts",
+                )
+            )
+        rejection_reasons = rule.get("rejection_reasons")
+        if isinstance(rejection_reasons, list) and set(rejection_reasons) != expected_rejections:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"{prefix}.rejection_reasons must preserve deterministic rejection vocabulary",
+                    "record missing inputs, unknown attributes, provenance, and constraint failures",
+                )
+            )
     return errors
 
 
@@ -1980,6 +2097,12 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
             validate_research_execution_boundary(
                 load_yaml(V12_BOUNDARY_CONFIG_PATH),
                 _source_label(V12_BOUNDARY_CONFIG_PATH),
+            )
+        )
+        errors.extend(
+            validate_transformation_rule_registry(
+                load_yaml(TRANSFORMATION_RULE_CONFIG_PATH),
+                _source_label(TRANSFORMATION_RULE_CONFIG_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")
