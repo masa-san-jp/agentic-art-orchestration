@@ -329,7 +329,71 @@ tasks:
   - id: V12-ISSUE2-001
     milestone: M10
     title: Scope remote Issue #2 for v1.2 semi-deterministic research execution
-    status: READY
+    status: DONE
     depends_on: [RELEASE-002]
-    acceptance: Parent Issue #2 and agentic-art-research Issue #2 are decomposed into authority-preserving v1.2 tasks for explicit transformation rules, candidate generation, seeded selection, specificity/genericness gates, provenance, and child quality gates without changing v1.1 release acceptance or copying child canonical data.
+    acceptance: Parent Issue #2 and agentic-art-research Issue #2 are decomposed into the ordered authority-preserving v1.2 tasks below for explicit transformation rules, candidate generation, seeded selection, specificity/genericness gates, provenance, and child quality gates without changing v1.1 release acceptance or copying child canonical data.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-BOUNDARY-001
+    milestone: M10
+    title: Define v1.2 signal, rule, and worker boundary contracts
+    status: READY
+    depends_on: [V12-ISSUE2-001]
+    acceptance: The parent defines versioned metadata-only boundaries for normalized signals, transformation rules, source provenance, allowed worker operations, and forbidden free-form artistic invention; child core schemas and canonical data remain owned by their repositories.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-TRANSFORM-001
+    milestone: M10
+    title: Implement explicit transformation rule registry
+    status: BACKLOG
+    depends_on: [V12-BOUNDARY-001]
+    acceptance: Validated rules select declared signal attributes and compose a Research Proposition structure without adding unproven concepts; rule IDs, required inputs, constraints, and rejection reasons are deterministic and testable.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-CANDIDATE-001
+    milestone: M10
+    title: Generate a reproducible candidate space
+    status: BACKLOG
+    depends_on: [V12-TRANSFORM-001]
+    acceptance: Candidate generation enumerates or deterministically reduces signal/rule combinations, preserves all signal IDs and source repo@commit locators, and produces byte-identical candidates for the same snapshot and rules without LLM-added concepts.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-GATES-001
+    milestone: M10
+    title: Add specificity genericness and counterfactual gates
+    status: BACKLOG
+    depends_on: [V12-CANDIDATE-001]
+    acceptance: Personal, historical, contemporary, provenance, genericness, and counterfactual specificity gates produce explicit PASS or REJECT evidence; generic candidates and candidates with missing required source dependencies are rejected in offline fixtures.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-SELECTION-001
+    milestone: M10
+    title: Implement seeded candidate selection
+    status: BACKLOG
+    depends_on: [V12-GATES-001]
+    acceptance: Selection derives a stable seed from project and snapshot inputs, returns the same selected package for the same snapshot, rules, and seed, and limits different-seed variation to candidate ordering or selection while preserving facts and provenance.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-PROVENANCE-001
+    milestone: M10
+    title: Extend proposition provenance through selection
+    status: BACKLOG
+    depends_on: [V12-SELECTION-001]
+    acceptance: A Research Proposition traces through selection decision, candidate, rule, normalized signals, source repository@commit, and evidence locator; missing or mismatched provenance fails validation rather than being normalized.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-CHILD-GATES-001
+    milestone: M10
+    title: Bind v1.2 execution to independent child quality gates
+    status: BACKLOG
+    depends_on: [V12-BOUNDARY-001]
+    acceptance: The parent runs each manifest-declared child quality gate against the observed immutable commit, records repository-specific results, and preserves stale, unknown, or failed states without editing child repositories or copying canonical data.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-E2E-001
+    milestone: M10
+    title: Integrate and reproduce the v1.2 research execution path
+    status: BACKLOG
+    depends_on: [V12-PROVENANCE-001, V12-CHILD-GATES-001]
+    acceptance: Offline E2E connects normalized signals, explicit rules, candidate generation, gates, seeded selection, proposition provenance, and child quality-gate evidence; repeated runs are deterministic and v1.1 interaction/artifact behavior remains unchanged.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
