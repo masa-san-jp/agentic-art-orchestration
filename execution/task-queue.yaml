@@ -361,7 +361,7 @@ tasks:
   - id: V12-GATES-001
     milestone: M10
     title: Add specificity genericness and counterfactual gates
-    status: READY
+    status: DONE
     depends_on: [V12-CANDIDATE-001]
     acceptance: Personal, historical, contemporary, provenance, genericness, and counterfactual specificity gates produce explicit PASS or REJECT evidence; generic candidates and candidates with missing required source dependencies are rejected in offline fixtures.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
@@ -369,7 +369,7 @@ tasks:
   - id: V12-SELECTION-001
     milestone: M10
     title: Implement seeded candidate selection
-    status: BACKLOG
+    status: READY
     depends_on: [V12-GATES-001]
     acceptance: Selection derives a stable seed from project and snapshot inputs, returns the same selected package for the same snapshot, rules, and seed, and limits different-seed variation to candidate ordering or selection while preserving facts and provenance.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]

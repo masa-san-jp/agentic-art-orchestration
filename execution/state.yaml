@@ -1,29 +1,29 @@
 version: 2
-updated_at: "2026-08-12T08:10:50+09:00"
+updated_at: "2026-08-12T08:16:59+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-12T08:05:16+09:00"
-  expires_at: "2026-08-12T08:50:16+09:00"
-  lane: V12_CANDIDATE
-  execution_id: V12-CANDIDATE-001:attempt-1
+  acquired_at: "2026-08-12T08:13:28+09:00"
+  expires_at: "2026-08-12T08:58:28+09:00"
+  lane: V12_GATES
+  execution_id: V12-GATES-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/research-candidate.schema.json, tools/candidate_space.py, tools/validate.py, tests/fixtures/v12-candidates, tests/test_candidate_space.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
-  released_at: "2026-08-12T08:10:50+09:00"
+    paths: [schemas/research-candidate-gates.schema.json, tools/candidate_gates.py, tools/validate.py, tests/fixtures/v12-candidates, tests/test_candidate_gates.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+  released_at: "2026-08-12T08:16:59+09:00"
 checkpoint:
-  task: V12-CANDIDATE-001
-  repository: agentic-art-orchestration
-  start_point: f85c4fd102861dfe54d3029dcfb5845711a09764
-  expected_changes: Generate a deterministic candidate space from validated normalized signals and explicit transformation rules while preserving signal IDs and source provenance without adding concepts.
-  completed_at: "2026-08-12T08:10:50+09:00"
-  result: completed
-last_completed_task: V12-CANDIDATE-001
-resume_from:
   task: V12-GATES-001
-  action: Claim the READY gate task and add deterministic specificity, genericness, and counterfactual rejection evidence.
+  repository: agentic-art-orchestration
+  start_point: 430863630e6ad4759de8ff2f09955b10928dab7d
+  expected_changes: Add deterministic personal, historical, contemporary, provenance, genericness, and counterfactual gates for candidate references with explicit PASS or REJECT evidence.
+  completed_at: "2026-08-12T08:16:59+09:00"
+  result: completed
+last_completed_task: V12-GATES-001
+resume_from:
+  task: V12-SELECTION-001
+  action: Claim the READY selection task and implement stable seeded candidate selection without changing facts or provenance.
   command: .venv/bin/python tools/validate.py --check
 release:
   status: released
@@ -35,5 +35,5 @@ release:
   released_at: "2026-08-12T07:13:18+09:00"
 blocked: []
 last_validation:
-  command: .venv/bin/python tools/candidate_space.py --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
-  result: passed; V12-CANDIDATE-001 added and validated research-candidate/v1, enumerated finite R17 signal combinations in canonical order, preserved signal IDs and source repository@commit/evidence locators, and emitted reference-only candidates; candidate check passed, parent validator passed, full suite 181 tests passed, status drift CLEAN, audit CLEAN with 0 findings, security PASSED, diff clean; no child repositories, Issues, schemas, canonical data, or external artifacts were changed; 2026-08-12T08:10:50+09:00
+  command: .venv/bin/python tools/candidate_space.py --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/candidate_gates.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
+  result: passed; V12-GATES-001 added and validated research-candidate-gates/v1 with six explicit PASS/REJECT gates for personal, historical, contemporary, provenance, genericness, and counterfactual specificity; clean candidate passed all gates, generic and source-commit-mismatch fixtures were rejected with evidence; candidate-gates check passed, parent validator passed, full suite 187 tests passed, status drift CLEAN, audit CLEAN with 0 findings, security PASSED, diff clean; no child repositories, Issues, schemas, canonical data, or external artifacts were changed; 2026-08-12T08:16:59+09:00

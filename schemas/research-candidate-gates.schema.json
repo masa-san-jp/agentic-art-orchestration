@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/research-candidate-gates.schema.json",
+  "title": "Research candidate specificity gates v1",
+  "description": "Explicit gate outcomes for a reference-only candidate. Gate evidence remains provenance metadata, not generated proposition text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "candidate_space_hash", "evaluations"],
+  "properties": {
+    "contract_version": {
+      "const": "research-candidate-gates/v1"
+    },
+    "candidate_space_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evaluations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evaluation"
+      }
+    }
+  },
+  "$defs": {
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "overall_status", "gates"],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^candidate:[0-9a-f]{16}$"
+        },
+        "overall_status": {
+          "type": "string",
+          "enum": ["PASS", "REJECT"]
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/gate"
+          }
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "evidence", "reason_code"],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "enum": [
+            "personal-specificity",
+            "historical-specificity",
+            "contemporary-specificity",
+            "provenance",
+            "genericness",
+            "counterfactual"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "REJECT"]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "distinct_signal_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "matched_source_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "required_signal_kinds": {
+              "type": "array",
+              "items": {"type": "string", "enum": ["self", "art-history", "marketing"]}
+            },
+            "observed_signal_kinds": {
+              "type": "array",
+              "items": {"type": "string", "enum": ["self", "art-history", "marketing"]}
+            },
+            "expected_rejection": {
+              "const": "missing-required-signal"
+            }
+          }
+        },
+        "reason_code": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "missing-personal-signal",
+            "missing-historical-signal",
+            "missing-contemporary-signal",
+            "missing-provenance",
+            "generic-candidate",
+            "counterfactual-failure"
+          ]
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_id",
+        "signal_kind",
+        "attribute",
+        "source_repository",
+        "source_commit",
+        "source_entity_ids",
+        "source_locators",
+        "evidence_locators"
+      ],
+      "properties": {
+        "signal_id": {"type": "string", "minLength": 1},
+        "signal_kind": {"type": "string", "enum": ["self", "art-history", "marketing"]},
+        "attribute": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "source_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_entity_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "source_locators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "evidence_locators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}
