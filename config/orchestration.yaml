@@ -1,0 +1,28 @@
+version: 1
+selection_policy: lowest_id_ready_with_dependencies_done
+workspace:
+  update_policy: fetch_without_implicit_checkout
+  dirty_policy: stop
+  detached_head_policy: stop
+  unpushed_commit_policy: stop
+  missing_credentials_policy: blocked
+execution:
+  max_active_tasks_per_repository: 1
+  lease_minutes: 45
+  max_attempts: 3
+  retry_backoff_seconds: [30, 120, 600]
+  checkpoint_after_minutes: 30
+  require_child_quality_gates: true
+publishing:
+  allow_branch_creation: true
+  allow_commit: true
+  allow_draft_pr: true
+  require_human_for_merge: true
+  require_human_for_release: true
+  require_human_for_destructive_git: true
+data_boundary:
+  forbidden_classes: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier]
+  require_source_repository: true
+  require_source_commit: true
+  preserve_unknown: true
+  generated_directories: [data, workspace]

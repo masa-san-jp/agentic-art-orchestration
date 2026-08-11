@@ -1,0 +1,62 @@
+version: 1
+workspace_root: workspace/repos
+repositories:
+  - id: self-model
+    full_name: masa-san-jp/self-model-notes
+    url: https://github.com/masa-san-jp/self-model-notes.git
+    path: self-model-notes
+    role: input-kb
+    authority: self-model entities, evidence, claims, patterns, and export policy
+    default_branch: main
+    observed_commit: 2ac31805ed8a6c3361822c7351becba465c8769a
+    instructions: AGENTS.md
+    requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
+    quality_gates:
+      - python3 tools/build_graph.py --check
+      - python3 -m unittest discover -s tests -p "test_*.py"
+    export_contract: normalized-research-signal/v1
+
+  - id: art-history
+    full_name: masa-san-jp/art-history-notes
+    url: https://github.com/masa-san-jp/art-history-notes.git
+    path: art-history-notes
+    role: input-kb
+    authority: art-history entities, relations, evidence, and graph
+    default_branch: main
+    observed_commit: 83703055f11019f905ffdfa23cdd674d48522698
+    instructions: README.md
+    requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
+    quality_gates:
+      - python3 tools/build_graph.py --check
+      - python3 -m unittest discover -s tests -p "test_*.py"
+    export_contract: normalized-research-signal/v1
+
+  - id: marketing-trends
+    full_name: masa-san-jp/marketing-trends-notes
+    url: https://github.com/masa-san-jp/marketing-trends-notes.git
+    path: marketing-trends-notes
+    role: input-kb
+    authority: marketing trends, practices, freshness, evidence, and graph
+    default_branch: main
+    observed_commit: edcb49c4522364ae69f627bea996754dcc8cfe56
+    instructions: README.md
+    requirement_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/1
+    quality_gates:
+      - python3 tools/build_graph.py --check
+      - python3 -m unittest discover -s tests -p "test_*.py"
+    export_contract: normalized-research-signal/v1
+
+  - id: agentic-art-research
+    full_name: masa-san-jp/agentic-art-research
+    url: https://github.com/masa-san-jp/agentic-art-research.git
+    path: agentic-art-research
+    role: consumer-runtime
+    authority: research projects, execution state, decisions, requirements, and outputs
+    default_branch: main
+    observed_commit: 9bfa07d80c7962840031e0607f431c3bb997245f
+    instructions: AGENTS.md
+    requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
+    quality_gates:
+      - python3 tools/validate.py --check
+      - python3 -m unittest discover -s tests -v
+    import_contract: normalized-research-signal/v1
