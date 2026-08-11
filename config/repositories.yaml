@@ -1,5 +1,5 @@
 version: 1
-workspace_root: workspace/repos
+workspace_root: repos
 repositories:
   - id: self-model
     full_name: masa-san-jp/self-model-notes
