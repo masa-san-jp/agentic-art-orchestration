@@ -27,11 +27,7 @@ def main() -> int:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
-    print(
-        '{"changed": false, "command": "v12-boundary", "status": "PASSED"}'
-        if args.check
-        else '{"changed": false, "command": "v12-boundary", "status": "PASSED"}'
-    )
+    print('{"changed": false, "command": "v12-boundary", "status": "PASSED"}')
     return 0
 
 
