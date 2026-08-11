@@ -28,6 +28,7 @@ V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.js
 V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
 TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
+CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -58,6 +59,8 @@ REQUIRED_FILES = [
     "schemas/transformation-rule.schema.json",
     "config/transformation-rules.yaml",
     "tools/transformation_rules.py",
+    "schemas/research-candidate.schema.json",
+    "tools/candidate_space.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -653,6 +656,100 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                     "record missing inputs, unknown attributes, provenance, and constraint failures",
                 )
             )
+    return errors
+
+
+def validate_candidate_space(data: dict, source: str = "candidate-space") -> list[str]:
+    """Validate candidate references and require every composition slot to be traceable."""
+    errors: list[str] = []
+    schema = load_json(CANDIDATE_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the research-candidate field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    candidates = data.get("candidates")
+    if not isinstance(candidates, list):
+        return errors
+    if data.get("candidate_count") != len(candidates):
+        errors.append(
+            _signal_error(
+                source,
+                "candidate_count does not equal the number of candidates",
+                "recompute the count from the complete deterministic candidate list",
+            )
+        )
+    seen_candidate_ids: set[str] = set()
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict):
+            continue
+        candidate_id = candidate.get("candidate_id")
+        if candidate_id in seen_candidate_ids:
+            errors.append(
+                _signal_error(
+                    source,
+                    f"candidates[{index}] duplicates candidate_id {candidate_id!r}",
+                    "retain one candidate per stable rule and signal combination",
+                )
+            )
+        if isinstance(candidate_id, str):
+            seen_candidate_ids.add(candidate_id)
+
+        inputs = candidate.get("inputs")
+        input_refs: dict[tuple[str, str, str], dict] = {}
+        if isinstance(inputs, dict):
+            for kind, refs in inputs.items():
+                if not isinstance(refs, list):
+                    continue
+                for ref_index, ref in enumerate(refs):
+                    if not isinstance(ref, dict):
+                        continue
+                    key = (kind, ref.get("signal_id"), ref.get("attribute"))
+                    if key in input_refs:
+                        errors.append(
+                            _signal_error(
+                                source,
+                                f"candidates[{index}].inputs.{kind}[{ref_index}] duplicates signal/attribute reference",
+                                "retain one provenance reference per selected signal attribute",
+                            )
+                        )
+                    input_refs[key] = ref
+                    if ref.get("signal_kind") != kind:
+                        errors.append(
+                            _signal_error(
+                                source,
+                                f"candidates[{index}].inputs.{kind}[{ref_index}] signal_kind is inconsistent",
+                                "keep the input bucket aligned with the normalized signal kind",
+                            )
+                        )
+
+        composition = candidate.get("composition")
+        if isinstance(composition, dict):
+            for slot_name, slot in composition.items():
+                if not isinstance(slot, dict):
+                    continue
+                key = (slot.get("signal_kind"), slot.get("signal_id"), slot.get("attribute"))
+                if key not in input_refs:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"candidates[{index}].composition.{slot_name} is not traceable to inputs",
+                            "reference a declared input signal and attribute in the same candidate",
+                        )
+                    )
+                if isinstance(slot.get("signal_id"), str) and not any(
+                    isinstance(ref, dict) and ref.get("signal_id") == slot["signal_id"]
+                    for ref in input_refs.values()
+                ):
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"candidates[{index}].composition.{slot_name} lost its signal ID",
+                            "preserve the selected normalized signal ID through composition",
+                        )
+                    )
     return errors
 
 

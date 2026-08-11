@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "signal_files": [
+    "../signal/valid_self.json",
+    "../signal/valid_art_history.json",
+    "../signal/valid_marketing.json"
+  ]
+}
