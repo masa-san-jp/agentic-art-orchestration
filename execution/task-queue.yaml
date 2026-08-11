@@ -139,11 +139,19 @@ tasks:
     acceptance: Markdown and JSON show commits, drift, child progress, compatibility, blockers, and next work.
     checks: [python3 tools/status.py --check --offline-fixture]
 
+  - id: PROJECT-001
+    milestone: M4
+    title: Implement idempotent GitHub Projects number 4 synchronization
+    status: BACKLOG
+    depends_on: [STATUS-001]
+    acceptance: Priority and human-visible status map without duplicate items, while API unavailability leaves local execution usable.
+    checks: [python3 -m unittest tests.test_project_sync -v]
+
   - id: AUDIT-001
     milestone: M4
     title: Implement non-blocking cross-repository audit
     status: BACKLOG
-    depends_on: [STATUS-001]
+    depends_on: [PROJECT-001]
     acceptance: Audit reports stale pins, schema drift, orphan signals, freshness, consent, duplicates, and untested boundaries.
     checks: [python3 tools/audit.py --check --offline-fixture]
 
