@@ -43,7 +43,7 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 - normalized research signalは境界形式だけを規定し、子の内部schemaを上書きしない。
 - task-queue.yamlは親repo実装順の正本。
 - state.yamlは現在の再開点、handoff.mdは人間可読の引継ぎ。
-- data/とworkspace/は生成物。手編集しない。
+- data/とrepos/は生成物。手編集しない。
 
 ## Safety invariants
 
