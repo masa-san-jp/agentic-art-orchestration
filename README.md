@@ -5,6 +5,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research を、独
 ## 現在地
 
 - システム設計: [設計仕様書](docs/20260811-agentic-art-orchestration-system-design-specification.md)
+- 構想・要求の起点: [先行リポジトリ設計仕様書](docs/20260811-agentic-art-orchestration-repository-design-specification.md)
 - 完成実行計画: [実行計画](docs/20260811-agentic-art-orchestration-repository-execution-plan.md)
 - エージェント規則: [AGENTS.md](AGENTS.md)
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
@@ -25,7 +26,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research を、独
 - 子の内部形式を共通化せず、境界で normalized research signals に翻訳する。
 - 親は横断契約、workspace再現、依存DAG、実行状態、監査結果だけを正本として持つ。
 - 子の変更は子repoのbranch/PRで行い、親のcommitへ混ぜない。
-- workspace/ はローカル生成物でありGit管理しない。
+- repos/ はローカル生成物でありGit管理しない。
 
 ## エージェントの開始手順
 
@@ -54,5 +55,5 @@ execution/    task queue、状態、判断、引継ぎ
 tools/        workspace、検証、status、audit、dispatcher
 tests/        offline fixtureと障害試験
 data/         生成されたstatus・audit・trace。手編集禁止
-workspace/    ローカルの子repo展開先。Git管理外
+repos/        ローカルの子repo展開先。Git管理外
 ~~~
