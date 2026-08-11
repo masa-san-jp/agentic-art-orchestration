@@ -329,7 +329,7 @@ tasks:
   - id: V12-ISSUE2-001
     milestone: M10
     title: Scope remote Issue #2 for v1.2 semi-deterministic research execution
-    status: BACKLOG
+    status: READY
     depends_on: [RELEASE-002]
     acceptance: Parent Issue #2 and agentic-art-research Issue #2 are decomposed into authority-preserving v1.2 tasks for explicit transformation rules, candidate generation, seeded selection, specificity/genericness gates, provenance, and child quality gates without changing v1.1 release acceptance or copying child canonical data.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
