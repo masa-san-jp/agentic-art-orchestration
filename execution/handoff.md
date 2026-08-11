@@ -544,7 +544,17 @@
 
 ## Next exact action
 
-1. `V12-CHILD-GATES-001`をclaimし、manifest-declared child quality gateをimmutable observed commitへ結び付ける。最初の操作は`.venv/bin/python tools/validate.py --check`。
+1. `V12-PROVENANCE-001`をclaimし、Research Propositionからselection decision、candidate、rule、normalized signal、source commit、evidence locatorまでの逆引きtraceを実装する。最初の操作は`.venv/bin/python tools/validate.py --check`。
+
+## V12-CHILD-GATES-001 evidence
+
+- `schemas/child-quality-gates.schema.json`、`tools/child_quality_gates.py`、`tests/test_child_quality_gates.py`を追加した。親manifestの各quality gateを、子repo checkoutへ変更を加えず、observed commitの一時immutable archiveから実行する。quality gate hash、exit status、duration、redacted output、output hashをrepository単位で保存する。
+- stale checkout、missing observed commit、failed gate、validatorの不整合をoffline fixtureで検証した。stale checkoutは観測状態をSTALEとして保持したままobserved archiveを実行し、missing commitはBLOCKED/NOT_RUN、失敗ゲートはFAILEDとしてredacted evidenceを保持する。
+- `.venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root repos --run-id v12-child-gates`: 実行結果は4 repositoryすべて`STALE`、manifest pinned observed commitがoffline checkoutに存在しないため`BLOCKED/NOT_RUN`。これは失敗をPASSへ正規化せず、次回は対象commitをfetchまたはpin更新してから再実行する状態である。`--check`も同一bytesで成功した。
+- `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: pass（child gate 4 testsを含む）。`git diff --check`: pass。`data/child-quality-gates.json`は生成物としてignoreされ、Gitへ追加していない。
+- 変更子repo: なし。4つの子repoはread-onlyでworkspace stateを観測しただけで、checkout、branch、canonical data、Issue、PRを変更していない。observed commitが利用できないため子repoの宣言済みgate自体は未実行であり、その理由をBLOCKED/NOT_RUNとして保存した。
+- 機微情報: gate outputはredact・hash済みで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、個人識別情報、子repo canonical dataを親へコピーしていない。
+- acceptance: 1/1達成。leaseを解放し、依存完了済み最小IDの`V12-PROVENANCE-001`をREADYへ進めた。
 
 ## Observed child heads at bootstrap
 

@@ -31,7 +31,7 @@ python3 -m unittest discover -s tests -v
 - [x] M7: v1.1 interaction、artifact、feedback、knowledge profile契約を完成
 - [x] M8: retrieval、Drive adapter、Issue routing、自律改善、非同期auditorを完成
 - [x] M9: interaction E2E、runbook、v1.1 qualificationを完成（RELEASE-002。merge/releaseはhuman gate）
-- [ ] M10: v1.2 Issue #2の半決定論的制作研究実行を設計・分解・実装（V12-ISSUE2-001、V12-BOUNDARY-001、V12-TRANSFORM-001、V12-CANDIDATE-001、V12-GATES-001、V12-SELECTION-001完了。次はV12-CHILD-GATES-001）
+- [ ] M10: v1.2 Issue #2の半決定論的制作研究実行を設計・分解・実装（V12-ISSUE2-001、V12-BOUNDARY-001、V12-TRANSFORM-001、V12-CANDIDATE-001、V12-GATES-001、V12-SELECTION-001、V12-CHILD-GATES-001完了。次はV12-PROVENANCE-001）
 
 ## Surprises & Discoveries
 
@@ -122,7 +122,7 @@ INTERACTION-E2E-001は、versioned child knowledgeからの回答、append-only 
 
 親のリモートIssue #2と`agentic-art-research#2`はv1.1のrelease blockerではなく、v1.2の設計・実装対象とする。V12-ISSUE2-001で、normalized signalを正本とするexplicit transformation rules、candidate space、seeded selection、specificity/genericness gates、counterfactual test、provenance拡張、LLMのretrieve/normalize/classify/match/execute/verify境界、子repo個別quality gateを分解する。v1.2開始前にIssue SSOT、対象repo、migration、rollback、human gateを明記し、子repoの内部schemaを親から変更しない。
 
-分解後の実装順は、`V12-BOUNDARY-001`（境界契約）→ `V12-TRANSFORM-001`（明示rule）→ `V12-CANDIDATE-001`（候補空間）→ `V12-GATES-001`（specificity / genericness / counterfactual）→ `V12-SELECTION-001`（seed付き選択）→ `V12-PROVENANCE-001`（逆引きtrace）とする。`V12-CHILD-GATES-001`は境界契約後に独立実行でき、最後に`V12-E2E-001`で統合する。各taskは親control planeだけを変更対象とし、子repoのIssue・schema・canonical data変更は別task・別PR・子repo側の正本に従う。
+分解後の実装順は、`V12-BOUNDARY-001`（境界契約）→ `V12-TRANSFORM-001`（明示rule）→ `V12-CANDIDATE-001`（候補空間）→ `V12-GATES-001`（specificity / genericness / counterfactual）→ `V12-SELECTION-001`（seed付き選択）→ `V12-PROVENANCE-001`（逆引きtrace）とする。`V12-CHILD-GATES-001`は境界契約後に独立実行でき、immutable observed commitからの品質ゲート実行とstale/unknown/failed状態の保存まで完了した。次は`V12-PROVENANCE-001`、最後に`V12-E2E-001`で統合する。各taskは親control planeだけを変更対象とし、子repoのIssue・schema・canonical data変更は別task・別PR・子repo側の正本に従う。
 
 ## Concrete Steps
 

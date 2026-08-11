@@ -31,6 +31,7 @@ TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
+CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -67,6 +68,8 @@ REQUIRED_FILES = [
     "tools/candidate_gates.py",
     "schemas/research-selection.schema.json",
     "tools/candidate_selection.py",
+    "schemas/child-quality-gates.schema.json",
+    "tools/child_quality_gates.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -937,6 +940,56 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
                     )
     if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
         errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
+    return errors
+
+
+def validate_child_quality_gates(data: dict, source: str = "child-quality-gates") -> list[str]:
+    """Validate immutable child gate evidence and preserve stale/unknown/failed states."""
+    errors: list[str] = []
+    schema = load_json(CHILD_QUALITY_GATES_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the child-quality-gates field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    results = data.get("results")
+    if not isinstance(results, list):
+        return errors
+    if data.get("repository_count") != len(results):
+        errors.append(_signal_error(source, "repository_count does not equal results length", "derive the count from every manifest repository result"))
+    seen: set[str] = set()
+    for index, result in enumerate(results):
+        if not isinstance(result, dict):
+            continue
+        repository = result.get("repository")
+        if repository in seen:
+            errors.append(_signal_error(source, f"results[{index}] duplicates repository {repository!r}", "record one immutable gate result per repository"))
+        if isinstance(repository, str):
+            seen.add(repository)
+        status = result.get("status")
+        execution_mode = result.get("execution_mode")
+        gates = result.get("gates")
+        gate_statuses = [gate.get("status") for gate in gates if isinstance(gate, dict)] if isinstance(gates, list) else []
+        if status == "PASSED" and (execution_mode != "immutable-archive" or not gate_statuses or any(value != "PASSED" for value in gate_statuses)):
+            errors.append(_signal_error(source, f"results[{index}] PASSED without all immutable archive gates passing", "run every manifest command at the exact observed commit"))
+        if status == "FAILED" and "FAILED" not in gate_statuses:
+            errors.append(_signal_error(source, f"results[{index}] FAILED without a failed gate", "preserve the failing command status and redacted evidence"))
+        if status == "BLOCKED" and execution_mode != "NOT_RUN":
+            errors.append(_signal_error(source, f"results[{index}] BLOCKED with an execution mode", "do not report blocked work as executed"))
+        if result.get("workspace_state") in {"MISSING", "UNKNOWN"} and status != "BLOCKED":
+            errors.append(_signal_error(source, f"results[{index}] has unavailable workspace state but is not BLOCKED", "preserve missing or unknown child checkout state"))
+        for gate_index, gate in enumerate(gates if isinstance(gates, list) else []):
+            if not isinstance(gate, dict):
+                continue
+            gate_status = gate.get("status")
+            exit_code = gate.get("exit_code")
+            if gate_status == "PASSED" and exit_code != 0:
+                errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] passed with non-zero exit code", "retain the observed command exit status"))
+            if gate_status == "FAILED" and exit_code == 0:
+                errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] failed with zero exit code", "align gate status with the command result"))
+            if gate_status == "NOT_RUN" and exit_code is not None:
+                errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] NOT_RUN has an exit code", "leave exit_code null for unexecuted gates"))
     return errors
 
 
