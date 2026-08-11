@@ -353,7 +353,7 @@ tasks:
   - id: V12-CANDIDATE-001
     milestone: M10
     title: Generate a reproducible candidate space
-    status: READY
+    status: DONE
     depends_on: [V12-TRANSFORM-001]
     acceptance: Candidate generation enumerates or deterministically reduces signal/rule combinations, preserves all signal IDs and source repo@commit locators, and produces byte-identical candidates for the same snapshot and rules without LLM-added concepts.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
@@ -361,7 +361,7 @@ tasks:
   - id: V12-GATES-001
     milestone: M10
     title: Add specificity genericness and counterfactual gates
-    status: BACKLOG
+    status: READY
     depends_on: [V12-CANDIDATE-001]
     acceptance: Personal, historical, contemporary, provenance, genericness, and counterfactual specificity gates produce explicit PASS or REJECT evidence; generic candidates and candidates with missing required source dependencies are rejected in offline fixtures.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]

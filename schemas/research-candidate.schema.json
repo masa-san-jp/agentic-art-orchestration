@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/research-candidate.schema.json",
+  "title": "Deterministic research candidate space v1",
+  "description": "A provenance-preserving candidate space containing references only; proposition wording is produced by a later gated stage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "snapshot_id", "rule_set_hash", "candidate_count", "candidates"],
+  "properties": {
+    "contract_version": {
+      "const": "research-candidate/v1"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rule_set_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    }
+  },
+  "$defs": {
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "rule_id", "inputs", "composition"],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^candidate:[0-9a-f]{16}$"
+        },
+        "rule_id": {
+          "type": "string",
+          "pattern": "^R[0-9]+$"
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["self", "art-history", "marketing"],
+          "properties": {
+            "self": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/input_ref"}
+            },
+            "art-history": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/input_ref"}
+            },
+            "marketing": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/input_ref"}
+            }
+          }
+        },
+        "composition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["personal_tension", "historical_operation", "contemporary_condition"],
+          "properties": {
+            "personal_tension": {"$ref": "#/$defs/slot_ref"},
+            "historical_operation": {"$ref": "#/$defs/slot_ref"},
+            "contemporary_condition": {"$ref": "#/$defs/slot_ref"}
+          }
+        }
+      }
+    },
+    "input_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_id",
+        "signal_kind",
+        "attribute",
+        "source_repository",
+        "source_commit",
+        "source_entity_ids",
+        "source_locators",
+        "evidence_locators"
+      ],
+      "properties": {
+        "signal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signal_kind": {
+          "type": "string",
+          "enum": ["self", "art-history", "marketing"]
+        },
+        "attribute": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "source_repository": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "source_entity_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "source_locators": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "evidence_locators": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "slot_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "signal_kind", "attribute"],
+      "properties": {
+        "signal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signal_kind": {
+          "type": "string",
+          "enum": ["self", "art-history", "marketing"]
+        },
+        "attribute": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        }
+      }
+    }
+  }
+}
