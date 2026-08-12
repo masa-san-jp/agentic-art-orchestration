@@ -1,5 +1,5 @@
 version: 4
-updated_at: "2026-08-13T06:41:22+09:00"
+updated_at: "2026-08-13T06:47:47+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -466,7 +466,7 @@ tasks:
   - id: V121-RELEASE-001
     milestone: M12
     title: Release the qualified v1.2.1 baseline through the human gate
-    status: IN_PROGRESS
+    status: BLOCKED
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY

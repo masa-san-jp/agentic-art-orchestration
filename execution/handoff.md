@@ -658,6 +658,18 @@
 
 1. 人間がqualification evidenceと親差分をレビューし、`V121-RELEASE-001`のmerge・v1.2.1 tag・GitHub Releaseを明示承認する。最初の操作は`git status --short --branch`。
 
+## V121-RELEASE-001 review gate
+
+- PR #17（`design/initial-operations-roadmap` → `main`）を作成し、originへpushした。最新main取り込み後のheadは`fbb24b9fb2faa2fbf3475155d8e8ee6fec1c7fe7`で、PR状態はOPEN/DRAFT/MERGEABLE。
+- 最新main `c8ecbf819b310411cfa28153ddd50ae04b75fdc8`との衝突を親repo内で解消し、production linkage（MANIFEST-PRODUCTION-003）とv1.2.1 qualification計画・証跡を併存させた。子repoは変更していない。
+- GitHub Actions `bootstrap`はSUCCESS。GitHub review submissionsは0件、inline review threadsは0件。親ローカルではvalidator OK、215 tests PASS、status CLEAN、audit 0件、security PASSED、`git diff --check` PASS。
+- PR準備中に実行した外部操作は親branchのpushと親PR #17作成のみ。子repo、GitHub Issue、Google Drive、merge、tag、Release、共有範囲変更は未実行。
+- acceptance: PR準備とレビュー可能状態の確認は達成。merge・v1.2.1 tag・GitHub Releaseは人間ゲートのため未達成。`V121-RELEASE-001`はBLOCKED、leaseはreleasedとし、観測事実・推奨・解除条件をstateへ記録した。
+
+## Next exact action
+
+1. 人間がPR #17の差分とqualification evidenceをレビューし、「PR #17をmainへmergeし、merge後のSHAへv1.2.1 tagとGitHub Releaseを作成・公開する」と明示承認する。承認後の最初の操作は`gh pr view 17 --repo masa-san-jp/agentic-art-orchestration --json mergeable,reviewDecision,statusCheckRollup`。
+
 ## MANIFEST-PRODUCTION-003 post-merge reconciliation
 
 - 親repoのPR #15は2026-08-12 18:57:36 JSTにmergeされ、merge commitは`e5abdf00a6812d89059d87c07a6166ba73f15c87`。
