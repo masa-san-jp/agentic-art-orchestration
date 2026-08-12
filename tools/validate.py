@@ -32,6 +32,7 @@ CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
+RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -70,6 +71,8 @@ REQUIRED_FILES = [
     "tools/candidate_selection.py",
     "schemas/child-quality-gates.schema.json",
     "tools/child_quality_gates.py",
+    "schemas/research-provenance.schema.json",
+    "tools/proposition_provenance.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -990,6 +993,126 @@ def validate_child_quality_gates(data: dict, source: str = "child-quality-gates"
                 errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] failed with zero exit code", "align gate status with the command result"))
             if gate_status == "NOT_RUN" and exit_code is not None:
                 errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] NOT_RUN has an exit code", "leave exit_code null for unexecuted gates"))
+    return errors
+
+
+def validate_research_provenance(data: dict, source: str = "provenance") -> list[str]:
+    """Validate that every structured proposition reference remains traceable."""
+    errors: list[str] = []
+    schema = load_json(RESEARCH_PROVENANCE_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the research-provenance field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    propositions = data.get("propositions")
+    selection = data.get("selection_decision")
+    if not isinstance(propositions, list) or not isinstance(selection, dict):
+        return errors
+    if data.get("proposition_count") != len(propositions):
+        errors.append(_signal_error(source, "proposition_count does not equal propositions length", "derive the count from every emitted proposition trace"))
+    selected_refs = selection.get("selected_candidates")
+    if not isinstance(selected_refs, list):
+        return errors
+    if selection.get("selected_count") != len(selected_refs):
+        errors.append(_signal_error(source, "selection_decision.selected_count does not equal selected_candidates length", "preserve the selection decision count"))
+    selected_by_id: dict[str, dict] = {}
+    ranks: list[int] = []
+    for index, selected in enumerate(selected_refs):
+        if not isinstance(selected, dict):
+            continue
+        candidate_id = selected.get("candidate_id")
+        if candidate_id in selected_by_id:
+            errors.append(_signal_error(source, f"selection_decision.selected_candidates[{index}] duplicates {candidate_id!r}", "record one selection decision per candidate"))
+        if isinstance(candidate_id, str):
+            selected_by_id[candidate_id] = selected
+        rank = selected.get("rank")
+        if isinstance(rank, int) and not isinstance(rank, bool):
+            ranks.append(rank)
+    if ranks and sorted(ranks) != list(range(1, len(ranks) + 1)):
+        errors.append(_signal_error(source, "selection decision ranks are not contiguous from 1", "retain the deterministic selection ranks"))
+    proposition_ids: set[str] = set()
+    proposition_candidates: set[str] = set()
+    for index, proposition in enumerate(propositions):
+        if not isinstance(proposition, dict):
+            continue
+        proposition_id = proposition.get("proposition_id")
+        if proposition_id in proposition_ids:
+            errors.append(_signal_error(source, f"propositions[{index}] duplicates proposition_id {proposition_id!r}", "derive one stable proposition ID per selected candidate"))
+        if isinstance(proposition_id, str):
+            proposition_ids.add(proposition_id)
+        candidate_id = proposition.get("candidate_id")
+        if candidate_id in proposition_candidates:
+            errors.append(_signal_error(source, f"propositions[{index}] duplicates candidate_id {candidate_id!r}", "emit one proposition trace per selected candidate"))
+        if isinstance(candidate_id, str):
+            proposition_candidates.add(candidate_id)
+        selected_ref = selected_by_id.get(candidate_id)
+        if selected_ref is None:
+            errors.append(_signal_error(source, f"propositions[{index}] is not present in the selection decision", "trace only candidates selected by the seeded decision"))
+        elif proposition.get("selection") != selected_ref:
+            errors.append(_signal_error(source, f"propositions[{index}] selection differs from selection_decision", "copy rank and score without mutation"))
+        candidate = proposition.get("candidate")
+        rule = proposition.get("rule")
+        structured = proposition.get("structured_output")
+        signals = proposition.get("normalized_signals")
+        if not isinstance(candidate, dict) or not isinstance(rule, dict) or not isinstance(structured, dict) or not isinstance(signals, list):
+            continue
+        if candidate.get("candidate_id") != candidate_id or candidate.get("rule_id") != proposition.get("rule_id"):
+            errors.append(_signal_error(source, f"propositions[{index}] candidate identity is inconsistent", "preserve candidate and rule IDs through the trace"))
+        if rule.get("rule_id") != proposition.get("rule_id") or rule.get("rule_set_hash") != data.get("rule_set_hash"):
+            errors.append(_signal_error(source, f"propositions[{index}] rule identity is inconsistent", "preserve the active rule and registry hash"))
+        if structured.get("output_type") != rule.get("output_type") or structured.get("template") != rule.get("template"):
+            errors.append(_signal_error(source, f"propositions[{index}] structured output differs from rule", "use the finite rule template without free-form rewriting"))
+        trace_by_id: dict[str, dict] = {}
+        for signal_index, trace in enumerate(signals):
+            if not isinstance(trace, dict):
+                continue
+            signal_id = trace.get("signal_id")
+            if signal_id in trace_by_id:
+                errors.append(_signal_error(source, f"propositions[{index}].normalized_signals[{signal_index}] duplicates {signal_id!r}", "record one trace per normalized signal"))
+            if isinstance(signal_id, str):
+                trace_by_id[signal_id] = trace
+        if {trace.get("signal_kind") for trace in trace_by_id.values()} != {"self", "art-history", "marketing"}:
+            errors.append(_signal_error(source, f"propositions[{index}] does not trace all required signal kinds", "preserve self, art-history, and marketing provenance"))
+        inputs = candidate.get("inputs")
+        if isinstance(inputs, dict):
+            for kind, refs in inputs.items():
+                if not isinstance(refs, list):
+                    continue
+                for ref_index, ref in enumerate(refs):
+                    if not isinstance(ref, dict):
+                        continue
+                    if ref.get("signal_kind") != kind:
+                        errors.append(_signal_error(source, f"propositions[{index}].candidate.inputs.{kind}[{ref_index}] has an inconsistent signal kind", "keep each provenance reference in its declared signal bucket"))
+                    trace = trace_by_id.get(ref.get("signal_id"))
+                    if trace is None:
+                        errors.append(_signal_error(source, f"propositions[{index}].candidate.inputs.{kind}[{ref_index}] has no normalized signal trace", "retain every selected signal in normalized_signals"))
+                        continue
+                    for field in ("signal_kind", "source_repository", "source_commit", "source_entity_ids", "source_locators", "evidence_locators"):
+                        if ref.get(field) != trace.get(field):
+                            errors.append(_signal_error(source, f"propositions[{index}] input {ref.get('signal_id')!r} mismatches normalized signal {field}", "preserve source provenance exactly"))
+                    if ref.get("attribute") not in trace.get("attributes", []):
+                        errors.append(_signal_error(source, f"propositions[{index}] input attribute is absent from normalized signal trace", "retain every referenced attribute"))
+        slots = structured.get("slots") if isinstance(structured, dict) else None
+        composition = candidate.get("composition")
+        if isinstance(slots, dict) and isinstance(composition, dict):
+            for slot_name, slot in slots.items():
+                if not isinstance(slot, dict) or not isinstance(composition.get(slot_name), dict):
+                    continue
+                composition_ref = composition[slot_name]
+                trace = trace_by_id.get(slot.get("signal_id"))
+                if trace is None:
+                    continue
+                for field in ("signal_id", "signal_kind", "attribute"):
+                    if slot.get(field) != composition_ref.get(field):
+                        errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} loses composition {field}", "preserve rule slot identity"))
+                if slot.get("source_repository") != trace.get("source_repository") or slot.get("source_commit") != trace.get("source_commit"):
+                    errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} loses source identity", "copy repository and commit from the normalized signal trace"))
+                if slot.get("evidence_locator") not in trace.get("evidence_locators", []):
+                    errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} has an untraceable evidence locator", "use an evidence locator from the normalized signal"))
+    if len(propositions) != len(selected_by_id):
+        errors.append(_signal_error(source, "proposition count does not cover the selection decision", "emit one proposition trace for every selected candidate"))
     return errors
 
 

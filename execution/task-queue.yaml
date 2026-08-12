@@ -377,7 +377,7 @@ tasks:
   - id: V12-PROVENANCE-001
     milestone: M10
     title: Extend proposition provenance through selection
-    status: READY
+    status: DONE
     depends_on: [V12-SELECTION-001]
     acceptance: A Research Proposition traces through selection decision, candidate, rule, normalized signals, source repository@commit, and evidence locator; missing or mismatched provenance fails validation rather than being normalized.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
@@ -393,7 +393,7 @@ tasks:
   - id: V12-E2E-001
     milestone: M10
     title: Integrate and reproduce the v1.2 research execution path
-    status: BACKLOG
+    status: READY
     depends_on: [V12-PROVENANCE-001, V12-CHILD-GATES-001]
     acceptance: Offline E2E connects normalized signals, explicit rules, candidate generation, gates, seeded selection, proposition provenance, and child quality-gate evidence; repeated runs are deterministic and v1.1 interaction/artifact behavior remains unchanged.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
