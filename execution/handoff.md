@@ -611,3 +611,13 @@
 - `/tmp/aap-bootstrap-venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 211 tests pass。`git diff --check`: pass。
 - 機微情報、会話全文、Drive本文、asset body、credential、signed URLは追加していない。外部effect、物理作業、merge、tag、releaseは実行していない。
 - acceptance: 1/1達成。task/leaseはDONE/released。次はdraft PRのhuman reviewであり、merge後に親manifestからIssue #10へのmain上の結線が確立する。
+
+## MANIFEST-PRODUCTION-002 evidence
+
+- `agentic-art-production` の現在の `main` を再確認し、Issue #10がopenの要件SSOTであること、最新pinが `80aa824de33fddf7dc6dff526191699ce483bea0` であることを記録した。親manifestのProduction pinを更新し、子CIに存在する `python3 tools/run_evaluation.py --format json` を親quality gateへ追加した。
+- `/tmp/aap-bootstrap-venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 214 tests pass。`git diff --check`: pass。
+- `/tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-prod-revalidation-L4KFv6 --run-id production-revalidation`: 5 repository、12 gateすべて `PASSED`。Productionはvalidate、tests、evaluationの3 gateすべてPASSED。再実行 `--check` もPASSED。
+- child gate runnerは、意味上の証跡を維持したままruntime-onlyの `duration_ms`、一時path、unittest実行時間を正規化して比較する。status、exit code、command、redacted output、output hash、manifest pinは比較対象として保持する。
+- 固定checkoutは5件すべてobserved commitと一致し、detachedかつdirtyなし。子repoのbranch、Issue、schema、canonical data、品質ゲート、PRは変更していない。Google Drive、外部artifact、merge、tag、release、物理effectも変更していない。
+- 機密情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは親へ追加していない。gate outputはredact・hash済みで、一時パスは正規化した。
+- acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。次はPR #15のhuman reviewとmerge判断であり、merge後にのみ親main上の結線が成立する。

@@ -1,28 +1,29 @@
 version: 2
-updated_at: "2026-08-12T18:05:00+09:00"
+updated_at: "2026-08-12T18:23:30+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-production-ssot-review
-  acquired_at: "2026-08-12T17:45:02+09:00"
-  expires_at: "2026-08-12T19:45:02+09:00"
+  owner: codex-production-revalidation
+  acquired_at: "2026-08-12T18:06:30+09:00"
+  expires_at: "2026-08-12T19:06:30+09:00"
   lane: MANIFEST_ONBOARDING
-  execution_id: MANIFEST-PRODUCTION-001:attempt-1
-  released_at: "2026-08-12T18:05:00+09:00"
+  execution_id: MANIFEST-PRODUCTION-002:attempt-1
+  released_at: "2026-08-12T18:23:30+09:00"
+  release_reason: completed
   scope:
     repository: agentic-art-orchestration
     paths: [config/repositories.yaml, schemas/repository-manifest.schema.json, tools/validate.py, tools/workspace.py, tools/audit.py, tools/improvement_loop.py, tests, README.md, docs, execution]
 checkpoint:
-  task: MANIFEST-PRODUCTION-001
+  task: MANIFEST-PRODUCTION-002
   repository: agentic-art-orchestration
-  start_point: aff0744132ea08dacbcd09c457a8e3daed32d44b
-  expected_changes: Append agentic-art-production with Issue 10 as same-repository requirement SSOT and represent its handoff/result exchange boundary in schema, validation, snapshot, audit, tests, and documentation.
-  result: completed
-last_completed_task: MANIFEST-PRODUCTION-001
+  start_point: 47007909aad7c44be15b862a297ee8426915839b
+  expected_changes: Refresh the production manifest pin to the current child main commit and include every child CI quality gate, especially run_evaluation.py.
+  result: completed; current child main pin and CI evaluation gate revalidated, parent and all five immutable child gates passed
+last_completed_task: MANIFEST-PRODUCTION-002
 resume_from:
   task: null
-  action: Review the MANIFEST-PRODUCTION-001 draft PR and merge only through the existing human gate.
+  action: Review PR #15 with the latest production pin and merge only through the human gate.
   command: git status -sb
 release:
   status: released
@@ -34,5 +35,5 @@ release:
   released_at: "2026-08-12T13:29:42+09:00"
 blocked: []
 last_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; git diff --check
-  result: passed; manifest validation passed, all 211 parent tests passed, and diff check passed. Five-repository offline init/snapshot/audit/security and v1.2 E2E passed while the legacy four-core-repository failure fixture remained deterministic. agentic-art-production was read-only and no child branch, Issue body, canonical data, external artifact, merge, tag, release, or physical/external effect was changed by the parent implementation; 2026-08-12T18:05:00+09:00
+  command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-prod-revalidation-L4KFv6 --run-id production-revalidation --check; git diff --check
+  result: passed; parent 214 tests passed, all five repositories matched their observed commits and all 12 immutable child gates passed, including agentic-art-production validate/tests/evaluation. Runtime-only gate paths and test durations are normalized for repeatable --check evidence; 2026-08-12T18:23:30+09:00

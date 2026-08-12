@@ -205,6 +205,19 @@ def _render(data: dict) -> bytes:
     return (canonical_json(data) + "\n").encode("utf-8")
 
 
+def _deterministic_view(value: object) -> object:
+    """Remove runtime-only measurements before comparing generated evidence."""
+    if isinstance(value, dict):
+        return {
+            key: _deterministic_view(item)
+            for key, item in value.items()
+            if key != "duration_ms"
+        }
+    if isinstance(value, list):
+        return [_deterministic_view(item) for item in value]
+    return value
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run manifest child gates from immutable observed commits")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -230,8 +243,13 @@ def main() -> int:
         except OSError as exc:
             print(f"ERROR: {args.output}: {exc}; remediation: generate child gate evidence first", file=sys.stderr)
             return 1
-        if observed != rendered:
-            print(f"ERROR: {args.output}: generated child gate bytes differ; remediation: regenerate immutable gate evidence", file=sys.stderr)
+        try:
+            observed_data = json.loads(observed)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            print(f"ERROR: {args.output}: stored child gate evidence is not valid JSON: {exc}; remediation: regenerate immutable gate evidence", file=sys.stderr)
+            return 1
+        if _deterministic_view(observed_data) != _deterministic_view(report):
+            print(f"ERROR: {args.output}: generated child gate evidence differs beyond runtime-only duration; remediation: regenerate immutable gate evidence", file=sys.stderr)
             return 1
         changed = False
     else:

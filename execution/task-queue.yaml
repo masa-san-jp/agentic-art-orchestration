@@ -413,3 +413,11 @@ tasks:
     depends_on: [V12-RELEASE-001]
     acceptance: The parent manifest references agentic-art-production Issue 10 in the same repository, represents production-handoff v1 and production-result v1 without misclassifying the runtime as a normalized-signal producer or consumer, and passes parent validation and tests without mutating the child repository.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: MANIFEST-PRODUCTION-002
+    milestone: M11
+    title: Revalidate Agentic Art Production at its current main commit
+    status: DONE
+    depends_on: [MANIFEST-PRODUCTION-001]
+    acceptance: The parent manifest pins the current agentic-art-production main commit, mirrors all declared child CI quality gates including evaluation, and passes parent validation plus the pinned child gates without mutating the child repository.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id production-revalidation --check]
