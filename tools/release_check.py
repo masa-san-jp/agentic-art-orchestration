@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run read-only v1.0/v1.1 qualification checks without releasing anything."""
+"""Run read-only v1.0/v1.1/v1.2 qualification checks without releasing anything."""
 
 from __future__ import annotations
 
@@ -14,10 +14,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ASYNC_AUDIT_FIXTURE_STATE = ROOT / "tests/fixtures/async-audit/state.yaml"
+V12_FIXTURE = ROOT / "tests/fixtures/v12-candidates"
+V12_MANIFEST = ROOT / "config/repositories.yaml"
+V12_WORKSPACE_ROOT = ROOT / "repos"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.e2e import run_e2e
+from tools.v12_e2e import run_v12_e2e
 from tools.interaction_e2e import run_interaction_e2e
 
 
@@ -37,9 +41,14 @@ HISTORY_EXEMPT_VALUES = {"supersecret", "synthetic-value", "synthetic-secret"}
 
 
 def _run(command: list[str]) -> tuple[int, str, str]:
+    environment = os.environ.copy()
+    environment["PATH"] = os.pathsep.join(
+        [str(Path(sys.executable).parent), environment.get("PATH", "")]
+    )
     completed = subprocess.run(
         command,
         cwd=ROOT,
+        env=environment,
         capture_output=True,
         text=True,
         check=False,
@@ -55,8 +64,8 @@ def _git(command: list[str]) -> str:
 
 
 def validate_request(version: str, runs: int) -> None:
-    if version not in {"1.0.0", "1.1.0"}:
-        raise ReleaseCheckError("only versions 1.0.0 and 1.1.0 are supported; remediation: qualify the declared task version")
+    if version not in {"1.0.0", "1.1.0", "1.2.0"}:
+        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, and 1.2.0 are supported; remediation: qualify the declared task version")
     if runs <= 0:
         raise ReleaseCheckError("runs must be positive; remediation: use at least one deterministic E2E run")
 
@@ -197,7 +206,147 @@ def _interaction_e2e_check(runs: int) -> dict:
     }
 
 
-def qualify(version: str = "1.0.0", runs: int = 3) -> dict:
+def _v12_e2e_check(runs: int, workspace_root: Path = V12_WORKSPACE_ROOT) -> dict:
+    """Qualify v1.2 and require every pinned child quality gate to pass."""
+    summaries: list[dict] = []
+    error_types: list[str] = []
+    for index in range(runs):
+        try:
+            result = run_v12_e2e(
+                run_id=f"V12-RELEASE-001:attempt-{index + 1}",
+                fixture_dir=V12_FIXTURE,
+                manifest_path=V12_MANIFEST,
+                workspace_root=workspace_root,
+            )
+            summaries.append(
+                {
+                    "acceptance": {
+                        key: result["acceptance"].get(key) is True
+                        for key in sorted(result["acceptance"])
+                    },
+                    "child_statuses": result["child_quality_gates"]["statuses"],
+                    "child_workspace_states": result["child_quality_gates"]["workspace_states"],
+                    "child_execution_modes": result["child_quality_gates"]["execution_modes"],
+                    "remote_operations": result["remote_operations"],
+                }
+            )
+        except Exception as exc:  # qualification report must remain sanitized
+            error_types.append(type(exc).__name__)
+    deterministic = bool(summaries) and len(summaries) == runs and all(
+        summary == summaries[0] for summary in summaries[1:]
+    )
+    acceptance_passed = bool(summaries) and all(
+        all(summary["acceptance"].values()) for summary in summaries
+    )
+    child_gates_passed = bool(summaries) and all(
+        summary["child_statuses"] == ["PASSED"]
+        and summary["child_execution_modes"] == ["immutable-archive"]
+        for summary in summaries
+    )
+    no_remote_mutation = bool(summaries) and all(
+        summary["remote_operations"] == [] for summary in summaries
+    )
+    passed = deterministic and acceptance_passed and child_gates_passed and no_remote_mutation
+    return {
+        "id": "v1.2-e2e",
+        "status": "PASSED" if passed else "FAILED",
+        "runs": runs,
+        "deterministic": deterministic,
+        "acceptance_passed": acceptance_passed,
+        "child_gates_passed": child_gates_passed,
+        "no_remote_mutation": no_remote_mutation,
+        "error_types": sorted(set(error_types)),
+        "child_statuses": summaries[0]["child_statuses"] if summaries else [],
+        "child_workspace_states": summaries[0]["child_workspace_states"] if summaries else [],
+        "child_execution_modes": summaries[0]["child_execution_modes"] if summaries else [],
+    }
+
+
+def _v12_child_quality_gate_check(
+    report_path: Path = ROOT / "data/child-quality-gates.json",
+) -> dict:
+    """Require the materialized child-gate report to contain only PASS results."""
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {
+            "id": "v1.2-child-quality-gates-result",
+            "status": "FAILED",
+            "repository_count": 0,
+            "repository_statuses": [],
+            "gate_statuses": [],
+            "execution_modes": [],
+        }
+    results = report.get("results", [])
+    repository_statuses = sorted({item.get("status") for item in results})
+    gate_statuses = sorted(
+        {
+            gate.get("status")
+            for item in results
+            for gate in item.get("gates", [])
+        }
+    )
+    execution_modes = sorted({item.get("execution_mode") for item in results})
+    passed = bool(results) and repository_statuses == ["PASSED"] and gate_statuses == ["PASSED"]
+    return {
+        "id": "v1.2-child-quality-gates-result",
+        "status": "PASSED" if passed else "FAILED",
+        "repository_count": len(results),
+        "repository_statuses": repository_statuses,
+        "gate_statuses": gate_statuses,
+        "execution_modes": execution_modes,
+    }
+
+
+def _v12_release_checks(python: str, workspace_root: Path) -> list[dict]:
+    """Materialize v1.2 child and E2E evidence in an isolated temporary directory."""
+    with tempfile.TemporaryDirectory(prefix="release-v12-") as temporary_name:
+        temporary = Path(temporary_name)
+        child_report = temporary / "child-quality-gates.json"
+        e2e_report = temporary / "v12-e2e.json"
+        checks = [
+            _command_check(
+                "v1.2-child-quality-gates",
+                [
+                    python,
+                    "tools/child_quality_gates.py",
+                    "--manifest",
+                    str(V12_MANIFEST),
+                    "--workspace-root",
+                    str(workspace_root),
+                    "--run-id",
+                    "v12-child-gates",
+                    "--output",
+                    str(child_report),
+                ],
+            ),
+            _command_check(
+                "v1.2-e2e-materialize",
+                [
+                    python,
+                    "tools/v12_e2e.py",
+                    "--run-id",
+                    "v12-e2e",
+                    "--fixture",
+                    str(V12_FIXTURE),
+                    "--manifest",
+                    str(V12_MANIFEST),
+                    "--workspace-root",
+                    str(workspace_root),
+                    "--output",
+                    str(e2e_report),
+                ],
+            ),
+            _v12_child_quality_gate_check(child_report),
+        ]
+        return checks
+
+
+def qualify(
+    version: str = "1.0.0",
+    runs: int = 3,
+    workspace_root: Path = V12_WORKSPACE_ROOT,
+) -> dict:
     """Return a deterministic qualification report; never create a tag, commit, or release."""
     validate_request(version, runs)
     python = sys.executable
@@ -205,7 +354,7 @@ def qualify(version: str = "1.0.0", runs: int = 3) -> dict:
         _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
         _command_check("audit-materialize", [python, "tools/audit.py", "--offline-fixture"]),
     ]
-    if version == "1.1.0":
+    if version in {"1.1.0", "1.2.0"}:
         checks.extend(
             [
                 _command_check("retrieval-materialize", [python, "tools/retrieval.py"]),
@@ -228,7 +377,7 @@ def qualify(version: str = "1.0.0", runs: int = 3) -> dict:
             _command_check("security", [python, "tools/security.py", "--offline-fixture"]),
         ]
     )
-    if version == "1.1.0":
+    if version in {"1.1.0", "1.2.0"}:
         checks.extend(
             [
                 _command_check("retrieval", [python, "tools/retrieval.py", "--check"]),
@@ -261,18 +410,24 @@ def qualify(version: str = "1.0.0", runs: int = 3) -> dict:
                 ),
             ]
         )
+    if version == "1.2.0":
+        checks.extend(_v12_release_checks(python, workspace_root))
     e2e = _e2e_check(runs)
-    interaction_e2e = _interaction_e2e_check(runs) if version == "1.1.0" else None
+    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0"} else None
+    v12_e2e = _v12_e2e_check(runs, workspace_root) if version == "1.2.0" else None
     history = _history_forbidden_findings()
     passed = (
         all(item["status"] == "PASSED" for item in checks)
         and e2e["status"] == "PASSED"
         and (interaction_e2e is None or interaction_e2e["status"] == "PASSED")
+        and (v12_e2e is None or v12_e2e["status"] == "PASSED")
         and history["status"] == "PASSED"
     )
     report_checks = checks + [e2e]
     if interaction_e2e is not None:
         report_checks.append(interaction_e2e)
+    if v12_e2e is not None:
+        report_checks.append(v12_e2e)
     return {
         "version": version,
         "network": "disabled",
@@ -301,13 +456,15 @@ def _write_atomic(path: Path, content: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Qualify v1.0.0 or v1.1.0 without performing release operations")
+    parser = argparse.ArgumentParser(description="Qualify v1.0.0, v1.1.0, or v1.2.0 without performing release operations")
     parser.add_argument("--version", required=True)
     parser.add_argument("--runs", type=int, default=3)
+    parser.add_argument("--workspace-root", type=Path, default=V12_WORKSPACE_ROOT)
     parser.add_argument("--output", type=Path, default=ROOT / "data/release-check.json")
     args = parser.parse_args()
     try:
-        result = qualify(args.version, args.runs)
+        workspace_root = args.workspace_root if args.workspace_root.is_absolute() else Path.cwd() / args.workspace_root
+        result = qualify(args.version, args.runs, workspace_root.resolve())
         output = args.output if args.output.is_absolute() else Path.cwd() / args.output
         _write_atomic(output.resolve(), json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     except (OSError, ReleaseCheckError, ValueError, KeyError):

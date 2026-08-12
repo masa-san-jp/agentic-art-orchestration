@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
-from tools.v12_e2e import run_v12_e2e
+from tools.v12_e2e import _deterministic_view, run_v12_e2e
 from tools.validate import load_yaml, validate_v12_e2e
 
 
@@ -60,6 +60,11 @@ class V12E2ETests(unittest.TestCase):
         self.assertEqual("v12-e2e/v1", schema["properties"]["contract_version"]["const"])
         self.assertEqual("disabled", schema["properties"]["network"]["const"])
         self.assertEqual([], schema["properties"]["remote_operations"]["const"])
+
+    def test_deterministic_view_ignores_only_runtime_gate_output(self):
+        first = {"duration_ms": 1, "output_sha256": "a", "nested": [{"status": "PASSED"}]}
+        second = {"duration_ms": 99, "output_sha256": "b", "nested": [{"status": "PASSED"}]}
+        self.assertEqual(_deterministic_view(first), _deterministic_view(second))
 
 
 if __name__ == "__main__":

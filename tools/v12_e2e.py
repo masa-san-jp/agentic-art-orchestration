@@ -49,6 +49,24 @@ def _render(data: dict) -> bytes:
     return (canonical_json(data) + "\n").encode("utf-8")
 
 
+def _deterministic_view(value: object) -> object:
+    """Remove runtime-only gate output before comparing repeated runs."""
+    if isinstance(value, dict):
+        return {
+            key: _deterministic_view(child)
+            for key, child in value.items()
+            if key not in {
+                "duration_ms",
+                "output_redacted",
+                "output_sha256",
+                "output_truncated",
+            }
+        }
+    if isinstance(value, list):
+        return [_deterministic_view(child) for child in value]
+    return value
+
+
 def _summary(
     candidate_space: dict,
     gate_report: dict,
@@ -99,8 +117,8 @@ def run_v12_e2e(
     second["gate_report"] = build_gate_report(second["candidate_space"], copy.deepcopy(signals), copy.deepcopy(registry), "v12-e2e.gates")
     second["selection"] = build_selection(second["candidate_space"], second["gate_report"], "agentic-art-orchestration", "v12-e2e", 1, "v12-e2e.selection")
     second["provenance"] = build_provenance(second["selection"], second["candidate_space"], second["gate_report"], copy.deepcopy(signals), copy.deepcopy(registry), "v12-e2e.provenance")
-    if first != second:
-        raise V12E2EError("repeated v1.2 pipeline output is not byte-identical; remediation: remove nondeterministic inputs")
+    if _deterministic_view(first) != _deterministic_view(second):
+        raise V12E2EError("repeated v1.2 pipeline evidence is not deterministic; remediation: remove nondeterministic inputs")
     interaction = run_interaction_e2e(f"{run_id}:v11-regression")
     v11_regression = {
         "interaction_contract": interaction["contract_version"],
@@ -137,7 +155,7 @@ def run_v12_e2e(
         "v11_regression": v11_regression,
         "acceptance": {
             "signals_to_provenance": provenance["proposition_count"] == selection["selected_count"] and set(_summary(candidate_space, gate_report, selection, provenance, child_gates)["signal_ids"]) == {signal["signal_id"] for signal in signals},
-            "selection_deterministic": first == second,
+            "selection_deterministic": _deterministic_view(first) == _deterministic_view(second),
             "child_gates_observed": child_gates["repository_count"] == len(manifest["repositories"]),
             "v11_unchanged": v11_regression["interaction_contract"] == "interaction-e2e/v1" and v11_regression["artifact_policy"] == "CREATE_ONLY" and v11_regression["raw_conversation_stored"] is False,
             "no_child_mutation": all(item["workspace_state"] != "DIRTY" for item in child_gates["results"]),

@@ -76,6 +76,12 @@ v1.1.0のqualificationは、上記v1.0ゲートに加えてretrieval、Drive cre
 .venv/bin/python tools/release_check.py --version 1.1.0 --runs 3
 ~~~
 
+v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、manifestが固定する4子repoの品質ゲートを各observed commitのimmutable archiveから実行する。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
+
+~~~bash
+.venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>
+~~~
+
 `data/release-check.json`で`status=PASSED`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`を確認する。qualification成功だけではrelease済みとは扱わず、merge、tag、release、公開、共有範囲拡張、artifact削除は人間の明示承認後に別途実行する。
 
 ## 3. taskを実行する

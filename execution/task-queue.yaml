@@ -1,5 +1,5 @@
 version: 2
-updated_at: "2026-08-12T00:36:57+09:00"
+updated_at: "2026-08-12T11:18:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -397,3 +397,11 @@ tasks:
     depends_on: [V12-PROVENANCE-001, V12-CHILD-GATES-001]
     acceptance: Offline E2E connects normalized signals, explicit rules, candidate generation, gates, seeded selection, proposition provenance, and child quality-gate evidence; repeated runs are deterministic and v1.1 interaction/artifact behavior remains unchanged.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V12-RELEASE-001
+    milestone: M10
+    title: Qualify v1.2.0 with pinned child quality gates
+    status: DONE
+    depends_on: [V12-E2E-001]
+    acceptance: Read-only v1.2.0 qualification runs the parent checks, deterministic v1.2 E2E, and every manifest-pinned child gate; any stale, blocked, or failed child gate blocks qualification, and no merge, tag, or release operation is performed.
+    checks: [python3 tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>]

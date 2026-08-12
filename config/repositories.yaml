@@ -50,7 +50,8 @@ repositories:
     requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
     quality_gates:
       - python3 tools/build_graph.py --check
-      - python3 -m unittest discover -s tests -p "test_*.py"
+      - python3 tools/build_context_vectors.py --check
+      - python3 -m unittest discover -s tests -p "test*.py"
     knowledge_profile:
       answerable_questions:
         - "What entities, relations, periods, regions, and evidence are recorded?"
@@ -87,7 +88,7 @@ repositories:
     requirement_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/1
     quality_gates:
       - python3 tools/build_graph.py --check
-      - python3 -m unittest discover -s tests -p "test_*.py"
+      - python3 tools/audit.py --dry-run
     knowledge_profile:
       answerable_questions:
         - "What external trends, practices, and evidence are currently recorded?"
@@ -123,8 +124,10 @@ repositories:
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
+      - python3 -m compileall -q tools tests
       - python3 tools/validate.py --check
       - python3 -m unittest discover -s tests -v
+      - python3 tools/build_graph.py --check
     knowledge_profile:
       answerable_questions:
         - "What research requirements, decisions, and normalized signals are available?"

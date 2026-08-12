@@ -16,7 +16,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research を、独
 
 初期ブートストラップからM9のv1.1.0 qualificationまでを完了した。qualificationはread-onlyでPASSEDだが、merge、tag、release、公開、共有範囲拡張は人間gateとして未実行である。v1.0は、4リポジトリを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
 
-親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2バックログ`V12-ISSUE2-001`で扱う。v1.2ではrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance拡張を設計・実装する。
+親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2で実装・qualification済みである。v1.2はrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance、固定commit child quality gateを含む。qualificationはread-onlyであり、merge・tag・GitHub Releaseはhuman gateとして別途承認する。
 
 v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加する。現在の4repoはcore setであり、新規repoは置換ではなくmanifestへ追加し、同じ正本・契約・snapshot・品質ゲートを要求する。
 
