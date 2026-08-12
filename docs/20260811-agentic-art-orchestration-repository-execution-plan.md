@@ -56,6 +56,7 @@ python3 -m unittest discover -s tests -v
 - 2026-08-12: v1.1のDrive、Issue、improvement、auditはnetworkless contractとして完成しているが、実Drive write、実Issue create、agent startupへの接続は未実装であり、運用完成と同義ではない。
 - 2026-08-12: manifestのProduction契約宣言とchild gate成功だけではResearch→Production→Researchの往復を証明しない。親mainが固定するResearch `9bfa07d...`にはhandoff export/result import CLIがなく、remote mainの後続commitには存在するため、M13冒頭で両子commitをread-only再qualificationする必要がある。
 - 2026-08-12: 子repoは随時更新されるため、remote head観測とrun入力pinを分離する。起動時に差分を検知しても、自動checkout・pin更新・正常化をしない。
+- 2026-08-12: MANIFEST-PRODUCTION-001/002のDraft PR #15がhuman gateでmergeされ、production Issue SSOTと親main manifestの結線が実運用状態になった。子repoの正本は変更せず、親mainのmerge commitだけをpost-merge stateへ記録する。
 
 ## Decision Log
 
@@ -71,12 +72,15 @@ python3 -m unittest discover -s tests -v
 - D-015: 初期改善はprivacy-safeなGitHub Issueのcreate/deduplicateで終端し、実装・PRへ自動遷移しない。
 - D-016: 初期監査と全manifest repoのremote update確認をorchestration起動時に毎回実行する。
 - D-017: 運用化をv1.2.1基線、v1.3.0 Production exchange、v1.4.0 initial operationsの順にreleaseする。
+- D-013: Productionの親manifest結線は、PR作成ではなくhuman merge後の親main再確認を完了条件とする。
 
 詳細は execution/decisions.md を正本とする。
 
 ## Outcomes & Retrospective
 
 M0時点では構造と実行可能なqueueを確定した。M1でmanifest schema、workspace lifecycle、非破壊Git guard、決定的snapshotを実装し、M2でnormalized research signal v1、3 adapter、consumer compatibility、requirement-to-source traceを完成した。M3ではWORKITEM-001でowner、target、allowed paths、dependency、checks、risk、attempts、lease、checkpoint、terminal evidenceを機械検証するschemaを追加し、SCHEDULER-001で依存DONE・path conflictなしの候補だけをID順に選び、除外理由を返す処理を追加した。RUNTIME-001では期限切れleaseからcheckpointとdecisionを保持して再開し、evidenceをidempotentに記録するstate transitionを追加した。GATES-001では変更repoだけのmanifest quality gate実行、shell制御構文拒否、出力redact/hash、失敗時blockingを実装した。DISPATCH-001ではrequired files以外を除外し、rules/contracts/acceptance/allowed pathsとrecoveryをdeterministicにpackし、unsafe pathとsensitive assignmentを拒否するCLIを実装した。M3の運用基盤は完了した。STATUS-001ではsnapshot、live Git状態、queue、stateを統合し、commit、drift、child progress、compatibility、blocker、next workをJSON/Markdownへ決定的に出力した。PROJECT-001ではProject #4のstatus/priority/target/human gate/run IDをstable task IDでmappingし、重複remote itemを拒否、CREATE/UPDATE/UNCHANGEDを冪等に計画し、API unavailable時はlocal-onlyでqueue実行を継続可能にした。AUDIT-001ではmanifest/snapshot pin、contract schema、signal freshness/consent/orphan、queue duplicate、boundary test coverageをread-onlyで非blocking監査し、clean fixtureでfinding 0、注入fixtureで各findingを観測可能にした。SECURITY-001ではparent payloadとnormalized signalを再帰的にscanし、forbidden class、likely secret、unapproved exportをsanitized findingとしてcommit前にblockingできる境界を実装した。FIXTURE-001では一時rootに4 synthetic repoをcloneし、network disabledでclean/stale/dirty/diverged/incompatible/privacyの6シナリオを再現できるfixture builderを実装した。E2E-001ではconsumer、trace、security、quality gate、runtimeを4-repository offline fixtureへ接続し、cleanのCOMPLETEと9 failure injectionの終端・復旧経路をdeterministicに確認した。DOCS-001とRELEASE-001でv1.0 control planeをqualifiedにした。v1.1ではこの基盤を変更せず、interaction、external artifact、feedback、retrieval、improvement、asynchronous auditを後続milestoneとして追加する。
+
+M11では、追加runtimeのDraft PR #15をhuman gate経由でmergeした後、親mainのmanifest、Issue SSOT、子commit pin、quality gate結線を再確認し、post-merge状態を親state/handoffへ記録した。親mainの実効結線とDraft PRの存在を別状態として扱えるようになった。
 
 ## Context and Orientation
 

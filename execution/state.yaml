@@ -24,6 +24,14 @@ resume_from:
   task: V121-RELEASE-001
   action: Push the qualification branch and open a draft PR for review; preserve merge/tag/release as human-gated operations.
   command: git push -u origin design/initial-operations-roadmap
+post_merge:
+  status: linked
+  pull_request: 15
+  merge_commit: e5abdf00a6812d89059d87c07a6166ba73f15c87
+  merged_at: "2026-08-12T18:57:36+09:00"
+  manifest_main_commit: e5abdf00a6812d89059d87c07a6166ba73f15c87
+  verified_at: "2026-08-12T19:02:09+09:00"
+  child_repository_mutation: false
 release:
   status: released
   version: 1.2.0

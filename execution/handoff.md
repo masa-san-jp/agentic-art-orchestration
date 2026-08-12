@@ -657,3 +657,11 @@
 ## Next exact action
 
 1. 人間がqualification evidenceと親差分をレビューし、`V121-RELEASE-001`のmerge・v1.2.1 tag・GitHub Releaseを明示承認する。最初の操作は`git status --short --branch`。
+
+## MANIFEST-PRODUCTION-003 post-merge reconciliation
+
+- 親repoのPR #15は2026-08-12 18:57:36 JSTにmergeされ、merge commitは`e5abdf00a6812d89059d87c07a6166ba73f15c87`。
+- 親mainの`config/repositories.yaml`に`agentic-art-production`、同一repo Issue #10、`production-handoff/v1` import、`production-result/v1` export、3つの子quality gateが反映されている。
+- 子repoの最新pinは`80aa824de33fddf7dc6dff526191699ce483bea0`で、子repoのIssue、schema、canonical data、branchは変更していない。
+- マージ後の親mainを取得し、manifest内容、親main SHA、既存214 tests / validator / diff checkのPR証跡を確認した。外部artifact、release、tag、物理effectは実施していない。
+- acceptance: 1/1達成。親mainと子Issue SSOTの結線は確立済み。後続の`V121-RELEASE-001`はqualification済み親差分のhuman reviewとrelease操作を扱う。

@@ -422,6 +422,14 @@ tasks:
     acceptance: The parent manifest pins the current agentic-art-production main commit, mirrors all declared child CI quality gates including evaluation, and passes parent validation plus the pinned child gates without mutating the child repository.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id production-revalidation --check]
 
+  - id: MANIFEST-PRODUCTION-003
+    milestone: M11
+    title: Reconcile the production linkage after parent merge
+    status: DONE
+    depends_on: [MANIFEST-PRODUCTION-002]
+    acceptance: The parent main commit is verified to contain the production manifest entry and Issue SSOT linkage after PR merge; post-merge state and handoff record the merge commit, child pin, and absence of child mutation.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
   - id: OPS-DESIGN-001
     milestone: M12
     title: Define the staged initial-operations design and executable roadmap

@@ -78,6 +78,13 @@
 
 ## D-012 — v1.2は境界固定から始め、実装を依存DAGへ分解する
 
+## D-013 — Production結線はマージ後に親mainで再確認する
+
+- 日付: 2026-08-12
+- 決定: 子repo Issue SSOTを親manifestへ追加する作業は、PR作成時点では未結線として扱い、human merge後に親mainのmanifest、merge commit、子repo pinを再確認して結線済みへ遷移させる。
+- 理由: Draft PRの存在と親mainの実効設定を混同せず、レビュー・マージ境界を監査可能にするため。
+- 安全条件: post-merge確認はread-onlyとし、子repoのIssue、schema、canonical data、branchは変更しない。マージ後の記録更新は別commit・別PRで行う。
+
 - 日付: 2026-08-12
 - 決定: v1.2は、境界契約、明示的変換rule、candidate space、specificity / genericness / counterfactual gate、seed付きselection、provenance、子repo品質gate、統合E2Eの順に親taskへ分解する。境界契約後に子repo品質gateを独立実行できる。
 - 理由: 親Issue #2の「LLMを創作者ではなく実行系に限定する」要件と、agentic-art-research Issue #2の既存runtime/quality gateの正本性を同時に守るには、生成・選択・検証を一つの自由推論taskへまとめてはならないため。
