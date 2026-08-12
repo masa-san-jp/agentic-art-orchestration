@@ -620,4 +620,16 @@
 - child gate runnerは、意味上の証跡を維持したままruntime-onlyの `duration_ms`、一時path、unittest実行時間を正規化して比較する。status、exit code、command、redacted output、output hash、manifest pinは比較対象として保持する。
 - 固定checkoutは5件すべてobserved commitと一致し、detachedかつdirtyなし。子repoのbranch、Issue、schema、canonical data、品質ゲート、PRは変更していない。Google Drive、外部artifact、merge、tag、release、物理effectも変更していない。
 - 機密情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは親へ追加していない。gate outputはredact・hash済みで、一時パスは正規化した。
-- acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。次はPR #15のhuman reviewとmerge判断であり、merge後にのみ親main上の結線が成立する。
+- acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。PR #15のhuman reviewとmergeが完了し、親main上の結線を確認済み。
+
+## MANIFEST-PRODUCTION-003 post-merge reconciliation
+
+- 親repoのPR #15は2026-08-12 18:57:36 JSTにmergeされ、merge commitは`e5abdf00a6812d89059d87c07a6166ba73f15c87`。
+- 親mainの`config/repositories.yaml`に`agentic-art-production`、同一repo Issue #10、`production-handoff/v1` import、`production-result/v1` export、3つの子quality gateが反映されている。
+- 子repoの最新pinは`80aa824de33fddf7dc6dff526191699ce483bea0`で、子repoのIssue、schema、canonical data、branchは変更していない。
+- マージ後の親mainを取得し、manifest内容、親main SHA、既存214 tests / validator / diff checkのPR証跡を確認した。外部artifact、release、tag、物理effectは実施していない。
+- acceptance: 1/1達成。親mainと子Issue SSOTの結線は確立済み。依存完了済みのREADY taskはなく、次回開始点は通常のqueue再確認。
+
+## Next exact action
+
+1. 次のセッションは`git status -sb`を実行し、`execution/task-queue.yaml`にREADY taskがないことを確認する。
