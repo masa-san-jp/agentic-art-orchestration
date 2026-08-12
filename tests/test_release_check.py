@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from tools.release_check import (
     ReleaseCheckError,
@@ -53,7 +56,22 @@ class ReleaseCheckTests(unittest.TestCase):
         self.assertFalse(result["child_gates_passed"])
 
     def test_v12_child_gate_report_is_a_blocking_release_check(self):
-        result = _v12_child_quality_gate_check()
+        with tempfile.TemporaryDirectory() as temporary_name:
+            report_path = Path(temporary_name) / "child-quality-gates.json"
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "results": [
+                            {
+                                "status": "BLOCKED",
+                                "gates": [{"status": "BLOCKED"}],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = _v12_child_quality_gate_check(report_path)
         self.assertEqual("v1.2-child-quality-gates-result", result["id"])
         self.assertEqual("FAILED", result["status"])
         self.assertIn("BLOCKED", result["repository_statuses"])
