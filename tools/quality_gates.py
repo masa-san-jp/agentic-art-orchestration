@@ -38,6 +38,27 @@ _RUNTIME_PATH_PATTERN = re.compile(r"(?:/private)?/var/folders/\S+|/tmp/\S+")
 _TEST_DURATION_PATTERN = re.compile(r"(Ran \d+ tests? in )\d+(?:\.\d+)?s")
 
 
+def _runtime_bin_dirs() -> list[str]:
+    """Prefer the active virtualenv's scripts over the resolved Python binary.
+
+    On macOS, ``sys.executable`` can resolve a virtualenv symlink to the
+    Homebrew interpreter.  Child gates are declared as ``python3 ...`` and
+    must therefore see the active environment first, otherwise dependencies
+    installed in the virtualenv are silently skipped.
+    """
+    candidates: list[Path] = []
+    prefix = Path(sys.prefix)
+    base_prefix = Path(getattr(sys, "base_prefix", sys.prefix))
+    if prefix != base_prefix:
+        candidates.extend([prefix / "bin", prefix / "Scripts"])
+    candidates.append(Path(sys.executable).resolve().parent)
+    result: list[str] = []
+    for candidate in candidates:
+        if candidate.is_dir() and str(candidate) not in result:
+            result.append(str(candidate))
+    return result
+
+
 def redact_output(output: str) -> str:
     # Gate output often contains temporary archive/output roots. Normalize those
     # paths before hashing so repeated immutable runs compare semantic evidence.
@@ -124,7 +145,7 @@ def _run_gate(command: str, repository_path: Path, timeout_seconds: int) -> dict
     started = time.monotonic()
     environment = os.environ.copy()
     environment["PATH"] = os.pathsep.join(
-        [str(Path(sys.executable).parent), environment.get("PATH", "")]
+        _runtime_bin_dirs() + [environment.get("PATH", "")]
     )
     try:
         completed = subprocess.run(

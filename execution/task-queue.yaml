@@ -1,5 +1,5 @@
 version: 4
-updated_at: "2026-08-12T19:38:20+09:00"
+updated_at: "2026-08-12T20:05:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -436,7 +436,7 @@ tasks:
   - id: V121-RECONCILE-001
     milestone: M12
     title: Reconcile the post-v1.2.0 five-repository baseline
-    status: READY
+    status: DONE
     lane: RELEASE_BASELINE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -447,7 +447,7 @@ tasks:
   - id: V121-QUALIFY-001
     milestone: M12
     title: Qualify the v1.2.1 five-repository baseline
-    status: BACKLOG
+    status: READY
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY

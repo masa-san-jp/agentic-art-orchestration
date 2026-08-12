@@ -297,7 +297,7 @@ M12以降はさらに、Production交換の子owned schemaを親へ複製しな�
 
 - Python 3.11+
 - Git 2.39+
-- PyYAML 6.x
+- PyYAML 6.x、jsonschema 4.23.x（子repoのmanifest gateを親runnerから実行するqualification環境）
 - private repo read権限、実装時はbranch/commit/draft PR権限
 - Google Driveの承認済み保存先とcreate/read権限。update/delete/share権限はv1.1 coreに不要
 - GitHub Issue create/read権限を持つ認証済み実行環境とrepository allowlist。issue edit/comment/close/delete権限は初期profileに不要

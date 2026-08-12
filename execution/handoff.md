@@ -2,12 +2,12 @@
 
 ## Current state
 
-- 完了: M0からM11、`MANIFEST-PRODUCTION-002`まで。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
-- 完了: OPS-DESIGN-001。v1.2.1基線化、v1.3 Production実交換、v1.4 Codex/Claude Code初期運用の正本仕様と依存DAGを更新済み。
-- 次: `V121-RECONCILE-001`（READY、依存完了済み）。
+- 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
+- 完了: v1.2.1基線化実装。release checker、親runnerのactive virtualenv解決、5repo表記、runbook、state/handoffを更新済み。
+- 次: `V121-QUALIFY-001`（READY、依存完了済み、3回qualification）。
 - blocker: なし
 - active lease: なし
-- 親repo: `design/initial-operations-roadmap` / `e5abdf0`開始点 / working treeは意図したtask差分のみ
+- 親repo: `design/initial-operations-roadmap` / `ea18918`開始点 / working treeは意図したtask差分のみ
 
 ## MANIFEST-001 evidence
 
@@ -633,3 +633,14 @@
 - 子repo変更、GitHub Issue作成、Google Drive書込み、PR/merge/tag/release、物理effectは実行していない。新規文書はrepo ID、commit、contract、opaque locatorだけを扱い、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLを追加していない。
 - `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -v`: 214 tests pass。`git diff --check`: pass。acceptance 1/1達成、lease released。
 - 次taskは`V121-RECONCILE-001`（READY）。最初の操作は`.venv/bin/python tools/validate.py --check`。
+
+## V121-RECONCILE-001 evidence
+
+- `tools/release_check.py`が受け付ける資格判定versionへ`1.2.1`を追加した。v1.2.0の判定経路は維持し、v1.2.1はv1.1 interaction回帰、v1.2 E2E、親validator/test、offline fixture、status、audit、security、history scan、manifest全child gateを同じfail-closed基準で実行する。
+- `requirements-dev.txt`へ`jsonschema==4.23.0`を追加した。`tools/quality_gates.py`はmacOSでvenvのsymlinkがsystem Pythonへ解決されても、active `sys.prefix/bin`をPATHの先頭に置く。これによりProduction child gateが要求するjsonschemaをqualification環境から解決できる。`tests/test_quality_gates.py`にvirtualenv優先の回帰を追加した。
+- READMEとoperator-runbookを、Production追加後の5repo baseline、v1.2.1 qualification、`--runs 1`（疎通）と`--runs 3`（qualification）の区別へ更新した。manifest pinsは変更していない。
+- 初回v1.2.1疎通は、親checksと4repo gateは通過したが、Productionの3gateが`ModuleNotFoundError: jsonschema`でFAILED。これは実行環境の依存不足であり、child commit/working treeはMATCHEDかつ未変更だった。依存解決後の再実行でProduction validate/tests/evaluationを含む5repo・12gateがすべてPASSEDした。
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 1 --workspace-root /tmp/aap-prod-revalidation-L4KFv6`: `status=PASSED`。v1.2.1 E2E、v1.1回帰、親checks、security、5repo immutable archive、5repo MATCHED、remote operation 0、merge/tag/release NOT_PERFORMEDを確認した。
+- `.venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 215 tests pass。`.venv/bin/python tools/status.py --offline-fixture`: CLEAN/blocker 0。`.venv/bin/python tools/audit.py --offline-fixture`: CLEAN/finding 0。`.venv/bin/python tools/security.py --offline-fixture`: PASSED/finding 0。`git diff --check`: pass。
+- 変更子repo: なし。self-model、art-history、marketing-trends、Research、Productionのpin、branch、Issue、schema、canonical data、PRは変更していない。Google Drive、GitHub Issue、merge、tag、release、外部effectも実行していない。
+- acceptance: 1/1達成。`V121-RECONCILE-001`はDONE、lease released。次は`V121-QUALIFY-001`で同じread-only qualificationを3回連続実行する。
