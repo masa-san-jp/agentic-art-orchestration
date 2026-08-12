@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/child-quality-gates.schema.json",
+  "title": "Immutable child repository quality gate evidence v1",
+  "description": "Manifest quality gates executed from an immutable observed commit archive without mutating child checkouts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "manifest_hash", "repository_count", "results"],
+  "properties": {
+    "contract_version": {"const": "child-quality-gates/v1"},
+    "run_id": {"type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9._:-]+$"},
+    "manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repository_count": {"type": "integer", "minimum": 1},
+    "results": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/repository_result"}}
+  },
+  "$defs": {
+    "repository_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "observed_commit", "workspace_commit", "workspace_state", "execution_mode", "quality_gate_hash", "status", "gates"],
+      "properties": {
+        "repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "observed_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "workspace_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+        "workspace_state": {"type": "string", "enum": ["MATCHED", "STALE", "DIRTY", "MISSING", "UNKNOWN"]},
+        "execution_mode": {"type": "string", "enum": ["immutable-archive", "NOT_RUN"]},
+        "quality_gate_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"type": "string", "enum": ["PASSED", "FAILED", "BLOCKED"]},
+        "gates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gate_result"}}
+      }
+    },
+    "gate_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "status", "exit_code", "duration_ms", "output_redacted", "output_truncated", "output_sha256"],
+      "properties": {
+        "command": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["PASSED", "FAILED", "NOT_RUN"]},
+        "exit_code": {"type": ["integer", "null"]},
+        "duration_ms": {"type": "integer", "minimum": 0},
+        "output_redacted": {"type": "string"},
+        "output_truncated": {"type": "boolean"},
+        "output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "error": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
