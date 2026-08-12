@@ -151,3 +151,43 @@ repositories:
         allowed_paths: [requirements, decisions, projects, outputs, README.md]
       forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier, unapproved_export]
     import_contract: normalized-research-signal/v1
+
+  - id: agentic-art-production
+    full_name: masa-san-jp/agentic-art-production
+    url: https://github.com/masa-san-jp/agentic-art-production.git
+    path: agentic-art-production
+    role: control-plane-extension
+    authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
+    default_branch: main
+    observed_commit: 80aa824de33fddf7dc6dff526191699ce483bea0
+    instructions: AGENTS.md
+    requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
+    quality_gates:
+      - python3 tools/validate.py --check
+      - python3 -m unittest discover -s tests -v
+      - python3 tools/run_evaluation.py --format json
+    knowledge_profile:
+      answerable_questions:
+        - "What production scope, plans, prototypes, runtime state, outputs, quality results, and gaps are recorded?"
+        - "What production result can be returned to research with complete provenance and explicit external-validation status?"
+      canonical_entities: [production-project, handoff-receipt, plan, prototype, task, output, quality-result, installation, production-result]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: production runtime scope and repository boundary}
+        - {kind: directory, locator: schemas, purpose: production-owned contracts and external snapshots}
+        - {kind: issue, locator: https://github.com/masa-san-jp/agentic-art-production/issues/10, purpose: production requirement SSOT}
+      evidence_rules:
+        allowed_kinds: [handoff, plan, test, observation, external-validation, derived]
+        requires_locator: true
+        minimum_quality: explicit
+      freshness_rules:
+        policy: explicit
+        allowed_statuses: [current, stale, unknown, not-applicable]
+        revalidation_required: true
+      feedback_owner: agentic-art-production
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [config, schemas, docs, tools, tests, execution, README.md, AGENTS.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier, signed_url, asset_body, contract_original]
+    exchange_contracts:
+      imports: [production-handoff/v1]
+      exports: [production-result/v1]

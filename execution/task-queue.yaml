@@ -1,5 +1,5 @@
-version: 2
-updated_at: "2026-08-12T11:18:00+09:00"
+version: 3
+updated_at: "2026-08-12T17:45:02+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -405,3 +405,19 @@ tasks:
     depends_on: [V12-E2E-001]
     acceptance: Read-only v1.2.0 qualification runs the parent checks, deterministic v1.2 E2E, and every manifest-pinned child gate; any stale, blocked, or failed child gate blocks qualification, and no merge, tag, or release operation is performed.
     checks: [python3 tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>]
+
+  - id: MANIFEST-PRODUCTION-001
+    milestone: M11
+    title: Onboard Agentic Art Production and its requirement SSOT
+    status: DONE
+    depends_on: [V12-RELEASE-001]
+    acceptance: The parent manifest references agentic-art-production Issue 10 in the same repository, represents production-handoff v1 and production-result v1 without misclassifying the runtime as a normalized-signal producer or consumer, and passes parent validation and tests without mutating the child repository.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: MANIFEST-PRODUCTION-002
+    milestone: M11
+    title: Revalidate Agentic Art Production at its current main commit
+    status: DONE
+    depends_on: [MANIFEST-PRODUCTION-001]
+    acceptance: The parent manifest pins the current agentic-art-production main commit, mirrors all declared child CI quality gates including evaluation, and passes parent validation plus the pinned child gates without mutating the child repository.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id production-revalidation --check]

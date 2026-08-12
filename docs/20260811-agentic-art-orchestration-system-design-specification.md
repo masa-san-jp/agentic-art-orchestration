@@ -8,12 +8,14 @@
 
 ## 1. 目的
 
-本システムは、以下4つの独立GitHubリポジトリを、人間とAIエージェントが単一ルートから安全かつ再現可能に扱うオーケストレーション基盤である。
+本システムは、4つのcore独立GitHubリポジトリと、同じonboarding契約を満たす追加リポジトリを、人間とAIエージェントが単一ルートから安全かつ再現可能に扱うオーケストレーション基盤である。`agentic-art-production`は最初の追加runtimeである。
 
 ~~~text
 Self Model × Art History × Marketing Trends
                     ↓
           Agentic Art Research
+                    ↓
+          Agentic Art Production
 ~~~
 
 単なるリンク集や一括clone scriptではなく、次を実現する。
@@ -157,7 +159,7 @@ Google Driveはユーザー成果物と、その成果物に対するfeedbackの
 
 各entryは安定ID、full name、clone URL、workspace path、role、domain authority、default branch、観測commit、instructions、requirement SSOT、quality gates、export/import contractを持つ。v1.1ではknowledge profileとしてanswerable questions、canonical entities、retrieval entry points、evidence/freshness rules、feedback owner、write scope、forbidden dataも持つ。
 
-manifestのcommitは運用開始点であり、永続pinではない。run開始時に生成するsnapshotが実際の入力commitを固定する。既存4repo IDはcore setとして必須とし、追加repoは既存entryの置換ではなくappendする。追加entryにもunique ownership、role-contract、同一repo Issue SSOT、instructions、quality gateを要求する。
+manifestのcommitは運用開始点であり、永続pinではない。run開始時に生成するsnapshotが実際の入力commitを固定する。既存4repo IDはcore setとして必須とし、追加repoは既存entryの置換ではなくappendする。追加entryにもunique ownership、role-contract、同一repo Issue SSOT、instructions、quality gateを要求する。`agentic-art-production`は`production-handoff/v1`をimportし、`production-result/v1`をexportする双方向runtimeとして登録し、normalized research signalのproducer/consumerへ誤分類しない。
 
 ## 8. Workspace lifecycle
 

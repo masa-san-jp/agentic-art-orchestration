@@ -601,3 +601,23 @@
 ## Next exact action
 
 1. 次のセッションは`git status -sb`で状態を確認し、依存完了済み最小IDのREADY taskを1件選択する。
+
+## MANIFEST-PRODUCTION-001 evidence
+
+- `config/repositories.yaml`へ`agentic-art-production`を5件目としてappendし、同一repoの[Issue #10](https://github.com/masa-san-jp/agentic-art-production/issues/10)を`requirement_ssot`に設定した。既存4repo core setは置換していない。
+- `production-handoff/v1` importと`production-result/v1` exportを`exchange_contracts`として機械可読化し、Productionをnormalized research signalのproducer/consumerへ誤分類しないfail-closed validator、snapshot、audit、improvement contextを追加した。
+- Productionのobserved commitは`8e1e361186edc95f467620ecd5df64ca767731b8`。宣言quality gateは`python3 tools/validate.py --check`と`python3 -m unittest discover -s tests -v`。親実装では子repoをread-only参照し、子branch、Issue、schema、canonical dataは変更していない。
+- 5repo offline initは初回5 clone、2回目no-op。snapshotはProductionのexchange契約とIssue #10を保持し、statusはdrift CLEAN/blocker 0、audit finding 0、security PASSED。既存4repo failure fixtureはcore scenarioとして分離し、v1.2 E2Eの再現性を維持した。
+- `/tmp/aap-bootstrap-venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 211 tests pass。`git diff --check`: pass。
+- 機微情報、会話全文、Drive本文、asset body、credential、signed URLは追加していない。外部effect、物理作業、merge、tag、releaseは実行していない。
+- acceptance: 1/1達成。task/leaseはDONE/released。次はdraft PRのhuman reviewであり、merge後に親manifestからIssue #10へのmain上の結線が確立する。
+
+## MANIFEST-PRODUCTION-002 evidence
+
+- `agentic-art-production` の現在の `main` を再確認し、Issue #10がopenの要件SSOTであること、最新pinが `80aa824de33fddf7dc6dff526191699ce483bea0` であることを記録した。親manifestのProduction pinを更新し、子CIに存在する `python3 tools/run_evaluation.py --format json` を親quality gateへ追加した。
+- `/tmp/aap-bootstrap-venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 214 tests pass。`git diff --check`: pass。
+- `/tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-prod-revalidation-L4KFv6 --run-id production-revalidation`: 5 repository、12 gateすべて `PASSED`。Productionはvalidate、tests、evaluationの3 gateすべてPASSED。再実行 `--check` もPASSED。
+- child gate runnerは、意味上の証跡を維持したままruntime-onlyの `duration_ms`、一時path、unittest実行時間を正規化して比較する。status、exit code、command、redacted output、output hash、manifest pinは比較対象として保持する。
+- 固定checkoutは5件すべてobserved commitと一致し、detachedかつdirtyなし。子repoのbranch、Issue、schema、canonical data、品質ゲート、PRは変更していない。Google Drive、外部artifact、merge、tag、release、物理effectも変更していない。
+- 機密情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは親へ追加していない。gate outputはredact・hash済みで、一時パスは正規化した。
+- acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。次はPR #15のhuman reviewとmerge判断であり、merge後にのみ親main上の結線が成立する。

@@ -34,10 +34,15 @@ _SECRET_PATTERNS = [
     ),
     re.compile(r"\b(?:ghp|github_pat|sk)-[A-Za-z0-9_-]{8,}\b"),
 ]
+_RUNTIME_PATH_PATTERN = re.compile(r"(?:/private)?/var/folders/\S+|/tmp/\S+")
+_TEST_DURATION_PATTERN = re.compile(r"(Ran \d+ tests? in )\d+(?:\.\d+)?s")
 
 
 def redact_output(output: str) -> str:
-    redacted = output
+    # Gate output often contains temporary archive/output roots. Normalize those
+    # paths before hashing so repeated immutable runs compare semantic evidence.
+    redacted = _RUNTIME_PATH_PATTERN.sub("<TEMP_PATH>", output)
+    redacted = _TEST_DURATION_PATTERN.sub(r"\1<TEST_DURATION>", redacted)
     for pattern in _SECRET_PATTERNS:
         if pattern.groups:
             redacted = pattern.sub(lambda match: match.group(0)[: match.start(1) - match.start(0)] + "<REDACTED>", redacted)

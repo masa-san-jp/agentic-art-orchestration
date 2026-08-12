@@ -21,7 +21,7 @@ class V12E2ETests(unittest.TestCase):
         self.assertEqual(1, result["pipeline"]["candidate_count"])
         self.assertEqual(1, result["pipeline"]["selection"]["selected_count"])
         self.assertEqual("research-provenance/v1", result["pipeline"]["provenance"]["contract_version"])
-        self.assertEqual(4, result["child_quality_gates"]["repository_count"])
+        self.assertEqual(5, result["child_quality_gates"]["repository_count"])
         self.assertEqual("interaction-e2e/v1", result["v11_regression"]["interaction_contract"])
         self.assertTrue(all(result["acceptance"].values()))
         self.assertEqual([], result["remote_operations"])

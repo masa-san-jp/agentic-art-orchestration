@@ -86,6 +86,7 @@ REQUIRED_FILES = [
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}
 CONTRACTS = {"normalized-research-signal/v1"}
+EXCHANGE_CONTRACTS = {"production-handoff/v1", "production-result/v1"}
 CORE_REPOSITORY_IDS = {
     "self-model",
     "art-history",
@@ -319,22 +320,42 @@ def validate_manifest(data: dict, source: str = "config/repositories.yaml") -> l
                 )
 
         contract_fields = [
-            field for field in ("export_contract", "import_contract")
+            field for field in ("export_contract", "import_contract", "exchange_contracts")
             if field in repo
         ]
         if len(contract_fields) == 1:
-            contract = repo.get(contract_fields[0])
-            if contract not in CONTRACTS:
+            contract_field = contract_fields[0]
+            contract = repo.get(contract_field)
+            if contract_field == "exchange_contracts":
+                imports = contract.get("imports", []) if isinstance(contract, dict) else []
+                exports = contract.get("exports", []) if isinstance(contract, dict) else []
+                unknown = sorted((set(imports) | set(exports)) - EXCHANGE_CONTRACTS)
+                if unknown:
+                    errors.append(
+                        f"{prefix}.exchange_contracts: unknown contracts {unknown!r}; "
+                        f"remediation: use only registered exchange contracts {sorted(EXCHANGE_CONTRACTS)!r}"
+                    )
+                if role != "control-plane-extension":
+                    errors.append(
+                        f"{prefix}: exchange_contracts require control-plane-extension role; "
+                        "remediation: use the bidirectional runtime role for non-signal boundaries"
+                    )
+                if set(imports) != {"production-handoff/v1"} or set(exports) != {"production-result/v1"}:
+                    errors.append(
+                        f"{prefix}.exchange_contracts: production runtime must import production-handoff/v1 "
+                        "and export production-result/v1; remediation: preserve the Research/Production boundary"
+                    )
+            elif contract not in CONTRACTS:
                 errors.append(
-                    f"{prefix}.{contract_fields[0]}: unknown contract {contract!r}; "
+                    f"{prefix}.{contract_field}: unknown contract {contract!r}; "
                     f"remediation: use one of {sorted(CONTRACTS)!r}"
                 )
-            if role == "input-kb" and contract_fields[0] != "export_contract":
+            if role == "input-kb" and contract_field != "export_contract":
                 errors.append(
                     f"{prefix}: input-kb must export a contract; "
                     "remediation: use export_contract"
                 )
-            if role == "consumer-runtime" and contract_fields[0] != "import_contract":
+            if role == "consumer-runtime" and contract_field != "import_contract":
                 errors.append(
                     f"{prefix}: consumer-runtime must import a contract; "
                     "remediation: use import_contract"

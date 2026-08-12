@@ -42,7 +42,8 @@
       ],
       "oneOf": [
         {"required": ["export_contract"]},
-        {"required": ["import_contract"]}
+        {"required": ["import_contract"]},
+        {"required": ["exchange_contracts"]}
       ],
       "properties": {
         "id": {
@@ -107,6 +108,31 @@
         "import_contract": {
           "type": "string",
           "pattern": "^normalized-research-signal/v[1-9][0-9]*$"
+        },
+        "exchange_contracts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["imports", "exports"],
+          "properties": {
+            "imports": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*/v[1-9][0-9]*$"
+              }
+            },
+            "exports": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*/v[1-9][0-9]*$"
+              }
+            }
+          }
         }
       }
     },

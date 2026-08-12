@@ -122,6 +122,19 @@ def _audit_pins(manifest: Mapping[str, object], snapshot: Mapping[str, object], 
             )
     current_contracts = {}
     for repository_id, repository in manifest_by_id.items():
+        if "exchange_contracts" in repository:
+            exchange = repository.get("exchange_contracts", {})
+            if exchange.get("imports") != ["production-handoff/v1"] or exchange.get("exports") != ["production-result/v1"]:
+                findings.append(
+                    _finding(
+                        "schema-drift",
+                        repository_id,
+                        {"field": "exchange_contracts", "value": exchange},
+                        "restore production-handoff/v1 import and production-result/v1 export",
+                        "error",
+                    )
+                )
+            continue
         contract_key = "export_contract" if "export_contract" in repository else "import_contract"
         contract = repository.get(contract_key)
         current_contracts[repository_id] = contract
@@ -139,6 +152,18 @@ def _audit_pins(manifest: Mapping[str, object], snapshot: Mapping[str, object], 
         if not isinstance(repository, dict):
             continue
         contract = repository.get("contract", {})
+        if contract.get("direction") == "exchange":
+            if contract.get("imports") != ["production-handoff/v1"] or contract.get("exports") != ["production-result/v1"]:
+                findings.append(
+                    _finding(
+                        "schema-drift",
+                        str(repository.get("id")),
+                        {"snapshot_contract": contract},
+                        "regenerate the snapshot from the production exchange manifest",
+                        "error",
+                    )
+                )
+            continue
         if contract.get("version") != EXPECTED_CONTRACT:
             findings.append(
                 _finding(

@@ -1,28 +1,29 @@
 version: 2
-updated_at: "2026-08-12T13:30:00+09:00"
+updated_at: "2026-08-12T18:23:30+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v12-release
-  acquired_at: "2026-08-12T11:02:00+09:00"
-  expires_at: "2026-08-12T11:47:00+09:00"
-  lane: RELEASE_QUALIFICATION
-  execution_id: V12-RELEASE-001:attempt-1
-  released_at: "2026-08-12T11:18:00+09:00"
+  owner: codex-production-revalidation
+  acquired_at: "2026-08-12T18:06:30+09:00"
+  expires_at: "2026-08-12T19:06:30+09:00"
+  lane: MANIFEST_ONBOARDING
+  execution_id: MANIFEST-PRODUCTION-002:attempt-1
+  released_at: "2026-08-12T18:23:30+09:00"
+  release_reason: completed
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/release_check.py, tests/test_release_check.py, docs/operator-runbook.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [config/repositories.yaml, schemas/repository-manifest.schema.json, tools/validate.py, tools/workspace.py, tools/audit.py, tools/improvement_loop.py, tests, README.md, docs, execution]
 checkpoint:
-  task: V12-RELEASE-001
+  task: MANIFEST-PRODUCTION-002
   repository: agentic-art-orchestration
-  start_point: 4ee8f970b63fce46e15205ca1f344e639f2816b8
-  expected_changes: Add read-only v1.2.0 release qualification that requires deterministic parent and v1.2 checks plus PASS for every manifest-pinned child quality gate, without merge, tag, release, or child repository mutation.
-  result: completed
-last_completed_task: V12-RELEASE-001
+  start_point: 47007909aad7c44be15b862a297ee8426915839b
+  expected_changes: Refresh the production manifest pin to the current child main commit and include every child CI quality gate, especially run_evaluation.py.
+  result: completed; current child main pin and CI evaluation gate revalidated, parent and all five immutable child gates passed
+last_completed_task: MANIFEST-PRODUCTION-002
 resume_from:
   task: null
-  action: v1.2.0 is released; next operation starts with selecting the next READY task.
+  action: Review PR #15 with the latest production pin and merge only through the human gate.
   command: git status -sb
 release:
   status: released
@@ -34,5 +35,5 @@ release:
   released_at: "2026-08-12T13:29:42+09:00"
 blocked: []
 last_validation:
-  command: .venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; git diff --check
-  result: passed; V12-RELEASE-001 added read-only v1.2.0 qualification, aligned manifest child gates with the pinned commit CI contracts, and ran the qualification three times against a temporary workspace containing the four exact observed commits. All 25 qualification checks passed, including parent checks, v1.1 regression, v1.2 E2E 3/3 deterministic, and child gates 4/4 PASSED from immutable archives. The qualified changes were merged in PR #13 at e2ac816a09a97da0d8703a87e14e743f298d91b1, tagged v1.2.0, and published as the GitHub Release. Child repositories and parent generated source data were not modified; 2026-08-12T13:29:42+09:00
+  command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-prod-revalidation-L4KFv6 --run-id production-revalidation --check; git diff --check
+  result: passed; parent 214 tests passed, all five repositories matched their observed commits and all 12 immutable child gates passed, including agentic-art-production validate/tests/evaluation. Runtime-only gate paths and test durations are normalized for repeatable --check evidence; 2026-08-12T18:23:30+09:00

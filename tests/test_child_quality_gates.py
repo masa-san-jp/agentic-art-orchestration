@@ -39,6 +39,11 @@ def make_repo(root: Path, gate_body: str, second_commit: bool = False) -> tuple[
 
 
 class ChildQualityGateTests(unittest.TestCase):
+    def test_deterministic_view_ignores_runtime_duration_only(self):
+        first = {"duration_ms": 10, "nested": [{"duration_ms": 20, "status": "PASSED"}]}
+        second = {"duration_ms": 99, "nested": [{"duration_ms": 80, "status": "PASSED"}]}
+        self.assertEqual(MODULE._deterministic_view(first), MODULE._deterministic_view(second))
+
     def test_runs_gates_from_observed_archive_and_does_not_change_stale_checkout(self):
         with tempfile.TemporaryDirectory(prefix="child-gates-") as temporary:
             workspace = Path(temporary)

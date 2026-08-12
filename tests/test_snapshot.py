@@ -80,7 +80,7 @@ class SnapshotTests(unittest.TestCase):
             first_json_bytes = snapshot_json.read_bytes()
             first_markdown_bytes = snapshot_markdown.read_bytes()
             payload = json.loads(first_json_bytes)
-            self.assertEqual(4, len(payload["repositories"]))
+            self.assertEqual(5, len(payload["repositories"]))
             self.assertRegex(payload["captured_at"], r"Z$")
             self.assertEqual(first_result["snapshot_hash"], payload["snapshot_hash"])
             for repository in payload["repositories"]:
@@ -94,6 +94,10 @@ class SnapshotTests(unittest.TestCase):
                 self.assertIn("requirement_ssot", repository)
                 self.assertIn("contract", repository)
                 self.assertIn("quality_gate_hash", repository)
+            production = next(item for item in payload["repositories"] if item["id"] == "agentic-art-production")
+            self.assertEqual("exchange", production["contract"]["direction"])
+            self.assertEqual(["production-handoff/v1"], production["contract"]["imports"])
+            self.assertEqual(["production-result/v1"], production["contract"]["exports"])
 
             second = self.snapshot(workspace, fixture, output)
             self.assertEqual(0, second.returncode, second.stderr)

@@ -65,6 +65,32 @@ class QualityGateTests(unittest.TestCase):
             self.assertEqual(64, len(gate["output_sha256"]))
             self.assertEqual(hashlib.sha256(gate["output_redacted"].encode()).hexdigest(), gate["output_sha256"])
 
+    def test_runtime_paths_are_normalized_before_output_hashing(self):
+        with tempfile.TemporaryDirectory(prefix="quality-gates-paths-") as temporary:
+            root = Path(temporary)
+            (root / "pass-repo").mkdir()
+            (root / "pass-repo/pass_gate.py").write_text(
+                "print('/private/var/folders/aa/bb/T/tmp123/output/result')\n",
+                encoding="utf-8",
+            )
+            result = run_quality_gates(manifest_for(root), root, ["pass-repo"])
+            gate = next(item for item in result["repositories"] if item["repository"] == "pass-repo")["gates"][0]
+            self.assertIn("<TEMP_PATH>", gate["output_redacted"])
+            self.assertNotIn("/private/var/folders", gate["output_redacted"])
+
+    def test_test_runner_durations_are_normalized_before_output_hashing(self):
+        with tempfile.TemporaryDirectory(prefix="quality-gates-duration-") as temporary:
+            root = Path(temporary)
+            (root / "pass-repo").mkdir()
+            (root / "pass-repo/pass_gate.py").write_text(
+                "print('Ran 2 tests in 0.123s')\n",
+                encoding="utf-8",
+            )
+            result = run_quality_gates(manifest_for(root), root, ["pass-repo"])
+            gate = next(item for item in result["repositories"] if item["repository"] == "pass-repo")["gates"][0]
+            self.assertIn("<TEST_DURATION>", gate["output_redacted"])
+            self.assertNotIn("0.123s", gate["output_redacted"])
+
     def test_shell_control_syntax_fails_without_execution(self):
         with tempfile.TemporaryDirectory(prefix="quality-gates-shell-") as temporary:
             root = Path(temporary)
