@@ -1,5 +1,5 @@
 version: 2
-updated_at: "2026-08-12T11:18:00+09:00"
+updated_at: "2026-08-12T13:30:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
@@ -22,17 +22,17 @@ checkpoint:
 last_completed_task: V12-RELEASE-001
 resume_from:
   task: null
-  action: v1.2.0 qualification passed; obtain human approval before merge, tag, or GitHub Release.
+  action: v1.2.0 is released; next operation starts with selecting the next READY task.
   command: git status -sb
 release:
   status: released
-  version: 1.1.0
-  pull_request: 3
-  merge_commit: 807a327c9aca62837c2810962439946dda4d8b64
-  tag: v1.1.0
-  url: https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.1.0
-  released_at: "2026-08-12T07:13:18+09:00"
+  version: 1.2.0
+  pull_request: 13
+  merge_commit: e2ac816a09a97da0d8703a87e14e743f298d91b1
+  tag: v1.2.0
+  url: https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.2.0
+  released_at: "2026-08-12T13:29:42+09:00"
 blocked: []
 last_validation:
   command: .venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; git diff --check
-  result: passed; V12-RELEASE-001 added read-only v1.2.0 qualification, aligned manifest child gates with the pinned commit CI contracts, and ran the qualification three times against a temporary workspace containing the four exact observed commits. All 25 qualification checks passed, including parent checks, v1.1 regression, v1.2 E2E 3/3 deterministic, and child gates 4/4 PASSED from immutable archives. remote_operations=[], merge_operation=NOT_PERFORMED, tag_operation=NOT_PERFORMED, release_operation=NOT_PERFORMED; child repositories and parent generated source data were not modified; 2026-08-12T11:18:00+09:00
+  result: passed; V12-RELEASE-001 added read-only v1.2.0 qualification, aligned manifest child gates with the pinned commit CI contracts, and ran the qualification three times against a temporary workspace containing the four exact observed commits. All 25 qualification checks passed, including parent checks, v1.1 regression, v1.2 E2E 3/3 deterministic, and child gates 4/4 PASSED from immutable archives. The qualified changes were merged in PR #13 at e2ac816a09a97da0d8703a87e14e743f298d91b1, tagged v1.2.0, and published as the GitHub Release. Child repositories and parent generated source data were not modified; 2026-08-12T13:29:42+09:00
