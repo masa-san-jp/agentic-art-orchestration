@@ -677,3 +677,16 @@
 - 子repoの最新pinは`80aa824de33fddf7dc6dff526191699ce483bea0`で、子repoのIssue、schema、canonical data、branchは変更していない。
 - マージ後の親mainを取得し、manifest内容、親main SHA、既存214 tests / validator / diff checkのPR証跡を確認した。外部artifact、release、tag、物理effectは実施していない。
 - acceptance: 1/1達成。親mainと子Issue SSOTの結線は確立済み。後続の`V121-RELEASE-001`はqualification済み親差分のhuman reviewとrelease操作を扱う。
+
+## PRODUCTION-PIN-001 evidence
+
+- v1.2.1 release済みの親mainを起点に、5つの子repoのremote `main` headをread-onlyで観測した。Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf` はhandoff exportとproduction-result import、Production `9f1e332ae9faa1ecf098dd2f406f04c0506562b2` はhandoff receiptとproduction-result exportを公開していることを確認した。
+- self-model `53cdcb00d26a71ccf02d81b5a09e67804b9a2b73`、art-history `ab18a70fb3a16f62d89550e6b342aa17da4fc93e`、marketing `e9b86f3a352be43cd6e19624c481b446b4337077`を含む5つのclean immutable archiveを一時workspaceへ配置した。親manifestのResearch/Production pinを更新し、handoff schemaのSHA-256 `715f2426474de9d957ef3129e0a65d69492ff7e75181272b52cb4cbb850cf0f7`、production-result schemaのSHA-256 `5b69090476891629932e5b01260a6217273f8a4771cc004d4922fcd04a0a104a`が各子境界で一致することを確認した。
+- `child_quality_gates.py`は5 repository、14/14 gateを`PASSED`、全pinを`MATCHED`として出力した。候補workspaceを明示した親statusは`CLEAN / blocker 0`、auditはfinding 0、securityは`PASSED`、validatorとdiff checkもpassした。候補のsnapshotは親正本へ反映済みである。
+- 安全境界として、常設`repos/`の旧pin checkoutは自動更新していない。したがってデフォルトworkspaceを指定しないstatusは旧checkoutとの差分を検出するが、qualified candidate workspaceはCLEANである。常設checkoutの同期は別途明示した操作として扱う。
+- 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gate、commitは変更していない。GitHub Issue、Google Drive、外部artifact、物理effectも変更していない。親へ追加したのはrepo ID、immutable commit、contract hash、gate/status証跡だけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは含めていない。
+- acceptance: 1/1達成。`PRODUCTION-PIN-001`をDONE、leaseをreleased、依存完了済み最小IDの`PRODUCTION-EXCHANGE-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `git status --short --branch`で親差分を確認し、`PRODUCTION-EXCHANGE-001`として親所有のProduction exchange orchestratorの既存実装・schema参照・テストを調査する。子repo schemaの複製と隣接dirty workspaceの参照は行わない。
