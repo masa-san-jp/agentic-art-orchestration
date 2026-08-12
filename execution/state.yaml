@@ -1,5 +1,5 @@
 version: 2
-updated_at: "2026-08-12T18:23:30+09:00"
+updated_at: "2026-08-12T19:02:09+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
@@ -15,16 +15,24 @@ lease:
     repository: agentic-art-orchestration
     paths: [config/repositories.yaml, schemas/repository-manifest.schema.json, tools/validate.py, tools/workspace.py, tools/audit.py, tools/improvement_loop.py, tests, README.md, docs, execution]
 checkpoint:
-  task: MANIFEST-PRODUCTION-002
+  task: MANIFEST-PRODUCTION-003
   repository: agentic-art-orchestration
-  start_point: 47007909aad7c44be15b862a297ee8426915839b
-  expected_changes: Refresh the production manifest pin to the current child main commit and include every child CI quality gate, especially run_evaluation.py.
-  result: completed; current child main pin and CI evaluation gate revalidated, parent and all five immutable child gates passed
-last_completed_task: MANIFEST-PRODUCTION-002
+  start_point: e5abdf00a6812d89059d87c07a6166ba73f15c87
+  expected_changes: Record and verify the parent-main production linkage after PR #15 merge without mutating the child repository.
+  result: completed; parent main contains the production manifest and Issue SSOT linkage; child repository remained unchanged
+last_completed_task: MANIFEST-PRODUCTION-003
 resume_from:
   task: null
-  action: Review PR #15 with the latest production pin and merge only through the human gate.
+  action: Parent PR #15 is merged; no READY task remains. Re-run status and queue selection at the next session boundary.
   command: git status -sb
+post_merge:
+  status: linked
+  pull_request: 15
+  merge_commit: e5abdf00a6812d89059d87c07a6166ba73f15c87
+  merged_at: "2026-08-12T18:57:36+09:00"
+  manifest_main_commit: e5abdf00a6812d89059d87c07a6166ba73f15c87
+  verified_at: "2026-08-12T19:02:09+09:00"
+  child_repository_mutation: false
 release:
   status: released
   version: 1.2.0
@@ -36,4 +44,4 @@ release:
 blocked: []
 last_validation:
   command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-prod-revalidation-L4KFv6 --run-id production-revalidation --check; git diff --check
-  result: passed; parent 214 tests passed, all five repositories matched their observed commits and all 12 immutable child gates passed, including agentic-art-production validate/tests/evaluation. Runtime-only gate paths and test durations are normalized for repeatable --check evidence; 2026-08-12T18:23:30+09:00
+  result: passed; parent 214 tests passed, all five repositories matched their observed commits and all 12 immutable child gates passed, including agentic-art-production validate/tests/evaluation. Runtime-only gate paths and test durations are normalized for repeatable --check evidence; post-merge main linkage verified at e5abdf00a6812d89059d87c07a6166ba73f15c87; 2026-08-12T19:02:09+09:00
