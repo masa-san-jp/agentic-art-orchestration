@@ -2,11 +2,12 @@
 
 ## Current state
 
-- 完了: BOOTSTRAP-001、MANIFEST-001、WORKSPACE-001、WORKSPACE-002、SNAPSHOT-001、CONTRACT-001、ADAPTER-SELF-001、ADAPTER-ART-001、ADAPTER-MARKETING-001、CONSUMER-001、TRACE-001、WORKITEM-001、SCHEDULER-001、RUNTIME-001、GATES-001、DISPATCH-001、STATUS-001、PROJECT-001、AUDIT-001、SECURITY-001、FIXTURE-001、E2E-001、DOCS-001、RELEASE-001、V11-DESIGN-001、ARTIFACT-001、INTERACTION-001、FEEDBACK-001、REPOSITORY-ONBOARDING-001、KNOWLEDGE-PROFILE-001、AUDITOR-002、DRIVE-001
-- 次: ISSUE-ROUTER-001（READY、依存完了済み、最小ID）
+- 完了: M0からM11、`MANIFEST-PRODUCTION-002`まで。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
+- 完了: OPS-DESIGN-001。v1.2.1基線化、v1.3 Production実交換、v1.4 Codex/Claude Code初期運用の正本仕様と依存DAGを更新済み。
+- 次: `V121-RECONCILE-001`（READY、依存完了済み）。
 - blocker: なし
 - active lease: なし
-- 親repo: `main` / `e8f7fdf`開始点 / working treeは意図したtask差分のみ
+- 親repo: `design/initial-operations-roadmap` / `e5abdf0`開始点 / working treeは意図したtask差分のみ
 
 ## MANIFEST-001 evidence
 
@@ -621,3 +622,14 @@
 - 固定checkoutは5件すべてobserved commitと一致し、detachedかつdirtyなし。子repoのbranch、Issue、schema、canonical data、品質ゲート、PRは変更していない。Google Drive、外部artifact、merge、tag、release、物理effectも変更していない。
 - 機密情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは親へ追加していない。gate outputはredact・hash済みで、一時パスは正規化した。
 - acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。次はPR #15のhuman reviewとmerge判断であり、merge後にのみ親main上の結線が成立する。
+
+## OPS-DESIGN-001 evidence
+
+- ユーザー決定を初期profileとして固定した。人間向けUIはCodexまたはClaude Code、改善はGitHub Issueのcreate/deduplicateまで、監査と全manifest repoのremote head確認はorchestration起動時に毎回実行する。専用UI、Issue後の自動実装/PR、常駐監査、webhook更新追従は初期releaseの外とした。
+- canonical system designへstartup state (`READY` / `READY_WITH_FINDINGS` / `BLOCKED`)、remote observationとqualified pinの分離、create-only GitHub Issue、real create-only Drive、Research→Production→Research交換、禁止operation、v1.2.1/v1.3.0/v1.4.0完了条件を追加した。
+- canonical execution planとtask queueを、M12 `v1.2.1 five-repository baseline` → M13 `real Production exchange` → M14 `initial Codex/Claude Code operations`の直列DAGへ拡張した。各release taskはhuman gateであり、子repo、Issue、Driveをrelease mutation scopeから除外した。
+- read-only inspectionで、manifest pinのResearch `9bfa07d80c7962840031e0607f431c3bb997245f`にはhandoff export/result import CLIがなく、remote mainの後続commitには`build_handoff.py`、`export_handoff.py`、`import_production_result.py`が存在することを確認した。このためM13先頭に`PRODUCTION-PIN-001`を置き、Research/Production双方をchild gateで再qualificationしてから交換orchestratorへ進む。
+- Production pin `80aa824de33fddf7dc6dff526191699ce483bea0`にはGit外project作成、handoff受理、plan/prototype/runtime/execution、result build/export、evaluation CLIが存在する。親は子schemaを複製せず、clean immutable archive内の子CLIとGit外run rootだけを利用する設計とした。Research result applyは子変更になるため親E2Eではdry-runまでとした。
+- 子repo変更、GitHub Issue作成、Google Drive書込み、PR/merge/tag/release、物理effectは実行していない。新規文書はrepo ID、commit、contract、opaque locatorだけを扱い、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLを追加していない。
+- `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -v`: 214 tests pass。`git diff --check`: pass。acceptance 1/1達成、lease released。
+- 次taskは`V121-RECONCILE-001`（READY）。最初の操作は`.venv/bin/python tools/validate.py --check`。

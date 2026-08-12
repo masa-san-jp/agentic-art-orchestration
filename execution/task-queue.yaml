@@ -1,5 +1,5 @@
-version: 3
-updated_at: "2026-08-12T17:45:02+09:00"
+version: 4
+updated_at: "2026-08-12T19:38:20+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -421,3 +421,204 @@ tasks:
     depends_on: [MANIFEST-PRODUCTION-001]
     acceptance: The parent manifest pins the current agentic-art-production main commit, mirrors all declared child CI quality gates including evaluation, and passes parent validation plus the pinned child gates without mutating the child repository.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id production-revalidation --check]
+
+  - id: OPS-DESIGN-001
+    milestone: M12
+    title: Define the staged initial-operations design and executable roadmap
+    status: DONE
+    lane: OPERATIONS_DESIGN
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [MANIFEST-PRODUCTION-002]
+    acceptance: The canonical design and execution plan define an ordered v1.2.1 baseline release, a real Research-to-Production-to-Research exchange, and an initial Codex-or-Claude-Code interaction operation with startup repository update checks, startup audit, real create-only Drive artifacts, and create-only GitHub Issue delivery; the queue, state, handoff, safety boundaries, observable acceptance, and human release gates agree without mutating a child repository or remote service.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: V121-RECONCILE-001
+    milestone: M12
+    title: Reconcile the post-v1.2.0 five-repository baseline
+    status: READY
+    lane: RELEASE_BASELINE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [OPS-DESIGN-001]
+    acceptance: State, handoff, runbooks, generated status, and release qualification identify the merged five-repository main baseline and v1.2.1 candidate consistently; release_check supports v1.2.1 without weakening v1.2.0 gates, and no child pin is changed without a separately observed update decision.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/release_check.py --version 1.2.1 --runs 1 --workspace-root <verified-child-workspace>]
+
+  - id: V121-QUALIFY-001
+    milestone: M12
+    title: Qualify the v1.2.1 five-repository baseline
+    status: BACKLOG
+    lane: RELEASE_QUALIFICATION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [V121-RECONCILE-001]
+    acceptance: The parent suite and every manifest-pinned child gate pass in three consecutive read-only v1.2.1 runs, all five repositories match their observed commits, security checks report no forbidden data, and merge, tag, release, Issue, and Drive operations remain not performed.
+    checks: [python3 tools/release_check.py --version 1.2.1 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
+
+  - id: V121-RELEASE-001
+    milestone: M12
+    title: Release the qualified v1.2.1 baseline through the human gate
+    status: BACKLOG
+    lane: RELEASE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    human_gate: true
+    depends_on: [V121-QUALIFY-001]
+    acceptance: After explicit human approval, the qualification changes are reviewed and merged to main and the immutable v1.2.1 tag and GitHub Release point to that reviewed merge; no child repository, Issue, Drive file, or sharing scope is changed by the release operation.
+    checks: [git status --short --branch, git tag --points-at <reviewed-merge-sha>, gh release view v1.2.1]
+
+  - id: PRODUCTION-PIN-001
+    milestone: M13
+    title: Requalify Research and Production commits that expose both exchange directions
+    status: BACKLOG
+    lane: PRODUCTION_EXCHANGE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [V121-RELEASE-001]
+    acceptance: Read-only remote inspection selects clean immutable Research and Production commits where Research owns handoff export and production-result import and Production owns handoff receipt and result export; manifests and compatibility snapshots are updated only after both child quality-gate sets pass, while child branches, schemas, Issues, and data remain unchanged.
+    checks: [python3 tools/validate.py --check, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id production-exchange-pins --check]
+
+  - id: PRODUCTION-EXCHANGE-001
+    milestone: M13
+    title: Implement the parent-owned Production exchange orchestrator
+    status: BACKLOG
+    lane: PRODUCTION_EXCHANGE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PRODUCTION-PIN-001]
+    acceptance: A parent command invokes Research-owned handoff export and validation and Production-owned handoff receipt and result export at immutable manifest commits, records only contract version, repository@commit, hashes, statuses, and opaque Git-external paths, and never duplicates either child schema or reads an adjacent dirty working tree.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_production_exchange -v]
+
+  - id: PRODUCTION-E2E-001
+    milestone: M13
+    title: Execute the Research-to-Production-to-Research exchange end to end
+    status: BACKLOG
+    lane: PRODUCTION_EXCHANGE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PRODUCTION-EXCHANGE-001]
+    acceptance: An immutable Research handoff bundle is accepted into a Git-external Production project, a deterministic production-result bundle is exported with unperformed work preserved as NOT_RUN or EXTERNAL_VALIDATION_REQUIRED, Research validates or consumes the result, and tampered, stale, incompatible, dirty-source, and replay cases reach explicit terminal states without child writes.
+    checks: [python3 -m unittest tests.test_production_exchange_e2e -v, python3 tools/production_exchange.py --offline-fixture --check]
+
+  - id: PRODUCTION-QUALIFY-001
+    milestone: M13
+    title: Qualify the operational Production exchange
+    status: BACKLOG
+    lane: RELEASE_QUALIFICATION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PRODUCTION-E2E-001]
+    acceptance: The Production exchange E2E is byte-stable for three runs, every parent and five-repository child gate passes at the recorded commits, Git-external outputs are excluded from tracked history, and no physical work or external effect is reported as completed.
+    checks: [python3 tools/release_check.py --version 1.3.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
+
+  - id: PRODUCTION-RELEASE-001
+    milestone: M13
+    title: Release the qualified Production exchange through the human gate
+    status: BACKLOG
+    lane: RELEASE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    human_gate: true
+    depends_on: [PRODUCTION-QUALIFY-001]
+    acceptance: After explicit human approval, the reviewed Production exchange is merged and released as v1.3.0 while all child commits, external projects, physical effects, and user artifacts remain outside the release mutation scope.
+    checks: [git tag --points-at <reviewed-merge-sha>, gh release view v1.3.0]
+
+  - id: STARTUP-CONTRACT-001
+    milestone: M14
+    title: Define the initial orchestration startup contract and policy
+    status: BACKLOG
+    lane: STARTUP
+    interaction_blocking: true
+    user_artifact_policy: READ_ONLY
+    depends_on: [PRODUCTION-RELEASE-001]
+    acceptance: A versioned startup policy and report schema define ordered preflight, remote-head observation, pinned workspace guard, audit, security, READY or READY_WITH_FINDINGS or BLOCKED outcomes, and the exact capabilities exposed to Codex or Claude Code without storing raw conversation or credentials.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_startup_contract -v]
+
+  - id: STARTUP-DRIFT-001
+    milestone: M14
+    title: Check every registered child repository for updates at startup
+    status: BACKLOG
+    lane: STARTUP
+    interaction_blocking: true
+    user_artifact_policy: READ_ONLY
+    depends_on: [STARTUP-CONTRACT-001]
+    acceptance: Every startup performs read-only default-branch head observation for every manifest repository, compares it with observed_commit and the qualified snapshot, records source and observed commits, continues normal conversation only against the pinned snapshot with visible drift, and never changes a pin, checkout, branch, Issue, or child file automatically.
+    checks: [python3 -m unittest tests.test_startup_repository_updates -v, python3 tools/startup.py --offline-fixture --check]
+
+  - id: STARTUP-AUDIT-001
+    milestone: M14
+    title: Run repository audit during every initial startup
+    status: BACKLOG
+    lane: STARTUP_AUDIT
+    interaction_blocking: true
+    user_artifact_policy: READ_ONLY
+    depends_on: [STARTUP-DRIFT-001]
+    acceptance: Startup invokes the existing audit and security boundaries after snapshot selection, maps critical or privacy findings to BLOCKED and noncritical findings to READY_WITH_FINDINGS, emits deduplicated Issue candidates, and performs no refactoring or child mutation during startup.
+    checks: [python3 -m unittest tests.test_startup_audit -v, python3 tools/startup.py --offline-fixture --check]
+
+  - id: ISSUE-CREATE-001
+    milestone: M14
+    title: Deliver eligible feedback and audit findings as create-only GitHub Issues
+    status: BACKLOG
+    lane: FEEDBACK_DELIVERY
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [STARTUP-AUDIT-001]
+    acceptance: An authenticated allowlisted adapter creates at most one privacy-safe Issue in the authoritative repository for an eligible deduplication key, links explicit feedback or an explicitly marked unconfirmed inference, and supports plan and live modes while refusing Issue update, close, delete, comment, label mutation, implementation, branch, commit, and PR operations in the initial profile.
+    checks: [python3 -m unittest tests.test_github_issue_adapter -v, python3 tools/github_issue_adapter.py --fixture --check]
+
+  - id: DRIVE-LIVE-001
+    milestone: M14
+    title: Connect the append-only artifact contract to real Google Drive
+    status: BACKLOG
+    lane: DRIVE_ARTIFACT
+    interaction_blocking: false
+    user_artifact_policy: CREATE_ONLY
+    depends_on: [ISSUE-CREATE-001]
+    acceptance: A provider-neutral bridge creates a new file only inside an approved Drive folder, reads back metadata or content hash for verification, returns an opaque file reference and lineage, replays the same idempotency key without duplication, and refuses update, overwrite, delete, move, share, and permission changes; credentials and artifact bodies are never committed.
+    checks: [python3 -m unittest tests.test_drive_adapter tests.test_drive_live_bridge -v, python3 tools/drive_live_check.py --plan --check]
+
+  - id: AGENT-UI-001
+    milestone: M14
+    title: Make Codex and Claude Code the initial conversational interface
+    status: BACKLOG
+    lane: FRONTSTAGE_INTERACTION
+    interaction_blocking: true
+    user_artifact_policy: CREATE_ONLY
+    depends_on: [DRIVE-LIVE-001]
+    acceptance: A repository-native startup guide and agent command let Codex or Claude Code run the startup report, answer from the minimum qualified repositories with repository@commit, freshness, gaps, and constraints, create append-only Drive outputs on request, and capture explicit or inferred feedback for Issue creation without requiring the user to name repositories or Git operations.
+    checks: [python3 -m unittest tests.test_agent_ui_contract -v, python3 tools/interaction_e2e.py --initial-operations --offline-fixture --check]
+
+  - id: INITIAL-OPS-E2E-001
+    milestone: M14
+    title: Evaluate the initial interactive operations end to end
+    status: BACKLOG
+    lane: INTERACTION_E2E
+    interaction_blocking: false
+    user_artifact_policy: CREATE_ONLY
+    depends_on: [AGENT-UI-001]
+    acceptance: A scripted Codex-or-Claude-Code-equivalent interaction runs startup update checks and audit, answers from pinned knowledge, creates a new Drive artifact, captures explicit and inferred feedback, creates or deduplicates the authoritative Issue, and leaves implementation, PR, merge, release, child writes, Drive update/delete/share, and raw conversation storage unperformed; networkless contract and opt-in sandbox live paths are both evidenced.
+    checks: [python3 -m unittest tests.test_initial_operations_e2e -v, python3 tools/initial_operations_e2e.py --offline-fixture --check]
+
+  - id: INITIAL-OPS-QUALIFY-001
+    milestone: M14
+    title: Qualify the initial Codex and Claude Code operations profile
+    status: BACKLOG
+    lane: RELEASE_QUALIFICATION
+    interaction_blocking: false
+    user_artifact_policy: CREATE_ONLY
+    depends_on: [INITIAL-OPS-E2E-001]
+    acceptance: Three deterministic qualification runs pass the startup, Production exchange, retrieval, artifact, feedback, Issue delivery, privacy, idempotency, and five child quality gates; separate opt-in sandbox evidence proves one Drive create/read and one GitHub Issue create/deduplicate without modifying production user artifacts or existing Issues.
+    checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
+
+  - id: INITIAL-OPS-RELEASE-001
+    milestone: M14
+    title: Release the initial interactive operations profile through the human gate
+    status: BACKLOG
+    lane: RELEASE
+    interaction_blocking: false
+    user_artifact_policy: CREATE_ONLY
+    human_gate: true
+    depends_on: [INITIAL-OPS-QUALIFY-001]
+    acceptance: After explicit human approval, the reviewed initial operations profile is merged and released as v1.4.0; the release itself does not create or change child content, Issues, Drive files, permissions, or sharing scope.
+    checks: [git tag --points-at <reviewed-merge-sha>, gh release view v1.4.0]

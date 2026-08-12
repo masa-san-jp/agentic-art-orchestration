@@ -1,8 +1,9 @@
 # Agentic Art Orchestration システム設計仕様書
 
 作成日: 2026-08-11  
+最終更新: 2026-08-12
 対象: masa-san-jp/agentic-art-orchestration  
-状態: v1.1計画 / 実装用正本
+状態: v1.2.1基線化・v1.3 Production実連携・v1.4初期運用 / 実装用正本
 
 本書は、先行する repository-design-specification.md の構想・要求を、現在の4repoをcore setとして実測し、追加repoも安全にonboardできる実行契約へ具体化した文書である。意図・スコープは先行文書、実装ファイル名・検証・タスク順は本書を正とする。
 
@@ -30,6 +31,8 @@ Self Model × Art History × Marketing Trends
 8. 利用エージェントとの会話だけで、体系化された子repoの知識を根拠付きで利用できるinteraction体験。
 9. interactionから明示・推定feedbackを抽出し、正しいrepoのIssueへ変換して自律改善するloop。
 10. ユーザー成果物をGoogle Driveへ追記保存し、改善・監査agentも権限内で参照できるexternal artifact plane。
+11. 初期段階ではCodexまたはClaude Codeを会話UIとし、専用Web/GUIを待たずに利用可能にする。
+12. 初期改善はprivacy-safeなGitHub Issueの作成まで、初期監査と子repo更新確認はオーケストレーション起動時に毎回行う。
 
 ## 2. スコープ
 
@@ -49,6 +52,9 @@ Self Model × Art History × Marketing Trends
 - Google Drive external artifact参照とcreate-only adapter
 - explicit/inferred feedback、Issue routing、issue-to-draft-PR改善loop
 - interaction latencyから分離した非同期audit/refactoring lane
+- immutable bundleによるResearch→Production→Researchのhandoff/result往復
+- Codex/Claude Code用の起動契約、全登録repoのremote head確認、起動時audit
+- 実Google Driveへのcreate/read確認と、GitHub Issueのcreate-only delivery
 
 ### 2.2 スコープ外
 
@@ -61,6 +67,9 @@ Self Model × Art History × Marketing Trends
 - 作品生成モデルやGUI/mobile clientそのものの実装
 - Google Driveをdomain knowledgeの正本にすること
 - 推定feedbackをユーザー事実、同意、公開許可として扱うこと
+- 初期運用で専用Web UI、mobile client、常駐daemonを必須にすること
+- 初期運用でIssue作成後の自動実装、branch、commit、PR、merge、releaseを実行すること
+- 起動時の更新検知だけでmanifest pinや子repo checkoutを自動更新すること
 
 ## 3. 設計原則
 
@@ -110,31 +119,31 @@ interaction laneはユーザー応答を担い、improvement laneとaudit/refact
 |---|---|---|
 | Human owner | 要件優先度、merge、release、公開・同意判断 | 暗黙要件の放置 |
 | Orchestrator | task選択、context pack、状態管理、横断検証 | 子schemaの上書き |
-| Interaction agent | 会話、意図理解、retrieval、成果物提示、feedback観測 | 推定を事実化、改善完了待ちで会話をblock |
-| Improvement agent | feedback分類、Issue routing、実装、test、draft PR | authority不明のrepoへの直接変更 |
+| Interaction agent | CodexまたはClaude Codeとして会話、意図理解、retrieval、成果物提示、feedback観測 | 推定を事実化、改善完了待ちで会話をblock |
+| Improvement agent | feedback分類、Issue routing、初期運用ではcreate-only Issue delivery | authority不明のrepoへの直接変更、初期運用での実装・PR作成 |
 | Worker agent | 1taskの実装、test、記録、draft PR | 別taskへの無制限拡張 |
 | Child repository | domain要件、データ、schema、quality gate | 親run stateの所有 |
-| Auditor | 非同期のdrift、privacy、鮮度、孤立、構造品質の監査・refactoring提案 | 自動で事実を補完、user artifactの変更 |
+| Auditor | 初期運用では起動時にdrift、privacy、鮮度、孤立、構造品質を監査しIssue候補を作る | 自動で事実を補完、user artifact変更、初期運用でのrefactoring実装 |
 | Google Drive artifact store | immutable user output、revision lineage、feedback reference | domain KBやtask queueの正本化 |
 
 ## 5. 全体アーキテクチャ
 
 ~~~text
-User <-> Interaction Agent
+User <-> Codex / Claude Code
               |
-       parent control plane
+       startup + parent control plane
   registry + contracts + queue + state
        /          |             \
  repository   artifact       feedback
  retrieval    adapter        router
      |            |             |
-four child   Google Drive   Issue -> task
-repositories  append-only   -> draft PR
+five child   Google Drive   create-only
+repositories  append-only   GitHub Issue
      \            |             /
-      provenance + audit/refactoring
+      provenance + startup audit
 ~~~
 
-親repoはcontrol plane、子repoはdomain knowledge/data/implementation plane、Google Driveはuser artifact planeである。interaction agentはfrontstage、improvement agentとauditorはbackstageである。workspaceはローカル生成物で、親Gitの管理対象外とする。
+親repoはcontrol plane、子repoはdomain knowledge/data/implementation plane、Google Driveはuser artifact planeである。CodexまたはClaude Codeが初期frontstage、Issue deliveryとauditorがbackstageである。workspaceはローカル生成物で、親Gitの管理対象外とする。専用UIへの置換はこの境界を保つ限り後方互換なadapter追加として扱う。
 
 ## 6. 正本と優先順位
 
@@ -159,7 +168,9 @@ Google Driveはユーザー成果物と、その成果物に対するfeedbackの
 
 各entryは安定ID、full name、clone URL、workspace path、role、domain authority、default branch、観測commit、instructions、requirement SSOT、quality gates、export/import contractを持つ。v1.1ではknowledge profileとしてanswerable questions、canonical entities、retrieval entry points、evidence/freshness rules、feedback owner、write scope、forbidden dataも持つ。
 
-manifestのcommitは運用開始点であり、永続pinではない。run開始時に生成するsnapshotが実際の入力commitを固定する。既存4repo IDはcore setとして必須とし、追加repoは既存entryの置換ではなくappendする。追加entryにもunique ownership、role-contract、同一repo Issue SSOT、instructions、quality gateを要求する。`agentic-art-production`は`production-handoff/v1`をimportし、`production-result/v1`をexportする双方向runtimeとして登録し、normalized research signalのproducer/consumerへ誤分類しない。
+manifestのcommitは最後にqualifiedとなった利用可能pinであり、run開始時に生成するsnapshotがそのrunの実入力commitを固定する。既存4repo IDはcore setとして必須とし、追加repoは既存entryの置換ではなくappendする。追加entryにもunique ownership、role-contract、同一repo Issue SSOT、instructions、quality gateを要求する。`agentic-art-production`は`production-handoff/v1`をimportし、`production-result/v1`をexportする双方向runtimeとして登録し、normalized research signalのproducer/consumerへ誤分類しない。
+
+remote default branchの先端は起動時に毎回read-onlyで観測するが、manifest pinと同一ではない。差分はupdate candidateとして記録し、資格確認、child quality gate、親PRを経るまでrunの入力へ昇格させない。この分離により、子repoが随時更新されても会話は最後のqualified snapshotを再現可能に利用できる。
 
 ## 8. Workspace lifecycle
 
@@ -265,6 +276,86 @@ eligible Issueは既存scheduler、lease、checkpoint、quality gateを通じて
 
 auditorはinteraction request pathと別queue/leaseで動き、repository structure、duplicate knowledge、stale evidence、retrieval coverage、contract drift、privacy、artifact lineageを検査する。修復はIssueまたはdraft PRとして記録し、interaction中のuser artifactを変更しない。audit failureは最後のqualified snapshotによる利用を直ちに無効化せず、severityと影響範囲を明示する。
 
+## 10F. 初期運用profile
+
+初期運用profileは、将来像を削除せず、実際にremote side effectを伴う範囲を次へ限定する。
+
+| Concern | 初期運用 | 後続拡張 |
+|---|---|---|
+| Human interface | CodexまたはClaude Code | 専用Web/GUI、他agent client |
+| Improvement | GitHub Issueのcreateまたはduplicate reuseまで | 実装、test、draft PR |
+| Audit | orchestration起動時に同期実行し、findingをIssue候補化 | 非同期常駐監査、refactoring PR |
+| Child updates | 起動時に全repoのremote headをread-only確認 | webhook/polling、再qualification自動起票 |
+| User artifacts | 承認済みDrive folderへのcreate/read verification | 外部artifact検索・高度なfeedback連携 |
+
+初期profileで許可する外部mutationは、ユーザーが成果物保存を求めた場合のDrive CREATEと、feedback/audit findingがpolicyを満たす場合のGitHub Issue CREATEだけである。既存Drive fileのupdate/delete/move/share/permission変更、既存Issueのedit/comment/close/delete/label変更、子repoのbranch/commit/PR、merge、releaseは許可しない。
+
+## 10G. Orchestration startup contract
+
+CodexまたはClaude Codeは、最初のknowledge利用または外部writeより前に、単一のstartup commandを一度実行する。同じagent process内ではstartup reportの有効期限内だけ再利用でき、新しい起動では必ず再実行する。
+
+~~~text
+validate parent configuration
+  -> observe every manifest repository remote HEAD (read-only)
+  -> guard local workspaces and select qualified pins
+  -> snapshot
+  -> status + audit + security
+  -> capability decision
+     READY | READY_WITH_FINDINGS | BLOCKED
+~~~
+
+startup reportは、run ID、親commit、各repoのqualified pin、remote observed commit、observation timestamp、drift、workspace guard、audit/security finding code、capability、remediationだけを持つ。token、raw remote response、会話全文、Drive本文、直接識別情報を持たない。
+
+状態判定は次の通りとする。
+
+- `READY`: 全repoを観測でき、qualified pinが利用可能で、blocking findingがない。
+- `READY_WITH_FINDINGS`: remote head差分、非critical audit finding、または一時的なread-only remote観測不能があるが、最後のqualified snapshotで安全に回答できる。回答には使用commitと制約を表示し、release、pin更新、影響repoへのmutable improvementを止める。
+- `BLOCKED`: parent validation失敗、dirty/detached/divergedな利用対象、schema major不一致、credential/PRIVATE_RAW/RESTRICTED、consent違反、またはcritical security findingがある。影響capabilityを実行しない。
+
+remote head差分は更新の存在であり、直ちに異常でも採用指示でもない。startupはcheckout、pull、merge、reset、manifest編集を行わず、repo ID、qualified pin、remote observed commitを持つupdate candidateを生成する。採用は別taskでimmutable archiveを取得し、manifest記載child gateと親compatibilityを通して親PRにする。
+
+auditは初期profileではstartupの一部として完了を待つ。ただしaudit findingのIssue作成と将来の修復はユーザー応答後のbackstage side effectとしてよく、Issue API障害だけを理由にqualified knowledgeのread-only利用を止めない。
+
+## 10H. Create-only GitHub Issue delivery
+
+Issue deliveryは既存Issue routerのprivacy-safe候補だけを入力とし、target repositoryをmanifest authorityとallowlistの積で決定する。実行前に同じstable deduplication keyを検索し、既存Issueがあれば新規作成せずそのURLを返す。
+
+Issue bodyは次だけを含む。
+
+- stable issue key、source kind (`explicit` / `inferred` / `audit` / `repository-update`)
+- privacy-safe summary、観測されたfrictionまたはfinding、期待outcome
+- target authority、proposed acceptance、source repository@commitまたはopaque interaction/artifact reference
+- inferredの場合は`unconfirmed hypothesis`、confidence、反証条件
+- prohibited data scanと生成agent/run ID
+
+raw conversation、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierをIssueへ送らない。consentまたはauthorityが不十分なら`TRIAGE`に留める。初期profileではIssueの作成または既存Issueの再利用がterminal stateであり、実装task、branch、commit、PRを自動開始しない。
+
+## 10I. Real Google Drive boundary
+
+実Drive adapterはprovider-neutralなportとし、Codex/Claude Codeのconnector、承認済みCLI、またはservice adapterのいずれでも同じrequest/result envelopeを使う。OAuth tokenやprovider sessionはrepo外の実行環境が所有する。
+
+CREATE requestはapproved folder ID、artifact metadata、content hash、idempotency key、access/consent scope、lineageを持つ。adapterは新規fileを作成後、file IDとcontent hashまたはread-back hashを確認してopaque resultを返す。同じkey・同じhashは既存結果をreplayし、同じkey・異なるhashは拒否する。修正版は新key・新file・`supersedes` relationで保存する。
+
+実装・qualificationは、networkless fakeによる決定性検証と、明示的に指定したsandbox folderでのopt-in live smokeを分離する。live smokeは既存fileを更新せず、作成したtest file IDを証跡化する。削除を自動cleanupに使わないため、保存先にはtest artifactのretention policyを事前に設定する。
+
+## 10J. Research / Production exchange
+
+親が所有するのは双方向交換の順序とevidence envelopeだけであり、`production-handoff/v1`はResearch、`production-result/v1`はProductionが所有する。
+
+~~~text
+Research@commit
+  export_handoff -> immutable handoff bundle
+    Production@commit
+      receive -> plan/prototype/simulated execution in Git-external project
+      export_result -> immutable result bundle
+        Research@commit
+          import_result --dry-run -> optional apply only in an explicit child task
+~~~
+
+親は隣接working treeを直接参照せず、manifest pinから作ったclean immutable archive上で子repo自身のgenerator/validatorを呼ぶ。bundleとProduction project/resultはGit外のrun-scoped output rootへ置く。親のevidenceはproducer/consumer repository@commit、contract version、schema/bundle semantic hash、child command、exit status、terminal status、opaque output locatorだけを保持し、子schemaやbundle本文を複製しない。
+
+Productionの物理作業、購入、契約、公開、外部送信はE2Eで実行せず、`NOT_RUN`または`EXTERNAL_VALIDATION_REQUIRED`を保持する。Researchへのresult applyは子repoを変更するため、初期の親E2Eでは`--dry-run`までを必須とし、applyは別child task、別commit、別PRとする。
+
 ## 11. Cross-repository work item
 
 work itemはID、owner repo、dependency、allowed paths、context、acceptance、checks、risk、attempts、lease、checkpoint、terminal state、commit/PR/test evidenceを持つ。schedulerは選択結果だけでなく、他taskが選ばれない理由も出力する。
@@ -317,12 +408,17 @@ blocking validatorは最低限次を検査する。
 - artifact operationがCREATEであり、opaque Drive referenceとhashを持つこと
 - inferred feedbackがconfidence、evidence、hypothesisを持つこと
 - Issue routing targetがmanifest authorityと一致すること
+- startup reportが全manifest repoのqualified pinとremote observationを区別すること
+- remote driftがmanifest pinまたはcheckoutを暗黙更新していないこと
+- GitHub write operationがIssue CREATEまたはduplicate reuseだけであること
+- live Drive operationがCREATE/read verificationだけであること
+- Production exchangeのcontract owner、producer/consumer commit、bundle hashが完全であること
 - forbidden data classとlikely secret
 - generated dataが正本より古くないこと
 
 ## 16. Audit rules
 
-auditはcommitを止めず、stale pin、SSOT変更後の未検証、orphan signal、requirementの根拠不足、marketing freshness、self-model consent、art relation根拠、重複Issue/PR、長期BLOCKED、孤児lease、未push commit、artifact lineage欠落、feedback routing drift、retrieval coverage、interaction/audit lane競合を次の修復候補として出す。
+auditは通常のcommitを一律に止めず、stale pin、remote update、SSOT変更後の未検証、orphan signal、requirementの根拠不足、marketing freshness、self-model consent、art relation根拠、重複Issue/PR、長期BLOCKED、孤児lease、未push commit、artifact lineage欠落、feedback routing drift、retrieval coverage、interaction/audit lane競合を次の修復候補として出す。初期startupではcritical privacy/security/schema findingだけを`BLOCKED`、それ以外を`READY_WITH_FINDINGS`に写像する。
 
 ## 17. セキュリティとプライバシー
 
@@ -346,6 +442,9 @@ Drive書込みは保存先、access scope、consentが確定した場合だけ�
 - interaction応答はimprovement/audit処理の完了を待たない
 - Drive adapterはnetworkless fakeでcreate-only/idempotencyを検証可能
 - 同一interaction/snapshot/configから同一routingとmetadataを生成
+- startupはmanifest repo数に依存せず全entryを検査し、同一観測入力から同一判定を生成
+- remote API、GitHub Issue、Google Drive障害はrepo/operation単位に分離し、成功済みside effectを重複しない
+- Production exchangeはGit外output rootで反復可能で、子schemaやasset bodyを親Gitへ保存しない
 
 ## 19. 完了条件
 
@@ -383,6 +482,32 @@ Drive書込みは保存先、access scope、consentが確定した場合だけ�
 - privacy、consent、Drive権限、artifact lineage、child quality gateの失敗が期待する終端状態へ到達する
 - networkless interaction E2Eが3回連続で決定的に成功する
 - merge、release、公開、共有範囲拡張、artifact削除の人間gateが維持される
+
+### 19.4 v1.2.1 baseline
+
+- `agentic-art-production`を含む5repoのmanifest pin、snapshot、status、audit、child gateが一致する
+- v1.2.0公開後の親main変更をv1.2.1として3回連続qualificationする
+- 5repoすべてのimmutable child gateがpassし、remote mutationは0件である
+- review、main merge、tag、GitHub Releaseは明示的な人間承認で実行する
+
+### 19.5 v1.3.0 Production exchange
+
+- Research pinがhandoff exportとproduction-result dry-run importを、Production pinがhandoff receiptとresult exportを提供する
+- 親orchestratorがResearch→Production→Researchをclean immutable commitとGit外output rootだけで往復させる
+- tamper、schema/hash mismatch、dirty source、replay、未実施外部検証をfail-closedで観測する
+- 子repo schema、canonical data、working treeを親が変更・複製しない
+- parent + 5 child gatesとexchange E2Eが3回連続成功する
+
+### 19.6 v1.4.0 initial interactive operations
+
+- CodexまたはClaude Codeだけでstartup、根拠付き回答、成果物保存、feedback収集を会話として完結できる
+- orchestration起動ごとに全manifest repoのremote head確認とaudit/securityを行う
+- updateがある場合も最後のqualified pinを使い、差分と制約を明示して自動pin更新しない
+- 実Google Driveの承認済みfolderに新規artifactをcreateし、read-back/hashを確認し、既存artifactを上書きしない
+- eligible feedback/audit findingをauthority repoのGitHub Issueとしてcreateまたはdeduplicateし、Issue後の実装を自動開始しない
+- raw conversation、Drive本文、機微情報、credentialをGitHubまたは親Gitへ保存しない
+- networkless E2Eを3回、opt-in sandbox live smokeでDrive CREATE/readとIssue CREATE/deduplicateを確認する
+- PR、merge、release、子repo mutation、Drive update/delete/shareは人間または別明示taskのgateを維持する
 
 ## 20. 変更管理
 
