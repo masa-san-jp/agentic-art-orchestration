@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -116,10 +117,15 @@ def _run_gate(command: str, repository_path: Path, timeout_seconds: int) -> dict
             error="command produced no argv; remediation: declare one executable command",
         )
     started = time.monotonic()
+    environment = os.environ.copy()
+    environment["PATH"] = os.pathsep.join(
+        [str(Path(sys.executable).parent), environment.get("PATH", "")]
+    )
     try:
         completed = subprocess.run(
             argv,
             cwd=repository_path,
+            env=environment,
             capture_output=True,
             text=True,
             timeout=timeout_seconds,

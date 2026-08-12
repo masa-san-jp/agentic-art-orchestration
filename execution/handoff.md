@@ -587,3 +587,17 @@
 | agentic-art-research | 9bfa07d80c7962840031e0607f431c3bb997245f |
 
 これらは2026-08-11の観測値。運用開始後はsnapshot生成物が現在値を保持する。
+
+## V12-RELEASE-001 evidence
+
+- `tools/release_check.py`をv1.2.0へ拡張し、親validator/test、v1.1 interaction回帰、v1.2 E2E、manifest固定commitのchild quality gates、history/privacy境界を一つのread-only qualificationへ接続した。`--workspace-root`で検証済みの一時child workspaceを渡せる。
+- `config/repositories.yaml`のquality gatesを、各observed commitのGitHub Actions定義へ合わせた。self-modelはgraph + tests、art-historyはgraph + context vectors + tests、marketingはgraph + audit dry-run、agentic-art-researchはcompileall + validate + tests + graphである。子repo自体は変更していない。
+- `tools/quality_gates.py`は宣言gateの`python3`がqualification実行環境の依存済みinterpreterを使うようPATHを限定的に補正する。`tools/v12_e2e.py`は実行時間とredacted output hash等のruntime-only evidenceを除外して、意味上の決定性を比較する。
+- GitHub上で4つのmanifest observed commitの存在を確認した。一時workspaceで各commitをimmutable archiveとして実行し、4/4 repository、全宣言gateが`PASSED`。workspace checkoutは親・子ともread-onlyで、子branch、Issue、PR、canonical dataは変更していない。
+- `.venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>`: `status=PASSED`、25 checks、親チェック全件PASS、v1.1 E2E 3/3、v1.2 E2E 3/3 deterministic、child gates 4/4 PASS。`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`。
+- `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: release qualification実装を含む全親テスト pass。`git diff --check`: pass。機微情報、会話全文、Drive本文、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。
+- Task acceptance: 1/1。状態は`active_task: null`、lease released、`last_completed_task: V12-RELEASE-001`。未解決はv1.2.0のmerge・tag・GitHub Releaseのhuman approvalのみ。
+
+## Next exact action
+
+1. human ownerがqualification reportと差分をレビューし、v1.2.0をmerge・tag・GitHub Releaseするか承認する。最初の操作は`git status -sb`。
