@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/research-provenance.schema.json",
+  "title": "Research proposition provenance trace v1",
+  "description": "A structured, reference-only proposition trace from seeded selection through normalized signals and immutable evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "project_id",
+    "snapshot_id",
+    "rule_set_hash",
+    "candidate_space_hash",
+    "gate_report_hash",
+    "selection_decision",
+    "proposition_count",
+    "propositions"
+  ],
+  "properties": {
+    "contract_version": {"const": "research-provenance/v1"},
+    "project_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "snapshot_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "rule_set_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate_space_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gate_report_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "selection_decision": {"$ref": "#/$defs/selection_decision"},
+    "proposition_count": {"type": "integer", "minimum": 1},
+    "propositions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/proposition"}
+    }
+  },
+  "$defs": {
+    "selection_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed_input", "seed", "selection_limit", "selected_count", "selected_candidates"],
+      "properties": {
+        "seed_input": {"type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9._:-]+$"},
+        "seed": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "selection_limit": {"type": "integer", "minimum": 1},
+        "selected_count": {"type": "integer", "minimum": 1},
+        "selected_candidates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/selection_ref"}
+        }
+      }
+    },
+    "selection_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "rank", "selection_score"],
+      "properties": {
+        "candidate_id": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"},
+        "rank": {"type": "integer", "minimum": 1},
+        "selection_score": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "proposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposition_id", "candidate_id", "rule_id", "selection", "candidate", "rule", "structured_output", "normalized_signals"],
+      "properties": {
+        "proposition_id": {"type": "string", "pattern": "^proposition:[0-9a-f]{16}$"},
+        "candidate_id": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"},
+        "rule_id": {"type": "string", "pattern": "^R[0-9]+$"},
+        "selection": {"$ref": "#/$defs/selection_ref"},
+        "candidate": {"$ref": "#/$defs/candidate_snapshot"},
+        "rule": {"$ref": "#/$defs/rule_snapshot"},
+        "structured_output": {"$ref": "#/$defs/structured_output"},
+        "normalized_signals": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"$ref": "#/$defs/signal_trace"}
+        }
+      }
+    },
+    "candidate_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "rule_id", "inputs", "composition"],
+      "properties": {
+        "candidate_id": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"},
+        "rule_id": {"type": "string", "pattern": "^R[0-9]+$"},
+        "inputs": {"$ref": "#/$defs/inputs"},
+        "composition": {"$ref": "#/$defs/composition"}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["self", "art-history", "marketing"],
+      "properties": {
+        "self": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/input_ref"}},
+        "art-history": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/input_ref"}},
+        "marketing": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/input_ref"}}
+      }
+    },
+    "input_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "signal_kind", "attribute", "source_repository", "source_commit", "source_entity_ids", "source_locators", "evidence_locators"],
+      "properties": {
+        "signal_id": {"type": "string", "minLength": 1},
+        "signal_kind": {"type": "string", "enum": ["self", "art-history", "marketing"]},
+        "attribute": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "source_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_entity_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "source_locators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "evidence_locators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["personal_tension", "historical_operation", "contemporary_condition"],
+      "properties": {
+        "personal_tension": {"$ref": "#/$defs/slot_ref"},
+        "historical_operation": {"$ref": "#/$defs/slot_ref"},
+        "contemporary_condition": {"$ref": "#/$defs/slot_ref"}
+      }
+    },
+    "slot_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "signal_kind", "attribute"],
+      "properties": {
+        "signal_id": {"type": "string", "minLength": 1},
+        "signal_kind": {"type": "string", "enum": ["self", "art-history", "marketing"]},
+        "attribute": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+      }
+    },
+    "rule_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "rule_set_hash", "output_type", "template", "constraints"],
+      "properties": {
+        "rule_id": {"type": "string", "pattern": "^R[0-9]+$"},
+        "rule_set_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "output_type": {"const": "research_proposition"},
+        "template": {"const": "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"},
+        "constraints": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {"enum": ["require_all_inputs", "require_source_provenance", "no_unproven_concepts"]}
+        }
+      }
+    },
+    "structured_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output_type", "template", "slots"],
+      "properties": {
+        "output_type": {"const": "research_proposition"},
+        "template": {"const": "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"},
+        "slots": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["personal_tension", "historical_operation", "contemporary_condition"],
+          "properties": {
+            "personal_tension": {"$ref": "#/$defs/provenance_ref"},
+            "historical_operation": {"$ref": "#/$defs/provenance_ref"},
+            "contemporary_condition": {"$ref": "#/$defs/provenance_ref"}
+          }
+        }
+      }
+    },
+    "provenance_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "signal_kind", "attribute", "source_repository", "source_commit", "evidence_locator"],
+      "properties": {
+        "signal_id": {"type": "string", "minLength": 1},
+        "signal_kind": {"type": "string", "enum": ["self", "art-history", "marketing"]},
+        "attribute": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "source_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "evidence_locator": {"type": "string", "minLength": 1}
+      }
+    },
+    "signal_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "signal_kind", "attributes", "source_repository", "source_commit", "source_entity_ids", "source_locators", "evidence_locators"],
+      "properties": {
+        "signal_id": {"type": "string", "minLength": 1},
+        "signal_kind": {"type": "string", "enum": ["self", "art-history", "marketing"]},
+        "attributes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}},
+        "source_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_entity_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "source_locators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "evidence_locators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

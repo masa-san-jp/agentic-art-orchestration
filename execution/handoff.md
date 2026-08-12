@@ -556,6 +556,16 @@
 - 機微情報: gate outputはredact・hash済みで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、個人識別情報、子repo canonical dataを親へコピーしていない。
 - acceptance: 1/1達成。leaseを解放し、依存完了済み最小IDの`V12-PROVENANCE-001`をREADYへ進めた。
 
+## V12-PROVENANCE-001 evidence
+
+- `schemas/research-provenance.schema.json`、`tools/proposition_provenance.py`、`tests/test_proposition_provenance.py`を追加した。`research-provenance/v1`は、seeded selection decision、candidate、active transformation rule、固定structured output、normalized signals、source repository@commit、source/entity locator、evidence locatorを一つの逆引きtraceへ結び付ける。
+- propositionは自由生成文やraw statementを持たず、rule registryの固定templateとslot参照だけを保持する。slotの`signal_id`、`signal_kind`、attribute、source repository、40桁commit、evidence locatorは元signalと完全一致しなければならない。
+- selection/candidate/gate/rule/signalのschema・hash・identity不一致、selection candidateの改変、source commitの改変、未追跡evidenceをfail-closedで拒否する。clean fixtureでは1 proposition、3 signal kinds、R17、全source provenanceが再現され、同じ入力でbyte-identicalとなることを検証した。
+- `.venv/bin/python tools/proposition_provenance.py ...`: pass。`--check`: pass。candidate space、candidate gates、selectionの各`--check`: pass。`.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: pass（202 tests）。status drift CLEAN、audit finding 0、security PASSED、child workspace statusは4件すべてclean、`git diff --check`: pass。
+- 変更子repo: なし。子repoのIssue、schema、canonical data、quality gate、branch、commit、PRは変更していない。Google Driveへの実書込みもない。
+- 機微情報: provenance outputはsignal metadata、source commit、entity/source/evidence locatorだけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、child canonical dataを含まない。
+- acceptance: 1/1達成。leaseを解放し、依存完了済み最小IDの`V12-E2E-001`をREADYへ進めた。
+
 ## Observed child heads at bootstrap
 
 | Repository | Commit |
