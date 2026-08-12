@@ -3,9 +3,10 @@ from __future__ import annotations
 import hashlib
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
-from tools.quality_gates import QualityGateError, run_quality_gates
+from tools.quality_gates import QualityGateError, _runtime_bin_dirs, run_quality_gates
 
 
 def manifest_for(workspace: Path) -> dict:
@@ -31,6 +32,16 @@ def manifest_for(workspace: Path) -> dict:
 
 
 class QualityGateTests(unittest.TestCase):
+    def test_active_virtualenv_bin_precedes_resolved_interpreter(self):
+        with tempfile.TemporaryDirectory(prefix="quality-gates-venv-") as temporary:
+            virtualenv_bin = Path(temporary) / "bin"
+            virtualenv_bin.mkdir()
+            with patch("tools.quality_gates.sys.prefix", temporary), patch(
+                "tools.quality_gates.sys.base_prefix", "/system"
+            ), patch("tools.quality_gates.sys.executable", "/system/bin/python3"):
+                paths = _runtime_bin_dirs()
+            self.assertEqual(str(virtualenv_bin), paths[0])
+
     def test_only_changed_repositories_run_and_unchanged_is_not_run(self):
         with tempfile.TemporaryDirectory(prefix="quality-gates-") as temporary:
             root = Path(temporary)

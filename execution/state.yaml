@@ -1,30 +1,30 @@
 version: 2
-updated_at: "2026-08-12T19:02:09+09:00"
+updated_at: "2026-08-13T06:47:47+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-production-revalidation
-  acquired_at: "2026-08-12T18:06:30+09:00"
-  expires_at: "2026-08-12T19:06:30+09:00"
-  lane: MANIFEST_ONBOARDING
-  execution_id: MANIFEST-PRODUCTION-002:attempt-1
-  released_at: "2026-08-12T18:23:30+09:00"
-  release_reason: completed
+  owner: codex-v121-release
+  acquired_at: "2026-08-13T06:41:22+09:00"
+  expires_at: "2026-08-13T07:41:22+09:00"
+  lane: RELEASE
+  execution_id: V121-RELEASE-001:attempt-1
+  released_at: "2026-08-13T06:47:47+09:00"
+  release_reason: blocked at human gate; PR ready for explicit approval
   scope:
     repository: agentic-art-orchestration
-    paths: [config/repositories.yaml, schemas/repository-manifest.schema.json, tools/validate.py, tools/workspace.py, tools/audit.py, tools/improvement_loop.py, tests, README.md, docs, execution]
+    paths: [execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
 checkpoint:
-  task: MANIFEST-PRODUCTION-003
+  task: V121-RELEASE-001
   repository: agentic-art-orchestration
-  start_point: e5abdf00a6812d89059d87c07a6166ba73f15c87
-  expected_changes: Record and verify the parent-main production linkage after PR #15 merge without mutating the child repository.
-  result: completed; parent main contains the production manifest and Issue SSOT linkage; child repository remained unchanged
-last_completed_task: MANIFEST-PRODUCTION-003
+  start_point: b9206b1
+  expected_changes: Prepare a reviewable parent-only PR for the qualified v1.2.1 baseline; do not mutate child repositories, Issues, Drive, or perform merge/tag/release before the human gate.
+  result: blocked; PR #17 is mergeable with successful bootstrap CI and no reviews or unresolved threads, but explicit human approval is required before merge/tag/release
+last_completed_task: V121-QUALIFY-001
 resume_from:
-  task: null
-  action: Parent PR #15 is merged; no READY task remains. Re-run status and queue selection at the next session boundary.
-  command: git status -sb
+  task: V121-RELEASE-001
+  action: Obtain explicit human approval for PR #17, then merge main, create v1.2.1 tag, and publish GitHub Release.
+  command: gh pr view 17 --repo masa-san-jp/agentic-art-orchestration --json mergeable,reviewDecision,statusCheckRollup
 post_merge:
   status: linked
   pull_request: 15
@@ -41,7 +41,14 @@ release:
   tag: v1.2.0
   url: https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.2.0
   released_at: "2026-08-12T13:29:42+09:00"
-blocked: []
+blocked:
+  - task: V121-RELEASE-001
+    reason: human_gate_required
+    observed: PR #17 is OPEN/DRAFT/MERGEABLE; bootstrap CI passed; no submitted reviews or unresolved threads; merge, tag, and release are not performed.
+    options: [approve_and_merge_release, request_changes]
+    recommendation: approve_and_merge_release_after_human_review
+    impact: v1.2.1 remains unreleased; downstream M13 tasks stay blocked.
+    unblock_condition: explicit human approval naming PR #17 merge plus v1.2.1 tag and GitHub Release
 last_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-prod-revalidation-L4KFv6 --run-id production-revalidation --check; git diff --check
-  result: passed; parent 214 tests passed, all five repositories matched their observed commits and all 12 immutable child gates passed, including agentic-art-production validate/tests/evaluation. Runtime-only gate paths and test durations are normalized for repeatable --check evidence; post-merge main linkage verified at e5abdf00a6812d89059d87c07a6166ba73f15c87; 2026-08-12T19:02:09+09:00
+  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 3 --workspace-root /tmp/aap-prod-revalidation-L4KFv6; .venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
+  result: passed; v1.2.1 qualification 3/3, offline E2E 3/3, interaction E2E 3/3, v1.2 E2E 3/3 deterministic, five immutable child repositories MATCHED, all 12 child gates PASSED, parent validator and 215 tests passed, status CLEAN, audit finding 0, security PASSED, history finding 0; no remote/merge/tag/release operation; 2026-08-12T20:36:26+09:00

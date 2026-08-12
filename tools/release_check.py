@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run read-only v1.0/v1.1/v1.2 qualification checks without releasing anything."""
+"""Run read-only release qualification checks without releasing anything."""
 
 from __future__ import annotations
 
@@ -64,8 +64,8 @@ def _git(command: list[str]) -> str:
 
 
 def validate_request(version: str, runs: int) -> None:
-    if version not in {"1.0.0", "1.1.0", "1.2.0"}:
-        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, and 1.2.0 are supported; remediation: qualify the declared task version")
+    if version not in {"1.0.0", "1.1.0", "1.2.0", "1.2.1"}:
+        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, 1.2.0, and 1.2.1 are supported; remediation: qualify the declared task version")
     if runs <= 0:
         raise ReleaseCheckError("runs must be positive; remediation: use at least one deterministic E2E run")
 
@@ -354,7 +354,7 @@ def qualify(
         _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
         _command_check("audit-materialize", [python, "tools/audit.py", "--offline-fixture"]),
     ]
-    if version in {"1.1.0", "1.2.0"}:
+    if version in {"1.1.0", "1.2.0", "1.2.1"}:
         checks.extend(
             [
                 _command_check("retrieval-materialize", [python, "tools/retrieval.py"]),
@@ -377,7 +377,7 @@ def qualify(
             _command_check("security", [python, "tools/security.py", "--offline-fixture"]),
         ]
     )
-    if version in {"1.1.0", "1.2.0"}:
+    if version in {"1.1.0", "1.2.0", "1.2.1"}:
         checks.extend(
             [
                 _command_check("retrieval", [python, "tools/retrieval.py", "--check"]),
@@ -410,11 +410,11 @@ def qualify(
                 ),
             ]
         )
-    if version == "1.2.0":
+    if version in {"1.2.0", "1.2.1"}:
         checks.extend(_v12_release_checks(python, workspace_root))
     e2e = _e2e_check(runs)
-    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0"} else None
-    v12_e2e = _v12_e2e_check(runs, workspace_root) if version == "1.2.0" else None
+    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1"} else None
+    v12_e2e = _v12_e2e_check(runs, workspace_root) if version in {"1.2.0", "1.2.1"} else None
     history = _history_forbidden_findings()
     passed = (
         all(item["status"] == "PASSED" for item in checks)
@@ -456,7 +456,7 @@ def _write_atomic(path: Path, content: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Qualify v1.0.0, v1.1.0, or v1.2.0 without performing release operations")
+    parser = argparse.ArgumentParser(description="Qualify v1.0.0, v1.1.0, v1.2.0, or v1.2.1 without performing release operations")
     parser.add_argument("--version", required=True)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workspace-root", type=Path, default=V12_WORKSPACE_ROOT)

@@ -21,7 +21,8 @@ class ReleaseCheckTests(unittest.TestCase):
         validate_request("1.0.0", 3)
         validate_request("1.1.0", 3)
         validate_request("1.2.0", 3)
-        with self.assertRaisesRegex(ReleaseCheckError, "only versions 1.0.0, 1.1.0, and 1.2.0"):
+        validate_request("1.2.1", 3)
+        with self.assertRaisesRegex(ReleaseCheckError, "only versions 1.0.0, 1.1.0, 1.2.0, and 1.2.1"):
             validate_request("2.0.0", 3)
         with self.assertRaisesRegex(ReleaseCheckError, "runs must be positive"):
             validate_request("1.0.0", 0)

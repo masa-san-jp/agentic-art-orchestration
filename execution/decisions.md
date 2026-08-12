@@ -97,3 +97,31 @@
 - 決定: `agentic-art-production`を既存4repo core setの置換ではなく5件目としてappendし、同一repoのIssue #10を`requirement_ssot`とする。境界は`production-handoff/v1` importと`production-result/v1` exportを一組の`exchange_contracts`として表す。
 - 理由: Productionはnormalized research signalの入力KBでも単方向consumerでもない。既存roleへ偽装するとResearch→Production→Researchの責任分界が失われるため、control-plane-extensionの双方向runtimeとしてfail-closedに検証する。
 - 影響: manifest schema、validator、snapshot、audit、improvement context、offline testsを同時更新する。子repoのIssue、schema、canonical data、branchは変更しない。
+
+## D-014 — 初期の会話UIはCodexまたはClaude Codeとする
+
+- 日付: 2026-08-12
+- 決定: 専用Web/GUIを初期releaseの前提にせず、親repoのstartup contractとruntime guideを読めるCodexまたはClaude Codeを人間向けinteraction agentとして使用する。
+- 理由: product surfaceは会話体験であり、client固有UIではない。既存agent環境でknowledge利用、成果物作成、feedback観測を先に実運用化できる。
+- 安全条件: agentはstartup reportを先に取得し、使用repo@commit、freshness、unknowns、constraintを回答へ反映する。会話全文を親Gitへ保存しない。
+
+## D-015 — 初期の自律改善はGitHub Issue作成で終端する
+
+- 日付: 2026-08-12
+- 決定: 初期profileでfeedbackまたはaudit findingから許可するremote mutationは、authority repoへのprivacy-safeなIssue CREATEまたは既存duplicateの再利用までとする。
+- 理由: 利用体験から改善要求を失わず蓄積しつつ、実装・branch・commit・PRによる複数repoへの波及を運用初期から自動化しないため。
+- 安全条件: allowlist、stable deduplication key、consent、inference表示、forbidden-data scanを必須にする。Issue update、comment、close、delete、label mutation、実装開始は行わない。
+
+## D-016 — 初期監査と子repo更新確認は毎startupで行う
+
+- 日付: 2026-08-12
+- 決定: 新しいorchestration起動ごとに、全manifest repositoryのremote default-branch headをread-only観測し、その後qualified snapshotに対してaudit/securityを実行する。
+- 理由: 子repoは随時更新され、会話開始時点の鮮度と安全性を明示する必要がある。初期段階は常駐serviceやwebhookより、起動時の一貫したpreflightを優先する。
+- 安全条件: remote head差分はqualified pinと分離し、checkout、pull、reset、manifest pin更新を自動実行しない。critical finding以外は最後のqualified snapshotを`READY_WITH_FINDINGS`で利用できる。
+
+## D-017 — 運用化を3つのrelease段階へ分ける
+
+- 日付: 2026-08-12
+- 決定: (1) v1.2.1で現在mainの5repo基線を再qualification、(2) v1.3.0でResearch→Production→Research交換を実装、(3) v1.4.0でCodex/Claude Code、startup、実Drive、create-only Issueを初期運用化する。
+- 理由: manifest登録、contract実往復、外部side effectを別々に観察・rollbackでき、どの段階がrelease済みかを曖昧にしないため。
+- Human gate: 各段階のmain merge、tag、GitHub Releaseはqualification後も人間承認を要する。

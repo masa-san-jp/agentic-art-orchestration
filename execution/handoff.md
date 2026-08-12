@@ -2,11 +2,12 @@
 
 ## Current state
 
-- 完了: BOOTSTRAP-001、MANIFEST-001、WORKSPACE-001、WORKSPACE-002、SNAPSHOT-001、CONTRACT-001、ADAPTER-SELF-001、ADAPTER-ART-001、ADAPTER-MARKETING-001、CONSUMER-001、TRACE-001、WORKITEM-001、SCHEDULER-001、RUNTIME-001、GATES-001、DISPATCH-001、STATUS-001、PROJECT-001、AUDIT-001、SECURITY-001、FIXTURE-001、E2E-001、DOCS-001、RELEASE-001、V11-DESIGN-001、ARTIFACT-001、INTERACTION-001、FEEDBACK-001、REPOSITORY-ONBOARDING-001、KNOWLEDGE-PROFILE-001、AUDITOR-002、DRIVE-001
-- 次: ISSUE-ROUTER-001（READY、依存完了済み、最小ID）
+- 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
+- 完了: v1.2.1基線化実装。release checker、親runnerのactive virtualenv解決、5repo表記、runbook、state/handoffを更新済み。
+- 次: `V121-QUALIFY-001`（READY、依存完了済み、3回qualification）。
 - blocker: なし
 - active lease: なし
-- 親repo: `main` / `e8f7fdf`開始点 / working treeは意図したtask差分のみ
+- 親repo: `design/initial-operations-roadmap` / `ea18918`開始点 / working treeは意図したtask差分のみ
 
 ## MANIFEST-001 evidence
 
@@ -620,7 +621,54 @@
 - child gate runnerは、意味上の証跡を維持したままruntime-onlyの `duration_ms`、一時path、unittest実行時間を正規化して比較する。status、exit code、command、redacted output、output hash、manifest pinは比較対象として保持する。
 - 固定checkoutは5件すべてobserved commitと一致し、detachedかつdirtyなし。子repoのbranch、Issue、schema、canonical data、品質ゲート、PRは変更していない。Google Drive、外部artifact、merge、tag、release、物理effectも変更していない。
 - 機密情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは親へ追加していない。gate outputはredact・hash済みで、一時パスは正規化した。
-- acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。PR #15のhuman reviewとmergeが完了し、親main上の結線を確認済み。
+- acceptance: 1/1達成。MANIFEST-PRODUCTION-002はDONE、leaseはreleased。次はPR #15のhuman reviewとmerge判断であり、merge後にのみ親main上の結線が成立する。
+
+## OPS-DESIGN-001 evidence
+
+- ユーザー決定を初期profileとして固定した。人間向けUIはCodexまたはClaude Code、改善はGitHub Issueのcreate/deduplicateまで、監査と全manifest repoのremote head確認はorchestration起動時に毎回実行する。専用UI、Issue後の自動実装/PR、常駐監査、webhook更新追従は初期releaseの外とした。
+- canonical system designへstartup state (`READY` / `READY_WITH_FINDINGS` / `BLOCKED`)、remote observationとqualified pinの分離、create-only GitHub Issue、real create-only Drive、Research→Production→Research交換、禁止operation、v1.2.1/v1.3.0/v1.4.0完了条件を追加した。
+- canonical execution planとtask queueを、M12 `v1.2.1 five-repository baseline` → M13 `real Production exchange` → M14 `initial Codex/Claude Code operations`の直列DAGへ拡張した。各release taskはhuman gateであり、子repo、Issue、Driveをrelease mutation scopeから除外した。
+- read-only inspectionで、manifest pinのResearch `9bfa07d80c7962840031e0607f431c3bb997245f`にはhandoff export/result import CLIがなく、remote mainの後続commitには`build_handoff.py`、`export_handoff.py`、`import_production_result.py`が存在することを確認した。このためM13先頭に`PRODUCTION-PIN-001`を置き、Research/Production双方をchild gateで再qualificationしてから交換orchestratorへ進む。
+- Production pin `80aa824de33fddf7dc6dff526191699ce483bea0`にはGit外project作成、handoff受理、plan/prototype/runtime/execution、result build/export、evaluation CLIが存在する。親は子schemaを複製せず、clean immutable archive内の子CLIとGit外run rootだけを利用する設計とした。Research result applyは子変更になるため親E2Eではdry-runまでとした。
+- 子repo変更、GitHub Issue作成、Google Drive書込み、PR/merge/tag/release、物理effectは実行していない。新規文書はrepo ID、commit、contract、opaque locatorだけを扱い、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLを追加していない。
+- `.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -v`: 214 tests pass。`git diff --check`: pass。acceptance 1/1達成、lease released。
+- 次taskは`V121-RECONCILE-001`（READY）。最初の操作は`.venv/bin/python tools/validate.py --check`。
+
+## V121-RECONCILE-001 evidence
+
+- `tools/release_check.py`が受け付ける資格判定versionへ`1.2.1`を追加した。v1.2.0の判定経路は維持し、v1.2.1はv1.1 interaction回帰、v1.2 E2E、親validator/test、offline fixture、status、audit、security、history scan、manifest全child gateを同じfail-closed基準で実行する。
+- `requirements-dev.txt`へ`jsonschema==4.23.0`を追加した。`tools/quality_gates.py`はmacOSでvenvのsymlinkがsystem Pythonへ解決されても、active `sys.prefix/bin`をPATHの先頭に置く。これによりProduction child gateが要求するjsonschemaをqualification環境から解決できる。`tests/test_quality_gates.py`にvirtualenv優先の回帰を追加した。
+- READMEとoperator-runbookを、Production追加後の5repo baseline、v1.2.1 qualification、`--runs 1`（疎通）と`--runs 3`（qualification）の区別へ更新した。manifest pinsは変更していない。
+- 初回v1.2.1疎通は、親checksと4repo gateは通過したが、Productionの3gateが`ModuleNotFoundError: jsonschema`でFAILED。これは実行環境の依存不足であり、child commit/working treeはMATCHEDかつ未変更だった。依存解決後の再実行でProduction validate/tests/evaluationを含む5repo・12gateがすべてPASSEDした。
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 1 --workspace-root /tmp/aap-prod-revalidation-L4KFv6`: `status=PASSED`。v1.2.1 E2E、v1.1回帰、親checks、security、5repo immutable archive、5repo MATCHED、remote operation 0、merge/tag/release NOT_PERFORMEDを確認した。
+- `.venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 215 tests pass。`.venv/bin/python tools/status.py --offline-fixture`: CLEAN/blocker 0。`.venv/bin/python tools/audit.py --offline-fixture`: CLEAN/finding 0。`.venv/bin/python tools/security.py --offline-fixture`: PASSED/finding 0。`git diff --check`: pass。
+- 変更子repo: なし。self-model、art-history、marketing-trends、Research、Productionのpin、branch、Issue、schema、canonical data、PRは変更していない。Google Drive、GitHub Issue、merge、tag、release、外部effectも実行していない。
+- acceptance: 1/1達成。`V121-RECONCILE-001`はDONE、lease released。次は`V121-QUALIFY-001`で同じread-only qualificationを3回連続実行する。
+
+## V121-QUALIFY-001 evidence
+
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 3 --workspace-root /tmp/aap-prod-revalidation-L4KFv6`をread-onlyで実行し、終了コード0、`version=1.2.1`、`status=PASSED`を確認した。資格確認は3/3、offline E2Eは3/3、interaction E2Eは3/3、v1.2 E2Eは3/3 deterministicで、全て`no_remote_mutation=true`だった。
+- 5つのmanifest-pinned immutable archiveがすべてobserved commitとMATCHEDし、child quality gateはProductionを含む5/5 repository、計12/12 gateが`PASSED`となった。実行modeは全て`immutable-archive`で、失敗ゲートをPASSへ正規化していない。
+- qualification reportのhistoryは47 commits、finding 0、security boundaryは親の機密チェック対象payload/signalsでfinding 0。raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、child canonical dataは親へ追加していない。
+- `.venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 215 tests pass。status `--check --offline-fixture`: pass/CLEAN、audit `--check --offline-fixture`: pass/finding 0、security: PASSED、`git diff --check`: pass。
+- 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gateは変更していない。Google Drive、GitHub Issue、remote operation、merge、tag、releaseも未実行。生成reportは`data/`のignore対象で、Gitへ追加していない。
+- acceptance: 1/1達成。`V121-QUALIFY-001`をDONE、leaseをreleased、`V121-RELEASE-001`をREADYへ遷移した。v1.2.1のmerge、tag、GitHub Releaseは人間承認が必要なため未実行。
+
+## Next exact action
+
+1. 人間がqualification evidenceと親差分をレビューし、`V121-RELEASE-001`のmerge・v1.2.1 tag・GitHub Releaseを明示承認する。最初の操作は`git status --short --branch`。
+
+## V121-RELEASE-001 review gate
+
+- PR #17（`design/initial-operations-roadmap` → `main`）を作成し、originへpushした。最新main取り込み後のheadは`fbb24b9fb2faa2fbf3475155d8e8ee6fec1c7fe7`で、PR状態はOPEN/DRAFT/MERGEABLE。
+- 最新main `c8ecbf819b310411cfa28153ddd50ae04b75fdc8`との衝突を親repo内で解消し、production linkage（MANIFEST-PRODUCTION-003）とv1.2.1 qualification計画・証跡を併存させた。子repoは変更していない。
+- GitHub Actions `bootstrap`はSUCCESS。GitHub review submissionsは0件、inline review threadsは0件。親ローカルではvalidator OK、215 tests PASS、status CLEAN、audit 0件、security PASSED、`git diff --check` PASS。
+- PR準備中に実行した外部操作は親branchのpushと親PR #17作成のみ。子repo、GitHub Issue、Google Drive、merge、tag、Release、共有範囲変更は未実行。
+- acceptance: PR準備とレビュー可能状態の確認は達成。merge・v1.2.1 tag・GitHub Releaseは人間ゲートのため未達成。`V121-RELEASE-001`はBLOCKED、leaseはreleasedとし、観測事実・推奨・解除条件をstateへ記録した。
+
+## Next exact action
+
+1. 人間がPR #17の差分とqualification evidenceをレビューし、「PR #17をmainへmergeし、merge後のSHAへv1.2.1 tagとGitHub Releaseを作成・公開する」と明示承認する。承認後の最初の操作は`gh pr view 17 --repo masa-san-jp/agentic-art-orchestration --json mergeable,reviewDecision,statusCheckRollup`。
 
 ## MANIFEST-PRODUCTION-003 post-merge reconciliation
 
@@ -628,8 +676,4 @@
 - 親mainの`config/repositories.yaml`に`agentic-art-production`、同一repo Issue #10、`production-handoff/v1` import、`production-result/v1` export、3つの子quality gateが反映されている。
 - 子repoの最新pinは`80aa824de33fddf7dc6dff526191699ce483bea0`で、子repoのIssue、schema、canonical data、branchは変更していない。
 - マージ後の親mainを取得し、manifest内容、親main SHA、既存214 tests / validator / diff checkのPR証跡を確認した。外部artifact、release、tag、物理effectは実施していない。
-- acceptance: 1/1達成。親mainと子Issue SSOTの結線は確立済み。依存完了済みのREADY taskはなく、次回開始点は通常のqueue再確認。
-
-## Next exact action
-
-1. 次のセッションは`git status -sb`を実行し、`execution/task-queue.yaml`にREADY taskがないことを確認する。
+- acceptance: 1/1達成。親mainと子Issue SSOTの結線は確立済み。後続の`V121-RELEASE-001`はqualification済み親差分のhuman reviewとrelease操作を扱う。

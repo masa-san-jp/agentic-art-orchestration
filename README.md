@@ -14,18 +14,20 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
 - 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 
-初期ブートストラップからM10のv1.2.0 qualification、merge、tag、GitHub Release公開までを完了した。v1.2.0はread-only qualificationを通過し、親repoのhuman gateを経て公開済みである。v1.0は、4リポジトリを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
+初期ブートストラップからM10のv1.2.0 qualification、merge、tag、GitHub Release公開、M11のProduction追加と親PR #15 mergeまでを完了した。現在は5repo構成のv1.2.1 baseline reconciliation中であり、v1.2.1の資格判定はread-onlyで実行する。v1.0は、4つのcore repoと追加repoを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
 
 親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2で実装・qualification済みである。v1.2はrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance、固定commit child quality gateを含む。qualificationはread-onlyで実施し、merge・tag・GitHub Releaseはhuman gateを経て公開済みである。
 
-v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加する。既存4repoはcore setとして維持し、`agentic-art-production`を追加runtimeとしてmanifestへappendする。追加repoにも同一repo Issue SSOT、明示的な境界契約、snapshot、個別品質ゲートを要求する。
+v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加した。既存4repoはcore setとして維持し、`agentic-art-production`を追加runtimeとしてmanifestへappendした。追加repoにも同一repo Issue SSOT、明示的な境界契約、snapshot、個別品質ゲートを要求する。
+
+次の実装順は、v1.2.1で5repo基線を再qualification、v1.3.0でResearch→Production→Researchのbundle交換、v1.4.0でCodexまたはClaude Codeを初期UIとして起動時更新確認・起動時監査・実Drive create-only保存・GitHub Issue create-only改善を接続することである。初期改善はIssue作成で止まり、Issue後の実装・PR・merge・releaseは自動開始しない。
 
 ~~~text
-User <-> Interaction Agent -> Child Knowledge Repositories
-                    |       -> Append-only Google Drive Artifacts
-                    +------ -> Feedback -> Issue -> Improvement -> Draft PR
+User <-> Codex / Claude Code -> Child Knowledge Repositories
+                    |          -> Append-only Google Drive Artifacts
+                    +--------- -> Feedback -> create-only GitHub Issue
 
-Asynchronous Auditor ------ -> Refactoring Issue / Draft PR
+Startup update check + audit -> findings / Issue candidate
 ~~~
 
 ## 統合対象
@@ -47,6 +49,7 @@ Asynchronous Auditor ------ -> Refactoring Issue / Draft PR
 - Drive成果物は上書き・削除せず、修正版を新規作成してderived_from/supersedesで結ぶ。
 - 推定された不満や欲求はfeedback仮説であり、明示要求やユーザー属性として扱わない。
 - 改善・監査は会話応答と非同期に進め、merge・release・公開・同意拡張は人間gateを維持する。
+- 起動時は全manifest repoのremote headをread-only確認し、最後のqualified pinと差分を区別する。自動checkout、pin更新、子repo変更は行わない。
 
 ## エージェントの開始手順
 

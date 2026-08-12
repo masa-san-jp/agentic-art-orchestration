@@ -1,6 +1,6 @@
 # Operator runbook
 
-この文書は、会話履歴なしの新しいagentが親repoだけを読み、4つの独立repoを安全に展開・検査・実行・引き継ぐための手順である。子repoの要件、schema、Issue、データは各子repoが正本であり、親のrunbookはそれらを複製しない。
+この文書は、会話履歴なしの新しいagentが親repoだけを読み、4つのcore repoと追加Production repoを安全に展開・検査・実行・引き継ぐための手順である。子repoの要件、schema、Issue、データは各子repoが正本であり、親のrunbookはそれらを複製しない。
 
 ## 0. 最初の1操作
 
@@ -31,6 +31,18 @@ git status --short
 
 ## 2. 初期化と検査
 
+### 初期運用startup（M14実装後）
+
+CodexまたはClaude Codeを利用agentとして起動したら、最初の回答または外部writeより前に次を実行する。
+
+~~~bash
+.venv/bin/python tools/startup.py --check
+~~~
+
+startupは全manifest repoのremote headをread-onlyで確認し、qualified pinと比較してからworkspace guard、snapshot、status、audit、securityを実行する。`READY`は通常利用可、`READY_WITH_FINDINGS`は表示されたqualified commitと制約の範囲でread-only利用可、`BLOCKED`は影響capabilityを停止する。差分検知時にcheckout、pull、manifest pin更新を行わない。
+
+M14完了前はこのcommandが存在しないため、従来のnetworkless smokeと実repo workspace検査を用いる。存在しないstartup commandを実装済みとして扱わない。
+
 ### networkless smoke
 
 ネットワークを使わない再現確認は次の順で行う。
@@ -47,7 +59,7 @@ git status --short
 .venv/bin/python tools/e2e.py --offline-fixture --check
 ~~~
 
-期待値は、manifest記載repo数（coreは4）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、audit finding 0、security `PASSED`、E2E clean `COMPLETE`である。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
+期待値は、manifest記載repo数（coreは4、現在はProductionを含む5）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、audit finding 0、security `PASSED`、E2E clean `COMPLETE`である。legacy failure fixtureが4repoであることはmanifestの5repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
 
 ### 実repo workspace
 
@@ -76,11 +88,19 @@ v1.1.0のqualificationは、上記v1.0ゲートに加えてretrieval、Drive cre
 .venv/bin/python tools/release_check.py --version 1.1.0 --runs 3
 ~~~
 
-v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、manifestが固定する4子repoの品質ゲートを各observed commitのimmutable archiveから実行する。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
+v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、当時manifestが固定した4子repoの品質ゲートを各observed commitのimmutable archiveから実行した。現在mainにはProductionが追加されているため、次の資格判定はv1.2.1として5repoを対象にする。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
 
 ~~~bash
 .venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>
 ~~~
+
+`V121-RECONCILE-001`完了後は次を使用する。
+
+~~~bash
+.venv/bin/python tools/release_check.py --version 1.2.1 --runs 3 --workspace-root <verified-child-workspace>
+~~~
+
+v1.2.1は、Productionを含む5件のmanifest entryを対象に、v1.2.0と同じv1.2 E2E・v1.1回帰・親validator/test・security・immutable child quality gateを実行する。`--runs 1`は実装taskの疎通確認、`--runs 3`だけがqualificationである。5件のchild statusが全て`PASSED`、execution modeが`immutable-archive`、remote/merge/tag/release operationが未実行であることを確認する。remote default branchに新commitがあっても、このtaskはpinを更新しない。
 
 `data/release-check.json`で`status=PASSED`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`を確認する。qualification成功だけではrelease済みとは扱わず、merge、tag、release、公開、共有範囲拡張、artifact削除は人間の明示承認後に別途実行する。
 
@@ -145,6 +165,8 @@ traceの各edgeは、requirement → signal ID → source entity → repository@
 
 現段階の検証はnetworkless FakeDriveだけで行い、実Google Driveへの書込みは実行しない。
 
+実Google Driveは`DRIVE-LIVE-001`で接続する。実装後も既存fileのupdate/delete/move/share/permission変更は行わず、approved sandbox folderへのCREATEとread-back/hash確認だけを許可する。現時点でFakeDriveを通ることを、実Drive接続済みとは報告しない。
+
 ## 7. feedbackからIssue候補へのルーティング
 
 feedback routerは、summary code、manifestのknowledge profile、target authority、confidence、consentを使って、domain feedbackを正本の子repoへ、UX・retrieval・adapter・artifact・orchestration feedbackを親repoへ決定的に割り当てる。authorityが未確定またはinferred confidenceが閾値未満なら`TRIAGE`に留め、同じIssue keyはcanonical候補へ集約して重複を抑止する。出力はprivacy-safeなIssue候補のmetadataだけで、GitHub Issueのcreate/update/deleteは行わず、人間gateを維持する。
@@ -155,7 +177,7 @@ feedback routerは、summary code、manifestのknowledge profile、target author
 .venv/bin/python -m unittest tests.test_issue_router -v
 ~~~
 
-`data/feedback-routing.json`にはfeedback ID、interaction/artifactのopaque参照、source snapshot、confidence、候補のacceptanceだけを保存する。raw conversation、Drive本文、PRIVATE_RAW、RESTRICTED、direct identifierは保存しない。`issue_creation_permitted`がfalseのfeedbackは`BLOCKED`とし、推定feedbackをuser factへ昇格させない。
+`data/feedback-routing.json`にはfeedback ID、interaction/artifactのopaque参照、source snapshot、confidence、候補のacceptanceだけを保存する。raw conversation、Drive本文、PRIVATE_RAW、RESTRICTED、direct identifierは保存しない。`issue_creation_permitted`がfalseのfeedbackは`BLOCKED`とし、推定feedbackをuser factへ昇格させない。`ISSUE-CREATE-001`完了後の初期運用では、eligible候補を実GitHub Issueとしてcreate/deduplicateできるが、そのIssueの編集、comment、close、実装、branch、commit、PRは行わない。
 
 ## 8. Issue-to-draft-PR improvement lane
 
