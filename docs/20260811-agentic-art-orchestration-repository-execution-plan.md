@@ -32,6 +32,7 @@ python3 -m unittest discover -s tests -v
 - [x] M8: retrieval、Drive adapter、Issue routing、自律改善、非同期auditorを完成
 - [x] M9: interaction E2E、runbook、v1.1 qualificationを完成（RELEASE-002。merge/releaseはhuman gate）
 - [x] M10: v1.2 Issue #2の半決定論的制作研究実行を設計・分解・実装（V12-ISSUE2-001、V12-BOUNDARY-001、V12-TRANSFORM-001、V12-CANDIDATE-001、V12-GATES-001、V12-SELECTION-001、V12-CHILD-GATES-001、V12-PROVENANCE-001、V12-E2E-001、V12-RELEASE-001完了。v1.2 qualificationは4子repo固定commit gateを含めPASS。merge・tag・releaseは別途human gate）
+- [x] M11: `agentic-art-production`を同一repo Issue SSOTとhandoff/result exchange契約付きで親manifestへ追加し、5repo snapshot・quality gate・auditへ接続する（MANIFEST-PRODUCTION-001。mergeはhuman gate）。
 
 ## Surprises & Discoveries
 

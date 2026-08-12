@@ -20,6 +20,7 @@ def manifest() -> dict:
             {"id": "art-history", "observed_commit": "2" * 40, "export_contract": "normalized-research-signal/v1"},
             {"id": "marketing-trends", "observed_commit": "3" * 40, "export_contract": "normalized-research-signal/v1"},
             {"id": "agentic-art-research", "observed_commit": "4" * 40, "import_contract": "normalized-research-signal/v1"},
+            {"id": "agentic-art-production", "observed_commit": "5" * 40, "exchange_contracts": {"imports": ["production-handoff/v1"], "exports": ["production-result/v1"]}},
         ]
     }
 
@@ -32,6 +33,7 @@ def snapshot() -> dict:
             {"id": "art-history", "manifest_observed_commit": "2" * 40, "contract": {"version": "normalized-research-signal/v1"}},
             {"id": "marketing-trends", "manifest_observed_commit": "3" * 40, "contract": {"version": "normalized-research-signal/v1"}},
             {"id": "agentic-art-research", "manifest_observed_commit": "4" * 40, "contract": {"version": "normalized-research-signal/v1"}},
+            {"id": "agentic-art-production", "manifest_observed_commit": "5" * 40, "contract": {"direction": "exchange", "imports": ["production-handoff/v1"], "exports": ["production-result/v1"]}},
         ]
     }
 

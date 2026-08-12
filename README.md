@@ -1,6 +1,6 @@
 # Agentic Art Orchestration
 
-Self Model × Art History × Marketing Trends → Agentic Art Research を、独立した4リポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
+Self Model × Art History × Marketing Trends → Agentic Art Research → Agentic Art Production を、独立したリポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
 
 ## 現在地
 
@@ -18,7 +18,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research を、独
 
 親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2で実装・qualification済みである。v1.2はrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance、固定commit child quality gateを含む。qualificationはread-onlyで実施し、merge・tag・GitHub Releaseはhuman gateを経て公開済みである。
 
-v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加する。現在の4repoはcore setであり、新規repoは置換ではなくmanifestへ追加し、同じ正本・契約・snapshot・品質ゲートを要求する。
+v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加する。既存4repoはcore setとして維持し、`agentic-art-production`を追加runtimeとしてmanifestへappendする。追加repoにも同一repo Issue SSOT、明示的な境界契約、snapshot、個別品質ゲートを要求する。
 
 ~~~text
 User <-> Interaction Agent -> Child Knowledge Repositories
@@ -34,6 +34,7 @@ Asynchronous Auditor ------ -> Refactoring Issue / Draft PR
 - [art-history-notes](https://github.com/masa-san-jp/art-history-notes) — 芸術史入力KB
 - [marketing-trends-notes](https://github.com/masa-san-jp/marketing-trends-notes) — マーケティング変化入力KB
 - [agentic-art-research](https://github.com/masa-san-jp/agentic-art-research) — 制作リサーチ実行・成果物repo
+- [agentic-art-production](https://github.com/masa-san-jp/agentic-art-production) — 制作引き渡し受領、制作実行、結果還流repo（要件SSOT: Issue #10）
 
 ## 重要な境界
 

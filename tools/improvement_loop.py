@@ -211,9 +211,14 @@ def _build_work_item(
     instructions = repository.get("instructions", "AGENTS.md") if isinstance(repository, Mapping) else "AGENTS.md"
     contracts = []
     if isinstance(repository, Mapping):
-        contract = repository.get("export_contract") or repository.get("import_contract")
-        if isinstance(contract, str):
-            contracts.append(contract)
+        exchange = repository.get("exchange_contracts")
+        if isinstance(exchange, Mapping):
+            contracts.extend(str(item) for item in exchange.get("imports", []))
+            contracts.extend(str(item) for item in exchange.get("exports", []))
+        else:
+            contract = repository.get("export_contract") or repository.get("import_contract")
+            if isinstance(contract, str):
+                contracts.append(contract)
     return {
         "version": 1,
         "id": work_item_id,

@@ -52,9 +52,9 @@ class WorkspaceInitTests(unittest.TestCase):
             first = MODULE.init_workspace(manifest, workspace, True, fixture)
             second = MODULE.init_workspace(manifest, workspace, True, fixture)
             status = MODULE.status_workspace(manifest, workspace)
-            self.assertEqual(5, first["changed_count"])
+            self.assertEqual(6, first["changed_count"])
             self.assertEqual(0, second["changed_count"])
-            self.assertEqual(5, len(status["repositories"]))
+            self.assertEqual(6, len(status["repositories"]))
             self.assertTrue(all(repo["state"] == "clean" for repo in status["repositories"]))
 
     def test_offline_init_is_idempotent_and_status_is_clean(self):
@@ -72,7 +72,7 @@ class WorkspaceInitTests(unittest.TestCase):
             )
             self.assertEqual(0, first.returncode, first.stderr)
             first_payload = json.loads(first.stdout)
-            self.assertEqual(4, first_payload["changed_count"])
+            self.assertEqual(5, first_payload["changed_count"])
             self.assertTrue(first_payload["fixture_created"])
             self.assertEqual({"cloned"}, {repo["action"] for repo in first_payload["repositories"]})
 
@@ -97,7 +97,7 @@ class WorkspaceInitTests(unittest.TestCase):
             status = run_workspace("status", "--json", "--workspace-root", str(workspace))
             self.assertEqual(0, status.returncode, status.stderr)
             status_payload = json.loads(status.stdout)
-            self.assertEqual(4, len(status_payload["repositories"]))
+            self.assertEqual(5, len(status_payload["repositories"]))
             self.assertTrue(all(repo["exists"] for repo in status_payload["repositories"]))
             self.assertTrue(all(repo["state"] == "clean" for repo in status_payload["repositories"]))
             self.assertTrue(all(repo["branch"] == "main" for repo in status_payload["repositories"]))
@@ -128,7 +128,7 @@ class WorkspaceInitTests(unittest.TestCase):
             self.assertEqual(0, fetched.returncode, fetched.stderr)
             payload = json.loads(fetched.stdout)
             self.assertEqual(0, payload["changed_count"])
-            self.assertEqual(4, len(payload["repositories"]))
+            self.assertEqual(5, len(payload["repositories"]))
 
 
 if __name__ == "__main__":

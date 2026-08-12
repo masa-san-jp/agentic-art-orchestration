@@ -601,3 +601,13 @@
 ## Next exact action
 
 1. 次のセッションは`git status -sb`で状態を確認し、依存完了済み最小IDのREADY taskを1件選択する。
+
+## MANIFEST-PRODUCTION-001 evidence
+
+- `config/repositories.yaml`へ`agentic-art-production`を5件目としてappendし、同一repoの[Issue #10](https://github.com/masa-san-jp/agentic-art-production/issues/10)を`requirement_ssot`に設定した。既存4repo core setは置換していない。
+- `production-handoff/v1` importと`production-result/v1` exportを`exchange_contracts`として機械可読化し、Productionをnormalized research signalのproducer/consumerへ誤分類しないfail-closed validator、snapshot、audit、improvement contextを追加した。
+- Productionのobserved commitは`8e1e361186edc95f467620ecd5df64ca767731b8`。宣言quality gateは`python3 tools/validate.py --check`と`python3 -m unittest discover -s tests -v`。親実装では子repoをread-only参照し、子branch、Issue、schema、canonical dataは変更していない。
+- 5repo offline initは初回5 clone、2回目no-op。snapshotはProductionのexchange契約とIssue #10を保持し、statusはdrift CLEAN/blocker 0、audit finding 0、security PASSED。既存4repo failure fixtureはcore scenarioとして分離し、v1.2 E2Eの再現性を維持した。
+- `/tmp/aap-bootstrap-venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 211 tests pass。`git diff --check`: pass。
+- 機微情報、会話全文、Drive本文、asset body、credential、signed URLは追加していない。外部effect、物理作業、merge、tag、releaseは実行していない。
+- acceptance: 1/1達成。task/leaseはDONE/released。次はdraft PRのhuman reviewであり、merge後に親manifestからIssue #10へのmain上の結線が確立する。

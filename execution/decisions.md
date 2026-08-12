@@ -83,3 +83,10 @@
 - 理由: 親Issue #2の「LLMを創作者ではなく実行系に限定する」要件と、agentic-art-research Issue #2の既存runtime/quality gateの正本性を同時に守るには、生成・選択・検証を一つの自由推論taskへまとめてはならないため。
 - 安全条件: normalized research signalとsource repo@commitを入力の正本とし、子repoのcore schema・canonical data・Issueを親から変更しない。v1.1 interaction、append-only artifact、feedback、auditのrelease acceptanceは変更しない。
 - 実装順: `V12-BOUNDARY-001` → `V12-TRANSFORM-001` → `V12-CANDIDATE-001` → `V12-GATES-001` → `V12-SELECTION-001` → `V12-PROVENANCE-001`。`V12-CHILD-GATES-001`はboundary後、`V12-E2E-001`はprovenanceとchild gates後に実行する。
+
+## D-013 — Productionを双方向exchange runtimeとして追加する
+
+- 日付: 2026-08-12
+- 決定: `agentic-art-production`を既存4repo core setの置換ではなく5件目としてappendし、同一repoのIssue #10を`requirement_ssot`とする。境界は`production-handoff/v1` importと`production-result/v1` exportを一組の`exchange_contracts`として表す。
+- 理由: Productionはnormalized research signalの入力KBでも単方向consumerでもない。既存roleへ偽装するとResearch→Production→Researchの責任分界が失われるため、control-plane-extensionの双方向runtimeとしてfail-closedに検証する。
+- 影響: manifest schema、validator、snapshot、audit、improvement context、offline testsを同時更新する。子repoのIssue、schema、canonical data、branchは変更しない。

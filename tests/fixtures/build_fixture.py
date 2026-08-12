@@ -90,7 +90,13 @@ def _signal_scenarios() -> dict:
 
 
 def build_fixture() -> dict:
-    manifest = load_manifest()
+    complete_manifest = load_manifest()
+    core_ids = {"self-model", "art-history", "marketing-trends", "agentic-art-research"}
+    manifest = copy.deepcopy(complete_manifest)
+    manifest["repositories"] = [
+        repository for repository in manifest["repositories"]
+        if repository["id"] in core_ids
+    ]
     scenario_signals = _signal_scenarios()
     with tempfile.TemporaryDirectory(prefix="agentic-art-orchestration-fixture-") as temporary:
         root = Path(temporary)

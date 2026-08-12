@@ -33,6 +33,12 @@ class BootstrapValidationTests(unittest.TestCase):
         self.assertGreaterEqual(roles.count("input-kb"), 3)
         self.assertGreaterEqual(roles.count("consumer-runtime"), 1)
         self.assertTrue(MODULE.CORE_REPOSITORY_IDS.issubset(ids))
+        production = next(repo for repo in manifest["repositories"] if repo["id"] == "agentic-art-production")
+        self.assertEqual("control-plane-extension", production["role"])
+        self.assertEqual(
+            {"imports": ["production-handoff/v1"], "exports": ["production-result/v1"]},
+            production["exchange_contracts"],
+        )
 
         added = copy.deepcopy(manifest["repositories"][0])
         added.update(
@@ -77,6 +83,16 @@ class BootstrapValidationTests(unittest.TestCase):
         repository = schema["$defs"]["repository"]
         self.assertIn("export_contract", repository["properties"])
         self.assertIn("import_contract", repository["properties"])
+        self.assertIn("exchange_contracts", repository["properties"])
+
+    def test_production_exchange_contract_is_fail_closed(self):
+        manifest = copy.deepcopy(MODULE.load_yaml(ROOT / "config/repositories.yaml"))
+        production = next(repo for repo in manifest["repositories"] if repo["id"] == "agentic-art-production")
+        production["exchange_contracts"]["exports"] = ["normalized-research-signal/v1"]
+        rendered = "\n".join(MODULE.validate_manifest(manifest, "fixture:production-exchange"))
+        self.assertIn("exchange_contracts", rendered)
+        self.assertIn("production-result/v1", rendered)
+        self.assertIn("remediation:", rendered)
 
     def test_invalid_manifest_fixtures_fail_with_remediation(self):
         valid = MODULE.load_yaml(ROOT / "config/repositories.yaml")

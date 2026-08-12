@@ -520,7 +520,18 @@ def snapshot_repository(
 ) -> tuple[dict, str | None]:
     status = read_repo_status(repository, workspace_root)
     destination = repo_path(workspace_root, repository)
-    contract_field = "export_contract" if "export_contract" in repository else "import_contract"
+    if "exchange_contracts" in repository:
+        contract = {
+            "direction": "exchange",
+            "imports": list(repository["exchange_contracts"]["imports"]),
+            "exports": list(repository["exchange_contracts"]["exports"]),
+        }
+    else:
+        contract_field = "export_contract" if "export_contract" in repository else "import_contract"
+        contract = {
+            "direction": "export" if contract_field == "export_contract" else "import",
+            "version": repository[contract_field],
+        }
     quality_gates = list(repository["quality_gates"])
     quality_gate_hash = sha256_text(canonical_json(quality_gates))
     status_entries = status.get("status_entries", [])
@@ -528,10 +539,7 @@ def snapshot_repository(
         "ahead": status.get("ahead"),
         "behind": status.get("behind"),
         "branch": status.get("branch"),
-        "contract": {
-            "direction": "export" if contract_field == "export_contract" else "import",
-            "version": repository[contract_field],
-        },
+        "contract": contract,
         "default_branch": repository["default_branch"],
         "detached": status.get("branch") is None if status.get("exists") else None,
         "dirty": status.get("dirty"),
@@ -588,11 +596,20 @@ def render_snapshot_markdown(snapshot: dict) -> str:
     ]
     for repository in snapshot["repositories"]:
         direction = repository["contract"]["direction"]
-        contract = f"{direction}:{repository['contract']['version']}"
+        if direction == "exchange":
+            imports = ",".join(repository["contract"]["imports"])
+            exports = ",".join(repository["contract"]["exports"])
+            contract = f"exchange:in={imports};out={exports}"
+        else:
+            contract = f"{direction}:{repository['contract']['version']}"
         lines.append(
             "| {id} | {role} | {branch} | `{head}` | {upstream} | {dirty} | {untracked} | {detached} | {ahead} | {behind} | {contract} | {ssot} | `{quality}` |".format(
                 id=repository["id"],
-                role="consumer-runtime" if direction == "import" else "input-kb",
+                role=(
+                    "consumer-runtime" if direction == "import"
+                    else "control-plane-extension" if direction == "exchange"
+                    else "input-kb"
+                ),
                 branch=repository["branch"] or "-",
                 head=repository["head"] or "-",
                 upstream=repository["upstream"] or "-",
