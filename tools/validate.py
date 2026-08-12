@@ -33,6 +33,7 @@ CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.js
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
+V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -73,6 +74,8 @@ REQUIRED_FILES = [
     "tools/child_quality_gates.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
+    "schemas/v12-e2e.schema.json",
+    "tools/v12_e2e.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -1113,6 +1116,47 @@ def validate_research_provenance(data: dict, source: str = "provenance") -> list
                     errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} has an untraceable evidence locator", "use an evidence locator from the normalized signal"))
     if len(propositions) != len(selected_by_id):
         errors.append(_signal_error(source, "proposition count does not cover the selection decision", "emit one proposition trace for every selected candidate"))
+    return errors
+
+
+def validate_v12_e2e(data: dict, manifest: dict | None = None, source: str = "v12-e2e") -> list[str]:
+    """Validate v1.2 stage integration and the preserved v1.1 regression boundary."""
+    errors: list[str] = []
+    schema = load_json(V12_E2E_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the v12-e2e field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    pipeline = data.get("pipeline")
+    child = data.get("child_quality_gates")
+    regression = data.get("v11_regression")
+    acceptance = data.get("acceptance")
+    if isinstance(pipeline, dict):
+        provenance = pipeline.get("provenance", {})
+        selection = pipeline.get("selection", {})
+        if isinstance(provenance, dict) and isinstance(selection, dict):
+            if provenance.get("proposition_count") != selection.get("selected_count"):
+                errors.append(_signal_error(source, "provenance count differs from selection count", "trace exactly every selected candidate"))
+            if not set(selection.get("selected_candidate_ids", [])):
+                errors.append(_signal_error(source, "selection has no selected candidate IDs", "retain the deterministic selected package"))
+            if not set(provenance.get("signal_ids", [])):
+                errors.append(_signal_error(source, "provenance has no signal IDs", "preserve normalized signal identity through the E2E"))
+    if isinstance(child, dict) and isinstance(manifest, dict):
+        repositories = manifest.get("repositories", [])
+        if child.get("repository_count") != len(repositories):
+            errors.append(_signal_error(source, "child gate repository count differs from manifest", "run every manifest-declared child gate"))
+        if "FAILED" in child.get("statuses", []) and acceptance and acceptance.get("child_gates_observed"):
+            errors.append(_signal_error(source, "failed child gate was hidden by a passing E2E acceptance", "preserve failed child quality gates as a non-passing state"))
+    if isinstance(regression, dict):
+        if regression.get("remote_operations") != [] or regression.get("raw_conversation_stored") is not False:
+            errors.append(_signal_error(source, "v1.1 regression boundary was widened", "keep interaction artifacts reference-only and remote operations empty"))
+        regression_acceptance = regression.get("acceptance")
+        if isinstance(regression_acceptance, dict) and any(value is not True for value in regression_acceptance.values()):
+            errors.append(_signal_error(source, "v1.1 regression acceptance is incomplete", "preserve every v1.1 interaction and artifact invariant"))
+    if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
+        errors.append(_signal_error(source, "v1.2 E2E acceptance is incomplete", "keep every research, child gate, regression, and remote safety invariant true"))
     return errors
 
 

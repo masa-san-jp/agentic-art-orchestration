@@ -566,6 +566,17 @@
 - 機微情報: provenance outputはsignal metadata、source commit、entity/source/evidence locatorだけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、child canonical dataを含まない。
 - acceptance: 1/1達成。leaseを解放し、依存完了済み最小IDの`V12-E2E-001`をREADYへ進めた。
 
+## V12-E2E-001 evidence
+
+- `schemas/v12-e2e.schema.json`、`tools/v12_e2e.py`、`tests/test_v12_e2e.py`を追加した。3つのnormalized signalを入力に、R17 rule、candidate space、6 gate、seeded selection、research provenance、4 child repository quality-gate evidenceを一つのnetworkless E2Eへ接続する。
+- 同じrun ID・fixture・manifest・workspaceで2回実行して、pipeline出力がbyte-identicalとなることを検証した。provenanceはselected candidate、signal IDs、source commits、evidence locatorsを保持し、raw statement・conversation・artifact contentは出力しない。
+- child gate結果はmanifestの4 repositoryを全件含み、現環境では`STALE` workspaceと観測commit不在による`BLOCKED/NOT_RUN`を保持する。E2EはこれをPASSへ正規化しない。子checkoutはread-onlyでdirty化していない。
+- v1.1 `interaction-e2e/v1`をregressionとして実行し、CREATE_ONLY artifact、raw conversation false、remote operation 0、既存acceptance全件trueを確認した。v1.1契約とartifact policyは変更していない。
+- `.venv/bin/python tools/v12_e2e.py --run-id v12-e2e ...`: pass。`--check`: pass。`.venv/bin/python tools/interaction_e2e.py --check`: pass。`.venv/bin/python tools/validate.py --check`: pass。`.venv/bin/python -m unittest discover -s tests -q`: pass（207 tests）。status CLEAN with 0 blockers、audit finding 0、security PASSED、child gate check BLOCKED preserved、`git diff --check`: pass。
+- 変更子repo: なし。子repoのIssue、schema、canonical data、branch、commit、quality gateの内容は変更していない。Google Drive、GitHub Issue、remote artifactへの実書込みもない。
+- 機微情報: E2E outputはID、hash、commit、locator、gate status、契約状態のみで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、canonical dataを含まない。
+- acceptance: 1/1達成。M10 v1.2実装taskを完了とし、releaseは別途human gateとしてstateを解放した。
+
 ## Observed child heads at bootstrap
 
 | Repository | Commit |

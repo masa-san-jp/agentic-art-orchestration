@@ -1,28 +1,28 @@
 version: 2
-updated_at: "2026-08-12T10:00:52+09:00"
+updated_at: "2026-08-12T10:08:09+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v12-provenance
-  acquired_at: "2026-08-12T09:54:54+09:00"
-  expires_at: "2026-08-12T10:39:54+09:00"
-  lane: V12_PROVENANCE
-  execution_id: V12-PROVENANCE-001:attempt-1
-  released_at: "2026-08-12T10:00:52+09:00"
+  owner: codex-v12-e2e
+  acquired_at: "2026-08-12T10:04:12+09:00"
+  expires_at: "2026-08-12T10:49:12+09:00"
+  lane: V12_E2E
+  execution_id: V12-E2E-001:attempt-1
+  released_at: "2026-08-12T10:08:09+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/research-provenance.schema.json, tools/proposition_provenance.py, tools/validate.py, tests/fixtures/v12-candidates, tests/test_proposition_provenance.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+    paths: [schemas/v12-e2e.schema.json, tools/v12_e2e.py, tools/validate.py, tests/fixtures/v12-candidates, tests/test_v12_e2e.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
 checkpoint:
-  task: V12-PROVENANCE-001
-  repository: agentic-art-orchestration
-  start_point: 5fee93f0beb85989dd50c1bddfc528032f3f1af8
-  expected_changes: Trace a structured Research Proposition through selection decision, candidate, rule, normalized signals, source repository@commit, and evidence locators with fail-closed validation.
-  result: completed
-last_completed_task: V12-PROVENANCE-001
-resume_from:
   task: V12-E2E-001
-  action: Integrate normalized signals, explicit rules, candidate generation, gates, seeded selection, proposition provenance, and child quality-gate evidence in a deterministic offline E2E.
+  repository: agentic-art-orchestration
+  start_point: bedd9cebe8f4211d690f82d17dc43e865a1f65d5
+  expected_changes: Integrate normalized signals, explicit rules, candidate generation, gates, seeded selection, proposition provenance, and child quality-gate evidence in a deterministic offline E2E while preserving v1.1 interaction/artifact behavior.
+  result: completed
+last_completed_task: V12-E2E-001
+resume_from:
+  task: null
+  action: v1.2 E2E is complete; review the merged main and decide whether to qualify a v1.2 release.
   command: .venv/bin/python tools/validate.py --check
 release:
   status: released
@@ -35,4 +35,5 @@ release:
 blocked: []
 last_validation:
   command: .venv/bin/python tools/candidate_space.py --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/candidate_gates.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates --check; .venv/bin/python tools/candidate_selection.py --candidates data/candidate-space.json --fixture tests/fixtures/v12-candidates --project-id agentic-art-orchestration --seed-input default --limit 1 --check; .venv/bin/python tools/proposition_provenance.py --selection data/selection.json --candidates data/candidate-space.json --gates data/candidate-gates.json --fixture tests/fixtures/v12-candidates --rules config/transformation-rules.yaml --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/workspace.py status --json; git diff --check
-  result: passed; V12-PROVENANCE-001 added research-provenance/v1 and a reference-only provenance builder. Deterministic output traces selection decision, candidate, active rule, structured rule template, normalized signal IDs, source repository@commit, entity/source locators, and evidence locators; source or selection mutation fails closed and no statement/free-form proposition text is emitted. Candidate, gate, selection, provenance checks passed; parent validator passed; 202 tests passed; status drift CLEAN with 0 blockers, audit CLEAN with 0 findings, security PASSED, child workspace status clean, diff clean; no child repositories, Issues, canonical data, or external artifacts were changed; 2026-08-12T10:00:52+09:00
+  command: .venv/bin/python tools/v12_e2e.py --run-id v12-e2e --fixture tests/fixtures/v12-candidates --manifest config/repositories.yaml --workspace-root repos --check; .venv/bin/python tools/interaction_e2e.py --check; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -q; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root repos --run-id v12-child-gates --check; git diff --check
+  result: passed; V12-E2E-001 added v12-e2e/v1 integrating 3 normalized signals, R17, candidate generation, six gates, deterministic seeded selection, research provenance, and all four manifest child gate results. Repeated pipeline output was byte-identical; child workspace states remained STALE with BLOCKED/NOT_RUN gates for unavailable observed commits; v1.1 interaction-e2e/v1 remained CREATE_ONLY, raw-conversation false, and zero remote operations. v1.2 E2E check passed, interaction regression passed, parent validator passed, 207 tests passed, status CLEAN with 0 blockers, audit CLEAN with 0 findings, security PASSED, child gate check preserved BLOCKED, diff clean; no child repositories, Issues, canonical data, or external artifacts were changed; 2026-08-12T10:08:09+09:00
