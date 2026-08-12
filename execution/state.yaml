@@ -1,30 +1,30 @@
 version: 2
-updated_at: "2026-08-12T20:05:00+09:00"
+updated_at: "2026-08-12T20:36:26+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v121-reconcile
-  acquired_at: "2026-08-12T19:42:00+09:00"
-  expires_at: "2026-08-12T20:42:00+09:00"
-  lane: RELEASE_BASELINE
-  execution_id: V121-RECONCILE-001:attempt-1
-  released_at: "2026-08-12T20:05:00+09:00"
+  owner: codex-v121-qualify
+  acquired_at: "2026-08-12T20:22:58+09:00"
+  expires_at: "2026-08-12T21:22:58+09:00"
+  lane: RELEASE_QUALIFICATION
+  execution_id: V121-QUALIFY-001:attempt-1
+  released_at: "2026-08-12T20:36:26+09:00"
   release_reason: completed
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/release_check.py, tests/test_release_check.py, README.md, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/release_check.py, tests, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
 checkpoint:
-  task: V121-RECONCILE-001
-  repository: agentic-art-orchestration
-  start_point: ea18918be8e0d64af70cd02a4ee7b56570970d1d
-  expected_changes: Add fail-closed v1.2.1 qualification for the current five-repository manifest without changing any child pin, and reconcile current baseline documentation and generated reports.
-  result: completed; v1.2.1 qualification profile added, five-repository baseline documentation reconciled, active virtualenv dependency resolution fixed, and one-run qualification passed
-last_completed_task: V121-RECONCILE-001
-resume_from:
   task: V121-QUALIFY-001
-  action: Run three consecutive read-only v1.2.1 qualifications against the five manifest-pinned immutable child archives and preserve any failed gate as blocking.
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 3 --workspace-root /tmp/aap-prod-revalidation-L4KFv6
+  repository: agentic-art-orchestration
+  start_point: 0f35639
+  expected_changes: Run three consecutive read-only v1.2.1 qualifications against the five manifest-pinned immutable child archives and preserve any failed gate as blocking.
+  result: completed; three consecutive v1.2.1 qualifications passed with five matched immutable child repositories and twelve passed child gates
+last_completed_task: V121-QUALIFY-001
+resume_from:
+  task: V121-RELEASE-001
+  action: Human review and approval of the qualified parent changes, followed by the explicitly approved merge, v1.2.1 tag, and GitHub Release.
+  command: git status --short --branch
 release:
   status: released
   version: 1.2.0
@@ -35,5 +35,5 @@ release:
   released_at: "2026-08-12T13:29:42+09:00"
 blocked: []
 last_validation:
-  command: .venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/status.py --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 1 --workspace-root /tmp/aap-prod-revalidation-L4KFv6; git diff --check
-  result: passed; parent validator, all 215 tests, status CLEAN, audit finding 0, security PASSED, and v1.2.1 one-run qualification PASSED with 5/5 immutable child repositories and all 12 child gates PASSED; no remote/merge/tag/release operation; 2026-08-12T20:05:00+09:00
+  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 3 --workspace-root /tmp/aap-prod-revalidation-L4KFv6; .venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/status.py --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
+  result: passed; v1.2.1 qualification 3/3, offline E2E 3/3, interaction E2E 3/3, v1.2 E2E 3/3 deterministic, five immutable child repositories MATCHED, all 12 child gates PASSED, parent validator and 215 tests passed, status CLEAN, audit finding 0, security PASSED, history finding 0; no remote/merge/tag/release operation; 2026-08-12T20:36:26+09:00

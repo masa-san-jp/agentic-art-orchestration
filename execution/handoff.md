@@ -644,3 +644,16 @@
 - `.venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 215 tests pass。`.venv/bin/python tools/status.py --offline-fixture`: CLEAN/blocker 0。`.venv/bin/python tools/audit.py --offline-fixture`: CLEAN/finding 0。`.venv/bin/python tools/security.py --offline-fixture`: PASSED/finding 0。`git diff --check`: pass。
 - 変更子repo: なし。self-model、art-history、marketing-trends、Research、Productionのpin、branch、Issue、schema、canonical data、PRは変更していない。Google Drive、GitHub Issue、merge、tag、release、外部effectも実行していない。
 - acceptance: 1/1達成。`V121-RECONCILE-001`はDONE、lease released。次は`V121-QUALIFY-001`で同じread-only qualificationを3回連続実行する。
+
+## V121-QUALIFY-001 evidence
+
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.2.1 --runs 3 --workspace-root /tmp/aap-prod-revalidation-L4KFv6`をread-onlyで実行し、終了コード0、`version=1.2.1`、`status=PASSED`を確認した。資格確認は3/3、offline E2Eは3/3、interaction E2Eは3/3、v1.2 E2Eは3/3 deterministicで、全て`no_remote_mutation=true`だった。
+- 5つのmanifest-pinned immutable archiveがすべてobserved commitとMATCHEDし、child quality gateはProductionを含む5/5 repository、計12/12 gateが`PASSED`となった。実行modeは全て`immutable-archive`で、失敗ゲートをPASSへ正規化していない。
+- qualification reportのhistoryは47 commits、finding 0、security boundaryは親の機密チェック対象payload/signalsでfinding 0。raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、child canonical dataは親へ追加していない。
+- `.venv/bin/python tools/validate.py --check`: pass。`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`: 215 tests pass。status `--check --offline-fixture`: pass/CLEAN、audit `--check --offline-fixture`: pass/finding 0、security: PASSED、`git diff --check`: pass。
+- 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gateは変更していない。Google Drive、GitHub Issue、remote operation、merge、tag、releaseも未実行。生成reportは`data/`のignore対象で、Gitへ追加していない。
+- acceptance: 1/1達成。`V121-QUALIFY-001`をDONE、leaseをreleased、`V121-RELEASE-001`をREADYへ遷移した。v1.2.1のmerge、tag、GitHub Releaseは人間承認が必要なため未実行。
+
+## Next exact action
+
+1. 人間がqualification evidenceと親差分をレビューし、`V121-RELEASE-001`のmerge・v1.2.1 tag・GitHub Releaseを明示承認する。最初の操作は`git status --short --branch`。

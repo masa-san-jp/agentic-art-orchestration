@@ -1,5 +1,5 @@
 version: 4
-updated_at: "2026-08-12T20:05:00+09:00"
+updated_at: "2026-08-12T20:36:26+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -447,7 +447,7 @@ tasks:
   - id: V121-QUALIFY-001
     milestone: M12
     title: Qualify the v1.2.1 five-repository baseline
-    status: READY
+    status: DONE
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -458,7 +458,7 @@ tasks:
   - id: V121-RELEASE-001
     milestone: M12
     title: Release the qualified v1.2.1 baseline through the human gate
-    status: BACKLOG
+    status: READY
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
