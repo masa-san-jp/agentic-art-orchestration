@@ -881,4 +881,19 @@
 
 ## Next exact action
 
-1. `INITIAL-OPS-QUALIFY-001`をclaimし、3回の決定的qualificationとDrive/GitHub sandbox evidenceの不足分を確認する。
+1. GitHub sandbox repositoryの明示指定後、live Issue evidenceだけを実行し、資格確認を完了する。
+
+## INITIAL-OPS-QUALIFY-001 qualification
+
+- `tools/release_check.py`をv1.4.0へ拡張し、initial-operations E2E、既存v1.2/v1.3回帰、Production exchange、privacy/idempotency、GitHub live evidence gateを一つのread-only qualificationへ接続した。
+- `/tmp/aap-bootstrap-venv/bin/python -m unittest tests.test_release_check tests.test_initial_operations_e2e -q`: 14 tests PASS。`tools/validate.py --check`と`git diff --check`もPASS。
+- initial-operations networkless qualificationは3/3 deterministic、startup/retrieval/Drive CREATE+REPLAY/feedback/Issue CREATE+REUSE/privacy/remote mutationをPASS。固定workspaceの5 repositories、14 child gatesはMATCHED/PASSED、Production exchangeは6 terminal scenariosとremote/physical effectなしをPASS。
+- qualification runnerがvirtualenv起動時にもactive interpreterを子CLIへ渡すよう`_active_python()`を追加した。これによりmacOSのvirtualenv symlinkがsystem Pythonへ解決される場合の依存欠落誤判定を防ぐ。
+- GitHub認証は利用可能だが、専用sandboxと明示された別repositoryは設定・検索から検出できなかった。既存の本番repo・child repo・実験repoを推測してIssue CREATEすることはせず、GitHub live evidenceはBLOCKED、Issue CREATEは未実行。
+- Drive live evidenceは前タスクのconnector smoke証跡を再利用し、作成本文、URL、folder ID、credentialはGitへ保存していない。merge、tag、release、child repository mutationは未実行。
+
+## Blocker and resume
+
+- 解除条件: GitHub sandbox repositoryの`owner/name`を専用テスト用として明示指定し、既存Issue・本番データを触らないことを確認したうえで、`GITHUB_TOKEN`または`GH_TOKEN`をrepo外から供給し、`--confirm-issue`で一度だけ検索→CREATE/REUSEを実行する。
+- 設定が揃うまで`INITIAL-OPS-RELEASE-001`は開始しない。sandbox指定後はlive evidenceだけを追加検証し、他の外部書込みやcleanupは行わない。
+- 2026-08-13 17:08 JST、qualification leaseを解放した。親working treeの実装差分はこのブランチへ保持し、外部sandbox指定後に同じtaskを再開する。

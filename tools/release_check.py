@@ -27,6 +27,7 @@ from tools.production_exchange import run_exchange_e2e
 from tools.validate import load_yaml
 from tools.v12_e2e import run_v12_e2e
 from tools.interaction_e2e import run_interaction_e2e
+from tools.initial_operations_e2e import run_initial_operations_e2e
 
 
 class ReleaseCheckError(ValueError):
@@ -44,10 +45,22 @@ HISTORY_EXEMPT_PREFIXES = ("docs/", "execution/", "tests/")
 HISTORY_EXEMPT_VALUES = {"supersecret", "synthetic-value", "synthetic-secret"}
 
 
+def _active_python() -> str:
+    """Return the interpreter from the active virtualenv when one is present."""
+    prefix = Path(sys.prefix)
+    base_prefix = Path(getattr(sys, "base_prefix", sys.prefix))
+    if prefix != base_prefix:
+        for name in ("python", "python3"):
+            candidate = prefix / "bin" / name
+            if candidate.is_file():
+                return str(candidate)
+    return sys.executable
+
+
 def _run(command: list[str]) -> tuple[int, str, str]:
     environment = os.environ.copy()
     environment["PATH"] = os.pathsep.join(
-        [str(Path(sys.executable).parent), environment.get("PATH", "")]
+        [str(Path(_active_python()).parent), environment.get("PATH", "")]
     )
     completed = subprocess.run(
         command,
@@ -68,8 +81,8 @@ def _git(command: list[str]) -> str:
 
 
 def validate_request(version: str, runs: int) -> None:
-    if version not in {"1.0.0", "1.1.0", "1.2.0", "1.2.1", "1.3.0"}:
-        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, 1.2.0, 1.2.1, and 1.3.0 are supported; remediation: qualify the declared task version")
+    if version not in {"1.0.0", "1.1.0", "1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
+        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, 1.2.0, 1.2.1, 1.3.0, and 1.4.0 are supported; remediation: qualify the declared task version")
     if runs <= 0:
         raise ReleaseCheckError("runs must be positive; remediation: use at least one deterministic E2E run")
 
@@ -205,6 +218,60 @@ def _interaction_e2e_check(runs: int) -> dict:
         "runs": runs,
         "deterministic": deterministic,
         "acceptance_passed": acceptance_passed,
+        "no_remote_mutation": no_remote_mutation,
+        "error_types": sorted(set(error_types)),
+    }
+
+
+def _initial_operations_e2e_check(runs: int) -> dict:
+    """Qualify the initial operations contract without external writes."""
+    summaries: list[dict] = []
+    error_types: list[str] = []
+    for index in range(runs):
+        try:
+            result = run_initial_operations_e2e(run_id=f"INITIAL-OPS-QUALIFY-001:run-{index + 1}", offline_fixture=True)
+            summaries.append(
+                {
+                    "acceptance": {key: value is True for key, value in sorted(result["acceptance"].items())},
+                    "startup_status": result["startup"]["status"],
+                    "retrieval_status": result["retrieval"]["status"],
+                    "drive": {
+                        "create_status": result["drive"]["create_status"],
+                        "replay_status": result["drive"]["replay_status"],
+                        "provider_file_count": result["drive"]["provider_file_count"],
+                    },
+                    "issue": {
+                        "create_status": result["issue"]["create"]["status"],
+                        "reuse_status": result["issue"]["reuse"]["status"],
+                    },
+                    "live_gate": result["live_gate"]["status"],
+                    "remote_operation_count": len(result["remote_operations"]),
+                }
+            )
+        except Exception as exc:
+            error_types.append(type(exc).__name__)
+    deterministic = bool(summaries) and len(summaries) == runs and all(summary == summaries[0] for summary in summaries[1:])
+    acceptance_passed = bool(summaries) and all(all(summary["acceptance"].values()) for summary in summaries)
+    no_remote_mutation = bool(summaries) and all(summary["remote_operation_count"] == 0 for summary in summaries)
+    drive_idempotent = bool(summaries) and all(
+        summary["drive"] == {"create_status": "CREATED", "replay_status": "REPLAYED", "provider_file_count": 1}
+        for summary in summaries
+    )
+    issue_idempotent = bool(summaries) and all(
+        summary["issue"] == {"create_status": "CREATED", "reuse_status": "REUSED"}
+        for summary in summaries
+    )
+    live_gate_closed = bool(summaries) and all(summary["live_gate"] == "NOT_REQUESTED" for summary in summaries)
+    passed = deterministic and acceptance_passed and no_remote_mutation and drive_idempotent and issue_idempotent and live_gate_closed and not error_types
+    return {
+        "id": "initial-operations-e2e",
+        "status": "PASSED" if passed else "FAILED",
+        "runs": runs,
+        "deterministic": deterministic,
+        "acceptance_passed": acceptance_passed,
+        "drive_idempotent": drive_idempotent,
+        "issue_idempotent": issue_idempotent,
+        "live_gate_closed": live_gate_closed,
         "no_remote_mutation": no_remote_mutation,
         "error_types": sorted(set(error_types)),
     }
@@ -482,6 +549,19 @@ def _production_exchange_check(
     }
 
 
+def _sandbox_live_evidence_check() -> dict:
+    """Report the separate live evidence gate without attempting a write."""
+    return {
+        "id": "initial-operations-live-evidence",
+        "status": "BLOCKED",
+        "drive_create_read": "PASSED",
+        "github_issue_create_reuse": "NOT_AVAILABLE",
+        "required_controls": ["approved_sandbox", "credential_outside_git", "explicit_confirmation", "single_live_lane"],
+        "remote_operations": [],
+        "reason": "no explicitly approved GitHub sandbox repository was designated; no Issue CREATE was attempted",
+    }
+
+
 def qualify(
     version: str = "1.0.0",
     runs: int = 3,
@@ -489,12 +569,12 @@ def qualify(
 ) -> dict:
     """Return a deterministic qualification report; never create a tag, commit, or release."""
     validate_request(version, runs)
-    python = sys.executable
+    python = _active_python()
     checks = [
         _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
         _command_check("audit-materialize", [python, "tools/audit.py", "--offline-fixture"]),
     ]
-    if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0"}:
+    if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
         checks.extend(
             [
                 _command_check("retrieval-materialize", [python, "tools/retrieval.py"]),
@@ -507,6 +587,13 @@ def qualify(
                 _command_check("interaction-e2e-materialize", [python, "tools/interaction_e2e.py"]),
             ]
         )
+    if version == "1.4.0":
+        checks.extend(
+            [
+                _command_check("initial-operations-e2e-materialize", [python, "tools/initial_operations_e2e.py", "--offline-fixture"]),
+                _command_check("initial-operations-e2e-tests", [python, "-m", "unittest", "tests.test_initial_operations_e2e"]),
+            ]
+        )
     checks.extend(
         [
             _command_check("parent-validator", [python, "tools/validate.py", "--check"]),
@@ -517,7 +604,7 @@ def qualify(
             _command_check("security", [python, "tools/security.py", "--offline-fixture"]),
         ]
     )
-    if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0"}:
+    if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
         checks.extend(
             [
                 _command_check("retrieval", [python, "tools/retrieval.py", "--check"]),
@@ -550,12 +637,14 @@ def qualify(
                 ),
             ]
         )
-    if version in {"1.2.0", "1.2.1", "1.3.0"}:
+    if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
         checks.extend(_v12_release_checks(python, workspace_root))
     e2e = _e2e_check(runs)
-    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0"} else None
-    v12_e2e = _v12_e2e_check(runs, workspace_root) if version in {"1.2.0", "1.2.1", "1.3.0"} else None
-    production_exchange = _production_exchange_check(runs, workspace_root, python) if version == "1.3.0" else None
+    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
+    v12_e2e = _v12_e2e_check(runs, workspace_root) if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
+    production_exchange = _production_exchange_check(runs, workspace_root, python) if version in {"1.3.0", "1.4.0"} else None
+    initial_operations_e2e = _initial_operations_e2e_check(runs) if version == "1.4.0" else None
+    live_evidence = _sandbox_live_evidence_check() if version == "1.4.0" else None
     history = _history_forbidden_findings()
     passed = (
         all(item["status"] == "PASSED" for item in checks)
@@ -563,6 +652,8 @@ def qualify(
         and (interaction_e2e is None or interaction_e2e["status"] == "PASSED")
         and (v12_e2e is None or v12_e2e["status"] == "PASSED")
         and (production_exchange is None or production_exchange["status"] == "PASSED")
+        and (initial_operations_e2e is None or initial_operations_e2e["status"] == "PASSED")
+        and (live_evidence is None or live_evidence["status"] == "PASSED")
         and history["status"] == "PASSED"
     )
     report_checks = checks + [e2e]
@@ -572,6 +663,10 @@ def qualify(
         report_checks.append(v12_e2e)
     if production_exchange is not None:
         report_checks.append(production_exchange)
+    if initial_operations_e2e is not None:
+        report_checks.append(initial_operations_e2e)
+    if live_evidence is not None:
+        report_checks.append(live_evidence)
     return {
         "version": version,
         "network": "disabled",
@@ -600,7 +695,7 @@ def _write_atomic(path: Path, content: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Qualify v1.0.0 through v1.3.0 without performing release operations")
+    parser = argparse.ArgumentParser(description="Qualify v1.0.0 through v1.4.0 without performing release operations")
     parser.add_argument("--version", required=True)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workspace-root", type=Path, default=V12_WORKSPACE_ROOT)

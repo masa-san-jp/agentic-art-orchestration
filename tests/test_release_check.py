@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,8 @@ from tools.release_check import (
     ReleaseCheckError,
     _e2e_check,
     _history_forbidden_findings,
+    _active_python,
+    _initial_operations_e2e_check,
     _interaction_e2e_check,
     _production_exchange_check,
     _v12_child_quality_gate_check,
@@ -19,13 +22,20 @@ from tools.release_check import (
 
 
 class ReleaseCheckTests(unittest.TestCase):
+    def test_active_python_uses_virtualenv_interpreter_when_available(self):
+        active = Path(_active_python())
+        self.assertTrue(active.is_file())
+        if Path(sys.prefix) != Path(sys.base_prefix):
+            self.assertEqual(Path(sys.prefix), active.parent.parent)
+
     def test_request_requires_declared_version_and_positive_runs(self):
         validate_request("1.0.0", 3)
         validate_request("1.1.0", 3)
         validate_request("1.2.0", 3)
         validate_request("1.2.1", 3)
         validate_request("1.3.0", 3)
-        with self.assertRaisesRegex(ReleaseCheckError, "only versions 1.0.0, 1.1.0, 1.2.0, 1.2.1, and 1.3.0"):
+        validate_request("1.4.0", 3)
+        with self.assertRaisesRegex(ReleaseCheckError, "only versions 1.0.0, 1.1.0, 1.2.0, 1.2.1, 1.3.0, and 1.4.0"):
             validate_request("2.0.0", 3)
         with self.assertRaisesRegex(ReleaseCheckError, "runs must be positive"):
             validate_request("1.0.0", 0)
@@ -51,6 +61,16 @@ class ReleaseCheckTests(unittest.TestCase):
         self.assertEqual(1, result["runs"])
         self.assertTrue(result["deterministic"])
         self.assertTrue(result["acceptance_passed"])
+        self.assertTrue(result["no_remote_mutation"])
+
+    def test_initial_operations_check_proves_three_deterministic_networkless_runs(self):
+        result = _initial_operations_e2e_check(3)
+        self.assertEqual("initial-operations-e2e", result["id"])
+        self.assertTrue(result["deterministic"])
+        self.assertTrue(result["acceptance_passed"])
+        self.assertTrue(result["drive_idempotent"])
+        self.assertTrue(result["issue_idempotent"])
+        self.assertTrue(result["live_gate_closed"])
         self.assertTrue(result["no_remote_mutation"])
 
     def test_v12_check_blocks_when_child_gate_is_not_passed(self):
