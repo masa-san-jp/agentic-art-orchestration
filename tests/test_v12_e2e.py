@@ -4,7 +4,9 @@ import copy
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from tools.child_quality_gates import sha256_hex
 from tools.v12_e2e import _deterministic_view, run_v12_e2e
 from tools.validate import load_yaml, validate_v12_e2e
 
@@ -65,6 +67,46 @@ class V12E2ETests(unittest.TestCase):
         first = {"duration_ms": 1, "output_sha256": "a", "nested": [{"status": "PASSED"}]}
         second = {"duration_ms": 99, "output_sha256": "b", "nested": [{"status": "PASSED"}]}
         self.assertEqual(_deterministic_view(first), _deterministic_view(second))
+
+    def test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates(self):
+        child = {
+            "contract_version": "child-quality-gates/v1",
+            "run_id": "fixture-child-gates",
+            "manifest_hash": sha256_hex(load_yaml(ROOT / "config/repositories.yaml")),
+            "repository_count": 5,
+            "results": [
+                {
+                    "repository": repository["id"],
+                    "observed_commit": repository["observed_commit"],
+                    "workspace_commit": repository["observed_commit"],
+                    "workspace_state": "MATCHED",
+                    "execution_mode": "immutable-archive",
+                    "quality_gate_hash": sha256_hex(repository["quality_gates"]),
+                    "status": "PASSED",
+                    "gates": [
+                        {
+                            "command": command,
+                            "status": "PASSED",
+                            "exit_code": 0,
+                            "duration_ms": 0,
+                            "output_redacted": "",
+                            "output_truncated": False,
+                            "output_sha256": "0" * 64,
+                        }
+                        for command in repository["quality_gates"]
+                    ],
+                }
+                for repository in load_yaml(ROOT / "config/repositories.yaml")["repositories"]
+            ],
+        }
+        with patch("tools.v12_e2e.run_child_quality_gates", side_effect=AssertionError("gate rerun")):
+            result = run_v12_e2e("V12-E2E-001:test-reuse", child_quality_gates=child)
+        self.assertEqual(["PASSED"], result["child_quality_gates"]["statuses"])
+
+    def test_reused_child_gate_evidence_must_match_manifest(self):
+        child = {"contract_version": "child-quality-gates/v1", "manifest_hash": "0" * 64, "results": []}
+        with self.assertRaisesRegex(RuntimeError, "provided child quality gate evidence is invalid"):
+            run_v12_e2e("V12-E2E-001:test-reuse-mismatch", child_quality_gates=child)
 
 
 if __name__ == "__main__":

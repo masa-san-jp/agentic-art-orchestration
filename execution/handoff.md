@@ -897,3 +897,11 @@
 - 解除条件: GitHub sandbox repositoryの`owner/name`を専用テスト用として明示指定し、既存Issue・本番データを触らないことを確認したうえで、`GITHUB_TOKEN`または`GH_TOKEN`をrepo外から供給し、`--confirm-issue`で一度だけ検索→CREATE/REUSEを実行する。
 - 設定が揃うまで`INITIAL-OPS-RELEASE-001`は開始しない。sandbox指定後はlive evidenceだけを追加検証し、他の外部書込みやcleanupは行わない。
 - 2026-08-13 17:08 JST、qualification leaseを解放した。親working treeの実装差分はこのブランチへ保持し、外部sandbox指定後に同じtaskを再開する。
+
+## INITIAL-OPS-QUALIFY-001 offline aggregate completion
+
+- `tools/release_check.py`と`tools/v12_e2e.py`を整理し、固定workspaceの5 repositories / 14 quality gatesをqualification全体で1回だけ実行し、以後のv1.2 E2EとProduction exchangeでは検証済み証跡を再利用する経路を追加した。再利用時はmanifest hash、repository集合、observed commit、quality gate hash、コマンド列を再検証し、不一致ならfail-closedする。
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun --output /tmp/aap-release-check-v14-short.json`を完走した。親の全offline check、offline E2E 3/3、interaction E2E 3/3、v1.2 E2E 3/3、Production exchange 3/3、initial-operations 3/3、履歴監査84 commits / finding 0がPASS。childは5/5 repositories MATCHED、14/14 gates PASS、Production report hashは3回同一で`sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93`。
+- 全体statusは`FAILED`のまま維持した。唯一の非PASSは`initial-operations-live-evidence=BLOCKED`で、GitHub sandbox repositoryが明示指定されていないためIssue CREATE/REUSEを実行していない。これはqualification failureではなく、外部sandbox指定待ちの安全ゲートとして記録した。
+- 検証: 全親テスト274件PASS、`tools/validate.py --check` PASS、`git diff --check` PASS。GitHub/Drive/child repo/Issue/Releaseへの新規外部書込みは行っていない。
+- 実装差分はPRでレビュー可能な状態。sandbox指定後はこの資格タスクを再開し、GitHub live Issue evidenceだけを追加実行する。v1.4.0 release human gateは、それがPASSするまで開始しない。

@@ -13,7 +13,7 @@ try:
     from tools.candidate_gates import build_gate_report
     from tools.candidate_selection import build_selection
     from tools.candidate_space import build_candidate_space, canonical_json, load_fixture
-    from tools.child_quality_gates import run_child_quality_gates
+    from tools.child_quality_gates import run_child_quality_gates, sha256_hex
     from tools.interaction_e2e import run_interaction_e2e
     from tools.proposition_provenance import build_provenance
     from tools.validate import (
@@ -21,6 +21,7 @@ try:
         TRANSFORMATION_RULE_CONFIG_PATH,
         load_json,
         load_yaml,
+        validate_child_quality_gates,
         validate_v12_e2e,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
@@ -29,10 +30,10 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     from tools.candidate_gates import build_gate_report
     from tools.candidate_selection import build_selection
     from tools.candidate_space import build_candidate_space, canonical_json, load_fixture
-    from tools.child_quality_gates import run_child_quality_gates
+    from tools.child_quality_gates import run_child_quality_gates, sha256_hex
     from tools.interaction_e2e import run_interaction_e2e
     from tools.proposition_provenance import build_provenance
-    from tools.validate import ROOT, TRANSFORMATION_RULE_CONFIG_PATH, load_json, load_yaml, validate_v12_e2e
+    from tools.validate import ROOT, TRANSFORMATION_RULE_CONFIG_PATH, load_json, load_yaml, validate_child_quality_gates, validate_v12_e2e
 
 
 DEFAULT_FIXTURE_DIR = ROOT / "tests/fixtures/v12-candidates"
@@ -43,6 +44,36 @@ DEFAULT_OUTPUT = ROOT / "data/v12-e2e.json"
 
 class V12E2EError(RuntimeError):
     """The v1.2 E2E did not prove a required invariant."""
+
+
+def _validate_child_quality_gates_for_manifest(report: dict, manifest: dict, source: str) -> None:
+    """Reject reused evidence that is not for this exact manifest and gate set."""
+    errors = validate_child_quality_gates(report, source)
+    if report.get("manifest_hash") != sha256_hex(manifest):
+        errors.append("child quality gate manifest hash does not match the supplied manifest")
+    expected = {
+        repository.get("id"): repository
+        for repository in manifest.get("repositories", [])
+        if isinstance(repository, dict)
+    }
+    results = report.get("results", [])
+    if {item.get("repository") for item in results if isinstance(item, dict)} != set(expected):
+        errors.append("child quality gate repositories do not match the supplied manifest")
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        repository = expected.get(item.get("repository"))
+        if repository is None:
+            continue
+        if item.get("observed_commit") != repository.get("observed_commit"):
+            errors.append(f"child quality gate commit does not match repository {item.get('repository')!r}")
+        if item.get("quality_gate_hash") != sha256_hex(repository.get("quality_gates", [])):
+            errors.append(f"child quality gate definition does not match repository {item.get('repository')!r}")
+        commands = [gate.get("command") for gate in item.get("gates", []) if isinstance(gate, dict)]
+        if commands != repository.get("quality_gates"):
+            errors.append(f"child quality gate commands do not match repository {item.get('repository')!r}")
+    if errors:
+        raise V12E2EError("provided child quality gate evidence is invalid: " + " | ".join(errors[:5]))
 
 
 def _render(data: dict) -> bytes:
@@ -90,6 +121,7 @@ def run_v12_e2e(
     fixture_dir: Path = DEFAULT_FIXTURE_DIR,
     manifest_path: Path = DEFAULT_MANIFEST,
     workspace_root: Path = DEFAULT_WORKSPACE_ROOT,
+    child_quality_gates: dict | None = None,
 ) -> dict:
     """Execute all v1.2 stages in memory and summarize immutable evidence."""
     registry = load_yaml(TRANSFORMATION_RULE_CONFIG_PATH)
@@ -99,7 +131,11 @@ def run_v12_e2e(
     gate_report = build_gate_report(candidate_space, copy.deepcopy(signals), copy.deepcopy(registry), "v12-e2e.gates")
     selection = build_selection(candidate_space, gate_report, "agentic-art-orchestration", "v12-e2e", 1, "v12-e2e.selection")
     provenance = build_provenance(selection, candidate_space, gate_report, copy.deepcopy(signals), copy.deepcopy(registry), "v12-e2e.provenance")
-    child_gates = run_child_quality_gates(manifest, workspace_root, run_id=f"{run_id}:child-gates")
+    if child_quality_gates is None:
+        child_gates = run_child_quality_gates(manifest, workspace_root, run_id=f"{run_id}:child-gates")
+    else:
+        child_gates = copy.deepcopy(child_quality_gates)
+        _validate_child_quality_gates_for_manifest(child_gates, manifest, f"{run_id}:child-quality-gates")
     first = {
         "candidate_space": copy.deepcopy(candidate_space),
         "gate_report": copy.deepcopy(gate_report),
@@ -112,7 +148,7 @@ def run_v12_e2e(
         "gate_report": None,
         "selection": None,
         "provenance": None,
-        "child_gates": run_child_quality_gates(manifest, workspace_root, run_id=f"{run_id}:child-gates"),
+        "child_gates": copy.deepcopy(child_gates),
     }
     second["gate_report"] = build_gate_report(second["candidate_space"], copy.deepcopy(signals), copy.deepcopy(registry), "v12-e2e.gates")
     second["selection"] = build_selection(second["candidate_space"], second["gate_report"], "agentic-art-orchestration", "v12-e2e", 1, "v12-e2e.selection")
@@ -175,11 +211,15 @@ def main() -> int:
     parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE_DIR)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--workspace-root", type=Path, default=DEFAULT_WORKSPACE_ROOT)
+    parser.add_argument("--child-quality-gates", type=Path, help="reuse one validated child-gate report for this parent-only E2E")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
-        result = run_v12_e2e(args.run_id, args.fixture, args.manifest, args.workspace_root)
+        child_quality_gates = None
+        if args.child_quality_gates:
+            child_quality_gates = json.loads(args.child_quality_gates.read_text(encoding="utf-8"))
+        result = run_v12_e2e(args.run_id, args.fixture, args.manifest, args.workspace_root, child_quality_gates)
         rendered = _render(result)
         if args.check:
             if args.output.read_bytes() != rendered:

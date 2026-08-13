@@ -1,5 +1,5 @@
-version: 9
-updated_at: "2026-08-13T17:08:00+09:00"
+version: 10
+updated_at: "2026-08-13T17:41:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
@@ -13,13 +13,13 @@ lease:
     repository: agentic-art-orchestration
     paths: [tools/release_check.py, tests/test_release_check.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
   released_at: "2026-08-13T17:08:00+09:00"
-  release_reason: qualification implementation and offline evidence recorded; GitHub sandbox live evidence remains an external resume gate
+  release_reason: v1.4 offline aggregate qualification completed; GitHub sandbox live evidence remains an external resume gate
 checkpoint:
   task: INITIAL-OPS-QUALIFY-001
   repository: agentic-art-orchestration
   start_point: 9698c38a748ef84f850e71a484b378c2e60e7c2c
   expected_changes: Qualify v1.4.0 through three deterministic initial-operations runs, inherited parent/child gates, and separate opt-in sandbox evidence without performing release operations.
-  result: partial; initial-operations 3-run networkless check passed; fixed-workspace child gates and one Production exchange passed in isolated checks; full v1.4.0 aggregate qualification and GitHub sandbox evidence remain to be resolved
+  result: partial; v1.4.0 offline aggregate qualification passed across three deterministic runs; GitHub sandbox live evidence remains the only blocking gate
 last_completed_task: INITIAL-OPS-E2E-001
 resume_from:
   task: INITIAL-OPS-QUALIFY-001
@@ -71,11 +71,11 @@ last_validation:
   command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-qualified-5Nhxun --run-id production-qualification-final --output /tmp/aap-production-qualification-final/child-quality-gates.json --check; /tmp/aap-bootstrap-venv/bin/python tools/workspace.py snapshot --check --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/status.py --check --workspace-root /tmp/aap-production-qualified-5Nhxun --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check; gh pr view 18 --repo masa-san-jp/agentic-art-orchestration --json state,mergeCommit,statusCheckRollup; git tag --points-at 302de458495257fca0e754ed4f71f6b5255abbbe; gh release view v1.3.0 --repo masa-san-jp/agentic-art-orchestration
   result: passed; v1.3.0 qualification PASS, three exchange reports byte-stable at sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93, six terminal scenarios PASS, 5 repositories MATCHED, 14/14 child gates PASS per run, parent 225 tests PASS, audit finding 0, security PASS, tracked output paths empty; PR #18 merge, exact tag, and published GitHub Release verified; 2026-08-13T12:00:33+09:00
 qualification_v14:
-  status: partial_offline_live_blocked
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun
+  status: offline_passed_live_blocked
+  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun --output /tmp/aap-release-check-v14-short.json
   initial_operations: passed; 3/3 deterministic; Drive idempotency, Issue idempotency, privacy, and remote mutation checks passed
   child_quality_gates: passed_isolated; 5/5 repositories MATCHED; 14/14 gates PASSED in isolated fixed-workspace run
-  production_exchange: passed_isolated; one deterministic isolated run; six terminal scenarios; remote/physical effect false
-  aggregate_qualification: incomplete; long-running v1.4.0 aggregate was stopped before final report; no failure was normalized to PASS
+  production_exchange: passed; 3/3 deterministic runs; six terminal scenarios; report hash sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93 repeated; remote/physical effect false
+  aggregate_qualification: passed_offline; all offline checks, 3/3 initial-operations runs, 3/3 Production exchange runs, 5 repositories, and 14 child gates passed; child evidence was executed once and safely reused only after manifest/commit/gate validation
   github_live_evidence: blocked; no explicitly designated sandbox repository was detected; no Issue CREATE attempted
   release_operation: not_performed

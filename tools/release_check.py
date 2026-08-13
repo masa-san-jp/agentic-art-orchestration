@@ -277,7 +277,11 @@ def _initial_operations_e2e_check(runs: int) -> dict:
     }
 
 
-def _v12_e2e_check(runs: int, workspace_root: Path = V12_WORKSPACE_ROOT) -> dict:
+def _v12_e2e_check(
+    runs: int,
+    workspace_root: Path = V12_WORKSPACE_ROOT,
+    child_quality_gates: dict | None = None,
+) -> dict:
     """Qualify v1.2 and require every pinned child quality gate to pass."""
     summaries: list[dict] = []
     error_types: list[str] = []
@@ -288,6 +292,7 @@ def _v12_e2e_check(runs: int, workspace_root: Path = V12_WORKSPACE_ROOT) -> dict
                 fixture_dir=V12_FIXTURE,
                 manifest_path=V12_MANIFEST,
                 workspace_root=workspace_root,
+                child_quality_gates=child_quality_gates,
             )
             summaries.append(
                 {
@@ -369,28 +374,38 @@ def _v12_child_quality_gate_check(
     }
 
 
-def _v12_release_checks(python: str, workspace_root: Path) -> list[dict]:
+def _v12_release_checks(
+    python: str,
+    workspace_root: Path,
+    child_quality_gates: dict | None = None,
+) -> list[dict]:
     """Materialize v1.2 child and E2E evidence in an isolated temporary directory."""
     with tempfile.TemporaryDirectory(prefix="release-v12-") as temporary_name:
         temporary = Path(temporary_name)
         child_report = temporary / "child-quality-gates.json"
         e2e_report = temporary / "v12-e2e.json"
-        checks = [
-            _command_check(
-                "v1.2-child-quality-gates",
-                [
-                    python,
-                    "tools/child_quality_gates.py",
-                    "--manifest",
-                    str(V12_MANIFEST),
-                    "--workspace-root",
-                    str(workspace_root),
-                    "--run-id",
-                    "v12-child-gates",
-                    "--output",
-                    str(child_report),
-                ],
-            ),
+        if child_quality_gates is None:
+            checks = [
+                _command_check(
+                    "v1.2-child-quality-gates",
+                    [
+                        python,
+                        "tools/child_quality_gates.py",
+                        "--manifest",
+                        str(V12_MANIFEST),
+                        "--workspace-root",
+                        str(workspace_root),
+                        "--run-id",
+                        "v12-child-gates",
+                        "--output",
+                        str(child_report),
+                    ],
+                )
+            ]
+        else:
+            child_report.write_text(json.dumps(child_quality_gates, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+            checks = []
+        checks.extend([
             _command_check(
                 "v1.2-e2e-materialize",
                 [
@@ -404,12 +419,14 @@ def _v12_release_checks(python: str, workspace_root: Path) -> list[dict]:
                     str(V12_MANIFEST),
                     "--workspace-root",
                     str(workspace_root),
+                    "--child-quality-gates",
+                    str(child_report),
                     "--output",
                     str(e2e_report),
                 ],
             ),
             _v12_child_quality_gate_check(child_report),
-        ]
+        ])
         return checks
 
 
@@ -450,6 +467,7 @@ def _production_exchange_check(
     runs: int,
     workspace_root: Path,
     child_python: str,
+    child_quality_gates: dict | None = None,
 ) -> dict:
     """Qualify the Production exchange without retaining child or bundle content."""
     manifest = load_yaml(V12_MANIFEST)
@@ -473,10 +491,14 @@ def _production_exchange_check(
                 rendered = (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
                 e2e_reports.append(report)
                 e2e_bytes.append(rendered)
-                child_report = run_child_quality_gates(
-                    manifest,
-                    workspace_root,
-                    run_id=f"PRODUCTION-QUALIFY-001:child-{index + 1}",
+                child_report = (
+                    child_quality_gates
+                    if child_quality_gates is not None
+                    else run_child_quality_gates(
+                        manifest,
+                        workspace_root,
+                        run_id=f"PRODUCTION-QUALIFY-001:child-{index + 1}",
+                    )
                 )
                 child_summaries.append(_child_gate_summary(child_report))
             except Exception as exc:  # qualification report must remain sanitized
@@ -570,6 +592,13 @@ def qualify(
     """Return a deterministic qualification report; never create a tag, commit, or release."""
     validate_request(version, runs)
     python = _active_python()
+    child_quality_gates = None
+    if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
+        child_quality_gates = run_child_quality_gates(
+            load_yaml(V12_MANIFEST),
+            workspace_root,
+            run_id="release-qualification-child-gates",
+        )
     checks = [
         _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
         _command_check("audit-materialize", [python, "tools/audit.py", "--offline-fixture"]),
@@ -638,11 +667,11 @@ def qualify(
             ]
         )
     if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
-        checks.extend(_v12_release_checks(python, workspace_root))
+        checks.extend(_v12_release_checks(python, workspace_root, child_quality_gates))
     e2e = _e2e_check(runs)
     interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
-    v12_e2e = _v12_e2e_check(runs, workspace_root) if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
-    production_exchange = _production_exchange_check(runs, workspace_root, python) if version in {"1.3.0", "1.4.0"} else None
+    v12_e2e = _v12_e2e_check(runs, workspace_root, child_quality_gates) if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
+    production_exchange = _production_exchange_check(runs, workspace_root, python, child_quality_gates) if version in {"1.3.0", "1.4.0"} else None
     initial_operations_e2e = _initial_operations_e2e_check(runs) if version == "1.4.0" else None
     live_evidence = _sandbox_live_evidence_check() if version == "1.4.0" else None
     history = _history_forbidden_findings()
