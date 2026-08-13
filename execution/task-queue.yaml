@@ -511,7 +511,7 @@ tasks:
   - id: PRODUCTION-QUALIFY-001
     milestone: M13
     title: Qualify the operational Production exchange
-    status: READY
+    status: DONE
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -522,7 +522,7 @@ tasks:
   - id: PRODUCTION-RELEASE-001
     milestone: M13
     title: Release the qualified Production exchange through the human gate
-    status: BACKLOG
+    status: READY
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY

@@ -717,3 +717,17 @@
 ## Next exact action
 
 1. `git status --short --branch`で差分を確認し、`PRODUCTION-QUALIFY-001`として同一qualificationを3回実行し、byte stability・親検証・5 repo child gates・Git外出力を総合確認する。
+
+## PRODUCTION-QUALIFY-001 evidence
+
+- `tools/release_check.py`へv1.3.0のread-only qualification経路を追加した。既存v1.0.0〜v1.2.1 gateを維持し、Production exchangeを3回、固定generated_at・同一run ID・独立Git外run rootで実行してcanonical JSON bytesを比較する。`tests/test_release_check.py`へversion受入とchild gate/exchange判定のfail-closed回帰を追加した。
+- 初回に使った候補workspaceは、5repoのgate自体は14/14 `PASSED`だったが、core 3repoがmanifest記録pinより後続commitで`STALE`だったため資格判定を失敗させた。pin更新や既存workspace変更はせず、候補履歴に存在するmanifest記録commitへ5repoをdetached checkoutした新しいGit外candidateを作成した。
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun`は終了コード0、`status=PASSED`。3回のProduction exchange report SHAはすべて`sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93`、6シナリオ行列、`remote_operations=[]`、`child_mutations=[]`、`tracked_output_paths=[]`、physical/remote effectなしだった。
+- 各回のchild gateは5 repository、14/14 gate、全repo `MATCHED`、`immutable-archive`、全status `PASSED`。生成後のstandalone `child_quality_gates.py --check`も`PASSED`。親validator、225 tests、history finding 0、audit finding 0、security `PASSED`、workspace snapshot/status `--check`、`git diff --check`も通過した。
+- 初回candidateはdetachedのためasync-auditとstatusの通常branch保護によりblockerとなった。各manifest pinから一時candidate内に`qualification-main` branchを作り、5repoを記録commitへ揃えた後、snapshot/statusは`drift=CLEAN`・blocker 1（human release gateのみ）となった。qualificationの`MATCHED`判定（immutable archive上のpin一致）とstatusの通常branch保護を両方満たしている。常設`repos/`、子reporemote、Issue、PR、schema、canonical data、Google Drive、外部Production artifactは変更していない。
+- 機微情報確認: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは追加していない。出力はGitignoreされた`data/`またはGit外一時rootに限定し、親のqualification reportはcommit/status/hash/countだけを保持する。
+- acceptance: 1/1達成。`PRODUCTION-QUALIFY-001`をDONE、leaseをreleased、`PRODUCTION-RELEASE-001`をREADYへ遷移した。v1.3.0のmerge、tag、GitHub Releaseは人間承認が必要なため未実行。
+
+## Next exact action
+
+1. 人間が親repo差分とv1.3.0 qualification evidenceをレビューし、`PRODUCTION-RELEASE-001`としてmerge、v1.3.0 tag、GitHub Releaseを明示承認する。最初の操作は`git status --short --branch`。

@@ -4,12 +4,14 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.release_check import (
     ReleaseCheckError,
     _e2e_check,
     _history_forbidden_findings,
     _interaction_e2e_check,
+    _production_exchange_check,
     _v12_child_quality_gate_check,
     _v12_e2e_check,
     validate_request,
@@ -22,7 +24,8 @@ class ReleaseCheckTests(unittest.TestCase):
         validate_request("1.1.0", 3)
         validate_request("1.2.0", 3)
         validate_request("1.2.1", 3)
-        with self.assertRaisesRegex(ReleaseCheckError, "only versions 1.0.0, 1.1.0, 1.2.0, and 1.2.1"):
+        validate_request("1.3.0", 3)
+        with self.assertRaisesRegex(ReleaseCheckError, "only versions 1.0.0, 1.1.0, 1.2.0, 1.2.1, and 1.3.0"):
             validate_request("2.0.0", 3)
         with self.assertRaisesRegex(ReleaseCheckError, "runs must be positive"):
             validate_request("1.0.0", 0)
@@ -76,6 +79,47 @@ class ReleaseCheckTests(unittest.TestCase):
         self.assertEqual("v1.2-child-quality-gates-result", result["id"])
         self.assertEqual("FAILED", result["status"])
         self.assertIn("BLOCKED", result["repository_statuses"])
+
+    def test_production_check_requires_three_stable_exchange_reports_and_all_child_gates(self):
+        exchange = {
+            "scenarios": [
+                {"scenario_id": "clean", "status": "PASSED", "terminal_status": "COMPLETE"},
+                {"scenario_id": "tamper", "status": "FAILED", "terminal_status": "FAILED"},
+                {"scenario_id": "stale", "status": "BLOCKED", "terminal_status": "BLOCKED"},
+                {"scenario_id": "incompatible", "status": "FAILED", "terminal_status": "FAILED"},
+                {"scenario_id": "dirty-source", "status": "BLOCKED", "terminal_status": "BLOCKED"},
+                {"scenario_id": "replay", "status": "PASSED", "terminal_status": "REPLAYED"},
+            ],
+            "normal_exchange": {
+                "status": "PASSED",
+                "external_validation_required": True,
+                "research_result_dry_run": True,
+            },
+            "remote_operations": [],
+            "child_mutations": [],
+        }
+        child_results = []
+        for index in range(5):
+            commit = f"{index + 1:040x}"
+            child_results.append(
+                {
+                    "status": "PASSED",
+                    "workspace_state": "MATCHED",
+                    "workspace_commit": commit,
+                    "observed_commit": commit,
+                    "execution_mode": "immutable-archive",
+                    "gates": [{"status": "PASSED"}] * (2 if index == 4 else 3),
+                }
+            )
+        with patch("tools.release_check.run_exchange_e2e", return_value=exchange), patch(
+            "tools.release_check.run_child_quality_gates",
+            return_value={"results": child_results},
+        ), patch("tools.release_check._git", return_value=""):
+            result = _production_exchange_check(3, Path("/tmp/verified-child-workspace"), "python3")
+        self.assertEqual("PASSED", result["status"])
+        self.assertTrue(result["deterministic"])
+        self.assertTrue(result["child_gates_passed"])
+        self.assertEqual(3, len(result["report_sha256"]))
 
 
 if __name__ == "__main__":
