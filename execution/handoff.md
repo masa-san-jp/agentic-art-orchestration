@@ -782,3 +782,22 @@
 ## Next exact action
 
 1. Connect `tools/workspace.py`, `tools/status.py`, `tools/audit.py`, and `tools/security.py` into startup after snapshot selection.
+
+## STARTUP-AUDIT-001 execution
+
+- 2026-08-13 12:20 JST、`STARTUP-AUDIT-001`をclaimした。対象は親repoのstartup実行境界と専用テストのみ。
+- 起動時にqualified snapshot選択後のworkspace guard、status、audit、securityを読み取り専用で呼び出し、privacy/securityまたはguardのcritical findingを`BLOCKED`、通常のaudit/status/remote findingを`READY_WITH_FINDINGS`へ集約する。
+- 子repo、pin、checkout、branch、Issue、Google Drive、raw conversation、認証情報は変更対象外。生成JSONは既存の`data/`生成物境界に限定する。
+
+## STARTUP-AUDIT-001 completed
+
+- `tools/startup.py` now connects qualified snapshot selection to read-only workspace guard, portfolio status, existing cross-repository audit, and security boundary checks. Offline mode creates only the synthetic test remotes/workspace under the supplied fixture root; normal startup never initializes, fetches, checks out, resets, pushes, or edits child repositories.
+- Critical workspace, schema/privacy, audit, or security findings become `BLOCKED`; ordinary remote drift and audit/status findings become `READY_WITH_FINDINGS`. `BLOCKED` reports expose no capability, while non-clean reports restrict external create-only capabilities.
+- Startup emits metadata-only, deduplicated Issue candidates with stable keys, privacy-safe summaries, `human_gate: true`, `side_effect: NONE`, and no Issue creation. The startup report schema and policy explicitly include this field while retaining forbidden raw conversation/credential boundaries.
+- `.venv/bin/python tools/validate.py --check`: PASS. Dedicated startup contract/audit/update tests: 5/5, 5/5, 3/3 PASS. Full parent suite: 237/237 PASS. Workspace status: 5 repositories clean on `main`, ahead/behind 0. Audit: `CLEAN`; security: `PASSED`; startup materialize and `--check`: byte-stable `READY_WITH_FINDINGS`. `git diff --check`: PASS.
+- `.github/workflows/validate.yml` now exercises startup materialization and deterministic check in CI. No child repository, Issue, Google Drive artifact, pin, branch, or user artifact was changed; no child quality gate was required because no child repo changed.
+- Acceptance: 1/1 achieved. `STARTUP-AUDIT-001` is DONE; lease released. `ISSUE-CREATE-001` is the next task.
+
+## Next exact action
+
+1. Review the generated startup Issue candidates and implement `ISSUE-CREATE-001` only within its explicit create-only, human-gated boundary; first operation is `git status --short --branch`.

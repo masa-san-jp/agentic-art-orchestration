@@ -110,6 +110,7 @@ data_boundary:
     - finding_code
     - capability
     - remediation
+    - issue_candidates
   forbidden_fields:
     - token
     - access_token

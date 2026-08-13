@@ -61,6 +61,7 @@ class StartupRepositoryUpdateTests(unittest.TestCase):
             self.assertEqual("READY_WITH_FINDINGS", report["status"])
             self.assertEqual(5, len(report["repositories"]))
             self.assertTrue(all(record["pinned_for_use"] for record in report["repositories"]))
+            self.assertEqual("PASSED", report["workspace_guard"]["status"])
             self.assertEqual([], report["remote_operations"])
             self.assertEqual(before, snapshot.read_bytes())
 

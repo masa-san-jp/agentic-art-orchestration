@@ -556,7 +556,7 @@ tasks:
   - id: STARTUP-AUDIT-001
     milestone: M14
     title: Run repository audit during every initial startup
-    status: READY
+    status: DONE
     lane: STARTUP_AUDIT
     interaction_blocking: true
     user_artifact_policy: READ_ONLY
@@ -567,7 +567,7 @@ tasks:
   - id: ISSUE-CREATE-001
     milestone: M14
     title: Deliver eligible feedback and audit findings as create-only GitHub Issues
-    status: BACKLOG
+    status: READY
     lane: FEEDBACK_DELIVERY
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
