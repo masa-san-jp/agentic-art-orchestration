@@ -11,3 +11,8 @@ max_creates_per_idempotency_key: 1
 human_confirmation_required: true
 existing_issue_mutation: false
 production_repositories_must_be_rejected: true
+post_create_search:
+  max_attempts: 5
+  initial_delay_seconds: 2
+  backoff_multiplier: 2
+  max_delay_seconds: 16

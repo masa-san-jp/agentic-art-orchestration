@@ -49,6 +49,6 @@ The initial-operations qualification uses a separate sandbox lane, not the norma
 .venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --github-sandbox-evidence /tmp/github-sandbox-live-evidence.json
 ```
 
-The sandbox command searches first, creates at most one metadata-only Issue, reads it back, and records a reuse check. It refuses production repositories and existing ambiguous matches; the evidence file contains hashes and operation metadata only. Do not run the command against an experiment or production repository by inference.
+The sandbox command searches first, creates at most one metadata-only Issue, then retries the post-create search with the bounded policy schedule (`2s → 4s → 8s → 16s`, at most five searches) before recording reuse. It refuses production repositories and existing ambiguous matches; the evidence file contains hashes and operation metadata only. If the search index still has no single match at the bound, it remains `BLOCKED` and does not claim qualification. Do not run the command against an experiment or production repository by inference.
 
 If startup is `READY_WITH_FINDINGS`, the answer remains pinned and read-only; external CREATE capabilities stay restricted. If startup is `BLOCKED`, affected capabilities stop and the remediation in the startup report is authoritative.

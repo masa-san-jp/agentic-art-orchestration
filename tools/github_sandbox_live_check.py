@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import time
 from typing import Mapping, Protocol
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,7 +107,7 @@ def _body(repository: str) -> str:
     )
 
 
-def _remote(operation: str, repository: str, issue_number: int | None = None) -> dict:
+def _remote(operation: str, repository: str, issue_number: int | None = None, attempt: int | None = None) -> dict:
     result = {
         "operation": operation,
         "repository_id_hash": _hash(repository),
@@ -114,6 +115,8 @@ def _remote(operation: str, repository: str, issue_number: int | None = None) ->
     }
     if issue_number is not None:
         result["issue_number"] = issue_number
+    if attempt is not None:
+        result["attempt"] = attempt
     return result
 
 
@@ -151,6 +154,35 @@ def _preflight(provider: GithubSandboxProvider, repository: str) -> None:
         raise _error("token lacks repository write permission", "use an external credential with permission only for the approved sandbox")
 
 
+def _retry_settings(policy: Mapping[str, object]) -> tuple[int, float, float, float]:
+    retry = policy["post_create_search"]
+    return (
+        retry["max_attempts"],
+        float(retry["initial_delay_seconds"]),
+        float(retry["backoff_multiplier"]),
+        float(retry["max_delay_seconds"]),
+    )
+
+
+def _search_after_create(
+    provider: GithubSandboxProvider,
+    repository: str,
+    policy: Mapping[str, object],
+    remote_operations: list[dict],
+    sleep=time.sleep,
+) -> list[dict]:
+    max_attempts, delay, multiplier, max_delay = _retry_settings(policy)
+    for attempt in range(max_attempts):
+        matches = provider.search(repository, IDEMPOTENCY_KEY)
+        remote_operations.append(_remote("READ", repository, attempt=attempt + 1))
+        if matches:
+            return matches
+        if attempt + 1 < max_attempts:
+            sleep(delay)
+            delay = min(max_delay, delay * multiplier)
+    return []
+
+
 def run_check(
     *,
     mode: str = "plan",
@@ -160,6 +192,7 @@ def run_check(
     manifest: Mapping[str, object] | None = None,
     run_id: str = "INITIAL-OPS-GITHUB-SANDBOX:attempt-1",
     repository_override: str | None = None,
+    sleep=time.sleep,
 ) -> dict:
     if mode not in {"plan", "live"} or not ID_PATTERN.fullmatch(run_id):
         raise _error("mode or run ID is invalid", "use plan/live and a stable run ID")
@@ -195,8 +228,7 @@ def run_check(
     created = provider.create(repository, "[sandbox] initial operations qualification", _body(repository))
     number, _, issue_hash = _issue_ref(repository, created)
     remote_operations.append(_remote("CREATE", repository, number))
-    replay = provider.search(repository, IDEMPOTENCY_KEY)
-    remote_operations.append(_remote("READ", repository, number))
+    replay = _search_after_create(provider, repository, policy, remote_operations, sleep=sleep)
     if len(replay) != 1:
         return _result(run_id=run_id, mode=mode, status="BLOCKED", operation="CREATE", repository=repository, issue_id_hash=issue_hash, remote_operations=remote_operations)
     replay_number, _, replay_hash = _issue_ref(repository, replay[0])

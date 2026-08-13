@@ -155,6 +155,43 @@ class ReleaseCheckTests(unittest.TestCase):
         self.assertEqual("PASSED", result["github_issue_create_reuse"])
         self.assertEqual(["READ", "CREATE", "READ", "REUSE"], [item["operation"] for item in result["remote_operations"]])
 
+    def test_sandbox_live_evidence_accepts_bounded_eventual_consistency_reads(self):
+        from tools.github_sandbox_live_check import FixtureProvider, run_check
+
+        class DelayedProvider(FixtureProvider):
+            def __init__(self):
+                super().__init__()
+                self.search_count = 0
+
+            def search(self, repository: str, deduplication_key: str) -> list[dict]:
+                self.search_count += 1
+                return super().search(repository, deduplication_key) if self.search_count >= 4 else []
+
+        with tempfile.TemporaryDirectory() as temporary_name:
+            evidence_path = Path(temporary_name) / "github-sandbox-live-evidence.json"
+            with patch.dict("os.environ", {"AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY": "masa-san-jp/dedicated-sandbox"}, clear=False):
+                evidence = run_check(mode="live", confirm_live=True, provider=DelayedProvider(), sleep=lambda _: None)
+            evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+            result = _sandbox_live_evidence_check(evidence_path)
+        self.assertEqual("PASSED", result["status"])
+        self.assertEqual(["READ", "CREATE", "READ", "READ", "READ", "REUSE"], [item["operation"] for item in result["remote_operations"]])
+
+    def test_sandbox_live_evidence_rejects_reads_beyond_policy_bound(self):
+        from tools.github_sandbox_live_check import FixtureProvider, run_check
+
+        with tempfile.TemporaryDirectory() as temporary_name:
+            evidence_path = Path(temporary_name) / "github-sandbox-live-evidence.json"
+            with patch.dict("os.environ", {"AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY": "masa-san-jp/dedicated-sandbox"}, clear=False):
+                evidence = run_check(mode="live", confirm_live=True, provider=FixtureProvider())
+            reuse = evidence["remote_operations"].pop()
+            for attempt in range(1, 7):
+                evidence["remote_operations"].append({"operation": "READ", "repository_id_hash": evidence["repository_id_hash"], "idempotency_key_hash": evidence["idempotency_key_hash"], "attempt": attempt})
+            evidence["remote_operations"].append(reuse)
+            evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+            result = _sandbox_live_evidence_check(evidence_path)
+        self.assertEqual("FAILED", result["status"])
+        self.assertEqual("FAILED", result["github_issue_create_reuse"])
+
 
 if __name__ == "__main__":
     unittest.main()

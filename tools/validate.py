@@ -1104,6 +1104,20 @@ def validate_github_sandbox_live_contract(
         error(policy_source, "sandbox create idempotency or human confirmation is unsafe", "allow one create per key and require explicit confirmation")
     if policy.get("existing_issue_mutation") is not False or policy.get("production_repositories_must_be_rejected") is not True:
         error(policy_source, "sandbox isolation flags are unsafe", "reject production repositories and never mutate existing Issues")
+    retry = policy.get("post_create_search")
+    if not isinstance(retry, dict):
+        error(policy_source, "post_create_search must be an object", "bound eventual-consistency retries in the policy")
+    else:
+        if not isinstance(retry.get("max_attempts"), int) or not 1 <= retry["max_attempts"] <= 10:
+            error(policy_source, "post_create_search.max_attempts is unsafe", "use a finite retry bound between 1 and 10")
+        if not isinstance(retry.get("initial_delay_seconds"), (int, float)) or not 0 <= retry["initial_delay_seconds"] <= 60:
+            error(policy_source, "post_create_search.initial_delay_seconds is unsafe", "use a non-negative bounded delay")
+        if not isinstance(retry.get("backoff_multiplier"), (int, float)) or not 1 <= retry["backoff_multiplier"] <= 4:
+            error(policy_source, "post_create_search.backoff_multiplier is unsafe", "use a finite multiplier between 1 and 4")
+        if not isinstance(retry.get("max_delay_seconds"), (int, float)) or not 0 <= retry["max_delay_seconds"] <= 120:
+            error(policy_source, "post_create_search.max_delay_seconds is unsafe", "use a bounded maximum delay")
+        if isinstance(retry.get("initial_delay_seconds"), (int, float)) and isinstance(retry.get("max_delay_seconds"), (int, float)) and retry["initial_delay_seconds"] > retry["max_delay_seconds"]:
+            error(policy_source, "post_create_search initial delay exceeds maximum", "keep the retry schedule monotonic")
 
     declared = {
         item.get("full_name")
