@@ -1,30 +1,30 @@
-version: 4
-updated_at: "2026-08-13T15:58:00+09:00"
+version: 6
+updated_at: "2026-08-13T16:19:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-agent-ui
-  acquired_at: "2026-08-13T15:36:00+09:00"
-  expires_at: "2026-08-13T16:36:00+09:00"
-  lane: FRONTSTAGE_INTERACTION
-  execution_id: AGENT-UI-001:attempt-1
-  released_at: "2026-08-13T15:58:00+09:00"
-  release_reason: completed; repository-native initial conversational interface and safety contract passed
+  owner: codex-initial-ops-e2e
+  acquired_at: "2026-08-13T16:03:00+09:00"
+  expires_at: "2026-08-13T17:03:00+09:00"
+  lane: INTERACTION_E2E
+  execution_id: INITIAL-OPS-E2E-001:attempt-1
+  released_at: "2026-08-13T16:19:00+09:00"
+  release_reason: completed; networkless startup/retrieval/Drive replay/Issue reuse E2E and live gate passed
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/agent_ui.py, tests/test_agent_ui_contract.py, docs/agent-ui-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/initial_operations_e2e.py, schemas/initial-operations-e2e.schema.json, tests/test_initial_operations_e2e.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
 checkpoint:
-  task: AGENT-UI-001
-  repository: agentic-art-orchestration
-  start_point: dbbe31848ea0548fcbe199ba7af64f38a6f03206
-  expected_changes: Add a repository-native Codex/Claude Code command that composes startup, minimum-repository retrieval, append-only Drive output, and metadata-only feedback/Issue planning without storing raw conversation or exposing Git operations.
-  result: completed; 265 parent tests, validator, agent-ui plan/check, compatibility E2E, and diff check passed
-last_completed_task: AGENT-UI-001
-resume_from:
   task: INITIAL-OPS-E2E-001
-  action: Connect the scripted initial operations flow and prove offline plus opt-in sandbox paths without mutation outside approved CREATE-only lanes.
-  command: .venv/bin/python tools/initial_operations_e2e.py --offline-fixture --check
+  repository: agentic-art-orchestration
+  start_point: d404ac61c9845861fe59e42126eb08bb18a778a6
+  expected_changes: Connect startup, pinned retrieval, Drive CREATE/REPLAY, feedback capture, and Issue CREATE/REUSE into a deterministic initial-operations E2E with explicit live-path refusal and no forbidden mutation.
+  result: completed; 270 parent tests, validator, initial-operations materialize/check, and diff check passed
+last_completed_task: INITIAL-OPS-E2E-001
+resume_from:
+  task: INITIAL-OPS-QUALIFY-001
+  action: Run three deterministic initial-operations qualification passes and verify separate Drive and GitHub sandbox evidence before the human release gate.
+  command: .venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813
