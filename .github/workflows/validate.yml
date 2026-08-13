@@ -30,6 +30,8 @@ jobs:
           python3 tools/issue_router.py
           python3 tools/github_issue_adapter.py --fixture
           python3 tools/github_issue_adapter.py --fixture --check
+          python3 tools/drive_live_check.py --plan
+          python3 tools/drive_live_check.py --plan --check
           python3 tools/improvement_loop.py
           python3 tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml
           python3 tools/interaction_e2e.py

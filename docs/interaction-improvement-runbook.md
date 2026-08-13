@@ -73,7 +73,12 @@ ASYNC_AUDIT (separate lease, non-blocking) -> Issue candidate / draft plan
 .venv/bin/python tools/interaction_e2e.py --check
 ~~~
 
-同じinteraction-scoped idempotency keyと同じpayloadはmetadata-onlyのREPLAYになる。keyを使い回してpayload/metadataが変わる場合は重複作成を止める。現行fixtureは`FakeDrive`だけを使用し、実Google Driveへの書込みは行わない。実運用では保存先、access scope、consent、retentionを確認してからcreate権限だけを委譲する。
+同じinteraction-scoped idempotency keyと同じpayloadはmetadata-onlyのREPLAYになる。keyを使い回してpayload/metadataが変わる場合は重複作成を止める。`DRIVE-LIVE-001`はnetworkless `FakeDriveLiveProvider`に加えて、approved folderの検索、CREATE、read-back/hash確認だけを持つGoogle Drive providerを備える。実運用では保存先、access scope、consent、retentionを確認し、専用sandbox folder IDとrepo外credentialを設定してから、`--confirm-live`でcreate権限だけを委譲する。未指定ならliveはBLOCKEDのままにする。
+
+~~~bash
+.venv/bin/python tools/drive_live_check.py --plan --check
+.venv/bin/python -m unittest tests.test_drive_live_bridge -v
+~~~
 
 ## 5. feedbackとIssue routing
 

@@ -1,30 +1,30 @@
 version: 2
-updated_at: "2026-08-13T12:43:00+09:00"
+updated_at: "2026-08-13T13:01:08+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-issue-create
-  acquired_at: "2026-08-13T12:31:00+09:00"
-  expires_at: "2026-08-13T13:31:00+09:00"
-  lane: FEEDBACK_DELIVERY
-  execution_id: ISSUE-CREATE-001:attempt-1
-  released_at: "2026-08-13T12:43:00+09:00"
-  release_reason: completed; create-only Issue adapter plan/live contract, fixture provider, stable deduplication, and allowlist validation passed without live mutation
+  owner: codex-drive-live
+  acquired_at: "2026-08-13T13:02:00+09:00"
+  expires_at: "2026-08-13T14:02:00+09:00"
+  lane: DRIVE_ARTIFACT
+  execution_id: DRIVE-LIVE-001:attempt-1
+  released_at: "2026-08-13T12:56:47+09:00"
+  release_reason: blocked; offline provider-neutral bridge and plan/read-back contract passed, but no explicitly approved sandbox folder was designated for the required real Drive CREATE/read smoke
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/github_issue_adapter.py, tests/test_github_issue_adapter.py, schemas/github-issue-delivery.schema.json, config/issue-delivery-policy.yaml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
+    paths: [tools/drive_live_check.py, tools/drive_live_bridge.py, tests/test_drive_live_bridge.py, config/drive-live-policy.yaml, schemas/drive-live-evidence.schema.json, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
 checkpoint:
-  task: ISSUE-CREATE-001
+  task: DRIVE-LIVE-001
   repository: agentic-art-orchestration
   start_point: 043badb
-  expected_changes: Deliver allowlisted privacy-safe feedback and audit candidates through create-only plan/live Issue operations with stable deduplication and no update, close, comment, label, delete, branch, commit, or PR operation.
-  result: completed; plan and live fixture modes support at most one create per deduplication key, reuse existing Issues, and reject forbidden operations and privacy violations
+  expected_changes: Connect the append-only artifact contract to a provider-neutral Drive bridge with approved-folder plan/live create-read verification and no update, overwrite, delete, move, share, or permission operation.
+  result: blocked; provider-neutral bridge, policy/schema, deterministic plan, fake CREATE/read-back, replay, and forbidden-operation boundaries passed; real approved-folder smoke remains unavailable
 last_completed_task: ISSUE-CREATE-001
 resume_from:
   task: DRIVE-LIVE-001
-  action: Connect the append-only artifact contract to real Google Drive with plan/live create-and-read verification.
-  command: git status --short --branch
+  action: Designate an approved sandbox folder and authorize one create/read smoke, then set AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID outside Git.
+  command: .venv/bin/python tools/drive_live_check.py --live --folder-id <approved-sandbox-folder-id>
 post_merge:
   status: linked
   pull_request: 15
@@ -45,7 +45,14 @@ release:
   issue_mutation: false
   drive_mutation: false
   physical_or_external_effect: false
-blocked: []
+blocked:
+  - task: DRIVE-LIVE-001
+    repository: agentic-art-orchestration
+    condition: approved sandbox folder and explicit live create/read authorization are unavailable
+    observed: Read-only Drive discovery found accessible folders, but none was identified as the dedicated approved sandbox for this task; the live CLI intentionally refuses without an injected provider and explicit confirmation
+    recommendation: designate a dedicated sandbox folder, provide its ID through AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID outside Git, and authorize one non-deleting CREATE/read-back smoke
+    impact: DRIVE-LIVE-001 is partially implemented but remains BLOCKED; AGENT-UI-001 and later dependent tasks must not be started
+    unblock_when: approved folder identity, provider/session authority, and explicit one-file CREATE/read verification scope are available
 startup_audit_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates -v; .venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
   result: passed; startup audit tests 5/5, repository update tests 3/3, startup contract tests 5/5, full parent suite 237/237, validator and diff check passed, workspace five repositories clean, audit CLEAN, security PASSED, startup materialize/check byte-stable READY_WITH_FINDINGS; no changed child repository quality gate required

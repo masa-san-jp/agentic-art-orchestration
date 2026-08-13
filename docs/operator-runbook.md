@@ -171,9 +171,14 @@ traceの各edgeは、requirement → signal ID → source entity → repository@
 .venv/bin/python -m unittest tests.test_external_artifact_contract tests.test_drive_adapter -v
 ~~~
 
-現段階の検証はnetworkless FakeDriveだけで行い、実Google Driveへの書込みは実行しない。
+networklessの回帰は`FakeDrive`と`FakeDriveLiveProvider`で行う。`DRIVE-LIVE-001`のlive portはGoogle Drive v3の検索、approved folderへのmultipart CREATE、metadataまたはcontent hashのread-backだけを公開する。既存fileのupdate/delete/move/share/permission変更は実装しない。
 
-実Google Driveは`DRIVE-LIVE-001`で接続する。実装後も既存fileのupdate/delete/move/share/permission変更は行わず、approved sandbox folderへのCREATEとread-back/hash確認だけを許可する。現時点でFakeDriveを通ることを、実Drive接続済みとは報告しない。
+~~~bash
+.venv/bin/python tools/drive_live_check.py --plan --check
+.venv/bin/python -m unittest tests.test_drive_live_bridge -v
+~~~
+
+実Google Driveのsmokeは、専用sandbox folder IDとrepo外のcredential環境変数を人間が指定し、`--confirm-live`を明示したときだけ実行する。`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`と`AGENTIC_ART_GOOGLE_DRIVE_TOKEN`の値、artifact本文、signed URLはGitへ保存しない。指定がない場合はliveを実行せずBLOCKEDとして再検証経路を残す。実DriveのCREATE/readを通るまで、接続済みとは報告しない。
 
 ## 7. feedbackからIssue候補へのルーティング
 

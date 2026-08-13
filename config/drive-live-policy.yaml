@@ -1,0 +1,12 @@
+version: 1
+contract_version: drive-live/v1
+provider: google-drive
+approved_folder:
+  id_env_var: AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID
+  fixture_id: fixture-drive-live-sandbox
+credential_env_var: AGENTIC_ART_GOOGLE_DRIVE_TOKEN
+allowed_operations: [READ, CREATE]
+forbidden_operations: [UPDATE, OVERWRITE, DELETE, MOVE, SHARE, PERMISSION]
+human_confirmation_required: true
+content_in_repository: false
+response_loss_policy: search_by_idempotency_then_read_back
