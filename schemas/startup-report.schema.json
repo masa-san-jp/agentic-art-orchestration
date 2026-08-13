@@ -17,6 +17,7 @@
     "repositories",
     "workspace_guard",
     "findings",
+    "issue_candidates",
     "capabilities",
     "remediation",
     "privacy",
@@ -47,6 +48,11 @@
       "type": "array",
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/finding"}
+    },
+    "issue_candidates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/issue_candidate"}
     },
     "capabilities": {
       "type": "array",
@@ -149,6 +155,22 @@
         "code": {"$ref": "#/$defs/stable_id"},
         "severity": {"enum": ["INFO", "WARNING", "CRITICAL"]},
         "source": {"enum": ["startup", "workspace", "audit", "security", "repository"]}
+      }
+    },
+    "issue_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "source_kind", "finding_code", "deduplication_key", "target_repository", "privacy_safe_summary", "creation_permitted", "human_gate", "side_effect"],
+      "properties": {
+        "candidate_id": {"$ref": "#/$defs/stable_id"},
+        "source_kind": {"enum": ["audit", "repository-update"]},
+        "finding_code": {"$ref": "#/$defs/stable_id"},
+        "deduplication_key": {"$ref": "#/$defs/stable_id"},
+        "target_repository": {"$ref": "#/$defs/repository_id"},
+        "privacy_safe_summary": {"type": "string", "minLength": 1},
+        "creation_permitted": {"type": "boolean"},
+        "human_gate": {"const": true},
+        "side_effect": {"const": "NONE"}
       }
     },
     "capability": {

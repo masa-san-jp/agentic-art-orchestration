@@ -96,6 +96,7 @@ class StartupContractTests(unittest.TestCase):
                 "finding_codes": [],
             },
             "findings": [],
+            "issue_candidates": [],
             "capabilities": capabilities,
             "remediation": [],
             "privacy": {

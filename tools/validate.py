@@ -856,7 +856,7 @@ def validate_startup_contract(
     else:
         expected_allowed = {
             "run_id", "generated_at", "parent_commit", "qualified_commit", "remote_observed_commit",
-            "observation_timestamp", "drift", "workspace_guard", "finding_code", "capability", "remediation",
+            "observation_timestamp", "drift", "workspace_guard", "finding_code", "capability", "remediation", "issue_candidates",
         }
         if set(boundary.get("report_allowed_fields", [])) != expected_allowed:
             error("data_boundary.report_allowed_fields is not the minimal report allowlist", "store metadata and decisions only")
@@ -886,7 +886,7 @@ def validate_startup_contract(
         schema_properties = report_schema.get("properties", {})
         if set(report_schema.get("required", [])) != {
             "contract_version", "run_id", "generated_at", "profile", "agent_client", "status", "parent_commit",
-            "ordered_steps", "repositories", "workspace_guard", "findings", "capabilities", "remediation", "privacy", "remote_operations",
+            "ordered_steps", "repositories", "workspace_guard", "findings", "issue_candidates", "capabilities", "remediation", "privacy", "remote_operations",
         }:
             errors.append(_signal_error(schema_source, "required report fields are incomplete or expanded", "keep the report metadata-only and versioned"))
         if report_schema.get("additionalProperties") is not False or not isinstance(schema_properties, dict):

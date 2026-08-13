@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -25,11 +26,18 @@ from tools.validate import (  # noqa: E402
     load_yaml,
     validate,
 )
+from tools import audit as audit_tool  # noqa: E402
+from tools import security as security_tool  # noqa: E402
+from tools import status as status_tool  # noqa: E402
 from tools.workspace import (  # noqa: E402
     DEFAULT_OFFLINE_FIXTURE_ROOT,
     ensure_offline_remotes,
+    guard_workspace,
+    init_workspace,
     load_manifest,
+    read_repo_status,
     resolve_path,
+    resolve_workspace_root,
 )
 
 
@@ -40,6 +48,15 @@ REPORT_SCHEMA = ROOT / "schemas/startup-report.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 STABLE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]*$")
 EPOCH = "1970-01-01T00:00:00Z"
+CRITICAL_AUDIT_CODES = {
+    "schema-drift",
+    "consent",
+    "forbidden-data",
+    "invalid-signal",
+    "stale-pin",
+    "secret",
+    "unapproved-export",
+}
 
 
 class StartupError(ValueError):
@@ -156,10 +173,10 @@ def _capabilities(status: str, findings: list[str]) -> list[dict]:
     for capability in STARTUP_CAPABILITIES:
         if capability in {"child_repository_mutation", "drive_update_delete_share", "github_issue_update_close_delete_comment_label", "branch_commit_pull_request_merge_release"}:
             capability_status = "BLOCKED"
-        elif capability in {"drive_create", "github_issue_create"} and restricted_create:
-            capability_status = "RESTRICTED"
         elif status == "BLOCKED":
             capability_status = "BLOCKED"
+        elif capability in {"drive_create", "github_issue_create"} and restricted_create:
+            capability_status = "RESTRICTED"
         else:
             capability_status = "ALLOWED"
         records.append(
@@ -170,6 +187,50 @@ def _capabilities(status: str, findings: list[str]) -> list[dict]:
             }
         )
     return records
+
+
+def _issue_candidates(
+    manifest: dict,
+    repositories: list[dict],
+    audit_result: dict,
+    status: str,
+    status_findings: bool = False,
+) -> list[dict]:
+    """Emit deduplicated, privacy-safe candidates without creating Issues."""
+    repository_ids = {repository["id"] for repository in manifest["repositories"]}
+    candidates: dict[str, dict] = {}
+
+    def add(source_kind: str, finding_code: str, target: str) -> None:
+        if target not in repository_ids:
+            target = "agentic-art-orchestration"
+        identity = {"source_kind": source_kind, "finding_code": finding_code, "target": target}
+        digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:32]
+        key = f"startup:{source_kind}:{digest}"
+        candidates.setdefault(
+            key,
+            {
+                "candidate_id": f"startup:issue:{digest}",
+                "source_kind": source_kind,
+                "finding_code": finding_code,
+                "deduplication_key": key,
+                "target_repository": target,
+                "privacy_safe_summary": f"Startup observed {finding_code} for {target}; review the owning repository boundary.",
+                "creation_permitted": status == "READY",
+                "human_gate": True,
+                "side_effect": "NONE",
+            },
+        )
+
+    for repository in repositories:
+        if repository["drift"] != "CLEAN":
+            add("repository-update", "remote_update_candidate" if repository["drift"] == "UPDATE_CANDIDATE" else "remote_observation_unavailable", repository["repository"])
+    if status_findings:
+        add("audit", "audit_finding", "agentic-art-orchestration")
+    for finding in audit_result.get("findings", []):
+        if isinstance(finding, dict) and isinstance(finding.get("code"), str):
+            subject = finding.get("subject") if isinstance(finding.get("subject"), str) else "agentic-art-orchestration"
+            add("audit", finding["code"], subject)
+    return [candidates[key] for key in sorted(candidates)]
 
 
 def validate_report(report: dict) -> list[str]:
@@ -184,6 +245,20 @@ def validate_report(report: dict) -> list[str]:
     repositories = report.get("repositories", [])
     if any(record.get("pinned_for_use") is not True for record in repositories if isinstance(record, dict)):
         errors.append("startup report contains a repository that is not pinned for use")
+    capabilities = report.get("capabilities", [])
+    if report.get("status") == "BLOCKED" and any(
+        isinstance(capability, dict) and capability.get("status") != "BLOCKED"
+        for capability in capabilities
+    ):
+        errors.append("BLOCKED startup report exposes a non-blocked capability")
+    candidates = report.get("issue_candidates", [])
+    deduplication_keys = [
+        candidate.get("deduplication_key")
+        for candidate in candidates
+        if isinstance(candidate, dict)
+    ]
+    if len(deduplication_keys) != len(set(deduplication_keys)):
+        errors.append("startup report contains duplicate Issue candidate deduplication keys")
     return errors
 
 
@@ -194,6 +269,7 @@ def build_startup_report(
     fixture_root: Path = DEFAULT_OFFLINE_FIXTURE_ROOT,
     run_id: str | None = None,
     agent_client: str = "Codex",
+    workspace_root: Path | None = None,
 ) -> dict:
     """Build a metadata-only report; only offline fixture remotes may be created."""
     if agent_client not in {"Codex", "Claude Code"}:
@@ -203,6 +279,9 @@ def build_startup_report(
     if not STABLE_ID.fullmatch(run_id):
         raise _error("run_id is not stable", "use letters, digits, dot, underscore, colon, or hyphen")
     pins = _snapshot_pins(snapshot_path, manifest)
+    snapshot = load_json(snapshot_path)
+    if not isinstance(snapshot, dict):
+        raise _error("qualified snapshot is not an object", "regenerate data/snapshot.json")
     offline_remotes = None
     if offline_fixture:
         offline_remotes, _ = ensure_offline_remotes(manifest, fixture_root)
@@ -213,32 +292,133 @@ def build_startup_report(
         repositories.append(observe_repository(repository, pins[repository["id"]], remote, timestamp))
 
     findings: list[dict] = []
-    finding_codes: list[str] = []
+
+    def add_finding(code: str, severity: str, source: str) -> None:
+        finding = {"code": code, "severity": severity, "source": source}
+        if finding not in findings:
+            findings.append(finding)
+
     for record in repositories:
         if record["drift"] == "UPDATE_CANDIDATE":
-            code = "remote_update_candidate"
-            finding_codes.append(code)
-            findings.append({"code": code, "severity": "WARNING", "source": "repository"})
+            add_finding("remote_update_candidate", "WARNING", "repository")
         elif record["drift"] == "UNAVAILABLE":
-            code = "remote_observation_unavailable"
-            finding_codes.append(code)
-            findings.append({"code": code, "severity": "WARNING", "source": "repository"})
+            add_finding("remote_observation_unavailable", "WARNING", "repository")
 
-    findings = list({(item["code"], item["source"]): item for item in findings}.values())
+    if offline_fixture:
+        resolved_workspace_root = (
+            workspace_root.resolve()
+            if workspace_root is not None
+            else (fixture_root / "workspace").resolve()
+        )
+        # The fixture workspace is test infrastructure only. Never initialize or
+        # repair a caller-supplied checkout; an existing fixture is guarded as-is.
+        if workspace_root is None and not resolved_workspace_root.exists():
+            init_workspace(manifest, resolved_workspace_root, True, fixture_root)
+    else:
+        resolved_workspace_root = resolve_workspace_root(
+            manifest,
+            str(workspace_root) if workspace_root is not None else None,
+        )
+    guard_offline = offline_fixture
+    guard = guard_workspace(manifest, resolved_workspace_root, guard_offline, fixture_root)
+    guard_codes = sorted({code for repository in guard["repositories"] for code in repository["reason_codes"]})
+    guard_blocked = bool(guard["blocked_count"])
+    if guard_blocked:
+        add_finding("workspace_guard_blocked", "CRITICAL", "workspace")
+
+    queue = load_yaml(ROOT / "execution/task-queue.yaml")
+    state = load_yaml(ROOT / "execution/state.yaml")
+    live_repositories = [read_repo_status(repository, resolved_workspace_root) for repository in manifest["repositories"]]
+    manifest_hash = status_tool.sha256_text(status_tool.canonical_json(manifest))
+    portfolio_status = status_tool.build_status(snapshot, queue, state, live_repositories, manifest_hash)
+    status_has_findings = bool(portfolio_status["blockers"] or portfolio_status["drift"]["items"])
+    if status_has_findings:
+        add_finding("audit_finding", "WARNING", "audit")
+    compatibility = portfolio_status.get("compatibility")
+    if isinstance(compatibility, dict) and compatibility.get("status") == "INCOMPATIBLE":
+        add_finding("schema_major_mismatch", "CRITICAL", "audit")
+
+    signals, requirements = audit_tool._load_signals_and_requirements()
+    tested_boundaries = {
+        boundary: (ROOT / path).is_file()
+        for boundary, path in audit_tool.EXPECTED_BOUNDARIES.items()
+    }
+    audit_result = audit_tool.build_audit(
+        manifest,
+        snapshot,
+        queue,
+        state,
+        signals,
+        requirements,
+        tested_boundaries,
+    )
+    audit_has_findings = bool(audit_result["findings"])
+    if audit_has_findings:
+        add_finding("audit_finding", "WARNING", "audit")
+        for audit_finding in audit_result["findings"]:
+            if not isinstance(audit_finding, dict) or not isinstance(audit_finding.get("code"), str):
+                continue
+            severity = (
+                "CRITICAL"
+                if audit_finding.get("severity") == "error" or audit_finding["code"] in CRITICAL_AUDIT_CODES
+                else "WARNING"
+            )
+            add_finding(audit_finding["code"], severity, "audit")
+
+    signals_by_id = {
+        str(signal.get("signal_id", f"signal-{index}")): signal
+        for index, signal in enumerate(signals)
+        if isinstance(signal, dict)
+    }
+    security_result = security_tool.audit_boundary({"qualified_snapshot": snapshot}, signals_by_id)
+    security_has_findings = bool(security_result["findings"])
+    for security_finding in security_result["findings"]:
+        code = security_finding.get("code") if isinstance(security_finding, dict) else None
+        add_finding(
+            code if isinstance(code, str) and STABLE_ID.fullmatch(code) else "security_finding",
+            "CRITICAL",
+            "security",
+        )
+
+    audit_critical = any(
+        isinstance(finding, dict)
+        and (
+            finding.get("severity") == "error"
+            or finding.get("code") in CRITICAL_AUDIT_CODES
+        )
+        for finding in audit_result.get("findings", [])
+    )
+    critical = guard_blocked or audit_critical or security_has_findings or any(
+        finding["code"] == "schema_major_mismatch" for finding in findings
+    )
+    noncritical = bool(findings)
+    status = "BLOCKED" if critical else ("READY_WITH_FINDINGS" if noncritical else "READY")
+    issue_candidates = _issue_candidates(manifest, repositories, audit_result, status, status_has_findings)
+    observe_status = "PASSED" if all(record["drift"] == "CLEAN" for record in repositories) else "FINDINGS"
+    guard_status = "BLOCKED" if guard_blocked else "PASSED"
+    status_step = "FINDINGS" if status_has_findings else "PASSED"
+    audit_step = "FINDINGS" if audit_has_findings else "PASSED"
+    security_step = "BLOCKED" if security_has_findings else "PASSED"
     finding_codes = sorted({item["code"] for item in findings})
-
-    findings = list({(finding["code"], finding["source"]): finding for finding in findings}.values())
-    status = "READY" if not finding_codes else "READY_WITH_FINDINGS"
-    observe_status = "PASSED" if not finding_codes else "FINDINGS"
     ordered_steps = [
         _step("validate_parent_configuration", "PASSED"),
-        _step("observe_remote_heads", observe_status, False, finding_codes),
-        _step("guard_pinned_workspaces", "NOT_RUN"),
+        _step(
+            "observe_remote_heads",
+            observe_status,
+            False,
+            [item["code"] for item in findings if item["source"] == "repository"],
+        ),
+        _step("guard_pinned_workspaces", guard_status, guard_blocked, guard_codes),
         _step("select_qualified_snapshot", "PASSED"),
-        _step("materialize_snapshot", "NOT_RUN"),
-        _step("collect_status", "NOT_RUN"),
-        _step("run_audit", "NOT_RUN"),
-        _step("run_security", "NOT_RUN"),
+        _step("materialize_snapshot", "PASSED"),
+        _step("collect_status", status_step, False, ["audit_finding"] if status_has_findings else []),
+        _step("run_audit", audit_step, False, ["audit_finding"] if audit_has_findings else []),
+        _step(
+            "run_security",
+            security_step,
+            security_has_findings,
+            [item["code"] for item in findings if item["source"] == "security"],
+        ),
         _step("decide_capabilities", "PASSED"),
     ]
     report = {
@@ -251,12 +431,20 @@ def build_startup_report(
         "parent_commit": parent_commit,
         "ordered_steps": ordered_steps,
         "repositories": repositories,
-        "workspace_guard": {"status": "NOT_RUN", "checked_repositories": [], "finding_codes": []},
+        "workspace_guard": {
+            "status": guard_status,
+            "checked_repositories": sorted(repository["id"] for repository in guard["repositories"]),
+            "finding_codes": guard_codes,
+        },
         "findings": sorted(findings, key=lambda item: (item["code"], item["source"])),
+        "issue_candidates": issue_candidates,
         "capabilities": _capabilities(status, finding_codes),
         "remediation": [
             "review remote_update_candidate before changing a manifest pin" if "remote_update_candidate" in finding_codes else None,
             "retry remote observation before claiming the remote head is current" if "remote_observation_unavailable" in finding_codes else None,
+            "resolve the pinned workspace guard manually; startup will not checkout, reset, or push" if guard_blocked else None,
+            "review audit findings before enabling external create-only capabilities" if audit_has_findings else None,
+            "stop affected capabilities and resolve the security boundary finding" if security_has_findings else None,
         ],
         "privacy": {
             "raw_conversation_stored": False,
@@ -305,6 +493,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--run-id")
     parser.add_argument("--agent-client", default="Codex")
+    parser.add_argument("--workspace-root", type=Path)
     return parser.parse_args()
 
 
@@ -322,6 +511,7 @@ def main() -> int:
             resolve_path(args.fixture_root),
             args.run_id,
             args.agent_client,
+            resolve_path(args.workspace_root) if args.workspace_root else None,
         )
         result = _write_or_check(report, resolve_path(args.output), args.check)
     except (OSError, StartupError, ValueError, KeyError, json.JSONDecodeError) as exc:

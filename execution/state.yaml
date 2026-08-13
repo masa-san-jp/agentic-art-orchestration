@@ -1,29 +1,29 @@
 version: 2
-updated_at: "2026-08-13T12:12:30+09:00"
+updated_at: "2026-08-13T12:27:30+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-startup-drift
-  acquired_at: "2026-08-13T12:06:00+09:00"
-  expires_at: "2026-08-13T13:10:00+09:00"
+  owner: codex-startup-audit
+  acquired_at: "2026-08-13T12:20:00+09:00"
+  expires_at: "2026-08-13T13:20:00+09:00"
   lane: STARTUP
-  execution_id: STARTUP-DRIFT-001:attempt-1
-  released_at: "2026-08-13T12:12:30+09:00"
-  release_reason: completed; five manifest repository heads observed read-only and offline startup check passed
+  execution_id: STARTUP-AUDIT-001:attempt-1
+  released_at: "2026-08-13T12:27:30+09:00"
+  release_reason: completed; startup guard, status, audit, security, and deduplicated Issue candidates are connected with no child or external mutation
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/startup.py, tests/test_startup_repository_updates.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
+    paths: [.github/workflows/validate.yml, config/startup-policy.yaml, schemas/startup-report.schema.json, tools/startup.py, tools/validate.py, tests/test_startup_audit.py, tests/test_startup_contract.py, tests/test_startup_repository_updates.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
 checkpoint:
-  task: STARTUP-DRIFT-001
-  repository: agentic-art-orchestration
-  start_point: 5a966c3
-  expected_changes: Implement read-only default-branch head observation for every manifest repository, compare remote heads with qualified pins, and preserve pin, checkout, branch, Issue, Drive, and child-file boundaries.
-  result: completed; five repository observations, update candidate/unavailable handling, and deterministic check passed
-last_completed_task: STARTUP-DRIFT-001
-resume_from:
   task: STARTUP-AUDIT-001
-  action: Connect workspace guard, snapshot, status, audit, and security into the startup decision.
+  repository: agentic-art-orchestration
+  start_point: 043badb
+  expected_changes: Connect workspace guard, snapshot selection, status, audit, and security to startup; map critical findings to BLOCKED and noncritical findings to READY_WITH_FINDINGS without child or external mutation.
+  result: completed; critical/privacy findings block, noncritical findings produce READY_WITH_FINDINGS, and startup check is deterministic
+last_completed_task: STARTUP-AUDIT-001
+resume_from:
+  task: ISSUE-CREATE-001
+  action: Implement the authenticated allowlisted create-only GitHub Issue adapter after human review of startup audit candidates.
   command: git status --short --branch
 post_merge:
   status: linked
@@ -46,6 +46,14 @@ release:
   drive_mutation: false
   physical_or_external_effect: false
 blocked: []
+startup_audit_validation:
+  command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates -v; .venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
+  result: passed; startup audit tests 5/5, repository update tests 3/3, startup contract tests 5/5, full parent suite 237/237, validator and diff check passed, workspace five repositories clean, audit CLEAN, security PASSED, startup materialize/check byte-stable READY_WITH_FINDINGS; no changed child repository quality gate required
+  verified_at: "2026-08-13T12:27:30+09:00"
+  child_repository_mutation: false
+  issue_mutation: false
+  drive_mutation: false
+  raw_conversation_or_credentials: false
 startup_contract_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_validate -v; .venv/bin/python -m unittest discover -s tests -v; git diff --check
   result: passed; startup policy/report contract valid, dedicated startup contract tests 5/5 passed, full parent suite 230/230 passed, diff check passed; no startup runtime, remote observation, child repository, Issue, Drive, or user artifact mutation; 2026-08-13T12:12:00+09:00

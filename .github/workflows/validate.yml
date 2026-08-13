@@ -24,6 +24,8 @@ jobs:
           python3 tools/workspace.py snapshot
           python3 tools/status.py --offline-fixture
           python3 tools/audit.py --offline-fixture
+          python3 tools/startup.py --offline-fixture
+          python3 tools/startup.py --offline-fixture --check
           python3 tools/retrieval.py
           python3 tools/issue_router.py
           python3 tools/improvement_loop.py
