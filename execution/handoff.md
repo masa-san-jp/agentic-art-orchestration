@@ -842,3 +842,26 @@
 - 推奨: 専用sandbox folderを人間が指定し、そのIDをrepo外の`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`へ設定して、一度だけCREATE/read-backを承認する。test artifactは自動削除しない。
 - 解除条件: approved folder identity、provider/session authority、1ファイルCREATE/read検証の明示scopeが揃った後、最初の操作は`.venv/bin/python tools/drive_live_check.py --live --confirm-live --folder-id <approved-sandbox-folder-id>`。credentialはpolicyの`AGENTIC_ART_GOOGLE_DRIVE_TOKEN`からrepo外で供給する。
 - 2026-08-13 13:04 JST、Drive read-only searchで`agentic-art-orchestration`名のフォルダを確認したが、内容はリポジトリミラーであり専用sandboxではない。`sandbox`名の候補は複数で所有関係が判別できなかったため、approved folderには採用せず、folder作成・共有・artifact CREATEは行っていない。
+
+## DRIVE-LIVE-001 resumed and completed
+
+- 2026-08-13 15:33 JST、接続済みGoogle Driveの専用sandbox folderが空であることをread-onlyで確認し、固定内容の検証用テキストを1件だけCREATEした。
+- 作成後、返却されたopaque file referenceでmetadataと本文をread-backし、タイトル、text/plain、親folder、本文のSHA-256が一致した。既存ファイルの更新・上書き・削除・移動・共有・権限変更は行っていない。
+- 検証用本文、Drive URL、folder ID、provider tokenはGitへ保存していない。Gitにはartifact/provider referenceのhash、content hash、run ID、body/credential非保存フラグだけを証跡として記録した。
+- Acceptance: provider-neutral contract/plan/fake idempotencyとapproved-folder実CREATE/readを達成。`DRIVE-LIVE-001`をDONE、leaseをreleaseし、`AGENT-UI-001`をIN_PROGRESSとしてclaimした。
+
+## AGENT-UI-001 execution
+
+- 対象は親repoのrepository-native conversational command、startup/retrieval/artifact/feedback/Issue planningのcomposition、専用contract test、operator runbookのみ。child repository、既存Drive/Issue、branch/commit/PR/releaseは変更対象外。
+- 自由文は永続化せず、呼び出し側が渡すintent/capability metadataだけを処理する。回答材料には最低限のrepository@commit、freshness、unknowns、domain constraintsを残し、Driveはcreate-only、feedback/Issueはmetadata-only planに限定する。
+
+## AGENT-UI-001 completed
+
+- `schemas/agent-ui-result.schema.json`、`tools/agent_ui.py`、`tests/test_agent_ui_contract.py`、`docs/agent-ui-runbook.md`を追加し、startup、minimum-relevant retrieval、repository@commit/freshness/gaps/constraints、Drive plan/live境界、explicit/inferred feedback、Issue planを一つのrepository-native commandへ接続した。
+- 既定はoffline planで、raw query/conversation、Drive本文、credential、direct identifierを結果へ保存しない。startup findingsがある場合の外部CREATEを拒否し、DriveとGitHub Issueのlive lane同時実行も拒否する。
+- `.venv/bin/python -m unittest discover -s tests -v`: 265 tests PASS。`.venv/bin/python tools/validate.py --check`: PASS。`.venv/bin/python tools/agent_ui.py --offline-fixture`および`--check`: PASS。`.venv/bin/python tools/interaction_e2e.py --initial-operations --offline-fixture --check`: PASS。`git diff --check`: PASS。
+- `AGENT-UI-001`のacceptanceを達成し、leaseをreleaseした。`INITIAL-OPS-E2E-001`をREADYへ進めた。外部Drive/Issueの追加操作、子repo変更、branch/commit/PR/merge/releaseはこのtaskでは行っていない。
+
+## Next exact action
+
+1. `INITIAL-OPS-E2E-001`をclaimし、networkless scripted initial-operations E2Eとopt-in sandbox evidenceの境界を接続する。

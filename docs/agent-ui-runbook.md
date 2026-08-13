@@ -1,0 +1,36 @@
+# Initial Codex / Claude Code interface
+
+`tools/agent_ui.py` is the repository-native entry point for the first conversational operations profile. Codex or Claude Code can call it without asking the user to identify child repositories or perform Git operations.
+
+The command accepts structured intent and capability metadata. Raw conversational text is transient and is not an input to the persisted result. Retrieval selects the minimum relevant qualified repositories and the result keeps `repository@commit`, evidence IDs, freshness, gaps, and domain constraints.
+
+## Safe default
+
+The default is networkless planning:
+
+```sh
+.venv/bin/python tools/agent_ui.py --offline-fixture
+.venv/bin/python tools/agent_ui.py --offline-fixture --check
+```
+
+This runs startup, retrieval, feedback routing, a Drive create-only plan, and a GitHub Issue create-only plan. It performs no remote operation, stores no Drive content, and does not create or update an Issue.
+
+The output is `data/agent-ui.json`, which is ignored by Git. It contains only structured metadata and opaque references. Do not copy raw prompts, conversation text, artifact bodies, credentials, signed URLs, or direct provider identifiers into a tracked file.
+
+## Explicit operations
+
+The operation boundaries are independent:
+
+```sh
+# Networkless Drive create/read proof
+.venv/bin/python tools/agent_ui.py --offline-fixture --artifact-mode live --confirm-drive
+
+# Networkless Issue create/deduplicate proof
+.venv/bin/python tools/agent_ui.py --offline-fixture --issue-mode live --confirm-issue
+```
+
+For a real Drive sandbox, set `AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID` and `AGENTIC_ART_GOOGLE_DRIVE_TOKEN` outside Git, review the folder retention policy, and pass `--artifact-mode live --confirm-drive`. The bridge searches the idempotency marker first, creates only a new file in the approved folder, and reads back metadata or content hash. It never updates, overwrites, deletes, moves, shares, or changes permissions.
+
+For a real GitHub Issue, provide `GITHUB_TOKEN` or `GH_TOKEN`, review the allowlist and candidate, and pass `--issue-mode live --confirm-issue`. The adapter searches by the stable deduplication key, then creates at most one Issue. It never updates, closes, deletes, comments, labels, implements, branches, commits, opens PRs, merges, or releases.
+
+If startup is `READY_WITH_FINDINGS`, the answer remains pinned and read-only; external CREATE capabilities stay restricted. If startup is `BLOCKED`, affected capabilities stop and the remediation in the startup report is authoritative.

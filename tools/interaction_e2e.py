@@ -321,11 +321,15 @@ def _write_atomic(path: Path, content: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the networkless v1.1 interaction and improvement E2E")
+    parser.add_argument("--initial-operations", action="store_true", help="select the initial operations compatibility profile")
+    parser.add_argument("--offline-fixture", action="store_true", help="assert the networkless fixture path")
     parser.add_argument("--run-id", default="INTERACTION-E2E-001:attempt-1")
     parser.add_argument("--output", type=Path, default=ROOT / "data/interaction-e2e.json")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
+        if args.initial_operations and not args.offline_fixture:
+            raise InteractionE2EError("--initial-operations requires --offline-fixture; remediation: keep the compatibility E2E networkless")
         result = run_interaction_e2e(args.run_id)
         content = json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
         output_path = args.output.resolve()
