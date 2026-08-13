@@ -690,3 +690,17 @@
 ## Next exact action
 
 1. `git status --short --branch`で親差分を確認し、`PRODUCTION-EXCHANGE-001`として親所有のProduction exchange orchestratorの既存実装・schema参照・テストを調査する。子repo schemaの複製と隣接dirty workspaceの参照は行わない。
+
+## PRODUCTION-EXCHANGE-001 evidence
+
+- `schemas/production-exchange-evidence.schema.json`と`tools/production_exchange.py`を親repoへ追加した。親owned contractはResearch→Production→Researchの順序、owner repo@immutable commit、child command metadata、contract version、bundle semantic hash、terminal status、`run://` opaque locator、privacy/mutation boundaryだけを保持し、child schema・bundle本文・asset bodyを保持しない。
+- runnerはmanifest-pinned Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf`とProduction `9f1e332ae9faa1ecf098dd2f406f04c0506562b2`をarchive化し、Git外run rootで子CLIをargument listとして実行する。Research handoff export、Production handoff receipt、plan/prototype/runtime projection、production-result export、Research result `--dry-run` importの8段階が`PASSED`した。
+- 同じmanifest、commit、run ID、generated_atを2つの独立Git外run rootで実行し、`exchange-evidence.json`がbyte-identicalだった。`tests/test_production_exchange.py`は正常系、remote/child mutation、shell control syntax、raw/sensitive marker、unsafe locator、provenance欠落をfail-closedで確認する。
+- Productionの物理作業、購入、契約、公開、外部送信は実行していない。Research result importは`--dry-run`のみで、child applyはしていない。remote operations、child mutationsは空配列である。
+- 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gate、commitは変更していない。親の一時fixtureだけをGit外へ生成し、Research child CLIの受入条件を満たすためのfixture metadataと生成handoffを一時commitした。親へ残したのは証跡metadataだけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは含めていない。
+- Research pinで旧来のfixture helperに`Finding.render()`不整合があることを観測したため、parent runnerはfixture preparationを子helperへ委譲せず、子のcanonical fixtureをGit外へ展開してhandoff-owned CLIを呼ぶ。子repoの不具合修正は別Issue/別PRの対象である。
+- acceptance: 1/1達成。`PRODUCTION-EXCHANGE-001`をDONE、leaseをreleased、依存完了済み最小IDの`PRODUCTION-E2E-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `git status --short --branch`で差分を確認し、`PRODUCTION-E2E-001`としてtamper、schema mismatch、dirty source、replay、unsupported versionの明示terminal testを追加する。
