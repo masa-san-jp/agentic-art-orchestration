@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/startup-report.schema.json",
+  "title": "Orchestration startup report v1",
+  "description": "Privacy-safe startup decision for Codex or Claude Code using qualified repository pins.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "generated_at",
+    "profile",
+    "agent_client",
+    "status",
+    "parent_commit",
+    "ordered_steps",
+    "repositories",
+    "workspace_guard",
+    "findings",
+    "capabilities",
+    "remediation",
+    "privacy",
+    "remote_operations"
+  ],
+  "properties": {
+    "contract_version": {"const": "startup-report/v1"},
+    "run_id": {"$ref": "#/$defs/stable_id"},
+    "generated_at": {"$ref": "#/$defs/timestamp"},
+    "profile": {"const": "initial-operations"},
+    "agent_client": {"enum": ["Codex", "Claude Code"]},
+    "status": {"enum": ["READY", "READY_WITH_FINDINGS", "BLOCKED"]},
+    "parent_commit": {"$ref": "#/$defs/sha40"},
+    "ordered_steps": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {"$ref": "#/$defs/step"}
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/repository"}
+    },
+    "workspace_guard": {"$ref": "#/$defs/workspace_guard"},
+    "findings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/capability"}
+    },
+    "remediation": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "privacy": {"$ref": "#/$defs/privacy"},
+    "remote_operations": {"const": []}
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "status", "blocking", "finding_codes"],
+      "properties": {
+        "step_id": {
+          "enum": [
+            "validate_parent_configuration",
+            "observe_remote_heads",
+            "guard_pinned_workspaces",
+            "select_qualified_snapshot",
+            "materialize_snapshot",
+            "collect_status",
+            "run_audit",
+            "run_security",
+            "decide_capabilities"
+          ]
+        },
+        "status": {"enum": ["PASSED", "FINDINGS", "BLOCKED", "NOT_RUN"]},
+        "blocking": {"type": "boolean"},
+        "finding_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "qualified_commit", "remote_observed_commit", "observation_timestamp", "drift", "pinned_for_use"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/repository_id"},
+        "qualified_commit": {"$ref": "#/$defs/sha40"},
+        "remote_observed_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+        "observation_timestamp": {"$ref": "#/$defs/timestamp"},
+        "drift": {"enum": ["CLEAN", "UPDATE_CANDIDATE", "UNAVAILABLE", "UNKNOWN"]},
+        "pinned_for_use": {"type": "boolean"}
+      }
+    },
+    "workspace_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checked_repositories", "finding_codes"],
+      "properties": {
+        "status": {"enum": ["PASSED", "FINDINGS", "BLOCKED", "NOT_RUN"]},
+        "checked_repositories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/repository_id"}
+        },
+        "finding_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "source"],
+      "properties": {
+        "code": {"$ref": "#/$defs/stable_id"},
+        "severity": {"enum": ["INFO", "WARNING", "CRITICAL"]},
+        "source": {"enum": ["startup", "workspace", "audit", "security", "repository"]}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "status", "reason_codes"],
+      "properties": {
+        "capability": {
+          "enum": [
+            "qualified_knowledge_read",
+            "evidence_trace_read",
+            "feedback_capture",
+            "audit_observation",
+            "drive_create",
+            "github_issue_create",
+            "child_repository_mutation",
+            "drive_update_delete_share",
+            "github_issue_update_close_delete_comment_label",
+            "branch_commit_pull_request_merge_release"
+          ]
+        },
+        "status": {"enum": ["ALLOWED", "RESTRICTED", "BLOCKED"]},
+        "reason_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/stable_id"}
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_conversation_stored", "credentials_stored", "raw_remote_response_stored", "drive_content_stored", "direct_identifiers_stored"],
+      "properties": {
+        "raw_conversation_stored": {"const": false},
+        "credentials_stored": {"const": false},
+        "raw_remote_response_stored": {"const": false},
+        "drive_content_stored": {"const": false},
+        "direct_identifiers_stored": {"const": false}
+      }
+    }
+  }
+}

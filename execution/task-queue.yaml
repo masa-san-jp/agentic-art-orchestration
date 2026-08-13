@@ -522,7 +522,7 @@ tasks:
   - id: PRODUCTION-RELEASE-001
     milestone: M13
     title: Release the qualified Production exchange through the human gate
-    status: IN_PROGRESS
+    status: DONE
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -534,7 +534,7 @@ tasks:
   - id: STARTUP-CONTRACT-001
     milestone: M14
     title: Define the initial orchestration startup contract and policy
-    status: BACKLOG
+    status: DONE
     lane: STARTUP
     interaction_blocking: true
     user_artifact_policy: READ_ONLY
@@ -545,7 +545,7 @@ tasks:
   - id: STARTUP-DRIFT-001
     milestone: M14
     title: Check every registered child repository for updates at startup
-    status: BACKLOG
+    status: READY
     lane: STARTUP
     interaction_blocking: true
     user_artifact_policy: READ_ONLY

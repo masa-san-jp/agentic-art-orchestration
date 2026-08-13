@@ -737,3 +737,29 @@
 - 2026-08-13 11:56 JST、ユーザーがv1.3.0のmerge・tag・GitHub Releaseを明示依頼したため、human gateを解除してrelease taskをclaimした。
 - 対象は親repoのqualification済み差分だけ。子repo5件、GitHub Issue、Google Drive、外部Production artifact、物理effectは変更対象外とする。
 - 次の操作は親branchのrelease PR準備、CIとmerge SHAの確認、merge SHAへの`v1.3.0` tag作成、GitHub Release公開。branch削除は行わない。
+
+## PRODUCTION-RELEASE-001 completed
+
+- PR #18 `Release v1.3.0: qualify Production exchange` was merged into `main` with successful `bootstrap` CI. The merge SHA is `302de458495257fca0e754ed4f71f6b5255abbbe`.
+- The remote `v1.3.0` tag points exactly to that merge SHA. The published GitHub Release is [v1.3.0](https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.3.0).
+- The tag and Release were already present when the release commands were checked; they were reused only after exact SHA verification. No duplicate tag, tag move, branch deletion, or force operation was performed.
+- The parent qualification remained the release basis: three byte-stable exchange runs, five matched child repositories, 14/14 child gates per run, parent 225 tests, audit/security pass, and no tracked output, child mutation, Issue mutation, Drive mutation, or physical/external effect.
+- `PRODUCTION-RELEASE-001` is DONE, the lease is released, and `STARTUP-CONTRACT-001` is the next READY task. Child repositories, GitHub Issues, and Google Drive were not changed.
+
+## Next exact action
+
+1. Start `STARTUP-CONTRACT-001` from the clean merge checkout with `git status --short --branch`.
+
+## STARTUP-CONTRACT-001 completed
+
+- `config/startup-policy.yaml` fixes the initial-operations profile for Codex and Claude Code: 60-minute same-process reuse, mandatory rerun for a new process, and nine ordered read-only preflight steps from parent validation through capability decision.
+- `schemas/startup-report.schema.json` fixes the metadata-only `startup-report/v1` envelope: qualified and remote commits, drift, workspace guard, finding codes, capability status, remediation, and explicit false privacy guards. Unknown fields and protected content are rejected.
+- The capability matrix allows qualified knowledge/evidence reads, local feedback capture, audit observation, and READY-only Drive/GitHub Issue CREATE; child mutation, Drive update/delete/share, Issue mutation, and branch/commit/PR/merge/release remain blocked.
+- `tools/validate.py` now validates the policy, report schema, ordered preflight, fail-closed outcome mapping, capability matrix, security severity mapping, and forbidden data boundary.
+- `.venv/bin/python tools/validate.py --check`: PASS. `.venv/bin/python -m unittest tests.test_startup_contract -v`: 5 tests PASS. `git diff --check`: PASS.
+- No startup runtime, remote observation, checkout, pin update, external Issue, Drive artifact, child repository, or user artifact was changed in this task.
+- Acceptance: 1/1 achieved. `STARTUP-CONTRACT-001` is DONE; lease released. `STARTUP-DRIFT-001` is the next task.
+
+## Next exact action
+
+1. Implement `tools/startup.py` for read-only default-branch head observation, beginning with its offline fixture and repository update tests.
