@@ -947,6 +947,11 @@ def validate_issue_delivery_contract(
         for entry in entries
         if isinstance(entry, dict)
     } if isinstance(entries, list) else {}
+    if isinstance(entries, list):
+        entry_ids = [entry.get("id") for entry in entries if isinstance(entry, dict)]
+        entry_full_names = [entry.get("full_name") for entry in entries if isinstance(entry, dict)]
+        if len(entry_ids) != len(set(entry_ids)) or len(entry_full_names) != len(set(entry_full_names)):
+            error("allowlisted_repositories contains duplicate IDs or full names", "retain one unique authority entry per repository")
     if observed_allowlist != expected_allowlist:
         error("allowlisted_repositories does not match the manifest and parent", "allow only declared authoritative repositories")
 

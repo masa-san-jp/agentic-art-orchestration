@@ -159,6 +159,16 @@ class GithubIssueAdapterTests(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("--confirm-live", result.stderr)
 
+    def test_plan_alias_is_supported(self):
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "tools/github_issue_adapter.py"), "--fixture", "--plan", "--check"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, result.returncode)
+        self.assertIn('"mode": "plan"', result.stdout)
+
     def test_policy_and_schema_are_closed_and_create_only(self):
         policy = load_yaml(ROOT / "config/issue-delivery-policy.yaml")
         schema = load_json(ROOT / "schemas/github-issue-delivery.schema.json")
@@ -168,6 +178,14 @@ class GithubIssueAdapterTests(unittest.TestCase):
         self.assertFalse(schema["additionalProperties"])
         self.assertEqual({"PLAN", "LIVE"}, set(schema["properties"]["mode"]["enum"]))
         self.assertEqual([], validate_issue_delivery_contract(policy, schema, manifest()))
+
+    def test_untrusted_confidence_is_rejected_before_live_create(self):
+        candidate = explicit_candidate()
+        candidate["confidence"] = "conversation body must not be copied"
+        provider = FixtureProvider()
+        result = deliver([candidate], manifest(), mode="live", provider=provider, run_id="ISSUE-CREATE-001:confidence")
+        self.assertEqual("BLOCKED", result["records"][0]["status"])
+        self.assertEqual([], provider.created)
 
 
 if __name__ == "__main__":

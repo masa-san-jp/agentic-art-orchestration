@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 
 from tools.issue_router import route_feedback  # noqa: E402
 from tools.security import scan_payload  # noqa: E402
-from tools.validate import _schema_errors, load_json, load_yaml  # noqa: E402
+from tools.validate import _schema_errors, load_json, load_yaml, validate_issue_delivery_contract  # noqa: E402
 
 
 POLICY_PATH = ROOT / "config/issue-delivery-policy.yaml"
@@ -123,6 +123,8 @@ def _allowlisted_repositories(manifest: Mapping[str, object], policy: Mapping[st
     parent = policy.get("parent_repository")
     if not isinstance(parent, str) or parent not in policy_index:
         raise _error("parent repository is not allowlisted", "allowlist the authoritative orchestration repository")
+    if policy_index[parent] != "masa-san-jp/agentic-art-orchestration":
+        raise _error("parent repository full_name is not authoritative", "use masa-san-jp/agentic-art-orchestration as the parent target")
     for repository_id, full_name in policy_index.items():
         if repository_id != parent and manifest_index.get(repository_id) != full_name:
             raise _error(
@@ -262,6 +264,14 @@ def _normalise_candidate(raw: Mapping[str, object], allowlist: Mapping[str, str]
         confidence_value = confidence
     else:
         confidence_value = "not-provided"
+    if isinstance(confidence_value, str):
+        if confidence_value not in {"low", "medium", "high", "explicit", "not-provided"}:
+            raise _error("candidate confidence is not a recognized level", "use low, medium, high, explicit, or not-provided")
+    elif isinstance(confidence_value, (int, float)) and not isinstance(confidence_value, bool):
+        if not 0 <= confidence_value <= 1:
+            raise _error("candidate confidence score is outside 0..1", "retain a normalized confidence score")
+    else:
+        raise _error("candidate confidence is invalid", "use an opaque confidence level or a score from 0 to 1")
     contradiction_refs = raw.get("contradiction_refs") or raw.get("counterevidence_refs") or []
     if not isinstance(contradiction_refs, list) or any(not isinstance(item, str) or not ID_PATTERN.fullmatch(item) for item in contradiction_refs):
         contradiction_refs = []
@@ -378,6 +388,9 @@ def deliver(candidates: list[Mapping[str, object]], manifest: Mapping[str, objec
     if not isinstance(candidates, list) or not candidates:
         raise _error("candidate list is empty", "supply at least one metadata-only Issue candidate")
     policy = policy or load_yaml(POLICY_PATH)
+    policy_errors = validate_issue_delivery_contract(policy, load_json(SCHEMA_PATH), dict(manifest))
+    if policy_errors:
+        raise _error("delivery policy is invalid: " + "; ".join(policy_errors), "repair the allowlist and create-only contract before delivery")
     allowlist = _manifest_candidates(manifest, policy)
     normalized: dict[str, dict] = {}
     records: list[dict] = []
@@ -481,7 +494,9 @@ def _write_or_check(result: dict, output: Path, check: bool) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Deliver privacy-safe GitHub Issue candidates using create-only operations")
     parser.add_argument("--fixture", action="store_true")
-    parser.add_argument("--mode", choices=["plan", "live"], default="plan")
+    parser.add_argument("--mode", choices=["plan", "live"])
+    parser.add_argument("--plan", action="store_true", help="explicitly select networkless planning")
+    parser.add_argument("--live", action="store_true", help="select live mode; --confirm-live is still required")
     parser.add_argument("--confirm-live", action="store_true")
     parser.add_argument("--candidate", action="append", type=Path, default=[])
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -489,8 +504,13 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
+        if args.plan and args.live:
+            raise _error("--plan and --live cannot be combined", "select one delivery mode")
+        if args.mode and (args.plan or args.live):
+            raise _error("--mode cannot be combined with --plan or --live", "select one delivery mode")
+        mode = args.mode or ("live" if args.live else "plan")
         manifest = load_yaml(MANIFEST_PATH)
-        if args.mode == "live" and not args.confirm_live:
+        if mode == "live" and not args.confirm_live:
             raise _error("live mode requires --confirm-live", "keep plan mode unless live Issue creation is explicitly authorized")
         if args.fixture and args.candidate:
             raise _error("--fixture and --candidate cannot be combined", "choose one input source")
@@ -498,11 +518,11 @@ def main() -> int:
         if not candidates:
             raise _error("no Issue candidates were supplied", "provide --fixture or --candidate")
         provider = None
-        if args.mode == "live":
+        if mode == "live":
             provider = GithubApiProvider(os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or "")
-        result = deliver(candidates, manifest, args.mode, provider, args.run_id)
+        result = deliver(candidates, manifest, mode, provider, args.run_id)
         _write_or_check(result, args.output.resolve(), args.check)
-        print(json.dumps({"command": "github-issue-adapter", "changed": not args.check, "mode": args.mode, "record_count": len(result["records"]), "remote_operation_count": len(result["remote_operations"])}, ensure_ascii=False, indent=2, sort_keys=True))
+        print(json.dumps({"command": "github-issue-adapter", "changed": not args.check, "mode": mode, "record_count": len(result["records"]), "remote_operation_count": len(result["remote_operations"])}, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
