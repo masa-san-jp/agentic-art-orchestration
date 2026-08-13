@@ -704,3 +704,16 @@
 ## Next exact action
 
 1. `git status --short --branch`で差分を確認し、`PRODUCTION-E2E-001`としてtamper、schema mismatch、dirty source、replay、unsupported versionの明示terminal testを追加する。
+
+## PRODUCTION-E2E-001 evidence
+
+- `tools/production_exchange.py`へ、固定manifest commit上のResearch→Production→Research正常系と、親owned sanitized terminal matrixを追加した。`schemas/production-exchange-e2e.schema.json`と`tests/test_production_exchange_e2e.py`で契約、ネットワーク無効、結果status、失敗終端、mutation禁止を固定した。
+- qualification run `PRODUCTION-E2E-001:qualification` は8段階のclean exchangeを完了し、Production resultの物理・外部検証を`NOT_RUN`として保持、Research result importは`--dry-run`のみ実行した。親のGitignored generated summaryに記録したnormal evidence hashは`sha256:f4814b86f644a20245432dc4bc1aa4f55acb67e69ba293f0d1747def5f6d332c`。
+- terminal matrixはclean=`PASSED/COMPLETE`、tamper=`FAILED/FAILED`、stale=`BLOCKED/BLOCKED`、incompatible=`FAILED/FAILED`、dirty-source=`BLOCKED/BLOCKED`、replay=`PASSED/REPLAYED`。child error本文やraw bundle本文は親証跡へ保存していない。
+- child CLI依存のため、実行時は依存を持つqualification Pythonを`--child-python`で指定可能にした。親は引き続きmanifest pinのclean archiveだけを使用し、常設`repos/`と子repoのbranch、working tree、Issue、PR、schema、canonical data、commitは変更していない。
+- `remote_operations=[]`、`child_mutations=[]`。物理作業、購入、契約、公開、外部送信、Research apply、Google Drive変更は実行していない。security forbidden markerは0件。
+- acceptance: 1/1達成。`PRODUCTION-E2E-001`をDONE、leaseをreleased、依存完了済み最小IDの`PRODUCTION-QUALIFY-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `git status --short --branch`で差分を確認し、`PRODUCTION-QUALIFY-001`として同一qualificationを3回実行し、byte stability・親検証・5 repo child gates・Git外出力を総合確認する。

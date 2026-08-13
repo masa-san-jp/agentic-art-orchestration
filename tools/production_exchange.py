@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import copy
+import hashlib
 import io
 import json
 import re
@@ -19,11 +21,14 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
+E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
+E2E_OUTPUT_PATH = ROOT / "data/production-exchange.json"
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 HASH_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]*$")
 SAFE_COMMAND_PATTERN = re.compile(r"^[^;|&`\r\n]+$")
 FORBIDDEN_TEXT = re.compile(r"(?i)(PRIVATE_RAW|RESTRICTED|credential|signed[_ -]?url|raw[_ -]?asset)")
+STAGE_CONTRACTS = {None, "production-handoff/v1", "production-result/v1"}
 
 
 class ExchangeError(RuntimeError):
@@ -115,6 +120,8 @@ def validate_exchange_evidence(data: dict[str, Any], source: str = "production-e
         semantic_hash = stage.get("semantic_hash")
         if semantic_hash is not None and (not isinstance(semantic_hash, str) or not HASH_PATTERN.fullmatch(semantic_hash)):
             errors.append(f"{source}.stages[{index}].semantic_hash: malformed SHA-256; remediation: retain only bundle semantic hashes")
+        if stage.get("contract_version") not in STAGE_CONTRACTS:
+            errors.append(f"{source}.stages[{index}].contract_version: unsupported child contract; remediation: preserve the owning child contract version")
     try:
         _validate_strings(data)
     except ExchangeError as exc:
@@ -131,6 +138,89 @@ def validate_exchange_evidence(data: dict[str, Any], source: str = "production-e
                 errors.append(f"{source}.stages[{index}].command contains shell control syntax; remediation: use an argument-list subprocess")
             if stage.get("status") == "PASSED" and stage.get("terminal_status") == "NOT_RUN":
                 errors.append(f"{source}.stages[{index}] passed without a terminal status; remediation: record the observed child transition")
+    return errors
+
+
+def validate_exchange_e2e(data: dict[str, Any], source: str = "production-exchange-e2e") -> list[str]:
+    """Validate the parent-owned E2E summary without retaining child payloads."""
+    errors: list[str] = []
+    if not isinstance(data, dict):
+        return [f"{source}: E2E report must be an object; remediation: preserve the sanitized E2E envelope"]
+    required = {"contract_version", "run_id", "network", "status", "normal_exchange", "scenarios", "acceptance", "remote_operations", "child_mutations"}
+    errors.extend(
+        f"{source}: missing required field {field!r}; remediation: preserve the E2E terminal-state summary"
+        for field in sorted(required - set(data))
+    )
+    if data.get("contract_version") != "production-exchange-e2e/v1":
+        errors.append(f"{source}.contract_version: unsupported contract; remediation: use production-exchange-e2e/v1")
+    if data.get("network") != "disabled":
+        errors.append(f"{source}.network: must be disabled; remediation: run only the networkless E2E")
+    if data.get("status") != "PASSED":
+        errors.append(f"{source}.status: E2E qualification did not pass; remediation: preserve each failure terminal state")
+    if data.get("remote_operations") != [] or data.get("child_mutations") != []:
+        errors.append(f"{source}: remote or child mutation was recorded; remediation: keep E2E read-only")
+    normal = data.get("normal_exchange")
+    if not isinstance(normal, dict):
+        errors.append(f"{source}.normal_exchange: must be an object; remediation: record the clean exchange summary")
+    else:
+        if normal.get("status") != "PASSED":
+            errors.append(f"{source}.normal_exchange.status: clean exchange did not pass; remediation: fix the clean path")
+        if not isinstance(normal.get("evidence_sha256"), str) or not HASH_PATTERN.fullmatch(normal["evidence_sha256"]):
+            errors.append(f"{source}.normal_exchange.evidence_sha256: malformed hash; remediation: retain only a summary hash")
+        if not isinstance(normal.get("stage_count"), int) or normal["stage_count"] < 1:
+            errors.append(f"{source}.normal_exchange.stage_count: must be positive; remediation: record observed stages")
+        if "NOT_RUN" not in normal.get("result_statuses", []) and "EXTERNAL_VALIDATION_REQUIRED" not in normal.get("result_statuses", []):
+            errors.append(f"{source}.normal_exchange.result_statuses: unperformed work was not preserved; remediation: keep NOT_RUN or EXTERNAL_VALIDATION_REQUIRED")
+        if normal.get("external_validation_required") is not True:
+            errors.append(f"{source}.normal_exchange.external_validation_required: must be true; remediation: preserve unperformed external validation")
+        if normal.get("research_result_dry_run") is not True:
+            errors.append(f"{source}.normal_exchange.research_result_dry_run: must be true; remediation: do not apply into the child repo")
+    scenarios = data.get("scenarios")
+    expected = {"clean", "tamper", "stale", "incompatible", "dirty-source", "replay"}
+    if not isinstance(scenarios, list):
+        errors.append(f"{source}.scenarios: must be a list; remediation: record every required terminal case")
+        scenarios = []
+    scenario_ids = {item.get("scenario_id") for item in scenarios if isinstance(item, dict)}
+    if len(scenarios) != len(expected) or scenario_ids != expected:
+        errors.append(f"{source}.scenarios: expected terminal cases are {sorted(expected)}; remediation: preserve all E2E cases")
+    required_cases = {
+        "clean": ("PASSED", "COMPLETE"),
+        "tamper": ("FAILED", "FAILED"),
+        "stale": ("BLOCKED", "BLOCKED"),
+        "incompatible": ("FAILED", "FAILED"),
+        "dirty-source": ("BLOCKED", "BLOCKED"),
+        "replay": ("PASSED", "REPLAYED"),
+    }
+    for item in scenarios:
+        if not isinstance(item, dict):
+            errors.append(f"{source}.scenarios: every case must be an object; remediation: record status and terminal_status")
+            continue
+        scenario_id = item.get("scenario_id")
+        if scenario_id in required_cases:
+            expected_status, expected_terminal = required_cases[scenario_id]
+            if item.get("status") != expected_status or item.get("terminal_status") != expected_terminal:
+                errors.append(f"{source}.scenarios[{scenario_id}]: unexpected terminal state; remediation: preserve fail-closed status")
+            if not isinstance(item.get("reason_code"), str) or not re.fullmatch(r"[A-Z0-9_:-]+", item["reason_code"]):
+                errors.append(f"{source}.scenarios[{scenario_id}].reason_code: required sanitized reason; remediation: do not retain child error text")
+    acceptance = data.get("acceptance")
+    required_acceptance = {
+        "clean_exchange",
+        "external_validation_unperformed",
+        "research_result_dry_run",
+        "tamper_terminal",
+        "stale_terminal",
+        "incompatible_terminal",
+        "dirty_source_terminal",
+        "replay_idempotent",
+        "no_child_mutation",
+        "no_remote_mutation",
+    }
+    if not isinstance(acceptance, dict):
+        errors.append(f"{source}.acceptance: must be an object; remediation: record all E2E assertions")
+    else:
+        for field in sorted(required_acceptance):
+            if acceptance.get(field) is not True:
+                errors.append(f"{source}.acceptance.{field}: must be true; remediation: prove the terminal-state invariant")
     return errors
 
 
@@ -275,6 +365,202 @@ def _write_evidence(path: Path, evidence: dict[str, Any]) -> None:
     path.write_text(json.dumps(evidence, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
 
+def _run_directory(output_root: Path, run_id: str) -> Path:
+    return output_root / re.sub(r"[^A-Za-z0-9._-]+", "-", run_id)
+
+
+def _result_statuses(result_path: Path) -> tuple[list[str], bool]:
+    result = _load_yaml(result_path)
+    statuses = {
+        item.get("result")
+        for item in result.get("test_results", [])
+        if isinstance(item, dict) and isinstance(item.get("result"), str)
+    }
+    required = any(
+        isinstance(item, dict) and item.get("external_validation_status") == "REQUIRED"
+        for item in result.get("test_results", [])
+    )
+    if required:
+        statuses.add("EXTERNAL_VALIDATION_REQUIRED")
+    return sorted(statuses), required
+
+
+def _manifest_hashes(bundle: Path, entrypoint: str) -> tuple[str, str]:
+    manifest = _load_yaml(bundle / "manifest.yaml")
+    integrity = manifest.get("integrity") if isinstance(manifest.get("integrity"), dict) else {}
+    file_set_hash = integrity.get("file_set_sha256")
+    entry_hash = next(
+        (
+            item.get("sha256")
+            for item in manifest.get("files", [])
+            if isinstance(item, dict) and item.get("path") == entrypoint
+        ),
+    )
+    if not isinstance(file_set_hash, str) or not HASH_PATTERN.fullmatch(file_set_hash):
+        raise ExchangeError("E2E bundle file-set hash is missing")
+    if not isinstance(entry_hash, str) or not HASH_PATTERN.fullmatch(entry_hash):
+        raise ExchangeError("E2E bundle entry hash is missing")
+    return file_set_hash, entry_hash
+
+
+def _validate_exchange_run_artifacts(run_dir: Path, evidence: dict[str, Any]) -> list[str]:
+    """Check evidence hashes against Git-external bundle manifests."""
+    errors: list[str] = []
+    try:
+        handoff_file_set, handoff_entry = _manifest_hashes(run_dir / "handoff", "production-handoff.yaml")
+        result_file_set, result_entry = _manifest_hashes(run_dir / "result", "production-result.yaml")
+    except (OSError, KeyError, TypeError, ExchangeError) as exc:
+        return [f"exchange run artifacts unavailable: {type(exc).__name__}"]
+    expected = {
+        "research-handoff": handoff_file_set,
+        "production-receipt": handoff_entry,
+        "production-result": result_file_set,
+        "research-result-dry-run": result_entry,
+    }
+    for stage in evidence.get("stages", []):
+        if stage.get("stage_id") in expected and stage.get("semantic_hash") != expected[stage["stage_id"]]:
+            errors.append(f"{stage['stage_id']}: semantic hash mismatch")
+    return errors
+
+
+def _scenario(scenario_id: str, status: str, terminal_status: str, reason_code: str) -> dict[str, str]:
+    return {
+        "scenario_id": scenario_id,
+        "status": status,
+        "terminal_status": terminal_status,
+        "reason_code": reason_code,
+    }
+
+
+def run_exchange_e2e(
+    manifest: dict[str, Any],
+    workspace_root: Path,
+    output_root: Path,
+    *,
+    run_id: str,
+    generated_at: str,
+    research_project_slug: str = "harmony-study",
+    production_project_slug: str = "production-smoke",
+    handoff_id: str = "HO001",
+    result_id: str = "PR001",
+    child_python: str | None = None,
+) -> dict[str, Any]:
+    """Execute the clean exchange and qualify sanitized terminal-state scenarios."""
+    clean_run_id = f"{run_id}:clean"
+    clean = run_exchange(
+        manifest,
+        workspace_root,
+        output_root,
+        run_id=clean_run_id,
+        generated_at=generated_at,
+        research_project_slug=research_project_slug,
+        production_project_slug=production_project_slug,
+        handoff_id=handoff_id,
+        result_id=result_id,
+        child_python=child_python,
+    )
+    clean_dir = _run_directory(output_root, clean_run_id)
+    result_statuses, external_validation_required = _result_statuses(clean_dir / "result" / "production-result.yaml")
+    clean_bytes = (clean_dir / "exchange-evidence.json").read_bytes()
+
+    tampered = copy.deepcopy(clean)
+    tampered["stages"][0]["semantic_hash"] = "sha256:" + "0" * 64
+    if not validate_exchange_evidence(tampered) == []:
+        raise ExchangeError("tamper scenario did not preserve a structurally valid envelope")
+    if not _validate_exchange_run_artifacts(clean_dir, tampered):
+        raise ExchangeError("tamper scenario did not fail closed")
+
+    stale_manifest = copy.deepcopy(manifest)
+    _repo(stale_manifest, "agentic-art-research")["observed_commit"] = "0" * 40
+    try:
+        run_exchange(stale_manifest, workspace_root, output_root, run_id=f"{run_id}:stale", generated_at=generated_at)
+    except ExchangeError:
+        stale_terminal = _scenario("stale", "BLOCKED", "BLOCKED", "SOURCE_STALE")
+    else:
+        raise ExchangeError("stale source scenario did not block")
+
+    incompatible = copy.deepcopy(clean)
+    incompatible["stages"][0]["contract_version"] = "production-handoff/v99"
+    if not validate_exchange_evidence(incompatible):
+        raise ExchangeError("incompatible schema scenario did not fail closed")
+
+    research = _repo(manifest, "agentic-art-research")
+    research_source = (workspace_root / str(research["path"])).resolve()
+    with tempfile.TemporaryDirectory(prefix="aap-exchange-dirty-") as dirty_parent:
+        dirty_root = Path(dirty_parent) / "research"
+        cloned = subprocess.run(
+            ["git", "clone", "--no-local", "--quiet", str(research_source), str(dirty_root)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if cloned.returncode != 0:
+            raise ExchangeError("dirty source scenario could not prepare an external clone")
+        (dirty_root / ".e2e-dirty-marker").write_text("synthetic dirty source\n", encoding="utf-8")
+        try:
+            _verify_source(dirty_root, str(research["observed_commit"]))
+        except ExchangeError:
+            dirty_terminal = _scenario("dirty-source", "BLOCKED", "BLOCKED", "SOURCE_DIRTY")
+        else:
+            raise ExchangeError("dirty source scenario did not block")
+
+    replay = run_exchange(
+        manifest,
+        workspace_root,
+        output_root,
+        run_id=clean_run_id,
+        generated_at=generated_at,
+        research_project_slug=research_project_slug,
+        production_project_slug=production_project_slug,
+        handoff_id=handoff_id,
+        result_id=result_id,
+        child_python=child_python,
+    )
+    if clean_bytes != (clean_dir / "exchange-evidence.json").read_bytes() or replay != clean:
+        raise ExchangeError("replay scenario changed an existing exchange result")
+
+    report = {
+        "contract_version": "production-exchange-e2e/v1",
+        "run_id": run_id,
+        "network": "disabled",
+        "status": "PASSED",
+        "normal_exchange": {
+            "status": clean["status"],
+            "evidence_sha256": "sha256:" + hashlib.sha256(clean_bytes).hexdigest(),
+            "stage_count": len(clean["stages"]),
+            "result_statuses": result_statuses,
+            "external_validation_required": external_validation_required or "NOT_RUN" in result_statuses,
+            "research_result_dry_run": clean["acceptance"]["research_result_dry_run"],
+        },
+        "scenarios": [
+            _scenario("clean", "PASSED", "COMPLETE", "CLEAN_EXCHANGE"),
+            _scenario("tamper", "FAILED", "FAILED", "TAMPER_DETECTED"),
+            stale_terminal,
+            _scenario("incompatible", "FAILED", "FAILED", "UNSUPPORTED_CONTRACT"),
+            dirty_terminal,
+            _scenario("replay", "PASSED", "REPLAYED", "REPLAY_IDEMPOTENT"),
+        ],
+        "acceptance": {
+            "clean_exchange": True,
+            "external_validation_unperformed": True,
+            "research_result_dry_run": True,
+            "tamper_terminal": True,
+            "stale_terminal": True,
+            "incompatible_terminal": True,
+            "dirty_source_terminal": True,
+            "replay_idempotent": True,
+            "no_child_mutation": clean["child_mutations"] == [],
+            "no_remote_mutation": clean["remote_operations"] == [],
+        },
+        "remote_operations": [],
+        "child_mutations": [],
+    }
+    errors = validate_exchange_e2e(report)
+    if errors:
+        raise ExchangeError("generated E2E report is invalid: " + " | ".join(errors[:5]))
+    return report
+
+
 def _prepare_research_fixture(root: Path, slug: str, generated_at: str) -> None:
     project = root / "projects" / slug
     fixture = root / "tests" / "fixtures" / "harmony"
@@ -313,6 +599,7 @@ def run_exchange(
     production_project_slug: str = "production-smoke",
     handoff_id: str = "HO001",
     result_id: str = "PR001",
+    child_python: str | None = None,
 ) -> dict[str, Any]:
     if not RUN_ID_PATTERN.fullmatch(run_id):
         raise ExchangeError("run_id is not stable")
@@ -341,6 +628,7 @@ def run_exchange(
     stages: list[dict[str, Any]] = []
     research_commit = str(research["observed_commit"])
     production_commit = str(production["observed_commit"])
+    child_python = child_python or sys.executable
     evidence_path = run_dir / "exchange-evidence.json"
     base = {
         "contract_version": "production-exchange-evidence/v1",
@@ -374,7 +662,7 @@ def run_exchange(
             production_bundle = run_dir / "result"
             research_project_path = research_root / "projects" / research_project_slug
             _run_command(
-                [sys.executable, "tools/new_project.py", research_project_slug, "--title", "Harmony Study", "--creator-id", "creator/fixture", "--root", str(research_root)],
+                [child_python, "tools/new_project.py", research_project_slug, "--title", "Harmony Study", "--creator-id", "creator/fixture", "--root", str(research_root)],
                 cwd=research_root,
                 stage_id="research-project",
                 display=_display("python3 tools/new_project.py PROJECT_SLUG --title HARMONY_STUDY --creator-id CREATOR --root RESEARCH_ROOT"),
@@ -390,14 +678,14 @@ def run_exchange(
             _prepare_research_fixture(research_root, research_project_slug, generated_at)
             _make_clean_fixture_checkout(research_root, research_commit)
             _run_command(
-                [sys.executable, "tools/build_handoff.py", research_project, "--root", str(research_root), "--generated-at", generated_at, "--research-commit", research_commit, "--handoff-id", handoff_id, "--revision", "1"],
+                [child_python, "tools/build_handoff.py", research_project, "--root", str(research_root), "--generated-at", generated_at, "--research-commit", research_commit, "--handoff-id", handoff_id, "--revision", "1"],
                 cwd=research_root,
                 stage_id="research-handoff-build",
                 display=_display("python3 tools/build_handoff.py RESEARCH_PROJECT --root RESEARCH_ROOT --generated-at FIXED_TIME --research-commit RESEARCH_COMMIT --handoff-id HANDOFF_ID --revision 1"),
             )
             _commit_fixture_changes(research_root, "generated handoff fixture")
             _run_command(
-                [sys.executable, "tools/export_handoff.py", research_project, "--root", str(research_root), "--output", str(research_bundle)],
+                [child_python, "tools/export_handoff.py", research_project, "--root", str(research_root), "--output", str(research_bundle)],
                 cwd=research_root,
                 stage_id="research-handoff",
                 display=_display("python3 tools/export_handoff.py RESEARCH_PROJECT --root RESEARCH_ROOT --output HANDOFF_OUTPUT"),
@@ -406,7 +694,7 @@ def run_exchange(
             stages.append(_stage("research-handoff", "agentic-art-research", research_commit, "python3 tools/export_handoff.py RESEARCH_PROJECT --root RESEARCH_ROOT --output HANDOFF_OUTPUT", "production-handoff/v1", handoff_file_set_hash, "PASSED", "HANDOFF_EXPORTED", _locator(run_id, "handoff")))
             base["acceptance"]["research_handoff_exported"] = True
             _run_command(
-                [sys.executable, "tools/new_production.py", production_project_slug, "--handoff", str(research_bundle), "--output-root", str(production_output), "--format", "json"],
+                [child_python, "tools/new_production.py", production_project_slug, "--handoff", str(research_bundle), "--output-root", str(production_output), "--format", "json"],
                 cwd=production_root,
                 stage_id="production-receipt",
                 display=_display("python3 tools/new_production.py PRODUCTION_SLUG --handoff HANDOFF_OUTPUT --output-root PRODUCTION_OUTPUT --format json"),
@@ -419,10 +707,10 @@ def run_exchange(
                 ("production-prototype", ["tools/build_prototype.py", "--project-root", str(production_project), "--format", "json"], "python3 tools/build_prototype.py --project-root PRODUCTION_PROJECT --format json"),
                 ("production-runtime", ["tools/run_execution.py", "--project-root", str(production_project), "init", "--format", "json"], "python3 tools/run_execution.py --project-root PRODUCTION_PROJECT init --format json"),
             ):
-                _run_command([sys.executable, *args], cwd=production_root, stage_id=stage_id, display=display)
+                _run_command([child_python, *args], cwd=production_root, stage_id=stage_id, display=display)
                 stages.append(_stage(stage_id, "agentic-art-production", production_commit, display, None, None, "PASSED", "PREPARED", _locator(run_id, "production/project")))
             result_id_value = _run_command(
-                [sys.executable, "tools/build_result.py", "--project-root", str(production_project), "--result-id", result_id, "--generated-at", generated_at, "--production-commit", production_commit, "--format", "json"],
+                [child_python, "tools/build_result.py", "--project-root", str(production_project), "--result-id", result_id, "--generated-at", generated_at, "--production-commit", production_commit, "--format", "json"],
                 cwd=production_root,
                 stage_id="production-result-build",
                 display="python3 tools/build_result.py --project-root PRODUCTION_PROJECT --result-id RESULT_ID --generated-at FIXED_TIME --production-commit PRODUCTION_COMMIT --format json",
@@ -430,7 +718,7 @@ def run_exchange(
             )
             stages.append(_stage("production-result-build", "agentic-art-production", production_commit, "python3 tools/build_result.py --project-root PRODUCTION_PROJECT --result-id RESULT_ID --generated-at FIXED_TIME --production-commit PRODUCTION_COMMIT --format json", "production-result/v1", f"sha256:{result_id_value.get('content_sha256', '').split(':')[-1]}" if isinstance(result_id_value.get("content_sha256"), str) and HASH_PATTERN.fullmatch(result_id_value["content_sha256"]) else None, "PASSED", "PREPARED", _locator(run_id, "production/project/result")))
             result_summary = _run_command(
-                [sys.executable, "tools/export_result.py", "--project-root", str(production_project), "--output", str(production_bundle), "--format", "json"],
+                [child_python, "tools/export_result.py", "--project-root", str(production_project), "--output", str(production_bundle), "--format", "json"],
                 cwd=production_root,
                 stage_id="production-result",
                 display="python3 tools/export_result.py --project-root PRODUCTION_PROJECT --output RESULT_OUTPUT --format json",
@@ -440,7 +728,7 @@ def run_exchange(
             stages.append(_stage("production-result", "agentic-art-production", production_commit, "python3 tools/export_result.py --project-root PRODUCTION_PROJECT --output RESULT_OUTPUT --format json", "production-result/v1", result_file_set_hash, "PASSED", "RESULT_EXPORTED", _locator(run_id, "result")))
             base["acceptance"]["production_result_exported"] = True
             dry_run = _run_command(
-                [sys.executable, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--dry-run", "--root", str(research_root)],
+                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--dry-run", "--root", str(research_root)],
                 cwd=research_root,
                 stage_id="research-result-dry-run",
                 display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_ROOT",
@@ -466,13 +754,17 @@ def run_exchange(
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workspace-root", type=Path, required=True)
-    parser.add_argument("--output-root", type=Path, required=True)
-    parser.add_argument("--run-id", required=True)
-    parser.add_argument("--generated-at", required=True)
+    parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
+    parser.add_argument("--output-root", type=Path, default=Path(tempfile.gettempdir()) / "agentic-art-orchestration-production-exchange")
+    parser.add_argument("--run-id", default="PRODUCTION-E2E-001:offline-fixture")
+    parser.add_argument("--generated-at", default="2026-08-13T08:00:00+09:00")
     parser.add_argument("--manifest", type=Path, default=ROOT / "config/repositories.yaml")
     parser.add_argument("--check", action="store_true", help="validate an existing evidence JSON")
     parser.add_argument("--evidence", type=Path)
+    parser.add_argument("--e2e", action="store_true", help="run the sanitized end-to-end terminal-state qualification")
+    parser.add_argument("--e2e-output", type=Path, default=E2E_OUTPUT_PATH)
+    parser.add_argument("--child-python", default=sys.executable, help="Python executable with the child CLI dependencies")
+    parser.add_argument("--offline-fixture", action="store_true", help="use the verified immutable candidate workspace and Git-external output")
     return parser
 
 
@@ -481,7 +773,15 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.check:
             if not args.evidence:
-                raise ExchangeError("--check requires --evidence")
+                if not args.e2e and not args.offline_fixture:
+                    raise ExchangeError("--check requires --evidence")
+                report = json.loads(args.e2e_output.read_text(encoding="utf-8"))
+                errors = validate_exchange_e2e(report, str(args.e2e_output))
+                if errors:
+                    print(json.dumps({"status": "FAILED", "errors": errors}, ensure_ascii=False, sort_keys=True))
+                    return 2
+                print(json.dumps({"status": "PASSED", "evidence": str(args.e2e_output.name)}, ensure_ascii=False, sort_keys=True))
+                return 0
             evidence = json.loads(args.evidence.read_text(encoding="utf-8"))
             errors = validate_exchange_evidence(evidence, str(args.evidence))
             if errors:
@@ -490,7 +790,15 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"status": "PASSED", "evidence": str(args.evidence.name)}, ensure_ascii=False, sort_keys=True))
             return 0
         manifest = _load_yaml(args.manifest)
-        evidence = run_exchange(manifest, args.workspace_root, args.output_root, run_id=args.run_id, generated_at=args.generated_at)
+        if args.e2e:
+            report = run_exchange_e2e(manifest, args.workspace_root, args.output_root, run_id=args.run_id, generated_at=args.generated_at, child_python=args.child_python)
+            rendered = json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+            if args.offline_fixture:
+                args.e2e_output.parent.mkdir(parents=True, exist_ok=True)
+                args.e2e_output.write_text(rendered, encoding="utf-8")
+            print(json.dumps({"status": report["status"], "evidence": str(args.e2e_output)}, ensure_ascii=False, sort_keys=True))
+            return 0 if report["status"] == "PASSED" else 2
+        evidence = run_exchange(manifest, args.workspace_root, args.output_root, run_id=args.run_id, generated_at=args.generated_at, child_python=args.child_python)
         print(json.dumps(evidence, ensure_ascii=False, sort_keys=True))
         return 0 if evidence["status"] == "PASSED" else 2
     except (OSError, ValueError, ExchangeError) as exc:

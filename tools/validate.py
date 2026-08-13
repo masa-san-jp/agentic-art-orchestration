@@ -35,6 +35,7 @@ CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.jso
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 PRODUCTION_EXCHANGE_SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
+PRODUCTION_EXCHANGE_E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -77,6 +78,7 @@ REQUIRED_FILES = [
     "tools/proposition_provenance.py",
     "schemas/v12-e2e.schema.json",
     "schemas/production-exchange-evidence.schema.json",
+    "schemas/production-exchange-e2e.schema.json",
     "tools/production_exchange.py",
     "tools/v12_e2e.py",
     "execution/task-queue.yaml",

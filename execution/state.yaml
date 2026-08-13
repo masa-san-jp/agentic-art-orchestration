@@ -1,29 +1,29 @@
 version: 2
-updated_at: "2026-08-13T07:45:00+09:00"
+updated_at: "2026-08-13T08:25:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-production-exchange
-  acquired_at: "2026-08-13T07:31:00+09:00"
-  expires_at: "2026-08-13T08:31:00+09:00"
+  owner: codex-production-e2e
+  acquired_at: "2026-08-13T08:00:00+09:00"
+  expires_at: "2026-08-13T09:00:00+09:00"
   lane: PRODUCTION_EXCHANGE
-  execution_id: PRODUCTION-EXCHANGE-001:attempt-1
-  released_at: "2026-08-13T07:45:00+09:00"
-  release_reason: completed; immutable Research to Production to Research exchange passed twice byte-identically with fail-closed evidence tests
+  execution_id: PRODUCTION-E2E-001:attempt-1
+  released_at: "2026-08-13T08:25:00+09:00"
+  release_reason: completed; clean exchange and six explicit terminal-state scenarios passed without child or remote mutation
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/production-exchange-evidence.schema.json, tools/production_exchange.py, tests/test_production_exchange.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
+    paths: [tools/production_exchange.py, tests/test_production_exchange_e2e.py, schemas/production-exchange-evidence.schema.json, schemas/production-exchange-e2e.schema.json, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
 checkpoint:
-  task: PRODUCTION-EXCHANGE-001
-  repository: agentic-art-orchestration
-  start_point: 12bbd9e
-  expected_changes: Implement a parent-owned reference-only orchestrator that invokes the pinned child CLIs through subprocess argument lists and records sanitized exchange evidence without copying child schemas or payloads.
-  result: completed; parent exchange runner invoked both child directions and preserved external-effect, privacy, and mutation boundaries
-last_completed_task: PRODUCTION-EXCHANGE-001
-resume_from:
   task: PRODUCTION-E2E-001
-  action: Execute the Research-to-Production-to-Research exchange qualification with replay, tamper, schema mismatch, dirty-source, and unsupported-version terminal cases.
+  repository: agentic-art-orchestration
+  start_point: 73932ca
+  expected_changes: Add deterministic Research-to-Production-to-Research E2E terminal cases for tamper, stale, incompatible, dirty-source, and replay without child writes or external effects.
+  result: completed; clean exchange passed with NOT_RUN external work, dry-run result import, and tamper/stale/incompatible/dirty/replay terminal states
+last_completed_task: PRODUCTION-E2E-001
+resume_from:
+  task: PRODUCTION-QUALIFY-001
+  action: Run three deterministic Production exchange qualification runs plus all parent and five-repository child gates; keep outputs Git-external and preserve no physical effect.
   command: git status --short --branch
 post_merge:
   status: linked
@@ -43,5 +43,5 @@ release:
   released_at: "2026-08-12T22:08:09+09:00"
 blocked: []
 last_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-pin-ZpbR0t --run-id production-exchange-pins --check; .venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/status.py --workspace-root /tmp/aap-production-pin-ZpbR0t --check --offline-fixture; .venv/bin/python tools/audit.py --check --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
-  result: passed; exchange stage tests passed, two independent immutable runs were byte-identical with 8 stages PASSED, child pins and external-effect boundaries preserved; 2026-08-13T07:45:00+09:00
+  command: /tmp/aap-bootstrap-venv/bin/python tools/production_exchange.py --offline-fixture --check --e2e-output data/production-exchange.json; .venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -q; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-pin-ZpbR0t --run-id production-exchange-pins --output /tmp/aap-production-e2e-qualification/child-quality-gates.json --check; .venv/bin/python tools/status.py --workspace-root /tmp/aap-production-pin-ZpbR0t --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; git diff --check
+  result: passed; 224 tests OK, E2E six-case terminal matrix PASSED, child gates 5 repositories / 14 gates PASSED, candidate status CLEAN, audit finding 0, security PASSED; 2026-08-13T08:25:00+09:00
