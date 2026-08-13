@@ -165,6 +165,17 @@ class GithubApiProvider:
             raise _error("GitHub returned an unexpected response", "inspect the provider contract before retrying")
         return value
 
+    def get_repository(self, repository: str) -> dict:
+        """Return only the repository preflight fields needed by the sandbox lane."""
+        value = self._request("GET", f"/repos/{quote(repository, safe='/')}")
+        permissions = value.get("permissions") if isinstance(value.get("permissions"), Mapping) else {}
+        return {
+            "full_name": value.get("full_name"),
+            "archived": value.get("archived"),
+            "has_issues": value.get("has_issues"),
+            "push_permission": permissions.get("push") is True,
+        }
+
     def search(self, repository: str, deduplication_key: str) -> list[dict]:
         query = urlencode({"q": f'repo:{repository} is:issue "{deduplication_key}"', "per_page": "10"})
         result = self._request("GET", f"/search/issues?{query}")

@@ -42,4 +42,13 @@ For a real Drive sandbox, set `AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID` and `AGENTI
 
 For a real GitHub Issue, provide `GITHUB_TOKEN` or `GH_TOKEN`, review the allowlist and candidate, and pass `--issue-mode live --confirm-issue`. The adapter searches by the stable deduplication key, then creates at most one Issue. It never updates, closes, deletes, comments, labels, implements, branches, commits, opens PRs, merges, or releases.
 
+The initial-operations qualification uses a separate sandbox lane, not the normal Issue allowlist. Set `AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY=owner/name` and provide `GITHUB_TOKEN` or `GH_TOKEN` outside Git. Verify that the repository is dedicated, non-archived, has Issues enabled, and is not one of the production repositories. Then run:
+
+```sh
+.venv/bin/python tools/github_sandbox_live_check.py --live --confirm-live --output /tmp/github-sandbox-live-evidence.json
+.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --github-sandbox-evidence /tmp/github-sandbox-live-evidence.json
+```
+
+The sandbox command searches first, creates at most one metadata-only Issue, reads it back, and records a reuse check. It refuses production repositories and existing ambiguous matches; the evidence file contains hashes and operation metadata only. Do not run the command against an experiment or production repository by inference.
+
 If startup is `READY_WITH_FINDINGS`, the answer remains pinned and read-only; external CREATE capabilities stay restricted. If startup is `BLOCKED`, affected capabilities stop and the remediation in the startup report is authoritative.

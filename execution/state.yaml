@@ -1,5 +1,5 @@
 version: 10
-updated_at: "2026-08-13T17:41:00+09:00"
+updated_at: "2026-08-13T18:17:47+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
@@ -55,7 +55,14 @@ release:
   issue_mutation: false
   drive_mutation: false
   physical_or_external_effect: false
-blocked: []
+blocked:
+  - task: INITIAL-OPS-QUALIFY-001
+    repository: agentic-art-orchestration
+    condition: an explicitly designated GitHub sandbox repository for one live Issue CREATE/REUSE is unavailable
+    observed: Read-only repository discovery found Agent-Lab (an active private multi-agent lab with existing Issues) and seedance-api-local-test (an unrelated application repository); neither is designated as the qualification sandbox.
+    recommendation: designate a dedicated GitHub sandbox repository owner/name, confirm that existing Issues and production repositories are out of scope, and provide the credential outside Git.
+    impact: offline v1.4.0 qualification passed, but the live Issue evidence gate remains BLOCKED and INITIAL-OPS-RELEASE-001 must not start.
+    unblock_when: approved sandbox owner/name, external credential/session authority, and explicit one-Issue search→CREATE/REUSE scope are available.
 startup_audit_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates -v; .venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
   result: passed; startup audit tests 5/5, repository update tests 3/3, startup contract tests 5/5, full parent suite 237/237, validator and diff check passed, workspace five repositories clean, audit CLEAN, security PASSED, startup materialize/check byte-stable READY_WITH_FINDINGS; no changed child repository quality gate required

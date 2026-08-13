@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/github-sandbox-live-evidence.schema.json",
+  "title": "Dedicated GitHub sandbox Issue evidence v1",
+  "description": "Metadata-only evidence for one explicitly designated GitHub sandbox repository and create-only Issue search/create/reuse.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "mode", "status", "operation", "provider", "repository_id_hash", "idempotency_key_hash", "issue_id_hash", "remote_operations"],
+  "properties": {
+    "contract_version": {"const": "github-sandbox-live/v1"},
+    "run_id": {"$ref": "#/$defs/stable_id"},
+    "mode": {"enum": ["PLAN", "LIVE"]},
+    "status": {"enum": ["PLANNED", "CREATED", "REUSED", "BLOCKED"]},
+    "operation": {"enum": ["NONE", "CREATE", "REUSE"]},
+    "provider": {"const": "github"},
+    "repository_id_hash": {"$ref": "#/$defs/hash"},
+    "idempotency_key_hash": {"$ref": "#/$defs/hash"},
+    "issue_id_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "remote_operations": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/remote_operation"}}
+  },
+  "$defs": {
+    "stable_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "remote_operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "repository_id_hash", "idempotency_key_hash"],
+      "properties": {
+        "operation": {"enum": ["READ", "CREATE", "REUSE"]},
+        "repository_id_hash": {"$ref": "#/$defs/hash"},
+        "idempotency_key_hash": {"$ref": "#/$defs/hash"},
+        "issue_number": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

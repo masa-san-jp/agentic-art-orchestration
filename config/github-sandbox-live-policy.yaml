@@ -1,0 +1,13 @@
+version: 1
+contract_version: github-sandbox-live/v1
+provider: github
+approved_repository:
+  id_env_var: AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY
+  fixture_id: fixture-github-live-sandbox
+token_env_vars: [GITHUB_TOKEN, GH_TOKEN]
+allowed_operations: [READ, CREATE]
+forbidden_operations: [UPDATE, CLOSE, DELETE, COMMENT, LABEL, IMPLEMENT, BRANCH, COMMIT, PULL_REQUEST, MERGE, RELEASE]
+max_creates_per_idempotency_key: 1
+human_confirmation_required: true
+existing_issue_mutation: false
+production_repositories_must_be_rejected: true

@@ -611,7 +611,7 @@ tasks:
   - id: INITIAL-OPS-QUALIFY-001
     milestone: M14
     title: Qualify the initial Codex and Claude Code operations profile
-    status: IN_PROGRESS
+    status: BLOCKED
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
