@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/drive-live-evidence.schema.json",
+  "title": "Provider-neutral Google Drive create/read evidence v1",
+  "description": "Metadata-only evidence for an approved-folder append-only Drive create and read-back verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "mode", "status", "operation", "provider", "approved_folder_id_hash", "idempotency_key_hash", "content_hash", "artifact", "remote_operations"],
+  "properties": {
+    "contract_version": {"const": "drive-live/v1"},
+    "run_id": {"$ref": "#/$defs/stable_id"},
+    "mode": {"enum": ["PLAN", "LIVE"]},
+    "status": {"enum": ["PLANNED", "CREATED", "REPLAYED", "BLOCKED"]},
+    "operation": {"enum": ["NONE", "CREATE", "REPLAY"]},
+    "provider": {"const": "google-drive"},
+    "approved_folder_id_hash": {"$ref": "#/$defs/hash"},
+    "idempotency_key_hash": {"$ref": "#/$defs/hash"},
+    "content_hash": {"$ref": "#/$defs/hash"},
+    "artifact": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/artifact"}]},
+    "remote_operations": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/remote_operation"}}
+  },
+  "$defs": {
+    "stable_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "provider_file_id", "content_hash", "lineage"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/stable_id"},
+        "provider_file_id": {"type": "string", "minLength": 3, "pattern": "^[A-Za-z0-9_-]+$"},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "lineage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["derived_from", "supersedes"],
+          "properties": {
+            "derived_from": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+            "supersedes": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}}
+          }
+        }
+      }
+    },
+    "remote_operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "approved_folder_id_hash", "idempotency_key_hash"],
+      "properties": {
+        "operation": {"enum": ["READ", "CREATE"]},
+        "approved_folder_id_hash": {"$ref": "#/$defs/hash"},
+        "idempotency_key_hash": {"$ref": "#/$defs/hash"},
+        "provider_file_id_hash": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

@@ -40,6 +40,8 @@ PRODUCTION_EXCHANGE_SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.s
 PRODUCTION_EXCHANGE_E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
 STARTUP_POLICY_PATH = ROOT / "config/startup-policy.yaml"
 STARTUP_REPORT_SCHEMA_PATH = ROOT / "schemas/startup-report.schema.json"
+DRIVE_LIVE_SCHEMA_PATH = ROOT / "schemas/drive-live-evidence.schema.json"
+DRIVE_LIVE_POLICY_PATH = ROOT / "config/drive-live-policy.yaml"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -91,6 +93,10 @@ REQUIRED_FILES = [
     "tools/startup.py",
     "config/startup-policy.yaml",
     "schemas/startup-report.schema.json",
+    "config/drive-live-policy.yaml",
+    "schemas/drive-live-evidence.schema.json",
+    "tools/drive_live_bridge.py",
+    "tools/drive_live_check.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -971,6 +977,73 @@ def validate_issue_delivery_contract(
     remote = report_schema.get("$defs", {}).get("remote_operation", {})
     if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE", "REUSE"}:
         errors.append(_signal_error(schema_source, "remote operation vocabulary is unsafe", "exclude update, close, delete, comment, and label operations"))
+    return errors
+
+
+def validate_drive_live_contract(
+    policy: dict | None = None,
+    evidence_schema: dict | None = None,
+    policy_source: str = "config/drive-live-policy.yaml",
+    schema_source: str = "schemas/drive-live-evidence.schema.json",
+) -> list[str]:
+    """Validate the approved-folder, create/read-only Drive live boundary."""
+    policy = policy if policy is not None else load_yaml(DRIVE_LIVE_POLICY_PATH)
+    evidence_schema = evidence_schema if evidence_schema is not None else load_json(DRIVE_LIVE_SCHEMA_PATH)
+    errors: list[str] = []
+
+    def error(source: str, message: str, remediation: str) -> None:
+        errors.append(_signal_error(source, message, remediation))
+
+    if not isinstance(policy, dict):
+        error(policy_source, "Drive live policy must be an object", "restore the provider-neutral create/read policy")
+        return errors
+    if policy.get("version") != 1 or policy.get("contract_version") != "drive-live/v1":
+        error(policy_source, "Drive live policy version is unsupported", "keep the Drive live boundary on v1")
+    if policy.get("provider") != "google-drive":
+        error(policy_source, "Drive live provider must be google-drive", "keep the external artifact provider explicit")
+    approved_folder = policy.get("approved_folder")
+    if not isinstance(approved_folder, dict):
+        error(policy_source, "approved_folder must be an object", "require an explicit approved folder ID or environment variable")
+    else:
+        env_name = approved_folder.get("id_env_var")
+        fixture_id = approved_folder.get("fixture_id")
+        if not isinstance(env_name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", env_name) is None:
+            error(policy_source, "approved_folder.id_env_var is invalid", "use an uppercase environment variable name")
+        if not isinstance(fixture_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", fixture_id) is None:
+            error(policy_source, "approved_folder.fixture_id is invalid", "use a stable offline fixture folder ID")
+        credential_env_name = policy.get("credential_env_var")
+        if not isinstance(credential_env_name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", credential_env_name) is None:
+            error(policy_source, "credential_env_var is invalid", "use an uppercase environment variable and keep the credential outside Git")
+    credential_env = policy.get("credential_env_var")
+    if not isinstance(credential_env, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", credential_env) is None:
+        error(policy_source, "credential_env_var is invalid", "use an uppercase environment variable name and never commit its value")
+    if policy.get("allowed_operations") != ["READ", "CREATE"]:
+        error(policy_source, "allowed_operations must be exactly READ and CREATE", "exclude all Drive mutation beyond append-only CREATE")
+    expected_forbidden = {"UPDATE", "OVERWRITE", "DELETE", "MOVE", "SHARE", "PERMISSION"}
+    forbidden = policy.get("forbidden_operations")
+    if not isinstance(forbidden, list) or set(forbidden) != expected_forbidden:
+        error(policy_source, "forbidden_operations is incomplete or expanded", "retain the append-only Drive boundary")
+    if policy.get("human_confirmation_required") is not True:
+        error(policy_source, "human_confirmation_required must be true", "require explicit approval for live external CREATE")
+    if policy.get("content_in_repository") is not False:
+        error(policy_source, "content_in_repository must be false", "keep artifact bodies outside Git")
+    if policy.get("response_loss_policy") != "search_by_idempotency_then_read_back":
+        error(policy_source, "response_loss_policy is unsafe", "search by stable key before retrying a CREATE")
+
+    if not isinstance(evidence_schema, dict):
+        error(schema_source, "Drive live evidence schema must be an object", "restore schemas/drive-live-evidence.schema.json")
+        return errors
+    if evidence_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" or evidence_schema.get("additionalProperties") is not False:
+        error(schema_source, "Drive live evidence schema must be closed Draft 2020-12", "reject fields outside the metadata evidence envelope")
+    expected_required = {"contract_version", "run_id", "mode", "status", "operation", "provider", "approved_folder_id_hash", "idempotency_key_hash", "content_hash", "artifact", "remote_operations"}
+    if set(evidence_schema.get("required", [])) != expected_required:
+        error(schema_source, "Drive live evidence required fields are incomplete or expanded", "keep the evidence envelope minimal and deterministic")
+    properties = evidence_schema.get("properties", {})
+    if properties.get("mode", {}).get("enum") != ["PLAN", "LIVE"]:
+        error(schema_source, "Drive live mode must expose PLAN and LIVE", "separate offline planning from explicit live execution")
+    remote = evidence_schema.get("$defs", {}).get("remote_operation", {})
+    if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE"}:
+        error(schema_source, "remote operation vocabulary is unsafe", "exclude update, overwrite, delete, move, share, and permission operations")
     return errors
 
 
@@ -2924,6 +2997,14 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_yaml(manifest_path),
                 _source_label(ISSUE_DELIVERY_POLICY_PATH),
                 _source_label(ISSUE_DELIVERY_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_drive_live_contract(
+                load_yaml(DRIVE_LIVE_POLICY_PATH),
+                load_json(DRIVE_LIVE_SCHEMA_PATH),
+                _source_label(DRIVE_LIVE_POLICY_PATH),
+                _source_label(DRIVE_LIVE_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

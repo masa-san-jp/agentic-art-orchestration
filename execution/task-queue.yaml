@@ -578,7 +578,7 @@ tasks:
   - id: DRIVE-LIVE-001
     milestone: M14
     title: Connect the append-only artifact contract to real Google Drive
-    status: READY
+    status: BLOCKED
     lane: DRIVE_ARTIFACT
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY

@@ -819,3 +819,25 @@
 ## Next exact action
 
 1. Implement `DRIVE-LIVE-001` as a provider-neutral append-only Drive bridge with plan mode first, then explicit sandbox live create/read verification.
+
+## DRIVE-LIVE-001 execution
+
+- 2026-08-13 13:02 JST、`DRIVE-LIVE-001`をclaimした。対象は親repoのprovider-neutral Drive bridge、approved-folder policy/schema、plan/live fixture testのみ。
+- 既存の`DriveArtifactAdapter`/`FakeDrive`の外部artifact envelopeを維持し、live portはCREATEとread-backだけを公開する。UPDATE、overwrite、DELETE、move、share、permission変更は実装しない。
+- 実Driveは保存先のapproved folder IDをread-onlyで確認できるまで書き込まない。OAuth/session/credentialとartifact本文は親Gitへ保存しない。
+
+## DRIVE-LIVE-001 blocked
+
+- `tools/drive_live_bridge.py`、`tools/drive_live_check.py`、`config/drive-live-policy.yaml`、`schemas/drive-live-evidence.schema.json`を追加し、既存の`DriveArtifactAdapter`/`FakeDrive`を壊さず、approved-folder限定のprovider-neutral READ/CREATE portを実装した。
+- plan、fake CREATE/read-back、同一keyのREPLAY、異なるpayloadのidempotency拒否、process retryのmarker検索、複数一致・folder不正・provider未注入・live未確認のfail-closedをテストした。artifact body、credential、folder IDはGitへ保存しない。
+- `.venv/bin/python tools/validate.py --check`: PASS。Drive専用7 tests、既存external-artifact/Drive tests 19 tests、親全体257 tests、`tools/drive_live_check.py --plan`と`--plan --check`: PASS。workspaceは5 child repoすべて`main`、clean、ahead/behind 0。auditは`CLEAN`、securityは`PASSED`、`git diff --check`: PASS。
+- Google Drive v3 providerを追加し、credential環境変数からのみtokenを読み、appPropertiesのmarker/fingerprint、approved folder、metadataまたはcontent hashのread-backを照合する。provider portは検索・CREATE・READだけで、既存fileのmutationメソッドを持たない。
+- `.venv/bin/python -m unittest discover -s tests -v`: 259 tests PASS。`.venv/bin/python tools/validate.py --check`: PASS。`git diff --check`: PASS。`tools/drive_live_check.py --plan`と`--plan --check`: PASS。
+- Google Driveはread-only discoveryのみ実施。候補の共有フォルダは確認できたが、`DRIVE-LIVE-001`のapproved sandboxとして指定されたfolderは確認できず、実Drive CREATE/read smokeは実行していない。既存folderの変更、artifact作成、共有範囲変更、削除は行っていない。
+- Acceptance: provider-neutral contract/plan/fake idempotencyは達成、実approved-folder CREATE/readは未達。task全体はBLOCKED、leaseはreleased。`AGENT-UI-001`以降は開始しない。
+
+## Blocker and resume
+
+- 観測事実: live CLIはprovider未注入または`confirm_live`未指定で拒否し、policyは`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`を要求する。Drive側にsandboxと明示された保存先は特定できなかった。
+- 推奨: 専用sandbox folderを人間が指定し、そのIDをrepo外の`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`へ設定して、一度だけCREATE/read-backを承認する。test artifactは自動削除しない。
+- 解除条件: approved folder identity、provider/session authority、1ファイルCREATE/read検証の明示scopeが揃った後、最初の操作は`.venv/bin/python tools/drive_live_check.py --live --folder-id <approved-sandbox-folder-id>`。
