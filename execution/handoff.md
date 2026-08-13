@@ -801,3 +801,21 @@
 ## Next exact action
 
 1. Review the generated startup Issue candidates and implement `ISSUE-CREATE-001` only within its explicit create-only, human-gated boundary; first operation is `git status --short --branch`.
+
+## ISSUE-CREATE-001 execution
+
+- 2026-08-13 12:31 JST、`ISSUE-CREATE-001`をclaimした。対象は親repoのIssue delivery adapter、schema、policy、fixture testのみ。
+- 既存の`issue_router.py`候補とstartup監査候補をmanifestの`full_name` allowlistへ解決し、stable deduplication keyごとに`CREATE`または既存Issueの`REUSE`だけを許可する。通常はplan、liveは明示確認付きで実行する。
+- Issue bodyはsummary code、source kind、opaqueなfeedback ID、acceptance、inferred時の`unconfirmed`だけに限定し、会話本文・Drive本文・credential・直接識別情報を渡さない。Issue update/close/delete/comment/label、子repo、branch、commit、PR、merge、releaseは対象外。
+
+## ISSUE-CREATE-001 completed
+
+- `tools/github_issue_adapter.py` now resolves candidates only through the manifest/policy allowlist and supports deterministic `PLAN` plus explicitly confirmed `LIVE` modes. Live mode searches by the stable key first, reuses one existing Issue when found, and creates at most one new Issue otherwise.
+- The GitHub provider exposes only search and create; no update, close, delete, comment, label, assignment, branch, commit, PR, merge, or release operation exists in the adapter. Issue bodies contain only privacy-safe summary metadata, opaque source references, acceptance, source kind, and explicit `unconfirmed` inference state.
+- `schemas/github-issue-delivery.schema.json`, `config/issue-delivery-policy.yaml`, and parent validator checks enforce the allowlist, human confirmation, closed metadata envelope, stable deduplication, and `READ/CREATE` operation vocabulary. Fixture provider tests cover CREATE, REUSE, duplicate merge, conflict blocking, raw/unknown target blocking, and no-live-confirmation refusal.
+- `.venv/bin/python tools/validate.py --check`: PASS. `.venv/bin/python -m unittest discover -s tests -v`: 245 tests PASS. `.venv/bin/python tools/github_issue_adapter.py --fixture` followed by `--check`: PASS with one deterministic plan record and zero remote operations. `git diff --check`: PASS.
+- No live GitHub Issue, child repository, branch, commit, PR, merge, release, Drive artifact, credential, or user artifact was changed. `ISSUE-CREATE-001` is DONE; lease released. `DRIVE-LIVE-001` is the next READY task.
+
+## Next exact action
+
+1. Implement `DRIVE-LIVE-001` as a provider-neutral append-only Drive bridge with plan mode first, then explicit sandbox live create/read verification.

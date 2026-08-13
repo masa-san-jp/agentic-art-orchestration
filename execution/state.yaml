@@ -1,29 +1,29 @@
 version: 2
-updated_at: "2026-08-13T12:27:30+09:00"
+updated_at: "2026-08-13T12:43:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-startup-audit
-  acquired_at: "2026-08-13T12:20:00+09:00"
-  expires_at: "2026-08-13T13:20:00+09:00"
-  lane: STARTUP
-  execution_id: STARTUP-AUDIT-001:attempt-1
-  released_at: "2026-08-13T12:27:30+09:00"
-  release_reason: completed; startup guard, status, audit, security, and deduplicated Issue candidates are connected with no child or external mutation
+  owner: codex-issue-create
+  acquired_at: "2026-08-13T12:31:00+09:00"
+  expires_at: "2026-08-13T13:31:00+09:00"
+  lane: FEEDBACK_DELIVERY
+  execution_id: ISSUE-CREATE-001:attempt-1
+  released_at: "2026-08-13T12:43:00+09:00"
+  release_reason: completed; create-only Issue adapter plan/live contract, fixture provider, stable deduplication, and allowlist validation passed without live mutation
   scope:
     repository: agentic-art-orchestration
-    paths: [.github/workflows/validate.yml, config/startup-policy.yaml, schemas/startup-report.schema.json, tools/startup.py, tools/validate.py, tests/test_startup_audit.py, tests/test_startup_contract.py, tests/test_startup_repository_updates.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
+    paths: [tools/github_issue_adapter.py, tests/test_github_issue_adapter.py, schemas/github-issue-delivery.schema.json, config/issue-delivery-policy.yaml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
 checkpoint:
-  task: STARTUP-AUDIT-001
+  task: ISSUE-CREATE-001
   repository: agentic-art-orchestration
   start_point: 043badb
-  expected_changes: Connect workspace guard, snapshot selection, status, audit, and security to startup; map critical findings to BLOCKED and noncritical findings to READY_WITH_FINDINGS without child or external mutation.
-  result: completed; critical/privacy findings block, noncritical findings produce READY_WITH_FINDINGS, and startup check is deterministic
-last_completed_task: STARTUP-AUDIT-001
+  expected_changes: Deliver allowlisted privacy-safe feedback and audit candidates through create-only plan/live Issue operations with stable deduplication and no update, close, comment, label, delete, branch, commit, or PR operation.
+  result: completed; plan and live fixture modes support at most one create per deduplication key, reuse existing Issues, and reject forbidden operations and privacy violations
+last_completed_task: ISSUE-CREATE-001
 resume_from:
-  task: ISSUE-CREATE-001
-  action: Implement the authenticated allowlisted create-only GitHub Issue adapter after human review of startup audit candidates.
+  task: DRIVE-LIVE-001
+  action: Connect the append-only artifact contract to real Google Drive with plan/live create-and-read verification.
   command: git status --short --branch
 post_merge:
   status: linked
