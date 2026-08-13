@@ -20,6 +20,13 @@ class GithubSandboxLiveCheckTests(unittest.TestCase):
     def test_policy_and_schema_are_closed_and_separate(self):
         self.assertEqual([], validate_github_sandbox_live_contract(self.policy, load_json(ROOT / "schemas/github-sandbox-live-evidence.schema.json"), self.manifest))
 
+    def test_retry_policy_rejects_unbounded_or_non_monotonic_settings(self):
+        invalid = dict(self.policy)
+        invalid["post_create_search"] = {"max_attempts": 11, "initial_delay_seconds": 9, "backoff_multiplier": 2, "max_delay_seconds": 8}
+        errors = validate_github_sandbox_live_contract(invalid, load_json(ROOT / "schemas/github-sandbox-live-evidence.schema.json"), self.manifest)
+        self.assertTrue(any("max_attempts" in error for error in errors))
+        self.assertTrue(any("initial delay exceeds maximum" in error for error in errors))
+
     def test_plan_has_no_remote_operations_and_is_deterministic(self):
         first = run_check(policy=self.policy, manifest=self.manifest)
         second = run_check(policy=self.policy, manifest=self.manifest)
@@ -51,6 +58,40 @@ class GithubSandboxLiveCheckTests(unittest.TestCase):
         self.assertEqual(1, len(provider.created))
         self.assertEqual(["READ", "CREATE", "READ", "REUSE"], [item["operation"] for item in result["remote_operations"]])
         self.assertNotIn("dedicated-sandbox", str(result))
+
+    def test_live_retries_eventually_consistent_search_without_waiting_in_fixture(self):
+        class EventuallyConsistentProvider(FixtureProvider):
+            def __init__(self):
+                super().__init__()
+                self.search_count = 0
+
+            def search(self, repository: str, deduplication_key: str) -> list[dict]:
+                self.search_count += 1
+                return super().search(repository, deduplication_key) if self.search_count >= 4 else []
+
+        provider = EventuallyConsistentProvider()
+        sleeps: list[float] = []
+        with patch.dict(os.environ, {"AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY": "masa-san-jp/dedicated-sandbox"}, clear=False):
+            result = run_check(mode="live", confirm_live=True, provider=provider, policy=self.policy, manifest=self.manifest, sleep=sleeps.append)
+        self.assertEqual("CREATED", result["status"])
+        self.assertEqual(4, provider.search_count)
+        self.assertEqual([2.0, 4.0], sleeps)
+        self.assertEqual(["READ", "CREATE", "READ", "READ", "READ", "REUSE"], [item["operation"] for item in result["remote_operations"]])
+        self.assertEqual([1, 2, 3], [item["attempt"] for item in result["remote_operations"] if item["operation"] == "READ" and "attempt" in item])
+
+    def test_live_blocks_after_finite_post_create_search_attempts(self):
+        class NeverIndexedProvider(FixtureProvider):
+            def search(self, repository: str, deduplication_key: str) -> list[dict]:
+                return []
+
+        policy = dict(self.policy)
+        policy["post_create_search"] = {"max_attempts": 3, "initial_delay_seconds": 0, "backoff_multiplier": 2, "max_delay_seconds": 0}
+        provider = NeverIndexedProvider()
+        with patch.dict(os.environ, {"AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY": "masa-san-jp/dedicated-sandbox"}, clear=False):
+            result = run_check(mode="live", confirm_live=True, provider=provider, policy=policy, manifest=self.manifest, sleep=lambda _: None)
+        self.assertEqual("BLOCKED", result["status"])
+        self.assertEqual(1, len(provider.created))
+        self.assertEqual(["READ", "CREATE", "READ", "READ", "READ"], [item["operation"] for item in result["remote_operations"]])
 
     def test_existing_issue_is_reused_without_create(self):
         provider = FixtureProvider([{"number": 9, "url": "https://github.com/masa-san-jp/dedicated-sandbox/issues/9"}])

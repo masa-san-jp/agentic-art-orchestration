@@ -19,6 +19,7 @@ V12_FIXTURE = ROOT / "tests/fixtures/v12-candidates"
 V12_MANIFEST = ROOT / "config/repositories.yaml"
 V12_WORKSPACE_ROOT = ROOT / "repos"
 GITHUB_SANDBOX_EVIDENCE_SCHEMA = ROOT / "schemas/github-sandbox-live-evidence.schema.json"
+GITHUB_SANDBOX_LIVE_POLICY = ROOT / "config/github-sandbox-live-policy.yaml"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -613,12 +614,32 @@ def _sandbox_live_evidence_check(evidence_path: Path | None = None) -> dict:
         and item["idempotency_key_hash"] == idempotency_hash
         for item in operations
     )
+    create_index = operation_names.index("CREATE") if "CREATE" in operation_names else -1
+    reuse_index = operation_names.index("REUSE") if "REUSE" in operation_names else -1
+    retry_policy = load_yaml(GITHUB_SANDBOX_LIVE_POLICY).get("post_create_search", {})
+    max_attempts = retry_policy.get("max_attempts") if isinstance(retry_policy, dict) else None
+    post_create_reads = operations[2:-1]
+    post_create_attempts = [item.get("attempt") for item in post_create_reads]
+    bounded_retry_evidence = (
+        isinstance(max_attempts, int)
+        and 1 <= len(post_create_reads) <= max_attempts
+        and (
+            post_create_attempts == list(range(1, len(post_create_reads) + 1))
+            or post_create_attempts == [None]
+        )
+    )
     fresh_create_reuse = (
         evidence["mode"] == "LIVE"
         and evidence["status"] == "CREATED"
         and evidence["operation"] == "CREATE"
         and evidence["issue_id_hash"] is not None
-        and operation_names == ["READ", "CREATE", "READ", "REUSE"]
+        and operation_names[0:2] == ["READ", "CREATE"]
+        and create_index == 1
+        and reuse_index == len(operation_names) - 1
+        and len(operation_names) >= 4
+        and all(item == "READ" for item in operation_names[2:-1])
+        and sum(item == "CREATE" for item in operation_names) == 1
+        and bounded_retry_evidence
         and consistent
     )
     if not fresh_create_reuse:

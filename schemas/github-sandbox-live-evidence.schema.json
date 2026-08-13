@@ -29,7 +29,8 @@
         "operation": {"enum": ["READ", "CREATE", "REUSE"]},
         "repository_id_hash": {"$ref": "#/$defs/hash"},
         "idempotency_key_hash": {"$ref": "#/$defs/hash"},
-        "issue_number": {"type": "integer", "minimum": 1}
+        "issue_number": {"type": "integer", "minimum": 1},
+        "attempt": {"type": "integer", "minimum": 1}
       }
     }
   }

@@ -919,4 +919,11 @@
 - live laneは、明示された`AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY`、`GITHUB_TOKEN`/`GH_TOKEN`、`--confirm-live`を要求する。開始前にrepository identity、非archive、Issues有効、push permissionをREADで確認する。
 - 実行範囲は`READ → CREATE → READ → REUSE`の1 Issueだけ。既存Issueが1件ならREUSE、複数ならCREATEせずBLOCKED。UPDATE/CLOSE/DELETE/COMMENT/LABEL/branch/commit/PR/merge/releaseはpolicyと実装の双方で禁止した。
 - `release_check.py --github-sandbox-evidence <path>`は、実liveで生成されたハッシュ済み証跡だけを受け取り、fresh single CREATEとREUSEの順序を検証する。証跡にrepository名、URL、body、credentialは保存しない。
-- fixtureテスト7件、release接続テストを含む全親テスト282件、`tools/validate.py --check`、`git diff --check`がPASS。sandbox環境変数とtokenは未設定のため、実GitHub Issue CREATEは行っていない。
+- fixtureテスト9件、release接続テストを含む全親テスト287件、`tools/validate.py --check`、`git diff --check`がPASS。sandbox環境変数とtokenは未設定のため、実GitHub Issue CREATEは行っていない。
+
+## ISSUE-33 eventual-consistency retry
+
+- 2026-08-14、Issue #33の実測（GitHub Issue CREATE直後の`/search/issues`索引遅延）に対応した。
+- `config/github-sandbox-live-policy.yaml`に`post_create_search`の有限リトライ設定を追加。既定は最大5回、2秒開始、倍率2、最大16秒。CREATE直後の検索だけを対象にし、既存Issueの初回検索は変更しない。
+- 各再試行はmetadata-onlyのREAD証跡（attempt番号付き）として保持し、単一Issueが見つかったときだけ`REUSE`を記録する。上限まで見つからなければ`BLOCKED`のままにして、作成成功を資格成功へ誤変換しない。
+- fixtureではsleepを注入して実時間待ちなしに遅延・上限到達を検証した。release判定は固定4操作列ではなく、`READ → CREATE → READ* → REUSE`かつCREATE一回を受け入れる。
