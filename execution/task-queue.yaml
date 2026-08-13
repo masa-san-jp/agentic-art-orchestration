@@ -1,5 +1,5 @@
 version: 4
-updated_at: "2026-08-13T06:47:47+09:00"
+updated_at: "2026-08-13T08:25:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -466,7 +466,7 @@ tasks:
   - id: V121-RELEASE-001
     milestone: M12
     title: Release the qualified v1.2.1 baseline through the human gate
-    status: BLOCKED
+    status: DONE
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -478,7 +478,7 @@ tasks:
   - id: PRODUCTION-PIN-001
     milestone: M13
     title: Requalify Research and Production commits that expose both exchange directions
-    status: BACKLOG
+    status: DONE
     lane: PRODUCTION_EXCHANGE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -489,7 +489,7 @@ tasks:
   - id: PRODUCTION-EXCHANGE-001
     milestone: M13
     title: Implement the parent-owned Production exchange orchestrator
-    status: BACKLOG
+    status: DONE
     lane: PRODUCTION_EXCHANGE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -500,7 +500,7 @@ tasks:
   - id: PRODUCTION-E2E-001
     milestone: M13
     title: Execute the Research-to-Production-to-Research exchange end to end
-    status: BACKLOG
+    status: DONE
     lane: PRODUCTION_EXCHANGE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -511,7 +511,7 @@ tasks:
   - id: PRODUCTION-QUALIFY-001
     milestone: M13
     title: Qualify the operational Production exchange
-    status: BACKLOG
+    status: DONE
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -522,7 +522,7 @@ tasks:
   - id: PRODUCTION-RELEASE-001
     milestone: M13
     title: Release the qualified Production exchange through the human gate
-    status: BACKLOG
+    status: IN_PROGRESS
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY

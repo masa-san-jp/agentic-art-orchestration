@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/production-exchange-e2e.schema.json",
+  "title": "Research Production exchange E2E v1",
+  "description": "Sanitized parent-owned terminal-state summary for the immutable Research to Production to Research exchange.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "network", "status", "normal_exchange", "scenarios", "acceptance", "remote_operations", "child_mutations"],
+  "properties": {
+    "contract_version": {"const": "production-exchange-e2e/v1"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "network": {"const": "disabled"},
+    "status": {"const": "PASSED"},
+    "normal_exchange": {"$ref": "#/$defs/normal"},
+    "scenarios": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/scenario"}},
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "remote_operations": {"const": []},
+    "child_mutations": {"const": []}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "normal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence_sha256", "stage_count", "result_statuses", "external_validation_required", "research_result_dry_run"],
+      "properties": {
+        "status": {"const": "PASSED"},
+        "evidence_sha256": {"$ref": "#/$defs/hash"},
+        "stage_count": {"type": "integer", "minimum": 1},
+        "result_statuses": {"type": "array", "minItems": 1, "items": {"enum": ["NOT_RUN", "EXTERNAL_VALIDATION_REQUIRED"]}},
+        "external_validation_required": {"const": true},
+        "research_result_dry_run": {"const": true}
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "status", "terminal_status", "reason_code"],
+      "properties": {
+        "scenario_id": {"enum": ["clean", "tamper", "stale", "incompatible", "dirty-source", "replay"]},
+        "status": {"enum": ["PASSED", "FAILED", "BLOCKED"]},
+        "terminal_status": {"enum": ["COMPLETE", "FAILED", "BLOCKED", "REPLAYED"]},
+        "reason_code": {"type": "string", "pattern": "^[A-Z0-9_:-]+$"}
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clean_exchange", "external_validation_unperformed", "research_result_dry_run", "tamper_terminal", "stale_terminal", "incompatible_terminal", "dirty_source_terminal", "replay_idempotent", "no_child_mutation", "no_remote_mutation"],
+      "properties": {
+        "clean_exchange": {"const": true},
+        "external_validation_unperformed": {"const": true},
+        "research_result_dry_run": {"const": true},
+        "tamper_terminal": {"const": true},
+        "stale_terminal": {"const": true},
+        "incompatible_terminal": {"const": true},
+        "dirty_source_terminal": {"const": true},
+        "replay_idempotent": {"const": true},
+        "no_child_mutation": {"const": true},
+        "no_remote_mutation": {"const": true}
+      }
+    }
+  }
+}

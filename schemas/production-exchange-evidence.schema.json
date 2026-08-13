@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/production-exchange-evidence.schema.json",
+  "title": "Research Production exchange evidence v1",
+  "description": "Parent-owned metadata for a reference-only Research to Production to Research exchange. Child bundle bodies and schemas remain external.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "mode", "status", "stages", "remote_operations", "child_mutations", "acceptance", "privacy"],
+  "properties": {
+    "contract_version": {"const": "production-exchange-evidence/v1"},
+    "run_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "mode": {"const": "immutable-networkless"},
+    "status": {"enum": ["PASSED", "FAILED", "BLOCKED"]},
+    "stages": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stage"}},
+    "remote_operations": {"const": []},
+    "child_mutations": {"const": []},
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "privacy": {"$ref": "#/$defs/privacy"}
+  },
+  "$defs": {
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "hash": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
+    "locator": {"type": "string", "pattern": "^run://[A-Za-z0-9][A-Za-z0-9._:-]*/[A-Za-z0-9._/-]+$"},
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "owner_repository", "source_commit", "command", "contract_version", "semantic_hash", "status", "terminal_status", "output_locator"],
+      "properties": {
+        "stage_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "owner_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "source_commit": {"$ref": "#/$defs/commit"},
+        "command": {"type": "string", "minLength": 1, "pattern": "^[^;|&<>`\\r\\n]+$"},
+        "contract_version": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9._/-]+$"},
+        "semantic_hash": {"$ref": "#/$defs/hash"},
+        "status": {"enum": ["PASSED", "FAILED", "BLOCKED", "NOT_RUN"]},
+        "terminal_status": {"enum": ["PREPARED", "HANDOFF_EXPORTED", "HANDOFF_ACCEPTED", "RESULT_EXPORTED", "RESULT_DRY_RUN", "NOT_RUN"]},
+        "output_locator": {"$ref": "#/$defs/locator"},
+        "reason_code": {"type": "string", "pattern": "^[A-Z0-9_:-]+$"}
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["research_handoff_exported", "production_handoff_accepted", "production_result_exported", "research_result_dry_run", "child_schema_not_copied", "adjacent_worktree_not_read", "external_effects_not_run"],
+      "properties": {
+        "research_handoff_exported": {"const": true},
+        "production_handoff_accepted": {"const": true},
+        "production_result_exported": {"const": true},
+        "research_result_dry_run": {"const": true},
+        "child_schema_not_copied": {"const": true},
+        "adjacent_worktree_not_read": {"const": true},
+        "external_effects_not_run": {"const": true}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_bundle_stored", "raw_asset_body_stored", "sensitive_data_stored", "opaque_paths_only"],
+      "properties": {
+        "raw_bundle_stored": {"const": false},
+        "raw_asset_body_stored": {"const": false},
+        "sensitive_data_stored": {"const": false},
+        "opaque_paths_only": {"const": true}
+      }
+    }
+  }
+}

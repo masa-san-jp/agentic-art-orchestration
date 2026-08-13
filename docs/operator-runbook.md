@@ -102,6 +102,14 @@ v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・prov
 
 v1.2.1は、Productionを含む5件のmanifest entryを対象に、v1.2.0と同じv1.2 E2E・v1.1回帰・親validator/test・security・immutable child quality gateを実行する。`--runs 1`は実装taskの疎通確認、`--runs 3`だけがqualificationである。5件のchild statusが全て`PASSED`、execution modeが`immutable-archive`、remote/merge/tag/release operationが未実行であることを確認する。remote default branchに新commitがあっても、このtaskはpinを更新しない。
 
+`PRODUCTION-QUALIFY-001`完了後は、manifest記録commitと一致するGit外のverified child workspaceを指定してv1.3.0をqualificationする。
+
+~~~bash
+.venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root <verified-child-workspace>
+~~~
+
+v1.3.0は、Research→Production→Researchのexchange E2Eを3回バイト比較し、clean、tamper、stale、incompatible、dirty-source、replayの終端行列、Productionを含む5repo・14 child gate、親suite、Git外出力、物理/remote effectなしを確認する。child workspaceはmanifest pinと`MATCHED`でなければ失敗とし、detached candidateを使う場合はそのcandidateを先にsnapshotしてstatus driftを混同しない。qualificationはRelease操作ではなく、merge/tag/GitHub Releaseは`PRODUCTION-RELEASE-001`の人間承認後に実行する。
+
 `data/release-check.json`で`status=PASSED`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`を確認する。qualification成功だけではrelease済みとは扱わず、merge、tag、release、公開、共有範囲拡張、artifact削除は人間の明示承認後に別途実行する。
 
 ## 3. taskを実行する

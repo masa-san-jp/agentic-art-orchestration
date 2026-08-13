@@ -677,3 +677,63 @@
 - 子repoの最新pinは`80aa824de33fddf7dc6dff526191699ce483bea0`で、子repoのIssue、schema、canonical data、branchは変更していない。
 - マージ後の親mainを取得し、manifest内容、親main SHA、既存214 tests / validator / diff checkのPR証跡を確認した。外部artifact、release、tag、物理effectは実施していない。
 - acceptance: 1/1達成。親mainと子Issue SSOTの結線は確立済み。後続の`V121-RELEASE-001`はqualification済み親差分のhuman reviewとrelease操作を扱う。
+
+## PRODUCTION-PIN-001 evidence
+
+- v1.2.1 release済みの親mainを起点に、5つの子repoのremote `main` headをread-onlyで観測した。Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf` はhandoff exportとproduction-result import、Production `9f1e332ae9faa1ecf098dd2f406f04c0506562b2` はhandoff receiptとproduction-result exportを公開していることを確認した。
+- self-model `53cdcb00d26a71ccf02d81b5a09e67804b9a2b73`、art-history `ab18a70fb3a16f62d89550e6b342aa17da4fc93e`、marketing `e9b86f3a352be43cd6e19624c481b446b4337077`を含む5つのclean immutable archiveを一時workspaceへ配置した。親manifestのResearch/Production pinを更新し、handoff schemaのSHA-256 `715f2426474de9d957ef3129e0a65d69492ff7e75181272b52cb4cbb850cf0f7`、production-result schemaのSHA-256 `5b69090476891629932e5b01260a6217273f8a4771cc004d4922fcd04a0a104a`が各子境界で一致することを確認した。
+- `child_quality_gates.py`は5 repository、14/14 gateを`PASSED`、全pinを`MATCHED`として出力した。候補workspaceを明示した親statusは`CLEAN / blocker 0`、auditはfinding 0、securityは`PASSED`、validatorとdiff checkもpassした。候補のsnapshotは親正本へ反映済みである。
+- 安全境界として、常設`repos/`の旧pin checkoutは自動更新していない。したがってデフォルトworkspaceを指定しないstatusは旧checkoutとの差分を検出するが、qualified candidate workspaceはCLEANである。常設checkoutの同期は別途明示した操作として扱う。
+- 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gate、commitは変更していない。GitHub Issue、Google Drive、外部artifact、物理effectも変更していない。親へ追加したのはrepo ID、immutable commit、contract hash、gate/status証跡だけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは含めていない。
+- acceptance: 1/1達成。`PRODUCTION-PIN-001`をDONE、leaseをreleased、依存完了済み最小IDの`PRODUCTION-EXCHANGE-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `git status --short --branch`で親差分を確認し、`PRODUCTION-EXCHANGE-001`として親所有のProduction exchange orchestratorの既存実装・schema参照・テストを調査する。子repo schemaの複製と隣接dirty workspaceの参照は行わない。
+
+## PRODUCTION-EXCHANGE-001 evidence
+
+- `schemas/production-exchange-evidence.schema.json`と`tools/production_exchange.py`を親repoへ追加した。親owned contractはResearch→Production→Researchの順序、owner repo@immutable commit、child command metadata、contract version、bundle semantic hash、terminal status、`run://` opaque locator、privacy/mutation boundaryだけを保持し、child schema・bundle本文・asset bodyを保持しない。
+- runnerはmanifest-pinned Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf`とProduction `9f1e332ae9faa1ecf098dd2f406f04c0506562b2`をarchive化し、Git外run rootで子CLIをargument listとして実行する。Research handoff export、Production handoff receipt、plan/prototype/runtime projection、production-result export、Research result `--dry-run` importの8段階が`PASSED`した。
+- 同じmanifest、commit、run ID、generated_atを2つの独立Git外run rootで実行し、`exchange-evidence.json`がbyte-identicalだった。`tests/test_production_exchange.py`は正常系、remote/child mutation、shell control syntax、raw/sensitive marker、unsafe locator、provenance欠落をfail-closedで確認する。
+- Productionの物理作業、購入、契約、公開、外部送信は実行していない。Research result importは`--dry-run`のみで、child applyはしていない。remote operations、child mutationsは空配列である。
+- 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gate、commitは変更していない。親の一時fixtureだけをGit外へ生成し、Research child CLIの受入条件を満たすためのfixture metadataと生成handoffを一時commitした。親へ残したのは証跡metadataだけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは含めていない。
+- Research pinで旧来のfixture helperに`Finding.render()`不整合があることを観測したため、parent runnerはfixture preparationを子helperへ委譲せず、子のcanonical fixtureをGit外へ展開してhandoff-owned CLIを呼ぶ。子repoの不具合修正は別Issue/別PRの対象である。
+- acceptance: 1/1達成。`PRODUCTION-EXCHANGE-001`をDONE、leaseをreleased、依存完了済み最小IDの`PRODUCTION-E2E-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `git status --short --branch`で差分を確認し、`PRODUCTION-E2E-001`としてtamper、schema mismatch、dirty source、replay、unsupported versionの明示terminal testを追加する。
+
+## PRODUCTION-E2E-001 evidence
+
+- `tools/production_exchange.py`へ、固定manifest commit上のResearch→Production→Research正常系と、親owned sanitized terminal matrixを追加した。`schemas/production-exchange-e2e.schema.json`と`tests/test_production_exchange_e2e.py`で契約、ネットワーク無効、結果status、失敗終端、mutation禁止を固定した。
+- qualification run `PRODUCTION-E2E-001:qualification` は8段階のclean exchangeを完了し、Production resultの物理・外部検証を`NOT_RUN`として保持、Research result importは`--dry-run`のみ実行した。親のGitignored generated summaryに記録したnormal evidence hashは`sha256:f4814b86f644a20245432dc4bc1aa4f55acb67e69ba293f0d1747def5f6d332c`。
+- terminal matrixはclean=`PASSED/COMPLETE`、tamper=`FAILED/FAILED`、stale=`BLOCKED/BLOCKED`、incompatible=`FAILED/FAILED`、dirty-source=`BLOCKED/BLOCKED`、replay=`PASSED/REPLAYED`。child error本文やraw bundle本文は親証跡へ保存していない。
+- child CLI依存のため、実行時は依存を持つqualification Pythonを`--child-python`で指定可能にした。親は引き続きmanifest pinのclean archiveだけを使用し、常設`repos/`と子repoのbranch、working tree、Issue、PR、schema、canonical data、commitは変更していない。
+- `remote_operations=[]`、`child_mutations=[]`。物理作業、購入、契約、公開、外部送信、Research apply、Google Drive変更は実行していない。security forbidden markerは0件。
+- acceptance: 1/1達成。`PRODUCTION-E2E-001`をDONE、leaseをreleased、依存完了済み最小IDの`PRODUCTION-QUALIFY-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `git status --short --branch`で差分を確認し、`PRODUCTION-QUALIFY-001`として同一qualificationを3回実行し、byte stability・親検証・5 repo child gates・Git外出力を総合確認する。
+
+## PRODUCTION-QUALIFY-001 evidence
+
+- `tools/release_check.py`へv1.3.0のread-only qualification経路を追加した。既存v1.0.0〜v1.2.1 gateを維持し、Production exchangeを3回、固定generated_at・同一run ID・独立Git外run rootで実行してcanonical JSON bytesを比較する。`tests/test_release_check.py`へversion受入とchild gate/exchange判定のfail-closed回帰を追加した。
+- 初回に使った候補workspaceは、5repoのgate自体は14/14 `PASSED`だったが、core 3repoがmanifest記録pinより後続commitで`STALE`だったため資格判定を失敗させた。pin更新や既存workspace変更はせず、候補履歴に存在するmanifest記録commitへ5repoをdetached checkoutした新しいGit外candidateを作成した。
+- `/tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun`は終了コード0、`status=PASSED`。3回のProduction exchange report SHAはすべて`sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93`、6シナリオ行列、`remote_operations=[]`、`child_mutations=[]`、`tracked_output_paths=[]`、physical/remote effectなしだった。
+- 各回のchild gateは5 repository、14/14 gate、全repo `MATCHED`、`immutable-archive`、全status `PASSED`。生成後のstandalone `child_quality_gates.py --check`も`PASSED`。親validator、225 tests、history finding 0、audit finding 0、security `PASSED`、workspace snapshot/status `--check`、`git diff --check`も通過した。
+- 初回candidateはdetachedのためasync-auditとstatusの通常branch保護によりblockerとなった。各manifest pinから一時candidate内に`qualification-main` branchを作り、5repoを記録commitへ揃えた後、snapshot/statusは`drift=CLEAN`・blocker 1（human release gateのみ）となった。qualificationの`MATCHED`判定（immutable archive上のpin一致）とstatusの通常branch保護を両方満たしている。常設`repos/`、子reporemote、Issue、PR、schema、canonical data、Google Drive、外部Production artifactは変更していない。
+- 機微情報確認: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは追加していない。出力はGitignoreされた`data/`またはGit外一時rootに限定し、親のqualification reportはcommit/status/hash/countだけを保持する。
+- acceptance: 1/1達成。`PRODUCTION-QUALIFY-001`をDONE、leaseをreleased、`PRODUCTION-RELEASE-001`をREADYへ遷移した。v1.3.0のmerge、tag、GitHub Releaseは人間承認が必要なため未実行。
+
+## Next exact action
+
+1. 人間が親repo差分とv1.3.0 qualification evidenceをレビューし、`PRODUCTION-RELEASE-001`としてmerge、v1.3.0 tag、GitHub Releaseを明示承認する。最初の操作は`git status --short --branch`。
+
+## PRODUCTION-RELEASE-001 execution
+
+- 2026-08-13 11:56 JST、ユーザーがv1.3.0のmerge・tag・GitHub Releaseを明示依頼したため、human gateを解除してrelease taskをclaimした。
+- 対象は親repoのqualification済み差分だけ。子repo5件、GitHub Issue、Google Drive、外部Production artifact、物理effectは変更対象外とする。
+- 次の操作は親branchのrelease PR準備、CIとmerge SHAの確認、merge SHAへの`v1.3.0` tag作成、GitHub Release公開。branch削除は行わない。

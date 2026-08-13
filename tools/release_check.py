@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -21,6 +22,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.e2e import run_e2e
+from tools.child_quality_gates import run_child_quality_gates
+from tools.production_exchange import run_exchange_e2e
+from tools.validate import load_yaml
 from tools.v12_e2e import run_v12_e2e
 from tools.interaction_e2e import run_interaction_e2e
 
@@ -64,8 +68,8 @@ def _git(command: list[str]) -> str:
 
 
 def validate_request(version: str, runs: int) -> None:
-    if version not in {"1.0.0", "1.1.0", "1.2.0", "1.2.1"}:
-        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, 1.2.0, and 1.2.1 are supported; remediation: qualify the declared task version")
+    if version not in {"1.0.0", "1.1.0", "1.2.0", "1.2.1", "1.3.0"}:
+        raise ReleaseCheckError("only versions 1.0.0, 1.1.0, 1.2.0, 1.2.1, and 1.3.0 are supported; remediation: qualify the declared task version")
     if runs <= 0:
         raise ReleaseCheckError("runs must be positive; remediation: use at least one deterministic E2E run")
 
@@ -342,6 +346,142 @@ def _v12_release_checks(python: str, workspace_root: Path) -> list[dict]:
         return checks
 
 
+def _child_gate_summary(report: dict) -> dict:
+    """Reduce child gate evidence to release-safe observations."""
+    results = report.get("results", [])
+    gate_statuses = [
+        gate.get("status")
+        for result in results
+        for gate in result.get("gates", [])
+    ]
+    repositories_match = all(
+        result.get("workspace_state") == "MATCHED"
+        and result.get("workspace_commit") == result.get("observed_commit")
+        for result in results
+    )
+    passed = (
+        len(results) == 5
+        and repositories_match
+        and all(result.get("status") == "PASSED" for result in results)
+        and len(gate_statuses) == 14
+        and all(status == "PASSED" for status in gate_statuses)
+        and all(result.get("execution_mode") == "immutable-archive" for result in results)
+    )
+    return {
+        "status": "PASSED" if passed else "FAILED",
+        "repository_count": len(results),
+        "gate_count": len(gate_statuses),
+        "repository_statuses": sorted({result.get("status") for result in results}),
+        "gate_statuses": sorted(set(gate_statuses)),
+        "workspace_states": sorted({result.get("workspace_state") for result in results}),
+        "execution_modes": sorted({result.get("execution_mode") for result in results}),
+        "repositories_match_recorded_commits": repositories_match,
+    }
+
+
+def _production_exchange_check(
+    runs: int,
+    workspace_root: Path,
+    child_python: str,
+) -> dict:
+    """Qualify the Production exchange without retaining child or bundle content."""
+    manifest = load_yaml(V12_MANIFEST)
+    e2e_reports: list[dict] = []
+    e2e_bytes: list[bytes] = []
+    child_summaries: list[dict] = []
+    error_types: list[str] = []
+    generated_at = "2026-08-13T09:00:00+09:00"
+    with tempfile.TemporaryDirectory(prefix="release-production-") as temporary_name:
+        temporary = Path(temporary_name)
+        for index in range(runs):
+            try:
+                report = run_exchange_e2e(
+                    manifest,
+                    workspace_root,
+                    temporary / f"exchange-{index + 1}",
+                    run_id="PRODUCTION-QUALIFY-001",
+                    generated_at=generated_at,
+                    child_python=child_python,
+                )
+                rendered = (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+                e2e_reports.append(report)
+                e2e_bytes.append(rendered)
+                child_report = run_child_quality_gates(
+                    manifest,
+                    workspace_root,
+                    run_id=f"PRODUCTION-QUALIFY-001:child-{index + 1}",
+                )
+                child_summaries.append(_child_gate_summary(child_report))
+            except Exception as exc:  # qualification report must remain sanitized
+                error_types.append(type(exc).__name__)
+    deterministic = bool(e2e_bytes) and len(e2e_bytes) == runs and all(
+        observed == e2e_bytes[0] for observed in e2e_bytes[1:]
+    )
+    expected_scenarios = {
+        "clean": ("PASSED", "COMPLETE"),
+        "tamper": ("FAILED", "FAILED"),
+        "stale": ("BLOCKED", "BLOCKED"),
+        "incompatible": ("FAILED", "FAILED"),
+        "dirty-source": ("BLOCKED", "BLOCKED"),
+        "replay": ("PASSED", "REPLAYED"),
+    }
+    scenario_matrix_passed = bool(e2e_reports) and all(
+        {
+            item.get("scenario_id"): (item.get("status"), item.get("terminal_status"))
+            for item in report.get("scenarios", [])
+        }
+        == expected_scenarios
+        for report in e2e_reports
+    )
+    no_effects = bool(e2e_reports) and all(
+        report.get("remote_operations") == []
+        and report.get("child_mutations") == []
+        and report.get("normal_exchange", {}).get("status") == "PASSED"
+        and report.get("normal_exchange", {}).get("external_validation_required") is True
+        and report.get("normal_exchange", {}).get("research_result_dry_run") is True
+        for report in e2e_reports
+    )
+    child_gates_passed = bool(child_summaries) and len(child_summaries) == runs and all(
+        summary["status"] == "PASSED" for summary in child_summaries
+    )
+    tracked_outputs = [
+        path
+        for path in _git(
+            [
+                "ls-files",
+                "--",
+                "data/production-exchange.json",
+                "data/release-check.json",
+                "data/child-quality-gates.json",
+            ]
+        ).splitlines()
+        if path
+    ]
+    git_external_outputs = not tracked_outputs
+    passed = (
+        deterministic
+        and scenario_matrix_passed
+        and no_effects
+        and child_gates_passed
+        and git_external_outputs
+        and not error_types
+    )
+    return {
+        "id": "production-exchange",
+        "status": "PASSED" if passed else "FAILED",
+        "runs": runs,
+        "deterministic": deterministic,
+        "report_sha256": ["sha256:" + hashlib.sha256(value).hexdigest() for value in e2e_bytes],
+        "scenario_matrix_passed": scenario_matrix_passed,
+        "child_gates_passed": child_gates_passed,
+        "child_gate_runs": child_summaries,
+        "git_external_outputs": git_external_outputs,
+        "tracked_output_paths": tracked_outputs,
+        "no_physical_or_remote_effect": no_effects,
+        "error_types": sorted(set(error_types)),
+    }
+
+
 def qualify(
     version: str = "1.0.0",
     runs: int = 3,
@@ -354,7 +494,7 @@ def qualify(
         _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
         _command_check("audit-materialize", [python, "tools/audit.py", "--offline-fixture"]),
     ]
-    if version in {"1.1.0", "1.2.0", "1.2.1"}:
+    if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0"}:
         checks.extend(
             [
                 _command_check("retrieval-materialize", [python, "tools/retrieval.py"]),
@@ -377,7 +517,7 @@ def qualify(
             _command_check("security", [python, "tools/security.py", "--offline-fixture"]),
         ]
     )
-    if version in {"1.1.0", "1.2.0", "1.2.1"}:
+    if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0"}:
         checks.extend(
             [
                 _command_check("retrieval", [python, "tools/retrieval.py", "--check"]),
@@ -410,17 +550,19 @@ def qualify(
                 ),
             ]
         )
-    if version in {"1.2.0", "1.2.1"}:
+    if version in {"1.2.0", "1.2.1", "1.3.0"}:
         checks.extend(_v12_release_checks(python, workspace_root))
     e2e = _e2e_check(runs)
-    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1"} else None
-    v12_e2e = _v12_e2e_check(runs, workspace_root) if version in {"1.2.0", "1.2.1"} else None
+    interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0"} else None
+    v12_e2e = _v12_e2e_check(runs, workspace_root) if version in {"1.2.0", "1.2.1", "1.3.0"} else None
+    production_exchange = _production_exchange_check(runs, workspace_root, python) if version == "1.3.0" else None
     history = _history_forbidden_findings()
     passed = (
         all(item["status"] == "PASSED" for item in checks)
         and e2e["status"] == "PASSED"
         and (interaction_e2e is None or interaction_e2e["status"] == "PASSED")
         and (v12_e2e is None or v12_e2e["status"] == "PASSED")
+        and (production_exchange is None or production_exchange["status"] == "PASSED")
         and history["status"] == "PASSED"
     )
     report_checks = checks + [e2e]
@@ -428,6 +570,8 @@ def qualify(
         report_checks.append(interaction_e2e)
     if v12_e2e is not None:
         report_checks.append(v12_e2e)
+    if production_exchange is not None:
+        report_checks.append(production_exchange)
     return {
         "version": version,
         "network": "disabled",
@@ -456,7 +600,7 @@ def _write_atomic(path: Path, content: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Qualify v1.0.0, v1.1.0, v1.2.0, or v1.2.1 without performing release operations")
+    parser = argparse.ArgumentParser(description="Qualify v1.0.0 through v1.3.0 without performing release operations")
     parser.add_argument("--version", required=True)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workspace-root", type=Path, default=V12_WORKSPACE_ROOT)
