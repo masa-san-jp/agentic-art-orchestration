@@ -1,30 +1,29 @@
 version: 2
-updated_at: "2026-08-13T12:10:00+09:00"
-active_task: STARTUP-DRIFT-001
+updated_at: "2026-08-13T12:12:30+09:00"
+active_task: null
 active_repository: agentic-art-orchestration
 lease:
-  status: active
+  status: released
   owner: codex-startup-drift
   acquired_at: "2026-08-13T12:06:00+09:00"
   expires_at: "2026-08-13T13:10:00+09:00"
   lane: STARTUP
   execution_id: STARTUP-DRIFT-001:attempt-1
+  released_at: "2026-08-13T12:12:30+09:00"
+  release_reason: completed; five manifest repository heads observed read-only and offline startup check passed
   scope:
     repository: agentic-art-orchestration
     paths: [tools/startup.py, tests/test_startup_repository_updates.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
-  scope:
-    repository: agentic-art-orchestration
-    paths: [config/startup-policy.yaml, schemas/startup-report.schema.json, tools/validate.py, tests/test_startup_contract.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
 checkpoint:
   task: STARTUP-DRIFT-001
   repository: agentic-art-orchestration
   start_point: 5a966c3
   expected_changes: Implement read-only default-branch head observation for every manifest repository, compare remote heads with qualified pins, and preserve pin, checkout, branch, Issue, Drive, and child-file boundaries.
-  result: in_progress; claim recorded before implementation
-last_completed_task: STARTUP-CONTRACT-001
+  result: completed; five repository observations, update candidate/unavailable handling, and deterministic check passed
+last_completed_task: STARTUP-DRIFT-001
 resume_from:
-  task: STARTUP-DRIFT-001
-  action: Implement read-only default-branch head observation in tools/startup.py using the completed startup contract.
+  task: STARTUP-AUDIT-001
+  action: Connect workspace guard, snapshot, status, audit, and security into the startup decision.
   command: git status --short --branch
 post_merge:
   status: linked

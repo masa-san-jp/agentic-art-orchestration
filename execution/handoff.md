@@ -763,3 +763,22 @@
 ## Next exact action
 
 1. Implement `tools/startup.py` for read-only default-branch head observation, beginning with its offline fixture and repository update tests.
+
+## STARTUP-DRIFT-001 execution
+
+- 2026-08-13 12:10 JST、`STARTUP-DRIFT-001`をclaimした。対象は親repoのstartup observerとoffline fixture testのみ。
+- remote default branchは`git ls-remote`のargument-list呼び出しで観測し、`observed_commit`とqualified snapshotを比較する。remote updateは`UPDATE_CANDIDATE`、観測不能は`UNAVAILABLE`として記録し、pin・checkout・branch・Issue・Driveを変更しない。
+- 子repoのcommit、schema、canonical data、working treeは変更対象外。生成fixtureはGit外一時rootだけを使用する。
+
+## STARTUP-DRIFT-001 completed
+
+- `tools/startup.py` observes every manifest repository's declared default branch with argument-list `git ls-remote`; it never fetches, checks out, edits pins, changes branches, or mutates child files.
+- The report compares each remote head with the qualified snapshot pin and emits `CLEAN`, `UPDATE_CANDIDATE`, or `UNAVAILABLE`. All repositories remain `pinned_for_use=true`; remote differences are visible findings and do not replace the qualified snapshot.
+- `tests/test_startup_repository_updates.py` covers five-repository offline observation, deterministic `--check` replay, clean/update/unavailable states, snapshot immutability, and shell-control rejection.
+- `.venv/bin/python tools/validate.py --check`: PASS. `.venv/bin/python -m unittest tests.test_startup_repository_updates -v`: 3 tests PASS. `.venv/bin/python tools/startup.py --offline-fixture --check`: PASS with 5 repositories and `READY_WITH_FINDINGS`/`UPDATE_CANDIDATE`. `git diff --check`: PASS.
+- No child repository, schema, canonical data, working tree, GitHub Issue, Google Drive artifact, branch, pin, or physical/external effect was changed. Output was written only to Git-external temporary paths.
+- Acceptance: 1/1 achieved. `STARTUP-DRIFT-001` is DONE; lease released. `STARTUP-AUDIT-001` is the next task.
+
+## Next exact action
+
+1. Connect `tools/workspace.py`, `tools/status.py`, `tools/audit.py`, and `tools/security.py` into startup after snapshot selection.

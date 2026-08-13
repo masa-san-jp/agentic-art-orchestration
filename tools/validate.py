@@ -83,6 +83,7 @@ REQUIRED_FILES = [
     "schemas/production-exchange-e2e.schema.json",
     "tools/production_exchange.py",
     "tools/v12_e2e.py",
+    "tools/startup.py",
     "config/startup-policy.yaml",
     "schemas/startup-report.schema.json",
     "execution/task-queue.yaml",

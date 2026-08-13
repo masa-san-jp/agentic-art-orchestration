@@ -545,7 +545,7 @@ tasks:
   - id: STARTUP-DRIFT-001
     milestone: M14
     title: Check every registered child repository for updates at startup
-    status: READY
+    status: DONE
     lane: STARTUP
     interaction_blocking: true
     user_artifact_policy: READ_ONLY
@@ -556,7 +556,7 @@ tasks:
   - id: STARTUP-AUDIT-001
     milestone: M14
     title: Run repository audit during every initial startup
-    status: BACKLOG
+    status: READY
     lane: STARTUP_AUDIT
     interaction_blocking: true
     user_artifact_policy: READ_ONLY
