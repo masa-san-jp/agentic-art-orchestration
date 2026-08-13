@@ -15,6 +15,15 @@ The default is networkless planning:
 
 This runs startup, retrieval, feedback routing, a Drive create-only plan, and a GitHub Issue create-only plan. It performs no remote operation, stores no Drive content, and does not create or update an Issue.
 
+The complete initial-operations regression is:
+
+```sh
+.venv/bin/python tools/initial_operations_e2e.py --offline-fixture
+.venv/bin/python tools/initial_operations_e2e.py --offline-fixture --check
+```
+
+It proves startup and pinned retrieval, one Drive CREATE followed by idempotent read-back/replay, explicit versus inferred feedback, and one Issue CREATE followed by deduplicated REUSE. Its `live_gate` remains `NOT_REQUESTED`; a real operation is a separate human-confirmed step.
+
 The output is `data/agent-ui.json`, which is ignored by Git. It contains only structured metadata and opaque references. Do not copy raw prompts, conversation text, artifact bodies, credentials, signed URLs, or direct provider identifiers into a tracked file.
 
 ## Explicit operations

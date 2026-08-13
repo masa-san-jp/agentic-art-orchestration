@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/initial-operations-e2e.schema.json",
+  "title": "Initial operations E2E evidence v1",
+  "description": "Metadata-only scripted evidence for startup, retrieval, append-only Drive, feedback, and create-only Issue delivery.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "network", "startup", "retrieval", "drive", "feedback", "issue", "live_gate", "privacy", "acceptance", "remote_operations"],
+  "properties": {
+    "contract_version": {"const": "initial-operations-e2e/v1"},
+    "run_id": {"$ref": "#/$defs/execution_id"},
+    "network": {"const": "disabled"},
+    "startup": {"$ref": "#/$defs/startup"},
+    "retrieval": {"$ref": "#/$defs/retrieval"},
+    "drive": {"$ref": "#/$defs/drive"},
+    "feedback": {"$ref": "#/$defs/feedback"},
+    "issue": {"$ref": "#/$defs/issue"},
+    "live_gate": {"$ref": "#/$defs/live_gate"},
+    "privacy": {"$ref": "#/$defs/privacy"},
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "remote_operations": {"const": []}
+  },
+  "$defs": {
+    "stable_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "execution_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "startup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "parent_commit", "ordered_step_count", "update_check_status", "audit_status", "finding_codes"],
+      "properties": {
+        "status": {"enum": ["READY", "READY_WITH_FINDINGS", "BLOCKED"]},
+        "parent_commit": {"$ref": "#/$defs/sha40"},
+        "ordered_step_count": {"const": 9},
+        "update_check_status": {"enum": ["PASSED", "FINDINGS", "BLOCKED"]},
+        "audit_status": {"enum": ["PASSED", "FINDINGS", "BLOCKED"]},
+        "finding_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "repository_at_commit", "freshness", "evidence_ids"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/stable_id"},
+        "repository_at_commit": {"type": "string", "minLength": 1},
+        "freshness": {"type": "array", "uniqueItems": true, "items": {"enum": ["current", "stale", "unknown", "not-applicable"]}},
+        "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}}
+      }
+    },
+    "retrieval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "sources", "gaps", "constraints"],
+      "properties": {
+        "status": {"enum": ["COMPLETE", "COMPLETE_WITH_GAPS", "NO_MATCH"]},
+        "sources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/source"}},
+        "gaps": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "constraints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "drive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "create_status", "replay_status", "operation_sequence", "provider_file_count", "provider_file_id_hash", "content_hash", "source_snapshot_count", "forbidden_operations"],
+      "properties": {
+        "provider": {"const": "fake-google-drive"},
+        "create_status": {"const": "CREATED"},
+        "replay_status": {"const": "REPLAYED"},
+        "operation_sequence": {"type": "array", "minItems": 3, "uniqueItems": false, "items": {"enum": ["READ", "CREATE"]}},
+        "provider_file_count": {"const": 1},
+        "provider_file_id_hash": {"$ref": "#/$defs/hash"},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "source_snapshot_count": {"type": "integer", "minimum": 1},
+        "forbidden_operations": {"const": []}
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["captured_ids", "explicit_ids", "inferred_ids", "routing_statuses", "promoted_to_user_fact"],
+      "properties": {
+        "captured_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "explicit_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "inferred_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "routing_statuses": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "promoted_to_user_fact": {"const": false}
+      }
+    },
+    "issue_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "operation", "target_repository", "issue_id_hash"],
+      "properties": {
+        "status": {"enum": ["CREATED", "REUSED"]},
+        "operation": {"enum": ["CREATE", "REUSE"]},
+        "target_repository": {"$ref": "#/$defs/stable_id"},
+        "issue_id_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "target_repository", "create", "reuse", "operation_sequence", "forbidden_operations"],
+      "properties": {
+        "provider": {"const": "fixture-github"},
+        "target_repository": {"$ref": "#/$defs/stable_id"},
+        "create": {"$ref": "#/$defs/issue_record"},
+        "reuse": {"$ref": "#/$defs/issue_record"},
+        "operation_sequence": {"type": "array", "minItems": 2, "items": {"enum": ["READ", "CREATE", "REUSE"]}},
+        "forbidden_operations": {"const": []}
+      }
+    },
+    "live_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "available_paths", "required_controls", "remote_operations"],
+      "properties": {
+        "status": {"const": "NOT_REQUESTED"},
+        "available_paths": {"const": ["drive:create_read", "github:search_create_reuse"]},
+        "required_controls": {"const": ["approved_sandbox", "credential_outside_git", "explicit_confirmation", "single_live_lane"]},
+        "remote_operations": {"const": []}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_conversation_stored", "raw_query_stored", "drive_content_stored", "credentials_stored", "direct_identifiers_stored"],
+      "properties": {
+        "raw_conversation_stored": {"const": false},
+        "raw_query_stored": {"const": false},
+        "drive_content_stored": {"const": false},
+        "credentials_stored": {"const": false},
+        "direct_identifiers_stored": {"const": false}
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup_checked", "pinned_answer", "drive_create_replay", "feedback_distinguished", "issue_create_reuse", "no_forbidden_mutation", "live_gate_closed", "privacy_closed"],
+      "properties": {
+        "startup_checked": {"const": true},
+        "pinned_answer": {"const": true},
+        "drive_create_replay": {"const": true},
+        "feedback_distinguished": {"const": true},
+        "issue_create_reuse": {"const": true},
+        "no_forbidden_mutation": {"const": true},
+        "live_gate_closed": {"const": true},
+        "privacy_closed": {"const": true}
+      }
+    }
+  }
+}

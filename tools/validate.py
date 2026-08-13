@@ -27,6 +27,7 @@ RETRIEVAL_RESULT_SCHEMA_PATH = ROOT / "schemas/retrieval-result.schema.json"
 IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
 INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
 AGENT_UI_SCHEMA_PATH = ROOT / "schemas/agent-ui-result.schema.json"
+INITIAL_OPERATIONS_E2E_SCHEMA_PATH = ROOT / "schemas/initial-operations-e2e.schema.json"
 V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.json"
 V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
@@ -71,6 +72,7 @@ REQUIRED_FILES = [
     "schemas/improvement-loop.schema.json",
     "schemas/interaction-e2e.schema.json",
     "schemas/agent-ui-result.schema.json",
+    "schemas/initial-operations-e2e.schema.json",
     "schemas/research-execution-boundary.schema.json",
     "config/research-execution-boundary.yaml",
     "tools/v12_boundary.py",
@@ -100,6 +102,7 @@ REQUIRED_FILES = [
     "tools/drive_live_bridge.py",
     "tools/drive_live_check.py",
     "tools/agent_ui.py",
+    "tools/initial_operations_e2e.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -2777,6 +2780,47 @@ def validate_agent_ui_result(data: dict, source: str = "agent-ui") -> list[str]:
     privacy = data.get("privacy", {})
     if isinstance(privacy, dict) and any(privacy.get(field) is not False for field in ("raw_query_stored", "raw_conversation_stored", "drive_content_stored", "credentials_stored", "direct_identifiers_stored")):
         errors.append(_interaction_error(source, "agent UI privacy boundary is open", "store only structured metadata and opaque references"))
+    return errors
+
+
+def validate_initial_operations_e2e(data: dict, source: str = "initial-operations-e2e") -> list[str]:
+    """Validate the closed networkless initial operations evidence envelope."""
+    errors: list[str] = []
+    schema = load_json(INITIAL_OPERATIONS_E2E_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the initial operations E2E field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+    startup = data.get("startup", {})
+    if isinstance(startup, dict) and startup.get("ordered_step_count") != 9:
+        errors.append(_interaction_error(source, "startup preflight is incomplete", "run all nine read-only startup steps"))
+    retrieval = data.get("retrieval", {})
+    if isinstance(retrieval, dict):
+        for index, source_item in enumerate(retrieval.get("sources", [])):
+            if not isinstance(source_item, dict):
+                continue
+            repository_at_commit = source_item.get("repository_at_commit", "")
+            repository = source_item.get("repository")
+            if repository not in repository_at_commit or "@" not in repository_at_commit:
+                errors.append(_interaction_error(source, f"retrieval.sources[{index}] lacks repository@commit", "retain immutable source provenance in the answer"))
+    drive = data.get("drive", {})
+    if isinstance(drive, dict) and drive.get("operation_sequence") != ["READ", "CREATE", "READ", "READ", "READ"]:
+        errors.append(_interaction_error(source, "Drive operation sequence is not create/read/replay-only", "keep replay as a marker search and read-back without a second CREATE"))
+    issue = data.get("issue", {})
+    if isinstance(issue, dict):
+        if issue.get("create", {}).get("target_repository") != issue.get("reuse", {}).get("target_repository"):
+            errors.append(_interaction_error(source, "Issue CREATE/REUSE targets differ", "reuse the same authoritative deduplication target"))
+    if data.get("network") != "disabled" or data.get("remote_operations") != []:
+        errors.append(_interaction_error(source, "initial operations E2E has remote operations", "keep the qualification path networkless and use a separate opt-in live gate"))
+    live_gate = data.get("live_gate", {})
+    if isinstance(live_gate, dict) and live_gate.get("status") != "NOT_REQUESTED":
+        errors.append(_interaction_error(source, "live gate was implicitly executed", "require an explicit sandbox and human confirmation before live operations"))
+    acceptance = data.get("acceptance", {})
+    if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
+        errors.append(_interaction_error(source, "initial operations E2E acceptance is incomplete", "preserve every startup, provenance, idempotency, and privacy invariant"))
     return errors
 
 

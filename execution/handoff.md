@@ -865,3 +865,20 @@
 ## Next exact action
 
 1. `INITIAL-OPS-E2E-001`をclaimし、networkless scripted initial-operations E2Eとopt-in sandbox evidenceの境界を接続する。
+
+## INITIAL-OPS-E2E-001 execution
+
+- startup、pinned retrieval、Drive CREATE/REPLAY、explicit/inferred feedback、Issue CREATE/REUSEを同一runへ接続する。networkless既定ではFake providerだけを使い、child repo、既存Drive/Issue、Git操作、raw conversationは変更しない。
+- live pathはsandbox/provider credential/confirmationが揃った場合だけ選べるようにし、未指定・同時実行・非確認はfail-closedで記録する。
+
+## INITIAL-OPS-E2E-001 completed
+
+- `schemas/initial-operations-e2e.schema.json`、`tools/initial_operations_e2e.py`、`tests/test_initial_operations_e2e.py`を追加し、startupの9段階、pinned retrieval、repository@commit、freshness/gaps/constraints、Drive CREATE/REPLAY、explicit/inferred feedback、Issue CREATE/REUSEを一つの証跡へ接続した。
+- DriveはFake providerで`READ→CREATE→READ→READ→READ`を通し、provider file count 1を確認した。Issueは同一deduplication keyでCREATE後にREUSEを確認した。禁止操作は空で、networkless resultの`remote_operations=[]`を維持した。
+- `live_gate=NOT_REQUESTED`をschemaで固定し、非offline pathはfail-closed。実Driveのsandbox CREATE/readは前タスクの証跡を利用し、GitHub Issueの実作成はsandbox未指定のため行っていない。
+- `.venv/bin/python -m unittest discover -s tests -v`: 270 tests PASS。`.venv/bin/python tools/validate.py --check`: PASS。`.venv/bin/python tools/initial_operations_e2e.py --offline-fixture`および`--check`: PASS。`git diff --check`: PASS。
+- Acceptanceを達成し、leaseをreleaseした。`INITIAL-OPS-QUALIFY-001`をREADYへ進めた。子repo、既存Drive/Issue、branch/commit/PR/merge/releaseは変更していない。
+
+## Next exact action
+
+1. `INITIAL-OPS-QUALIFY-001`をclaimし、3回の決定的qualificationとDrive/GitHub sandbox evidenceの不足分を確認する。

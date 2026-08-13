@@ -600,7 +600,7 @@ tasks:
   - id: INITIAL-OPS-E2E-001
     milestone: M14
     title: Evaluate the initial interactive operations end to end
-    status: READY
+    status: DONE
     lane: INTERACTION_E2E
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
@@ -611,7 +611,7 @@ tasks:
   - id: INITIAL-OPS-QUALIFY-001
     milestone: M14
     title: Qualify the initial Codex and Claude Code operations profile
-    status: BACKLOG
+    status: READY
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
