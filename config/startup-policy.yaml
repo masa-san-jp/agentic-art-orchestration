@@ -1,0 +1,135 @@
+version: 1
+contract_version: orchestration-startup/v1
+report_contract_version: startup-report/v1
+profile: initial-operations
+agent_clients: [Codex, Claude Code]
+
+startup:
+  command: python3 tools/startup.py --check
+  reuse:
+    same_process: true
+    expiry_minutes: 60
+    new_process_requires_rerun: true
+  ordered_preflight:
+    - id: validate_parent_configuration
+      operation: validate
+      mode: read_only
+    - id: observe_remote_heads
+      operation: observe_default_branch_heads
+      mode: read_only
+    - id: guard_pinned_workspaces
+      operation: guard_qualified_workspaces
+      mode: read_only
+    - id: select_qualified_snapshot
+      operation: select_manifest_pins
+      mode: read_only
+    - id: materialize_snapshot
+      operation: snapshot
+      mode: read_only
+    - id: collect_status
+      operation: status
+      mode: read_only
+    - id: run_audit
+      operation: audit
+      mode: read_only
+    - id: run_security
+      operation: security
+      mode: read_only
+    - id: decide_capabilities
+      operation: capability_decision
+      mode: read_only
+
+remote_head_observation:
+  mode: read_only
+  branch_source: manifest.default_branch
+  compare_targets: [observed_commit, qualified_snapshot]
+  difference_result: update_candidate
+  unavailable_result: observation_unavailable
+  mutation_operations: []
+
+pinned_workspace:
+  pin_source: manifest.observed_commit
+  use_source: qualified_snapshot
+  guard_checks: [dirty, untracked, detached, unpushed, behind, diverged, remote_mismatch]
+  failure_result: BLOCKED
+  mutation_operations: []
+
+outcomes:
+  READY:
+    meaning: qualified_pins_available_without_blocking_findings
+    answer_policy: qualified_read_and_approved_create_only
+  READY_WITH_FINDINGS:
+    meaning: qualified_pins_available_with_visible_noncritical_findings
+    answer_policy: qualified_read_only_with_constraints
+  BLOCKED:
+    meaning: qualified_pins_unavailable_or_critical_boundary_failure
+    answer_policy: stop_affected_capabilities
+
+capabilities:
+  - id: qualified_knowledge_read
+    class: read
+    allowed_outcomes: [READY, READY_WITH_FINDINGS]
+  - id: evidence_trace_read
+    class: read
+    allowed_outcomes: [READY, READY_WITH_FINDINGS]
+  - id: feedback_capture
+    class: local_record
+    allowed_outcomes: [READY, READY_WITH_FINDINGS]
+  - id: audit_observation
+    class: read
+    allowed_outcomes: [READY, READY_WITH_FINDINGS]
+  - id: drive_create
+    class: external_create
+    allowed_outcomes: [READY]
+  - id: github_issue_create
+    class: external_create
+    allowed_outcomes: [READY]
+  - id: child_repository_mutation
+    class: mutation
+    allowed_outcomes: []
+  - id: drive_update_delete_share
+    class: mutation
+    allowed_outcomes: []
+  - id: github_issue_update_close_delete_comment_label
+    class: mutation
+    allowed_outcomes: []
+  - id: branch_commit_pull_request_merge_release
+    class: mutation
+    allowed_outcomes: []
+
+data_boundary:
+  report_allowed_fields:
+    - run_id
+    - generated_at
+    - parent_commit
+    - qualified_commit
+    - remote_observed_commit
+    - observation_timestamp
+    - drift
+    - workspace_guard
+    - finding_code
+    - capability
+    - remediation
+  forbidden_fields:
+    - token
+    - access_token
+    - credential_value
+    - raw_remote_response
+    - raw_conversation
+    - conversation_body
+    - drive_body
+    - direct_identifier
+    - PRIVATE_RAW
+    - RESTRICTED
+  boolean_guards:
+    raw_conversation_stored: false
+    credentials_stored: false
+    raw_remote_response_stored: false
+    drive_content_stored: false
+    direct_identifiers_stored: false
+
+security:
+  critical_findings: [credential, PRIVATE_RAW, RESTRICTED, consent_violation, schema_major_mismatch]
+  noncritical_findings: [remote_update_candidate, audit_finding, remote_observation_unavailable]
+  critical_result: BLOCKED
+  noncritical_result: READY_WITH_FINDINGS

@@ -36,6 +36,8 @@ RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.jso
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 PRODUCTION_EXCHANGE_SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
 PRODUCTION_EXCHANGE_E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
+STARTUP_POLICY_PATH = ROOT / "config/startup-policy.yaml"
+STARTUP_REPORT_SCHEMA_PATH = ROOT / "schemas/startup-report.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -81,6 +83,8 @@ REQUIRED_FILES = [
     "schemas/production-exchange-e2e.schema.json",
     "tools/production_exchange.py",
     "tools/v12_e2e.py",
+    "config/startup-policy.yaml",
+    "schemas/startup-report.schema.json",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
@@ -105,6 +109,42 @@ REQUIRED_PROFILE_FORBIDDEN_DATA = {
     "direct_identifier",
 }
 COMMAND_FORBIDDEN_TOKENS = ("\x00", "\r", "\n", ";", "&&", "||", "|", ">", "<", "`")
+STARTUP_STEPS = [
+    "validate_parent_configuration",
+    "observe_remote_heads",
+    "guard_pinned_workspaces",
+    "select_qualified_snapshot",
+    "materialize_snapshot",
+    "collect_status",
+    "run_audit",
+    "run_security",
+    "decide_capabilities",
+]
+STARTUP_CAPABILITIES = [
+    "qualified_knowledge_read",
+    "evidence_trace_read",
+    "feedback_capture",
+    "audit_observation",
+    "drive_create",
+    "github_issue_create",
+    "child_repository_mutation",
+    "drive_update_delete_share",
+    "github_issue_update_close_delete_comment_label",
+    "branch_commit_pull_request_merge_release",
+]
+STARTUP_OUTCOMES = {"READY", "READY_WITH_FINDINGS", "BLOCKED"}
+STARTUP_FORBIDDEN_FIELDS = {
+    "token",
+    "access_token",
+    "credential_value",
+    "raw_remote_response",
+    "raw_conversation",
+    "conversation_body",
+    "drive_body",
+    "direct_identifier",
+    "PRIVATE_RAW",
+    "RESTRICTED",
+}
 
 
 def load_yaml(path: Path):
@@ -697,6 +737,163 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                     "record missing inputs, unknown attributes, provenance, and constraint failures",
                 )
             )
+    return errors
+
+
+def validate_startup_contract(
+    policy: dict | None = None,
+    report_schema: dict | None = None,
+    policy_source: str = "config/startup-policy.yaml",
+    schema_source: str = "schemas/startup-report.schema.json",
+) -> list[str]:
+    """Validate the versioned, privacy-safe startup contract before runtime exists."""
+    policy = policy if policy is not None else load_yaml(STARTUP_POLICY_PATH)
+    report_schema = report_schema if report_schema is not None else load_json(STARTUP_REPORT_SCHEMA_PATH)
+    errors: list[str] = []
+
+    def error(message: str, remediation: str) -> None:
+        errors.append(_signal_error(policy_source, message, remediation))
+
+    if not isinstance(policy, dict):
+        error("startup policy must be an object", "restore config/startup-policy.yaml as a mapping")
+        return errors
+    if policy.get("version") != 1:
+        error("version must be 1", "set the startup policy version to the supported major contract")
+    if policy.get("contract_version") != "orchestration-startup/v1":
+        error("contract_version must be orchestration-startup/v1", "keep the startup policy on the v1 contract")
+    if policy.get("report_contract_version") != "startup-report/v1":
+        error("report_contract_version must be startup-report/v1", "point the policy at the versioned startup report")
+    if policy.get("profile") != "initial-operations":
+        error("profile must be initial-operations", "use the bounded initial operations profile")
+    if policy.get("agent_clients") != ["Codex", "Claude Code"]:
+        error("agent_clients must expose exactly Codex and Claude Code", "declare only the supported conversation clients")
+
+    startup = policy.get("startup")
+    if not isinstance(startup, dict):
+        error("startup must be an object", "declare the startup command, reuse policy, and ordered preflight")
+    else:
+        if startup.get("command") != "python3 tools/startup.py --check":
+            error("startup.command is not the repository startup command", "use python3 tools/startup.py --check")
+        reuse = startup.get("reuse")
+        if not isinstance(reuse, dict) or reuse.get("same_process") is not True or reuse.get("expiry_minutes") != 60 or reuse.get("new_process_requires_rerun") is not True:
+            error("startup reuse policy is unsafe or incomplete", "rerun startup for each new process and expire reports after 60 minutes")
+        steps = startup.get("ordered_preflight")
+        observed_steps = [step.get("id") for step in steps] if isinstance(steps, list) and all(isinstance(step, dict) for step in steps) else []
+        if observed_steps != STARTUP_STEPS:
+            error(f"ordered_preflight must be {STARTUP_STEPS!r}", "preserve the startup safety order")
+        for step in steps if isinstance(steps, list) else []:
+            if not isinstance(step, dict):
+                continue
+            if step.get("mode") != "read_only":
+                error(f"preflight step {step.get('id')!r} is not read-only", "startup preflight must not mutate repositories or external systems")
+
+    remote = policy.get("remote_head_observation")
+    if not isinstance(remote, dict):
+        error("remote_head_observation must be an object", "declare read-only remote default-branch observation")
+    else:
+        if remote.get("mode") != "read_only":
+            error("remote head observation must be read-only", "observe remote heads without checkout, pull, or pin updates")
+        if remote.get("branch_source") != "manifest.default_branch":
+            error("remote head branch_source is not manifest.default_branch", "observe each repository's declared default branch")
+        if remote.get("compare_targets") != ["observed_commit", "qualified_snapshot"]:
+            error("remote head compare_targets are incomplete", "compare observed heads with both the manifest pin and qualified snapshot")
+        if remote.get("difference_result") != "update_candidate" or remote.get("unavailable_result") != "observation_unavailable":
+            error("remote head non-clean outcomes are not explicit", "record drift and observation outages without normalizing them")
+        if remote.get("mutation_operations") != []:
+            error("remote head observation declares mutation operations", "keep startup remote observation create-free and checkout-free")
+
+    pinned = policy.get("pinned_workspace")
+    if not isinstance(pinned, dict):
+        error("pinned_workspace must be an object", "declare the qualified pin source and workspace guard")
+    else:
+        if pinned.get("pin_source") != "manifest.observed_commit" or pinned.get("use_source") != "qualified_snapshot":
+            error("pinned workspace pin sources are inconsistent", "observe the manifest pin but use only the qualified snapshot")
+        if pinned.get("guard_checks") != ["dirty", "untracked", "detached", "unpushed", "behind", "diverged", "remote_mismatch"]:
+            error("pinned workspace guard checks are incomplete", "block unsafe local workspaces before knowledge use")
+        if pinned.get("failure_result") != "BLOCKED" or pinned.get("mutation_operations") != []:
+            error("pinned workspace guard does not fail closed", "block unsafe workspaces and perform no recovery mutation")
+
+    outcomes = policy.get("outcomes")
+    if not isinstance(outcomes, dict) or set(outcomes) != STARTUP_OUTCOMES:
+        error("outcomes must define READY, READY_WITH_FINDINGS, and BLOCKED", "declare all startup terminal states")
+    else:
+        expected_answers = {
+            "READY": "qualified_read_and_approved_create_only",
+            "READY_WITH_FINDINGS": "qualified_read_only_with_constraints",
+            "BLOCKED": "stop_affected_capabilities",
+        }
+        for outcome, answer_policy in expected_answers.items():
+            if outcomes.get(outcome, {}).get("answer_policy") != answer_policy:
+                error(f"outcomes.{outcome}.answer_policy is unsafe", "restrict capabilities according to the startup decision")
+
+    capabilities = policy.get("capabilities")
+    capability_map = {
+        item.get("id"): item for item in capabilities
+    } if isinstance(capabilities, list) and all(isinstance(item, dict) for item in capabilities) else {}
+    if list(capability_map) != STARTUP_CAPABILITIES:
+        error(f"capabilities must be exactly {STARTUP_CAPABILITIES!r}", "expose only the initial profile capability matrix")
+    expected_capabilities = {
+        "qualified_knowledge_read": ("read", ["READY", "READY_WITH_FINDINGS"]),
+        "evidence_trace_read": ("read", ["READY", "READY_WITH_FINDINGS"]),
+        "feedback_capture": ("local_record", ["READY", "READY_WITH_FINDINGS"]),
+        "audit_observation": ("read", ["READY", "READY_WITH_FINDINGS"]),
+        "drive_create": ("external_create", ["READY"]),
+        "github_issue_create": ("external_create", ["READY"]),
+        "child_repository_mutation": ("mutation", []),
+        "drive_update_delete_share": ("mutation", []),
+        "github_issue_update_close_delete_comment_label": ("mutation", []),
+        "branch_commit_pull_request_merge_release": ("mutation", []),
+    }
+    for capability, (expected_class, allowed_outcomes) in expected_capabilities.items():
+        item = capability_map.get(capability)
+        if not isinstance(item, dict) or item.get("class") != expected_class or item.get("allowed_outcomes") != allowed_outcomes:
+            error(f"capabilities.{capability} violates the initial profile matrix", "allow only read and explicitly approved create-only operations")
+
+    boundary = policy.get("data_boundary")
+    if not isinstance(boundary, dict):
+        error("data_boundary must be an object", "declare report allowlist and forbidden data classes")
+    else:
+        expected_allowed = {
+            "run_id", "generated_at", "parent_commit", "qualified_commit", "remote_observed_commit",
+            "observation_timestamp", "drift", "workspace_guard", "finding_code", "capability", "remediation",
+        }
+        if set(boundary.get("report_allowed_fields", [])) != expected_allowed:
+            error("data_boundary.report_allowed_fields is not the minimal report allowlist", "store metadata and decisions only")
+        if not set(STARTUP_FORBIDDEN_FIELDS).issubset(set(boundary.get("forbidden_fields", []))):
+            error("data_boundary.forbidden_fields omits a protected class", "forbid raw conversation, credentials, direct identifiers, and restricted data")
+        expected_guards = {
+            "raw_conversation_stored": False,
+            "credentials_stored": False,
+            "raw_remote_response_stored": False,
+            "drive_content_stored": False,
+            "direct_identifiers_stored": False,
+        }
+        if boundary.get("boolean_guards") != expected_guards:
+            error("data_boundary.boolean_guards must all be false", "prove that startup reports do not retain protected content")
+
+    security = policy.get("security")
+    if not isinstance(security, dict) or set(security.get("critical_findings", [])) != {"credential", "PRIVATE_RAW", "RESTRICTED", "consent_violation", "schema_major_mismatch"} or set(security.get("noncritical_findings", [])) != {"remote_update_candidate", "audit_finding", "remote_observation_unavailable"} or security.get("critical_result") != "BLOCKED" or security.get("noncritical_result") != "READY_WITH_FINDINGS":
+        error("security severity mapping is incomplete", "map critical/privacy findings to BLOCKED and noncritical findings to READY_WITH_FINDINGS")
+
+    if not isinstance(report_schema, dict):
+        errors.append(_signal_error(schema_source, "startup report schema must be an object", "restore schemas/startup-report.schema.json"))
+    else:
+        if report_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+            errors.append(_signal_error(schema_source, "$schema must be Draft 2020-12", "use the repository schema dialect"))
+        if report_schema.get("$id", "").endswith("/schemas/startup-report.schema.json") is False:
+            errors.append(_signal_error(schema_source, "$id must identify the startup report schema", "keep the schema ID stable"))
+        schema_properties = report_schema.get("properties", {})
+        if set(report_schema.get("required", [])) != {
+            "contract_version", "run_id", "generated_at", "profile", "agent_client", "status", "parent_commit",
+            "ordered_steps", "repositories", "workspace_guard", "findings", "capabilities", "remediation", "privacy", "remote_operations",
+        }:
+            errors.append(_signal_error(schema_source, "required report fields are incomplete or expanded", "keep the report metadata-only and versioned"))
+        if report_schema.get("additionalProperties") is not False or not isinstance(schema_properties, dict):
+            errors.append(_signal_error(schema_source, "report schema must reject unknown fields", "set additionalProperties to false"))
+        for forbidden in STARTUP_FORBIDDEN_FIELDS:
+            if forbidden in schema_properties:
+                errors.append(_signal_error(schema_source, f"report schema exposes forbidden field {forbidden!r}", "remove protected content from the startup report"))
+
     return errors
 
 
@@ -2633,6 +2830,14 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
             validate_transformation_rule_registry(
                 load_yaml(TRANSFORMATION_RULE_CONFIG_PATH),
                 _source_label(TRANSFORMATION_RULE_CONFIG_PATH),
+            )
+        )
+        errors.extend(
+            validate_startup_contract(
+                load_yaml(STARTUP_POLICY_PATH),
+                load_json(STARTUP_REPORT_SCHEMA_PATH),
+                _source_label(STARTUP_POLICY_PATH),
+                _source_label(STARTUP_REPORT_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

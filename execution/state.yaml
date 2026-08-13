@@ -1,27 +1,30 @@
 version: 2
-updated_at: "2026-08-13T11:56:32+09:00"
-active_task: PRODUCTION-RELEASE-001
+updated_at: "2026-08-13T12:10:00+09:00"
+active_task: STARTUP-DRIFT-001
 active_repository: agentic-art-orchestration
 lease:
   status: active
-  owner: codex-production-release
-  acquired_at: "2026-08-13T11:56:32+09:00"
-  expires_at: "2026-08-13T12:56:32+09:00"
-  lane: RELEASE
-  execution_id: PRODUCTION-RELEASE-001:attempt-1
+  owner: codex-startup-drift
+  acquired_at: "2026-08-13T12:06:00+09:00"
+  expires_at: "2026-08-13T13:10:00+09:00"
+  lane: STARTUP
+  execution_id: STARTUP-DRIFT-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/startup.py, tests/test_startup_repository_updates.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, data]
+  scope:
+    repository: agentic-art-orchestration
+    paths: [config/startup-policy.yaml, schemas/startup-report.schema.json, tools/validate.py, tests/test_startup_contract.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
 checkpoint:
-  task: PRODUCTION-RELEASE-001
+  task: STARTUP-DRIFT-001
   repository: agentic-art-orchestration
-  start_point: 4b4616a
-  expected_changes: Merge the qualified parent change through a reviewable PR, tag the reviewed main merge as v1.3.0, and publish the GitHub Release without mutating child repositories, Issues, Drive, or physical/external artifacts.
-  result: in_progress; explicit human approval received for v1.3.0 merge, tag, and GitHub Release
-last_completed_task: PRODUCTION-QUALIFY-001
+  start_point: 5a966c3
+  expected_changes: Implement read-only default-branch head observation for every manifest repository, compare remote heads with qualified pins, and preserve pin, checkout, branch, Issue, Drive, and child-file boundaries.
+  result: in_progress; claim recorded before implementation
+last_completed_task: STARTUP-CONTRACT-001
 resume_from:
-  task: PRODUCTION-RELEASE-001
-  action: Push the qualified parent branch, open or inspect the release PR, wait for required checks, then merge and release v1.3.0.
+  task: STARTUP-DRIFT-001
+  action: Implement read-only default-branch head observation in tools/startup.py using the completed startup contract.
   command: git status --short --branch
 post_merge:
   status: linked
@@ -33,13 +36,20 @@ post_merge:
   child_repository_mutation: false
 release:
   status: released
-  version: 1.2.1
-  pull_request: 17
-  merge_commit: 12bbd9efc2b18873da419d17a1abb95ae58c1740
-  tag: v1.2.1
-  url: https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.2.1
-  released_at: "2026-08-12T22:08:09+09:00"
+  version: 1.3.0
+  pull_request: 18
+  merge_commit: 302de458495257fca0e754ed4f71f6b5255abbbe
+  tag: v1.3.0
+  url: https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.3.0
+  released_at: "2026-08-13T11:59:55+09:00"
+  child_repository_mutation: false
+  issue_mutation: false
+  drive_mutation: false
+  physical_or_external_effect: false
 blocked: []
+startup_contract_validation:
+  command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_validate -v; .venv/bin/python -m unittest discover -s tests -v; git diff --check
+  result: passed; startup policy/report contract valid, dedicated startup contract tests 5/5 passed, full parent suite 230/230 passed, diff check passed; no startup runtime, remote observation, child repository, Issue, Drive, or user artifact mutation; 2026-08-13T12:12:00+09:00
 last_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-qualified-5Nhxun --run-id production-qualification-final --output /tmp/aap-production-qualification-final/child-quality-gates.json --check; /tmp/aap-bootstrap-venv/bin/python tools/workspace.py snapshot --check --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/status.py --check --workspace-root /tmp/aap-production-qualified-5Nhxun --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check
-  result: passed; v1.3.0 qualification PASS, three exchange reports byte-stable at sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93, six terminal scenarios PASS, 5 repositories MATCHED, 14/14 child gates PASS per run, parent 225 tests PASS, audit finding 0, security PASS, tracked output paths empty, remote/merge/tag/release NOT_PERFORMED; candidate status drift CLEAN with one human-release blocker recorded; 2026-08-13T11:40:28+09:00
+  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-qualified-5Nhxun --run-id production-qualification-final --output /tmp/aap-production-qualification-final/child-quality-gates.json --check; /tmp/aap-bootstrap-venv/bin/python tools/workspace.py snapshot --check --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/status.py --check --workspace-root /tmp/aap-production-qualified-5Nhxun --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check; gh pr view 18 --repo masa-san-jp/agentic-art-orchestration --json state,mergeCommit,statusCheckRollup; git tag --points-at 302de458495257fca0e754ed4f71f6b5255abbbe; gh release view v1.3.0 --repo masa-san-jp/agentic-art-orchestration
+  result: passed; v1.3.0 qualification PASS, three exchange reports byte-stable at sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93, six terminal scenarios PASS, 5 repositories MATCHED, 14/14 child gates PASS per run, parent 225 tests PASS, audit finding 0, security PASS, tracked output paths empty; PR #18 merge, exact tag, and published GitHub Release verified; 2026-08-13T12:00:33+09:00
