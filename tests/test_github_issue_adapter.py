@@ -7,7 +7,7 @@ import subprocess
 import sys
 import unittest
 
-from tools.github_issue_adapter import FixtureProvider, IssueDeliveryError, deliver
+from tools.github_issue_adapter import FixtureProvider, deliver
 from tools.validate import load_json, load_yaml, validate_issue_delivery_contract
 
 
@@ -32,6 +32,24 @@ def explicit_candidate() -> dict:
         "human_gate": True,
         "side_effect": "NONE",
     }
+
+
+def inferred_candidate() -> dict:
+    candidate = explicit_candidate()
+    candidate.update(
+        {
+            "candidate_id": "candidate:inferred-001",
+            "source_kind": "inferred",
+            "target_repository": "agentic-art-orchestration",
+            "summary_code": "friction:repeated-context-request",
+            "deduplication_key": "issue:inferred-context-001",
+            "source_feedback_ids": ["feedback:interaction-001:001"],
+            "inference": {"is_inferred": True, "hypothesis_status": "unconfirmed"},
+            "confidence": "medium",
+            "counterevidence_refs": ["interaction:001:outcome:002"],
+        }
+    )
+    return candidate
 
 
 class GithubIssueAdapterTests(unittest.TestCase):
@@ -69,6 +87,43 @@ class GithubIssueAdapterTests(unittest.TestCase):
         self.assertNotIn("raw_conversation", json.dumps(result))
         self.assertEqual("masa-san-jp/art-history-notes", body_hash_record["repository"])
         self.assertEqual([], [record for record in result["records"] if record["status"] == "BLOCKED"])
+
+    def test_same_fixture_provider_reuses_created_issue_on_retry(self):
+        provider = FixtureProvider()
+        first = deliver([explicit_candidate()], manifest(), mode="live", provider=provider, run_id="ISSUE-CREATE-001:retry")
+        second = deliver([explicit_candidate()], manifest(), mode="live", provider=provider, run_id="ISSUE-CREATE-001:retry")
+        self.assertEqual("CREATED", first["records"][0]["status"])
+        self.assertEqual("REUSED", second["records"][0]["status"])
+        self.assertEqual(1, len(provider.created))
+        self.assertEqual(["READ", "CREATE"], [item["operation"] for item in first["remote_operations"]])
+        self.assertEqual(["READ", "REUSE"], [item["operation"] for item in second["remote_operations"]])
+
+    def test_inferred_candidate_preserves_unconfirmed_boundary_in_issue_body(self):
+        provider = FixtureProvider()
+        result = deliver([inferred_candidate()], manifest(), mode="live", provider=provider, run_id="ISSUE-CREATE-001:inferred")
+        self.assertEqual("CREATED", result["records"][0]["status"])
+        body = provider.created[0]
+        self.assertIn("unconfirmed", body["body"])
+        self.assertIn("Target authority", body["body"])
+        self.assertIn("Prohibited data scan: `PASS`", body["body"])
+        self.assertEqual("masa-san-jp/agentic-art-orchestration", body["repository"])
+        self.assertTrue(result["records"][0]["inference"]["is_inferred"])
+        self.assertEqual("unconfirmed", result["records"][0]["inference"]["hypothesis_status"])
+
+    def test_multiple_existing_issues_fail_closed_without_create(self):
+        candidate = explicit_candidate()
+        provider = FixtureProvider(
+            {
+                "masa-san-jp/art-history-notes:issue:art-history-evidence-001": [
+                    {"number": 17, "url": "https://github.com/masa-san-jp/art-history-notes/issues/17"},
+                    {"number": 18, "url": "https://github.com/masa-san-jp/art-history-notes/issues/18"},
+                ]
+            }
+        )
+        result = deliver([candidate], manifest(), mode="live", provider=provider, run_id="ISSUE-CREATE-001:ambiguous")
+        self.assertEqual("BLOCKED", result["records"][0]["status"])
+        self.assertEqual("NONE", result["records"][0]["operation"])
+        self.assertEqual([], provider.created)
 
     def test_duplicate_key_merges_source_refs_and_conflict_is_blocked(self):
         first = explicit_candidate()

@@ -104,6 +104,9 @@ def _policy_index(policy: Mapping[str, object]) -> dict[str, str]:
             raise _error("Issue allowlist ID is invalid", "use a stable repository ID")
         if not isinstance(full_name, str) or not FULL_NAME_PATTERN.fullmatch(full_name):
             raise _error("Issue allowlist full_name is invalid", "use owner/repository without a URL")
+        role = entry.get("role")
+        if role not in {"parent", "child"}:
+            raise _error("Issue allowlist role is invalid", "declare parent or child authority explicitly")
         if repository_id in result and result[repository_id] != full_name:
             raise _error(f"Issue allowlist has conflicting entry for {repository_id}", "retain one authoritative full_name")
         result[repository_id] = full_name
@@ -195,7 +198,9 @@ class FixtureProvider:
     def create(self, repository: str, title: str, body: str) -> dict:
         number = int(_hash({"repository": repository, "title": title, "body": body})[:8], 16) % 1000000 + 1
         result = {"number": number, "url": f"https://github.com/{repository}/issues/{number}"}
-        self.created.append({"repository": repository, "title": title, "body_hash": _hash(body)})
+        self.created.append({"repository": repository, "title": title, "body": body, "body_hash": _hash(body)})
+        key = f"{repository}:{_extract_deduplication_key(body)}"
+        self.existing.setdefault(key, []).append(result)
         return result
 
 
@@ -214,7 +219,7 @@ def _normalise_candidate(raw: Mapping[str, object], allowlist: Mapping[str, str]
     source_kind = raw.get("source_kind", "explicit")
     if source_kind == "feedback":
         source_kind = "inferred" if isinstance(raw.get("inference"), Mapping) and raw["inference"].get("is_inferred") is True else "explicit"
-    if source_kind not in SOURCE_KINDS:
+    if not isinstance(source_kind, str) or source_kind not in SOURCE_KINDS:
         raise _error("candidate source_kind is not supported", "use explicit, inferred, audit, or repository-update")
     deduplication_key = raw.get("deduplication_key") or raw.get("issue_key")
     finding_code = raw.get("finding_code")
@@ -224,10 +229,10 @@ def _normalise_candidate(raw: Mapping[str, object], allowlist: Mapping[str, str]
     if not isinstance(summary_code, str) or not ID_PATTERN.fullmatch(summary_code):
         raise _error("candidate summary code is invalid", "use a stable summary code")
     summary = raw.get("privacy_safe_summary")
-    if not isinstance(summary, str) or not summary or len(summary) > 500:
+    if not isinstance(summary, str) or not summary or len(summary) > 500 or any(ord(char) < 32 and char not in "\t" for char in summary):
         raise _error("candidate privacy-safe summary is invalid", "retain a short metadata-only summary")
     acceptance = raw.get("acceptance") or [f"Review {summary_code} at the authoritative repository boundary."]
-    if not isinstance(acceptance, list) or not acceptance or any(not isinstance(item, str) or not item or len(item) > 300 for item in acceptance):
+    if not isinstance(acceptance, list) or not acceptance or any(not isinstance(item, str) or not item or len(item) > 300 or any(ord(char) < 32 and char not in "\t" for char in item) for item in acceptance):
         raise _error("candidate acceptance is invalid", "retain short metadata-only acceptance criteria")
     if scan_payload(summary) or any(scan_payload(item) for item in acceptance):
         raise _error("candidate crosses the security boundary", "remove credential-like values from summary and acceptance")
@@ -236,6 +241,8 @@ def _normalise_candidate(raw: Mapping[str, object], allowlist: Mapping[str, str]
         raise _error("candidate source references are invalid", "use opaque stable IDs only")
     inference = raw.get("inference") if isinstance(raw.get("inference"), Mapping) else {}
     is_inferred = source_kind == "inferred" or inference.get("is_inferred") is True
+    if is_inferred:
+        source_kind = "inferred"
     hypothesis_status = raw.get("inference_status") or inference.get("hypothesis_status") or inference.get("confirmation_status")
     if is_inferred and hypothesis_status != "unconfirmed":
         raise _error("inferred candidate is not explicitly unconfirmed", "retain the hypothesis boundary in the Issue")
@@ -245,8 +252,21 @@ def _normalise_candidate(raw: Mapping[str, object], allowlist: Mapping[str, str]
         raise _error("candidate is not eligible for create-only delivery", "retain consent and human gate")
     if raw.get("side_effect") not in (None, "NONE"):
         raise _error("candidate declares a side effect", "Issue delivery must remain human-gated and create-only")
+    candidate_id = raw.get("candidate_id") or f"candidate:{_stable(raw)}"
+    if not isinstance(candidate_id, str) or not ID_PATTERN.fullmatch(candidate_id):
+        candidate_id = f"candidate:{_stable({'candidate_id': candidate_id})}"
+    confidence = raw.get("confidence")
+    if isinstance(confidence, Mapping):
+        confidence_value = confidence.get("level") or confidence.get("score") or "not-provided"
+    elif isinstance(confidence, (str, int, float)) and not isinstance(confidence, bool):
+        confidence_value = confidence
+    else:
+        confidence_value = "not-provided"
+    contradiction_refs = raw.get("contradiction_refs") or raw.get("counterevidence_refs") or []
+    if not isinstance(contradiction_refs, list) or any(not isinstance(item, str) or not ID_PATTERN.fullmatch(item) for item in contradiction_refs):
+        contradiction_refs = []
     return {
-        "candidate_id": str(raw.get("candidate_id") or f"candidate:{_stable(raw)}"),
+        "candidate_id": candidate_id,
         "source_kind": source_kind,
         "target_repository": str(target_id),
         "target_full_name": target_full_name,
@@ -256,6 +276,8 @@ def _normalise_candidate(raw: Mapping[str, object], allowlist: Mapping[str, str]
         "acceptance": list(dict.fromkeys(acceptance)),
         "inference": {"is_inferred": bool(is_inferred), "hypothesis_status": hypothesis_status},
         "summary_code": summary_code,
+        "confidence": confidence_value,
+        "contradiction_refs": sorted(set(contradiction_refs)),
     }
 
 
@@ -263,15 +285,25 @@ def _title(candidate: Mapping[str, object]) -> str:
     return f"[orchestration:{candidate['deduplication_key']}] {candidate['summary_code']}"
 
 
-def _body(candidate: Mapping[str, object]) -> str:
+def _extract_deduplication_key(body: str) -> str:
+    marker = re.search(r"orchestration-deduplication-key:\s*([A-Za-z0-9][A-Za-z0-9._:-]*)", body)
+    return marker.group(1) if marker else f"unknown:{_stable(body)}"
+
+
+def _body(candidate: Mapping[str, object], run_id: str, agent_id: str = "github-issue-adapter") -> str:
     lines = [
         f"<!-- orchestration-deduplication-key: {candidate['deduplication_key']} -->",
         "## Metadata-only feedback",
         f"- Source kind: `{candidate['source_kind']}`",
         f"- Summary code: `{candidate['summary_code']}`",
         f"- Privacy-safe summary: {candidate['privacy_safe_summary']}",
+        f"- Target authority: `{candidate['target_repository']}` (`{candidate['target_full_name']}`)",
+        f"- Agent/run: `{agent_id}` / `{run_id}`",
         f"- Inference status: `{candidate['inference']['hypothesis_status']}`",
+        f"- Confidence: `{candidate['confidence']}`",
+        f"- Contradiction references: {', '.join(f'`{item}`' for item in candidate['contradiction_refs']) or '`none-recorded`'}",
         f"- Source references: {', '.join(f'`{item}`' for item in candidate['source_refs'])}",
+        "- Prohibited data scan: `PASS` (metadata-only body)",
         "",
         "## Acceptance",
     ]
@@ -294,7 +326,7 @@ def _issue_ref(repository: str, value: Mapping[str, object]) -> tuple[int, str, 
     return number, url, _hash({"repository": repository, "number": number})
 
 
-def _record(candidate: Mapping[str, object], *, status: str, operation: str, issue_number: int | None = None, issue_url: str | None = None, issue_id_hash: str | None = None) -> dict:
+def _record(candidate: Mapping[str, object], *, status: str, operation: str, issue_number: int | None = None, issue_url: str | None = None, issue_id_hash: str | None = None, creation_permitted: bool | None = None) -> dict:
     return {
         "candidate_id": candidate["candidate_id"],
         "source_kind": candidate["source_kind"],
@@ -305,7 +337,7 @@ def _record(candidate: Mapping[str, object], *, status: str, operation: str, iss
         "privacy_safe_summary": candidate["privacy_safe_summary"],
         "acceptance": list(candidate["acceptance"]),
         "inference": dict(candidate["inference"]),
-        "creation_permitted": True,
+        "creation_permitted": candidate.get("creation_permitted", True) if creation_permitted is None else creation_permitted,
         "human_gate": True,
         "status": status,
         "operation": operation,
@@ -319,11 +351,12 @@ def _blocked_record(raw: Mapping[str, object], reason: str, allowlist: Mapping[s
     target_id = raw.get("target_repository") if isinstance(raw.get("target_repository"), str) else "agentic-art-orchestration"
     if target_id not in allowlist:
         target_id = "agentic-art-orchestration"
-    candidate_id = raw.get("candidate_id") if isinstance(raw.get("candidate_id"), str) else f"candidate:{_stable(raw)}"
+    candidate_id = raw.get("candidate_id") if isinstance(raw.get("candidate_id"), str) and ID_PATTERN.fullmatch(raw.get("candidate_id")) else f"candidate:{_stable(raw)}"
     key = raw.get("deduplication_key") or raw.get("issue_key")
     if not isinstance(key, str) or not ID_PATTERN.fullmatch(key):
         key = f"blocked:{_stable({'candidate_id': candidate_id, 'reason': reason})}"
-    source_kind = raw.get("source_kind") if raw.get("source_kind") in SOURCE_KINDS else "audit"
+    raw_source_kind = raw.get("source_kind")
+    source_kind = raw_source_kind if isinstance(raw_source_kind, str) and raw_source_kind in SOURCE_KINDS else "audit"
     summary = "Candidate blocked before delivery; review the stable metadata and remediation."
     candidate = {
         "candidate_id": candidate_id,
@@ -336,12 +369,14 @@ def _blocked_record(raw: Mapping[str, object], reason: str, allowlist: Mapping[s
         "acceptance": ["Resolve the delivery precondition at the authoritative repository boundary."],
         "inference": {"is_inferred": source_kind == "inferred", "hypothesis_status": "unconfirmed" if source_kind == "inferred" else "not-applicable"},
     }
-    return _record(candidate, status="BLOCKED", operation="NONE")
+    return _record(candidate, status="BLOCKED", operation="NONE", creation_permitted=False)
 
 
 def deliver(candidates: list[Mapping[str, object]], manifest: Mapping[str, object], mode: str = "plan", provider: IssueProvider | None = None, run_id: str = "ISSUE-CREATE-001:attempt-1", policy: Mapping[str, object] | None = None) -> dict:
     if mode not in {"plan", "live"} or not ID_PATTERN.fullmatch(run_id):
         raise _error("mode or run_id is invalid", "use plan/live and a stable run ID")
+    if not isinstance(candidates, list) or not candidates:
+        raise _error("candidate list is empty", "supply at least one metadata-only Issue candidate")
     policy = policy or load_yaml(POLICY_PATH)
     allowlist = _manifest_candidates(manifest, policy)
     normalized: dict[str, dict] = {}
@@ -357,7 +392,7 @@ def deliver(candidates: list[Mapping[str, object]], manifest: Mapping[str, objec
         if existing is None:
             normalized[key] = candidate
         elif (existing["target_repository"], existing["summary_code"], existing["source_kind"]) != (candidate["target_repository"], candidate["summary_code"], candidate["source_kind"]):
-            records.append(_record(candidate, status="BLOCKED", operation="NONE"))
+            records.append(_record(candidate, status="BLOCKED", operation="NONE", creation_permitted=False))
         else:
             existing["source_refs"] = sorted(set(existing["source_refs"] + candidate["source_refs"]))
 
@@ -371,12 +406,15 @@ def deliver(candidates: list[Mapping[str, object]], manifest: Mapping[str, objec
             raise _error("live mode has no provider", "supply an authenticated provider")
         matches = provider.search(candidate["target_full_name"], key)
         remote_operations.append({"operation": "READ", "target_repository": candidate["target_repository"], "deduplication_key": key})
+        if len(matches) > 1:
+            records.append(_record(candidate, status="BLOCKED", operation="NONE", creation_permitted=False))
+            continue
         if matches:
             number, url, issue_hash = _issue_ref(candidate["target_full_name"], matches[0])
             records.append(_record(candidate, status="REUSED", operation="REUSE", issue_number=number, issue_url=url, issue_id_hash=issue_hash))
             remote_operations.append({"operation": "REUSE", "target_repository": candidate["target_repository"], "deduplication_key": key, "issue_number": number})
         else:
-            created = provider.create(candidate["target_full_name"], _title(candidate), _body(candidate))
+            created = provider.create(candidate["target_full_name"], _title(candidate), _body(candidate, run_id))
             number, url, issue_hash = _issue_ref(candidate["target_full_name"], created)
             records.append(_record(candidate, status="CREATED", operation="CREATE", issue_number=number, issue_url=url, issue_id_hash=issue_hash))
             remote_operations.append({"operation": "CREATE", "target_repository": candidate["target_repository"], "deduplication_key": key, "issue_number": number})
@@ -424,6 +462,8 @@ def _fixture_candidates(manifest: Mapping[str, object]) -> list[dict]:
             "is_inferred": candidate["source_kind"] == "inferred",
             "hypothesis_status": route.get("inference", {}).get("hypothesis_status", "not-applicable"),
         }
+        candidate["confidence"] = route.get("confidence", {}).get("level", "not-provided")
+        candidate["contradiction_refs"] = list(route.get("inference", {}).get("counterevidence_refs", []))
         candidates.append(candidate)
     return candidates
 
