@@ -522,7 +522,7 @@ tasks:
   - id: PRODUCTION-RELEASE-001
     milestone: M13
     title: Release the qualified Production exchange through the human gate
-    status: READY
+    status: IN_PROGRESS
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
