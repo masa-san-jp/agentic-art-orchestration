@@ -15,6 +15,7 @@ from tools.release_check import (
     _initial_operations_e2e_check,
     _interaction_e2e_check,
     _production_exchange_check,
+    _sandbox_live_evidence_check,
     _v12_child_quality_gate_check,
     _v12_e2e_check,
     validate_request,
@@ -140,6 +141,19 @@ class ReleaseCheckTests(unittest.TestCase):
         self.assertTrue(result["deterministic"])
         self.assertTrue(result["child_gates_passed"])
         self.assertEqual(3, len(result["report_sha256"]))
+
+    def test_sandbox_live_evidence_is_accepted_only_after_create_and_reuse(self):
+        from tools.github_sandbox_live_check import FixtureProvider, run_check
+
+        with tempfile.TemporaryDirectory() as temporary_name:
+            evidence_path = Path(temporary_name) / "github-sandbox-live-evidence.json"
+            with patch.dict("os.environ", {"AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY": "masa-san-jp/dedicated-sandbox"}, clear=False):
+                evidence = run_check(mode="live", confirm_live=True, provider=FixtureProvider())
+            evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+            result = _sandbox_live_evidence_check(evidence_path)
+        self.assertEqual("PASSED", result["status"])
+        self.assertEqual("PASSED", result["github_issue_create_reuse"])
+        self.assertEqual(["READ", "CREATE", "READ", "REUSE"], [item["operation"] for item in result["remote_operations"]])
 
 
 if __name__ == "__main__":

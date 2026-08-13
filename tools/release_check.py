@@ -18,13 +18,14 @@ ASYNC_AUDIT_FIXTURE_STATE = ROOT / "tests/fixtures/async-audit/state.yaml"
 V12_FIXTURE = ROOT / "tests/fixtures/v12-candidates"
 V12_MANIFEST = ROOT / "config/repositories.yaml"
 V12_WORKSPACE_ROOT = ROOT / "repos"
+GITHUB_SANDBOX_EVIDENCE_SCHEMA = ROOT / "schemas/github-sandbox-live-evidence.schema.json"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.e2e import run_e2e
 from tools.child_quality_gates import run_child_quality_gates
 from tools.production_exchange import run_exchange_e2e
-from tools.validate import load_yaml
+from tools.validate import _schema_errors, load_json, load_yaml
 from tools.v12_e2e import run_v12_e2e
 from tools.interaction_e2e import run_interaction_e2e
 from tools.initial_operations_e2e import run_initial_operations_e2e
@@ -571,16 +572,69 @@ def _production_exchange_check(
     }
 
 
-def _sandbox_live_evidence_check() -> dict:
-    """Report the separate live evidence gate without attempting a write."""
-    return {
+def _sandbox_live_evidence_check(evidence_path: Path | None = None) -> dict:
+    """Validate supplied metadata-only live evidence without performing a remote write."""
+    base = {
         "id": "initial-operations-live-evidence",
-        "status": "BLOCKED",
         "drive_create_read": "PASSED",
-        "github_issue_create_reuse": "NOT_AVAILABLE",
         "required_controls": ["approved_sandbox", "credential_outside_git", "explicit_confirmation", "single_live_lane"],
         "remote_operations": [],
-        "reason": "no explicitly approved GitHub sandbox repository was designated; no Issue CREATE was attempted",
+    }
+    if evidence_path is None:
+        return {
+            **base,
+            "status": "BLOCKED",
+            "github_issue_create_reuse": "NOT_AVAILABLE",
+            "reason": "no explicitly approved GitHub sandbox evidence was supplied; no Issue CREATE was attempted",
+        }
+    try:
+        evidence = load_json(evidence_path)
+    except (OSError, ValueError):
+        return {
+            **base,
+            "status": "FAILED",
+            "github_issue_create_reuse": "FAILED",
+            "reason": "sandbox evidence could not be read",
+        }
+    schema_errors = _schema_errors(evidence, load_json(GITHUB_SANDBOX_EVIDENCE_SCHEMA))
+    if schema_errors or not isinstance(evidence, dict):
+        return {
+            **base,
+            "status": "FAILED",
+            "github_issue_create_reuse": "FAILED",
+            "reason": "sandbox evidence violates the closed metadata-only schema",
+        }
+    operations = evidence["remote_operations"]
+    operation_names = [item["operation"] for item in operations]
+    repository_hash = evidence["repository_id_hash"]
+    idempotency_hash = evidence["idempotency_key_hash"]
+    consistent = all(
+        item["repository_id_hash"] == repository_hash
+        and item["idempotency_key_hash"] == idempotency_hash
+        for item in operations
+    )
+    fresh_create_reuse = (
+        evidence["mode"] == "LIVE"
+        and evidence["status"] == "CREATED"
+        and evidence["operation"] == "CREATE"
+        and evidence["issue_id_hash"] is not None
+        and operation_names == ["READ", "CREATE", "READ", "REUSE"]
+        and consistent
+    )
+    if not fresh_create_reuse:
+        return {
+            **base,
+            "status": "BLOCKED" if evidence.get("status") == "REUSED" else "FAILED",
+            "github_issue_create_reuse": "NOT_AVAILABLE" if evidence.get("status") == "REUSED" else "FAILED",
+            "remote_operations": operations,
+            "reason": "live evidence must prove a fresh single CREATE followed by a deduplicated REUSE",
+        }
+    return {
+        **base,
+        "status": "PASSED",
+        "github_issue_create_reuse": "PASSED",
+        "remote_operations": operations,
+        "reason": "dedicated sandbox Issue CREATE and REUSE evidence validated",
     }
 
 
@@ -588,6 +642,7 @@ def qualify(
     version: str = "1.0.0",
     runs: int = 3,
     workspace_root: Path = V12_WORKSPACE_ROOT,
+    github_sandbox_evidence: Path | None = None,
 ) -> dict:
     """Return a deterministic qualification report; never create a tag, commit, or release."""
     validate_request(version, runs)
@@ -673,7 +728,7 @@ def qualify(
     v12_e2e = _v12_e2e_check(runs, workspace_root, child_quality_gates) if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
     production_exchange = _production_exchange_check(runs, workspace_root, python, child_quality_gates) if version in {"1.3.0", "1.4.0"} else None
     initial_operations_e2e = _initial_operations_e2e_check(runs) if version == "1.4.0" else None
-    live_evidence = _sandbox_live_evidence_check() if version == "1.4.0" else None
+    live_evidence = _sandbox_live_evidence_check(github_sandbox_evidence) if version == "1.4.0" else None
     history = _history_forbidden_findings()
     passed = (
         all(item["status"] == "PASSED" for item in checks)
@@ -728,11 +783,15 @@ def main() -> int:
     parser.add_argument("--version", required=True)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workspace-root", type=Path, default=V12_WORKSPACE_ROOT)
+    parser.add_argument("--github-sandbox-evidence", type=Path, help="metadata-only evidence produced by the dedicated live sandbox lane")
     parser.add_argument("--output", type=Path, default=ROOT / "data/release-check.json")
     args = parser.parse_args()
     try:
         workspace_root = args.workspace_root if args.workspace_root.is_absolute() else Path.cwd() / args.workspace_root
-        result = qualify(args.version, args.runs, workspace_root.resolve())
+        evidence_path = args.github_sandbox_evidence
+        if evidence_path is not None and not evidence_path.is_absolute():
+            evidence_path = Path.cwd() / evidence_path
+        result = qualify(args.version, args.runs, workspace_root.resolve(), evidence_path.resolve() if evidence_path is not None else None)
         output = args.output if args.output.is_absolute() else Path.cwd() / args.output
         _write_atomic(output.resolve(), json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     except (OSError, ReleaseCheckError, ValueError, KeyError):

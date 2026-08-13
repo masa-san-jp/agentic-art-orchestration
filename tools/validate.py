@@ -43,6 +43,8 @@ PRODUCTION_EXCHANGE_E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.sc
 STARTUP_POLICY_PATH = ROOT / "config/startup-policy.yaml"
 STARTUP_REPORT_SCHEMA_PATH = ROOT / "schemas/startup-report.schema.json"
 DRIVE_LIVE_SCHEMA_PATH = ROOT / "schemas/drive-live-evidence.schema.json"
+GITHUB_SANDBOX_LIVE_SCHEMA_PATH = ROOT / "schemas/github-sandbox-live-evidence.schema.json"
+GITHUB_SANDBOX_LIVE_POLICY_PATH = ROOT / "config/github-sandbox-live-policy.yaml"
 DRIVE_LIVE_POLICY_PATH = ROOT / "config/drive-live-policy.yaml"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
@@ -101,6 +103,9 @@ REQUIRED_FILES = [
     "schemas/drive-live-evidence.schema.json",
     "tools/drive_live_bridge.py",
     "tools/drive_live_check.py",
+    "config/github-sandbox-live-policy.yaml",
+    "schemas/github-sandbox-live-evidence.schema.json",
+    "tools/github_sandbox_live_check.py",
     "tools/agent_ui.py",
     "tools/initial_operations_e2e.py",
     "execution/task-queue.yaml",
@@ -1051,6 +1056,77 @@ def validate_drive_live_contract(
     remote = evidence_schema.get("$defs", {}).get("remote_operation", {})
     if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE"}:
         error(schema_source, "remote operation vocabulary is unsafe", "exclude update, overwrite, delete, move, share, and permission operations")
+    return errors
+
+
+def validate_github_sandbox_live_contract(
+    policy: dict | None = None,
+    evidence_schema: dict | None = None,
+    manifest: dict | None = None,
+    policy_source: str = "config/github-sandbox-live-policy.yaml",
+    schema_source: str = "schemas/github-sandbox-live-evidence.schema.json",
+) -> list[str]:
+    """Validate the separately designated GitHub sandbox create-only lane."""
+    policy = policy if policy is not None else load_yaml(GITHUB_SANDBOX_LIVE_POLICY_PATH)
+    evidence_schema = evidence_schema if evidence_schema is not None else load_json(GITHUB_SANDBOX_LIVE_SCHEMA_PATH)
+    manifest = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
+    errors: list[str] = []
+
+    def error(source: str, message: str, remediation: str) -> None:
+        errors.append(_signal_error(source, message, remediation))
+
+    if not isinstance(policy, dict):
+        error(policy_source, "GitHub sandbox live policy must be an object", "restore the dedicated create-only policy")
+        return errors
+    if policy.get("version") != 1 or policy.get("contract_version") != "github-sandbox-live/v1":
+        error(policy_source, "GitHub sandbox live policy version is unsupported", "keep the dedicated sandbox lane on v1")
+    if policy.get("provider") != "github":
+        error(policy_source, "GitHub sandbox provider must be github", "keep the external Issue provider explicit")
+    approved = policy.get("approved_repository")
+    if not isinstance(approved, dict):
+        error(policy_source, "approved_repository must be an object", "require an explicit repository environment variable and fixture ID")
+    else:
+        env_name = approved.get("id_env_var")
+        fixture_id = approved.get("fixture_id")
+        if not isinstance(env_name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", env_name) is None:
+            error(policy_source, "approved_repository.id_env_var is invalid", "use an uppercase environment variable name")
+        if not isinstance(fixture_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", fixture_id) is None:
+            error(policy_source, "approved_repository.fixture_id is invalid", "use a stable offline fixture ID")
+    token_env_vars = policy.get("token_env_vars")
+    if token_env_vars != ["GITHUB_TOKEN", "GH_TOKEN"]:
+        error(policy_source, "token_env_vars must be GITHUB_TOKEN then GH_TOKEN", "accept credentials only from repo-external GitHub token variables")
+    if policy.get("allowed_operations") != ["READ", "CREATE"]:
+        error(policy_source, "allowed_operations must be exactly READ and CREATE", "exclude all Issue mutation beyond one append-only CREATE")
+    expected_forbidden = {"UPDATE", "CLOSE", "DELETE", "COMMENT", "LABEL", "IMPLEMENT", "BRANCH", "COMMIT", "PULL_REQUEST", "MERGE", "RELEASE"}
+    if set(policy.get("forbidden_operations", [])) != expected_forbidden:
+        error(policy_source, "forbidden_operations is incomplete or expanded", "retain the create-only sandbox boundary")
+    if policy.get("max_creates_per_idempotency_key") != 1 or policy.get("human_confirmation_required") is not True:
+        error(policy_source, "sandbox create idempotency or human confirmation is unsafe", "allow one create per key and require explicit confirmation")
+    if policy.get("existing_issue_mutation") is not False or policy.get("production_repositories_must_be_rejected") is not True:
+        error(policy_source, "sandbox isolation flags are unsafe", "reject production repositories and never mutate existing Issues")
+
+    declared = {
+        item.get("full_name")
+        for item in manifest.get("repositories", [])
+        if isinstance(item, dict) and isinstance(item.get("full_name"), str)
+    } | {"masa-san-jp/agentic-art-orchestration"}
+    if isinstance(approved, dict) and approved.get("fixture_id") in declared:
+        error(policy_source, "fixture sandbox identifier overlaps a declared repository", "keep the fixture and production authorities separate")
+
+    if not isinstance(evidence_schema, dict):
+        error(schema_source, "GitHub sandbox evidence schema must be an object", "restore the closed metadata-only evidence schema")
+        return errors
+    if evidence_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" or evidence_schema.get("additionalProperties") is not False:
+        error(schema_source, "GitHub sandbox evidence schema must be closed Draft 2020-12", "reject fields outside the metadata-only envelope")
+    expected_required = {"contract_version", "run_id", "mode", "status", "operation", "provider", "repository_id_hash", "idempotency_key_hash", "issue_id_hash", "remote_operations"}
+    if set(evidence_schema.get("required", [])) != expected_required:
+        error(schema_source, "GitHub sandbox evidence required fields are incomplete or expanded", "keep the evidence envelope minimal")
+    properties = evidence_schema.get("properties", {})
+    if properties.get("mode", {}).get("enum") != ["PLAN", "LIVE"]:
+        error(schema_source, "GitHub sandbox mode must expose PLAN and LIVE", "separate planning from explicit live execution")
+    remote = evidence_schema.get("$defs", {}).get("remote_operation", {})
+    if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE", "REUSE"}:
+        error(schema_source, "GitHub sandbox remote operation vocabulary is unsafe", "allow only search, create, and reuse")
     return errors
 
 
@@ -3097,6 +3173,15 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_json(DRIVE_LIVE_SCHEMA_PATH),
                 _source_label(DRIVE_LIVE_POLICY_PATH),
                 _source_label(DRIVE_LIVE_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_github_sandbox_live_contract(
+                load_yaml(GITHUB_SANDBOX_LIVE_POLICY_PATH),
+                load_json(GITHUB_SANDBOX_LIVE_SCHEMA_PATH),
+                load_yaml(manifest_path),
+                _source_label(GITHUB_SANDBOX_LIVE_POLICY_PATH),
+                _source_label(GITHUB_SANDBOX_LIVE_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

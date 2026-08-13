@@ -905,3 +905,18 @@
 - 全体statusは`FAILED`のまま維持した。唯一の非PASSは`initial-operations-live-evidence=BLOCKED`で、GitHub sandbox repositoryが明示指定されていないためIssue CREATE/REUSEを実行していない。これはqualification failureではなく、外部sandbox指定待ちの安全ゲートとして記録した。
 - 検証: 全親テスト274件PASS、`tools/validate.py --check` PASS、`git diff --check` PASS。GitHub/Drive/child repo/Issue/Releaseへの新規外部書込みは行っていない。
 - 実装差分はPRでレビュー可能な状態。sandbox指定後はこの資格タスクを再開し、GitHub live Issue evidenceだけを追加実行する。v1.4.0 release human gateは、それがPASSするまで開始しない。
+
+## INITIAL-OPS-QUALIFY-001 blocked: GitHub sandbox
+
+- 2026-08-13 18:17 JST、GitHub repository一覧・説明・topics・README・既存Issueをread-onlyで再確認した。
+- `Agent-Lab`は「開発・実験ラボ」だが既存Issueが多数あり、`seedance-api-local-test`は別用途のアプリrepoである。資格確認用sandboxとして明示されていないため、どちらも採用しなかった。
+- v1.4.0 offline aggregateはPASS済み（5 repositories、14/14 child gates、3/3 E2E、3/3 Production exchange、initial-operations 3/3）。Drive CREATE/readはPASS済み。GitHub Issue CREATE/REUSEは未実行で、既存Issue・production repoへの副作用はない。
+- TaskをBLOCKEDへ更新した。解除条件は専用sandbox `owner/name`、repo外credential/session、1 Issueの検索→CREATE/REUSE scopeの明示指定。解除後の最初の操作は既存Issue検索であり、sandbox以外には書き込まない。
+
+## INITIAL-OPS-QUALIFY-001 sandbox lane implementation
+
+- 2026-08-13、専用sandbox用の`github-sandbox-live/v1` policy、閉じたmetadata-only evidence schema、`tools/github_sandbox_live_check.py`を追加した。通常のIssue allowlistとは分離し、production repositoriesを拒否する。
+- live laneは、明示された`AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY`、`GITHUB_TOKEN`/`GH_TOKEN`、`--confirm-live`を要求する。開始前にrepository identity、非archive、Issues有効、push permissionをREADで確認する。
+- 実行範囲は`READ → CREATE → READ → REUSE`の1 Issueだけ。既存Issueが1件ならREUSE、複数ならCREATEせずBLOCKED。UPDATE/CLOSE/DELETE/COMMENT/LABEL/branch/commit/PR/merge/releaseはpolicyと実装の双方で禁止した。
+- `release_check.py --github-sandbox-evidence <path>`は、実liveで生成されたハッシュ済み証跡だけを受け取り、fresh single CREATEとREUSEの順序を検証する。証跡にrepository名、URL、body、credentialは保存しない。
+- fixtureテスト7件、release接続テストを含む全親テスト282件、`tools/validate.py --check`、`git diff --check`がPASS。sandbox環境変数とtokenは未設定のため、実GitHub Issue CREATEは行っていない。
