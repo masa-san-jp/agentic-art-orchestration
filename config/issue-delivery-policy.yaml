@@ -1,0 +1,14 @@
+version: 1
+contract_version: github-issue-delivery/v1
+parent_repository: agentic-art-orchestration
+allowlisted_repositories:
+  - {id: agentic-art-orchestration, full_name: masa-san-jp/agentic-art-orchestration, role: parent}
+  - {id: self-model, full_name: masa-san-jp/self-model-notes, role: child}
+  - {id: art-history, full_name: masa-san-jp/art-history-notes, role: child}
+  - {id: marketing-trends, full_name: masa-san-jp/marketing-trends-notes, role: child}
+  - {id: agentic-art-research, full_name: masa-san-jp/agentic-art-research, role: child}
+  - {id: agentic-art-production, full_name: masa-san-jp/agentic-art-production, role: child}
+allowed_operations: [READ, CREATE]
+forbidden_operations: [UPDATE, CLOSE, DELETE, COMMENT, LABEL, IMPLEMENT, BRANCH, COMMIT, PULL_REQUEST, MERGE, RELEASE]
+max_creates_per_deduplication_key: 1
+human_confirmation_required: true

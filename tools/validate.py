@@ -19,6 +19,8 @@ INTERACTION_SCHEMA_PATH = ROOT / "schemas/interaction-event.schema.json"
 FEEDBACK_SCHEMA_PATH = ROOT / "schemas/feedback-signal.schema.json"
 ASYNC_AUDIT_SCHEMA_PATH = ROOT / "schemas/async-audit.schema.json"
 ISSUE_ROUTING_SCHEMA_PATH = ROOT / "schemas/issue-routing.schema.json"
+ISSUE_DELIVERY_SCHEMA_PATH = ROOT / "schemas/github-issue-delivery.schema.json"
+ISSUE_DELIVERY_POLICY_PATH = ROOT / "config/issue-delivery-policy.yaml"
 RETRIEVAL_REQUEST_SCHEMA_PATH = ROOT / "schemas/retrieval-request.schema.json"
 RETRIEVAL_INDEX_SCHEMA_PATH = ROOT / "schemas/retrieval-index.schema.json"
 RETRIEVAL_RESULT_SCHEMA_PATH = ROOT / "schemas/retrieval-result.schema.json"
@@ -57,6 +59,9 @@ REQUIRED_FILES = [
     "schemas/feedback-signal.schema.json",
     "schemas/async-audit.schema.json",
     "schemas/issue-routing.schema.json",
+    "config/issue-delivery-policy.yaml",
+    "schemas/github-issue-delivery.schema.json",
+    "tools/github_issue_adapter.py",
     "schemas/retrieval-request.schema.json",
     "schemas/retrieval-index.schema.json",
     "schemas/retrieval-result.schema.json",
@@ -895,6 +900,72 @@ def validate_startup_contract(
             if forbidden in schema_properties:
                 errors.append(_signal_error(schema_source, f"report schema exposes forbidden field {forbidden!r}", "remove protected content from the startup report"))
 
+    return errors
+
+
+def validate_issue_delivery_contract(
+    policy: dict | None = None,
+    report_schema: dict | None = None,
+    manifest: dict | None = None,
+    policy_source: str = "config/issue-delivery-policy.yaml",
+    schema_source: str = "schemas/github-issue-delivery.schema.json",
+) -> list[str]:
+    """Validate the allowlist and create-only GitHub Issue delivery envelope."""
+    policy = policy if policy is not None else load_yaml(ISSUE_DELIVERY_POLICY_PATH)
+    report_schema = report_schema if report_schema is not None else load_json(ISSUE_DELIVERY_SCHEMA_PATH)
+    manifest = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
+    errors: list[str] = []
+
+    def error(message: str, remediation: str) -> None:
+        errors.append(_signal_error(policy_source, message, remediation))
+
+    if not isinstance(policy, dict):
+        error("Issue delivery policy must be an object", "restore config/issue-delivery-policy.yaml as a mapping")
+        return errors
+    if policy.get("version") != 1 or policy.get("contract_version") != "github-issue-delivery/v1":
+        error("Issue delivery policy version is unsupported", "keep the create-only delivery policy on v1")
+    if policy.get("parent_repository") != "agentic-art-orchestration":
+        error("parent_repository must be the orchestration repository", "keep the authoritative parent explicit")
+    if policy.get("allowed_operations") != ["READ", "CREATE"]:
+        error("allowed_operations must be exactly READ and CREATE", "do not authorize Issue mutation or implementation")
+    forbidden = policy.get("forbidden_operations")
+    expected_forbidden = {"UPDATE", "CLOSE", "DELETE", "COMMENT", "LABEL", "IMPLEMENT", "BRANCH", "COMMIT", "PULL_REQUEST", "MERGE", "RELEASE"}
+    if not isinstance(forbidden, list) or set(forbidden) != expected_forbidden:
+        error("forbidden_operations is incomplete or expanded", "keep Issue delivery create-only and human-gated")
+    if policy.get("max_creates_per_deduplication_key") != 1 or policy.get("human_confirmation_required") is not True:
+        error("Issue create idempotency or human confirmation is unsafe", "allow at most one create per key and require confirmation")
+
+    manifest_ids = {
+        repository.get("id"): repository.get("full_name")
+        for repository in manifest.get("repositories", [])
+        if isinstance(repository, dict)
+    } if isinstance(manifest, dict) else {}
+    expected_allowlist = {"agentic-art-orchestration": "masa-san-jp/agentic-art-orchestration", **manifest_ids}
+    entries = policy.get("allowlisted_repositories")
+    observed_allowlist = {
+        entry.get("id"): entry.get("full_name")
+        for entry in entries
+        if isinstance(entry, dict)
+    } if isinstance(entries, list) else {}
+    if observed_allowlist != expected_allowlist:
+        error("allowlisted_repositories does not match the manifest and parent", "allow only declared authoritative repositories")
+
+    if not isinstance(report_schema, dict):
+        errors.append(_signal_error(schema_source, "Issue delivery schema must be an object", "restore schemas/github-issue-delivery.schema.json"))
+        return errors
+    if report_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" or report_schema.get("additionalProperties") is not False:
+        errors.append(_signal_error(schema_source, "Issue delivery schema must be closed Draft 2020-12", "reject fields outside the create-only envelope"))
+    if set(report_schema.get("required", [])) != {"contract_version", "delivery_run_id", "mode", "generated_at", "status", "records", "remote_operations"}:
+        errors.append(_signal_error(schema_source, "Issue delivery required fields are incomplete or expanded", "keep the delivery evidence envelope minimal"))
+    properties = report_schema.get("properties", {})
+    if properties.get("mode", {}).get("enum") != ["PLAN", "LIVE"]:
+        errors.append(_signal_error(schema_source, "Issue delivery mode must expose PLAN and LIVE", "separate networkless planning from explicitly confirmed live delivery"))
+    record = report_schema.get("$defs", {}).get("record", {})
+    if record.get("properties", {}).get("operation", {}).get("enum") != ["NONE", "READ", "CREATE", "REUSE"]:
+        errors.append(_signal_error(schema_source, "Issue record operation vocabulary is unsafe", "allow only read, create, and existing Issue reuse"))
+    remote = report_schema.get("$defs", {}).get("remote_operation", {})
+    if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE", "REUSE"}:
+        errors.append(_signal_error(schema_source, "remote operation vocabulary is unsafe", "exclude update, close, delete, comment, and label operations"))
     return errors
 
 
@@ -2839,6 +2910,15 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_json(STARTUP_REPORT_SCHEMA_PATH),
                 _source_label(STARTUP_POLICY_PATH),
                 _source_label(STARTUP_REPORT_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_issue_delivery_contract(
+                load_yaml(ISSUE_DELIVERY_POLICY_PATH),
+                load_json(ISSUE_DELIVERY_SCHEMA_PATH),
+                load_yaml(manifest_path),
+                _source_label(ISSUE_DELIVERY_POLICY_PATH),
+                _source_label(ISSUE_DELIVERY_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")
