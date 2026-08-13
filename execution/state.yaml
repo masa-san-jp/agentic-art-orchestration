@@ -24,7 +24,7 @@ last_completed_task: ISSUE-CREATE-001
 resume_from:
   task: DRIVE-LIVE-001
   action: Designate an approved sandbox folder and authorize one create/read smoke, then set AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID outside Git.
-  command: .venv/bin/python tools/drive_live_check.py --live --folder-id <approved-sandbox-folder-id>
+  command: .venv/bin/python tools/drive_live_check.py --live --confirm-live --folder-id <approved-sandbox-folder-id>
 post_merge:
   status: linked
   pull_request: 15
