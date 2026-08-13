@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/agent-ui-result.schema.json",
+  "title": "Initial conversational agent UI result v1",
+  "description": "Privacy-safe orchestration metadata for Codex or Claude Code.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "agent_client", "status", "startup", "answer", "artifact", "feedback", "privacy", "remote_operations"],
+  "properties": {
+    "contract_version": {"const": "agent-ui/v1"},
+    "run_id": {"$ref": "#/$defs/stable_id"},
+    "agent_client": {"enum": ["Codex", "Claude Code"]},
+    "status": {"enum": ["READY", "READY_WITH_FINDINGS", "BLOCKED"]},
+    "startup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "parent_commit", "finding_codes", "capabilities"],
+      "properties": {
+        "status": {"enum": ["READY", "READY_WITH_FINDINGS", "BLOCKED"]},
+        "parent_commit": {"$ref": "#/$defs/sha40"},
+        "finding_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "capabilities": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/capability"}}
+      }
+    },
+    "answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retrieval_status", "sources", "gaps", "constraints"],
+      "properties": {
+        "retrieval_status": {"enum": ["COMPLETE", "COMPLETE_WITH_GAPS", "NO_MATCH"]},
+        "sources": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/source"}},
+        "gaps": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "constraints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested", "status", "operation", "artifact_id", "provider_file_id", "content_hash", "source_snapshots"],
+      "properties": {
+        "requested": {"type": "boolean"},
+        "status": {"enum": ["NOT_REQUESTED", "PLANNED", "CREATED", "REPLAYED", "BLOCKED"]},
+        "operation": {"enum": ["NONE", "PLAN", "CREATE", "REPLAY"]},
+        "artifact_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "provider_file_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9_-]+$"},
+        "content_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "source_snapshots": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/source_snapshot"}}
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["captured_ids", "explicit_ids", "inferred_ids", "routing_statuses", "issue_candidate_count", "issue_delivery_status", "issue_records"],
+      "properties": {
+        "captured_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "explicit_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "inferred_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "routing_statuses": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}},
+        "issue_candidate_count": {"type": "integer", "minimum": 0},
+        "issue_delivery_status": {"enum": ["PLANNED", "CREATED", "REUSED", "PARTIAL", "BLOCKED"]},
+        "issue_records": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/issue_record"}}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_query_stored", "raw_conversation_stored", "drive_content_stored", "credentials_stored", "direct_identifiers_stored"],
+      "properties": {
+        "raw_query_stored": {"const": false},
+        "raw_conversation_stored": {"const": false},
+        "drive_content_stored": {"const": false},
+        "credentials_stored": {"const": false},
+        "direct_identifiers_stored": {"const": false}
+      }
+    },
+    "remote_operations": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/remote_operation"}}
+  },
+  "$defs": {
+    "stable_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "capability": {"type": "string", "pattern": "^[a-z][a-z0-9._:-]*$"},
+    "source_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {"repository": {"$ref": "#/$defs/stable_id"}, "commit": {"$ref": "#/$defs/sha40"}}
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "repository_at_commit", "freshness", "evidence_ids"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/stable_id"},
+        "commit": {"$ref": "#/$defs/sha40"},
+        "repository_at_commit": {"type": "string", "minLength": 1},
+        "freshness": {"type": "array", "uniqueItems": true, "items": {"enum": ["current", "stale", "unknown", "not-applicable"]}},
+        "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stable_id"}}
+      }
+    },
+    "issue_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deduplication_key", "target_repository", "status", "operation"],
+      "properties": {
+        "deduplication_key": {"$ref": "#/$defs/stable_id"},
+        "target_repository": {"$ref": "#/$defs/stable_id"},
+        "status": {"enum": ["PLANNED", "CREATED", "REUSED", "BLOCKED"]},
+        "operation": {"enum": ["NONE", "CREATE", "REUSE"]}
+      }
+    },
+    "remote_operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "system"],
+      "properties": {
+        "operation": {"enum": ["READ", "CREATE", "REUSE"]},
+        "system": {"enum": ["google-drive", "github"]}
+      }
+    }
+  }
+}

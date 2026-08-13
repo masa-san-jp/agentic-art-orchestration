@@ -11,6 +11,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 - 運用runbook: [operator-runbook.md](docs/operator-runbook.md)
 - 障害・復旧runbook: [incident-runbook.md](docs/incident-runbook.md)
 - v1.1 interaction/improvement runbook: [interaction-improvement-runbook.md](docs/interaction-improvement-runbook.md)
+- 初期Codex / Claude Code UI: [agent-ui-runbook.md](docs/agent-ui-runbook.md)
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
 - 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 
@@ -20,7 +21,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 
 v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加した。既存4repoはcore setとして維持し、`agentic-art-production`を追加runtimeとしてmanifestへappendした。追加repoにも同一repo Issue SSOT、明示的な境界契約、snapshot、個別品質ゲートを要求する。
 
-次の実装順は、v1.2.1で5repo基線を再qualification、v1.3.0でResearch→Production→Researchのbundle交換、v1.4.0でCodexまたはClaude Codeを初期UIとして起動時更新確認・起動時監査・実Drive create-only保存・GitHub Issue create-only改善を接続することである。初期改善はIssue作成で止まり、Issue後の実装・PR・merge・releaseは自動開始しない。
+次の実装順は、v1.2.1で5repo基線を再qualification、v1.3.0でResearch→Production→Researchのbundle交換、v1.4.0でCodexまたはClaude Codeを初期UIとして起動時更新確認・起動時監査・実Drive create-only保存・GitHub Issue create-only改善を接続することである。初期UIの実装は進行中で、初期改善はIssue作成で止まり、Issue後の実装・PR・merge・releaseは自動開始しない。
 
 ~~~text
 User <-> Codex / Claude Code -> Child Knowledge Repositories
@@ -50,6 +51,7 @@ Startup update check + audit -> findings / Issue candidate
 - 推定された不満や欲求はfeedback仮説であり、明示要求やユーザー属性として扱わない。
 - 改善・監査は会話応答と非同期に進め、merge・release・公開・同意拡張は人間gateを維持する。
 - 起動時は全manifest repoのremote headをread-only確認し、最後のqualified pinと差分を区別する。自動checkout、pin更新、子repo変更は行わない。
+- 初期UIは既定でoffline planを実行し、外部CREATEはstartupがREADYで明示確認された単一laneに限定する。DriveとIssueのlive CREATEを同時に実行しない。
 
 ## エージェントの開始手順
 
@@ -72,10 +74,10 @@ python3 -m unittest discover -s tests -v
 
 ~~~text
 config/       リポジトリ一覧、横断ポリシー、品質ゲート
-schemas/      manifest・signal・work item・retrieval・interaction・artifact・feedback・routing・improvement・E2E・async auditの契約
+schemas/      manifest・signal・work item・retrieval・interaction・artifact・feedback・routing・improvement・agent UI・E2E・async auditの契約
 docs/         設計、実行計画、横断契約、実行ガイド
 execution/    task queue、状態、判断、引継ぎ
-tools/        workspace、検証、status、audit、retrieval、issue router、improvement、interaction E2E、async auditor、dispatcher
+tools/        workspace、検証、status、audit、retrieval、agent UI、issue router、improvement、interaction E2E、async auditor、dispatcher
 tests/        offline fixtureと障害試験
 data/         生成されたstatus・audit・retrieval-result・feedback-routing・improvement-loop・interaction-e2e・async-audit・trace。手編集禁止
 repos/        ローカルの子repo展開先。Git管理外

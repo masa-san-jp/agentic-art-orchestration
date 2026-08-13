@@ -578,7 +578,7 @@ tasks:
   - id: DRIVE-LIVE-001
     milestone: M14
     title: Connect the append-only artifact contract to real Google Drive
-    status: BLOCKED
+    status: DONE
     lane: DRIVE_ARTIFACT
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
@@ -589,18 +589,18 @@ tasks:
   - id: AGENT-UI-001
     milestone: M14
     title: Make Codex and Claude Code the initial conversational interface
-    status: BACKLOG
+    status: DONE
     lane: FRONTSTAGE_INTERACTION
     interaction_blocking: true
     user_artifact_policy: CREATE_ONLY
     depends_on: [DRIVE-LIVE-001]
     acceptance: A repository-native startup guide and agent command let Codex or Claude Code run the startup report, answer from the minimum qualified repositories with repository@commit, freshness, gaps, and constraints, create append-only Drive outputs on request, and capture explicit or inferred feedback for Issue creation without requiring the user to name repositories or Git operations.
-    checks: [python3 -m unittest tests.test_agent_ui_contract -v, python3 tools/interaction_e2e.py --initial-operations --offline-fixture --check]
+    checks: [python3 -m unittest tests.test_agent_ui_contract -v, python3 tools/agent_ui.py --offline-fixture --check, python3 tools/interaction_e2e.py --initial-operations --offline-fixture --check]
 
   - id: INITIAL-OPS-E2E-001
     milestone: M14
     title: Evaluate the initial interactive operations end to end
-    status: BACKLOG
+    status: READY
     lane: INTERACTION_E2E
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY

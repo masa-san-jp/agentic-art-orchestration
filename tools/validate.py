@@ -26,6 +26,7 @@ RETRIEVAL_INDEX_SCHEMA_PATH = ROOT / "schemas/retrieval-index.schema.json"
 RETRIEVAL_RESULT_SCHEMA_PATH = ROOT / "schemas/retrieval-result.schema.json"
 IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
 INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
+AGENT_UI_SCHEMA_PATH = ROOT / "schemas/agent-ui-result.schema.json"
 V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.json"
 V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
@@ -69,6 +70,7 @@ REQUIRED_FILES = [
     "schemas/retrieval-result.schema.json",
     "schemas/improvement-loop.schema.json",
     "schemas/interaction-e2e.schema.json",
+    "schemas/agent-ui-result.schema.json",
     "schemas/research-execution-boundary.schema.json",
     "config/research-execution-boundary.yaml",
     "tools/v12_boundary.py",
@@ -97,12 +99,14 @@ REQUIRED_FILES = [
     "schemas/drive-live-evidence.schema.json",
     "tools/drive_live_bridge.py",
     "tools/drive_live_check.py",
+    "tools/agent_ui.py",
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
     "docs/20260811-agentic-art-orchestration-system-design-specification.md",
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
     "docs/interaction-improvement-runbook.md",
+    "docs/agent-ui-runbook.md",
 ]
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}
@@ -2729,6 +2733,50 @@ def validate_interaction_e2e(
     acceptance = data.get("acceptance", {})
     if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
         errors.append(_interaction_error(source, "interaction E2E acceptance is incomplete", "preserve every frontstage/backstage safety invariant"))
+    return errors
+
+
+def validate_agent_ui_result(data: dict, source: str = "agent-ui") -> list[str]:
+    """Validate the closed metadata envelope emitted by the initial UI command."""
+    errors: list[str] = []
+    schema = load_json(AGENT_UI_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the agent UI result field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+    startup = data.get("startup", {})
+    if isinstance(startup, dict) and startup.get("status") != data.get("status"):
+        errors.append(_interaction_error(source, "agent UI status does not match startup status", "do not expose capabilities beyond the startup decision"))
+    answer = data.get("answer", {})
+    sources = answer.get("sources", []) if isinstance(answer, dict) else []
+    known = _known_repository_ids() | {"agentic-art-orchestration"}
+    seen: set[str] = set()
+    if isinstance(sources, list):
+        for index, source_item in enumerate(sources):
+            if not isinstance(source_item, dict):
+                continue
+            repository = source_item.get("repository")
+            commit = source_item.get("commit")
+            if repository in seen:
+                errors.append(_interaction_error(source, f"answer.sources[{index}] duplicates {repository!r}", "emit one repository@commit source record"))
+            if repository not in known:
+                errors.append(_interaction_error(source, f"answer.sources[{index}] names unknown repository", "use only manifest repository IDs"))
+            seen.add(repository)
+            if source_item.get("repository_at_commit") != f"{repository}@{commit}":
+                errors.append(_interaction_error(source, f"answer.sources[{index}] repository@commit is inconsistent", "render the immutable source commit explicitly"))
+    artifact = data.get("artifact", {})
+    if isinstance(artifact, dict) and artifact.get("requested") is False:
+        if any(artifact.get(field) is not None for field in ("artifact_id", "provider_file_id", "content_hash")):
+            errors.append(_interaction_error(source, "not-requested artifact contains a provider reference", "keep absent outputs null"))
+    feedback = data.get("feedback", {})
+    if isinstance(feedback, dict) and not set(feedback.get("inferred_ids", [])).isdisjoint(set(feedback.get("explicit_ids", []))):
+        errors.append(_interaction_error(source, "feedback is both explicit and inferred", "preserve the distinction between observed request and hypothesis"))
+    privacy = data.get("privacy", {})
+    if isinstance(privacy, dict) and any(privacy.get(field) is not False for field in ("raw_query_stored", "raw_conversation_stored", "drive_content_stored", "credentials_stored", "direct_identifiers_stored")):
+        errors.append(_interaction_error(source, "agent UI privacy boundary is open", "store only structured metadata and opaque references"))
     return errors
 
 
