@@ -840,4 +840,5 @@
 
 - 観測事実: live CLIはprovider未注入または`confirm_live`未指定で拒否し、policyは`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`を要求する。Drive側にsandboxと明示された保存先は特定できなかった。
 - 推奨: 専用sandbox folderを人間が指定し、そのIDをrepo外の`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`へ設定して、一度だけCREATE/read-backを承認する。test artifactは自動削除しない。
-- 解除条件: approved folder identity、provider/session authority、1ファイルCREATE/read検証の明示scopeが揃った後、最初の操作は`.venv/bin/python tools/drive_live_check.py --live --folder-id <approved-sandbox-folder-id>`。
+- 解除条件: approved folder identity、provider/session authority、1ファイルCREATE/read検証の明示scopeが揃った後、最初の操作は`.venv/bin/python tools/drive_live_check.py --live --confirm-live --folder-id <approved-sandbox-folder-id>`。credentialはpolicyの`AGENTIC_ART_GOOGLE_DRIVE_TOKEN`からrepo外で供給する。
+- 2026-08-13 13:04 JST、Drive read-only searchで`agentic-art-orchestration`名のフォルダを確認したが、内容はリポジトリミラーであり専用sandboxではない。`sandbox`名の候補は複数で所有関係が判別できなかったため、approved folderには採用せず、folder作成・共有・artifact CREATEは行っていない。
