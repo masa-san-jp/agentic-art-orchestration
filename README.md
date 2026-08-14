@@ -12,6 +12,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 - 障害・復旧runbook: [incident-runbook.md](docs/incident-runbook.md)
 - v1.1 interaction/improvement runbook: [interaction-improvement-runbook.md](docs/interaction-improvement-runbook.md)
 - 初期Codex / Claude Code UI: [agent-ui-runbook.md](docs/agent-ui-runbook.md)
+- 入力KB→Research開始 / pin採用: [input-pipeline-runbook.md](docs/input-pipeline-runbook.md)
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
 - 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 

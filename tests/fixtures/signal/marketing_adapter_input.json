@@ -1,6 +1,6 @@
 {
   "signal_id": "marketing:trend-001",
-  "commit": "edcb49c4522364ae69f627bea996754dcc8cfe56",
+  "commit": "ff3adca6e52c18095a00c23d39ef2a961ae1d13b",
   "entity_id": "trend-entity-001",
   "source_locator": "trends/trend-entity-001",
   "evidence_locator": "marketing-trends/evidence/report-001",
