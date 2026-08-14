@@ -50,6 +50,13 @@
 - active lease: `ISSUE-38-REAL-CHAIN-CI-001`
 - 親repo: `design/initial-operations-roadmap` / `ea18918`開始点 / working treeは意図したtask差分のみ
 
+## ISSUE-38 latest qualification evidence
+
+- Parent branch head is `bd39238969d1098bf54e7f20e7d8621f0fe43169`; checkout steps use the external token and `persist-credentials: false` for all five private child repositories.
+- GitHub Actions run [31769491465](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31769491465) is `bootstrap=PASSED`, `real-chain=FAILED` at the explicit preflight because `AAP_CHILD_REPOS_TOKEN` is unset. This is the intended fail-closed result; no checkout or child mutation occurred.
+- Local evidence: parent full suite `303/303` passed, `tools/validate.py --check` passed, offline audit is `CLEAN`, security is `PASSED`, and `git diff --check` passed.
+- No credential was created, retrieved, or committed. The next operation remains external secret configuration by a repository administrator, followed by a PR check rerun.
+
 ## MANIFEST-001 evidence
 
 - `schemas/repository-manifest.schema.json` を追加し、Draft 2020-12のmanifest項目、role、契約、品質ゲートを固定。
