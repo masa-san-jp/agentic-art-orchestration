@@ -37,3 +37,56 @@ jobs:
           python3 tools/interaction_e2e.py
           python3 tools/security.py --offline-fixture
       - run: python3 -m unittest discover -s tests -v
+
+  real-chain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/self-model-notes
+          ref: main
+          path: repos/self-model-notes
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/art-history-notes
+          ref: main
+          path: repos/art-history-notes
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/marketing-trends-notes
+          ref: main
+          path: repos/marketing-trends-notes
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/agentic-art-research
+          ref: main
+          path: repos/agentic-art-research
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/agentic-art-production
+          ref: main
+          path: repos/agentic-art-production
+          fetch-depth: 0
+      - name: Install parent and child dependencies
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+          for child in repos/self-model-notes repos/art-history-notes repos/marketing-trends-notes repos/agentic-art-research repos/agentic-art-production; do
+            if [ -f "$child/requirements-dev.txt" ]; then python3 -m pip install -r "$child/requirements-dev.txt"; fi
+            if [ -f "$child/requirements.txt" ]; then python3 -m pip install -r "$child/requirements.txt"; fi
+          done
+      - name: Qualify the real immutable exchange chain
+        run: |
+          python3 tools/qualify_pin_update.py \
+            --workspace-root repos \
+            --output /tmp/pin-update-qualification.json \
+            --run-id ci-real-chain

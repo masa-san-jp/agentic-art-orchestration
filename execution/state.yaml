@@ -1,37 +1,36 @@
-version: 16
-updated_at: "2026-08-14T01:30:00+09:00"
-active_task: null
+version: 17
+updated_at: "2026-08-14T01:45:00+09:00"
+active_task: ISSUE-38-REAL-CHAIN-CI-001
 active_repository: agentic-art-orchestration
 lease:
-  status: released
-  owner: codex-issue-40-pin-adoption
-  acquired_at: "2026-08-14T01:15:00+09:00"
-  expires_at: "2026-08-14T02:15:00+09:00"
-  lane: PIN_ADOPTION
-  execution_id: ISSUE-40-PIN-ADOPTION-001:attempt-1
+  status: active
+  owner: codex-issue-38-real-chain-ci
+  acquired_at: "2026-08-14T01:45:00+09:00"
+  expires_at: "2026-08-14T02:45:00+09:00"
+  lane: RELEASE_QUALIFICATION
+  execution_id: ISSUE-38-REAL-CHAIN-CI-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/qualify_pin_update.py, tests/test_pin_update.py, docs/input-pipeline-runbook.md, config/repositories.yaml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-14T01:30:00+09:00"
-  release_reason: read-only verified workspace qualification passed; no parent pin adoption or child mutation performed
+    paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
 checkpoint:
-  task: ISSUE-40-PIN-ADOPTION-001
+  task: ISSUE-38-REAL-CHAIN-CI-001
   repository: agentic-art-orchestration
   start_point: 302de458495257fca0e754ed4f71f6b5255abbbe
-  expected_changes: Add a repeatable read-only pin candidate qualification and safe apply guard without mutating child repositories or the parent manifest during qualification.
-  result: passed; focused tests 3/3, verified workspace child gates 5/5, Production exchange PASSED, offline fixture correctly FAILED due unavailable child dependencies, manifest unchanged
+  expected_changes: Add real child checkout and parent Production exchange qualification to CI without pin adoption or child mutation.
+  result: in_progress
 last_completed_task: ISSUE-40-PIN-ADOPTION-001
 resume_from:
   task: ISSUE-38-REAL-CHAIN-CI-001
-  action: Inspect the real-chain CI workflow and run its parent-side checks; child PR merge remains a prerequisite for a green real exchange job.
+  action: Run workflow contract tests and parent validation; child PR merge remains a prerequisite for a green real exchange job.
   command: .venv/bin/python tools/validate.py --check
 pin_qualification:
-  status: passed_read_only
-  verified_workspace: /tmp/aap-production-qualified-5Nhxun
+  status: passed_and_adopted
+  verified_workspace: temporary GitHub main workspace
   child_quality_gates: "5/5 repositories PASSED"
   production_exchange: PASSED
-  candidate_changes: 0
-  manifest_mutation: false
+  candidate_changes: 5
+  manifest_mutation: true
+  adopted_commits: [fda3e29c76ba8fbd40ee6946589d6789029d92d6, b914b6989b025e2caa9d7fc49149d787da99f798, ff3adca6e52c18095a00c23d39ef2a961ae1d13b, d947fdd14abeb700af9a62abcf27c21f3f12e134, 51a817c8fcfe292069b85717f5e973b1e860bd4b]
   child_repository_mutation: false
   offline_fixture: FAILED_EXPECTED; synthetic fixture lacked installed child dependencies and was not adopted
 drive_live_smoke:

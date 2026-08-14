@@ -668,7 +668,7 @@ tasks:
   - id: ISSUE-38-REAL-CHAIN-CI-001
     milestone: M15
     title: Run real pinned child and Production exchange qualification in CI
-    status: READY
+    status: IN_PROGRESS
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
