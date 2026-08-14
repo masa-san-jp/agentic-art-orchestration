@@ -39,6 +39,7 @@
 - `.github/workflows/validate.yml` adds a read-only `real-chain` job for all five child repositories and invokes `tools/qualify_pin_update.py` without `--apply`.
 - `tests/test_real_chain_ci.py` asserts all child refs, full history, read-only permissions, qualification command, and absence of pin adoption.
 - The real-chain job is expected to remain red until the child Research/Production exchange PRs are merged or the current child mains independently satisfy the exchange contract; no merge or release is being performed by this task.
+- Remote CI evidence found an additional external blocker: all five child repos are PRIVATE and the parent Actions `GITHUB_TOKEN` cannot read them (`Repository not found` on the first checkout). The workflow now fails explicitly unless `AAP_CHILD_REPOS_TOKEN` is configured as an external read-only Actions secret; no credential was committed or created.
 
 ## Current state
 

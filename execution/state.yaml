@@ -33,6 +33,11 @@ pin_qualification:
   adopted_commits: [fda3e29c76ba8fbd40ee6946589d6789029d92d6, b914b6989b025e2caa9d7fc49149d787da99f798, ff3adca6e52c18095a00c23d39ef2a961ae1d13b, d947fdd14abeb700af9a62abcf27c21f3f12e134, 51a817c8fcfe292069b85717f5e973b1e860bd4b]
   child_repository_mutation: false
   offline_fixture: FAILED_EXPECTED; synthetic fixture lacked installed child dependencies and was not adopted
+real_chain_ci:
+  status: blocked_external_credential
+  observed: parent Actions GITHUB_TOKEN cannot read PRIVATE child repositories; first checkout failed with Repository not found
+  remediation: configure AAP_CHILD_REPOS_TOKEN as a read-only GitHub Actions secret outside Git
+  impact: real-chain CI cannot yet provide green remote evidence; no child or parent release mutation was performed
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813

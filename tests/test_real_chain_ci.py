@@ -43,6 +43,16 @@ class RealChainCITests(unittest.TestCase):
         self.assertIn("--run-id ci-real-chain", command)
         self.assertNotIn("--apply", command)
 
+    def test_private_child_access_requires_an_external_actions_secret(self):
+        workflow = self.workflow()
+        real_chain = workflow["jobs"]["real-chain"]
+        credential_step = next(step for step in real_chain["steps"] if step.get("name") == "Verify read-only private child repository credential")
+        self.assertIn("AAP_CHILD_REPOS_TOKEN", credential_step["env"]["AAP_CHILD_REPOS_TOKEN"])
+        self.assertIn("AAP_CHILD_REPOS_TOKEN", credential_step["run"])
+        for step in real_chain["steps"]:
+            if step.get("uses") == "actions/checkout@v4" and "repository" in step.get("with", {}):
+                self.assertIn("AAP_CHILD_REPOS_TOKEN", step["with"]["token"])
+
 
 if __name__ == "__main__":
     unittest.main()

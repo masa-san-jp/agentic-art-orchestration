@@ -43,6 +43,14 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Verify read-only private child repository credential
+        env:
+          AAP_CHILD_REPOS_TOKEN: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+        run: |
+          if [ -z "$AAP_CHILD_REPOS_TOKEN" ]; then
+            echo "::error::AAP_CHILD_REPOS_TOKEN is required to read the private child repositories; configure it as an Actions secret without committing the credential."
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -53,30 +61,35 @@ jobs:
           ref: main
           path: repos/self-model-notes
           fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/art-history-notes
           ref: main
           path: repos/art-history-notes
           fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/marketing-trends-notes
           ref: main
           path: repos/marketing-trends-notes
           fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/agentic-art-research
           ref: main
           path: repos/agentic-art-research
           fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/agentic-art-production
           ref: main
           path: repos/agentic-art-production
           fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
       - name: Install parent and child dependencies
         run: |
           python3 -m pip install -r requirements-dev.txt
