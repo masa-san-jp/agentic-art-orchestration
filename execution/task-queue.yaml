@@ -642,3 +642,14 @@ tasks:
     depends_on: [CONSUMER-001, KNOWLEDGE-PROFILE-001, V12-CANDIDATE-001]
     acceptance: Each approved child DTO enters through its declared parent adapter and a versioned aggregate normalized signal bundle with repository@commit provenance; the parent validates and imports it through the consumer boundary; the candidate pipeline consumes the bundle without manual signal-file wiring; and legacy, raw, or mixed-source envelopes fail closed.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_export_signal tests.test_signal_bundle tests.test_input_pipeline tests.test_consumer_contract tests.test_candidate_space -v, python3 tools/signal_bundle.py --self <self-signal> --art-history <art-signal> --marketing <marketing-signal> --generated-at <timestamp> --check --output <bundle>]
+
+  - id: ISSUE-41-RESEARCH-REQUEST-001
+    milestone: M15
+    title: Generate and dry-run the child research request from selected candidates
+    status: DONE
+    lane: RESEARCH_HANDOFF
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-39-KB-PIPE-001, V12-SELECTION-001, V12-PROVENANCE-001]
+    acceptance: A selected candidate produces the child-owned research-request/v1-shaped request with intent, constraints, open questions, references, source repository@commit, and a raw-data exclusion; the pinned Research acceptor reaches DRY_RUN without creating or changing a child project, and selected signal statements are not copied into the request.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_research_request -v, python3 tools/research_start.py --bundle <bundle> --project-id <id> --project-slug <slug> --seed-input <seed> --request-id <RR###> --requested-at <timestamp> --research-root <pinned-research> --output-dir <output>]

@@ -8,6 +8,18 @@
 - Evidence: `.venv/bin/python tools/validate.py --check` passed; full parent suite passed 294/294; focused bundle/pipeline tests passed; bundle and input-pipeline CLI outputs were byte-identical across repeated runs.
 - No child repository, Issue, Google Drive, or user artifact was changed. Next operation is the separate `ISSUE-41-RESEARCH-REQUEST-001` validation task.
 
+## ISSUE-41-RESEARCH-REQUEST-001 in progress
+
+- `tools/research_request.py` derives the child-owned request shape from the selected candidate and canonical bundle, retaining opaque references and source commit metadata only.
+- `tools/research_start.py` composes the parent pipeline and invokes the pinned Research acceptor in `--dry-run` mode; it has no apply path.
+- Next operation: run the focused request tests and child dry-run, then inspect the child Git status for zero mutation.
+
+## ISSUE-41-RESEARCH-REQUEST-001 completed
+
+- `.venv/bin/python -m unittest tests.test_research_request -v`: 2/2 passed.
+- `tools/research_start.py` produced `research_acceptance.status=DRY_RUN` through the sibling Research acceptor after resolving `research_root/.venv/bin/python`; no Research project was created.
+- Research child status before/after: `main...origin/main`, clean. Next operation is the read-only pin adoption qualification task.
+
 ## Current state
 
 - 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
