@@ -36,6 +36,7 @@ class RealChainCITests(unittest.TestCase):
             if step.get("uses") == "actions/checkout@v4" and "repository" in step.get("with", {}):
                 self.assertEqual("main", step["with"]["ref"])
                 self.assertEqual(0, step["with"]["fetch-depth"])
+                self.assertFalse(step["with"]["persist-credentials"])
         qualification = next(step for step in real_chain["steps"] if step.get("name") == "Qualify the real immutable exchange chain")
         command = qualification["run"]
         self.assertIn("tools/qualify_pin_update.py", command)
@@ -52,6 +53,7 @@ class RealChainCITests(unittest.TestCase):
         for step in real_chain["steps"]:
             if step.get("uses") == "actions/checkout@v4" and "repository" in step.get("with", {}):
                 self.assertIn("AAP_CHILD_REPOS_TOKEN", step["with"]["token"])
+                self.assertFalse(step["with"]["persist-credentials"])
 
 
 if __name__ == "__main__":

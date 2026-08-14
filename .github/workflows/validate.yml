@@ -62,6 +62,7 @@ jobs:
           path: repos/self-model-notes
           fetch-depth: 0
           token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/art-history-notes
@@ -69,6 +70,7 @@ jobs:
           path: repos/art-history-notes
           fetch-depth: 0
           token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/marketing-trends-notes
@@ -76,6 +78,7 @@ jobs:
           path: repos/marketing-trends-notes
           fetch-depth: 0
           token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/agentic-art-research
@@ -83,6 +86,7 @@ jobs:
           path: repos/agentic-art-research
           fetch-depth: 0
           token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/agentic-art-production
@@ -90,6 +94,7 @@ jobs:
           path: repos/agentic-art-production
           fetch-depth: 0
           token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
       - name: Install parent and child dependencies
         run: |
           python3 -m pip install -r requirements-dev.txt
