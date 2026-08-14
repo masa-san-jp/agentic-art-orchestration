@@ -21,6 +21,21 @@ marketing-trends-notes -----/
 - adapter.name / adapter.version
 - generated_at
 
+## Envelope naming rules
+
+The name of a cross-repository container is defined by the consuming contract. When no consumer contract exists, use the plural noun for the contents. Producers may keep their internal schema; only the boundary envelope is governed here.
+
+| Boundary artifact | Canonical key | Meaning |
+| --- | --- | --- |
+| `source-ref-index.yaml` | `references` | Source-reference records consumed by Production |
+| `source-ref-index.yaml` record | `record_hash` | Canonical non-zero hash produced by Research; a consumer must not invent or silently zero-fill it |
+| `research-signal-export/v1` | `signals` / `signal_count` | Pre-adapter signal payload and its count |
+| Signal envelope metadata | `contract_version` / `generated_at` | Contract version and generation time |
+
+`record_hash` identifies the canonical source-record snapshot computed by the producer. Production validates its format and presence, but cannot claim to verify the source record when the record body is intentionally not copied into the handoff.
+
+The parent-owned `normalized-research-signal-bundle/v1` is a separate consumer-side aggregate and intentionally uses `records`; that internal aggregate name does not override the producer envelope rule above. Adapters translate child-specific internal forms at the boundary, so `entities`, `graph`, and other KB-internal schemas are not forced to share names.
+
 ## Domain-preserving extensions
 
 ### Self Model

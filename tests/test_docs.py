@@ -63,6 +63,22 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("docs/incident-runbook.md", text)
         self.assertIn("docs/interaction-improvement-runbook.md", text)
 
+    def test_cross_repository_contract_defines_envelope_naming_rules(self):
+        text = (ROOT / "docs/cross-repository-contract.md").read_text(encoding="utf-8")
+        for required in (
+            "Envelope naming rules",
+            "consuming contract",
+            "source-ref-index.yaml",
+            "references",
+            "record_hash",
+            "research-signal-export/v1",
+            "signals",
+            "signal_count",
+            "normalized-research-signal-bundle/v1",
+            "must not invent or silently zero-fill",
+        ):
+            self.assertIn(required, text)
+
     def test_v11_runbook_is_operable_without_conversation_history(self):
         text = (ROOT / "docs/interaction-improvement-runbook.md").read_text(encoding="utf-8")
         for required in (
