@@ -37,3 +37,25 @@ jobs:
           python3 tools/interaction_e2e.py
           python3 tools/security.py --offline-fixture
       - run: python3 -m unittest discover -s tests -v
+
+  # The bootstrap job validates against the offline fixture mirror. This job is the
+  # only place the real children run against each other, so a boundary that breaks
+  # between repositories fails here and nowhere else.
+  production-exchange:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 -m pip install -r requirements-dev.txt
+      - name: Materialize the manifest-pinned children
+        env:
+          CHILD_REPOS_TOKEN: ${{ secrets.CHILD_REPOS_TOKEN }}
+        run: python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
+      - name: Run the Research/Production exchange against the real children
+        run: |
+          python3 tools/production_exchange.py \
+            --workspace-root "$RUNNER_TEMP/pinned" \
+            --output-root "$RUNNER_TEMP/exchange" \
+            --evidence "$RUNNER_TEMP/exchange-evidence.json"
