@@ -63,6 +63,14 @@
 - The parent pin remains `b914b6989b025e2caa9d7fc49149d787da99f798`; unmerged child content was not imported into the parent and no other child repository was changed.
 - After human merge, observe the new child `main` SHA, rerun child gates and Production exchange, then update the parent pin in a separate qualified parent change. Do not merge the parent PR based on the unmerged child head.
 
+## 2026-08-14 issue/PR recheck
+
+- Parent Issues #43〜#51 are new follow-up decisions/tasks and are not represented in the current parent `execution/task-queue.yaml`; they must not be silently mixed into the Issue #38 PR.
+- `agentic-art-research` PR #42 is `CONFLICTING` with current `main` (`d947fdd`) and its `records`/`record_sha256` contract conflicts with parent Issue #43's declared `references`/`record_hash` decision. Its isolated branch validator and 120 tests pass, but it is not merge-ready.
+- `agentic-art-production` PR #21 is `CONFLICTING` with current `main` (`51a817c`) and depends on the same source-reference naming. Its isolated branch validator, tests, and diff check pass, but it is not merge-ready until the Research contract is settled and current main is incorporated.
+- `art-history-notes` PR #349 is the only reviewed child PR with current-base CI PASS; it remains unmerged and does not change the parent pin.
+- Reviews and exact unblock conditions were recorded on parent PR #42, Research PR #42, and Production PR #21. No child merge, parent merge, release, Issue close, Drive mutation, or credential operation was performed.
+
 ## MANIFEST-001 evidence
 
 - `schemas/repository-manifest.schema.json` を追加し、Draft 2020-12のmanifest項目、role、契約、品質ゲートを固定。

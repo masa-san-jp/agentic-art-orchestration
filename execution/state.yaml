@@ -1,12 +1,12 @@
-version: 19
-updated_at: "2026-08-14T13:32:03+09:00"
+version: 20
+updated_at: "2026-08-14T20:03:06+09:00"
 active_task: ISSUE-38-REAL-CHAIN-CI-001
 active_repository: agentic-art-orchestration
 lease:
   status: active
   owner: codex-issue-38-real-chain-ci
-  acquired_at: "2026-08-14T13:32:03+09:00"
-  expires_at: "2026-08-14T14:32:03+09:00"
+  acquired_at: "2026-08-14T20:03:06+09:00"
+  expires_at: "2026-08-14T21:03:06+09:00"
   lane: RELEASE_QUALIFICATION
   execution_id: ISSUE-38-REAL-CHAIN-CI-001:attempt-1
   scope:
@@ -54,6 +54,20 @@ child_pr_review:
   child_quality_gate: PASSED
   parent_pin_changed: false
   next_after_human_merge: observe_main; requalify_child_gates_and_production_exchange; separately_adopt_parent_pin
+follow_up_review:
+  status: blocked_by_child_contract_and_pr_conflicts
+  parent_issues: [43, 44, 45, 46, 47, 48, 49, 50, 51]
+  research_pull_request:
+    number: 42
+    head_commit: 85514df96d54d254b785cf786a55b5d1e2162036
+    status: conflicting_with_current_main_and_contract_decision
+    local_validation: validator_passed; tests_120_of_120_passed
+  production_pull_request:
+    number: 21
+    head_commit: 2b3643061b0480e89ee02c7d40c11bccb73b0be5
+    status: conflicting_with_current_main_and_waiting_for_research_contract
+    local_validation: validator_passed; tests_passed; diff_check_passed
+  required_next: resolve_issue_43_contract_names_before_coordinated_child_pr_updates
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813
