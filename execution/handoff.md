@@ -23,7 +23,7 @@
 ## ISSUE-40-PIN-ADOPTION-001 in progress
 
 - `tools/qualify_pin_update.py` observes workspace HEADs, builds a copied candidate manifest, runs child quality gates and Production exchange, and writes only an external report during qualification.
-- `apply_qualified_pins` re-reads the candidate and refuses to apply if the workspace changed after qualification. No `--apply` operation has been performed.
+- `apply_qualified_pins` re-reads the candidate and refuses to apply if the workspace changed after qualification. The separate adoption was applied only to the parent branch and recorded in `3813145`; no child repository was changed.
 - Next operation: record the verified-workspace PASS and offline-fixture BLOCK/FAIL evidence, then release the lease.
 
 ## ISSUE-40-PIN-ADOPTION-001 completed
@@ -32,22 +32,22 @@
 - Verified temporary GitHub main workspace: child quality gates `5/5 PASSED`, Production exchange `PASSED`, candidate changes `5`; the qualification was repeated with `--apply` and changed only the five parent `observed_commit` lines.
 - Adopted pins: self-model `fda3e29c76ba8fbd40ee6946589d6789029d92d6`, art-history `b914b6989b025e2caa9d7fc49149d787da99f798`, marketing-trends `ff3adca6e52c18095a00c23d39ef2a961ae1d13b`, Research `d947fdd14abeb700af9a62abcf27c21f3f12e134`, Production `51a817c8fcfe292069b85717f5e973b1e860bd4b`.
 - Offline fixture was rejected because its synthetic child archives do not contain the real child dependencies/tools; this remains a failed candidate, not a normalized success.
-- Next operation: inspect and qualify the real-chain CI workflow for Issue #38. Child PR merges remain a separate human gate.
+- Next operation: inspect and qualify the real-chain CI workflow for Issue #38. Child PR #41 and #19 are already merged; the remaining external gate is private-repository Actions access.
 
 ## ISSUE-38-REAL-CHAIN-CI-001 in progress
 
 - `.github/workflows/validate.yml` adds a read-only `real-chain` job for all five child repositories and invokes `tools/qualify_pin_update.py` without `--apply`.
 - `tests/test_real_chain_ci.py` asserts all child refs, full history, read-only permissions, qualification command, and absence of pin adoption.
-- The real-chain job is expected to remain red until the child Research/Production exchange PRs are merged or the current child mains independently satisfy the exchange contract; no merge or release is being performed by this task.
+- The real-chain job is expected to remain red until the external read-only Actions credential is configured; no merge or release is being performed by this task.
 - Remote CI evidence found an additional external blocker: all five child repos are PRIVATE and the parent Actions `GITHUB_TOKEN` cannot read them (`Repository not found` on the first checkout). The workflow now fails explicitly unless `AAP_CHILD_REPOS_TOKEN` is configured as an external read-only Actions secret; no credential was committed or created.
 
 ## Current state
 
 - 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
 - 完了: v1.2.1基線化実装。release checker、親runnerのactive virtualenv解決、5repo表記、runbook、state/handoffを更新済み。
-- 次: `ISSUE-41-RESEARCH-REQUEST-001`（selected candidateからchild research-requestへの境界検証）。
-- blocker: なし
-- active lease: なし
+- 次: `ISSUE-38-REAL-CHAIN-CI-001`（外部Actions secret設定後の再実行）。
+- blocker: PRIVATE child repoを読む`AAP_CHILD_REPOS_TOKEN`が未設定。
+- active lease: `ISSUE-38-REAL-CHAIN-CI-001`
 - 親repo: `design/initial-operations-roadmap` / `ea18918`開始点 / working treeは意図したtask差分のみ
 
 ## MANIFEST-001 evidence

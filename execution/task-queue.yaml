@@ -674,5 +674,5 @@ tasks:
     user_artifact_policy: READ_ONLY
     depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
     acceptance: Pull-request CI checks out each registered child at an immutable ref using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails on missing credential, stale, unavailable, failed, or incompatible real-chain evidence, and never adopts pins or mutates child repositories.
-    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain]
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain]
     blocker: Parent GitHub Actions cannot read the five private child repositories with GITHUB_TOKEN; AAP_CHILD_REPOS_TOKEN must be configured outside Git before the real-chain job can pass.

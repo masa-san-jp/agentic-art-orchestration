@@ -21,7 +21,7 @@ checkpoint:
 last_completed_task: ISSUE-40-PIN-ADOPTION-001
 resume_from:
   task: ISSUE-38-REAL-CHAIN-CI-001
-  action: Run workflow contract tests and parent validation; child PR merge remains a prerequisite for a green real exchange job.
+  action: Configure the external AAP_CHILD_REPOS_TOKEN secret, rerun the real-chain CI job, and retain the fail-closed behavior if access remains unavailable.
   command: .venv/bin/python tools/validate.py --check
 pin_qualification:
   status: passed_and_adopted
@@ -37,7 +37,7 @@ real_chain_ci:
   status: blocked_external_credential
   observed: parent Actions GITHUB_TOKEN cannot read PRIVATE child repositories; first checkout failed with Repository not found
   remediation: configure AAP_CHILD_REPOS_TOKEN as a read-only GitHub Actions secret outside Git
-  impact: real-chain CI cannot yet provide green remote evidence; no child or parent release mutation was performed
+  impact: real-chain CI cannot yet provide green remote evidence; no child, Issue, Drive, merge, or release mutation was performed
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813
