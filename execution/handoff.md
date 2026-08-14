@@ -30,7 +30,7 @@
 
 - `tests.test_pin_update`: 3/3 passed.
 - Verified temporary GitHub main workspace: child quality gates `5/5 PASSED`, Production exchange `PASSED`, candidate changes `5`; the qualification was repeated with `--apply` and changed only the five parent `observed_commit` lines.
-- Adopted pins: self-model `fda3e29c76ba8fbd40ee6946589d6789029d92d6`, art-history `b914b6989b025e2caa9d7fc49149d787da99f798`, marketing-trends `ff3adca6e52c18095a00c23d39ef2a961ae1d13b`, Research `d947fdd14abeb700af9a62abcf27c21f3f12e134`, Production `51a817c8fcfe292069b85717f5e973b1e860bd4b`.
+- Adopted pins: self-model `fda3e29c76ba8fbd40ee6946589d6789029d92d6`, art-history `b831f4c57d842f44ad45134a5abd434dc367482f`, marketing-trends `ff3adca6e52c18095a00c23d39ef2a961ae1d13b`, Research `d947fdd14abeb700af9a62abcf27c21f3f12e134`, Production `51a817c8fcfe292069b85717f5e973b1e860bd4b`.
 - Offline fixture was rejected because its synthetic child archives do not contain the real child dependencies/tools; this remains a failed candidate, not a normalized success.
 - Next operation: inspect and qualify the real-chain CI workflow for Issue #38. Child PR #41 and #19 are already merged; the remaining external gate is private-repository Actions access.
 
@@ -52,24 +52,24 @@
 
 ## ISSUE-38 latest qualification evidence
 
-- Parent branch head is `bd39238969d1098bf54e7f20e7d8621f0fe43169`; checkout steps use the external token and `persist-credentials: false` for all five private child repositories.
-- GitHub Actions run [31769491465](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31769491465) is `bootstrap=PASSED`, `real-chain=FAILED` at the explicit preflight because `AAP_CHILD_REPOS_TOKEN` is unset. This is the intended fail-closed result; no checkout or child mutation occurred.
-- Local evidence: parent full suite `303/303` passed, `tools/validate.py --check` passed, offline audit is `CLEAN`, security is `PASSED`, and `git diff --check` passed.
+- Parent branch head is `6024028bb4654f9d7c04172c9bcc93d053c7a54`; checkout steps use the external token and `persist-credentials: false` for all five private child repositories.
+- GitHub Actions run [31794633013](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31794633013) detected the stale art-history reference fixture in `bootstrap` and stopped `real-chain` at the explicit preflight because `AAP_CHILD_REPOS_TOKEN` is unset. Both failures are fail-closed; no checkout or child mutation occurred.
+- The stale fixture references were synchronized to the qualified art-history commit; the parent full suite `303/303` and validator now pass locally.
 - No credential was created, retrieved, or committed. The next operation remains external secret configuration by a repository administrator, followed by a PR check rerun.
 
 ## Child repository PR review
 
-- `art-history-notes` PR #349 was reviewed and corrected at `c4a81f05304cc9483d1a3378e03df2f25fbd27f2`; its child GitHub quality gate is PASS and the PR is mergeable, but it remains OPEN pending human merge approval.
-- The parent pin remains `b914b6989b025e2caa9d7fc49149d787da99f798`; unmerged child content was not imported into the parent and no other child repository was changed.
-- After human merge, observe the new child `main` SHA, rerun child gates and Production exchange, then update the parent pin in a separate qualified parent change. Do not merge the parent PR based on the unmerged child head.
+- `art-history-notes` PR #349 was reviewed and corrected at `c4a81f05304cc9483d1a3378e03df2f25fbd27f2`; its child GitHub quality gate was PASS and it merged as `b831f4c57d842f44ad45134a5abd434dc367482f`.
+- The parent pin was requalified against all five current child mains: child gates `5/5 PASSED`, Production exchange `PASSED`, and only the art-history `observed_commit` changed from `b914b6989b025e2caa9d7fc49149d787da99f798` to `b831f4c57d842f44ad45134a5abd434dc367482f`.
+- The parent PR remains blocked only by the external private-repository Actions credential; no other child repository was changed.
 
 ## 2026-08-14 issue/PR recheck
 
 - Parent Issues #43〜#51 are new follow-up decisions/tasks and are not represented in the current parent `execution/task-queue.yaml`; they must not be silently mixed into the Issue #38 PR.
 - `agentic-art-research` PR #42 is `CONFLICTING` with current `main` (`d947fdd`) and its `records`/`record_sha256` contract conflicts with parent Issue #43's declared `references`/`record_hash` decision. Its isolated branch validator and 120 tests pass, but it is not merge-ready.
 - `agentic-art-production` PR #21 is `CONFLICTING` with current `main` (`51a817c`) and depends on the same source-reference naming. Its isolated branch validator, tests, and diff check pass, but it is not merge-ready until the Research contract is settled and current main is incorporated.
-- `art-history-notes` PR #349 is the only reviewed child PR with current-base CI PASS; it remains unmerged and does not change the parent pin.
-- Reviews and exact unblock conditions were recorded on parent PR #42, Research PR #42, and Production PR #21. No child merge, parent merge, release, Issue close, Drive mutation, or credential operation was performed.
+- `art-history-notes` PR #349 is merged as `b831f4c`; the parent pin and reference fixtures were requalified and synchronized.
+- Reviews and exact unblock conditions were recorded on parent PR #42, Research PR #42, and Production PR #21. No other child merge, parent merge, release, Issue close, Drive mutation, or credential operation was performed.
 
 ## MANIFEST-001 evidence
 

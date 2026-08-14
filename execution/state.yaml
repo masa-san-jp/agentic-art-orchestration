@@ -30,30 +30,30 @@ pin_qualification:
   production_exchange: PASSED
   candidate_changes: 5
   manifest_mutation: true
-  adopted_commits: [fda3e29c76ba8fbd40ee6946589d6789029d92d6, b914b6989b025e2caa9d7fc49149d787da99f798, ff3adca6e52c18095a00c23d39ef2a961ae1d13b, d947fdd14abeb700af9a62abcf27c21f3f12e134, 51a817c8fcfe292069b85717f5e973b1e860bd4b]
+  adopted_commits: [fda3e29c76ba8fbd40ee6946589d6789029d92d6, b831f4c57d842f44ad45134a5abd434dc367482f, ff3adca6e52c18095a00c23d39ef2a961ae1d13b, d947fdd14abeb700af9a62abcf27c21f3f12e134, 51a817c8fcfe292069b85717f5e973b1e860bd4b]
   child_repository_mutation: false
   offline_fixture: FAILED_EXPECTED; synthetic fixture lacked installed child dependencies and was not adopted
 real_chain_ci:
   status: blocked_external_credential
   observed: parent Actions GITHUB_TOKEN cannot read PRIVATE child repositories; the explicit preflight failed because AAP_CHILD_REPOS_TOKEN is unset
   remediation: configure AAP_CHILD_REPOS_TOKEN as a read-only GitHub Actions secret outside Git
-  impact: real-chain CI cannot yet provide green remote evidence; no child, Issue, Drive, merge, or release mutation was performed
+  impact: real-chain CI cannot yet provide green remote evidence; the art-history child PR was merged separately, but no Issue, Drive, parent merge, or release mutation was performed
   latest_remote_run:
-    id: 31769491465
-    head_sha: bd39238969d1098bf54e7f20e7d8621f0fe43169
-    bootstrap: PASSED
+    id: 31794633013
+    head_sha: 6024028bb4654f9d7c04172c9bcc93d053c7a54
+    bootstrap: FAILED_REFERENCE_STALE
     real_chain: FAILED_MISSING_EXTERNAL_SECRET
-    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31769491465
-  local_validation: parent_tests_303_of_303_passed; validator_passed; audit_clean; security_passed; diff_check_passed
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31794633013
+  local_validation: parent_tests_303_of_303_passed; validator_passed; diff_check_passed_after_art_history_fixture_sync
 child_pr_review:
-  status: reviewed_clean_unmerged
+  status: merged_requalified
   repository: masa-san-jp/art-history-notes
   pull_request: 349
-  head_commit: c4a81f05304cc9483d1a3378e03df2f25fbd27f2
+  head_commit: b831f4c57d842f44ad45134a5abd434dc367482f
   base_commit: b914b6989b025e2caa9d7fc49149d787da99f798
   child_quality_gate: PASSED
-  parent_pin_changed: false
-  next_after_human_merge: observe_main; requalify_child_gates_and_production_exchange; separately_adopt_parent_pin
+  parent_pin_changed: true
+  next_after_human_merge: wait_for_external_actions_secret; rerun_parent_real_chain_ci
 follow_up_review:
   status: blocked_by_child_contract_and_pr_conflicts
   parent_issues: [43, 44, 45, 46, 47, 48, 49, 50, 51]
