@@ -48,8 +48,34 @@ def _authenticated(url: str, token: str | None) -> str:
     return url.replace("https://", f"https://x-access-token:{token}@", 1)
 
 
+def _unreachable(manifest: dict, token: str | None) -> list[str]:
+    """Name every repository the credential cannot read, not just the first one.
+
+    Only runs when a token is supplied. Without one the caller is relying on an
+    ambient credential helper, and probing every remote would put the network in
+    the path of offline callers.
+    """
+    if not token:
+        return []
+    denied = []
+    for repository in manifest["repositories"]:
+        probe = subprocess.run(
+            ["git", "ls-remote", "--exit-code", "-h", _authenticated(repository["url"], token)],
+            capture_output=True, text=True,
+        )
+        if probe.returncode != 0:
+            denied.append(repository["full_name"])
+    return denied
+
+
 def materialize(output: Path, token: str | None) -> list[tuple[str, str]]:
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+    denied = _unreachable(manifest, token)
+    if denied:
+        raise WorkspaceError(
+            "the credential cannot read: " + ", ".join(denied)
+            + " — grant the token Contents:Read-only on every manifest repository"
+        )
     output.mkdir(parents=True, exist_ok=True)
     materialized: list[tuple[str, str]] = []
     for repository in manifest["repositories"]:
