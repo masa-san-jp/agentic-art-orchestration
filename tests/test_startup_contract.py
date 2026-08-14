@@ -75,7 +75,7 @@ class StartupContractTests(unittest.TestCase):
         capabilities = [
             {
                 "capability": capability,
-                "status": "ALLOWED" if capability in MODULE.STARTUP_CAPABILITIES[:6] else "BLOCKED",
+                "status": "ALLOWED" if capability in MODULE.STARTUP_CAPABILITIES[:6] or capability == "branch_commit_pull_request" else "BLOCKED",
                 "reason_codes": [],
             }
             for capability in MODULE.STARTUP_CAPABILITIES

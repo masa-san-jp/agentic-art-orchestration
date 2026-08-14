@@ -8,6 +8,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_startup_capability_matrix_documents_finding_specific_boundaries(self):
+        text = (ROOT / "docs/agent-startup.md").read_text(encoding="utf-8")
+        for required in (
+            "Startup capability matrix",
+            "only `remote_update_candidate`",
+            "Parent `branch` / `commit` / `pull_request`",
+            "`merge` / `release` / `tag`",
+            "human gate",
+            "qualified snapshot",
+            "RESTRICTED",
+        ):
+            self.assertIn(required, text)
+
     def test_operator_runbook_has_complete_lifecycle_and_safety_boundaries(self):
         text = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
         for required in (

@@ -927,3 +927,11 @@
 - `config/github-sandbox-live-policy.yaml`に`post_create_search`の有限リトライ設定を追加。既定は最大5回、2秒開始、倍率2、最大16秒。CREATE直後の検索だけを対象にし、既存Issueの初回検索は変更しない。
 - 各再試行はmetadata-onlyのREAD証跡（attempt番号付き）として保持し、単一Issueが見つかったときだけ`REUSE`を記録する。上限まで見つからなければ`BLOCKED`のままにして、作成成功を資格成功へ誤変換しない。
 - fixtureではsleepを注入して実時間待ちなしに遅延・上限到達を検証した。release判定は固定4操作列ではなく、`READ → CREATE → READ* → REUSE`かつCREATE一回を受け入れる。
+
+## STARTUP-CAPABILITY-001 completed
+
+- Issue #54の循環を解消するため、startup capabilityを `branch_commit_pull_request` と `merge_release_tag` に分離した。`remote_update_candidate`だけの`READY_WITH_FINDINGS`ではqualified pinを使うreadと親repoのbranch・commit・draft PRを許可し、外部createを`RESTRICTED`、子repo変更・既存外部更新・merge/release/tagを`BLOCKED`とする。その他の非critical findingでは親control-plane修復も`RESTRICTED`、critical findingでは全capabilityを`BLOCKED`にする。
+- `config/startup-policy.yaml`、`schemas/startup-report.schema.json`、`tools/validate.py`、`tools/startup.py`、startup/運用docs、task queueを同期し、`docs/agent-startup.md`にfinding別matrixを追加した。`validate_report`にも親修復とmerge/release/tagのfail-closed意味検査を追加した。
+- 回帰テストはremote drift単独、他のnoncritical finding、critical finding、human gate、docsを追加した。`/tmp/aap-bootstrap-venv/bin/python tools/validate.py --check`、`/tmp/aap-bootstrap-venv/bin/python -m unittest discover -s tests -v`（290 tests）、`tools/startup.py --offline-fixture --check`、`git diff --check`がPASS。生成物不足を補うためoffline audit/Issue plan/interaction E2Eをmaterializeしてから全suiteを再実行した。
+- 実施したのは親repoのローカルbranch・commitのみで、child repository、Issue、PR merge、release、Drive、credential、raw conversation、外部artifactは変更していない。PR用commitは`a13f72a`。
+- 次の1操作: `git push -u origin agent/issue-54-capability-findings`後、Issue #54を参照するdraft PRを作成し、レビューを待つ。merge/release/tagは人間承認まで行わない。

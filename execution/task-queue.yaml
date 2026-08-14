@@ -1,5 +1,5 @@
-version: 4
-updated_at: "2026-08-13T08:25:00+09:00"
+version: 5
+updated_at: "2026-08-14T20:41:23+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -563,6 +563,18 @@ tasks:
     depends_on: [STARTUP-DRIFT-001]
     acceptance: Startup invokes the existing audit and security boundaries after snapshot selection, maps critical or privacy findings to BLOCKED and noncritical findings to READY_WITH_FINDINGS, emits deduplicated Issue candidates, and performs no refactoring or child mutation during startup.
     checks: [python3 -m unittest tests.test_startup_audit -v, python3 tools/startup.py --offline-fixture --check]
+
+  - id: STARTUP-CAPABILITY-001
+    milestone: M14
+    title: Split startup capabilities so remote drift can be repaired safely
+    status: DONE
+    lane: STARTUP_AUDIT
+    interaction_blocking: true
+    user_artifact_policy: READ_ONLY
+    depends_on: [STARTUP-AUDIT-001]
+    source_issue: agentic-art-orchestration#54
+    acceptance: A READY_WITH_FINDINGS report caused only by remote_update_candidate allows qualified read and parent branch/commit/pull_request repair, restricts external create and other noncritical findings, blocks child/update mutation, and keeps merge/release/tag human-gated; critical findings block every capability; policy, report schema, tests, and operator docs expose the same matrix.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_startup_contract tests.test_startup_audit -v, git diff --check]
 
   - id: ISSUE-CREATE-001
     milestone: M14

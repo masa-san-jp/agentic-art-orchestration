@@ -56,8 +56,8 @@
     },
     "capabilities": {
       "type": "array",
-      "minItems": 10,
-      "maxItems": 10,
+      "minItems": 11,
+      "maxItems": 11,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/capability"}
     },
@@ -189,7 +189,8 @@
             "child_repository_mutation",
             "drive_update_delete_share",
             "github_issue_update_close_delete_comment_label",
-            "branch_commit_pull_request_merge_release"
+            "branch_commit_pull_request",
+            "merge_release_tag"
           ]
         },
         "status": {"enum": ["ALLOWED", "RESTRICTED", "BLOCKED"]},

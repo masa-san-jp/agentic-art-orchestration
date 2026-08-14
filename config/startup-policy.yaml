@@ -60,7 +60,7 @@ outcomes:
     answer_policy: qualified_read_and_approved_create_only
   READY_WITH_FINDINGS:
     meaning: qualified_pins_available_with_visible_noncritical_findings
-    answer_policy: qualified_read_only_with_constraints
+    answer_policy: qualified_read_with_capability_constraints
   BLOCKED:
     meaning: qualified_pins_unavailable_or_critical_boundary_failure
     answer_policy: stop_affected_capabilities
@@ -93,7 +93,10 @@ capabilities:
   - id: github_issue_update_close_delete_comment_label
     class: mutation
     allowed_outcomes: []
-  - id: branch_commit_pull_request_merge_release
+  - id: branch_commit_pull_request
+    class: mutation
+    allowed_outcomes: [READY, READY_WITH_FINDINGS]
+  - id: merge_release_tag
     class: mutation
     allowed_outcomes: []
 

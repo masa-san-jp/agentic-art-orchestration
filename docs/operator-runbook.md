@@ -39,7 +39,7 @@ CodexまたはClaude Codeを利用agentとして起動したら、最初の回�
 .venv/bin/python tools/startup.py --check
 ~~~
 
-startupは全manifest repoのremote headをread-onlyで確認し、qualified pinと比較してからworkspace guard、snapshot、status、audit、securityを実行する。`READY`は通常利用可、`READY_WITH_FINDINGS`は表示されたqualified commitと制約の範囲でread-only利用可、`BLOCKED`は影響capabilityを停止する。差分検知時にcheckout、pull、manifest pin更新を行わない。
+startupは全manifest repoのremote headをread-onlyで確認し、qualified pinと比較してからworkspace guard、snapshot、status、audit、securityを実行する。全体statusは回答・knowledge laneの状態であり、実行可否はcapabilityごとに判定する。`READY_WITH_FINDINGS`でfindingが`remote_update_candidate`だけなら、qualified pinを使うreadは継続し、管制repoのbranch・commit・draft PRによる修復だけを許可する。外部create、子repo変更、pin-bound operation、merge/release/tagは止める。その他の非critical findingでは管制repo修復も`RESTRICTED`、critical findingでは影響capabilityを`BLOCKED`にする。差分検知時にcheckout、pull、manifest pin更新を行わない。詳細は[Startup capability matrix](agent-startup.md)を参照する。
 
 M14完了前はこのcommandが存在しないため、従来のnetworkless smokeと実repo workspace検査を用いる。存在しないstartup commandを実装済みとして扱わない。
 

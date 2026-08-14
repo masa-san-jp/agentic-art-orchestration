@@ -1,5 +1,5 @@
-version: 10
-updated_at: "2026-08-13T18:17:47+09:00"
+version: 11
+updated_at: "2026-08-14T20:41:23+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
@@ -15,12 +15,12 @@ lease:
   released_at: "2026-08-13T17:08:00+09:00"
   release_reason: v1.4 offline aggregate qualification completed; GitHub sandbox live evidence remains an external resume gate
 checkpoint:
-  task: INITIAL-OPS-QUALIFY-001
+  task: STARTUP-CAPABILITY-001
   repository: agentic-art-orchestration
-  start_point: 9698c38a748ef84f850e71a484b378c2e60e7c2c
-  expected_changes: Qualify v1.4.0 through three deterministic initial-operations runs, inherited parent/child gates, and separate opt-in sandbox evidence without performing release operations.
-  result: partial; v1.4.0 offline aggregate qualification passed across three deterministic runs; GitHub sandbox live evidence remains the only blocking gate
-last_completed_task: INITIAL-OPS-E2E-001
+  start_point: 0618aa01c0401edb76cc6fac70b1b085a3499caf
+  expected_changes: Split startup capability decisions so remote_update_candidate does not deadlock parent control-plane repair while critical findings and human approval boundaries remain fail-closed.
+  result: completed; policy, schema, runtime decision, tests, operator matrix, and task records are synchronized
+last_completed_task: STARTUP-CAPABILITY-001
 resume_from:
   task: INITIAL-OPS-QUALIFY-001
   action: Run three deterministic initial-operations qualification passes and verify separate Drive and GitHub sandbox evidence before the human release gate.
@@ -67,6 +67,14 @@ startup_audit_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates -v; .venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
   result: passed; startup audit tests 5/5, repository update tests 3/3, startup contract tests 5/5, full parent suite 237/237, validator and diff check passed, workspace five repositories clean, audit CLEAN, security PASSED, startup materialize/check byte-stable READY_WITH_FINDINGS; no changed child repository quality gate required
   verified_at: "2026-08-13T12:27:30+09:00"
+  child_repository_mutation: false
+  issue_mutation: false
+  drive_mutation: false
+  raw_conversation_or_credentials: false
+startup_capability_validation:
+  command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates tests.test_docs -v; /tmp/aap-bootstrap-venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
+  result: passed; finding-specific capability matrix validated; remote_update_candidate-only startup allows parent branch/commit/pull_request, restricts external create, blocks child/update mutation and merge/release/tag; critical findings block all capabilities; dedicated tests and offline startup are green
+  verified_at: "2026-08-14T20:41:23+09:00"
   child_repository_mutation: false
   issue_mutation: false
   drive_mutation: false

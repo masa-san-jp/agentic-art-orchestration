@@ -168,13 +168,24 @@ def _step(step_id: str, status: str, blocking: bool = False, finding_codes: list
 
 
 def _capabilities(status: str, findings: list[str]) -> list[dict]:
+    finding_set = set(findings)
     restricted_create = status != "READY"
+    parent_control_plane_allowed = status == "READY" or (
+        status == "READY_WITH_FINDINGS" and finding_set <= {"remote_update_candidate"}
+    )
     records = []
     for capability in STARTUP_CAPABILITIES:
-        if capability in {"child_repository_mutation", "drive_update_delete_share", "github_issue_update_close_delete_comment_label", "branch_commit_pull_request_merge_release"}:
+        if capability in {
+            "child_repository_mutation",
+            "drive_update_delete_share",
+            "github_issue_update_close_delete_comment_label",
+            "merge_release_tag",
+        }:
             capability_status = "BLOCKED"
         elif status == "BLOCKED":
             capability_status = "BLOCKED"
+        elif capability == "branch_commit_pull_request":
+            capability_status = "ALLOWED" if parent_control_plane_allowed else "RESTRICTED"
         elif capability in {"drive_create", "github_issue_create"} and restricted_create:
             capability_status = "RESTRICTED"
         else:
@@ -251,6 +262,22 @@ def validate_report(report: dict) -> list[str]:
         for capability in capabilities
     ):
         errors.append("BLOCKED startup report exposes a non-blocked capability")
+    capability_statuses = {
+        capability.get("capability"): capability.get("status")
+        for capability in capabilities
+        if isinstance(capability, dict)
+    }
+    if report.get("status") != "BLOCKED":
+        if capability_statuses.get("merge_release_tag") != "BLOCKED":
+            errors.append("startup report exposes merge, release, or tag capability")
+        if report.get("status") == "READY":
+            expected_parent_status = "ALLOWED"
+        elif set(item.get("code") for item in report.get("findings", []) if isinstance(item, dict)) <= {"remote_update_candidate"}:
+            expected_parent_status = "ALLOWED"
+        else:
+            expected_parent_status = "RESTRICTED"
+        if capability_statuses.get("branch_commit_pull_request") != expected_parent_status:
+            errors.append("startup report has an unsafe parent control-plane capability decision")
     candidates = report.get("issue_candidates", [])
     deduplication_keys = [
         candidate.get("deduplication_key")

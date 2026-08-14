@@ -115,6 +115,7 @@ REQUIRED_FILES = [
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
     "docs/interaction-improvement-runbook.md",
     "docs/agent-ui-runbook.md",
+    "docs/agent-startup.md",
 ]
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}
@@ -154,7 +155,8 @@ STARTUP_CAPABILITIES = [
     "child_repository_mutation",
     "drive_update_delete_share",
     "github_issue_update_close_delete_comment_label",
-    "branch_commit_pull_request_merge_release",
+    "branch_commit_pull_request",
+    "merge_release_tag",
 ]
 STARTUP_OUTCOMES = {"READY", "READY_WITH_FINDINGS", "BLOCKED"}
 STARTUP_FORBIDDEN_FIELDS = {
@@ -843,7 +845,7 @@ def validate_startup_contract(
     else:
         expected_answers = {
             "READY": "qualified_read_and_approved_create_only",
-            "READY_WITH_FINDINGS": "qualified_read_only_with_constraints",
+            "READY_WITH_FINDINGS": "qualified_read_with_capability_constraints",
             "BLOCKED": "stop_affected_capabilities",
         }
         for outcome, answer_policy in expected_answers.items():
@@ -866,7 +868,8 @@ def validate_startup_contract(
         "child_repository_mutation": ("mutation", []),
         "drive_update_delete_share": ("mutation", []),
         "github_issue_update_close_delete_comment_label": ("mutation", []),
-        "branch_commit_pull_request_merge_release": ("mutation", []),
+        "branch_commit_pull_request": ("mutation", ["READY", "READY_WITH_FINDINGS"]),
+        "merge_release_tag": ("mutation", []),
     }
     for capability, (expected_class, allowed_outcomes) in expected_capabilities.items():
         item = capability_map.get(capability)

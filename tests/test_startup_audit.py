@@ -44,12 +44,12 @@ class StartupAuditTests(unittest.TestCase):
 
         self.clean_observation = clean_observation
 
-    def build(self, *, audit=None, security=None, guard=None):
+    def build(self, *, audit=None, security=None, guard=None, observation=None):
         audit_result = audit or self.clean_audit
         security_result = security or self.clean_security
         guard_result = guard or self.clean_guard
         patches = [
-            patch.object(MODULE, "observe_repository", side_effect=self.clean_observation),
+            patch.object(MODULE, "observe_repository", side_effect=observation or self.clean_observation),
             patch.object(MODULE, "guard_workspace", return_value=guard_result),
             patch.object(MODULE.status_tool, "build_status", return_value=self.clean_status),
             patch.object(MODULE.audit_tool, "build_audit", return_value=audit_result),
@@ -62,6 +62,30 @@ class StartupAuditTests(unittest.TestCase):
                 self.snapshot_path,
                 run_id="startup-audit-unit",
             )
+
+    def test_remote_update_candidate_allows_parent_control_plane_only(self):
+        def update_observation(repository, qualified_commit, remote, timestamp):
+            record = self.clean_observation(repository, qualified_commit, remote, timestamp)
+            if repository["id"] == self.repository_ids[0]:
+                record["remote_observed_commit"] = "b" * 40
+                record["drift"] = "UPDATE_CANDIDATE"
+            return record
+
+        report = self.build(observation=update_observation)
+        statuses = {item["capability"]: item["status"] for item in report["capabilities"]}
+        self.assertEqual("READY_WITH_FINDINGS", report["status"])
+        self.assertEqual("ALLOWED", statuses["qualified_knowledge_read"])
+        self.assertEqual("ALLOWED", statuses["branch_commit_pull_request"])
+        self.assertEqual("BLOCKED", statuses["merge_release_tag"])
+        self.assertEqual("RESTRICTED", statuses["drive_create"])
+        self.assertEqual("BLOCKED", statuses["child_repository_mutation"])
+
+    def test_other_noncritical_findings_restrict_parent_control_plane(self):
+        audit = {"findings": [{"code": "untested-boundary", "subject": "runtime"}]}
+        report = self.build(audit=audit)
+        statuses = {item["capability"]: item["status"] for item in report["capabilities"]}
+        self.assertEqual("RESTRICTED", statuses["branch_commit_pull_request"])
+        self.assertEqual("BLOCKED", statuses["merge_release_tag"])
 
     def test_noncritical_findings_are_ready_with_deduplicated_issue_candidates(self):
         audit = {"findings": [{"code": "untested-boundary", "subject": "runtime"}]}

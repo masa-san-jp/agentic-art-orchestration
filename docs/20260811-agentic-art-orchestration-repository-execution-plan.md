@@ -176,14 +176,15 @@ M14は次の直列順で進める。順序を入れ替えず、後段が前段�
 1. `STARTUP-CONTRACT-001`: `config/startup-policy.yaml`、`schemas/startup-report.schema.json`、capability/state matrixを定義する。
 2. `STARTUP-DRIFT-001`: `tools/startup.py`から全manifest repoのdefault branch headをread-only観測し、qualified pinと分離して報告する。
 3. `STARTUP-AUDIT-001`: workspace guard、snapshot、status、audit、securityを起動時に接続し、`READY`、`READY_WITH_FINDINGS`、`BLOCKED`を決定する。
-4. `ISSUE-CREATE-001`: router候補をallowlisted GitHub repositoryへcreate-onlyで届け、stable keyでduplicateを再利用する。初期terminalはIssue URLであり、実装を開始しない。
-5. `DRIVE-LIVE-001`: 現在のFakeDrive portへprovider-neutral live bridgeを追加し、approved sandbox folderでCREATE/read verificationを行う。update/delete/shareを実装しない。
-6. `AGENT-UI-001`: Codex/Claude Codeが起動、retrieval、回答、Drive成果物、feedback/Issueを一つのconversationとして操作できるrepository-native guide/commandを作る。
-7. `INITIAL-OPS-E2E-001`: networkless contract pathとopt-in sandbox live pathを分離してE2E化する。
-8. `INITIAL-OPS-QUALIFY-001`: 3回決定的qualificationと、1件のDrive CREATE/read、1件のIssue CREATE/deduplicate evidenceを確認する。
-9. `INITIAL-OPS-RELEASE-001`: 人間承認後だけv1.4.0をmerge/tag/releaseする。
+4. `STARTUP-CAPABILITY-001`: `remote_update_candidate`だけでは親のbranch、commit、draft PRを止めず、子repo変更とmerge/release/tagを止めるfinding別capability matrixを実装する。
+5. `ISSUE-CREATE-001`: router候補をallowlisted GitHub repositoryへcreate-onlyで届け、stable keyでduplicateを再利用する。初期terminalはIssue URLであり、実装を開始しない。
+6. `DRIVE-LIVE-001`: 現在のFakeDrive portへprovider-neutral live bridgeを追加し、approved sandbox folderでCREATE/read verificationを行う。update/delete/shareを実装しない。
+7. `AGENT-UI-001`: Codex/Claude Codeが起動、retrieval、回答、Drive成果物、feedback/Issueを一つのconversationとして操作できるrepository-native guide/commandを作る。
+8. `INITIAL-OPS-E2E-001`: networkless contract pathとopt-in sandbox live pathを分離してE2E化する。
+9. `INITIAL-OPS-QUALIFY-001`: 3回決定的qualificationと、1件のDrive CREATE/read、1件のIssue CREATE/deduplicate evidenceを確認する。
+10. `INITIAL-OPS-RELEASE-001`: 人間承認後だけv1.4.0をmerge/tag/releaseする。
 
-startupのremote差分だけでは会話を全面停止しない。利用可能なqualified pinがありcritical findingがなければ`READY_WITH_FINDINGS`として、そのpin、差分、鮮度、unknownsをユーザーへ示してread-only retrievalを継続する。一方、release、pin更新、影響repoへのwriteは再qualificationまで止める。認証不足でremote headを観測できない場合も同様にgapを明示し、過去pinを最新と表現しない。
+startupのremote差分だけでは会話を全面停止しない。利用可能なqualified pinがありcritical findingがなければ`READY_WITH_FINDINGS`として、そのpin、差分、鮮度、unknownsをユーザーへ示してread-only retrievalを継続する。findingが`remote_update_candidate`だけの場合は、親repoのbranch、commit、draft PRによるcontrol-plane修復を許可するが、pin更新、子repo変更、merge、release、tagは止める。その他の非critical findingでは親repo修復も`RESTRICTED`とし、認証不足でremote headを観測できない場合も同様にgapを明示し、過去pinを最新と表現しない。
 
 Issue live testは専用sandbox repositoryまたは明示allowlist、Drive live testは専用sandbox folderを要求する。test artifact/Issueを自動削除しない。作成された外部ID、hash、run IDだけをevidenceとして残し、本文・token・signed URLをGitへ入れない。
 
