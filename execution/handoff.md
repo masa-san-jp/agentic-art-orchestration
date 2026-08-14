@@ -1,10 +1,18 @@
 # Handoff
 
+## ISSUE-39-KB-PIPE-001 completed
+
+- Parent-owned `normalized-research-signal-bundle/v1` contract and validator are present in `schemas/normalized-research-signal-bundle.schema.json` and `tools/signal_bundle.py`.
+- `tools/input_pipeline.py` connects the bundle to consumer import, candidate generation, candidate gates, seeded selection, and proposition provenance. It does not copy child schemas or write child repositories.
+- Focused tests currently pass: bundle determinism/provenance, mixed-commit rejection, tamper rejection, and full pipeline determinism.
+- Evidence: `.venv/bin/python tools/validate.py --check` passed; full parent suite passed 294/294; focused bundle/pipeline tests passed; bundle and input-pipeline CLI outputs were byte-identical across repeated runs.
+- No child repository, Issue, Google Drive, or user artifact was changed. Next operation is the separate `ISSUE-41-RESEARCH-REQUEST-001` validation task.
+
 ## Current state
 
 - 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
 - 完了: v1.2.1基線化実装。release checker、親runnerのactive virtualenv解決、5repo表記、runbook、state/handoffを更新済み。
-- 次: `V121-QUALIFY-001`（READY、依存完了済み、3回qualification）。
+- 次: `ISSUE-41-RESEARCH-REQUEST-001`（selected candidateからchild research-requestへの境界検証）。
 - blocker: なし
 - active lease: なし
 - 親repo: `design/initial-operations-roadmap` / `ea18918`開始点 / working treeは意図したtask差分のみ

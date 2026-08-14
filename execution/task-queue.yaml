@@ -631,3 +631,14 @@ tasks:
     depends_on: [INITIAL-OPS-QUALIFY-001]
     acceptance: After explicit human approval, the reviewed initial operations profile is merged and released as v1.4.0; the release itself does not create or change child content, Issues, Drive files, permissions, or sharing scope.
     checks: [git tag --points-at <reviewed-merge-sha>, gh release view v1.4.0]
+
+  - id: ISSUE-39-KB-PIPE-001
+    milestone: M15
+    title: Connect canonical child knowledge bundles to the parent pipeline
+    status: DONE
+    lane: KNOWLEDGE_IMPORT
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [CONSUMER-001, KNOWLEDGE-PROFILE-001, V12-CANDIDATE-001]
+    acceptance: Each approved child DTO enters through its declared parent adapter and a versioned aggregate normalized signal bundle with repository@commit provenance; the parent validates and imports it through the consumer boundary; the candidate pipeline consumes the bundle without manual signal-file wiring; and legacy, raw, or mixed-source envelopes fail closed.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_export_signal tests.test_signal_bundle tests.test_input_pipeline tests.test_consumer_contract tests.test_candidate_space -v, python3 tools/signal_bundle.py --self <self-signal> --art-history <art-signal> --marketing <marketing-signal> --generated-at <timestamp> --check --output <bundle>]

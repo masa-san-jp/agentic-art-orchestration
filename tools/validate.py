@@ -59,6 +59,7 @@ REQUIRED_FILES = [
     "config/orchestration.yaml",
     "schemas/repository-manifest.schema.json",
     "schemas/normalized-research-signal.schema.json",
+    "schemas/normalized-research-signal-bundle.schema.json",
     "schemas/work-item.schema.json",
     "schemas/external-artifact.schema.json",
     "schemas/interaction-event.schema.json",
@@ -81,8 +82,12 @@ REQUIRED_FILES = [
     "schemas/transformation-rule.schema.json",
     "config/transformation-rules.yaml",
     "tools/transformation_rules.py",
+    "tools/export_signal.py",
     "schemas/research-candidate.schema.json",
     "tools/candidate_space.py",
+    "tools/signal_bundle.py",
+    "tools/input_pipeline.py",
+    "tools/research_request.py",
     "schemas/research-candidate-gates.schema.json",
     "tools/candidate_gates.py",
     "schemas/research-selection.schema.json",
@@ -115,6 +120,7 @@ REQUIRED_FILES = [
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
     "docs/interaction-improvement-runbook.md",
     "docs/agent-ui-runbook.md",
+    "docs/input-pipeline-runbook.md",
 ]
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}

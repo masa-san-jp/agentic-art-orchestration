@@ -1,30 +1,30 @@
-version: 10
-updated_at: "2026-08-13T18:17:47+09:00"
+version: 12
+updated_at: "2026-08-14T00:20:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-initial-ops-qualify
-  acquired_at: "2026-08-13T16:28:00+09:00"
-  expires_at: "2026-08-13T17:28:00+09:00"
-  lane: RELEASE_QUALIFICATION
-  execution_id: INITIAL-OPS-QUALIFY-001:attempt-1
+  owner: codex-issue-39-kb-pipe
+  acquired_at: "2026-08-14T00:00:00+09:00"
+  expires_at: "2026-08-14T01:00:00+09:00"
+  lane: KNOWLEDGE_IMPORT
+  execution_id: ISSUE-39-KB-PIPE-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/release_check.py, tests/test_release_check.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-13T17:08:00+09:00"
-  release_reason: v1.4 offline aggregate qualification completed; GitHub sandbox live evidence remains an external resume gate
+    paths: [schemas/normalized-research-signal-bundle.schema.json, tools/export_signal.py, tools/signal_bundle.py, tools/input_pipeline.py, tools/validate.py, tests/test_export_signal.py, tests/test_signal_bundle.py, tests/test_input_pipeline.py, docs/input-pipeline-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+  released_at: "2026-08-14T00:20:00+09:00"
+  release_reason: canonical input KB bundle and parent pipeline verified; no child repository mutation
 checkpoint:
-  task: INITIAL-OPS-QUALIFY-001
+  task: ISSUE-39-KB-PIPE-001
   repository: agentic-art-orchestration
-  start_point: 9698c38a748ef84f850e71a484b378c2e60e7c2c
-  expected_changes: Qualify v1.4.0 through three deterministic initial-operations runs, inherited parent/child gates, and separate opt-in sandbox evidence without performing release operations.
-  result: partial; v1.4.0 offline aggregate qualification passed across three deterministic runs; GitHub sandbox live evidence remains the only blocking gate
-last_completed_task: INITIAL-OPS-E2E-001
+  start_point: 302de458495257fca0e754ed4f71f6b5255abbbe
+  expected_changes: Connect canonical child knowledge bundles to consumer import, candidate generation, and the existing gated research pipeline without copying child schemas or accepting mixed-source records.
+  result: passed; parent validator and 294-test suite passed, focused bundle/pipeline tests passed, deterministic CLI outputs matched
+last_completed_task: ISSUE-39-KB-PIPE-001
 resume_from:
-  task: INITIAL-OPS-QUALIFY-001
-  action: Run three deterministic initial-operations qualification passes and verify separate Drive and GitHub sandbox evidence before the human release gate.
-  command: .venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>
+  task: ISSUE-41-RESEARCH-REQUEST-001
+  action: Add the request task, validate the selected-candidate to child research-request generator, and run the child acceptor in dry-run mode.
+  command: .venv/bin/python -m unittest tests.test_research_request -v
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813

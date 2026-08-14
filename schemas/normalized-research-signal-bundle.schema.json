@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/normalized-research-signal-bundle.schema.json",
+  "title": "Normalized research signal bundle v1",
+  "description": "The parent-owned envelope for importing one immutable normalized signal from each input knowledge repository.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "generated_at", "source_repositories", "records"],
+  "properties": {
+    "contract_version": {"const": "normalized-research-signal-bundle/v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_repositories": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repository", "commit", "record_count"],
+        "properties": {
+          "repository": {"type": "string", "minLength": 1},
+          "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "record_count": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "records": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"type": "object", "required": ["contract_version", "signal_id", "signal_kind", "source"]}
+    }
+  }
+}
