@@ -31,11 +31,15 @@ class WorkspaceError(RuntimeError):
     """A child repository could not be materialized at its pinned commit."""
 
 
-def _run(args: list[str], cwd: Path | None = None) -> None:
+def _redacted(text: str, token: str | None) -> str:
+    return text.replace(token, "***") if token else text
+
+
+def _run(args: list[str], cwd: Path | None = None, token: str | None = None) -> None:
     result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
     if result.returncode != 0:
-        # stderr can contain the tokenized remote; report the operation only.
-        raise WorkspaceError(f"git {args[1]} failed for {cwd or args[-1]}")
+        detail = _redacted(result.stderr.strip(), token) or "no stderr"
+        raise WorkspaceError(f"git {args[1]} failed for {cwd or args[-1]}: {detail}")
 
 
 def _authenticated(url: str, token: str | None) -> str:
@@ -55,8 +59,8 @@ def materialize(output: Path, token: str | None) -> list[tuple[str, str]]:
         destination = output / repository["path"]
         if destination.exists():
             raise WorkspaceError(f"{destination} already exists; use an empty output directory")
-        _run(["git", "clone", "--quiet", _authenticated(repository["url"], token), str(destination)])
-        _run(["git", "checkout", "--quiet", commit], cwd=destination)
+        _run(["git", "clone", "--quiet", _authenticated(repository["url"], token), str(destination)], token=token)
+        _run(["git", "checkout", "--quiet", commit], cwd=destination, token=token)
         # Drop the tokenized remote so no later command can leak it.
         _run(["git", "remote", "set-url", "origin", repository["url"]], cwd=destination)
         materialized.append((repository["id"], commit))

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from tools.pinned_workspace import MANIFEST, WorkspaceError, _authenticated, materialize
+from tools.pinned_workspace import MANIFEST, WorkspaceError, _authenticated, _redacted, materialize
 
 
 class AuthenticatedRemoteTests(unittest.TestCase):
@@ -24,6 +24,16 @@ class AuthenticatedRemoteTests(unittest.TestCase):
         url = _authenticated("/tmp/offline-fixture/remotes/child.git", "secret-token")
 
         self.assertNotIn("secret-token", url)
+
+
+class RedactionTests(unittest.TestCase):
+    def test_token_is_removed_from_reported_output(self) -> None:
+        text = _redacted("fatal: could not read https://x-access-token:secret@github.com/o/r", "secret")
+
+        self.assertNotIn("secret", text)
+
+    def test_output_is_unchanged_without_a_token(self) -> None:
+        self.assertEqual(_redacted("fatal: repository not found", None), "fatal: repository not found")
 
 
 class MaterializeGuardTests(unittest.TestCase):
