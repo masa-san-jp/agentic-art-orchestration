@@ -57,6 +57,12 @@
 - Local evidence: parent full suite `303/303` passed, `tools/validate.py --check` passed, offline audit is `CLEAN`, security is `PASSED`, and `git diff --check` passed.
 - No credential was created, retrieved, or committed. The next operation remains external secret configuration by a repository administrator, followed by a PR check rerun.
 
+## Child repository PR review
+
+- `art-history-notes` PR #349 was reviewed and corrected at `c4a81f05304cc9483d1a3378e03df2f25fbd27f2`; its child GitHub quality gate is PASS and the PR is mergeable, but it remains OPEN pending human merge approval.
+- The parent pin remains `b914b6989b025e2caa9d7fc49149d787da99f798`; unmerged child content was not imported into the parent and no other child repository was changed.
+- After human merge, observe the new child `main` SHA, rerun child gates and Production exchange, then update the parent pin in a separate qualified parent change. Do not merge the parent PR based on the unmerged child head.
+
 ## MANIFEST-001 evidence
 
 - `schemas/repository-manifest.schema.json` を追加し、Draft 2020-12のmanifest項目、role、契約、品質ゲートを固定。
