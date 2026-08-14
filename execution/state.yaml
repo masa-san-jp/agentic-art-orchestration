@@ -1,30 +1,39 @@
-version: 14
-updated_at: "2026-08-14T00:45:00+09:00"
+version: 16
+updated_at: "2026-08-14T01:30:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-issue-41-research-request
-  acquired_at: "2026-08-14T00:30:00+09:00"
-  expires_at: "2026-08-14T01:30:00+09:00"
-  lane: RESEARCH_HANDOFF
-  execution_id: ISSUE-41-RESEARCH-REQUEST-001:attempt-1
+  owner: codex-issue-40-pin-adoption
+  acquired_at: "2026-08-14T01:15:00+09:00"
+  expires_at: "2026-08-14T02:15:00+09:00"
+  lane: PIN_ADOPTION
+  execution_id: ISSUE-40-PIN-ADOPTION-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/research_request.py, tools/research_start.py, tests/test_research_request.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-14T00:45:00+09:00"
-  release_reason: selected candidate to Research request dry-run passed; child checkout remained clean and no project was created
+    paths: [tools/qualify_pin_update.py, tests/test_pin_update.py, docs/input-pipeline-runbook.md, config/repositories.yaml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+  released_at: "2026-08-14T01:30:00+09:00"
+  release_reason: read-only verified workspace qualification passed; no parent pin adoption or child mutation performed
 checkpoint:
-  task: ISSUE-41-RESEARCH-REQUEST-001
+  task: ISSUE-40-PIN-ADOPTION-001
   repository: agentic-art-orchestration
   start_point: 302de458495257fca0e754ed4f71f6b5255abbbe
-  expected_changes: Generate the child-owned research request from a selected parent candidate and prove the pinned Research acceptor accepts it in dry-run mode without child mutation.
-  result: passed; request tests 2/2, Research acceptor dry-run DRY_RUN, research-start CLI PASSED with child venv resolution, child status unchanged
-last_completed_task: ISSUE-41-RESEARCH-REQUEST-001
+  expected_changes: Add a repeatable read-only pin candidate qualification and safe apply guard without mutating child repositories or the parent manifest during qualification.
+  result: passed; focused tests 3/3, verified workspace child gates 5/5, Production exchange PASSED, offline fixture correctly FAILED due unavailable child dependencies, manifest unchanged
+last_completed_task: ISSUE-40-PIN-ADOPTION-001
 resume_from:
-  task: ISSUE-40-PIN-ADOPTION-001
-  action: Inspect the read-only pin qualification tool and run it against the verified child workspace before any manifest adoption.
-  command: .venv/bin/python -m unittest tests.test_pin_update -v
+  task: ISSUE-38-REAL-CHAIN-CI-001
+  action: Inspect the real-chain CI workflow and run its parent-side checks; child PR merge remains a prerequisite for a green real exchange job.
+  command: .venv/bin/python tools/validate.py --check
+pin_qualification:
+  status: passed_read_only
+  verified_workspace: /tmp/aap-production-qualified-5Nhxun
+  child_quality_gates: "5/5 repositories PASSED"
+  production_exchange: PASSED
+  candidate_changes: 0
+  manifest_mutation: false
+  child_repository_mutation: false
+  offline_fixture: FAILED_EXPECTED; synthetic fixture lacked installed child dependencies and was not adopted
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813

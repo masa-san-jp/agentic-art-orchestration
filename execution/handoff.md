@@ -20,6 +20,19 @@
 - `tools/research_start.py` produced `research_acceptance.status=DRY_RUN` through the sibling Research acceptor after resolving `research_root/.venv/bin/python`; no Research project was created.
 - Research child status before/after: `main...origin/main`, clean. Next operation is the read-only pin adoption qualification task.
 
+## ISSUE-40-PIN-ADOPTION-001 in progress
+
+- `tools/qualify_pin_update.py` observes workspace HEADs, builds a copied candidate manifest, runs child quality gates and Production exchange, and writes only an external report during qualification.
+- `apply_qualified_pins` re-reads the candidate and refuses to apply if the workspace changed after qualification. No `--apply` operation has been performed.
+- Next operation: record the verified-workspace PASS and offline-fixture BLOCK/FAIL evidence, then release the lease.
+
+## ISSUE-40-PIN-ADOPTION-001 completed
+
+- `tests.test_pin_update`: 3/3 passed.
+- Verified clean five-repository workspace: child quality gates `5/5 PASSED`, Production exchange `PASSED`, candidate changes `0`, `applied=false`.
+- Offline fixture was rejected because child dependencies were unavailable; this is recorded as a failed candidate, not normalized to success. Parent manifest and child repositories remain unchanged.
+- Next operation: inspect and qualify the real-chain CI workflow for Issue #38. Child PR merges remain a separate human gate.
+
 ## Current state
 
 - 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。

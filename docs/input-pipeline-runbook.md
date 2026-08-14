@@ -41,3 +41,26 @@ python3 tools/research_start.py \
 - Research requestには選定候補IDとopaqueな参照URIだけを渡し、signal本文・raw payload・ローカルパスはコピーしない。
 - 同じbundle、seed、request ID、requested_atを使えば候補とrequestは再生成できる。`research_start.py` はdry-runなのでResearch projectを作らない。
 - `export_signal.py` はadapterをテスト専用にせず、実行時の入力境界として呼び出すための唯一の入口である。
+
+## pin更新の採用
+
+`tools/qualify_pin_update.py` は、指定したworkspaceの全childについて、dirtyでないHEADを候補pinとして読み取る。候補manifestを一時的に作り、manifest-pinned archiveのchild quality gatesとProduction exchange E2Eを通す。子checkoutへのfetch、checkout、commit、書き込みは行わない。
+
+```sh
+python3 tools/qualify_pin_update.py \
+  --workspace-root repos \
+  --output /tmp/pin-update-qualification.json \
+  --run-id pin-update-review
+```
+
+結果が `PASSED` の場合だけ、出力の `changes` を確認して次を実行できる。
+
+```sh
+python3 tools/qualify_pin_update.py \
+  --workspace-root repos \
+  --output /tmp/pin-update-qualification.json \
+  --run-id pin-update-review \
+  --apply
+```
+
+`--apply` が親の `config/repositories.yaml` に変更するのは `observed_commit` 行だけである。採用後は親ブランチで差分をレビューし、通常の親PRとしてcommit・CI・mergeする。CIの `real-chain` jobはmain checkoutを候補として同じ資格判定を行うが、manifestへの採用はしない。

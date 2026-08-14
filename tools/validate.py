@@ -90,6 +90,7 @@ REQUIRED_FILES = [
     "tools/research_request.py",
     "tools/research_start.py",
     "tools/qualify_pin_update.py",
+    "tools/qualify_pin_update.py",
     "schemas/research-candidate-gates.schema.json",
     "tools/candidate_gates.py",
     "schemas/research-selection.schema.json",

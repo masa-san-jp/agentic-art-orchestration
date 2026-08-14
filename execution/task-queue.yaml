@@ -653,3 +653,25 @@ tasks:
     depends_on: [ISSUE-39-KB-PIPE-001, V12-SELECTION-001, V12-PROVENANCE-001]
     acceptance: A selected candidate produces the child-owned research-request/v1-shaped request with intent, constraints, open questions, references, source repository@commit, and a raw-data exclusion; the pinned Research acceptor reaches DRY_RUN without creating or changing a child project, and selected signal statements are not copied into the request.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_research_request -v, python3 tools/research_start.py --bundle <bundle> --project-id <id> --project-slug <slug> --seed-input <seed> --request-id <RR###> --requested-at <timestamp> --research-root <pinned-research> --output-dir <output>]
+
+  - id: ISSUE-40-PIN-ADOPTION-001
+    milestone: M15
+    title: Qualify read-only child pin adoption before parent manifest update
+    status: DONE
+    lane: PIN_ADOPTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-41-RESEARCH-REQUEST-001, V12-CHILD-GATES-001, PRODUCTION-E2E-001]
+    acceptance: A read-only qualification observes clean immutable workspace HEADs, runs all candidate child quality gates and the Production exchange against a copied candidate manifest, emits the exact candidate changes, rejects failed or drifted candidates, and applies no manifest update unless a separately invoked apply operation sees the same qualified candidate.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_pin_update -v, python3 tools/qualify_pin_update.py --workspace-root <verified-child-workspace> --output <external-report> --run-id <run-id>]
+
+  - id: ISSUE-38-REAL-CHAIN-CI-001
+    milestone: M15
+    title: Run real pinned child and Production exchange qualification in CI
+    status: READY
+    lane: RELEASE_QUALIFICATION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
+    acceptance: Pull-request CI checks out each registered child at an immutable ref, runs the declared child gates and the parent Production exchange qualification, fails on stale, unavailable, failed, or incompatible real-chain evidence, and never adopts pins or mutates child repositories.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain]
