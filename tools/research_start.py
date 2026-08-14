@@ -43,6 +43,8 @@ def _write(path: Path, value: dict[str, Any]) -> None:
 
 
 def _accept_dry_run(request_path: Path, research_root: Path, child_python: str) -> dict[str, Any]:
+    request_path = request_path.resolve()
+    research_root = research_root.resolve()
     acceptor = research_root / "tools" / "accept_research_request.py"
     if not acceptor.is_file():
         raise ValueError("research-start: Research acceptance CLI is missing; remediation: pin a Research checkout with the inbound request contract")
@@ -133,7 +135,7 @@ def main() -> int:
             research_root=args.research_root,
             child_python=args.child_python,
         )
-        output = args.output_dir
+        output = args.output_dir.resolve()
         _write(output / "candidate-space.json", result["pipeline"]["candidate_space"])
         _write(output / "candidate-gates.json", result["pipeline"]["gate_report"])
         _write(output / "selection.json", result["pipeline"]["selection"])
