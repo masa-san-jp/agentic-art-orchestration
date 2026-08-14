@@ -5,7 +5,7 @@
 - Parent-owned `normalized-research-signal-bundle/v1` contract and validator are present in `schemas/normalized-research-signal-bundle.schema.json` and `tools/signal_bundle.py`.
 - `tools/input_pipeline.py` connects the bundle to consumer import, candidate generation, candidate gates, seeded selection, and proposition provenance. It does not copy child schemas or write child repositories.
 - Focused tests currently pass: bundle determinism/provenance, mixed-commit rejection, tamper rejection, and full pipeline determinism.
-- Evidence: `.venv/bin/python tools/validate.py --check` passed; full parent suite passed 294/294; focused bundle/pipeline tests passed; bundle and input-pipeline CLI outputs were byte-identical across repeated runs.
+- Evidence: `.venv/bin/python tools/validate.py --check` passed; final full parent suite passed 303/303; focused bundle/pipeline tests passed; bundle and input-pipeline CLI outputs were byte-identical across repeated runs.
 - No child repository, Issue, Google Drive, or user artifact was changed. Next operation is the separate `ISSUE-41-RESEARCH-REQUEST-001` validation task.
 
 ## ISSUE-41-RESEARCH-REQUEST-001 in progress
@@ -20,7 +20,7 @@
 - `tools/research_start.py` produced `research_acceptance.status=DRY_RUN` through the sibling Research acceptor after resolving `research_root/.venv/bin/python`; no Research project was created.
 - Research child status before/after: `main...origin/main`, clean. Next operation is the read-only pin adoption qualification task.
 
-## ISSUE-40-PIN-ADOPTION-001 in progress
+## ISSUE-40-PIN-ADOPTION-001 implementation notes
 
 - `tools/qualify_pin_update.py` observes workspace HEADs, builds a copied candidate manifest, runs child quality gates and Production exchange, and writes only an external report during qualification.
 - `apply_qualified_pins` re-reads the candidate and refuses to apply if the workspace changed after qualification. The separate adoption was applied only to the parent branch and recorded in `3813145`; no child repository was changed.
