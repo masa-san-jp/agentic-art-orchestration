@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
+import urllib.error
+import urllib.request
 import sys
 from pathlib import Path
 
@@ -48,6 +50,25 @@ def _authenticated(url: str, token: str | None) -> str:
     return url.replace("https://", f"https://x-access-token:{token}@", 1)
 
 
+def _api_visibility(full_name: str, token: str) -> str:
+    """Ask GitHub directly whether this credential can see the repository.
+
+    A failed clone cannot tell a missing permission apart from a remote URL the
+    server reads differently, so the report states which one it is.
+    """
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{full_name}",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return f"API {response.status}"
+    except urllib.error.HTTPError as exc:
+        return f"API {exc.code}"
+    except OSError:
+        return "API unreachable"
+
+
 def _unreachable(manifest: dict, token: str | None) -> list[str]:
     """Name every repository the credential cannot read, not just the first one.
 
@@ -64,7 +85,7 @@ def _unreachable(manifest: dict, token: str | None) -> list[str]:
             capture_output=True, text=True,
         )
         if probe.returncode != 0:
-            denied.append(repository["full_name"])
+            denied.append(f"{repository['full_name']} ({_api_visibility(repository['full_name'], token)})")
     return denied
 
 
