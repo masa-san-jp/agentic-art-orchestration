@@ -875,6 +875,16 @@ def validate_startup_contract(
         item = capability_map.get(capability)
         if not isinstance(item, dict) or item.get("class") != expected_class or item.get("allowed_outcomes") != allowed_outcomes:
             error(f"capabilities.{capability} violates the initial profile matrix", "allow only read and explicitly approved create-only operations")
+    parent_capability = capability_map.get("branch_commit_pull_request")
+    if (
+        not isinstance(parent_capability, dict)
+        or parent_capability.get("allowed_finding_severities") != ["WARNING"]
+        or parent_capability.get("require_nonempty_findings_for_ready_with_findings") is not True
+    ):
+        error(
+            "capabilities.branch_commit_pull_request finding policy is unsafe",
+            "allow parent control-plane repair only for noncritical findings and require an explicit finding",
+        )
 
     boundary = policy.get("data_boundary")
     if not isinstance(boundary, dict):

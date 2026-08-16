@@ -309,7 +309,7 @@ startup reportは、run ID、親commit、各repoのqualified pin、remote observ
 状態判定は次の通りとする。
 
 - `READY`: 全repoを観測でき、qualified pinが利用可能で、blocking findingがない。
-- `READY_WITH_FINDINGS`: remote head差分、非critical audit finding、または一時的なread-only remote観測不能があるが、最後のqualified snapshotで安全に回答できる。回答には使用commitと制約を表示し、release、pin更新、子repo変更、影響repoへのpin-bound improvementを止める。`remote_update_candidate`だけの場合は、親のbranch、commit、draft PRによるcontrol-plane修復を許可し、merge、release、tagは人間承認に残す。
+- `READY_WITH_FINDINGS`: remote head差分、非critical audit finding、または一時的なread-only remote観測不能があるが、最後のqualified snapshotで安全に回答できる。回答には使用commitと制約を表示し、release、pin更新、子repo変更、影響repoへのpin-bound improvementを止める。findingがすべてnoncritical warningの場合は、親のbranch、commit、draft PRによるcontrol-plane修復を許可し、merge、release、tagは人間承認に残す。
 - `BLOCKED`: parent validation失敗、dirty/detached/divergedな利用対象、schema major不一致、credential/PRIVATE_RAW/RESTRICTED、consent違反、またはcritical security findingがある。影響capabilityを実行しない。
 
 remote head差分は更新の存在であり、直ちに異常でも採用指示でもない。startupはcheckout、pull、merge、reset、manifest編集を行わず、repo ID、qualified pin、remote observed commitを持つupdate candidateを生成する。採用は別taskでimmutable archiveを取得し、manifest記載child gateと親compatibilityを通して親PRにする。

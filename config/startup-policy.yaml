@@ -96,6 +96,8 @@ capabilities:
   - id: branch_commit_pull_request
     class: mutation
     allowed_outcomes: [READY, READY_WITH_FINDINGS]
+    allowed_finding_severities: [WARNING]
+    require_nonempty_findings_for_ready_with_findings: true
   - id: merge_release_tag
     class: mutation
     allowed_outcomes: []

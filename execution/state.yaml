@@ -1,5 +1,5 @@
-version: 11
-updated_at: "2026-08-14T20:41:23+09:00"
+version: 12
+updated_at: "2026-08-16T10:01:10+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
@@ -72,9 +72,9 @@ startup_audit_validation:
   drive_mutation: false
   raw_conversation_or_credentials: false
 startup_capability_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/validate.py --check; /tmp/aap-bootstrap-venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates tests.test_docs -v; /tmp/aap-bootstrap-venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
-  result: passed; finding-specific capability matrix validated; remote_update_candidate-only startup allows parent branch/commit/pull_request, restricts external create, blocks child/update mutation and merge/release/tag; critical findings block all capabilities; dedicated tests and offline startup are green
-  verified_at: "2026-08-14T20:41:23+09:00"
+  command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates tests.test_docs -v; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
+  result: passed; noncritical WARNING findings including audit_finding and remote_update_candidate allow parent branch/commit/pull_request, restrict external create, block child/update mutation and merge/release/tag; critical findings block all capabilities; dedicated tests and offline startup are green
+  verified_at: "2026-08-16T10:01:10+09:00"
   child_repository_mutation: false
   issue_mutation: false
   drive_mutation: false

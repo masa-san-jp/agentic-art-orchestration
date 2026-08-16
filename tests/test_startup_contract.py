@@ -40,6 +40,15 @@ class StartupContractTests(unittest.TestCase):
         errors = MODULE.validate_startup_contract(policy, self.schema)
         self.assertTrue(any("drive_create" in error for error in errors))
 
+    def test_parent_control_plane_finding_policy_is_explicit(self):
+        parent = next(item for item in self.policy["capabilities"] if item["id"] == "branch_commit_pull_request")
+        self.assertEqual(["WARNING"], parent["allowed_finding_severities"])
+        self.assertTrue(parent["require_nonempty_findings_for_ready_with_findings"])
+        policy = copy.deepcopy(self.policy)
+        next(item for item in policy["capabilities"] if item["id"] == "branch_commit_pull_request")["allowed_finding_severities"] = []
+        errors = MODULE.validate_startup_contract(policy, self.schema)
+        self.assertTrue(any("finding policy" in error for error in errors))
+
     def test_report_is_closed_and_metadata_only(self):
         properties = self.schema["properties"]
         self.assertFalse(self.schema["additionalProperties"])

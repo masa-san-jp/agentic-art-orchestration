@@ -63,7 +63,7 @@ class StartupAuditTests(unittest.TestCase):
                 run_id="startup-audit-unit",
             )
 
-    def test_remote_update_candidate_allows_parent_control_plane_only(self):
+    def test_noncritical_findings_allow_parent_control_plane_with_reason_codes(self):
         def update_observation(repository, qualified_commit, remote, timestamp):
             record = self.clean_observation(repository, qualified_commit, remote, timestamp)
             if repository["id"] == self.repository_ids[0]:
@@ -71,7 +71,10 @@ class StartupAuditTests(unittest.TestCase):
                 record["drift"] = "UPDATE_CANDIDATE"
             return record
 
-        report = self.build(observation=update_observation)
+        report = self.build(
+            audit={"findings": [{"code": "untested-boundary", "subject": "runtime"}]},
+            observation=update_observation,
+        )
         statuses = {item["capability"]: item["status"] for item in report["capabilities"]}
         self.assertEqual("READY_WITH_FINDINGS", report["status"])
         self.assertEqual("ALLOWED", statuses["qualified_knowledge_read"])
@@ -79,13 +82,44 @@ class StartupAuditTests(unittest.TestCase):
         self.assertEqual("BLOCKED", statuses["merge_release_tag"])
         self.assertEqual("RESTRICTED", statuses["drive_create"])
         self.assertEqual("BLOCKED", statuses["child_repository_mutation"])
+        parent = next(item for item in report["capabilities"] if item["capability"] == "branch_commit_pull_request")
+        self.assertEqual(
+            ["audit_finding", "remote_update_candidate", "untested-boundary"],
+            parent["reason_codes"],
+        )
 
-    def test_other_noncritical_findings_restrict_parent_control_plane(self):
+    def test_other_noncritical_findings_allow_parent_control_plane(self):
         audit = {"findings": [{"code": "untested-boundary", "subject": "runtime"}]}
         report = self.build(audit=audit)
         statuses = {item["capability"]: item["status"] for item in report["capabilities"]}
-        self.assertEqual("RESTRICTED", statuses["branch_commit_pull_request"])
+        self.assertEqual("ALLOWED", statuses["branch_commit_pull_request"])
         self.assertEqual("BLOCKED", statuses["merge_release_tag"])
+
+    def test_validate_report_rejects_unsafe_capability_overrides(self):
+        report = self.build()
+        for capability in (
+            "child_repository_mutation",
+            "drive_update_delete_share",
+            "github_issue_update_close_delete_comment_label",
+        ):
+            candidate = copy.deepcopy(report)
+            next(item for item in candidate["capabilities"] if item["capability"] == capability)["status"] = "ALLOWED"
+            errors = MODULE.validate_report(candidate)
+            self.assertTrue(any("always-blocked capabilities" in error for error in errors), capability)
+
+    def test_validate_report_rejects_empty_ready_with_findings(self):
+        report = self.build()
+        report["status"] = "READY_WITH_FINDINGS"
+        next(item for item in report["capabilities"] if item["capability"] == "branch_commit_pull_request")["status"] = "ALLOWED"
+        errors = MODULE.validate_report(report)
+        self.assertIn("READY_WITH_FINDINGS", " ".join(errors))
+
+    def test_validate_report_rejects_nonblocked_critical_finding(self):
+        report = self.build()
+        report["status"] = "READY_WITH_FINDINGS"
+        report["findings"] = [{"code": "credential", "severity": "CRITICAL", "source": "security"}]
+        errors = MODULE.validate_report(report)
+        self.assertTrue(any("critical finding" in error for error in errors))
 
     def test_noncritical_findings_are_ready_with_deduplicated_issue_candidates(self):
         audit = {"findings": [{"code": "untested-boundary", "subject": "runtime"}]}

@@ -184,7 +184,7 @@ M14は次の直列順で進める。順序を入れ替えず、後段が前段�
 9. `INITIAL-OPS-QUALIFY-001`: 3回決定的qualificationと、1件のDrive CREATE/read、1件のIssue CREATE/deduplicate evidenceを確認する。
 10. `INITIAL-OPS-RELEASE-001`: 人間承認後だけv1.4.0をmerge/tag/releaseする。
 
-startupのremote差分だけでは会話を全面停止しない。利用可能なqualified pinがありcritical findingがなければ`READY_WITH_FINDINGS`として、そのpin、差分、鮮度、unknownsをユーザーへ示してread-only retrievalを継続する。findingが`remote_update_candidate`だけの場合は、親repoのbranch、commit、draft PRによるcontrol-plane修復を許可するが、pin更新、子repo変更、merge、release、tagは止める。その他の非critical findingでは親repo修復も`RESTRICTED`とし、認証不足でremote headを観測できない場合も同様にgapを明示し、過去pinを最新と表現しない。
+startupのremote差分だけでは会話を全面停止しない。利用可能なqualified pinがありcritical findingがなければ`READY_WITH_FINDINGS`として、そのpin、差分、鮮度、unknownsをユーザーへ示してread-only retrievalを継続する。findingがすべてnoncritical warningの場合は、親repoのbranch、commit、draft PRによるcontrol-plane修復を許可するが、pin更新、子repo変更、merge、release、tagは止める。認証不足でremote headを観測できる場合も同様にgapを明示し、過去pinを最新と表現しない。
 
 Issue live testは専用sandbox repositoryまたは明示allowlist、Drive live testは専用sandbox folderを要求する。test artifact/Issueを自動削除しない。作成された外部ID、hash、run IDだけをevidenceとして残し、本文・token・signed URLをGitへ入れない。
 

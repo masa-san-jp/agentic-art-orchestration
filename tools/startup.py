@@ -167,11 +167,27 @@ def _step(step_id: str, status: str, blocking: bool = False, finding_codes: list
     }
 
 
-def _capabilities(status: str, findings: list[str]) -> list[dict]:
-    finding_set = set(findings)
+def _capabilities(status: str, findings: list[str] | list[dict]) -> list[dict]:
+    finding_records = [
+        finding if isinstance(finding, dict) else {"code": finding, "severity": "WARNING"}
+        for finding in findings
+    ]
+    finding_codes = [finding.get("code") for finding in finding_records if isinstance(finding.get("code"), str)]
+    capability_policy = load_yaml(ROOT / "config/startup-policy.yaml")
+    policy_capabilities = capability_policy.get("capabilities", []) if isinstance(capability_policy, dict) else []
+    policy_map = {
+        item.get("id"): item
+        for item in policy_capabilities
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    parent_policy = policy_map.get("branch_commit_pull_request", {})
+    allowed_severities = set(parent_policy.get("allowed_finding_severities", []))
+    require_nonempty = parent_policy.get("require_nonempty_findings_for_ready_with_findings") is True
     restricted_create = status != "READY"
     parent_control_plane_allowed = status == "READY" or (
-        status == "READY_WITH_FINDINGS" and finding_set <= {"remote_update_candidate"}
+        status == "READY_WITH_FINDINGS"
+        and (bool(finding_records) or not require_nonempty)
+        and all(finding.get("severity") in allowed_severities for finding in finding_records)
     )
     records = []
     for capability in STARTUP_CAPABILITIES:
@@ -194,7 +210,10 @@ def _capabilities(status: str, findings: list[str]) -> list[dict]:
             {
                 "capability": capability,
                 "status": capability_status,
-                "reason_codes": sorted(set(findings)) if capability_status != "ALLOWED" else [],
+                "reason_codes": sorted(set(finding_codes))
+                if capability_status != "ALLOWED"
+                or (capability == "branch_commit_pull_request" and finding_records)
+                else [],
             }
         )
     return records
@@ -267,12 +286,44 @@ def validate_report(report: dict) -> list[str]:
         for capability in capabilities
         if isinstance(capability, dict)
     }
+    always_blocked = {
+        "child_repository_mutation",
+        "drive_update_delete_share",
+        "github_issue_update_close_delete_comment_label",
+        "merge_release_tag",
+    }
     if report.get("status") != "BLOCKED":
-        if capability_statuses.get("merge_release_tag") != "BLOCKED":
-            errors.append("startup report exposes merge, release, or tag capability")
+        exposed = sorted(
+            capability for capability in always_blocked
+            if capability_statuses.get(capability) != "BLOCKED"
+        )
+        if exposed:
+            errors.append(f"startup report exposes always-blocked capabilities: {', '.join(exposed)}")
+    findings = [item for item in report.get("findings", []) if isinstance(item, dict)]
+    if report.get("status") == "READY" and findings:
+        errors.append("READY startup report contains findings")
+    if report.get("status") == "READY_WITH_FINDINGS" and not findings:
+        errors.append("READY_WITH_FINDINGS report must contain findings")
+    if report.get("status") != "BLOCKED" and any(item.get("severity") == "CRITICAL" for item in findings):
+        errors.append("non-blocked startup report contains a critical finding")
+    if report.get("status") != "BLOCKED":
+        policy = load_yaml(ROOT / "config/startup-policy.yaml")
+        policy_capabilities = policy.get("capabilities", []) if isinstance(policy, dict) else []
+        policy_map = {
+            item.get("id"): item
+            for item in policy_capabilities
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        }
+        parent_policy = policy_map.get("branch_commit_pull_request", {})
+        allowed_severities = set(parent_policy.get("allowed_finding_severities", []))
+        require_nonempty = parent_policy.get("require_nonempty_findings_for_ready_with_findings") is True
         if report.get("status") == "READY":
             expected_parent_status = "ALLOWED"
-        elif set(item.get("code") for item in report.get("findings", []) if isinstance(item, dict)) <= {"remote_update_candidate"}:
+        elif (
+            findings
+            and all(item.get("severity") in allowed_severities for item in findings)
+            and (bool(findings) or not require_nonempty)
+        ):
             expected_parent_status = "ALLOWED"
         else:
             expected_parent_status = "RESTRICTED"
@@ -465,7 +516,7 @@ def build_startup_report(
         },
         "findings": sorted(findings, key=lambda item: (item["code"], item["source"])),
         "issue_candidates": issue_candidates,
-        "capabilities": _capabilities(status, finding_codes),
+        "capabilities": _capabilities(status, findings),
         "remediation": [
             "review remote_update_candidate before changing a manifest pin" if "remote_update_candidate" in finding_codes else None,
             "retry remote observation before claiming the remote head is current" if "remote_observation_unavailable" in finding_codes else None,

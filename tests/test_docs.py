@@ -12,7 +12,7 @@ class DocumentationTests(unittest.TestCase):
         text = (ROOT / "docs/agent-startup.md").read_text(encoding="utf-8")
         for required in (
             "Startup capability matrix",
-            "only `remote_update_candidate`",
+            "any noncritical finding (`WARNING`)",
             "Parent `branch` / `commit` / `pull_request`",
             "`merge` / `release` / `tag`",
             "human gate",

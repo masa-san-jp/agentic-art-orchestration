@@ -1,5 +1,5 @@
-version: 5
-updated_at: "2026-08-14T20:41:23+09:00"
+version: 6
+updated_at: "2026-08-16T10:01:10+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -573,7 +573,7 @@ tasks:
     user_artifact_policy: READ_ONLY
     depends_on: [STARTUP-AUDIT-001]
     source_issue: agentic-art-orchestration#54
-    acceptance: A READY_WITH_FINDINGS report caused only by remote_update_candidate allows qualified read and parent branch/commit/pull_request repair, restricts external create and other noncritical findings, blocks child/update mutation, and keeps merge/release/tag human-gated; critical findings block every capability; policy, report schema, tests, and operator docs expose the same matrix.
+    acceptance: A READY_WITH_FINDINGS report containing only noncritical WARNING findings allows qualified read and parent branch/commit/pull_request repair, restricts external create, blocks child/update mutation, and keeps merge/release/tag human-gated; critical findings block every capability; policy, report schema, tests, and operator docs expose the same matrix.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_startup_contract tests.test_startup_audit -v, git diff --check]
 
   - id: ISSUE-CREATE-001
