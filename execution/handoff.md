@@ -933,6 +933,6 @@
 - Issue #54の循環を解消するため、startup capabilityを `branch_commit_pull_request` と `merge_release_tag` に分離した。すべてのnoncritical `WARNING`だけで構成される`READY_WITH_FINDINGS`ではqualified pinを使うreadと親repoのbranch・commit・draft PRを許可し、外部createを`RESTRICTED`、子repo変更・既存外部更新・merge/release/tagを`BLOCKED`とする。critical findingでは全capabilityを`BLOCKED`にする。
 - `config/startup-policy.yaml`にfinding severity条件と非空条件を追加し、policyをruntime判定のSSOTにした。`schemas/startup-report.schema.json`、`tools/validate.py`、`tools/startup.py`、startup/運用docs、task queueを同期し、`docs/agent-startup.md`にfinding別matrixとclean checkoutのmaterialize手順を追加した。`validate_report`にも常時BLOCKED capability、critical混入、空のREADY_WITH_FINDINGS、親修復とmerge/release/tagのfail-closed意味検査を追加した。
 - 回帰テストはremote drift + audit findingの混在、許可理由コード、noncritical/critical、human gate、外部レポートの不正capability、docsを追加した。`.venv/bin/python tools/validate.py --check`、`.venv/bin/python -m unittest discover -s tests -v`、`tools/startup.py --offline-fixture --check`、`git diff --check`がPASS。生成物不足時は`docs/agent-startup.md`記載のoffline materialize手順を先に実行する。
-- 実施したのは親repoのローカルbranch・commitのみで、child repository、Issue、PR merge、release、Drive、credential、raw conversation、外部artifactは変更していない。レビュー対応commitは`5339c72`。
+- 実施したのは親repoのローカルbranch・commitのみで、child repository、Issue、PR merge、release、Drive、credential、raw conversation、外部artifactは変更していない。レビュー対応commitはPR #55のHEAD。
 - レビュー対応では、#54の実状態である`audit_finding + remote_update_candidate`も親control-plane修復を許可する方針を確定し、policy/runtime/test/docs/stateを同期した。PR本文の`Closes #54`はこの確定により維持する。
-- 次の1操作: `git push -u origin agent/issue-54-capability-findings`でレビュー対応commitをPR #55へpushし、CIと再レビューを確認する。merge/release/tagは人間承認まで行わない。
+- レビュー対応commitはPR #55へpush済みで、CIは成功、PRは`MERGEABLE`/`CLEAN`。次は人間レビューとmergeの承認を待つ。merge/release/tagは人間承認まで行わない。
