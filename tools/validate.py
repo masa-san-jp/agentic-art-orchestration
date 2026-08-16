@@ -734,12 +734,27 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                     for slot in slots.values()
                     if isinstance(slot, dict)
                 }
-                if slot_kinds != expected_kinds:
+                # A rule may add slots beyond the three, so require coverage rather than equality.
+                if not expected_kinds <= slot_kinds:
                     errors.append(
                         _signal_error(
                             source,
                             f"{prefix}.composition.slots must cover all signal kinds; observed {sorted(slot_kinds)!r}",
                             "declare one explicit composition slot for self, art-history, and marketing",
+                        )
+                    )
+            template = composition.get("template")
+            # The template is no longer a fixed sentence, so the registry checks that
+            # every slot it declares is actually spent. An unused slot means the rule
+            # binds a signal it never says anything with.
+            if isinstance(slots, dict) and isinstance(template, str):
+                unused = sorted(name for name in slots if "{" + str(name) + "}" not in template)
+                if unused:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"{prefix}.composition.template does not use declared slots {unused!r}",
+                            "reference every declared slot in the template, or remove the slot",
                         )
                     )
 
