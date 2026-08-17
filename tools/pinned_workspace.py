@@ -56,17 +56,26 @@ def _api_visibility(full_name: str, token: str) -> str:
     A failed clone cannot tell a missing permission apart from a remote URL the
     server reads differently, so the report states which one it is.
     """
-    request = urllib.request.Request(
-        f"https://api.github.com/repos/{full_name}",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return f"API {response.status}"
-    except urllib.error.HTTPError as exc:
-        return f"API {exc.code}"
-    except OSError:
-        return "API unreachable"
+    def status(path: str) -> int | str:
+        request = urllib.request.Request(
+            f"https://api.github.com/repos/{full_name}{path}",
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return response.status
+        except urllib.error.HTTPError as exc:
+            return exc.code
+        except OSError:
+            return "unreachable"
+
+    # Selecting the repository grants metadata, which answers the first call. Cloning
+    # needs the Contents permission, which is a separate grant and answers the second.
+    metadata = status("")
+    contents = status("/contents/")
+    if metadata == 200 and contents != 200:
+        return f"repository selected, but Contents permission missing (metadata {metadata}, contents {contents})"
+    return f"metadata {metadata}, contents {contents}"
 
 
 def _unreachable(manifest: dict, token: str | None) -> list[str]:
