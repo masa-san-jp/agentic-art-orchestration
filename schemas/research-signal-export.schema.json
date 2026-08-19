@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/research-signal-export.schema.json",
+  "title": "Research signal export envelope v1",
+  "description": "The payload an input knowledge base writes when it exports signals. It states who produced the records, from which commit, and how many. The records themselves stay unvalidated here: each kind has its own shape, and adapters translate them at the boundary.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_version",
+    "source_repository",
+    "source_commit",
+    "purpose",
+    "generated_at",
+    "signal_count",
+    "signals"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "research-signal-export/v1"
+    },
+    "source_repository": {
+      "type": "string",
+      "enum": ["self-model", "art-history", "marketing-trends"]
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signal_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["signal_id"],
+        "properties": {
+          "signal_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
