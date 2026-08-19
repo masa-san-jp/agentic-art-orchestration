@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "config/repositories.yaml"
 MANIFEST_SCHEMA_PATH = ROOT / "schemas/repository-manifest.schema.json"
 SIGNAL_SCHEMA_PATH = ROOT / "schemas/normalized-research-signal.schema.json"
+SIGNAL_EXPORT_SCHEMA_PATH = ROOT / "schemas/research-signal-export.schema.json"
 WORKITEM_SCHEMA_PATH = ROOT / "schemas/work-item.schema.json"
 EXTERNAL_ARTIFACT_SCHEMA_PATH = ROOT / "schemas/external-artifact.schema.json"
 INTERACTION_SCHEMA_PATH = ROOT / "schemas/interaction-event.schema.json"
@@ -59,6 +60,7 @@ REQUIRED_FILES = [
     "config/orchestration.yaml",
     "schemas/repository-manifest.schema.json",
     "schemas/normalized-research-signal.schema.json",
+    "schemas/research-signal-export.schema.json",
     "schemas/work-item.schema.json",
     "schemas/external-artifact.schema.json",
     "schemas/interaction-event.schema.json",
@@ -1642,6 +1644,53 @@ def validate_v12_e2e(data: dict, manifest: dict | None = None, source: str = "v1
             errors.append(_signal_error(source, "v1.1 regression acceptance is incomplete", "preserve every v1.1 interaction and artifact invariant"))
     if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
         errors.append(_signal_error(source, "v1.2 E2E acceptance is incomplete", "keep every research, child gate, regression, and remote safety invariant true"))
+    return errors
+
+
+
+def validate_signal_export(data: dict, source: str = "signal-export") -> list[str]:
+    """Validate the payload a knowledge base writes, without judging its records.
+
+    The envelope answers who produced the export, from which commit, and how many
+    records it carries. Each kind's records have their own shape, and the adapters
+    translate them, so this deliberately stops at the count.
+    """
+    errors: list[str] = []
+    schema = load_json(SIGNAL_EXPORT_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the signal export field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    signals = data.get("signals")
+    declared = data.get("signal_count")
+    if isinstance(signals, list) and isinstance(declared, int) and declared != len(signals):
+        errors.append(
+            _signal_error(
+                source,
+                f"signal_count {declared} does not match the {len(signals)} records carried",
+                "report the number of records the payload actually contains",
+            )
+        )
+
+    if isinstance(signals, list):
+        seen: set[str] = set()
+        for index, record in enumerate(signals):
+            if not isinstance(record, dict):
+                continue
+            identifier = record.get("signal_id")
+            if isinstance(identifier, str):
+                if identifier in seen:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"signals[{index}].signal_id {identifier!r} appears more than once",
+                            "give every exported record a unique signal_id",
+                        )
+                    )
+                seen.add(identifier)
     return errors
 
 
