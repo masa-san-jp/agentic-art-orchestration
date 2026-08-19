@@ -1,5 +1,5 @@
 version: 1
-contract_version: transformation-rule/v1
+contract_version: transformation-rule/v2
 rules:
   - rule_id: R17
     name: tension-operation-condition
