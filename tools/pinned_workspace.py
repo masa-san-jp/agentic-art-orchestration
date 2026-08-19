@@ -37,8 +37,15 @@ def _redacted(text: str, token: str | None) -> str:
     return text.replace(token, "***") if token else text
 
 
+# actions/checkout leaves an Authorization header in the checked-out repository's
+# config. Any git command run from inside that checkout inherits it, and that header
+# carries the workflow's own token, which can only read this repository. It silently
+# replaces the credential in our remote URL, so every other repository is refused.
+NO_INHERITED_AUTH = ["-c", "http.https://github.com/.extraheader="]
+
+
 def _run(args: list[str], cwd: Path | None = None, token: str | None = None) -> None:
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    result = subprocess.run([args[0], *NO_INHERITED_AUTH, *args[1:]], cwd=cwd, capture_output=True, text=True)
     if result.returncode != 0:
         detail = _redacted(result.stderr.strip(), token) or "no stderr"
         raise WorkspaceError(f"git {args[1]} failed for {cwd or args[-1]}: {detail}")
@@ -90,7 +97,7 @@ def _unreachable(manifest: dict, token: str | None) -> list[str]:
     denied = []
     for repository in manifest["repositories"]:
         probe = subprocess.run(
-            ["git", "ls-remote", "--exit-code", "-h", _authenticated(repository["url"], token)],
+            ["git", *NO_INHERITED_AUTH, "ls-remote", "--exit-code", "-h", _authenticated(repository["url"], token)],
             capture_output=True, text=True,
         )
         if probe.returncode != 0:
