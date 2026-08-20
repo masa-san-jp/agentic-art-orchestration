@@ -74,3 +74,15 @@ marketing-trends-notes -----/
 | 知識ベースの signal 書き出し | `signals`（契約は `contract_version`、時刻は `generated_at`、件数は `signal_count`） | `schemas/research-signal-export.schema.json` |
 
 signal の書き出しは、封筒だけを検証して**レコードの中身は検証しない**。種別ごとに形が違い、それを吸収するのが `tools/adapters.py` の役目だからである（README の「子の内部形式を共通化せず、境界で翻訳する」）。封筒が保証するのは、誰がいつどの版から出したか、と件数の整合だけ。
+
+## 境界を渡る enum
+
+器の名前と同じ問題が、**中身の語**でも起きる。research が許す語を production が知らないと、受理は通るのに次の工程で落ちる。器の規則をそのまま適用する——**語彙は消費側の契約が定め、生産側がそれに揃える。**
+
+| 値 | 語彙 | 定めた場所 | 生産側 |
+|---|---|---|---|
+| 受入試験の `result` | `NOT_RUN` / `PASS` / `FAIL` / `EXTERNAL_VALIDATION_REQUIRED` / `BLOCKED` | production `schemas/planning.schema.json` の `$defs.acceptanceTest.result` | research `config/vocabularies.yaml` の `test_results` |
+
+**この表に載る語を増やすときは、消費側の schema を先に変える。**
+
+語彙を揃えるだけでは足りない。**受理は、後の工程が要求する語彙をその場で検査する**（production `tools/new_production.py::_assert_planning_vocabulary`）。受理は「この bundle で仕事ができる」という宣言なので、計画生成が拒む値を含んだまま ACCEPTED にすると、宣言が事実でなくなる。検査は消費側 schema の enum を直接読むので、schema を変えれば検査も同時に動く。
