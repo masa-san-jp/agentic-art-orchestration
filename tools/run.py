@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Carry one intent as far as the repositories can take it, without asking anyone.
+"""Carry one intent all the way to a production plan, without asking anyone.
 
     python3 tools/run.py --intent "調和" --workspace-root <実クローン> --run-id RUN001
 
-The human appears once, in the interaction that produces the intent. From there
-the agent driving this repository runs to the edge of what the repositories can
-do on their own, and is told what to do next in the same breath. Nothing here
-waits for approval: a step either runs, or it names the work that has to happen
-and where its result goes.
+The human appears once, in the interaction that produces the intent. Everything
+after that runs without asking: ingest, compose, gate, select, trace, request,
+accept, hand over, and build the plan.
 
-Steps that are mechanical are executed. The step that needs an agent to read,
-search, and write records is returned as an instruction with its acceptance
-condition, so the agent can do it and call this again.
+One step is not a tool call. Conducting the research means reading, searching,
+and writing records, and the agent driving this repository does it. When the
+research is not yet done the run returns what is left and how it is judged
+done; calling the same entry again with the same run id carries on to the plan.
+It waits for the agent, never for a person.
 """
 
 from __future__ import annotations
@@ -41,9 +41,63 @@ def _run_tool(args: list[str], python: str) -> dict:
         return {"stdout": result.stdout.strip()}
 
 
+def _head(root: Path) -> str:
+    result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True)
+    return result.stdout.strip() if result.returncode == 0 else "0" * 40
+
+
+def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool = False,
+               allow_failure: bool = False) -> dict:
+    """Run a child repository's tool. Already-done steps are not failures on a resume."""
+    result = subprocess.run([python, *args], cwd=root, capture_output=True, text=True)
+    output = (result.stdout or result.stderr).strip()
+    if result.returncode != 0:
+        if allow_conflict and ("CONFLICT" in output or "already" in output or "in place" in output):
+            return {"status": "ALREADY_DONE", "detail": output.splitlines()[-1:][0] if output else ""}
+        if allow_failure:
+            return {"status": "NOT_READY", "detail": output.splitlines()[-1:][0] if output else ""}
+        raise StepFailure(f"{args[0]} failed: {(output.splitlines() or ['no output'])[-1]}")
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError:
+        return {"status": "PASSED", "stdout": output}
+
+
+
+def _at_research(work: Path, run_id: str, intent: str, steps: list[dict], research_root: Path, slug: str) -> dict:
+    """The run pauses for the agent, never for a person, and says exactly what is left."""
+    report = {
+        "run_id": run_id,
+        "intent": intent,
+        "status": "RESEARCH_PENDING",
+        "steps": steps,
+        "next_action": {
+            "actor": "agent",
+            "project": str(research_root / "projects" / slug),
+            "do": [
+                "01_planning/research-plan.yaml のタスクを tools/task_runtime.py で進める",
+                "02_evidence に証拠を集める。一次情報に当たり、開いて確かめてから引用する",
+                "03_knowledge に観察・主張・関係・矛盾を書く",
+                "04_decisions に判断・棄却案・不確実性を書く。棄却が無い調査は選んでいない",
+                "05_production に要件・受入試験・試作計画・創作指針を書く",
+            ],
+            "acceptance": "tools/complete.py が COMPLETE を返し、tools/validate.py --root . が通ること",
+            "resume": "同じ run-id でこの入口をもう一度呼ぶと、受け渡しから制作プランまで進む",
+        },
+        "state": str(work),
+    }
+    (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report
+
+
 def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
-        slug: str, title: str, requested_at: str, python: str) -> dict:
+        slug: str, title: str, requested_at: str, python: str,
+        research_root: Path | None = None, production_root: Path | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
+    if (research_root is None) != (production_root is None):
+        # Carrying on with one of the two would run a child tool in whatever directory
+        # happens to be current, and report a step it did not take.
+        raise StepFailure("--research-root and --production-root are given together or not at all")
     work = state_root / run_id
     work.mkdir(parents=True, exist_ok=True)
     signals = work / "signals"
@@ -84,6 +138,38 @@ def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpos
     ], python))
 
     request = sorted((work / "requests").glob("RR*.yaml"))[-1]
+
+    if research_root is not None:
+        record("accept", _run_child(
+            research_root, ["tools/accept_research_request.py", str(request), "--apply", "--root", ".",
+                            "--accepted-at", requested_at], python, allow_conflict=True))
+
+        complete = _run_child(research_root, ["tools/complete.py", f"project/{slug}"], python, allow_failure=True)
+        record("research-complete", complete)
+        if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
+            # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
+            return _at_research(work, run_id, intent, steps, research_root, slug)
+
+        record("handoff", _run_child(
+            research_root, ["tools/build_handoff.py", f"projects/{slug}", "--root", ".",
+                            "--generated-at", requested_at, "--research-commit", _head(research_root),
+                            "--handoff-id", "HO001", "--revision", "1"], python, allow_conflict=True))
+        record("export", _run_child(
+            research_root, ["tools/export_handoff.py", f"projects/{slug}", "--root", ".",
+                            "--output", str(work / "bundle")], python))
+        record("accept-production", _run_child(
+            production_root, ["tools/new_production.py", slug, "--handoff", str(work / "bundle"),
+                              "--output-root", str(work / "production")], python))
+        plan = _run_child(production_root, ["tools/build_plan.py", "--project-root",
+                                            str(work / "production" / "production" / slug)], python)
+        record("plan", plan)
+        report = {
+            "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
+            "plan": str(work / "production" / "production" / slug / "03_plan/production-plan.md"),
+            "state": str(work),
+        }
+        (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return report
 
     # The repositories stop here on their own. Conducting the research is not a
     # missing tool: it is reading, searching, and writing records, which the agent
@@ -129,12 +215,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--purpose", default="artistic-research")
     parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
     parser.add_argument("--state-root", type=Path, default=DEFAULT_STATE)
+    parser.add_argument("--research-root", type=Path, help="指定すると調査の受理から制作プランまで進む")
+    parser.add_argument("--production-root", type=Path)
     parser.add_argument("--child-python", default=sys.executable)
     args = parser.parse_args(argv)
 
     try:
         report = run(args.intent, args.workspace_root, args.state_root, args.run_id,
-                     args.purpose, args.slug, args.title, args.requested_at, args.child_python)
+                     args.purpose, args.slug, args.title, args.requested_at, args.child_python,
+                     args.research_root, args.production_root)
     except (StepFailure, OSError, IndexError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
