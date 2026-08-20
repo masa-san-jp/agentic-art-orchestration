@@ -582,9 +582,9 @@
 
 | Repository | Commit |
 |---|---|
-| self-model-notes | 2ac31805ed8a6c3361822c7351becba465c8769a |
-| art-history-notes | 83703055f11019f905ffdfa23cdd674d48522698 |
-| marketing-trends-notes | edcb49c4522364ae69f627bea996754dcc8cfe56 |
+| self-model-notes | 51163f17ac158ac0f4b277cef2e0e3bd96659747 |
+| art-history-notes | 1c0c1734e97f3c56c58a90ba93bc02638a62b947 |
+| marketing-trends-notes | d776a2fd1212c6a6c7b99f2fa72dd3b670b89533 |
 | agentic-art-research | 9bfa07d80c7962840031e0607f431c3bb997245f |
 
 これらは2026-08-11の観測値。運用開始後はsnapshot生成物が現在値を保持する。
@@ -680,7 +680,7 @@
 
 ## PRODUCTION-PIN-001 evidence
 
-- v1.2.1 release済みの親mainを起点に、5つの子repoのremote `main` headをread-onlyで観測した。Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf` はhandoff exportとproduction-result import、Production `9f1e332ae9faa1ecf098dd2f406f04c0506562b2` はhandoff receiptとproduction-result exportを公開していることを確認した。
+- v1.2.1 release済みの親mainを起点に、5つの子repoのremote `main` headをread-onlyで観測した。Research `d521af8ceca3db3f2816a7b0fa8c1c308e2fbb30` はhandoff exportとproduction-result import、Production `ca21c5146caf56b18036706e9b8d4edbdd6991ef` はhandoff receiptとproduction-result exportを公開していることを確認した。
 - self-model `53cdcb00d26a71ccf02d81b5a09e67804b9a2b73`、art-history `ab18a70fb3a16f62d89550e6b342aa17da4fc93e`、marketing `e9b86f3a352be43cd6e19624c481b446b4337077`を含む5つのclean immutable archiveを一時workspaceへ配置した。親manifestのResearch/Production pinを更新し、handoff schemaのSHA-256 `715f2426474de9d957ef3129e0a65d69492ff7e75181272b52cb4cbb850cf0f7`、production-result schemaのSHA-256 `5b69090476891629932e5b01260a6217273f8a4771cc004d4922fcd04a0a104a`が各子境界で一致することを確認した。
 - `child_quality_gates.py`は5 repository、14/14 gateを`PASSED`、全pinを`MATCHED`として出力した。候補workspaceを明示した親statusは`CLEAN / blocker 0`、auditはfinding 0、securityは`PASSED`、validatorとdiff checkもpassした。候補のsnapshotは親正本へ反映済みである。
 - 安全境界として、常設`repos/`の旧pin checkoutは自動更新していない。したがってデフォルトworkspaceを指定しないstatusは旧checkoutとの差分を検出するが、qualified candidate workspaceはCLEANである。常設checkoutの同期は別途明示した操作として扱う。
@@ -694,7 +694,7 @@
 ## PRODUCTION-EXCHANGE-001 evidence
 
 - `schemas/production-exchange-evidence.schema.json`と`tools/production_exchange.py`を親repoへ追加した。親owned contractはResearch→Production→Researchの順序、owner repo@immutable commit、child command metadata、contract version、bundle semantic hash、terminal status、`run://` opaque locator、privacy/mutation boundaryだけを保持し、child schema・bundle本文・asset bodyを保持しない。
-- runnerはmanifest-pinned Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf`とProduction `9f1e332ae9faa1ecf098dd2f406f04c0506562b2`をarchive化し、Git外run rootで子CLIをargument listとして実行する。Research handoff export、Production handoff receipt、plan/prototype/runtime projection、production-result export、Research result `--dry-run` importの8段階が`PASSED`した。
+- runnerはmanifest-pinned Research `d521af8ceca3db3f2816a7b0fa8c1c308e2fbb30`とProduction `ca21c5146caf56b18036706e9b8d4edbdd6991ef`をarchive化し、Git外run rootで子CLIをargument listとして実行する。Research handoff export、Production handoff receipt、plan/prototype/runtime projection、production-result export、Research result `--dry-run` importの8段階が`PASSED`した。
 - 同じmanifest、commit、run ID、generated_atを2つの独立Git外run rootで実行し、`exchange-evidence.json`がbyte-identicalだった。`tests/test_production_exchange.py`は正常系、remote/child mutation、shell control syntax、raw/sensitive marker、unsafe locator、provenance欠落をfail-closedで確認する。
 - Productionの物理作業、購入、契約、公開、外部送信は実行していない。Research result importは`--dry-run`のみで、child applyはしていない。remote operations、child mutationsは空配列である。
 - 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gate、commitは変更していない。親の一時fixtureだけをGit外へ生成し、Research child CLIの受入条件を満たすためのfixture metadataと生成handoffを一時commitした。親へ残したのは証跡metadataだけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは含めていない。

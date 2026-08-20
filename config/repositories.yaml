@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: 2ac31805ed8a6c3361822c7351becba465c8769a
+    observed_commit: 51163f17ac158ac0f4b277cef2e0e3bd96659747
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:
@@ -45,7 +45,7 @@ repositories:
     role: input-kb
     authority: art-history entities, relations, evidence, and graph
     default_branch: main
-    observed_commit: 83703055f11019f905ffdfa23cdd674d48522698
+    observed_commit: 1c0c1734e97f3c56c58a90ba93bc02638a62b947
     instructions: README.md
     requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
     quality_gates:
@@ -83,7 +83,7 @@ repositories:
     role: input-kb
     authority: marketing trends, practices, freshness, evidence, and graph
     default_branch: main
-    observed_commit: edcb49c4522364ae69f627bea996754dcc8cfe56
+    observed_commit: d776a2fd1212c6a6c7b99f2fa72dd3b670b89533
     instructions: README.md
     requirement_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/1
     quality_gates:
@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: 92a2c1ba1e80f2eb62b258374cd712e1d0c342cf
+    observed_commit: d521af8ceca3db3f2816a7b0fa8c1c308e2fbb30
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
@@ -159,7 +159,7 @@ repositories:
     role: control-plane-extension
     authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
     default_branch: main
-    observed_commit: 9f1e332ae9faa1ecf098dd2f406f04c0506562b2
+    observed_commit: ca21c5146caf56b18036706e9b8d4edbdd6991ef
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
     quality_gates:
