@@ -37,6 +37,7 @@ CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
+PIN_ADOPTION_SCHEMA_PATH = ROOT / "schemas/pin-adoption-report.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 PRODUCTION_EXCHANGE_SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
@@ -91,6 +92,8 @@ REQUIRED_FILES = [
     "tools/candidate_selection.py",
     "schemas/child-quality-gates.schema.json",
     "tools/child_quality_gates.py",
+    "schemas/pin-adoption-report.schema.json",
+    "tools/pin_adopt.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
     "schemas/v12-e2e.schema.json",
@@ -1433,6 +1436,30 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
                     )
     if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
         errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
+    return errors
+
+
+def validate_pin_adoption(data: dict, source: str = "pin-adoption") -> list[str]:
+    """Validate an adoption report. A partly-adopted manifest describes a workspace that never existed."""
+    errors: list[str] = []
+    schema = load_json(PIN_ADOPTION_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the pin-adoption field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    repositories = data.get("repositories")
+    if isinstance(repositories, list):
+        adoptable = [item for item in repositories if isinstance(item, dict) and item.get("adoptable")]
+        if data.get("status") == "READY" and not adoptable:
+            errors.append(_signal_error(source, "status READY with nothing adoptable", "use UNCHANGED"))
+        if data.get("adoptable_count") != len(adoptable):
+            errors.append(_signal_error(source, "adoptable_count does not match the repositories", "recount"))
+        for item in adoptable:
+            if not item.get("occurrences"):
+                errors.append(_signal_error(source, f"{item.get('repository')} is adoptable with no occurrences recorded",
+                                            "record every file that repeats the pin"))
     return errors
 
 
