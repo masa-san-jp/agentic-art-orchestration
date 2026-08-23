@@ -38,6 +38,7 @@ CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.js
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 PIN_ADOPTION_SCHEMA_PATH = ROOT / "schemas/pin-adoption-report.schema.json"
+BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 PRODUCTION_EXCHANGE_SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
@@ -94,6 +95,8 @@ REQUIRED_FILES = [
     "tools/child_quality_gates.py",
     "schemas/pin-adoption-report.schema.json",
     "tools/pin_adopt.py",
+    "schemas/batch-report-event.schema.json",
+    "tools/batch_status.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
     "schemas/v12-e2e.schema.json",
@@ -1437,6 +1440,15 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
     if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
         errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
     return errors
+
+
+def validate_batch_report_event(data: dict, source: str = "batch-report-event") -> list[str]:
+    """Validate one line of a batch log. An unmeasured field is absent, never zero."""
+    schema = load_json(BATCH_REPORT_EVENT_SCHEMA_PATH)
+    return [
+        _signal_error(source, schema_error, "correct the batch-report-event field")
+        for schema_error in _schema_errors(data, schema)
+    ]
 
 
 def validate_pin_adoption(data: dict, source: str = "pin-adoption") -> list[str]:
