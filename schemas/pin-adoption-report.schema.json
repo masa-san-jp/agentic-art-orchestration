@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/agentic-art-orchestration/pin-adoption-report.schema.json",
+  "title": "Pin adoption report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "workspace_root",
+    "repositories",
+    "adoptable_count",
+    "blocked_count",
+    "status"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "pin-adoption/v1"
+    },
+    "workspace_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adoptable_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "enum": [
+        "READY",
+        "BLOCKED",
+        "UNCHANGED"
+      ],
+      "$comment": "部分採用はしない。1つでも塞がっていれば全体が BLOCKED。"
+    },
+    "written_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "$comment": "--apply のときだけ現れる。pin は1行ではないので、書き換えた全ファイルを残す。"
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "repository",
+          "current_pin",
+          "candidate_commit",
+          "commits_ahead",
+          "child_gate_status",
+          "adoptable",
+          "reason",
+          "occurrences"
+        ],
+        "properties": {
+          "repository": {
+            "type": "string",
+            "minLength": 1
+          },
+          "current_pin": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "candidate_commit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "commits_ahead": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "child_gate_status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "adoptable": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "$comment": "採用しない理由。採用する場合だけ null。"
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}

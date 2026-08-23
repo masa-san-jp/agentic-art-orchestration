@@ -112,6 +112,41 @@ v1.3.0は、Research→Production→Researchのexchange E2Eを3回バイト比�
 
 `data/release-check.json`で`status=PASSED`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`を確認する。qualification成功だけではrelease済みとは扱わず、merge、tag、release、公開、共有範囲拡張、artifact削除は人間の明示承認後に別途実行する。
 
+## 2.9 pin を採用する
+
+検査は動いていたが、採用する手段が無かった。`tools/startup.py` は毎回 `remote_update_candidate` を出す一方、`observed_commit` を書き込むコードは0件で、この文書は「pin を更新しない」と3箇所に書いて更新の仕方をどこにも書いていなかった。**子が動いても pin が止まったままになり、境界が壊れたことを誰も知らせない状態**がそれで生まれる。
+
+### 確認する
+
+```
+python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン>
+```
+
+リポジトリごとに、いまの pin・候補コミット・その候補で子の quality gate を回した結果・採用の可否と理由を出す。**`config/repositories.yaml` は書き換えない。**
+
+### 採用する
+
+```
+python3 tools/pin_adopt.py --apply --workspace-root <実クローン>
+```
+
+**全ての検査が PASS のときだけ書き換える。** 1つでも塞がっていれば何も書かずに非0で終わる。部分的な採用はしない——一部だけ進んだ manifest は、存在したことのない作業空間を指す。
+
+`--dry-run` と `--apply` は排他で、どちらも省略するとエラーになる。
+
+### pin は1行ではない
+
+同じコミットが manifest 以外にも繰り返し書かれている（2026-08-20 実測で15ファイル: fixture 11件・retrieval index・test module・handoff record）。**manifest だけを書き換えると、retrieval index と improvement loop が自分の base commit を拒む。** `--apply` は候補ごとに全ての出現箇所を書き換え、書き換えたファイルを `written_files` に残す。
+
+### 失敗したときの読み方
+
+- `reason: child checkout has uncommitted changes` — その作業ツリーで誰かが作業中。採用の前に片づける
+- `reason: child checkout is N commit(s) behind its remote` — 手元が古い。先に取り込む
+- `child_gate_status: FAILED` — 候補コミットで子の gate が落ちている。**pin を上げれば直る種類の問題ではない**ので、子の側を直す
+- `status: BLOCKED` — 上のいずれかが1件でもある。書き換えは行われていない
+
+書き換えたあとの PR 作成と merge は人間が行う。manifest に関わる操作が人間の関門であることは変えていない。
+
 ## 3. taskを実行する
 
 1. queueから依存が`DONE`の最小ID `READY` taskを選ぶ。
