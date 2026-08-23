@@ -92,7 +92,8 @@ def _at_research(work: Path, run_id: str, intent: str, steps: list[dict], resear
 
 def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
         slug: str, title: str, requested_at: str, python: str,
-        research_root: Path | None = None, production_root: Path | None = None) -> dict:
+        research_root: Path | None = None, production_root: Path | None = None,
+        limit: int = 1) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if (research_root is None) != (production_root is None):
         # Carrying on with one of the two would run a child tool in whatever directory
@@ -122,7 +123,8 @@ def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpos
 
     record("selection", _run_tool([
         "tools/candidate_selection.py", "--candidates", str(work / "candidates.json"),
-        "--fixture", str(signals), "--project-id", slug, "--output", str(work / "selection.json"),
+        "--fixture", str(signals), "--project-id", slug, "--limit", str(limit),
+        "--output", str(work / "selection.json"),
     ], python))
 
     record("propositions", _run_tool([
@@ -131,13 +133,41 @@ def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpos
         "--fixture", str(signals), "--output", str(work / "propositions.json"),
     ], python))
 
-    record("research-request", _run_tool([
+    request_args = [
         "tools/build_research_request.py", "--propositions", str(work / "propositions.json"),
-        "--signals", str(signals), "--slug", slug, "--title", title,
+        "--signals", str(signals), "--title", title,
         "--requested-at", requested_at, "--output", str(work / "requests"),
-    ], python))
+    ]
+    request_args += ["--all", "--slug", slug] if limit > 1 else ["--slug", slug]
+    record("research-request", _run_tool(request_args, python))
 
-    request = sorted((work / "requests").glob("RR*.yaml"))[-1]
+    requests = sorted((work / "requests").glob("RR*.yaml"))
+    request = requests[-1]
+
+    if research_root is not None and limit > 1:
+        # 100件を人が100回叩かないための入口。受理まで進めて、どのプロジェクトが
+        # 調査待ちかを並べて返す。研究そのものはここから先の作業で、道具の実行ではない。
+        accepted = []
+        for path in requests:
+            outcome = _run_child(
+                research_root,
+                ["tools/accept_research_request.py", str(path), "--apply", "--root", ".",
+                 "--accepted-at", requested_at],
+                python, allow_conflict=True)
+            accepted.append({"request": path.name, "status": outcome.get("status"),
+                             "project_id": outcome.get("project_id")})
+        record("accept-batch", {"status": "PASSED", "accepted_count": len(accepted)})
+        report = {
+            "run_id": run_id, "intent": intent, "status": "BATCH_AT_RESEARCH",
+            "steps": steps, "accepted": accepted, "state": str(work),
+            "next_action": {
+                "actor": "agent",
+                "do": ["各プロジェクトで tools/next_action.py を回して調査を進める"],
+                "acceptance": "各プロジェクトで tools/complete.py が COMPLETE を返すこと",
+            },
+        }
+        (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return report
 
     if research_root is not None:
         record("accept", _run_child(
@@ -217,13 +247,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--state-root", type=Path, default=DEFAULT_STATE)
     parser.add_argument("--research-root", type=Path, help="指定すると調査の受理から制作プランまで進む")
     parser.add_argument("--production-root", type=Path)
+    parser.add_argument("--limit", type=int, default=1,
+                        help="選定する命題の件数。2以上でバッチになる")
     parser.add_argument("--child-python", default=sys.executable)
     args = parser.parse_args(argv)
 
     try:
         report = run(args.intent, args.workspace_root, args.state_root, args.run_id,
                      args.purpose, args.slug, args.title, args.requested_at, args.child_python,
-                     args.research_root, args.production_root)
+                     args.research_root, args.production_root, args.limit)
     except (StepFailure, OSError, IndexError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1

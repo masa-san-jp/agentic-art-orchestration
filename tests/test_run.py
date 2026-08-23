@@ -28,6 +28,58 @@ class MechanicalStepTests(unittest.TestCase):
             self.assertIn("does_not_exist", str(exc))
 
 
+class BatchGenerationTests(unittest.TestCase):
+    """A hundred plans cannot start from a hundred hand-typed commands."""
+
+    SPEC = importlib.util.spec_from_file_location(
+        "orchestration_request", ROOT / "tools/build_research_request.py")
+
+    def setUp(self):
+        module = importlib.util.module_from_spec(self.SPEC)
+        assert self.SPEC and self.SPEC.loader
+        self.SPEC.loader.exec_module(module)
+        self.request = module
+
+    @staticmethod
+    def _proposition(identifier: str, signal_ids: list[str]) -> dict:
+        return {"proposition_id": identifier,
+                "normalized_signals": [{"signal_id": value} for value in signal_ids]}
+
+    def test_two_studies_resting_on_the_same_signals_are_refused(self):
+        same = [self._proposition("proposition:a", ["x", "y"]),
+                self._proposition("proposition:b", ["y", "x"])]
+
+        with self.assertRaises(self.request.RequestError):
+            self.request._assert_distinct_signal_sets(same)
+
+    def test_distinct_signal_sets_pass(self):
+        distinct = [self._proposition("proposition:a", ["x", "y"]),
+                    self._proposition("proposition:b", ["x", "z"])]
+
+        self.request._assert_distinct_signal_sets(distinct)
+
+    def test_a_slug_is_derived_from_what_the_proposition_is_made_of(self):
+        used: set = set()
+
+        slug = self.request._slug_for(self._proposition("proposition:5ab4c437b82b", []), "harmony", used)
+
+        self.assertIn("5ab4c437b82b", slug)
+        self.assertTrue(slug.startswith("harmony-"))
+
+    def test_a_repeated_slug_gets_a_distinct_one_rather_than_colliding(self):
+        used = {"harmony-abc"}
+
+        slug = self.request._slug_for(self._proposition("proposition:abc", []), "harmony", used)
+
+        self.assertNotIn(slug, used)
+
+    def test_the_signal_set_ignores_the_order_the_signals_arrived_in(self):
+        first = self.request._signal_set(self._proposition("p", ["b", "a"]))
+        second = self.request._signal_set(self._proposition("q", ["a", "b"]))
+
+        self.assertEqual(first, second)
+
+
 class ChildStepTests(unittest.TestCase):
     """A resumed run re-enters steps it already took, so a child tool's refusal is not always a failure."""
 

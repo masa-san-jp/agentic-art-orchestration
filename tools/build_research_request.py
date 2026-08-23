@@ -57,6 +57,36 @@ class RequestError(RuntimeError):
     """The proposition does not carry what the research repository requires."""
 
 
+def _signal_set(proposition: dict) -> tuple[str, ...]:
+    return tuple(sorted(str(signal.get("signal_id")) for signal in proposition.get("normalized_signals", [])))
+
+
+def _assert_distinct_signal_sets(propositions: list[dict]) -> None:
+    """Two studies resting on the same three signals are one study done twice."""
+    seen: dict[tuple[str, ...], str] = {}
+    for proposition in propositions:
+        key = _signal_set(proposition)
+        identifier = str(proposition.get("proposition_id"))
+        if key in seen:
+            raise RequestError(
+                f"propositions {seen[key]} and {identifier} rest on the same signals: {', '.join(key)}"
+            )
+        seen[key] = identifier
+
+
+def _slug_for(proposition: dict, prefix: str | None, used: set[str]) -> str:
+    """A slug a person did not choose, derived from what the proposition is made of."""
+    identifier = str(proposition.get("proposition_id", ""))
+    tail = identifier.split(":")[-1][:12] or "proposition"
+    base = f"{prefix}-{tail}" if prefix else f"harmony-{tail}"
+    slug = base
+    suffix = 2
+    while slug in used:
+        slug = f"{base}-{suffix}"
+        suffix += 1
+    return slug
+
+
 def _next_request_id(output: Path) -> str:
     existing = [int(match.group(1)) for path in output.glob("RR*.yaml")
                 if (match := re.fullmatch(r"RR(\d{3,})", path.stem))]
@@ -174,13 +204,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--propositions", type=Path, default=ROOT / "data/propositions.json")
     parser.add_argument("--proposition", help="省略時は先頭の命題を使う")
     parser.add_argument("--signals", type=Path, default=ROOT / "data/signals")
-    parser.add_argument("--slug", required=True, help="作品の識別子。機械が名前を決めない")
-    parser.add_argument("--title", required=True)
+    parser.add_argument("--slug", help="作品の識別子。機械が名前を決めない。--all のときは接頭辞になる")
+    parser.add_argument("--title", help="--all のときは各件の題名の接頭辞になる")
+    parser.add_argument("--all", action="store_true",
+                        help="命題ごとに依頼書を出す。100件を人が100回叩かないための入口")
     parser.add_argument("--requested-at", required=True)
     parser.add_argument("--deadline")
     parser.add_argument("--creator-id")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
+
+    if not args.all and not (args.slug and args.title):
+        parser.error("--slug and --title are required unless --all is given")
 
     try:
         document = load_json(args.propositions)
@@ -203,22 +238,31 @@ def main(argv: list[str] | None = None) -> int:
         commit = _orchestration_commit()
 
         args.output.mkdir(parents=True, exist_ok=True)
-        request_id = _next_request_id(args.output)
-        request = build_request(
-            proposition, signals, request_id=request_id, slug=args.slug, title=args.title,
-            requested_at=args.requested_at, commit=commit, deadline=args.deadline, creator_id=args.creator_id,
-            full_names=full_names,
-        )
+        chosen = propositions if args.all else [proposition]
+        _assert_distinct_signal_sets(chosen)
+        used_slugs: set[str] = set()
+        written: list[dict[str, str]] = []
+        for item in chosen:
+            slug = args.slug if (args.slug and not args.all) else _slug_for(item, args.slug, used_slugs)
+            used_slugs.add(slug)
+            title = args.title if (args.title and not args.all) else f"{args.title or '調和'} {slug}"
+            request_id = _next_request_id(args.output)
+            request = build_request(
+                item, signals, request_id=request_id, slug=slug, title=title,
+                requested_at=args.requested_at, commit=commit, deadline=args.deadline,
+                creator_id=args.creator_id, full_names=full_names,
+            )
+            destination = args.output / f"{request_id}.yaml"
+            import yaml
+            destination.write_text(yaml.safe_dump(request, sort_keys=False, allow_unicode=True), encoding="utf-8")
+            written.append({"request_id": request_id, "slug": slug, "path": str(destination)})
     except (RequestError, OSError, KeyError, IndexError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
 
-    destination = args.output / f"{request_id}.yaml"
-    import yaml
-
-    destination.write_text(yaml.safe_dump(request, sort_keys=False, allow_unicode=True), encoding="utf-8")
-    print(json.dumps({"status": "PASSED", "request_id": request_id, "path": str(destination)}, ensure_ascii=False))
+    print(json.dumps({"status": "PASSED", "request_count": len(written), "requests": written}, ensure_ascii=False))
     return 0
+
 
 
 if __name__ == "__main__":
