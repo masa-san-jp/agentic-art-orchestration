@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: 51163f17ac158ac0f4b277cef2e0e3bd96659747
+    observed_commit: 2bb28dc23f45e497e0b36925b314d77e21558dbf
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:
@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: d521af8ceca3db3f2816a7b0fa8c1c308e2fbb30
+    observed_commit: a27bb96f2d482d8249290612adb98279d8fe01ed
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
@@ -159,7 +159,7 @@ repositories:
     role: control-plane-extension
     authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
     default_branch: main
-    observed_commit: cc9bf469068ddc53501cdd531bfa37364a67cb1b
+    observed_commit: ad4ea48e8e2455c44d36c1fe523b2f7816214ce5
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
     quality_gates:
