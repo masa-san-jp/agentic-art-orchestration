@@ -87,9 +87,31 @@ def _slug_for(proposition: dict, prefix: str | None, used: set[str]) -> str:
     return slug
 
 
-def _next_request_id(output: Path) -> str:
+def _accepted_request_numbers(research_root: Path) -> list[int]:
+    """Request IDs the research repository has already accepted.
+
+    The run directory is fresh on every run, so counting only what this run
+    wrote mints RR001 forever and the second intent collides with the first.
+    """
+    numbers = []
+    for path in sorted(research_root.glob("projects/*/00_intake/research-request.yaml")):
+        try:
+            document = load_yaml(path)
+        except Exception:
+            continue
+        if not isinstance(document, dict):
+            continue
+        match = re.fullmatch(r"RR(\d{3,})", str(document.get("request_id", "")))
+        if match:
+            numbers.append(int(match.group(1)))
+    return numbers
+
+
+def _next_request_id(output: Path, *, research_root: Path | None = None) -> str:
     existing = [int(match.group(1)) for path in output.glob("RR*.yaml")
                 if (match := re.fullmatch(r"RR(\d{3,})", path.stem))]
+    if research_root is not None:
+        existing += _accepted_request_numbers(research_root)
     return f"RR{max(existing, default=0) + 1:03d}"
 
 
@@ -212,6 +234,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--deadline")
     parser.add_argument("--creator-id")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--research-root", type=Path,
+                        help="指定すると、既に受理された request_id を避けて採番する")
     args = parser.parse_args(argv)
 
     if not args.all and not (args.slug and args.title):
@@ -246,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
             slug = args.slug if (args.slug and not args.all) else _slug_for(item, args.slug, used_slugs)
             used_slugs.add(slug)
             title = args.title if (args.title and not args.all) else f"{args.title or '調和'} {slug}"
-            request_id = _next_request_id(args.output)
+            request_id = _next_request_id(args.output, research_root=args.research_root)
             request = build_request(
                 item, signals, request_id=request_id, slug=slug, title=title,
                 requested_at=args.requested_at, commit=commit, deadline=args.deadline,

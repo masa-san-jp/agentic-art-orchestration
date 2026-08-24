@@ -138,6 +138,8 @@ def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpos
         "--signals", str(signals), "--title", title,
         "--requested-at", requested_at, "--output", str(work / "requests"),
     ]
+    if research_root is not None:
+        request_args += ["--research-root", str(research_root)]
     request_args += ["--all", "--slug", slug] if limit > 1 else ["--slug", slug]
     record("research-request", _run_tool(request_args, python))
 

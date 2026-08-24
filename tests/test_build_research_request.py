@@ -104,3 +104,49 @@ class BoundaryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RequestIdentityTests(unittest.TestCase):
+    """A second intent must not mint an id the research repository has already accepted."""
+
+    def _accepted_project(self, research_root: Path, slug: str, request_id: str) -> None:
+        intake = research_root / "projects" / slug / "00_intake"
+        intake.mkdir(parents=True, exist_ok=True)
+        (intake / "research-request.yaml").write_text(
+            f"request_id: {request_id}\nproject:\n  slug: {slug}\n", encoding="utf-8"
+        )
+
+    def test_the_next_id_skips_what_research_already_accepted(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "requests"
+            output.mkdir()
+            research_root = root / "research"
+            self._accepted_project(research_root, "harmony-proof", "RR001")
+            self._accepted_project(research_root, "probe-unattended", "RR002")
+
+            self.assertEqual(MODULE._next_request_id(output, research_root=research_root), "RR003")
+
+    def test_the_next_id_still_counts_what_this_run_already_wrote(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "requests"
+            output.mkdir()
+            (output / "RR004.yaml").write_text("request_id: RR004\n", encoding="utf-8")
+            research_root = root / "research"
+            self._accepted_project(research_root, "harmony-proof", "RR001")
+
+            self.assertEqual(MODULE._next_request_id(output, research_root=research_root), "RR005")
+
+    def test_without_a_research_root_the_run_directory_still_decides(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "requests"
+            output.mkdir()
+
+            self.assertEqual(MODULE._next_request_id(output, research_root=None), "RR001")
