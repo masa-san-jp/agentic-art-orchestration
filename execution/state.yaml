@@ -1,29 +1,29 @@
-version: 42
-updated_at: "2026-08-25T19:26:51+09:00"
+version: 43
+updated_at: "2026-08-25T19:59:53+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
   owner: codex-initial-ops-qualify
-  acquired_at: "2026-08-25T19:23:34+09:00"
-  expires_at: "2026-08-25T20:23:34+09:00"
+  acquired_at: "2026-08-25T19:59:53+09:00"
+  expires_at: "2026-08-25T20:59:53+09:00"
   lane: RELEASE_QUALIFICATION
-  execution_id: INITIAL-OPS-QUALIFY-001:attempt-1
+  execution_id: INITIAL-OPS-QUALIFY-001:attempt-2
   scope:
     repository: agentic-art-orchestration
     paths: [data/release-check-v14.json, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
-  released_at: "2026-08-25T19:24:17+09:00"
-  release_reason: INITIAL-OPS-QUALIFY-001 blocked; verified manifest-pinned workspace is unavailable and qualification failed closed before child gates
+  released_at: "2026-08-25T19:59:53+09:00"
+  release_reason: INITIAL-OPS-QUALIFY-001 blocked; exact manifest pins matched, but two child dependency preflights were ENV_UNSATISFIED and their quality gates were not run
 checkpoint:
   task: INITIAL-OPS-QUALIFY-001
   repository: agentic-art-orchestration
   start_point: d84f465
-  expected_changes: Run v1.4.0 three-run qualification from a verified manifest-pinned workspace with sandbox evidence; preserve fail-closed evidence if the workspace is unavailable.
-  result: blocked; three-run v1.4.0 qualification failed closed on five unavailable manifest pins; remediation is to provide a verified pinned workspace without mutating source checkouts
+  expected_changes: Run v1.4.0 three-run qualification from a verified manifest-pinned workspace with sandbox evidence; preserve fail-closed evidence when child dependency preflight cannot satisfy the child SSOT requirements.
+  result: blocked; all five exact manifest pins matched in a clean detached workspace, but agentic-art-production and marketing-trends used unsupported exact == requirements, so child gates and the dependent v1.2/production checks failed closed
 last_completed_task: PROJECT-STATUS-001
 resume_from:
   task: INITIAL-OPS-QUALIFY-001
-  action: Restore a verified manifest-pinned workspace for all five child repositories, then rerun the three-run v1.4.0 qualification with existing sandbox evidence.
+  action: Obtain an authorized child SSOT or parent preflight contract decision for exact requirement specifications, then rerun the three-run v1.4.0 qualification from a verified pinned workspace; do not auto-install or mutate child repositories.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -92,10 +92,19 @@ initial_ops_qualification:
   runs: 3
   acceptance: 0/1
   report: data/release-check-v14.json
-  report_sha256: 72c6da4e12b43b35c209f3bb9c8b4f1f84d0f2e72a64e12f436aabdbeaad1ee6
-  blocking_check: pinned-workspace-materialize
-  pin_failures: 5/5
-  child_gates: NOT_RUN
+  report_sha256: 2b553dc35ccffe622adcb1759de00f5bf8ab58f66a7ab441fb66294f6d13bade
+  blocking_check: v1.2-e2e-and-production-exchange
+  pin_materialization: PASSED
+  pinned_repositories: 5/5 MATCHED
+  child_quality_gates: 3/5 repositories PASSED; 2/5 ENV_UNSATISFIED; gates NOT_RUN for agentic-art-production and marketing-trends
+  env_unsatisfied_repositories: [agentic-art-production, marketing-trends]
+  unsupported_requirement_specs:
+    agentic-art-production: [PyYAML==6.0.2, jsonschema==4.23.0]
+    marketing-trends: [PyYAML==6.0.3]
+  v1_2_e2e: FAILED
+  production_exchange: FAILED
+  initial_operations_e2e: PASSED; 3/3
+  initial_operations_live_evidence: PASSED
   history: NOT_RUN
   source_mutation: false
   network: disabled
@@ -104,11 +113,11 @@ initial_ops_qualification:
   tag_operation: NOT_PERFORMED
   release_operation: NOT_PERFORMED
   sandbox_evidence: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
-  blocker: verified manifest-pinned workspace unavailable; observed commits are absent from generated offline source checkouts
-  remediation: provide a read-only verified workspace containing every manifest observed_commit, without changing child pins or source checkouts
+  blocker: exact manifest pins are available and matched, but current child dependency preflight does not support the exact == specifications declared by agentic-art-production and marketing-trends; their gates remain NOT_RUN and dependent qualification checks fail closed
+  remediation: make an authorized child SSOT or parent preflight contract decision to support exact requirements, then rerun from the verified workspace; do not auto-install dependencies, edit child requirements, or update pins
   parent_validation: passed
   parent_tests: 327/327
-  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  workspace_status: 5 repositories clean and detached at exact manifest commits
   security: PASSED
   audit: FINDINGS; one known nonblocking marketing freshness warning
   child_repository_mutation: false

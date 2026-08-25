@@ -618,7 +618,7 @@ tasks:
     depends_on: [PROJECT-STATUS-001]
     acceptance: Three deterministic qualification runs pass the startup, Production exchange, retrieval, artifact, feedback, Issue delivery, privacy, idempotency, and five child quality gates; separate opt-in sandbox evidence proves one Drive create/read and one GitHub Issue create/deduplicate without modifying production user artifacts or existing Issues.
     checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
-    blocker: Verified manifest-pinned workspace is unavailable in the local source checkouts; v1.4.0 qualification failed closed before child gates, and no pin update or remote fetch was authorized.
+    blocker: Verified exact manifest pins were materialized in a clean detached workspace, but agentic-art-production and marketing-trends requirements use exact == specifications unsupported by the current child dependency preflight; their gates were not run, so v1.4.0 qualification failed closed. No dependency installation, child edit, pin update, or remote write was authorized.
 
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14

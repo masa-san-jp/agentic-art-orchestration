@@ -1117,3 +1117,12 @@
 - Issue #67が要求するEpic/Issue外部書込みはowner approvalが明示されていないため行わなかった。子repo、child pin、Drive artifact、credential、merge、releaseも変更していない。
 - acceptance: 1/1。親validator、親全体320/320、workspace status、security、audit check、diff checkを確認した。次のtaskは`PROJECT-STATUS-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
 - implementation commit: `14d6daa`。完了記録はこのrecord commitへ反映する。
+
+## INITIAL-OPS-QUALIFY-001 reattempt blocked
+
+- 2026-08-25 19:59 JST、read-only GitHub CLI認証を使って一時の検証workspaceを構築し、manifestの5つのexact observed_commitをすべて実体化した。5/5 repositoriesはclean・detached・exact pin MATCHEDで、source mutationはfalseだった。
+- `.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --github-sandbox-evidence /tmp/github-sandbox-live-v14-20260825-ghcli-1.json --output data/release-check-v14.json`相当を実行した。report SHA-256は`2b553dc35ccffe622adcb1759de00f5bf8ab58f66a7ab441fb66294f6d13bade`。
+- child quality gateはresearch、art-history、self-modelの3/5 repositoriesがPASSした。一方、agentic-art-productionの`PyYAML==6.0.2`/`jsonschema==4.23.0`とmarketing-trendsの`PyYAML==6.0.3`は現行preflightの未対応形式で、両repoは`ENV_UNSATISFIED`、gateはNOT_RUNとなった。これによりv1.2 E2EとProduction exchangeはFAILED、総合qualificationのacceptanceは0/1。
+- initial-operations E2Eは3/3 PASS、既存のopt-in GitHub sandbox evidenceもPASSだった。remote_operationsは空で、今回のDrive/GitHub Issue/child repo/pin/merge/tag/releaseのwriteは行っていない。
+- remediationは、exact requirementを扱う親preflight contract変更または子repo SSOT変更についてownerが決定・承認した後、同じ検証workspaceから再qualificationすること。依存の自動install、子reporequirementsの無断編集、pin更新は行わない。
+- 親validator・親tests・workspace status・audit・securityを再確認してからこの記録をcommitする。次の最初の操作は、承認済み契約変更後に`.venv/bin/python tools/validate.py --check`を実行すること。
