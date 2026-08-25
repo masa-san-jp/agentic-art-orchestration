@@ -142,6 +142,36 @@ REQUIRED_PROFILE_FORBIDDEN_DATA = {
     "direct_identifier",
 }
 COMMAND_FORBIDDEN_TOKENS = ("\x00", "\r", "\n", ";", "&&", "||", "|", ">", "<", "`")
+GITHUB_ISSUE_URL = re.compile(
+    r"^https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/[1-9][0-9]*$"
+)
+AGENT_TERMINALS = {"COMMIT_READY", "DRAFT_PR_READY", "EVIDENCE_READY"}
+ISSUE_SSO_TASK_IDS = {
+    "GAP-DAG-001",
+    "V14-SANDBOX-ATTEMPT-001",
+    "V14-CHILD-PREFLIGHT-001",
+    "V14-PIN-RELEASE-CHECK-001",
+    "V14-OBSERVATION-PROVENANCE-001",
+    "V14-RECONCILE-001",
+    "PROJECT-STATUS-001",
+    "PURPOSE-NAMING-001",
+    "PURPOSE-INSPIRATION-001",
+    "PURPOSE-SELF-EXPORT-SOURCE-001",
+    "SELF-EXPORT-E2E-001",
+    "PURPOSE-SELF-DIVERSITY-001",
+    "PURPOSE-INTENT-RANK-001",
+    "PURPOSE-RESEARCH-KNOWLEDGE-001",
+    "PURPOSE-RESEARCH-DECISIONS-001",
+    "PURPOSE-RESEARCH-VISUAL-001",
+    "PURPOSE-PRODUCTION-OBSERVATION-001",
+    "PURPOSE-PRODUCTION-REVISION-001",
+    "PURPOSE-RESEARCH-FEEDBACK-001",
+    "PURPOSE-VIEWER-RESPONSE-001",
+    "PURPOSE-AUTONOMOUS-RUNNER-001",
+    "PURPOSE-BATCH-STATUS-001",
+    "PURPOSE-BATCH-100-001",
+    "PURPOSE-E2E-001",
+}
 STARTUP_STEPS = [
     "validate_parent_configuration",
     "observe_remote_heads",
@@ -3109,35 +3139,97 @@ def validate_repositories(errors: list[str], manifest_path: Path = MANIFEST_PATH
     errors.extend(validate_manifest(data, _source_label(manifest_path)))
 
 
-def validate_tasks(errors: list[str]) -> None:
-    data = load_yaml(ROOT / "execution/task-queue.yaml")
+def validate_tasks(errors: list[str], queue_path: Path | None = None) -> None:
+    queue_path = queue_path or ROOT / "execution/task-queue.yaml"
+    data = load_yaml(queue_path)
     tasks = data.get("tasks", []) if isinstance(data, dict) else []
     ids = [task.get("id") for task in tasks]
     if len(ids) != len(set(ids)):
-        errors.append("execution/task-queue.yaml: task IDs must be unique")
+        errors.append(f"{queue_path}: task IDs must be unique")
     by_id = {task.get("id"): task for task in tasks}
+    manifest = load_yaml(MANIFEST_PATH)
+    known_repositories = {
+        repo.get("id"): repo.get("full_name")
+        for repo in manifest.get("repositories", [])
+        if isinstance(repo, dict)
+    }
+    known_repositories["agentic-art-orchestration"] = "masa-san-jp/agentic-art-orchestration"
     for task in tasks:
         task_id = task.get("id", "<missing>")
         for field in ("milestone", "title", "status", "depends_on", "acceptance", "checks"):
             if field not in task:
-                errors.append(f"execution/task-queue.yaml: {task_id}.{field} is required")
+                errors.append(f"{queue_path}: {task_id}.{field} is required")
         if task.get("status") not in STATUSES:
-            errors.append(f"execution/task-queue.yaml: {task_id}.status is unknown")
+            errors.append(f"{queue_path}: {task_id}.status is unknown")
+        issue_fields = ("issue_ssot", "target_repositories", "agent_terminal")
+        has_issue_fields = [field in task for field in issue_fields]
+        if task_id in ISSUE_SSO_TASK_IDS and not all(has_issue_fields):
+            missing = [field for field in issue_fields if field not in task]
+            errors.append(
+                f"{queue_path}: {task_id} missing issue SSOT field(s) {missing}; "
+                "add issue_ssot, target_repositories, and agent_terminal"
+            )
+        elif any(has_issue_fields) and not all(has_issue_fields):
+            missing = [field for field in issue_fields if field not in task]
+            errors.append(
+                f"{queue_path}: {task_id} has incomplete issue SSOT contract; "
+                f"missing {missing}"
+            )
+        if all(has_issue_fields):
+            issue_url = task.get("issue_ssot")
+            match = GITHUB_ISSUE_URL.fullmatch(issue_url) if isinstance(issue_url, str) else None
+            if match is None:
+                errors.append(
+                    f"{queue_path}: {task_id}.issue_ssot is not a canonical GitHub Issue URL; "
+                    "use https://github.com/<owner>/<repo>/issues/<number>"
+                )
+            targets = task.get("target_repositories")
+            if not isinstance(targets, list) or not targets:
+                errors.append(
+                    f"{queue_path}: {task_id}.target_repositories must be a non-empty list; "
+                    "declare the owning manifest repository"
+                )
+            else:
+                if len(targets) != len(set(targets)):
+                    errors.append(
+                        f"{queue_path}: {task_id}.target_repositories must be unique; "
+                        "remove duplicate repository IDs"
+                    )
+                unknown = [repo for repo in targets if repo not in known_repositories]
+                if unknown:
+                    errors.append(
+                        f"{queue_path}: {task_id}.target_repositories has unknown repository IDs {unknown}; "
+                        "use repositories.yaml IDs"
+                    )
+                if match is not None:
+                    target_full_names = {
+                        known_repositories[repo] for repo in targets if repo in known_repositories
+                    }
+                    if match.group(1) not in target_full_names:
+                        errors.append(
+                            f"{queue_path}: {task_id}.issue_ssot authority {match.group(1)!r} "
+                            "is outside target_repositories; point to the authoritative repository Issue"
+                        )
+            if task.get("agent_terminal") not in AGENT_TERMINALS:
+                errors.append(
+                    f"{queue_path}: {task_id}.agent_terminal is unknown; "
+                    f"use one of {sorted(AGENT_TERMINALS)}"
+                )
         deps = task.get("depends_on", [])
         for dep in deps:
             if dep not in by_id:
-                errors.append(f"execution/task-queue.yaml: {task_id} depends on missing {dep}")
+                errors.append(f"{queue_path}: {task_id} depends on missing {dep}")
         if task.get("status") == "READY":
             incomplete = [dep for dep in deps if by_id.get(dep, {}).get("status") != "DONE"]
             if incomplete:
-                errors.append(f"execution/task-queue.yaml: {task_id} READY with incomplete {incomplete}")
+                errors.append(f"{queue_path}: {task_id} READY with incomplete {incomplete}")
 
     visiting: set[str] = set()
     visited: set[str] = set()
 
     def visit(task_id: str, chain: list[str]) -> None:
         if task_id in visiting:
-            errors.append(f"execution/task-queue.yaml: cycle {' -> '.join(chain + [task_id])}")
+            errors.append(f"{queue_path}: cycle {' -> '.join(chain + [task_id])}")
             return
         if task_id in visited or task_id not in by_id:
             return

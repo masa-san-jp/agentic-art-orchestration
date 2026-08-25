@@ -32,3 +32,12 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 5. 発見と決定を即時に計画へ戻す。
 6. 受入条件を満たすまで完了にしない。
 7. 終了時にrepo、branch、SHA、dirty状態、次の1commandを残す。
+
+## Current M15/M16 continuation
+
+目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
+
+- [ ] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する（`GAP-DAG-001` → `PROJECT-STATUS-001`）。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。
+
+旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。

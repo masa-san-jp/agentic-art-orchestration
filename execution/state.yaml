@@ -1,28 +1,51 @@
-version: 20
-updated_at: "2026-08-14T20:03:06+09:00"
-active_task: ISSUE-38-REAL-CHAIN-CI-001
+version: 22
+updated_at: "2026-08-25T15:15:51+09:00"
+active_task: null
 active_repository: agentic-art-orchestration
 lease:
-  status: active
-  owner: codex-issue-38-real-chain-ci
-  acquired_at: "2026-08-14T20:03:06+09:00"
-  expires_at: "2026-08-14T21:03:06+09:00"
-  lane: RELEASE_QUALIFICATION
-  execution_id: ISSUE-38-REAL-CHAIN-CI-001:attempt-1
+  status: released
+  owner: codex-gap-dag-001
+  acquired_at: "2026-08-25T15:08:00+09:00"
+  expires_at: "2026-08-25T15:53:00+09:00"
+  lane: EXECUTION_DAG
+  execution_id: GAP-DAG-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/validate.py, tests/test_validate.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+  released_at: "2026-08-25T15:15:51+09:00"
+  release_reason: GAP-DAG-001 completed; next READY task is V14-SANDBOX-ATTEMPT-001
 checkpoint:
-  task: ISSUE-38-REAL-CHAIN-CI-001
+  task: GAP-DAG-001
   repository: agentic-art-orchestration
-  start_point: 302de458495257fca0e754ed4f71f6b5255abbbe
-  expected_changes: Add real child checkout and parent Production exchange qualification to CI without pin adoption or child mutation.
-  result: in_progress
-last_completed_task: ISSUE-40-PIN-ADOPTION-001
+  start_point: a9d1656
+  expected_changes: Register the Issue SSOT queue metadata contract and the v1.4-to-purpose implementation DAG without child or external mutation.
+  result: completed; Issue SSOT metadata contract, 24-task DAG, dependency ordering, and stale-lease isolation are validated
+last_completed_task: GAP-DAG-001
 resume_from:
-  task: ISSUE-38-REAL-CHAIN-CI-001
-  action: Configure the external AAP_CHILD_REPOS_TOKEN secret, rerun the real-chain CI job, and retain the fail-closed behavior if access remains unavailable.
-  command: .venv/bin/python tools/validate.py --check
+  task: V14-SANDBOX-ATTEMPT-001
+  action: Read parent Issue #101 and the existing sandbox live-check policy/tests, then run the networkless gate before any explicitly authorized live attempt.
+  command: .venv/bin/python -m unittest tests.test_github_sandbox_live_check -v
+gap_dag:
+  status: completed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/107
+  implementation_commit: pending
+  record_commit: pending
+  issue_ssot_tasks: 24
+  next_ready_task: V14-SANDBOX-ATTEMPT-001
+  ready_task_count: 1
+  parent_validation: passed
+  focused_tests: 11/11
+  full_parent_tests: 305/305
+  diff_check: passed
+  child_repository_mutation: false
+  external_mutation: false
+stale_lease_resolution:
+  prior_task: ISSUE-38-REAL-CHAIN-CI-001
+  prior_owner: codex-issue-38-real-chain-ci
+  observed_expired_at: "2026-08-14T21:03:06+09:00"
+  observed_local_branch: agent/issues-38-41-pipeline
+  resolution: released_as_stale_before_claiming_gap_dag
+  evidence: remote_main_actions_run_32797739061_success
 pin_qualification:
   status: passed_and_adopted
   verified_workspace: temporary GitHub main workspace
@@ -99,13 +122,20 @@ release:
   drive_mutation: false
   physical_or_external_effect: false
 blocked:
-  - task: INITIAL-OPS-QUALIFY-001
+  - task: ISSUE-38-REAL-CHAIN-CI-001
     repository: agentic-art-orchestration
-    condition: an explicitly designated GitHub sandbox repository for one live Issue CREATE/REUSE is unavailable
-    observed: Read-only repository discovery found Agent-Lab (an active private multi-agent lab with existing Issues) and seedance-api-local-test (an unrelated application repository); neither is designated as the qualification sandbox.
-    recommendation: designate a dedicated GitHub sandbox repository owner/name, confirm that existing Issues and production repositories are out of scope, and provide the credential outside Git.
-    impact: offline v1.4.0 qualification passed, but the live Issue evidence gate remains BLOCKED and INITIAL-OPS-RELEASE-001 must not start.
-    unblock_when: approved sandbox owner/name, external credential/session authority, and explicit one-Issue search→CREATE/REUSE scope are available.
+    condition: the local historical task and current remote workflow are not the same qualification contract
+    observed: local queue expected the old AAP_CHILD_REPOS_TOKEN real-chain job; remote run 32797739061 succeeded for bootstrap and production-exchange, while the real-chain job was not present in the observed job list.
+    recommendation: re-baseline the task against current main in a separate Issue before marking it DONE; do not reuse the expired lease.
+    impact: old real-chain task is isolated as BLOCKED; the new DAG has exactly one READY task.
+    unblock_when: an explicit current-main Issue SSOT and matching CI evidence are available.
+  - task: INITIAL-OPS-RELEASE-001
+    repository: agentic-art-orchestration
+    condition: explicit human approval for merge, tag, and release is required
+    observed: The release task remains a human gate and is intentionally not a dependency of M16 purpose work.
+    recommendation: keep the release task BLOCKED until a human reviews and approves the qualified release.
+    impact: implementation and evidence tasks may continue; release operation must not start.
+    unblock_when: explicit human approval and a reviewed release commit are available.
 startup_audit_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates -v; .venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
   result: passed; startup audit tests 5/5, repository update tests 3/3, startup contract tests 5/5, full parent suite 237/237, validator and diff check passed, workspace five repositories clean, audit CLEAN, security PASSED, startup materialize/check byte-stable READY_WITH_FINDINGS; no changed child repository quality gate required

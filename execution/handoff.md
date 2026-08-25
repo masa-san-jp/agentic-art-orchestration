@@ -989,3 +989,14 @@
 - `config/github-sandbox-live-policy.yaml`に`post_create_search`の有限リトライ設定を追加。既定は最大5回、2秒開始、倍率2、最大16秒。CREATE直後の検索だけを対象にし、既存Issueの初回検索は変更しない。
 - 各再試行はmetadata-onlyのREAD証跡（attempt番号付き）として保持し、単一Issueが見つかったときだけ`REUSE`を記録する。上限まで見つからなければ`BLOCKED`のままにして、作成成功を資格成功へ誤変換しない。
 - fixtureではsleepを注入して実時間待ちなしに遅延・上限到達を検証した。release判定は固定4操作列ではなく、`READ → CREATE → READ* → REUSE`かつCREATE一回を受け入れる。
+
+## GAP-DAG-001 execution
+
+- 2026-08-25 15:08 JST、期限切れの `ISSUE-38-REAL-CHAIN-CI-001` leaseを履歴として保持したまま解放扱いにし、GAP-DAG-001をclaimした。ローカルは `agent/issues-38-41-pipeline` のclean tree、開始点は `a9d1656`。remote mainのreal-chain成功run `32797739061`をread-onlyで確認し、旧AAP_CHILD_REPOS_TOKEN blockerを再実装しない。
+- 対象は `tools/validate.py`、`tests/test_validate.py`、`execution/task-queue.yaml`、`execution/state.yaml`、`execution/handoff.md`、`PLANS.md`。子repo、GitHub Issue/PR、Drive、credential、external artifactは変更しない。
+- 親Issue #107のDAGに従い、Issue SSOT URL、target repository、agent terminalの3 fieldを新規24 taskへ付け、`INITIAL-OPS-QUALIFY-001`をPROJECT-STATUS-001依存のBACKLOG、`INITIAL-OPS-RELEASE-001`をhuman-gate BLOCKEDへ遷移させる。
+- queue validatorはcanonical Issue URL、manifest target、許可terminal、重複target、authority不一致、欠落metadata、DAG cycleを拒否する。旧taskへmetadataをbackfillしない。
+- 旧 `ISSUE-38-REAL-CHAIN-CI-001` は、remote main run `32797739061` がbootstrap/production-exchangeのみ成功し、旧real-chain jobを観測できなかったため、DONEへ推測せずBLOCKEDへ隔離した。再ベースラインは別Issueで扱う。
+- `.venv/bin/python tools/validate.py --check`、`tests.test_validate` 11/11、親全体 305/305、`git diff --check` は通過。24件のIssue SSOT taskを登録し、queue上のREADYは `V14-SANDBOX-ATTEMPT-001` 1件だけであることを確認した。
+- GAP-DAG-001 は lease released、`last_completed_task` に記録済み。次の再開点は `V14-SANDBOX-ATTEMPT-001`、最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v`。live CREATEは別Issueの明示スコープと外部権限が揃うまで実行しない。
+- 実装commitと記録commitはこのセッションの後続操作で state に記録する。現時点では子repo、GitHub Issue/PR、Drive、credential、external artifactに変更なし。

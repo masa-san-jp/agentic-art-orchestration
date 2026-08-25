@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import copy
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -25,6 +26,42 @@ class BootstrapValidationTests(unittest.TestCase):
         self.assertEqual("DONE", by_id["RELEASE-001"]["status"])
         self.assertEqual("DONE", by_id["V11-DESIGN-001"]["status"])
         self.assertIn(by_id["ARTIFACT-001"]["status"], {"READY", "IN_PROGRESS", "DONE"})
+
+    def test_issue_ssot_tasks_have_canonical_authority_and_terminal_contract(self):
+        queue = MODULE.load_yaml(ROOT / "execution/task-queue.yaml")
+        issue_tasks = [task for task in queue["tasks"] if task["id"] in MODULE.ISSUE_SSO_TASK_IDS]
+        self.assertEqual(MODULE.ISSUE_SSO_TASK_IDS, {task["id"] for task in issue_tasks})
+        errors = []
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "task-queue.yaml"
+            path.write_text(MODULE.yaml.safe_dump(queue, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            MODULE.validate_tasks(errors, path)
+        self.assertEqual([], errors)
+
+    def test_issue_ssot_task_rejects_incomplete_or_unsafe_metadata(self):
+        queue = MODULE.load_yaml(ROOT / "execution/task-queue.yaml")
+        task = next(item for item in queue["tasks"] if item["id"] == "GAP-DAG-001")
+        task.pop("issue_ssot")
+        missing_errors = []
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "missing-task-queue.yaml"
+            path.write_text(MODULE.yaml.safe_dump(queue, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            MODULE.validate_tasks(missing_errors, path)
+        self.assertIn("missing issue SSOT field", "\n".join(missing_errors))
+
+        task["issue_ssot"] = "https://example.com/not-an-issue"
+        task["target_repositories"] = ["not-in-manifest", "not-in-manifest"]
+        task["agent_terminal"] = "MERGE"
+        errors = []
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "task-queue.yaml"
+            path.write_text(MODULE.yaml.safe_dump(queue, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            MODULE.validate_tasks(errors, path)
+        rendered = "\n".join(errors)
+        self.assertIn("not a canonical GitHub Issue URL", rendered)
+        self.assertIn("target_repositories must be unique", rendered)
+        self.assertIn("unknown repository IDs", rendered)
+        self.assertIn("agent_terminal is unknown", rendered)
 
     def test_manifest_preserves_core_roles_and_allows_additions(self):
         manifest = MODULE.load_yaml(ROOT / "config/repositories.yaml")
