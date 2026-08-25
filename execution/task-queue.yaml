@@ -1,5 +1,5 @@
 version: 11
-updated_at: "2026-08-25T18:55:58+09:00"
+updated_at: "2026-08-25T19:05:54+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -735,7 +735,7 @@ tasks:
   - id: V14-RECONCILE-001
     milestone: M15
     title: Reconcile queue, state, handoff, and execution-plan progress
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/67
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -746,7 +746,7 @@ tasks:
   - id: PROJECT-STATUS-001
     milestone: M15
     title: Generate project status from queue and state and reject progress drift
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/100
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

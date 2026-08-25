@@ -37,9 +37,10 @@ python3 -m unittest discover -s tests -v
 - [x] M9: interaction E2E、runbook、v1.1 qualificationを完成（RELEASE-002。merge/releaseはhuman gate）
 - [x] M10: v1.2 Issue #2の半決定論的制作研究実行を設計・分解・実装（V12-ISSUE2-001、V12-BOUNDARY-001、V12-TRANSFORM-001、V12-CANDIDATE-001、V12-GATES-001、V12-SELECTION-001、V12-CHILD-GATES-001、V12-PROVENANCE-001、V12-E2E-001、V12-RELEASE-001完了。v1.2 qualificationは4子repo固定commit gateを含めPASS。merge・tag・releaseは別途human gate）
 - [x] M11: `agentic-art-production`を同一repo Issue SSOTとhandoff/result exchange契約付きで親manifestへ追加し、5repo snapshot・quality gate・auditへ接続する（MANIFEST-PRODUCTION-001、MANIFEST-PRODUCTION-002、親PR #15 merge済み）。
-- [ ] M12: post-v1.2.0 mainを5repo v1.2.1基線として整合・3回qualification・human-gated releaseする（OPS-DESIGN-001完了、V121-RECONCILE-001 READY）。
-- [ ] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする。
-- [ ] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする。
+- [x] M12: post-v1.2.0 mainを5repo v1.2.1基線として整合・3回qualification・human-gated releaseする（V121-RECONCILE-001、V121-QUALIFY-001、V121-RELEASE-001完了。release操作はhuman gateの実承認後に完了）。
+- [x] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする（PRODUCTION-PIN-001、PRODUCTION-E2E-001、PRODUCTION-QUALIFY-001、PRODUCTION-RELEASE-001完了）。
+- [ ] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidenceは完了。総合qualification再実行とv1.4.0 human-gated releaseは未完了）。
+- [ ] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する（V14-RECONCILE-001完了、PROJECT-STATUS-001 READY）。
 
 ## Surprises & Discoveries
 

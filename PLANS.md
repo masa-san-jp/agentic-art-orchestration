@@ -37,9 +37,9 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
-- [ ] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する（sandbox evidence、child preflight、pin release qualification、observation provenance完了。`V14-RECONCILE-001`から継続）。
+- [ ] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する（sandbox evidence、child preflight、pin release qualification、observation provenance、reconciliation完了。`PROJECT-STATUS-001`から継続）。
 - [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
-次のtaskは `V14-RECONCILE-001`。最初の操作は `.venv/bin/python tools/validate.py --check` を実行し、parent Issue #67 とqueue/state/handoffの整合条件を確認する。
+次のtaskは `PROJECT-STATUS-001`。最初の操作は `.venv/bin/python tools/validate.py --check` を実行し、parent Issue #100 とqueue/stateから決定的project statusを生成する条件を確認する。

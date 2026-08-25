@@ -16,13 +16,13 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
 - 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 
-初期ブートストラップからM10のv1.2.0 qualification、merge、tag、GitHub Release公開、M11のProduction追加と親PR #15 mergeまでを完了した。現在は5repo構成のv1.2.1 baseline reconciliation中であり、v1.2.1の資格判定はread-onlyで実行する。v1.0は、4つのcore repoと追加repoを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
+初期ブートストラップからM10のv1.2.0 qualification、M11のProduction追加、v1.2.1 five-repository baseline、v1.3.0 Production exchangeのqualification/releaseまでを完了した。v1.4.0ではCodex/Claude Code向けstartup、retrieval、Drive/Issueのcreate-only境界、interaction E2E、offline aggregate、専用GitHub sandbox evidenceまでを実装・検証済みである。v1.4.0総合qualificationは、検証済みmanifest-pinned workspaceとlive evidenceを同一runで再確認するまで未完了とし、releaseはhuman gateに残す。v1.0は、4つのcore repoと追加repoを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
 
 親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2で実装・qualification済みである。v1.2はrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance、固定commit child quality gateを含む。qualificationはread-onlyで実施し、merge・tag・GitHub Releaseはhuman gateを経て公開済みである。
 
 v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加した。既存4repoはcore setとして維持し、`agentic-art-production`を追加runtimeとしてmanifestへappendした。追加repoにも同一repo Issue SSOT、明示的な境界契約、snapshot、個別品質ゲートを要求する。
 
-次の実装順は、v1.2.1で5repo基線を再qualification、v1.3.0でResearch→Production→Researchのbundle交換、v1.4.0でCodexまたはClaude Codeを初期UIとして起動時更新確認・起動時監査・実Drive create-only保存・GitHub Issue create-only改善を接続することである。初期UIの実装は進行中で、初期改善はIssue作成で止まり、Issue後の実装・PR・merge・releaseは自動開始しない。
+次の実装順は、v1.4.0総合qualificationの再実行、資格記録のproject status化、目的ギャップの実装である。初期UIは、初期改善をIssue作成で止め、Issue後の実装・PR・merge・releaseを自動開始しない。次の親taskは `PROJECT-STATUS-001` である。
 
 ~~~text
 User <-> Codex / Claude Code -> Child Knowledge Repositories

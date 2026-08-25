@@ -1,29 +1,29 @@
-version: 32
-updated_at: "2026-08-25T18:55:58+09:00"
+version: 34
+updated_at: "2026-08-25T19:05:54+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v14-observation-provenance
-  acquired_at: "2026-08-25T18:48:41+09:00"
-  expires_at: "2026-08-25T19:48:41+09:00"
+  owner: codex-v14-reconcile
+  acquired_at: "2026-08-25T19:04:49+09:00"
+  expires_at: "2026-08-25T20:04:49+09:00"
   lane: RELEASE_QUALIFICATION
-  execution_id: V14-OBSERVATION-PROVENANCE-001:attempt-1
+  execution_id: V14-RECONCILE-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/validate.py, tests/test_validate.py, docs/cross-repository-contract.md, .github/ISSUE_TEMPLATE/decision.yml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-  released_at: "2026-08-25T18:55:58+09:00"
-  release_reason: V14-OBSERVATION-PROVENANCE-001 completed; qualification findings and replay commands now retain explicit observation provenance
+    paths: [README.md, PLANS.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+  released_at: "2026-08-25T19:05:54+09:00"
+  release_reason: V14-RECONCILE-001 completed; local progress SSOT now reflects observed releases, v1.4 qualification boundaries, and the next project-status task
 checkpoint:
-  task: V14-OBSERVATION-PROVENANCE-001
-  repository: agentic-art-orchestration
-  start_point: 22404ad
-  expected_changes: Preserve source repository, observed commit/ref, observation time, evidence reference, and explicit unknowns in qualification records; reject absolute paths in recorded execution commands.
-  result: completed; observation provenance, absolute command guard, decision template, and replayable state commands implemented
-last_completed_task: V14-OBSERVATION-PROVENANCE-001
-resume_from:
   task: V14-RECONCILE-001
-  action: Read parent Issue #67 and reconcile queue, state, handoff, README, and execution-plan progress without changing child pins.
+  repository: agentic-art-orchestration
+  start_point: 4ba02c6
+  expected_changes: Align local progress documents and state with observed v1.3.0 release, v1.4 offline qualification, sandbox evidence, current queue, and next task without changing child pins.
+  result: completed; M12/M13 progress, M14 qualification boundaries, current queue, and next project-status task reconciled
+last_completed_task: V14-RECONCILE-001
+resume_from:
+  task: PROJECT-STATUS-001
+  action: Read parent Issue #100 and generate deterministic project status from queue and state; reject stale hand-written progress.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -56,6 +56,22 @@ observation_provenance:
   audit: FINDINGS; one known nonblocking marketing freshness warning
   security: PASSED
   workspace_status: 5 repositories clean on main with ahead_behind_zero
+  child_repository_mutation: false
+reconciliation:
+  status: passed_with_v14_qualification_pending
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/67
+  implementation_commit: pending_record_commit
+  acceptance: 1/1
+  v1_2_1_baseline: qualified_and_released
+  v1_3_0_production_exchange: qualified_and_released
+  v1_4_implementation: complete
+  v1_4_offline_aggregate: passed; 3/3 initial-operations, 3/3 production exchange, 5 repositories, 14 child gates
+  v1_4_sandbox_live_evidence: passed; attempt-scoped READ/CREATE/READ/REUSE evidence exists outside Git
+  v1_4_aggregate_qualification: pending_rerun_from_verified_manifest_pinned_workspace
+  v1_4_release: BLOCKED; explicit human approval required
+  next_task: PROJECT-STATUS-001
+  external_issue_updates: not_performed; owner approval required for Epic/Issue writes
+  child_pins_changed: false
   child_repository_mutation: false
 child_preflight:
   status: passed_with_fixture_and_existing_qualified_evidence

@@ -1075,4 +1075,17 @@
 
 ## Next exact action
 
-1. `V14-RECONCILE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+1. `PROJECT-STATUS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## V14-RECONCILE-001 in progress
+
+- 2026-08-25 19:04 JST、`V14-RECONCILE-001`（Issue #67）をclaimした。開始点は`4ba02c6`、対象は親repoのREADME、PLANS、実行計画、queue、state、handoff。子repo、pin、GitHub Issue本文、Epic、Drive、credentialは変更しない。
+- Issue #67の作成時点のv1.4総合PASSを未観測のまま採用せず、現行stateの事実（v1.2.1/v1.3.0 release済み、v1.4 offline aggregate済み、sandbox live evidence済み、総合qualification再実行待ち、release human gate）を各local SSOTへ反映する。
+
+## V14-RECONCILE-001 completed
+
+- READMEをv1.2.1 baseline/v1.3.0 Production exchange release済み、v1.4実装・offline aggregate・sandbox evidence済み、総合qualificationとreleaseは未完了という現在地へ更新した。
+- 実行計画のM12/M13を完了、M14を実装済み・qualification/release未完了、M15を目的ギャップ実装継続として更新した。PLANSも同じ現在地と次taskへ揃えた。
+- queueでは`V14-RECONCILE-001=DONE`、`PROJECT-STATUS-001=READY`へ遷移した。stateにはv1.4のoffline aggregate、sandbox evidence、qualification再実行待ち、human gate、外部Issue更新未実施を明示した。
+- Issue #67が要求するEpic/Issue外部書込みはowner approvalが明示されていないため行わなかった。子repo、child pin、Drive artifact、credential、merge、releaseも変更していない。
+- acceptance: 1/1。次のtaskは`PROJECT-STATUS-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
