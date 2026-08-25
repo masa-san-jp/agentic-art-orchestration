@@ -36,7 +36,7 @@ DEFAULT_OUTPUT = ROOT / "data/child-quality-gates.json"
 
 _REQUIREMENT_PATTERN = re.compile(
     r"^(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*))(?:\[[^\]]+\])?"
-    r"\s*(?:>=\s*(?P<lower>[0-9]+(?:\.[0-9]+)*))?(?:\s*,.*)?$"
+    r"\s*(?:(?P<operator>>=|==)\s*(?P<version>[0-9]+(?:\.[0-9]+)*))?(?:\s*,.*)?$"
 )
 
 
@@ -93,13 +93,22 @@ def _meets_lower_bound(installed: str, lower: str) -> bool:
     return installed_numbers + (0,) * (width - len(installed_numbers)) >= lower_numbers + (0,) * (width - len(lower_numbers))
 
 
+def _matches_exact_version(installed: str, expected: str) -> bool:
+    installed_numbers = _version_numbers(installed)
+    expected_numbers = _version_numbers(expected)
+    if not installed_numbers or not expected_numbers:
+        return False
+    width = max(len(installed_numbers), len(expected_numbers))
+    return installed_numbers + (0,) * (width - len(installed_numbers)) == expected_numbers + (0,) * (width - len(expected_numbers))
+
+
 def _requirements_preflight(archive_root: Path, repository_path: str) -> tuple[str | None, str | None]:
     """Return an unsatisfied detail and remediation for a child archive, if any.
 
     This intentionally implements only the parent contract's small requirement
-    subset: distribution names with an optional ``>=`` lower bound. Environment
-    markers and upper bounds are ignored; dependency resolution and installation
-    remain outside this runner.
+    subset: distribution names with an optional numeric ``>=`` lower bound or
+    numeric ``==`` exact version. Environment markers and additional bounds are
+    ignored; dependency resolution and installation remain outside this runner.
     """
     requirements_path = archive_root / "requirements.txt"
     if not requirements_path.exists():
@@ -120,13 +129,19 @@ def _requirements_preflight(archive_root: Path, repository_path: str) -> tuple[s
             detail = f"unsupported requirement syntax on line {line_number}: {requirement!r}"
             return detail, f"pip install --user -r {repository_path}/requirements.txt"
         package_name = match.group("name")
-        lower_bound = match.group("lower")
+        operator = match.group("operator")
+        required_version = match.group("version")
         installed = _installed_version(package_name)
         if installed is None:
             return f"{package_name} is not installed", f"pip install --user -r {repository_path}/requirements.txt"
-        if lower_bound is not None and not _meets_lower_bound(installed, lower_bound):
+        if operator == ">=" and required_version is not None and not _meets_lower_bound(installed, required_version):
             return (
-                f"{package_name} version {installed!r} is below required >= {lower_bound}",
+                f"{package_name} version {installed!r} is below required >= {required_version}",
+                f"pip install --user -r {repository_path}/requirements.txt",
+            )
+        if operator == "==" and required_version is not None and not _matches_exact_version(installed, required_version):
+            return (
+                f"{package_name} version {installed!r} does not equal required == {required_version}",
                 f"pip install --user -r {repository_path}/requirements.txt",
             )
     return None, None

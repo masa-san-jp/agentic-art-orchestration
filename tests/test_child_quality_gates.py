@@ -142,6 +142,39 @@ class ChildQualityGateTests(unittest.TestCase):
             self.assertIn("below required >= 2.0", record["gates"][0]["error"])
             self.assertEqual("NOT_RUN", record["gates"][0]["status"])
 
+    def test_satisfied_exact_requirement_preserves_gate_execution(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-exact-satisfied-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "print('exact satisfied')\n",
+                requirements="fixture-exact-package==1.2.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value="1.2"):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("PASSED", record["status"])
+            self.assertEqual("immutable-archive", record["execution_mode"])
+            self.assertEqual("PASSED", record["gates"][0]["status"])
+            self.assertIn("exact satisfied", record["gates"][0]["output_redacted"])
+
+    def test_exact_requirement_mismatch_is_environment_unsatisfied_without_running_gate(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-exact-mismatch-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "raise SystemExit(9)\n",
+                requirements="fixture-exact-package==2.0.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value="1.9"):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("ENV_UNSATISFIED", record["status"])
+            self.assertEqual("NOT_RUN", record["execution_mode"])
+            self.assertEqual("NOT_RUN", record["gates"][0]["status"])
+            self.assertIn("does not equal required == 2.0.0", record["gates"][0]["error"])
+            self.assertNotIn("SystemExit", record["gates"][0]["output_redacted"])
+
     def test_validator_rejects_unexpected_status_and_preserves_schema_remediation(self):
         with tempfile.TemporaryDirectory(prefix="child-gates-validator-") as temporary:
             workspace = Path(temporary)
