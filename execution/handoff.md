@@ -1087,7 +1087,7 @@
 - `schemas/project-status.schema.json`と`tools/project_status.py`を追加し、queue/stateのSHA-256、status件数、current、依存解決済みREADY、BLOCKED理由、next task、state更新日時を`project-status/v1`として決定的に出力する。
 - READMEのmarker内だけを生成・checkし、marker外の本文を保持する。PLANS/実行計画はqueue/stateと生成コマンドを参照し、CIに`python3 tools/project_status.py --check-readme`を追加した。
 - unknown task reference、DONE current、READY未完了dependency、duplicate ID、counts mismatchをexit 2または検証エラーとして拒否する。`INITIAL-OPS-QUALIFY-001`をREADYへ進めた。
-- acceptance: 8/8。focused 7/7、親validator PASS、親全体326/326、README check PASS、diff check PASS。子repo・pin・GitHub Issue・Drive・credential・merge・releaseは変更していない。
+- acceptance: 8/8。focused 7/7、親validator PASS、親全体327/327、README check PASS、diff check PASS。子repo・pin・GitHub Issue・Drive・credential・merge・releaseは変更していない。
 - implementation commit: `e70eef9`。完了記録はこのrecord commitへ反映する。
 - 次のtaskは`INITIAL-OPS-QUALIFY-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
 
