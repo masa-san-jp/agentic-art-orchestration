@@ -60,7 +60,7 @@ observation_provenance:
 reconciliation:
   status: passed_with_v14_qualification_pending
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/67
-  implementation_commit: pending_record_commit
+  implementation_commit: 14d6daa
   acceptance: 1/1
   v1_2_1_baseline: qualified_and_released
   v1_3_0_production_exchange: qualified_and_released
