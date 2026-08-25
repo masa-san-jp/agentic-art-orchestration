@@ -41,3 +41,5 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 - [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
+
+再開点は `V14-SANDBOX-ATTEMPT-001`。最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v` を実行し、parent Issue #101 と既存のsandbox live-check policy/testsを読んだ後、明示的に承認されたlive CREATE以外の外部操作は行わない。
