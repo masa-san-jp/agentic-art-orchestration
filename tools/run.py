@@ -41,6 +41,28 @@ def _run_tool(args: list[str], python: str) -> dict:
         return {"stdout": result.stdout.strip()}
 
 
+def _next_handoff(research_root: Path, slug: str) -> dict:
+    """The handoff the project should produce next.
+
+    A fixed HO001 only works while the project has never handed anything over.
+    Every later run, and every revision the production result forces, is refused
+    because the content changed without the revision moving.
+    """
+    path = research_root / "projects" / slug / "05_production" / "production-handoff.yaml"
+    if not path.is_file():
+        return {"handoff_id": "HO001", "revision": 1, "supersedes": None}
+    import re
+
+    text = path.read_text(encoding="utf-8")
+    found = re.search(r"^handoff_id:\s*(\S+)\s*$", text, re.MULTILINE)
+    if not found or not re.fullmatch(r"HO(\d{3,})", found.group(1)):
+        raise StepFailure(
+            f"{path} carries no readable handoff_id, so the next one cannot be numbered"
+        )
+    number = int(found.group(1)[2:])
+    return {"handoff_id": f"HO{number + 1:03d}", "revision": number + 1, "supersedes": found.group(1)}
+
+
 def _head(root: Path) -> str:
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True)
     return result.stdout.strip() if result.returncode == 0 else "0" * 40
@@ -180,10 +202,13 @@ def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpos
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
             return _at_research(work, run_id, intent, steps, research_root, slug)
 
-        record("handoff", _run_child(
-            research_root, ["tools/build_handoff.py", f"projects/{slug}", "--root", ".",
-                            "--generated-at", requested_at, "--research-commit", _head(research_root),
-                            "--handoff-id", "HO001", "--revision", "1"], python, allow_conflict=True))
+        numbering = _next_handoff(research_root, slug)
+        handoff_args = ["tools/build_handoff.py", f"projects/{slug}", "--root", ".",
+                        "--generated-at", requested_at, "--research-commit", _head(research_root),
+                        "--handoff-id", numbering["handoff_id"], "--revision", str(numbering["revision"])]
+        if numbering["supersedes"] is not None:
+            handoff_args += ["--supersedes", numbering["supersedes"]]
+        record("handoff", _run_child(research_root, handoff_args, python, allow_conflict=True))
         record("export", _run_child(
             research_root, ["tools/export_handoff.py", f"projects/{slug}", "--root", ".",
                             "--output", str(work / "bundle")], python))

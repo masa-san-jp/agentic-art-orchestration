@@ -155,3 +155,41 @@ class HandoverArgumentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HandoffNumberingTests(unittest.TestCase):
+    """A fixed handoff id only works the first time, and every project after that is refused."""
+
+    def _project(self, root: Path, slug: str, handoff: str | None = None) -> None:
+        production = root / "projects" / slug / "05_production"
+        production.mkdir(parents=True, exist_ok=True)
+        if handoff is not None:
+            (production / "production-handoff.yaml").write_text(handoff, encoding="utf-8")
+
+    def test_a_project_without_a_handoff_starts_at_the_first_one(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._project(root, "study")
+
+            self.assertEqual(
+                MODULE._next_handoff(root, "study"),
+                {"handoff_id": "HO001", "revision": 1, "supersedes": None},
+            )
+
+    def test_a_project_with_a_handoff_gets_the_next_one(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._project(root, "study", "handoff_id: HO011\nrevision: 11\n")
+
+            self.assertEqual(
+                MODULE._next_handoff(root, "study"),
+                {"handoff_id": "HO012", "revision": 12, "supersedes": "HO011"},
+            )
+
+    def test_an_unreadable_handoff_does_not_silently_restart_the_numbering(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._project(root, "study", "handoff_id: not-an-id\n")
+
+            with self.assertRaises(MODULE.StepFailure):
+                MODULE._next_handoff(root, "study")
