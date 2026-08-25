@@ -1015,4 +1015,5 @@
 - dedicated sandboxの実測は Issue #2、attempt `v14-20260825-ghcli-1`、検索結果1件。外部操作は `READ → CREATE → READ → REUSE`、CREATE件数1。同じattemptの再検索は `REUSE`、追加CREATE 0件。証跡は `/tmp/github-sandbox-live-v14-20260825-ghcli-1.json`、schemaとrelease evidence validatorはPASS。evidenceにはrepository full name、Issue本文、credential、tokenを保存していない。
 - 直接のPython CLIはkeyring tokenを `GH_TOKEN` へ安全に受け渡せない環境だったため、外部CREATE/READ自体は認証済み `gh api` providerで行い、実装済み `run_check` を観測済みIssue refで検証した。追加の外部CREATEは行っていない。
 - checks: `tools/validate.py --check` PASS、focused 13/13 PASS、回帰 30/30 PASS、親全体 308/308 PASS、`git diff --check` PASS。子repo変更はなく、child quality gateは対象なし。
+- implementation commit: `e5158e5`。merge、release、PR作成は行わず、terminal `EVIDENCE_READY` の状態で停止した。
 - V14 sandbox leaseをreleasedし、次のREADYは `V14-CHILD-PREFLIGHT-001`。次の最初の操作は `.venv/bin/python tools/validate.py --check`。
