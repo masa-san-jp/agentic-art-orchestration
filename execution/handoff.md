@@ -1126,3 +1126,15 @@
 - initial-operations E2Eは3/3 PASS、既存のopt-in GitHub sandbox evidenceもPASSだった。remote_operationsは空で、今回のDrive/GitHub Issue/child repo/pin/merge/tag/releaseのwriteは行っていない。
 - remediationは、exact requirementを扱う親preflight contract変更または子repo SSOT変更についてownerが決定・承認した後、同じ検証workspaceから再qualificationすること。依存の自動install、子reporequirementsの無断編集、pin更新は行わない。
 - 親validator・親tests・workspace status・audit・securityを再確認してからこの記録をcommitする。次の最初の操作は、承認済み契約変更後に`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## V14-CHILD-PREFLIGHT-EXACT-001 completed
+
+- Issue #68の親runner契約を補完し、requirementsのbounded syntaxとしてdistribution name、numeric `>=`、numeric `==`を認識するよう`tools/child_quality_gates.py`を更新した。exact version mismatchも`ENV_UNSATISFIED`・`NOT_RUN`・remediationとして保持し、自動installは行わない。
+- `tests/test_child_quality_gates.py`にexact versionの充足実行と不一致停止を追加し、runbookを更新した。focused child tests 10/10、親全体329/329、validator PASS、diff check PASS。implementation commitは`df46ce7`。
+- 固定commit workspaceのchild gate再実行ではresearch、art-history、marketing-trends、self-modelの4/5 repositoriesがPASSした。agentic-art-productionだけはインストール済みPyYAML 6.0.3がchild SSOTの`PyYAML==6.0.2`と不一致のためENV_UNSATISFIED、3 gateはNOT_RUNとなった。
+
+## INITIAL-OPS-QUALIFY-001 reattempt blocked after exact preflight
+
+- v1.4.0 qualificationを3 runsで再実行した。report SHA-256は`f77c2a2ce82297347f59628b376985fabde1b2fdfa1df150233dea10a16f0dab`。pin materializationは5/5 MATCHED、source mutation=false、remote_operations=[]、merge/tag/releaseは未実行。
+- v1.2 E2EとProduction exchangeはchild gate blockerによりFAILED、initial-operations E2Eは3/3 PASS、既存sandbox live evidenceもPASS。総合acceptanceは0/1のまま。
+- productionのrequirementsは未対応構文ではなく、exact version mismatchとして観測できる状態になった。解除条件は、明示承認された実行環境で`PyYAML==6.0.2`を満たしてから、同じverified workspaceで再qualificationすること。自動install、子repo変更、pin更新、外部writeは行っていない。

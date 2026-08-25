@@ -615,10 +615,10 @@ tasks:
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
-    depends_on: [PROJECT-STATUS-001]
+    depends_on: [PROJECT-STATUS-001, V14-CHILD-PREFLIGHT-EXACT-001]
     acceptance: Three deterministic qualification runs pass the startup, Production exchange, retrieval, artifact, feedback, Issue delivery, privacy, idempotency, and five child quality gates; separate opt-in sandbox evidence proves one Drive create/read and one GitHub Issue create/deduplicate without modifying production user artifacts or existing Issues.
     checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
-    blocker: Verified exact manifest pins were materialized in a clean detached workspace, but agentic-art-production and marketing-trends requirements use exact == specifications unsupported by the current child dependency preflight; their gates were not run, so v1.4.0 qualification failed closed. No dependency installation, child edit, pin update, or remote write was authorized.
+    blocker: Verified exact manifest pins were materialized in a clean detached workspace and exact requirement syntax is now recognized, but agentic-art-production has PyYAML 6.0.3 installed while its child SSOT requires PyYAML==6.0.2; its gates were not run, so v1.4.0 qualification failed closed. No dependency installation, child edit, pin update, or remote write was authorized.
 
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14
@@ -710,6 +710,17 @@ tasks:
     depends_on: [V14-SANDBOX-ATTEMPT-001]
     acceptance: Every manifest child has an observed immutable commit, clean workspace status, and passing declared quality gates recorded without child mutation.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V14-CHILD-PREFLIGHT-EXACT-001
+    milestone: M15
+    title: Support exact pinned requirement specifications in child preflight
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/68
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-CHILD-PREFLIGHT-001]
+    acceptance: The parent child-gate preflight accepts the bounded requirement forms of a distribution name, numeric >= lower bound, and numeric == exact version; missing, lower-bound, or exact-version mismatch remains ENV_UNSATISFIED with NOT_RUN gates and remediation, while satisfied and dependency-free repositories retain existing execution behavior without automatic installation.
+    checks: [python3 -m unittest tests.test_child_quality_gates -v, python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
 
   - id: V14-PIN-RELEASE-CHECK-001
     milestone: M15

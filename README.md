@@ -20,18 +20,18 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-25T19:59:53+09:00`.
+Source updated at: `2026-08-25T20:24:49+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 17 | 0 | 0 | 3 | 77 | 97 |
+| 17 | 0 | 0 | 3 | 78 | 98 |
 
-Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `INITIAL-OPS-QUALIFY-001`.
-Next action: Obtain an authorized child SSOT or parent preflight contract decision for exact requirement specifications, then rerun the three-run v1.4.0 qualification from a verified pinned workspace; do not auto-install or mutate child repositories.
+Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `V14-CHILD-PREFLIGHT-EXACT-001`.
+Next action: Resolve the agentic-art-production PyYAML==6.0.2 environment requirement in an explicitly authorized environment, then rerun the three-run v1.4.0 qualification from the verified pinned workspace without mutating child source.
 Ready: none.
 Next task: `null`.
 Blocked:
-- `INITIAL-OPS-QUALIFY-001`: Verified exact manifest pins were materialized in a clean detached workspace, but agentic-art-production and marketing-trends requirements use exact == specifications unsupported by the current child dependency preflight; their gates were not run, so v1.4.0 qualification failed closed. No dependency installation, child edit, pin update, or remote write was authorized.
+- `INITIAL-OPS-QUALIFY-001`: Verified exact manifest pins were materialized in a clean detached workspace and exact requirement syntax is now recognized, but agentic-art-production has PyYAML 6.0.3 installed while its child SSOT requires PyYAML==6.0.2; its gates were not run, so v1.4.0 qualification failed closed. No dependency installation, child edit, pin update, or remote write was authorized.
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
 
