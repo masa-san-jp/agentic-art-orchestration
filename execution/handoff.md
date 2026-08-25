@@ -1077,6 +1077,19 @@
 
 1. `PROJECT-STATUS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
 
+## PROJECT-STATUS-001 in progress
+
+- 2026-08-25 19:11 JST、`PROJECT-STATUS-001`（Issue #100）をclaimした。開始点は`bb886f8`。queue/stateを正本として、project-status schema/tool、専用tests、README marker、PLANS/実行計画の参照、validator、CI checkを対象にする。
+- Issue #100の外部GitHub API・子repo・merge/releaseは対象外。会話全文、推定feedback、Drive artifact、credentialは扱わない。
+
+## PROJECT-STATUS-001 completed
+
+- `schemas/project-status.schema.json`と`tools/project_status.py`を追加し、queue/stateのSHA-256、status件数、current、依存解決済みREADY、BLOCKED理由、next task、state更新日時を`project-status/v1`として決定的に出力する。
+- READMEのmarker内だけを生成・checkし、marker外の本文を保持する。PLANS/実行計画はqueue/stateと生成コマンドを参照し、CIに`python3 tools/project_status.py --check-readme`を追加した。
+- unknown task reference、DONE current、READY未完了dependency、duplicate ID、counts mismatchをexit 2または検証エラーとして拒否する。`INITIAL-OPS-QUALIFY-001`をREADYへ進めた。
+- acceptance: 8/8。focused 7/7、親validator PASS、親全体326/326、README check PASS、diff check PASS。子repo・pin・GitHub Issue・Drive・credential・merge・releaseは変更していない。
+- 次のtaskは`INITIAL-OPS-QUALIFY-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
+
 ## V14-RECONCILE-001 in progress
 
 - 2026-08-25 19:04 JST、`V14-RECONCILE-001`（Issue #67）をclaimした。開始点は`4ba02c6`、対象は親repoのREADME、PLANS、実行計画、queue、state、handoff。子repo、pin、GitHub Issue本文、Epic、Drive、credentialは変更しない。

@@ -40,7 +40,7 @@ python3 -m unittest discover -s tests -v
 - [x] M12: post-v1.2.0 mainを5repo v1.2.1基線として整合・3回qualification・human-gated releaseする（V121-RECONCILE-001、V121-QUALIFY-001、V121-RELEASE-001完了。release操作はhuman gateの実承認後に完了）。
 - [x] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする（PRODUCTION-PIN-001、PRODUCTION-E2E-001、PRODUCTION-QUALIFY-001、PRODUCTION-RELEASE-001完了）。
 - [ ] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidenceは完了。総合qualification再実行とv1.4.0 human-gated releaseは未完了）。
-- [ ] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する（V14-RECONCILE-001完了、PROJECT-STATUS-001 READY）。
+- [ ] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
 
 ## Surprises & Discoveries
 

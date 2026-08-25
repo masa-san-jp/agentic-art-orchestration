@@ -18,6 +18,7 @@ jobs:
           python-version: "3.11"
       - run: python3 -m pip install -r requirements-dev.txt
       - run: python3 tools/validate.py --check
+      - run: python3 tools/project_status.py --check-readme
       - name: Materialize deterministic offline inputs
         run: |
           python3 tools/workspace.py init --offline-fixture

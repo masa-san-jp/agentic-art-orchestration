@@ -1,29 +1,29 @@
-version: 34
-updated_at: "2026-08-25T19:05:54+09:00"
+version: 37
+updated_at: "2026-08-25T19:17:51+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v14-reconcile
-  acquired_at: "2026-08-25T19:04:49+09:00"
-  expires_at: "2026-08-25T20:04:49+09:00"
-  lane: RELEASE_QUALIFICATION
-  execution_id: V14-RECONCILE-001:attempt-1
+  owner: codex-project-status
+  acquired_at: "2026-08-25T19:11:03+09:00"
+  expires_at: "2026-08-25T20:11:03+09:00"
+  lane: PROJECT_STATUS
+  execution_id: PROJECT-STATUS-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [README.md, PLANS.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-25T19:05:54+09:00"
-  release_reason: V14-RECONCILE-001 completed; local progress SSOT now reflects observed releases, v1.4 qualification boundaries, and the next project-status task
+    paths: [tools/project_status.py, schemas/project-status.schema.json, tests/test_project_status.py, README.md, PLANS.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, tools/validate.py, .github/workflows/validate.yml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+  released_at: "2026-08-25T19:16:37+09:00"
+  release_reason: PROJECT-STATUS-001 completed; deterministic project status is generated from queue/state and INITIAL-OPS-QUALIFY-001 is the next eligible task
 checkpoint:
-  task: V14-RECONCILE-001
-  repository: agentic-art-orchestration
-  start_point: 4ba02c6
-  expected_changes: Align local progress documents and state with observed v1.3.0 release, v1.4 offline qualification, sandbox evidence, current queue, and next task without changing child pins.
-  result: completed; M12/M13 progress, M14 qualification boundaries, current queue, and next project-status task reconciled
-last_completed_task: V14-RECONCILE-001
-resume_from:
   task: PROJECT-STATUS-001
-  action: Read parent Issue #100 and generate deterministic project status from queue and state; reject stale hand-written progress.
+  repository: agentic-art-orchestration
+  start_point: bb886f8
+  expected_changes: Generate deterministic project-status JSON/Markdown from queue/state, make README progress marker output authoritative, add schema/tests/CI check, and reject stale or inconsistent inputs.
+  result: completed; project-status contract, README marker, CI check, and integrity rejection tests are implemented and verified
+last_completed_task: PROJECT-STATUS-001
+resume_from:
+  task: INITIAL-OPS-QUALIFY-001
+  action: Run the v1.4 qualification from a verified manifest-pinned workspace; preserve live evidence boundaries.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -72,6 +72,19 @@ reconciliation:
   next_task: PROJECT-STATUS-001
   external_issue_updates: not_performed; owner approval required for Epic/Issue writes
   child_pins_changed: false
+  child_repository_mutation: false
+project_status:
+  status: passed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/100
+  implementation_commit: pending_record_commit
+  acceptance: 8/8
+  focused_tests: 7/7
+  parent_tests: 326/326
+  parent_validation: passed
+  readme_check: passed
+  ci_check: python3 tools/project_status.py --check-readme
+  integrity_rejections: [unknown_task_reference, done_current_task, ready_incomplete_dependency, duplicate_task_id, counts_mismatch]
+  source_hashes: queue_and_state_sha256
   child_repository_mutation: false
 child_preflight:
   status: passed_with_fixture_and_existing_qualified_evidence
