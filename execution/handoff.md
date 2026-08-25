@@ -1088,6 +1088,7 @@
 - READMEのmarker内だけを生成・checkし、marker外の本文を保持する。PLANS/実行計画はqueue/stateと生成コマンドを参照し、CIに`python3 tools/project_status.py --check-readme`を追加した。
 - unknown task reference、DONE current、READY未完了dependency、duplicate ID、counts mismatchをexit 2または検証エラーとして拒否する。`INITIAL-OPS-QUALIFY-001`をREADYへ進めた。
 - acceptance: 8/8。focused 7/7、親validator PASS、親全体326/326、README check PASS、diff check PASS。子repo・pin・GitHub Issue・Drive・credential・merge・releaseは変更していない。
+- implementation commit: `e70eef9`。完了記録はこのrecord commitへ反映する。
 - 次のtaskは`INITIAL-OPS-QUALIFY-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
 
 ## V14-RECONCILE-001 in progress
