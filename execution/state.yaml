@@ -1,29 +1,29 @@
-version: 39
-updated_at: "2026-08-25T19:21:22+09:00"
+version: 42
+updated_at: "2026-08-25T19:26:51+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-project-status
-  acquired_at: "2026-08-25T19:11:03+09:00"
-  expires_at: "2026-08-25T20:11:03+09:00"
-  lane: PROJECT_STATUS
-  execution_id: PROJECT-STATUS-001:attempt-1
+  owner: codex-initial-ops-qualify
+  acquired_at: "2026-08-25T19:23:34+09:00"
+  expires_at: "2026-08-25T20:23:34+09:00"
+  lane: RELEASE_QUALIFICATION
+  execution_id: INITIAL-OPS-QUALIFY-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/project_status.py, schemas/project-status.schema.json, tests/test_project_status.py, README.md, PLANS.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, tools/validate.py, .github/workflows/validate.yml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-25T19:16:37+09:00"
-  release_reason: PROJECT-STATUS-001 completed; deterministic project status is generated from queue/state and INITIAL-OPS-QUALIFY-001 is the next eligible task
+    paths: [data/release-check-v14.json, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
+  released_at: "2026-08-25T19:24:17+09:00"
+  release_reason: INITIAL-OPS-QUALIFY-001 blocked; verified manifest-pinned workspace is unavailable and qualification failed closed before child gates
 checkpoint:
-  task: PROJECT-STATUS-001
+  task: INITIAL-OPS-QUALIFY-001
   repository: agentic-art-orchestration
-  start_point: bb886f8
-  expected_changes: Generate deterministic project-status JSON/Markdown from queue/state, make README progress marker output authoritative, add schema/tests/CI check, and reject stale or inconsistent inputs.
-  result: completed; project-status contract, README marker, CI check, and integrity rejection tests are implemented and verified
+  start_point: d84f465
+  expected_changes: Run v1.4.0 three-run qualification from a verified manifest-pinned workspace with sandbox evidence; preserve fail-closed evidence if the workspace is unavailable.
+  result: blocked; three-run v1.4.0 qualification failed closed on five unavailable manifest pins; remediation is to provide a verified pinned workspace without mutating source checkouts
 last_completed_task: PROJECT-STATUS-001
 resume_from:
   task: INITIAL-OPS-QUALIFY-001
-  action: Run the v1.4 qualification from a verified manifest-pinned workspace; preserve live evidence boundaries.
+  action: Restore a verified manifest-pinned workspace for all five child repositories, then rerun the three-run v1.4.0 qualification with existing sandbox evidence.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -85,6 +85,32 @@ project_status:
   ci_check: python3 tools/project_status.py --check-readme
   integrity_rejections: [unknown_task_reference, done_current_task, ready_incomplete_dependency, duplicate_task_id, counts_mismatch]
   source_hashes: queue_and_state_sha256
+  child_repository_mutation: false
+initial_ops_qualification:
+  status: BLOCKED
+  version: 1.4.0
+  runs: 3
+  acceptance: 0/1
+  report: data/release-check-v14.json
+  report_sha256: 72c6da4e12b43b35c209f3bb9c8b4f1f84d0f2e72a64e12f436aabdbeaad1ee6
+  blocking_check: pinned-workspace-materialize
+  pin_failures: 5/5
+  child_gates: NOT_RUN
+  history: NOT_RUN
+  source_mutation: false
+  network: disabled
+  remote_operations: []
+  merge_operation: NOT_PERFORMED
+  tag_operation: NOT_PERFORMED
+  release_operation: NOT_PERFORMED
+  sandbox_evidence: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
+  blocker: verified manifest-pinned workspace unavailable; observed commits are absent from generated offline source checkouts
+  remediation: provide a read-only verified workspace containing every manifest observed_commit, without changing child pins or source checkouts
+  parent_validation: passed
+  parent_tests: 327/327
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  security: PASSED
+  audit: FINDINGS; one known nonblocking marketing freshness warning
   child_repository_mutation: false
 child_preflight:
   status: passed_with_fixture_and_existing_qualified_evidence

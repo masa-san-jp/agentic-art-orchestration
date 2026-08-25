@@ -1,5 +1,5 @@
 version: 11
-updated_at: "2026-08-25T19:16:37+09:00"
+updated_at: "2026-08-25T19:24:17+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -611,13 +611,14 @@ tasks:
   - id: INITIAL-OPS-QUALIFY-001
     milestone: M14
     title: Qualify the initial Codex and Claude Code operations profile
-    status: READY
+    status: BLOCKED
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
     depends_on: [PROJECT-STATUS-001]
     acceptance: Three deterministic qualification runs pass the startup, Production exchange, retrieval, artifact, feedback, Issue delivery, privacy, idempotency, and five child quality gates; separate opt-in sandbox evidence proves one Drive create/read and one GitHub Issue create/deduplicate without modifying production user artifacts or existing Issues.
     checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
+    blocker: Verified manifest-pinned workspace is unavailable in the local source checkouts; v1.4.0 qualification failed closed before child gates, and no pin update or remote fetch was authorized.
 
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14

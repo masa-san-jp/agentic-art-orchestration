@@ -1091,6 +1091,19 @@
 - implementation commit: `e70eef9`。完了記録はこのrecord commitへ反映する。
 - 次のtaskは`INITIAL-OPS-QUALIFY-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
 
+## INITIAL-OPS-QUALIFY-001 in progress
+
+- 2026-08-25 19:23 JST、`INITIAL-OPS-QUALIFY-001`をclaimした。開始点は`d84f465`。対象はread-only v1.4.0 qualification、既存sandbox evidence、qualification report、state/handoff/queue/READMEのみ。子repo、pin、GitHub Issue、Drive、credential、merge、releaseは変更しない。
+- acceptanceはverified manifest-pinned workspaceからの3-run総合qualificationを要求する。生成offline workspaceのpin object不足をPASSへ昇格せず、観測結果と解除条件を記録する。
+
+## INITIAL-OPS-QUALIFY-001 blocked
+
+- `.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root repos --github-sandbox-evidence /tmp/github-sandbox-live-v14-20260825-ghcli-1.json --output data/release-check-v14.json`をread-onlyで実行した。`runs=3`、`status=FAILED`、`blocking_check=pinned-workspace-materialize`、5/5 repositoryのobserved commit unavailable、child gate/historyは`NOT_RUN`だった。
+- report SHA-256は`72c6da4e12b43b35c209f3bb9c8b4f1f84d0f2e72a64e12f436aabdbeaad1ee6`。source mutation=false、network disabled、remote_operations=[]、merge/tag/releaseは未実行。sandbox evidenceは既存のattempt-scoped証拠として保持した。
+- verified manifest-pinned workspaceがないためacceptanceは未達。pin update、remote fetch、child checkout変更、GitHub Issue/Drive/credential、merge/releaseは行わず、queue taskを`BLOCKED`へ遷移した。
+- 観測事実: generated offline source checkoutのHEADはcleanだが、manifest observed commitが5repoすべてsource objectとして存在しない。解除条件: 全manifest observed_commitを含むread-only verified workspaceを用意し、同じ3-run qualificationを再実行する。
+- 親validator PASS、親全体327/327、workspace 5repo clean、security PASS、audit check PASSを確認した。acceptance: 0/1（qualification入力がblockedのため）。
+
 ## V14-RECONCILE-001 in progress
 
 - 2026-08-25 19:04 JST、`V14-RECONCILE-001`（Issue #67）をclaimした。開始点は`4ba02c6`、対象は親repoのREADME、PLANS、実行計画、queue、state、handoff。子repo、pin、GitHub Issue本文、Epic、Drive、credentialは変更しない。

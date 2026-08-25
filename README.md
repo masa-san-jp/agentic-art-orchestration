@@ -20,17 +20,18 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-25T19:21:22+09:00`.
+Source updated at: `2026-08-25T19:26:51+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 17 | 1 | 0 | 2 | 77 | 97 |
+| 17 | 0 | 0 | 3 | 77 | 97 |
 
-Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `PROJECT-STATUS-001`.
-Next action: Run the v1.4 qualification from a verified manifest-pinned workspace; preserve live evidence boundaries.
-Ready: `INITIAL-OPS-QUALIFY-001`.
-Next task: `INITIAL-OPS-QUALIFY-001`.
+Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `INITIAL-OPS-QUALIFY-001`.
+Next action: Restore a verified manifest-pinned workspace for all five child repositories, then rerun the three-run v1.4.0 qualification with existing sandbox evidence.
+Ready: none.
+Next task: `null`.
 Blocked:
+- `INITIAL-OPS-QUALIFY-001`: Verified manifest-pinned workspace is unavailable in the local source checkouts; v1.4.0 qualification failed closed before child gates, and no pin update or remote fetch was authorized.
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
 
