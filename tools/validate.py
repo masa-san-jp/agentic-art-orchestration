@@ -676,7 +676,7 @@ def validate_research_execution_boundary(data: dict, source: str = "research-exe
         require_exact_set(
             "child_authority.quality_gate_statuses",
             child_authority.get("quality_gate_statuses"),
-            {"NOT_RUN", "PASSED", "FAILED", "BLOCKED"},
+            {"NOT_RUN", "PASSED", "FAILED", "BLOCKED", "ENV_UNSATISFIED"},
             "child quality gate statuses",
         )
 
@@ -1497,6 +1497,11 @@ def validate_child_quality_gates(data: dict, source: str = "child-quality-gates"
             errors.append(_signal_error(source, f"results[{index}] FAILED without a failed gate", "preserve the failing command status and redacted evidence"))
         if status == "BLOCKED" and execution_mode != "NOT_RUN":
             errors.append(_signal_error(source, f"results[{index}] BLOCKED with an execution mode", "do not report blocked work as executed"))
+        if status == "ENV_UNSATISFIED":
+            if execution_mode != "NOT_RUN" or not gate_statuses or any(value != "NOT_RUN" for value in gate_statuses):
+                errors.append(_signal_error(source, f"results[{index}] ENV_UNSATISFIED after executing a gate", "record dependency insufficiency before running any immutable gate"))
+            if not isinstance(result.get("remediation"), str) or not result["remediation"].strip():
+                errors.append(_signal_error(source, f"results[{index}] ENV_UNSATISFIED without remediation", "record the external dependency installation command and rerun path"))
         if result.get("workspace_state") in {"MISSING", "UNKNOWN"} and status != "BLOCKED":
             errors.append(_signal_error(source, f"results[{index}] has unavailable workspace state but is not BLOCKED", "preserve missing or unknown child checkout state"))
         for gate_index, gate in enumerate(gates if isinstance(gates, list) else []):

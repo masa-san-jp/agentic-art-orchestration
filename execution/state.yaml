@@ -1,30 +1,45 @@
-version: 26
-updated_at: "2026-08-25T15:34:58+09:00"
+version: 28
+updated_at: "2026-08-25T15:47:33+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v14-sandbox-attempt
-  acquired_at: "2026-08-25T15:28:00+09:00"
-  expires_at: "2026-08-25T16:28:00+09:00"
+  owner: codex-v14-child-preflight
+  acquired_at: "2026-08-25T15:40:46+09:00"
+  expires_at: "2026-08-25T16:40:46+09:00"
   lane: RELEASE_QUALIFICATION
-  execution_id: V14-SANDBOX-ATTEMPT-001:attempt-1
+  execution_id: V14-CHILD-PREFLIGHT-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [config/github-sandbox-live-policy.yaml, tools/github_sandbox_live_check.py, tests/test_github_sandbox_live_check.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-25T15:33:09+09:00"
-  release_reason: V14-SANDBOX-ATTEMPT-001 completed; dedicated sandbox CREATE/REUSE evidence passed and next READY task is V14-CHILD-PREFLIGHT-001
+    paths: [tools/child_quality_gates.py, schemas/child-quality-gates.schema.json, tests/test_child_quality_gates.py, tools/validate.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+  released_at: "2026-08-25T15:47:33+09:00"
+  release_reason: V14-CHILD-PREFLIGHT-001 completed; archive requirements preflight, ENV_UNSATISFIED fail-closed evidence, and regression gates passed
 checkpoint:
-  task: V14-SANDBOX-ATTEMPT-001
-  repository: agentic-art-orchestration
-  start_point: 789b728
-  expected_changes: Make GitHub sandbox live qualification attempt-scoped, prove one CREATE and idempotent REUSE, and preserve metadata-only evidence without external data leakage.
-  result: completed; attempt-scoped policy, CLI, fixture, evidence hashing, and live sandbox qualification passed
-last_completed_task: V14-SANDBOX-ATTEMPT-001
-resume_from:
   task: V14-CHILD-PREFLIGHT-001
-  action: Read parent Issue #68 and child quality-gate preflight requirements, then run the parent validator before changing the preflight runner.
+  repository: agentic-art-orchestration
+  start_point: 79e3a15
+  expected_changes: Preflight child archive requirements before immutable quality gates and preserve fail-closed ENV_UNSATISFIED evidence.
+  result: completed; requirements preflight, fail-closed remediation, schema/validator contract, runbook, and regression evidence recorded
+last_completed_task: V14-CHILD-PREFLIGHT-001
+resume_from:
+  task: V14-PIN-RELEASE-CHECK-001
+  action: Read parent Issue #85 and release-check/pinned-workspace requirements, then run the parent validator before changing qualification logic.
   command: .venv/bin/python tools/validate.py --check
+child_preflight:
+  status: passed_with_fixture_and_existing_qualified_evidence
+  implementation_commit: 574b4d6
+  focused_tests: 8/8
+  missing_dependency_fixture: ENV_UNSATISFIED; gates NOT_RUN; remediation recorded
+  lower_bound_fixture: ENV_UNSATISFIED; gates NOT_RUN
+  satisfied_dependency_fixture: PASSED; immutable archive gate executed
+  parent_validation: passed
+  parent_tests: 311/311
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  existing_qualified_child_evidence: 5/5 repositories PASSED; 14/14 gates PASSED
+  local_fixture_gate_attempt: BLOCKED; observed manifest commits are not present in generated offline fixture; pins were not changed
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  child_repository_mutation: false
 github_sandbox_attempt:
   status: passed
   implementation_commit: e5158e5
@@ -51,7 +66,7 @@ gap_dag:
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/107
   implementation_commit: 7486320
   issue_ssot_tasks: 24
-  next_ready_task: V14-CHILD-PREFLIGHT-001
+  next_ready_task: V14-PIN-RELEASE-CHECK-001
   ready_task_count: 1
   parent_validation: passed
   focused_tests: 11/11

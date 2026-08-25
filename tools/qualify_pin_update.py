@@ -133,13 +133,14 @@ def qualify_pin_update(
                 child_python=child_python,
             )
     status = "PASSED" if gate_statuses == {"PASSED"} and exchange.get("status") == "PASSED" else "BLOCKED" if "BLOCKED" in gate_statuses or exchange.get("status") == "BLOCKED" else "FAILED"
+    child_status = "FAILED" if gate_statuses & {"FAILED", "ENV_UNSATISFIED"} else "BLOCKED" if "BLOCKED" in gate_statuses else "PASSED"
     return {
         "contract_version": "pin-update-qualification/v1",
         "status": status,
         "manifest_hash": _manifest_hash(manifest),
         "candidate_manifest_hash": _manifest_hash(candidate),
         "changes": changes,
-        "child_quality_gates": {"status": "FAILED" if "FAILED" in gate_statuses else "BLOCKED" if "BLOCKED" in gate_statuses else "PASSED", "repository_count": len(quality["results"])},
+        "child_quality_gates": {"status": child_status, "repository_count": len(quality["results"])},
         "production_exchange": {"status": exchange.get("status", "BLOCKED")},
         "applied": False,
     }

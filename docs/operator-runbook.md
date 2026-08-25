@@ -88,7 +88,7 @@ v1.1.0のqualificationは、上記v1.0ゲートに加えてretrieval、Drive cre
 .venv/bin/python tools/release_check.py --version 1.1.0 --runs 3
 ~~~
 
-v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、当時manifestが固定した4子repoの品質ゲートを各observed commitのimmutable archiveから実行した。現在mainにはProductionが追加されているため、次の資格判定はv1.2.1として5repoを対象にする。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
+v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、当時manifestが固定した4子repoの品質ゲートを各observed commitのimmutable archiveから実行した。現在mainにはProductionが追加されているため、次の資格判定はv1.2.1として5repoを対象にする。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、`ENV_UNSATISFIED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
 
 ~~~bash
 .venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>
@@ -111,6 +111,17 @@ v1.2.1は、Productionを含む5件のmanifest entryを対象に、v1.2.0と同�
 v1.3.0は、Research→Production→Researchのexchange E2Eを3回バイト比較し、clean、tamper、stale、incompatible、dirty-source、replayの終端行列、Productionを含む5repo・14 child gate、親suite、Git外出力、物理/remote effectなしを確認する。child workspaceはmanifest pinと`MATCHED`でなければ失敗とし、detached candidateを使う場合はそのcandidateを先にsnapshotしてstatus driftを混同しない。qualificationはRelease操作ではなく、merge/tag/GitHub Releaseは`PRODUCTION-RELEASE-001`の人間承認後に実行する。
 
 `data/release-check.json`で`status=PASSED`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`を確認する。qualification成功だけではrelease済みとは扱わず、merge、tag、release、公開、共有範囲拡張、artifact削除は人間の明示承認後に別途実行する。
+
+### child quality-gate dependency preflight
+
+immutable archiveに`requirements.txt`がある子repoは、quality gate実行前に親runnerの実行環境で依存名と単純な`>=`下限を検査する。依存が未導入、下限未達、または親runnerが扱えない形式の場合は、repository statusを`ENV_UNSATISFIED`、execution modeを`NOT_RUN`として記録し、gate commandは実行しない。資格判定は失敗のまま維持され、依存不足を`PASSED`や通常のgate failureへ変換しない。
+
+不足時はrunnerが自動インストールせず、結果のremediationに記録された子repoのrequirements SSOTを人間または明示許可された環境で解消してから再実行する。
+
+~~~bash
+pip install --user -r <child-repository-path>/requirements.txt
+.venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --output data/child-quality-gates.json
+~~~
 
 ## 3. taskを実行する
 

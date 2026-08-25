@@ -144,7 +144,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "enum": ["NOT_RUN", "PASSED", "FAILED", "BLOCKED"]
+            "enum": ["NOT_RUN", "PASSED", "FAILED", "BLOCKED", "ENV_UNSATISFIED"]
           }
         }
       }

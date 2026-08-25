@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import io
 import json
 import re
@@ -32,6 +33,11 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
 DEFAULT_MANIFEST = ROOT / "config/repositories.yaml"
 DEFAULT_WORKSPACE_ROOT = ROOT / "repos"
 DEFAULT_OUTPUT = ROOT / "data/child-quality-gates.json"
+
+_REQUIREMENT_PATTERN = re.compile(
+    r"^(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*))(?:\[[^\]]+\])?"
+    r"\s*(?:>=\s*(?P<lower>[0-9]+(?:\.[0-9]+)*))?(?:\s*,.*)?$"
+)
 
 
 def canonical_json(value: object) -> str:
@@ -65,6 +71,65 @@ def _workspace_state(root: Path, observed_commit: str) -> tuple[str, str | None]
 
 def _not_run(command: str, error: str) -> dict:
     return _gate_result(command, "NOT_RUN", None, 0, error=error)
+
+
+def _installed_version(package_name: str) -> str | None:
+    try:
+        return importlib.metadata.version(package_name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def _version_numbers(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in re.findall(r"\d+", value))
+
+
+def _meets_lower_bound(installed: str, lower: str) -> bool:
+    installed_numbers = _version_numbers(installed)
+    lower_numbers = _version_numbers(lower)
+    if not installed_numbers or not lower_numbers:
+        return False
+    width = max(len(installed_numbers), len(lower_numbers))
+    return installed_numbers + (0,) * (width - len(installed_numbers)) >= lower_numbers + (0,) * (width - len(lower_numbers))
+
+
+def _requirements_preflight(archive_root: Path, repository_path: str) -> tuple[str | None, str | None]:
+    """Return an unsatisfied detail and remediation for a child archive, if any.
+
+    This intentionally implements only the parent contract's small requirement
+    subset: distribution names with an optional ``>=`` lower bound. Environment
+    markers and upper bounds are ignored; dependency resolution and installation
+    remain outside this runner.
+    """
+    requirements_path = archive_root / "requirements.txt"
+    if not requirements_path.exists():
+        return None, None
+    if not requirements_path.is_file():
+        return "requirements.txt is not a regular file", f"pip install --user -r {repository_path}/requirements.txt"
+    try:
+        lines = requirements_path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        return f"requirements.txt could not be read: {exc}", f"pip install --user -r {repository_path}/requirements.txt"
+
+    for line_number, raw_line in enumerate(lines, start=1):
+        requirement = raw_line.split("#", 1)[0].split(";", 1)[0].strip()
+        if not requirement:
+            continue
+        match = _REQUIREMENT_PATTERN.fullmatch(requirement)
+        if match is None:
+            detail = f"unsupported requirement syntax on line {line_number}: {requirement!r}"
+            return detail, f"pip install --user -r {repository_path}/requirements.txt"
+        package_name = match.group("name")
+        lower_bound = match.group("lower")
+        installed = _installed_version(package_name)
+        if installed is None:
+            return f"{package_name} is not installed", f"pip install --user -r {repository_path}/requirements.txt"
+        if lower_bound is not None and not _meets_lower_bound(installed, lower_bound):
+            return (
+                f"{package_name} version {installed!r} is below required >= {lower_bound}",
+                f"pip install --user -r {repository_path}/requirements.txt",
+            )
+    return None, None
 
 
 def _extract_archive(root: Path, commit: str, target: Path) -> str | None:
@@ -158,6 +223,23 @@ def _run_repository(repository: dict, workspace_root: Path, timeout_seconds: int
                 "quality_gate_hash": quality_gate_hash,
                 "status": "BLOCKED",
                 "gates": [_not_run(command, archive_error) for command in commands],
+            }
+        preflight_error, remediation = _requirements_preflight(target, repository["path"])
+        if preflight_error:
+            error = (
+                f"child dependency preflight is unsatisfied: {preflight_error}; "
+                f"remediation: {remediation}"
+            )
+            return {
+                "repository": repository_id,
+                "observed_commit": observed_commit,
+                "workspace_commit": workspace_commit,
+                "workspace_state": workspace_state,
+                "execution_mode": "NOT_RUN",
+                "quality_gate_hash": quality_gate_hash,
+                "status": "ENV_UNSATISFIED",
+                "remediation": remediation,
+                "gates": [_not_run(command, error) for command in commands],
             }
         gates = [_run_gate(command, target, timeout_seconds) for command in commands]
         return {
@@ -258,7 +340,7 @@ def main() -> int:
         if not changed:
             args.output.write_bytes(rendered)
     statuses = {result["status"] for result in report["results"]}
-    overall_status = "FAILED" if "FAILED" in statuses else "BLOCKED" if "BLOCKED" in statuses else "PASSED"
+    overall_status = "FAILED" if statuses & {"FAILED", "ENV_UNSATISFIED"} else "BLOCKED" if "BLOCKED" in statuses else "PASSED"
     print(json.dumps({"changed": not changed if not args.check else False, "command": "child-quality-gates", "repository_count": report["repository_count"], "status": overall_status}, ensure_ascii=False, sort_keys=True))
     return 0
 

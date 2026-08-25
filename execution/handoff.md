@@ -1017,3 +1017,23 @@
 - checks: `tools/validate.py --check` PASS、focused 13/13 PASS、回帰 30/30 PASS、親全体 308/308 PASS、`git diff --check` PASS。子repo変更はなく、child quality gateは対象なし。
 - implementation commit: `e5158e5`。merge、release、PR作成は行わず、terminal `EVIDENCE_READY` の状態で停止した。
 - V14 sandbox leaseをreleasedし、次のREADYは `V14-CHILD-PREFLIGHT-001`。次の最初の操作は `.venv/bin/python tools/validate.py --check`。
+
+## V14-CHILD-PREFLIGHT-001 in progress
+
+- 2026-08-25 15:40 JST、`V14-CHILD-PREFLIGHT-001`をclaimした。開始点は`79e3a15`、対象は親のchild quality-gate runner、schema、validator、focused tests、runbook、および実行状態記録。子repo、GitHub Issue/PR、Drive、credentialは変更しない。
+- Issue #68の完了条件は、子repo archiveの`requirements.txt`をゲート実行前に検査し、依存欠落・下限未達を`ENV_UNSATISFIED`として記録してゲートを実行せず、remediationを残すこと。依存がないrepoは従来どおり実行し、依存充足時の挙動を変えない。
+- 最初の検証は`.venv/bin/python -m unittest tests.test_child_quality_gates -v`。実装後はvalidator、親全体テスト、workspace status/audit、diffを実行し、子repo変更がないことを確認する。
+
+## V14-CHILD-PREFLIGHT-001 completed
+
+- `tools/child_quality_gates.py`がimmutable archive展開後・gate実行前に`requirements.txt`を検査する。distribution name、任意の`>=`下限、コメント・環境marker無視だけを扱い、依存解決や自動installはしない。未導入・下限未達・未対応形式は`ENV_UNSATISFIED`、`execution_mode=NOT_RUN`、全gate`NOT_RUN`、`pip install --user -r <child-path>/requirements.txt` remediationとして記録する。
+- `schemas/child-quality-gates.schema.json`、research execution boundary、validator、pin qualification summaryを新statusに接続した。runbookには判定、再実行手順、子repo requirements SSOTの扱いを追記した。
+- fixture結果: missing dependency `ENV_UNSATISFIED`、lower-bound不足 `ENV_UNSATISFIED`、充足依存 `PASSED`かつimmutable archive gate実行。focused child/boundary 13/13、親全体311/311、validator PASS、diff check PASS。
+- workspace statusは5 repositoriesすべて`main`・clean・ahead/behind 0、security PASS。auditは既知のmarketing freshness warning 1件のみ。既存のqualified evidence 5/5 repositories・14/14 gates PASSを保持した。
+- 親の生成offline fixtureでの実manifest gate再実行は、observed commit object不在のため5件`BLOCKED`。これはpinを更新せず記録した。子repo、GitHub Issue/PR、Drive、credential、merge、releaseは変更していない。
+- acceptance: 1/1。leaseをreleaseし、次のREADYを`V14-PIN-RELEASE-CHECK-001`へ進めた。
+- implementation commit: `574b4d6`。完了記録は後続の親repo record commitへ反映した。
+
+## Next exact action
+
+1. `V14-PIN-RELEASE-CHECK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。

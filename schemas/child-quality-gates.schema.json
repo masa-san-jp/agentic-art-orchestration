@@ -25,7 +25,8 @@
         "workspace_state": {"type": "string", "enum": ["MATCHED", "STALE", "DIRTY", "MISSING", "UNKNOWN"]},
         "execution_mode": {"type": "string", "enum": ["immutable-archive", "NOT_RUN"]},
         "quality_gate_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "status": {"type": "string", "enum": ["PASSED", "FAILED", "BLOCKED"]},
+        "status": {"type": "string", "enum": ["PASSED", "FAILED", "BLOCKED", "ENV_UNSATISFIED"]},
+        "remediation": {"type": "string", "minLength": 1},
         "gates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gate_result"}}
       }
     },
