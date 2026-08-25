@@ -1131,6 +1131,11 @@ def validate_github_sandbox_live_contract(
             error(policy_source, "approved_repository.id_env_var is invalid", "use an uppercase environment variable name")
         if not isinstance(fixture_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", fixture_id) is None:
             error(policy_source, "approved_repository.fixture_id is invalid", "use a stable offline fixture ID")
+    if policy.get("idempotency_key_prefix") != "initial-operations-github-sandbox-v1":
+        error(policy_source, "idempotency_key_prefix is not the approved v1 prefix", "use the fixed prefix and append a validated attempt ID")
+    fixture_attempt_id = policy.get("fixture_attempt_id")
+    if not isinstance(fixture_attempt_id, str) or re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", fixture_attempt_id) is None:
+        error(policy_source, "fixture_attempt_id is invalid", "use a lowercase fixture attempt ID such as fixture-attempt-1")
     token_env_vars = policy.get("token_env_vars")
     if token_env_vars != ["GITHUB_TOKEN", "GH_TOKEN"]:
         error(policy_source, "token_env_vars must be GITHUB_TOKEN then GH_TOKEN", "accept credentials only from repo-external GitHub token variables")

@@ -1,5 +1,5 @@
-version: 5
-updated_at: "2026-08-25T15:08:00+09:00"
+version: 7
+updated_at: "2026-08-25T15:33:09+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -691,7 +691,7 @@ tasks:
   - id: V14-SANDBOX-ATTEMPT-001
     milestone: M15
     title: Requalify GitHub sandbox evidence with an attempt-scoped CREATE
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/101
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -702,7 +702,7 @@ tasks:
   - id: V14-CHILD-PREFLIGHT-001
     milestone: M15
     title: Revalidate child repository preflight and quality-gate evidence
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/68
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

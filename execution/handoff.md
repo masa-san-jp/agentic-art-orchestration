@@ -1000,3 +1000,19 @@
 - `.venv/bin/python tools/validate.py --check`、`tests.test_validate` 11/11、親全体 305/305、`git diff --check` は通過。24件のIssue SSOT taskを登録し、queue上のREADYは `V14-SANDBOX-ATTEMPT-001` 1件だけであることを確認した。
 - GAP-DAG-001 は lease released、`last_completed_task` に記録済み。次の再開点は `V14-SANDBOX-ATTEMPT-001`、最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v`。live CREATEは別Issueの明示スコープと外部権限が揃うまで実行しない。
 - 実装commitは `7486320`。この完了記録を含むrecord commitは最終HEADとして引き渡し、SHAは `git rev-parse HEAD` で取得できる。子repo、GitHub Issue/PR、Drive、credential、external artifactに変更なし。
+
+## V14-SANDBOX-ATTEMPT-001 in progress
+
+- 2026-08-25 15:28 JST、`V14-SANDBOX-ATTEMPT-001` をclaimした。開始点は `789b728`、対象はIssue #101が指定する5ファイルと親state/queue/handoff。GAP-DAG完了後のactive leaseは存在せず、子repo・Issue・Drive・credentialは未変更。
+- Issue #101の固定条件は、live `--attempt-id`必須、許容形式 `^[a-z0-9][a-z0-9._-]{0,63}$`、dedup key `initial-operations-github-sandbox-v1:<attempt-id>`、approved repository `masa-san-jp/agentic-art-sandbox-2`、CREATE最大1件である。
+- 最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v`。networklessの現状を確認後、同一attempt-idのREUSEと別attempt-idのCREATEをfixtureで検証し、外部liveは確認済みの専用sandboxに限定する。
+
+## V14-SANDBOX-ATTEMPT-001 completed
+
+- attempt-scoped contractを `config/github-sandbox-live-policy.yaml`、`tools/github_sandbox_live_check.py`、`tests/test_github_sandbox_live_check.py`、`docs/operator-runbook.md`へ実装した。live `--attempt-id`は `^[a-z0-9][a-z0-9._-]{0,63}$` を要求し、dedup keyは `initial-operations-github-sandbox-v1:<attempt-id>`、evidence hashは完全なdedup keyのSHA-256になった。schema versionは変更していない。
+- fixtureで別attempt 2件は各CREATE一件、同一attempt再実行はREUSE・追加CREATE 0件。attempt-idなしliveは外部READ前にexit 2、不正attempt-idもprovider READ前に拒否、production repositoryはCREATE前に拒否した。
+- approved sandbox `masa-san-jp/agentic-art-sandbox-2` のread-only preflightはPASS。外部資格証跡はkeyringのGitHub CLIからのみ利用し、tokenを表示・環境変数へexport・Git保存していない。
+- dedicated sandboxの実測は Issue #2、attempt `v14-20260825-ghcli-1`、検索結果1件。外部操作は `READ → CREATE → READ → REUSE`、CREATE件数1。同じattemptの再検索は `REUSE`、追加CREATE 0件。証跡は `/tmp/github-sandbox-live-v14-20260825-ghcli-1.json`、schemaとrelease evidence validatorはPASS。evidenceにはrepository full name、Issue本文、credential、tokenを保存していない。
+- 直接のPython CLIはkeyring tokenを `GH_TOKEN` へ安全に受け渡せない環境だったため、外部CREATE/READ自体は認証済み `gh api` providerで行い、実装済み `run_check` を観測済みIssue refで検証した。追加の外部CREATEは行っていない。
+- checks: `tools/validate.py --check` PASS、focused 13/13 PASS、回帰 30/30 PASS、親全体 308/308 PASS、`git diff --check` PASS。子repo変更はなく、child quality gateは対象なし。
+- V14 sandbox leaseをreleasedし、次のREADYは `V14-CHILD-PREFLIGHT-001`。次の最初の操作は `.venv/bin/python tools/validate.py --check`。

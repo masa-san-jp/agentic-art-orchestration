@@ -180,6 +180,20 @@ networklessの回帰は`FakeDrive`と`FakeDriveLiveProvider`で行う。`DRIVE-L
 
 実Google Driveのsmokeは、専用sandbox folder IDとrepo外のcredential環境変数を人間が指定し、`--confirm-live`を明示したときだけ実行する。`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`と`AGENTIC_ART_GOOGLE_DRIVE_TOKEN`の値、artifact本文、signed URLはGitへ保存しない。指定がない場合はliveを実行せずBLOCKEDとして再検証経路を残す。実DriveのCREATE/readを通るまで、接続済みとは報告しない。
 
+## 6.1 GitHub sandboxのattempt-scoped CREATE/REUSE
+
+GitHub Issueのlive qualificationは、実証専用の `masa-san-jp/agentic-art-sandbox-2` だけを対象とし、productionまたはmanifest登録repoを指定しない。live CLIには毎回、lowercaseの `--attempt-id`（`^[a-z0-9][a-z0-9._-]{0,63}$`）を明示する。dedup keyは `initial-operations-github-sandbox-v1:<attempt-id>` で、同じattemptの再実行はREUSE、別attemptは別のCREATEとして証跡を分離する。
+
+fixtureだけは `fixture-attempt-1` を既定値として使える。liveの既定attemptは存在しない。証跡はmetadata-onlyで、credential、repository full name、Issue本文を保存せず、live outputはGit外の `/tmp/github-sandbox-live-<attempt-id>.json` に出す。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v
+AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY=masa-san-jp/agentic-art-sandbox-2 .venv/bin/python tools/github_sandbox_live_check.py --live --confirm-live --attempt-id <unused-id> --output /tmp/github-sandbox-live-<unused-id>.json
+AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY=masa-san-jp/agentic-art-sandbox-2 .venv/bin/python tools/github_sandbox_live_check.py --live --confirm-live --attempt-id <same-id> --output /tmp/github-sandbox-live-<same-id>-replay.json
+~~~
+
+qualificationが記録する外部操作はREAD、CREATE一件、CREATE直後の有限READ、REUSEだけである。IssueのUPDATE、CLOSE、DELETE、COMMENT、LABEL、branch、commit、PR、merge、releaseは実行しない。
+
 ## 7. feedbackからIssue候補へのルーティング
 
 feedback routerは、summary code、manifestのknowledge profile、target authority、confidence、consentを使って、domain feedbackを正本の子repoへ、UX・retrieval・adapter・artifact・orchestration feedbackを親repoへ決定的に割り当てる。authorityが未確定またはinferred confidenceが閾値未満なら`TRIAGE`に留め、同じIssue keyはcanonical候補へ集約して重複を抑止する。出力はprivacy-safeなIssue候補のmetadataだけで、GitHub Issueのcreate/update/deleteは行わず、人間gateを維持する。

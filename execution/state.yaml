@@ -1,30 +1,50 @@
-version: 23
-updated_at: "2026-08-25T15:16:18+09:00"
+version: 25
+updated_at: "2026-08-25T15:33:09+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-gap-dag-001
-  acquired_at: "2026-08-25T15:08:00+09:00"
-  expires_at: "2026-08-25T15:53:00+09:00"
-  lane: EXECUTION_DAG
-  execution_id: GAP-DAG-001:attempt-1
+  owner: codex-v14-sandbox-attempt
+  acquired_at: "2026-08-25T15:28:00+09:00"
+  expires_at: "2026-08-25T16:28:00+09:00"
+  lane: RELEASE_QUALIFICATION
+  execution_id: V14-SANDBOX-ATTEMPT-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/validate.py, tests/test_validate.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-  released_at: "2026-08-25T15:15:51+09:00"
-  release_reason: GAP-DAG-001 completed; next READY task is V14-SANDBOX-ATTEMPT-001
+    paths: [config/github-sandbox-live-policy.yaml, tools/github_sandbox_live_check.py, tests/test_github_sandbox_live_check.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+  released_at: "2026-08-25T15:33:09+09:00"
+  release_reason: V14-SANDBOX-ATTEMPT-001 completed; dedicated sandbox CREATE/REUSE evidence passed and next READY task is V14-CHILD-PREFLIGHT-001
 checkpoint:
-  task: GAP-DAG-001
-  repository: agentic-art-orchestration
-  start_point: a9d1656
-  expected_changes: Register the Issue SSOT queue metadata contract and the v1.4-to-purpose implementation DAG without child or external mutation.
-  result: completed; Issue SSOT metadata contract, 24-task DAG, dependency ordering, and stale-lease isolation are validated
-last_completed_task: GAP-DAG-001
-resume_from:
   task: V14-SANDBOX-ATTEMPT-001
-  action: Read parent Issue #101 and the existing sandbox live-check policy/tests, then run the networkless gate before any explicitly authorized live attempt.
-  command: .venv/bin/python -m unittest tests.test_github_sandbox_live_check -v
+  repository: agentic-art-orchestration
+  start_point: 789b728
+  expected_changes: Make GitHub sandbox live qualification attempt-scoped, prove one CREATE and idempotent REUSE, and preserve metadata-only evidence without external data leakage.
+  result: completed; attempt-scoped policy, CLI, fixture, evidence hashing, and live sandbox qualification passed
+last_completed_task: V14-SANDBOX-ATTEMPT-001
+resume_from:
+  task: V14-CHILD-PREFLIGHT-001
+  action: Read parent Issue #68 and child quality-gate preflight requirements, then run the parent validator before changing the preflight runner.
+  command: .venv/bin/python tools/validate.py --check
+github_sandbox_attempt:
+  status: passed
+  attempt_id: v14-20260825-ghcli-1
+  repository_id_hash: 3ba61c2060fe01b3dbb4d0c4cf979d2be51abcd0c725192e7c343856d3ae0b70
+  issue_number: 2
+  idempotency_key_hash: 1100a907ee677765d59e5ac0dea2f83ce187ab8da77ef7e5247fa112ba463a15
+  operation_sequence: [READ, CREATE, READ, REUSE]
+  create_count: 1
+  replay_operation: REUSE
+  replay_create_count: 0
+  search_match_count_after_create: 1
+  evidence_path: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
+  evidence_validation: PASSED
+  cli_attempt_id_guard: PASSED
+  fixture_distinct_attempts: PASSED
+  credential_stored: false
+  child_repository_mutation: false
+  production_repository_mutation: false
+  issue_scope: metadata_only_single_create
+  provider_note: GitHub CLI keyring authenticated provider was used for the external CREATE/READ; no token was exported or persisted
 gap_dag:
   status: completed
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/107
