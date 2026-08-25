@@ -999,4 +999,4 @@
 - 旧 `ISSUE-38-REAL-CHAIN-CI-001` は、remote main run `32797739061` がbootstrap/production-exchangeのみ成功し、旧real-chain jobを観測できなかったため、DONEへ推測せずBLOCKEDへ隔離した。再ベースラインは別Issueで扱う。
 - `.venv/bin/python tools/validate.py --check`、`tests.test_validate` 11/11、親全体 305/305、`git diff --check` は通過。24件のIssue SSOT taskを登録し、queue上のREADYは `V14-SANDBOX-ATTEMPT-001` 1件だけであることを確認した。
 - GAP-DAG-001 は lease released、`last_completed_task` に記録済み。次の再開点は `V14-SANDBOX-ATTEMPT-001`、最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v`。live CREATEは別Issueの明示スコープと外部権限が揃うまで実行しない。
-- 実装commitと記録commitはこのセッションの後続操作で state に記録する。現時点では子repo、GitHub Issue/PR、Drive、credential、external artifactに変更なし。
+- 実装commitは `7486320`。この完了記録を含むrecord commitは最終HEADとして引き渡し、SHAは `git rev-parse HEAD` で取得できる。子repo、GitHub Issue/PR、Drive、credential、external artifactに変更なし。
