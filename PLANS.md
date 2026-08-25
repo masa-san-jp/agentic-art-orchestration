@@ -42,4 +42,4 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
-次のtaskは `V14-PIN-RELEASE-CHECK-001`。最初の操作は `.venv/bin/python tools/validate.py --check` を実行し、parent Issue #85 とrelease-check/pinned-workspace requirementsを読んだ後、qualification logicを変更する。
+次のtaskは `V14-OBSERVATION-PROVENANCE-001`。最初の操作は `.venv/bin/python tools/validate.py --check` を実行し、parent Issue #56 とqualification provenance requirementsを読んだ後、report provenanceを変更する。

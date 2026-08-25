@@ -1,30 +1,45 @@
-version: 28
-updated_at: "2026-08-25T15:47:33+09:00"
+version: 30
+updated_at: "2026-08-25T16:07:23+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v14-child-preflight
-  acquired_at: "2026-08-25T15:40:46+09:00"
-  expires_at: "2026-08-25T16:40:46+09:00"
+  owner: codex-v14-pin-release
+  acquired_at: "2026-08-25T15:58:37+09:00"
+  expires_at: "2026-08-25T16:58:37+09:00"
   lane: RELEASE_QUALIFICATION
-  execution_id: V14-CHILD-PREFLIGHT-001:attempt-1
+  execution_id: V14-PIN-RELEASE-CHECK-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/child_quality_gates.py, schemas/child-quality-gates.schema.json, tests/test_child_quality_gates.py, tools/validate.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-  released_at: "2026-08-25T15:47:33+09:00"
-  release_reason: V14-CHILD-PREFLIGHT-001 completed; archive requirements preflight, ENV_UNSATISFIED fail-closed evidence, and regression gates passed
+    paths: [tools/release_check.py, tools/pinned_workspace.py, tests/test_release_check.py, tests/test_pinned_workspace.py, tools/validate.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+  released_at: "2026-08-25T16:07:23+09:00"
+  release_reason: V14-PIN-RELEASE-CHECK-001 completed; release qualification now materializes manifest pins and records source drift without mutating child checkouts
 checkpoint:
-  task: V14-CHILD-PREFLIGHT-001
-  repository: agentic-art-orchestration
-  start_point: 79e3a15
-  expected_changes: Preflight child archive requirements before immutable quality gates and preserve fail-closed ENV_UNSATISFIED evidence.
-  result: completed; requirements preflight, fail-closed remediation, schema/validator contract, runbook, and regression evidence recorded
-last_completed_task: V14-CHILD-PREFLIGHT-001
-resume_from:
   task: V14-PIN-RELEASE-CHECK-001
-  action: Read parent Issue #85 and release-check/pinned-workspace requirements, then run the parent validator before changing qualification logic.
+  repository: agentic-art-orchestration
+  start_point: 143c69b
+  expected_changes: Materialize the manifest-pinned workspace for release qualification so production exchange and v1.2 E2E do not depend on mutable child checkouts.
+  result: completed; pin materializer, fail-closed unavailable-pin report, exact child observations, and qualification regression evidence recorded
+last_completed_task: V14-PIN-RELEASE-CHECK-001
+resume_from:
+  task: V14-OBSERVATION-PROVENANCE-001
+  action: Read parent Issue #56 and qualification provenance requirements, then run the parent validator before changing report provenance.
   command: .venv/bin/python tools/validate.py --check
+pin_release_check:
+  status: passed_with_fixture_and_fail_closed_pin_evidence
+  implementation_commit: pending_record_commit
+  focused_tests: 16/16
+  parent_validation: passed
+  parent_tests: 315/315
+  pinned_workspace_tests: advanced_dirty_detached_sources_all_materialize_exact_observed_commit
+  unavailable_pin_behavior: FAILED qualification with exact repository and observed_commit findings; no gate or newer HEAD substitution
+  exact_child_observations: recorded in v1.2 child check and production child_gate_runs summaries
+  source_mutation: false
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  local_qualification: BLOCKED_EXPECTED; generated offline fixture lacks manifest observed commit objects; pin update was not attempted
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  child_repository_mutation: false
 child_preflight:
   status: passed_with_fixture_and_existing_qualified_evidence
   implementation_commit: 426a8b3

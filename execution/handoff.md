@@ -1037,3 +1037,22 @@
 ## Next exact action
 
 1. `V14-PIN-RELEASE-CHECK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## V14-PIN-RELEASE-CHECK-001 in progress
+
+- 2026-08-25 15:58 JST、`V14-PIN-RELEASE-CHECK-001`をclaimした。開始点は`143c69b`、Issue #85の対象は親repoのrelease qualificationとpinned workspace経路。子repo、GitHub Issue/PR、Drive、credentialは変更しない。
+- Issue #85の完了条件は、`production-exchange`と`v1.2-e2e`を実クローンのHEAD/dirty/detached状態ではなくmanifest pinから実体化したworkspaceで実行し、遠隔pin遅延はfindingとして保持すること。
+- 最初の検証は`.venv/bin/python -m unittest tests.test_release_check tests.test_pinned_workspace -v`。実装後はvalidator、親全体テスト、release qualification関連テスト、workspace/audit、diffを実行する。
+
+## V14-PIN-RELEASE-CHECK-001 completed
+
+- `tools/pinned_workspace.py`を追加し、manifest各entryをsource checkoutから`git clone --no-local`した後、exact `observed_commit`へdetachするGit外一時workspaceを実装した。sourceのHEAD先行、dirty、detached状態を観測するが、source checkoutは変更しない。
+- `tools/release_check.py`のv1.2.0以降をpin workspace経路へ切り替えた。pin unavailable時はqualificationをFAILEDにし、repository、exact observed commit、source state、reasonを`pinned_workspace`とcheckへ記録する。成功時もsource driftをfindingとして保持し、新HEADへ追随しない。
+- v1.2 child gate checkとproduction child gate summaryに、repository、observed/workspace commit、workspace state、execution mode、gate statusesを追加した。
+- fixtureでadvanced・dirty・detachedの3状態が同じobserved commitへ実体化されること、source mutation=false、unavailable pinがfail-closedになることを確認した。focused 16/16、親全体315/315、validator PASS、diff check PASS。
+- workspace statusは5 repositoriesすべて`main`・clean・ahead/behind 0、security PASS。auditは既知のmarketing freshness warning 1件。生成offline fixtureの実manifest qualificationはpin object不足でBLOCKED_EXPECTEDとして記録し、pin更新やchild mutationは行っていない。
+- acceptance: 1/1。leaseをreleaseし、次のREADYを`V14-OBSERVATION-PROVENANCE-001`へ進めた。
+
+## Next exact action
+
+1. `V14-OBSERVATION-PROVENANCE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。

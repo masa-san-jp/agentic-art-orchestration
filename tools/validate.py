@@ -97,6 +97,7 @@ REQUIRED_FILES = [
     "tools/candidate_selection.py",
     "schemas/child-quality-gates.schema.json",
     "tools/child_quality_gates.py",
+    "tools/pinned_workspace.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
     "schemas/v12-e2e.schema.json",

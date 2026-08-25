@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -15,6 +16,7 @@ from tools.release_check import (
     _initial_operations_e2e_check,
     _interaction_e2e_check,
     _production_exchange_check,
+    qualify,
     _sandbox_live_evidence_check,
     _v12_child_quality_gate_check,
     _v12_e2e_check,
@@ -22,7 +24,51 @@ from tools.release_check import (
 )
 
 
+def git(root: Path, *args: str) -> str:
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
+
+def make_pinned_fixture(root: Path) -> tuple[dict, str, str]:
+    root.mkdir(parents=True)
+    git(root, "init", "-q", "-b", "main")
+    git(root, "config", "user.email", "fixture@example.invalid")
+    git(root, "config", "user.name", "Fixture")
+    (root / "marker.txt").write_text("observed\n", encoding="utf-8")
+    git(root, "add", "marker.txt")
+    git(root, "commit", "-q", "-m", "observed")
+    observed = git(root, "rev-parse", "HEAD")
+    (root / "marker.txt").write_text("current\n", encoding="utf-8")
+    git(root, "add", "marker.txt")
+    git(root, "commit", "-q", "-m", "current")
+    current = git(root, "rev-parse", "HEAD")
+    return {"id": "child-one", "path": "child-one", "observed_commit": observed, "quality_gates": ["python3 -c 'print(1)' "]}, observed, current
+
+
 class ReleaseCheckTests(unittest.TestCase):
+    def test_qualification_uses_materialized_pin_instead_of_source_head(self):
+        with tempfile.TemporaryDirectory(prefix="release-pinned-source-") as temporary_name:
+            source_root = Path(temporary_name) / "sources"
+            repository, observed, current = make_pinned_fixture(source_root / "child-one")
+            captured: dict[str, object] = {}
+
+            def fake_qualify(version, runs, workspace_root, github_sandbox_evidence, pinned_observations=None):
+                captured["head"] = git(Path(workspace_root) / "child-one", "rev-parse", "HEAD")
+                captured["marker"] = (Path(workspace_root) / "child-one" / "marker.txt").read_text(encoding="utf-8")
+                captured["observations"] = pinned_observations
+                return {"status": "PASSED"}
+
+            with patch("tools.release_check.V12_MANIFEST", Path(temporary_name) / "manifest.yaml"), patch(
+                "tools.release_check.load_yaml", return_value={"repositories": [repository]}
+            ), patch("tools.release_check._qualify", side_effect=fake_qualify):
+                result = qualify("1.2.0", 1, source_root)
+
+            self.assertEqual({"status": "PASSED"}, result)
+            self.assertEqual(observed, captured["head"])
+            self.assertEqual("observed\n", captured["marker"])
+            self.assertEqual(current, git(source_root / "child-one", "rev-parse", "HEAD"))
+            self.assertEqual("STALE", captured["observations"][0]["source_state"])
+
     def test_active_python_uses_virtualenv_interpreter_when_available(self):
         active = Path(_active_python())
         self.assertTrue(active.is_file())

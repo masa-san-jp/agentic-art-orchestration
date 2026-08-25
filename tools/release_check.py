@@ -26,6 +26,7 @@ if str(ROOT) not in sys.path:
 from tools.e2e import run_e2e
 from tools.child_quality_gates import run_child_quality_gates
 from tools.production_exchange import run_exchange_e2e
+from tools.pinned_workspace import PinnedWorkspaceError, materialize_pinned_workspace
 from tools.validate import _schema_errors, load_json, load_yaml
 from tools.v12_e2e import run_v12_e2e
 from tools.interaction_e2e import run_interaction_e2e
@@ -366,6 +367,19 @@ def _v12_child_quality_gate_check(
     )
     execution_modes = sorted({item.get("execution_mode") for item in results})
     passed = bool(results) and repository_statuses == ["PASSED"] and gate_statuses == ["PASSED"]
+    repository_observations = [
+        {
+            "repository": item.get("repository"),
+            "observed_commit": item.get("observed_commit"),
+            "workspace_commit": item.get("workspace_commit"),
+            "workspace_state": item.get("workspace_state"),
+            "execution_mode": item.get("execution_mode"),
+            "status": item.get("status"),
+            "gate_statuses": [gate.get("status") for gate in item.get("gates", []) if isinstance(gate, dict)],
+        }
+        for item in results
+        if isinstance(item, dict)
+    ]
     return {
         "id": "v1.2-child-quality-gates-result",
         "status": "PASSED" if passed else "FAILED",
@@ -373,6 +387,7 @@ def _v12_child_quality_gate_check(
         "repository_statuses": repository_statuses,
         "gate_statuses": gate_statuses,
         "execution_modes": execution_modes,
+        "repository_observations": repository_observations,
     }
 
 
@@ -453,6 +468,19 @@ def _child_gate_summary(report: dict) -> dict:
         and all(status == "PASSED" for status in gate_statuses)
         and all(result.get("execution_mode") == "immutable-archive" for result in results)
     )
+    repository_observations = [
+        {
+            "repository": result.get("repository"),
+            "observed_commit": result.get("observed_commit"),
+            "workspace_commit": result.get("workspace_commit"),
+            "workspace_state": result.get("workspace_state"),
+            "execution_mode": result.get("execution_mode"),
+            "status": result.get("status"),
+            "gate_statuses": [gate.get("status") for gate in result.get("gates", []) if isinstance(gate, dict)],
+        }
+        for result in results
+        if isinstance(result, dict)
+    ]
     return {
         "status": "PASSED" if passed else "FAILED",
         "repository_count": len(results),
@@ -462,6 +490,7 @@ def _child_gate_summary(report: dict) -> dict:
         "workspace_states": sorted({result.get("workspace_state") for result in results}),
         "execution_modes": sorted({result.get("execution_mode") for result in results}),
         "repositories_match_recorded_commits": repositories_match,
+        "repository_observations": repository_observations,
     }
 
 
@@ -659,11 +688,12 @@ def _sandbox_live_evidence_check(evidence_path: Path | None = None) -> dict:
     }
 
 
-def qualify(
+def _qualify(
     version: str = "1.0.0",
     runs: int = 3,
     workspace_root: Path = V12_WORKSPACE_ROOT,
     github_sandbox_evidence: Path | None = None,
+    pinned_observations: list[dict] | None = None,
 ) -> dict:
     """Return a deterministic qualification report; never create a tag, commit, or release."""
     validate_request(version, runs)
@@ -772,7 +802,7 @@ def qualify(
         report_checks.append(initial_operations_e2e)
     if live_evidence is not None:
         report_checks.append(live_evidence)
-    return {
+    report = {
         "version": version,
         "network": "disabled",
         "status": "PASSED" if passed else "FAILED",
@@ -785,6 +815,87 @@ def qualify(
         "release_operation": "NOT_PERFORMED",
         "human_gate": "merge/release requires human approval",
     }
+    if pinned_observations is not None:
+        source_findings = [
+            {
+                "repository": item.get("repository"),
+                "code": f"SOURCE_{item.get('source_state')}",
+                "observed_commit": item.get("observed_commit"),
+                "source_head": item.get("source_head"),
+                "source_state": item.get("source_state"),
+            }
+            for item in pinned_observations
+            if item.get("source_state") != "MATCHED"
+        ]
+        report["pinned_workspace"] = {
+            "mode": "manifest-observed-commit-clone",
+            "source_mutation": False,
+            "repositories": pinned_observations,
+            "findings": source_findings,
+        }
+    return report
+
+
+def _pinned_workspace_failure(version: str, runs: int, error: PinnedWorkspaceError) -> dict:
+    """Return a sanitized blocking report when a pin cannot be materialized."""
+    return {
+        "version": version,
+        "network": "disabled",
+        "status": "FAILED",
+        "blocking": True,
+        "checks": [
+            {
+                "id": "pinned-workspace-materialize",
+                "status": "FAILED",
+                "exit_code": 1,
+                "reason": str(error),
+                "repositories": error.findings,
+            }
+        ],
+        "pinned_workspace": {
+            "mode": "manifest-observed-commit-clone",
+            "source_mutation": False,
+            "repositories": error.findings,
+            "findings": [
+                {
+                    "repository": item.get("repository"),
+                    "code": "PIN_MATERIALIZATION_FAILED",
+                    "observed_commit": item.get("observed_commit"),
+                    "source_head": item.get("source_head"),
+                    "source_state": item.get("source_state"),
+                    "reason": item.get("reason"),
+                }
+                for item in error.findings
+            ],
+        },
+        "history": {"status": "NOT_RUN", "reason": "pin materialization failed"},
+        "remote_operations": [],
+        "merge_operation": "NOT_PERFORMED",
+        "tag_operation": "NOT_PERFORMED",
+        "release_operation": "NOT_PERFORMED",
+        "human_gate": "merge/release requires human approval",
+        "runs": runs,
+    }
+
+
+def qualify(
+    version: str = "1.0.0",
+    runs: int = 3,
+    workspace_root: Path = V12_WORKSPACE_ROOT,
+    github_sandbox_evidence: Path | None = None,
+) -> dict:
+    """Qualify using immutable child clones for every version with child gates."""
+    validate_request(version, runs)
+    if version not in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
+        return _qualify(version, runs, workspace_root, github_sandbox_evidence)
+    manifest = load_yaml(V12_MANIFEST)
+    with tempfile.TemporaryDirectory(prefix="release-pinned-workspace-") as temporary_name:
+        pinned_root = Path(temporary_name)
+        try:
+            observations = materialize_pinned_workspace(manifest, workspace_root, pinned_root)
+        except PinnedWorkspaceError as exc:
+            return _pinned_workspace_failure(version, runs, exc)
+        return _qualify(version, runs, pinned_root, github_sandbox_evidence, observations)
 
 
 def _write_atomic(path: Path, content: str) -> None:
