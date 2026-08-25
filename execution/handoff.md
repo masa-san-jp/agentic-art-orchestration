@@ -1057,3 +1057,22 @@
 ## Next exact action
 
 1. `V14-OBSERVATION-PROVENANCE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## V14-OBSERVATION-PROVENANCE-001 in progress
+
+- 2026-08-25 18:48 JST、`V14-OBSERVATION-PROVENANCE-001`（Issue #56）をclaimした。開始点は`22404ad`、対象は親repoのみ。子repo、GitHub Issue/PR、Drive、credential、pin、external artifactは変更しない。
+- Issue #56の決定を、qualification reportのfinding、execution stateの再実行command、横断契約、decision Issue templateへ反映する。pin、remote HEAD、local worktreeを同一視せず、欠落証拠をunknownとして保持する。
+- 実装後のfocused testsは34/34、親全体は320/320、validatorと`git diff --check`はPASS。workspaceは5 repositoriesすべて`main`・clean・ahead/behind 0、securityはPASS。auditは既知のmarketing freshness warning 1件のみで、audit再生成後の`--check`はPASS。
+
+## V14-OBSERVATION-PROVENANCE-001 completed
+
+- `tools/release_check.py`のpinned workspace observations、child gate observations、pin materialization failure findingsへ、`repository` / `observed_ref` / `observed_via` / `observed_at` / `source_repository` / `source_commit` / `evidence_locator` / `unknowns`を追加した。manifest pinをsource checkoutやremote HEADへ置換せず、local worktreeとremote HEADの未観測を明示する。
+- `tools/validate.py`が`execution/state.yaml`内の全`command`を再帰的に検査し、interpreter・workspace・outputの絶対パスを拒否する。過去の一時環境利用は`historical_provenance`として`NOT_REPLAYABLE`で残し、再実行commandは`.venv`、`repos`、`data`のrepo相対表記へ修正した。
+- `docs/cross-repository-contract.md`に4必須項目と3値の`observed_via`、missing evidenceの扱い、pin/remote/local区別を追加し、`.github/ISSUE_TEMPLATE/decision.yml`に同じprovenance表と入力欄を追加した。
+- acceptance: 1/1。親validator、focused 34/34、親全体320/320、audit check、security、workspace status、diff checkを確認した。子repo品質ゲートは対象なし。
+- 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、Drive artifactは保存・送信していない。GitHub Issue/PR、child repository、pin、merge、releaseは変更していない。
+- implementation commit: pending implementation commit。次のrecord commitでSHAをstateへ記録する。
+
+## Next exact action
+
+1. `V14-RECONCILE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。

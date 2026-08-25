@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
 
@@ -122,9 +123,11 @@ REQUIRED_FILES = [
     "execution/handoff.md",
     "docs/20260811-agentic-art-orchestration-system-design-specification.md",
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
+    "docs/cross-repository-contract.md",
     "docs/interaction-improvement-runbook.md",
     "docs/agent-ui-runbook.md",
     "docs/input-pipeline-runbook.md",
+    ".github/ISSUE_TEMPLATE/decision.yml",
 ]
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}
@@ -351,6 +354,52 @@ def _is_safe_relative_path(value) -> bool:
         return False
     parts = value.replace("\\", "/").split("/")
     return all(part not in {"", ".", ".."} for part in parts)
+
+
+def _absolute_command_token(command: str) -> str | None:
+    """Return an absolute filesystem token from a recorded command, if any."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return "<unparseable command>"
+    for token in tokens:
+        candidates = [token]
+        if "=" in token:
+            candidates.append(token.split("=", 1)[1])
+        if any(candidate.startswith(("/", "\\")) for candidate in candidates):
+            return token
+    return None
+
+
+def validate_execution_state(data: dict, source: str = "execution/state.yaml") -> list[str]:
+    """Reject non-replayable absolute paths in every recorded command field."""
+    errors: list[str] = []
+
+    def visit(value, path: str) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = f"{path}.{key}"
+                if key == "command":
+                    if not isinstance(child, str):
+                        errors.append(
+                            f"{source}: {child_path} must be a string; "
+                            "remediation: record a repo-relative replay command"
+                        )
+                    else:
+                        token = _absolute_command_token(child)
+                        if token is not None:
+                            errors.append(
+                                f"{source}: {child_path} contains absolute path token {token!r}; "
+                                "remediation: record the command with repo-relative interpreter, workspace, and output paths"
+                            )
+                else:
+                    visit(child, child_path)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                visit(child, f"{path}[{index}]")
+
+    visit(data, source)
+    return errors
 
 
 def validate_manifest(data: dict, source: str = "config/repositories.yaml") -> list[str]:
@@ -3311,6 +3360,7 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")
+        errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
         if state.get("last_completed_task") is None:
             errors.append("execution/state.yaml: last_completed_task is required")
     except ValueError as exc:

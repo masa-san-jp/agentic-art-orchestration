@@ -20,6 +20,8 @@ V12_MANIFEST = ROOT / "config/repositories.yaml"
 V12_WORKSPACE_ROOT = ROOT / "repos"
 GITHUB_SANDBOX_EVIDENCE_SCHEMA = ROOT / "schemas/github-sandbox-live-evidence.schema.json"
 GITHUB_SANDBOX_LIVE_POLICY = ROOT / "config/github-sandbox-live-policy.yaml"
+# The offline qualification contract uses a stable observation epoch so reports remain byte-reproducible.
+QUALIFICATION_OBSERVED_AT = "2026-08-25T18:48:41+09:00"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -134,6 +136,61 @@ def _command_check(identifier: str, command: list[str]) -> dict:
         "id": identifier,
         "status": "PASSED" if code == 0 else "FAILED",
         "exit_code": code,
+    }
+
+
+def _observation_provenance(item: dict, evidence_locator: str) -> dict:
+    """Return a sanitized, explicit provenance envelope for a qualification observation."""
+    repository = item.get("repository")
+    observed_commit = item.get("observed_commit")
+    source_head = item.get("source_head")
+    unknowns = {"remote_head_not_observed"}
+    if source_head is None:
+        unknowns.add("local_worktree_head_unavailable")
+    elif observed_commit is None:
+        unknowns.add("manifest_pin_unavailable")
+    elif source_head != observed_commit:
+        unknowns.add("local_worktree_differs_from_manifest_pin")
+    return {
+        "repository": repository,
+        "source_repository": repository,
+        "observed_ref": observed_commit,
+        "source_commit": observed_commit,
+        "observed_via": "manifest_pin",
+        "observed_at": QUALIFICATION_OBSERVED_AT,
+        "evidence_locator": evidence_locator,
+        "local_worktree": {
+            "head": source_head,
+            "matches_manifest_pin": (
+                source_head == observed_commit
+                if source_head is not None and observed_commit is not None
+                else None
+            ),
+            "matches_remote_head": None,
+        },
+        "unknowns": sorted(unknowns),
+    }
+
+
+def _child_repository_observation(result: dict, index: int, locator_prefix: str) -> dict:
+    """Keep child gate findings tied to their immutable source and evidence reference."""
+    provenance = _observation_provenance(
+        result,
+        f"release-check://{locator_prefix}/{result.get('repository', index)}",
+    )
+    return {
+        "repository": result.get("repository"),
+        "observed_commit": result.get("observed_commit"),
+        "workspace_commit": result.get("workspace_commit"),
+        "workspace_state": result.get("workspace_state"),
+        "execution_mode": result.get("execution_mode"),
+        "status": result.get("status"),
+        "gate_statuses": [
+            gate.get("status")
+            for gate in result.get("gates", [])
+            if isinstance(gate, dict)
+        ],
+        **provenance,
     }
 
 
@@ -368,16 +425,8 @@ def _v12_child_quality_gate_check(
     execution_modes = sorted({item.get("execution_mode") for item in results})
     passed = bool(results) and repository_statuses == ["PASSED"] and gate_statuses == ["PASSED"]
     repository_observations = [
-        {
-            "repository": item.get("repository"),
-            "observed_commit": item.get("observed_commit"),
-            "workspace_commit": item.get("workspace_commit"),
-            "workspace_state": item.get("workspace_state"),
-            "execution_mode": item.get("execution_mode"),
-            "status": item.get("status"),
-            "gate_statuses": [gate.get("status") for gate in item.get("gates", []) if isinstance(gate, dict)],
-        }
-        for item in results
+        _child_repository_observation(item, index, "v1.2-child-quality-gates")
+        for index, item in enumerate(results)
         if isinstance(item, dict)
     ]
     return {
@@ -469,16 +518,8 @@ def _child_gate_summary(report: dict) -> dict:
         and all(result.get("execution_mode") == "immutable-archive" for result in results)
     )
     repository_observations = [
-        {
-            "repository": result.get("repository"),
-            "observed_commit": result.get("observed_commit"),
-            "workspace_commit": result.get("workspace_commit"),
-            "workspace_state": result.get("workspace_state"),
-            "execution_mode": result.get("execution_mode"),
-            "status": result.get("status"),
-            "gate_statuses": [gate.get("status") for gate in result.get("gates", []) if isinstance(gate, dict)],
-        }
-        for result in results
+        _child_repository_observation(result, index, "production-child-gates")
+        for index, result in enumerate(results)
         if isinstance(result, dict)
     ]
     return {
@@ -816,6 +857,13 @@ def _qualify(
         "human_gate": "merge/release requires human approval",
     }
     if pinned_observations is not None:
+        observation_provenance = [
+            _observation_provenance(
+                item,
+                f"release-check://pinned-workspace/{item.get('repository', index)}",
+            )
+            for index, item in enumerate(pinned_observations)
+        ]
         source_findings = [
             {
                 "repository": item.get("repository"),
@@ -823,21 +871,31 @@ def _qualify(
                 "observed_commit": item.get("observed_commit"),
                 "source_head": item.get("source_head"),
                 "source_state": item.get("source_state"),
+                **observation_provenance[index],
             }
-            for item in pinned_observations
+            for index, item in enumerate(pinned_observations)
             if item.get("source_state") != "MATCHED"
         ]
         report["pinned_workspace"] = {
             "mode": "manifest-observed-commit-clone",
             "source_mutation": False,
             "repositories": pinned_observations,
+            "observation_provenance": observation_provenance,
             "findings": source_findings,
         }
+        report["observation_provenance"] = observation_provenance
     return report
 
 
 def _pinned_workspace_failure(version: str, runs: int, error: PinnedWorkspaceError) -> dict:
     """Return a sanitized blocking report when a pin cannot be materialized."""
+    observation_provenance = [
+        _observation_provenance(
+            item,
+            f"release-check://pinned-workspace/{item.get('repository', index)}",
+        )
+        for index, item in enumerate(error.findings)
+    ]
     return {
         "version": version,
         "network": "disabled",
@@ -864,10 +922,13 @@ def _pinned_workspace_failure(version: str, runs: int, error: PinnedWorkspaceErr
                     "source_head": item.get("source_head"),
                     "source_state": item.get("source_state"),
                     "reason": item.get("reason"),
+                    **observation_provenance[index],
                 }
-                for item in error.findings
+                for index, item in enumerate(error.findings)
             ],
+            "observation_provenance": observation_provenance,
         },
+        "observation_provenance": observation_provenance,
         "history": {"status": "NOT_RUN", "reason": "pin materialization failed"},
         "remote_operations": [],
         "merge_operation": "NOT_PERFORMED",

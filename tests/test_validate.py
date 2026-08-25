@@ -20,6 +20,20 @@ class BootstrapValidationTests(unittest.TestCase):
     def test_bootstrap_is_valid(self):
         self.assertEqual([], MODULE.validate())
 
+    def test_execution_state_rejects_absolute_replay_command_paths(self):
+        state = copy.deepcopy(MODULE.load_yaml(ROOT / "execution/state.yaml"))
+        state["qualification_v14"]["command"] = (
+            ".venv/bin/python tools/release_check.py --workspace-root=/tmp/ephemeral"
+        )
+        errors = MODULE.validate_execution_state(state, "fixture:execution/state.yaml")
+        rendered = "\n".join(errors)
+        self.assertIn("qualification_v14.command", rendered)
+        self.assertIn("absolute path token", rendered)
+
+    def test_execution_state_accepts_repo_relative_replay_commands(self):
+        state = copy.deepcopy(MODULE.load_yaml(ROOT / "execution/state.yaml"))
+        self.assertEqual([], MODULE.validate_execution_state(state, "fixture:execution/state.yaml"))
+
     def test_queue_advances_from_v1_qualification_into_v11(self):
         queue = MODULE.load_yaml(ROOT / "execution/task-queue.yaml")
         by_id = {task["id"]: task for task in queue["tasks"]}

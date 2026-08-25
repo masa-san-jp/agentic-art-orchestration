@@ -8,6 +8,36 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_observation_provenance_contract_and_decision_template_are_present(self):
+        contract = (ROOT / "docs/cross-repository-contract.md").read_text(encoding="utf-8")
+        template = (ROOT / ".github/ISSUE_TEMPLATE/decision.yml").read_text(encoding="utf-8")
+        for required in (
+            "## Observation provenance",
+            "`repository`",
+            "`observed_ref`",
+            "`observed_via`",
+            "`observed_at`",
+            "`manifest_pin` / `remote_head` / `local_worktree`",
+            "source_repository",
+            "source_commit",
+            "evidence_locator",
+            "unknowns",
+            "execution/state.yaml",
+        ):
+            self.assertIn(required, contract)
+        for required in (
+            "Decision with observation provenance",
+            "observed_ref",
+            "observed_via",
+            "observed_at",
+            "evidence_locator",
+            "unknowns",
+            "manifest_pin",
+            "remote_head",
+            "local_worktree",
+        ):
+            self.assertIn(required, template)
+
     def test_operator_runbook_has_complete_lifecycle_and_safety_boundaries(self):
         text = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
         for required in (

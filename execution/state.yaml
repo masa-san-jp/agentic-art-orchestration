@@ -1,29 +1,29 @@
-version: 30
-updated_at: "2026-08-25T16:07:23+09:00"
+version: 32
+updated_at: "2026-08-25T18:55:58+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-v14-pin-release
-  acquired_at: "2026-08-25T15:58:37+09:00"
-  expires_at: "2026-08-25T16:58:37+09:00"
+  owner: codex-v14-observation-provenance
+  acquired_at: "2026-08-25T18:48:41+09:00"
+  expires_at: "2026-08-25T19:48:41+09:00"
   lane: RELEASE_QUALIFICATION
-  execution_id: V14-PIN-RELEASE-CHECK-001:attempt-1
+  execution_id: V14-OBSERVATION-PROVENANCE-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/release_check.py, tools/pinned_workspace.py, tests/test_release_check.py, tests/test_pinned_workspace.py, tools/validate.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-  released_at: "2026-08-25T16:07:23+09:00"
-  release_reason: V14-PIN-RELEASE-CHECK-001 completed; release qualification now materializes manifest pins and records source drift without mutating child checkouts
+    paths: [tools/validate.py, tests/test_validate.py, docs/cross-repository-contract.md, .github/ISSUE_TEMPLATE/decision.yml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+  released_at: "2026-08-25T18:55:58+09:00"
+  release_reason: V14-OBSERVATION-PROVENANCE-001 completed; qualification findings and replay commands now retain explicit observation provenance
 checkpoint:
-  task: V14-PIN-RELEASE-CHECK-001
-  repository: agentic-art-orchestration
-  start_point: 143c69b
-  expected_changes: Materialize the manifest-pinned workspace for release qualification so production exchange and v1.2 E2E do not depend on mutable child checkouts.
-  result: completed; pin materializer, fail-closed unavailable-pin report, exact child observations, and qualification regression evidence recorded
-last_completed_task: V14-PIN-RELEASE-CHECK-001
-resume_from:
   task: V14-OBSERVATION-PROVENANCE-001
-  action: Read parent Issue #56 and qualification provenance requirements, then run the parent validator before changing report provenance.
+  repository: agentic-art-orchestration
+  start_point: 22404ad
+  expected_changes: Preserve source repository, observed commit/ref, observation time, evidence reference, and explicit unknowns in qualification records; reject absolute paths in recorded execution commands.
+  result: completed; observation provenance, absolute command guard, decision template, and replayable state commands implemented
+last_completed_task: V14-OBSERVATION-PROVENANCE-001
+resume_from:
+  task: V14-RECONCILE-001
+  action: Read parent Issue #67 and reconcile queue, state, handoff, README, and execution-plan progress without changing child pins.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -39,6 +39,23 @@ pin_release_check:
   local_qualification: BLOCKED_EXPECTED; generated offline fixture lacks manifest observed commit objects; pin update was not attempted
   audit: FINDINGS; one known nonblocking marketing freshness warning
   security: PASSED
+  child_repository_mutation: false
+observation_provenance:
+  status: passed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/56
+  implementation_commit: pending_record_commit
+  acceptance: 1/1
+  observation_fields: [repository, observed_ref, observed_via, observed_at, source_repository, source_commit, evidence_locator, unknowns]
+  observed_via_values: [manifest_pin, remote_head, local_worktree]
+  qualification_findings: source repository and commit retained; opaque evidence locator and explicit remote/local unknowns retained; missing pin evidence remains unavailable
+  state_command_guard: absolute interpreter, workspace, and output path tokens rejected
+  historical_commands: preserved as NOT_REPLAYABLE historical_provenance; replay commands use repo-relative paths
+  focused_tests: 34/34
+  parent_tests: 320/320
+  parent_validation: passed
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
   child_repository_mutation: false
 child_preflight:
   status: passed_with_fixture_and_existing_qualified_evidence
@@ -198,11 +215,21 @@ startup_contract_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_validate -v; .venv/bin/python -m unittest discover -s tests -v; git diff --check
   result: passed; startup policy/report contract valid, dedicated startup contract tests 5/5 passed, full parent suite 230/230 passed, diff check passed; no startup runtime, remote observation, child repository, Issue, Drive, or user artifact mutation; 2026-08-13T12:12:00+09:00
 last_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-qualified-5Nhxun --run-id production-qualification-final --output /tmp/aap-production-qualification-final/child-quality-gates.json --check; /tmp/aap-bootstrap-venv/bin/python tools/workspace.py snapshot --check --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/status.py --check --workspace-root /tmp/aap-production-qualified-5Nhxun --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check; gh pr view 18 --repo masa-san-jp/agentic-art-orchestration --json state,mergeCommit,statusCheckRollup; git tag --points-at 302de458495257fca0e754ed4f71f6b5255abbbe; gh release view v1.3.0 --repo masa-san-jp/agentic-art-orchestration
+  command: .venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root repos --output data/release-check-v13.json; .venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root repos --run-id production-qualification-final --output data/child-quality-gates-v13.json --check; .venv/bin/python tools/workspace.py snapshot --check --workspace-root repos; .venv/bin/python tools/status.py --check --workspace-root repos --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check; gh pr view 18 --repo masa-san-jp/agentic-art-orchestration --json state,mergeCommit,statusCheckRollup; git tag --points-at 302de458495257fca0e754ed4f71f6b5255abbbe; gh release view v1.3.0 --repo masa-san-jp/agentic-art-orchestration
+  historical_provenance:
+    execution_environment: ephemeral_interpreter_and_workspace
+    replayability: NOT_REPLAYABLE
+    evidence_ref: state://last_validation/historical-qualification-v1.3.0
+    unknowns: [historical_interpreter_and_workspace_no_longer_available]
   result: passed; v1.3.0 qualification PASS, three exchange reports byte-stable at sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93, six terminal scenarios PASS, 5 repositories MATCHED, 14/14 child gates PASS per run, parent 225 tests PASS, audit finding 0, security PASS, tracked output paths empty; PR #18 merge, exact tag, and published GitHub Release verified; 2026-08-13T12:00:33+09:00
 qualification_v14:
   status: offline_passed_live_blocked
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun --output /tmp/aap-release-check-v14-short.json
+  command: .venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root repos --output data/release-check-v14.json
+  historical_provenance:
+    execution_environment: ephemeral_interpreter_and_workspace
+    replayability: NOT_REPLAYABLE
+    evidence_ref: state://qualification_v14/historical-qualification-v1.4.0
+    unknowns: [historical_interpreter_and_workspace_no_longer_available]
   initial_operations: passed; 3/3 deterministic; Drive idempotency, Issue idempotency, privacy, and remote mutation checks passed
   child_quality_gates: passed_isolated; 5/5 repositories MATCHED; 14/14 gates PASSED in isolated fixed-workspace run
   production_exchange: passed; 3/3 deterministic runs; six terminal scenarios; report hash sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93 repeated; remote/physical effect false

@@ -20,8 +20,11 @@ from tools.release_check import (
     _sandbox_live_evidence_check,
     _v12_child_quality_gate_check,
     _v12_e2e_check,
+    _pinned_workspace_failure,
+    _observation_provenance,
     validate_request,
 )
+from tools.pinned_workspace import PinnedWorkspaceError
 
 
 def git(root: Path, *args: str) -> str:
@@ -46,6 +49,49 @@ def make_pinned_fixture(root: Path) -> tuple[dict, str, str]:
 
 
 class ReleaseCheckTests(unittest.TestCase):
+    def test_qualification_observation_provenance_preserves_pin_and_unknown_remote(self):
+        result = _observation_provenance(
+            {
+                "repository": "child-one",
+                "observed_commit": "a" * 40,
+                "source_head": "b" * 40,
+                "source_state": "STALE",
+            },
+            "release-check://pinned-workspace/child-one",
+        )
+        self.assertEqual("child-one", result["source_repository"])
+        self.assertEqual("a" * 40, result["source_commit"])
+        self.assertEqual("manifest_pin", result["observed_via"])
+        self.assertEqual("release-check://pinned-workspace/child-one", result["evidence_locator"])
+        self.assertIn("remote_head_not_observed", result["unknowns"])
+        self.assertIn("local_worktree_differs_from_manifest_pin", result["unknowns"])
+        self.assertIsNone(result["local_worktree"]["matches_remote_head"])
+
+    def test_pin_failure_finding_retains_provenance_without_normalizing_missing_evidence(self):
+        report = _pinned_workspace_failure(
+            "1.2.0",
+            1,
+            PinnedWorkspaceError(
+                "pin unavailable",
+                [
+                    {
+                        "repository": "child-one",
+                        "observed_commit": "a" * 40,
+                        "source_head": None,
+                        "source_state": "UNAVAILABLE",
+                        "materialized_state": "NOT_RUN",
+                        "reason": "observed commit is unavailable",
+                    }
+                ],
+            ),
+        )
+        finding = report["pinned_workspace"]["findings"][0]
+        self.assertEqual("child-one", finding["source_repository"])
+        self.assertEqual("a" * 40, finding["source_commit"])
+        self.assertTrue(finding["evidence_locator"].startswith("release-check://"))
+        self.assertIn("local_worktree_head_unavailable", finding["unknowns"])
+        self.assertIsNone(finding["local_worktree"]["head"])
+
     def test_qualification_uses_materialized_pin_instead_of_source_head(self):
         with tempfile.TemporaryDirectory(prefix="release-pinned-source-") as temporary_name:
             source_root = Path(temporary_name) / "sources"
