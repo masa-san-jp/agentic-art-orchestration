@@ -27,7 +27,7 @@ resume_from:
   command: .venv/bin/python tools/validate.py --check
 child_preflight:
   status: passed_with_fixture_and_existing_qualified_evidence
-  implementation_commit: 574b4d6
+  implementation_commit: 426a8b3
   focused_tests: 8/8
   missing_dependency_fixture: ENV_UNSATISFIED; gates NOT_RUN; remediation recorded
   lower_bound_fixture: ENV_UNSATISFIED; gates NOT_RUN

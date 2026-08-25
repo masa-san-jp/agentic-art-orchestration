@@ -1032,7 +1032,7 @@
 - workspace statusは5 repositoriesすべて`main`・clean・ahead/behind 0、security PASS。auditは既知のmarketing freshness warning 1件のみ。既存のqualified evidence 5/5 repositories・14/14 gates PASSを保持した。
 - 親の生成offline fixtureでの実manifest gate再実行は、observed commit object不在のため5件`BLOCKED`。これはpinを更新せず記録した。子repo、GitHub Issue/PR、Drive、credential、merge、releaseは変更していない。
 - acceptance: 1/1。leaseをreleaseし、次のREADYを`V14-PIN-RELEASE-CHECK-001`へ進めた。
-- implementation commit: `574b4d6`。完了記録は後続の親repo record commitへ反映した。
+- implementation commit: `426a8b3`。完了記録は後続の親repo record commitへ反映した。
 
 ## Next exact action
 
