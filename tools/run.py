@@ -205,7 +205,8 @@ def run(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpos
         numbering = _next_handoff(research_root, slug)
         handoff_args = ["tools/build_handoff.py", f"projects/{slug}", "--root", ".",
                         "--generated-at", requested_at, "--research-commit", _head(research_root),
-                        "--handoff-id", numbering["handoff_id"], "--revision", str(numbering["revision"])]
+                        "--handoff-id", numbering["handoff_id"], "--revision", str(numbering["revision"]),
+                        "--commit"]
         if numbering["supersedes"] is not None:
             handoff_args += ["--supersedes", numbering["supersedes"]]
         record("handoff", _run_child(research_root, handoff_args, python, allow_conflict=True))
