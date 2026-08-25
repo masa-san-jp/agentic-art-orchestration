@@ -1071,7 +1071,7 @@
 - `docs/cross-repository-contract.md`に4必須項目と3値の`observed_via`、missing evidenceの扱い、pin/remote/local区別を追加し、`.github/ISSUE_TEMPLATE/decision.yml`に同じprovenance表と入力欄を追加した。
 - acceptance: 1/1。親validator、focused 34/34、親全体320/320、audit check、security、workspace status、diff checkを確認した。子repo品質ゲートは対象なし。
 - 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、Drive artifactは保存・送信していない。GitHub Issue/PR、child repository、pin、merge、releaseは変更していない。
-- implementation commit: pending implementation commit。次のrecord commitでSHAをstateへ記録する。
+- implementation commit: `1707190`。完了記録は次の親repo record commitへ反映する。
 
 ## Next exact action
 

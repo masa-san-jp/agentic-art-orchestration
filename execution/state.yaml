@@ -43,7 +43,7 @@ pin_release_check:
 observation_provenance:
   status: passed
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/56
-  implementation_commit: pending_record_commit
+  implementation_commit: 1707190
   acceptance: 1/1
   observation_fields: [repository, observed_ref, observed_via, observed_at, source_repository, source_commit, evidence_locator, unknowns]
   observed_via_values: [manifest_pin, remote_head, local_worktree]
