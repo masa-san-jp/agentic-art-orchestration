@@ -51,7 +51,7 @@ gap_dag:
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/107
   implementation_commit: 7486320
   issue_ssot_tasks: 24
-  next_ready_task: V14-SANDBOX-ATTEMPT-001
+  next_ready_task: V14-CHILD-PREFLIGHT-001
   ready_task_count: 1
   parent_validation: passed
   focused_tests: 11/11
