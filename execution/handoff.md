@@ -1052,6 +1052,7 @@
 - fixtureでadvanced・dirty・detachedの3状態が同じobserved commitへ実体化されること、source mutation=false、unavailable pinがfail-closedになることを確認した。focused 16/16、親全体315/315、validator PASS、diff check PASS。
 - workspace statusは5 repositoriesすべて`main`・clean・ahead/behind 0、security PASS。auditは既知のmarketing freshness warning 1件。生成offline fixtureの実manifest qualificationはpin object不足でBLOCKED_EXPECTEDとして記録し、pin更新やchild mutationは行っていない。
 - acceptance: 1/1。leaseをreleaseし、次のREADYを`V14-OBSERVATION-PROVENANCE-001`へ進めた。
+- implementation commit: `37883f3`。完了記録は後続の親repo record commitへ反映する。
 
 ## Next exact action
 

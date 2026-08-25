@@ -27,7 +27,7 @@ resume_from:
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
-  implementation_commit: pending_record_commit
+  implementation_commit: 37883f3
   focused_tests: 16/16
   parent_validation: passed
   parent_tests: 315/315
