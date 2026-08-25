@@ -1138,3 +1138,9 @@
 - v1.4.0 qualificationを3 runsで再実行した。report SHA-256は`f77c2a2ce82297347f59628b376985fabde1b2fdfa1df150233dea10a16f0dab`。pin materializationは5/5 MATCHED、source mutation=false、remote_operations=[]、merge/tag/releaseは未実行。
 - v1.2 E2EとProduction exchangeはchild gate blockerによりFAILED、initial-operations E2Eは3/3 PASS、既存sandbox live evidenceもPASS。総合acceptanceは0/1のまま。
 - productionのrequirementsは未対応構文ではなく、exact version mismatchとして観測できる状態になった。解除条件は、明示承認された実行環境で`PyYAML==6.0.2`を満たしてから、同じverified workspaceで再qualificationすること。自動install、子repo変更、pin更新、外部writeは行っていない。
+
+## INITIAL-OPS-QUALIFY-001 reattempt blocked after explicit qualification command
+
+- 2026-08-26 01:01 JST、`<verified-child-workspace>`を前回のverified workspaceへ解決し、validator PASS後にv1.4.0 qualificationを3 runsで再実行した。report SHA-256は`ab2a533127ad7430dac40e2a0db6eb9f5faab4db19ca5d2da3974d7924a58ab4`。
+- 結果は前回と同じく、pin 5/5 MATCHED、child gate 4/5 PASS、agentic-art-productionは`PyYAML 6.0.3`対`PyYAML==6.0.2`のexact mismatchでENV_UNSATISFIED・3 gate NOT_RUN。v1.2 E2EとProduction exchangeはFAILED、initial-operations E2Eは3/3 PASSだった。
+- `remote_operations=[]`、merge/tag/releaseは未実行。子repo、pin、Drive/GitHub Issue、credential、外部artifactは変更していない。次は、明示承認された実行環境でexact版を満たしてから同じqualificationを再実行する。

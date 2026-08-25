@@ -1,25 +1,25 @@
-version: 45
-updated_at: "2026-08-25T20:24:49+09:00"
+version: 46
+updated_at: "2026-08-26T01:01:15+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-child-preflight-exact
-  acquired_at: "2026-08-25T20:15:38+09:00"
-  expires_at: "2026-08-25T21:15:38+09:00"
-  lane: QUALITY_GATES
-  execution_id: V14-CHILD-PREFLIGHT-EXACT-001:attempt-1
+  owner: codex-initial-ops-qualify
+  acquired_at: "2026-08-26T01:01:15+09:00"
+  expires_at: "2026-08-26T02:01:15+09:00"
+  lane: RELEASE_QUALIFICATION
+  execution_id: INITIAL-OPS-QUALIFY-001:attempt-3
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/child_quality_gates.py, tests/test_child_quality_gates.py, docs/operator-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
-  released_at: "2026-08-25T20:24:49+09:00"
-  release_reason: V14-CHILD-PREFLIGHT-EXACT-001 completed; exact numeric requirement syntax is supported and qualification now fails closed on a named installed-version mismatch
+    paths: [data/release-check-v14.json, execution/state.yaml, execution/handoff.md, README.md]
+  released_at: "2026-08-26T01:01:15+09:00"
+  release_reason: INITIAL-OPS-QUALIFY-001 reattempt blocked; exact requirement syntax is supported but agentic-art-production PyYAML==6.0.2 is not satisfied by installed 6.0.3
 checkpoint:
-  task: V14-CHILD-PREFLIGHT-EXACT-001
+  task: INITIAL-OPS-QUALIFY-001
   repository: agentic-art-orchestration
   start_point: 3ec458b
   expected_changes: Extend the bounded parent child-gate dependency preflight to recognize exact numeric == requirements while preserving fail-closed ENV_UNSATISFIED and no-install behavior.
-  result: completed; exact numeric == requirements are recognized, satisfied exact requirements execute gates, and mismatches remain ENV_UNSATISFIED with NOT_RUN gates
+  result: blocked; three-run qualification completed fail-closed with 5/5 pins matched, 4/5 child repositories passing, and agentic-art-production ENV_UNSATISFIED for exact PyYAML version mismatch
 last_completed_task: V14-CHILD-PREFLIGHT-EXACT-001
 resume_from:
   task: INITIAL-OPS-QUALIFY-001
@@ -104,7 +104,7 @@ initial_ops_qualification:
   runs: 3
   acceptance: 0/1
   report: data/release-check-v14.json
-  report_sha256: f77c2a2ce82297347f59628b376985fabde1b2fdfa1df150233dea10a16f0dab
+  report_sha256: ab2a533127ad7430dac40e2a0db6eb9f5faab4db19ca5d2da3974d7924a58ab4
   blocking_check: v1.2-e2e-and-production-exchange
   pin_materialization: PASSED
   pinned_repositories: 5/5 MATCHED

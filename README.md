@@ -20,13 +20,13 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-25T20:24:49+09:00`.
+Source updated at: `2026-08-26T01:01:15+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 17 | 0 | 0 | 3 | 78 | 98 |
 
-Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `V14-CHILD-PREFLIGHT-EXACT-001`.
+Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `INITIAL-OPS-QUALIFY-001`.
 Next action: Resolve the agentic-art-production PyYAML==6.0.2 environment requirement in an explicitly authorized environment, then rerun the three-run v1.4.0 qualification from the verified pinned workspace without mutating child source.
 Ready: none.
 Next task: `null`.
