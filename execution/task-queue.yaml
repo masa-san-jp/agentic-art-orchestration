@@ -1,5 +1,5 @@
-version: 11
-updated_at: "2026-08-25T19:24:17+09:00"
+version: 12
+updated_at: "2026-08-26T19:40:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -878,7 +878,7 @@ tasks:
   - id: PURPOSE-PRODUCTION-REVISION-001
     milestone: M16
     title: Accept superseding handoffs with impact-aware replanning
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/36
     target_repositories: [agentic-art-production]
     agent_terminal: DRAFT_PR_READY
@@ -889,7 +889,7 @@ tasks:
   - id: PURPOSE-RESEARCH-FEEDBACK-001
     milestone: M16
     title: Export production feedback as an anonymized idempotent research signal
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/45
     target_repositories: [agentic-art-research]
     agent_terminal: DRAFT_PR_READY

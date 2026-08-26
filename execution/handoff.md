@@ -1284,3 +1284,16 @@
 ## Next exact action
 
 1. `PURPOSE-PRODUCTION-REVISION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #36とProduction childのsuperseding-handoff contractを読む。
+
+## PURPOSE-PRODUCTION-REVISION-001 completed
+
+- Production childのIssue #36向けに、`--accept-revision`、明示的なoccurred-at/actor/idempotency、supersedes lineage検証、初回履歴移行、hash-chain receipt projection、immutable source bundle/old plan history、artifact impact report、STALE_BASELINEとblocking readiness、candidate plan再生成、同一candidate no-op、同一identity異hash/fork/sequence拒否、staging検証後のatomic directory swapを実装した。runtime、execution、evidence、observation、resultの旧記録はstagingへ引き継ぎ、terminal result/reportは履歴参照を保持する設計とした。
+- 変更されたchild treeはschema 3件、`tools/lib/handoff_revision.py`、`tools/new_production.py`、`tools/validate.py`、revision contract tests、project layout、schema registry、runbook、schema reference、ExecPlan、child task queueである。正常・失敗・再試行を`tests/test_handoff_revision.py` 3/3で確認した。
+- 隔離child branch `agent/handoff-revision-001`のcommitは`b6a6d52ea9f6f0b2eac04069ff5b154fd20ba50f`。child validatorは`[]`、全65 tests、evaluation 6 checks PASS、release gate 3/3 PASS（verified commit同SHA、repository_clean=true）である。release publicationはHUMAN_APPROVAL_REQUIREDのまま実行していない。
+- 親task acceptanceは1/1。親validatorはclaim前・完了記録後ともにPASSし、親全体testsは351/351 PASS。parentの次taskは`PURPOSE-RESEARCH-FEEDBACK-001`でREADYにした。
+- Production本体のcheckoutは`agent/runtime-guards-002`でcleanだがmainではない。親manifestのProduction pinは`51a817c8fcfe292069b85717f5e973b1e860bd4b`のまま、isolated child commitのmerge・push・PR・pin更新・remote Issue #36更新は行っていない。これはbranch不一致と人間承認境界による未解決であり、次回はownerが統合先branch/PRを明示した後に、commitの存在とpin整合を再確認する。
+- 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、asset bodyは追加していない。Google Drive等の外部artifactは作成・更新していない。explicit/inferred feedbackは扱っていない。外部effect、購入、契約、公開、物理作業、merge、releaseは実行していない。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-FEEDBACK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Research Issue #45とfeedback export schema・quality gateを読む。

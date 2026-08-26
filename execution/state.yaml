@@ -1,30 +1,30 @@
-version: 69
-updated_at: "2026-08-26T17:20:46+09:00"
+version: 71
+updated_at: "2026-08-26T19:40:00+09:00"
 active_task: null
 active_repository: agentic-art-production
 lease:
   status: released
-  owner: codex-production-observation
-  acquired_at: "2026-08-26T17:08:55+09:00"
-  expires_at: "2026-08-26T18:08:55+09:00"
+  owner: codex-production-revision
+  acquired_at: "2026-08-26T18:20:00+09:00"
+  expires_at: "2026-08-26T19:20:00+09:00"
   lane: CHILD_SOURCE
-  execution_id: PURPOSE-PRODUCTION-OBSERVATION-001:attempt-1
+  execution_id: PURPOSE-PRODUCTION-REVISION-001:attempt-1
   scope:
     repository: agentic-art-production
-    paths: [schemas/observation-record.schema.json, schemas/observations.schema.json, schemas/execution-event.schema.json, config/schema-registry.yaml, config/project-layout.yaml, tools/lib/execution.py, tools/run_execution.py, tools/lib/result.py, tools/build_result.py, tools/lib/evaluation.py, tools/validate.py, tests/test_observation.py, tests/test_result.py, tests/test_execution.py, docs/observation-migration.md, docs/operations-runbook.md, docs/schema-reference.md, execution/task-queue.yaml, README.md]
+    paths: [schemas/handoff-revision-event.schema.json, schemas/handoff-receipts.schema.json, schemas/handoff-impact-report.schema.json, config/schema-registry.yaml, config/project-layout.yaml, tools/lib/handoff_revision.py, tools/new_production.py, tools/validate.py, tests/test_handoff_revision.py, docs/operations-runbook.md, docs/schema-reference.md, execution/task-queue.yaml]
     child_repositories: [agentic-art-production]
-  released_at: "2026-08-26T17:20:46+09:00"
-  release_reason: "PURPOSE-PRODUCTION-OBSERVATION-001 completed; existing child Issue #34 implementation and all declared quality gates passed in an isolated clone; branch and pin integration remain separate"
+  released_at: "2026-08-26T19:40:00+09:00"
+  release_reason: "PURPOSE-PRODUCTION-REVISION-001 completed; Issue #36 implementation and all declared child gates passed in an isolated clone; branch and pin integration remain separate"
 checkpoint:
-  task: PURPOSE-PRODUCTION-OBSERVATION-001
+  task: PURPOSE-PRODUCTION-REVISION-001
   repository: agentic-art-production
   start_point: d07ed69
-  expected_changes: Verify the child Issue #34 implementation of append-only production observations, zero-observation result behavior, lossless ACTIVE revision projection, replay integrity, and privacy boundary without modifying the parent or child checkout.
-  result: completed; child Issue #34 implementation observed at 313e368 and verified at d07ed69 with compileall, validator, focused 7 tests, full 62 tests, evaluation, diff check, and clean isolated checkout; child source branch is not main and parent pin 51a817c remains unchanged because integration is out of scope
-last_completed_task: PURPOSE-PRODUCTION-OBSERVATION-001
+  expected_changes: Implement and verify Issue #36 superseding-handoff acceptance, deterministic history migration, impact report, atomic replanning, idempotency, and failure preservation in an isolated child checkout.
+  result: completed; isolated child commit b6a6d52ea9f6f0b2eac04069ff5b154fd20ba50f verified with validator, 65 tests, evaluation, and release gate 3/3
+last_completed_task: PURPOSE-PRODUCTION-REVISION-001
 resume_from:
-  task: PURPOSE-PRODUCTION-REVISION-001
-  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #36 and the Production child superseding-handoff contract.
+  task: PURPOSE-RESEARCH-FEEDBACK-001
+  action: Claim the lowest-ID READY task, run the parent validator, then inspect Research Issue #45 and the feedback export contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
