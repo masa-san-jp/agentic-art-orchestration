@@ -889,7 +889,7 @@ tasks:
   - id: PURPOSE-RESEARCH-FEEDBACK-001
     milestone: M16
     title: Export production feedback as an anonymized idempotent research signal
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/45
     target_repositories: [agentic-art-research]
     agent_terminal: DRAFT_PR_READY
@@ -900,7 +900,7 @@ tasks:
   - id: PURPOSE-VIEWER-RESPONSE-001
     milestone: M16
     title: Add viewer response notes and conservative requirement assessment
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/98
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: DRAFT_PR_READY

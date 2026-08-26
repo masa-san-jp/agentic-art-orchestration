@@ -1,30 +1,30 @@
-version: 71
-updated_at: "2026-08-26T19:40:00+09:00"
+version: 73
+updated_at: "2026-08-26T20:33:29+09:00"
 active_task: null
-active_repository: agentic-art-production
+active_repository: agentic-art-research
 lease:
   status: released
-  owner: codex-production-revision
-  acquired_at: "2026-08-26T18:20:00+09:00"
-  expires_at: "2026-08-26T19:20:00+09:00"
+  owner: codex-research-feedback
+  acquired_at: "2026-08-26T20:16:19+09:00"
+  expires_at: "2026-08-26T21:16:19+09:00"
   lane: CHILD_SOURCE
-  execution_id: PURPOSE-PRODUCTION-REVISION-001:attempt-1
+  execution_id: PURPOSE-RESEARCH-FEEDBACK-001:attempt-1
   scope:
-    repository: agentic-art-production
-    paths: [schemas/handoff-revision-event.schema.json, schemas/handoff-receipts.schema.json, schemas/handoff-impact-report.schema.json, config/schema-registry.yaml, config/project-layout.yaml, tools/lib/handoff_revision.py, tools/new_production.py, tools/validate.py, tests/test_handoff_revision.py, docs/operations-runbook.md, docs/schema-reference.md, execution/task-queue.yaml]
-    child_repositories: [agentic-art-production]
-  released_at: "2026-08-26T19:40:00+09:00"
-  release_reason: "PURPOSE-PRODUCTION-REVISION-001 completed; Issue #36 implementation and all declared child gates passed in an isolated clone; branch and pin integration remain separate"
+    repository: agentic-art-research
+    paths: [tools/export_feedback_signals.py, schemas/research-signal-export.schema.json, tests/test_export_feedback_signals.py, docs/schema-reference.md, execution/task-queue.yaml]
+    child_repositories: [agentic-art-research]
+  released_at: "2026-08-26T20:33:29+09:00"
+  release_reason: "PURPOSE-RESEARCH-FEEDBACK-001 completed; Research Issue #45 implementation and all declared child gates passed on clean child main; parent pin remains unchanged because child HEAD is newer"
 checkpoint:
-  task: PURPOSE-PRODUCTION-REVISION-001
-  repository: agentic-art-production
-  start_point: d07ed69
-  expected_changes: Implement and verify Issue #36 superseding-handoff acceptance, deterministic history migration, impact report, atomic replanning, idempotency, and failure preservation in an isolated child checkout.
-  result: completed; isolated child commit b6a6d52ea9f6f0b2eac04069ff5b154fd20ba50f verified with validator, 65 tests, evaluation, and release gate 3/3
-last_completed_task: PURPOSE-PRODUCTION-REVISION-001
-resume_from:
   task: PURPOSE-RESEARCH-FEEDBACK-001
-  action: Claim the lowest-ID READY task, run the parent validator, then inspect Research Issue #45 and the feedback export contract.
+  repository: agentic-art-research
+  start_point: 07f8cf57e416e5166ac80019ba2d015ff1821e9c
+  expected_changes: Verify Issue #45 anonymized deterministic research-signal export, source integrity, fail-closed privacy/contract checks, atomic output, idempotency, and no external delivery side effect.
+  result: completed; existing child implementation verified on clean main with 251 tests and all declared gates passed
+last_completed_task: PURPOSE-RESEARCH-FEEDBACK-001
+resume_from:
+  task: PURPOSE-VIEWER-RESPONSE-001
+  action: Claim the lowest-ID READY task, run the parent validator, then inspect the viewer response Issue #98 and append-only assessment contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence

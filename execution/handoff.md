@@ -1297,3 +1297,15 @@
 ## Next exact action
 
 1. `PURPOSE-RESEARCH-FEEDBACK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Research Issue #45とfeedback export schema・quality gateを読む。
+
+## PURPOSE-RESEARCH-FEEDBACK-001 completed
+
+- Research childのIssue #45（CLOSED）で定義された`tools/export_feedback_signals.py`、`schemas/research-signal-export.schema.json`、専用テストを、child `main` HEAD `07f8cf57e416e5166ac80019ba2d015ff1821e9c`で確認した。出力は明示outputの`manifest.json`と`signals.jsonl`だけで、production resultのimport監査・hash・acceptance test・requirement・observationを再検証し、決定的・原子的・冪等なresearch signalへ変換する。既存bytesの再実行は再利用し、異なるbytesはconflictとして非破壊に拒否する。
+- Issue #45の受入条件を、privacy-safe/fail-closed（PII、secret、private URL、path、`PRIVATE_RAW`/`RESTRICTED`、unknown field）、source provenance、schema validation、read-only project/data境界、canonical tree非出力、外部配送なしとして検証した。提示条件はproduction-result v1に存在しないため`null`固定であり、自由文から補っていない。
+- 子品質ゲートは4/4 PASS。`/private/tmp/aap-research-venv/bin/python -m unittest discover -s tests -v` は251/251、`tools/validate.py --check`、`tools/security_check.py --check`、`tools/docs_check.py --check` はすべてPASS。Issue専用`tests.test_export_feedback_signals`も7/7 PASSを確認した。子repoは`main...origin/main`・cleanのまま保持した。
+- 親validatorはclaim後・完了記録後ともにPASS。親task acceptanceは1/1。親manifestのResearch pin `d947fdd14abeb700af9a62abcf27c21f3f12e134`はchild HEADより古いため更新せず、child SSOTのpin adoptionは別作業として未解決に保持する。`repos/`、parent data、Issue/PR、Drive、credential、merge、releaseは変更していない。
+- 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、raw assetは追加していない。外部artifactは作成しておらず、create-only/opaque参照の対象もない。explicit/inferred feedbackは扱っていない。
+
+## Next exact action
+
+1. `PURPOSE-VIEWER-RESPONSE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、viewer responseのappend-only記録とUNKNOWN/SUPPORTED/CONTRADICTED評価を実装・検証する。
