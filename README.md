@@ -20,18 +20,17 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-26T12:39:14+09:00`.
+Source updated at: `2026-08-26T13:24:06+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 17 | 0 | 0 | 3 | 78 | 98 |
+| 16 | 1 | 0 | 2 | 79 | 98 |
 
 Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `INITIAL-OPS-QUALIFY-001`.
-Next action: Decide and implement an authorized per-child dependency environment strategy, or obtain child-owner reconciliation of the conflicting PyYAML exact pins, then rerun the three-run v1.4.0 qualification without mutating child source or pins automatically.
-Ready: none.
-Next task: `null`.
+Next action: Inspect the authoritative naming decision and affected repository instructions, then claim PURPOSE-NAMING-001 without changing child repositories until their SSOT and lease scope are confirmed.
+Ready: `PURPOSE-NAMING-001`.
+Next task: `PURPOSE-NAMING-001`.
 Blocked:
-- `INITIAL-OPS-QUALIFY-001`: Verified exact manifest pins were materialized in a clean detached workspace and exact requirement syntax is recognized, but the child SSOTs require mutually conflicting PyYAML versions (agentic-art-production==6.0.2 and marketing-trends==6.0.3); a single qualification environment can satisfy only one, so the other gates remain ENV_UNSATISFIED and v1.4.0 qualification fails closed. No dependency installation, child edit, pin update, or remote write was authorized.
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
 

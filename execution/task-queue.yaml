@@ -611,14 +611,13 @@ tasks:
   - id: INITIAL-OPS-QUALIFY-001
     milestone: M14
     title: Qualify the initial Codex and Claude Code operations profile
-    status: BLOCKED
+    status: DONE
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
     depends_on: [PROJECT-STATUS-001, V14-CHILD-PREFLIGHT-EXACT-001]
     acceptance: Three deterministic qualification runs pass the startup, Production exchange, retrieval, artifact, feedback, Issue delivery, privacy, idempotency, and five child quality gates; separate opt-in sandbox evidence proves one Drive create/read and one GitHub Issue create/deduplicate without modifying production user artifacts or existing Issues.
-    checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
-    blocker: Verified exact manifest pins were materialized in a clean detached workspace and exact requirement syntax is recognized, but the child SSOTs require mutually conflicting PyYAML versions (agentic-art-production==6.0.2 and marketing-trends==6.0.3); a single qualification environment can satisfy only one, so the other gates remain ENV_UNSATISFIED and v1.4.0 qualification fails closed. No dependency installation, child edit, pin update, or remote write was authorized.
+    checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --python-root <child-environment-root> --child-timeout 180, git diff --check]
 
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14
@@ -769,7 +768,7 @@ tasks:
   - id: PURPOSE-NAMING-001
     milestone: M16
     title: Apply the cross-repository envelope naming decision
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/43
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: DRAFT_PR_READY

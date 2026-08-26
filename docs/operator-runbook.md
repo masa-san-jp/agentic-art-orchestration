@@ -116,13 +116,13 @@ v1.3.0は、Research→Production→Researchのexchange E2Eを3回バイト比�
 
 ### child quality-gate dependency preflight
 
-immutable archiveに`requirements.txt`がある子repoは、quality gate実行前に親runnerの実行環境で依存名、単純な`>=`下限、または数値の`==`固定版を検査する。依存が未導入、下限未達、固定版不一致、または親runnerが扱えない形式の場合は、repository statusを`ENV_UNSATISFIED`、execution modeを`NOT_RUN`として記録し、gate commandは実行しない。資格判定は失敗のまま維持され、依存不足を`PASSED`や通常のgate failureへ変換しない。
+immutable archiveに`requirements.txt`がある子repoは、quality gate実行前に選択した実行環境で依存名、単純な`>=`下限、または数値の`==`固定版を検査する。repoごとに異なる固定版を持つ場合は、`<child-environment-root>/<repository-id>/bin/python`へ事前準備した環境を`--python-root`で指定する。reportの`environment_mode`は、指定なしなら`shared-runner`、指定ありなら`per-child`となる。依存が未導入、下限未達、固定版不一致、または親runnerが扱えない形式の場合は、repository statusを`ENV_UNSATISFIED`、execution modeを`NOT_RUN`として記録し、gate commandは実行しない。資格判定は失敗のまま維持され、依存不足を`PASSED`や通常のgate failureへ変換しない。
 
 不足時はrunnerが自動インストールせず、結果のremediationに記録された子repoのrequirements SSOTを人間または明示許可された環境で解消してから再実行する。
 
 ~~~bash
 pip install --user -r <child-repository-path>/requirements.txt
-.venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --output data/child-quality-gates.json
+.venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --python-root <child-environment-root> --output data/child-quality-gates.json
 ~~~
 
 ## 3. taskを実行する

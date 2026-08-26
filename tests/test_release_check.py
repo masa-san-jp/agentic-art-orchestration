@@ -98,10 +98,20 @@ class ReleaseCheckTests(unittest.TestCase):
             repository, observed, current = make_pinned_fixture(source_root / "child-one")
             captured: dict[str, object] = {}
 
-            def fake_qualify(version, runs, workspace_root, github_sandbox_evidence, pinned_observations=None):
+            def fake_qualify(
+                version,
+                runs,
+                workspace_root,
+                github_sandbox_evidence,
+                pinned_observations=None,
+                python_root=None,
+                child_timeout_seconds=60,
+            ):
                 captured["head"] = git(Path(workspace_root) / "child-one", "rev-parse", "HEAD")
                 captured["marker"] = (Path(workspace_root) / "child-one" / "marker.txt").read_text(encoding="utf-8")
                 captured["observations"] = pinned_observations
+                captured["python_root"] = python_root
+                captured["child_timeout_seconds"] = child_timeout_seconds
                 return {"status": "PASSED"}
 
             with patch("tools.release_check.V12_MANIFEST", Path(temporary_name) / "manifest.yaml"), patch(
@@ -114,6 +124,8 @@ class ReleaseCheckTests(unittest.TestCase):
             self.assertEqual("observed\n", captured["marker"])
             self.assertEqual(current, git(source_root / "child-one", "rev-parse", "HEAD"))
             self.assertEqual("STALE", captured["observations"][0]["source_state"])
+            self.assertIsNone(captured["python_root"])
+            self.assertEqual(60, captured["child_timeout_seconds"])
 
     def test_active_python_uses_virtualenv_interpreter_when_available(self):
         active = Path(_active_python())

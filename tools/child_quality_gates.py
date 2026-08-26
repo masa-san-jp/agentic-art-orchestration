@@ -80,6 +80,26 @@ def _installed_version(package_name: str) -> str | None:
         return None
 
 
+def _installed_version_in_python(package_name: str, python_executable: str | None) -> str | None:
+    """Read a dependency version from a selected child interpreter."""
+    if python_executable is None:
+        return _installed_version(package_name)
+    probe = (
+        "import importlib.metadata, sys; "
+        "print(importlib.metadata.version(sys.argv[1]))"
+    )
+    completed = subprocess.run(
+        [python_executable, "-c", probe, package_name],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    version = completed.stdout.strip()
+    return version or None
+
+
 def _version_numbers(value: str) -> tuple[int, ...]:
     return tuple(int(part) for part in re.findall(r"\d+", value))
 
@@ -102,7 +122,11 @@ def _matches_exact_version(installed: str, expected: str) -> bool:
     return installed_numbers + (0,) * (width - len(installed_numbers)) == expected_numbers + (0,) * (width - len(expected_numbers))
 
 
-def _requirements_preflight(archive_root: Path, repository_path: str) -> tuple[str | None, str | None]:
+def _requirements_preflight(
+    archive_root: Path,
+    repository_path: str,
+    python_executable: str | None = None,
+) -> tuple[str | None, str | None]:
     """Return an unsatisfied detail and remediation for a child archive, if any.
 
     This intentionally implements only the parent contract's small requirement
@@ -131,7 +155,7 @@ def _requirements_preflight(archive_root: Path, repository_path: str) -> tuple[s
         package_name = match.group("name")
         operator = match.group("operator")
         required_version = match.group("version")
-        installed = _installed_version(package_name)
+        installed = _installed_version_in_python(package_name, python_executable)
         if installed is None:
             return f"{package_name} is not installed", f"pip install --user -r {repository_path}/requirements.txt"
         if operator == ">=" and required_version is not None and not _meets_lower_bound(installed, required_version):
@@ -145,6 +169,31 @@ def _requirements_preflight(archive_root: Path, repository_path: str) -> tuple[s
                 f"pip install --user -r {repository_path}/requirements.txt",
             )
     return None, None
+
+
+def _resolve_python_environment(
+    repository_id: str,
+    python_root: Path | None,
+) -> tuple[str | None, str]:
+    """Resolve an optional pre-provisioned interpreter without installing anything."""
+    if python_root is None:
+        return None, "shared-runner"
+    candidates = (
+        python_root / repository_id / "bin" / "python",
+        python_root / repository_id / "Scripts" / "python.exe",
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate), "per-child"
+    return None, "per-child"
+
+
+def _environment_remediation(repository_id: str) -> str:
+    return (
+        "provision the child requirements in "
+        f"<child-environment-root>/{repository_id}/bin/python and rerun; "
+        "the runner does not install dependencies"
+    )
 
 
 def _extract_archive(root: Path, commit: str, target: Path) -> str | None:
@@ -206,10 +255,16 @@ def _validate_gate_manifest(manifest: dict) -> list[str]:
     return errors
 
 
-def _run_repository(repository: dict, workspace_root: Path, timeout_seconds: int) -> dict:
+def _run_repository(
+    repository: dict,
+    workspace_root: Path,
+    timeout_seconds: int,
+    python_root: Path | None = None,
+) -> dict:
     repository_id = repository["id"]
     observed_commit = repository["observed_commit"]
     root = workspace_root / repository["path"]
+    python_executable, environment_mode = _resolve_python_environment(repository_id, python_root)
     workspace_state, workspace_commit = _workspace_state(root, observed_commit)
     commands = repository["quality_gates"]
     quality_gate_hash = sha256_hex(commands)
@@ -221,6 +276,7 @@ def _run_repository(repository: dict, workspace_root: Path, timeout_seconds: int
             "workspace_commit": workspace_commit,
             "workspace_state": workspace_state,
             "execution_mode": "NOT_RUN",
+            "environment_mode": environment_mode,
             "quality_gate_hash": quality_gate_hash,
             "status": "BLOCKED",
             "gates": [_not_run(command, error) for command in commands],
@@ -235,11 +291,33 @@ def _run_repository(repository: dict, workspace_root: Path, timeout_seconds: int
                 "workspace_commit": workspace_commit,
                 "workspace_state": workspace_state,
                 "execution_mode": "NOT_RUN",
+                "environment_mode": environment_mode,
                 "quality_gate_hash": quality_gate_hash,
                 "status": "BLOCKED",
                 "gates": [_not_run(command, archive_error) for command in commands],
             }
-        preflight_error, remediation = _requirements_preflight(target, repository["path"])
+        if python_root is not None and python_executable is None:
+            error = (
+                f"per-child Python environment is unavailable for {repository_id}; "
+                f"remediation: {_environment_remediation(repository_id)}"
+            )
+            return {
+                "repository": repository_id,
+                "observed_commit": observed_commit,
+                "workspace_commit": workspace_commit,
+                "workspace_state": workspace_state,
+                "execution_mode": "NOT_RUN",
+                "environment_mode": environment_mode,
+                "quality_gate_hash": quality_gate_hash,
+                "status": "ENV_UNSATISFIED",
+                "remediation": _environment_remediation(repository_id),
+                "gates": [_not_run(command, error) for command in commands],
+            }
+        preflight_error, remediation = _requirements_preflight(
+            target,
+            repository["path"],
+            python_executable,
+        )
         if preflight_error:
             error = (
                 f"child dependency preflight is unsatisfied: {preflight_error}; "
@@ -251,18 +329,23 @@ def _run_repository(repository: dict, workspace_root: Path, timeout_seconds: int
                 "workspace_commit": workspace_commit,
                 "workspace_state": workspace_state,
                 "execution_mode": "NOT_RUN",
+                "environment_mode": environment_mode,
                 "quality_gate_hash": quality_gate_hash,
                 "status": "ENV_UNSATISFIED",
                 "remediation": remediation,
                 "gates": [_not_run(command, error) for command in commands],
             }
-        gates = [_run_gate(command, target, timeout_seconds) for command in commands]
+        gates = [
+            _run_gate(command, target, timeout_seconds, python_executable)
+            for command in commands
+        ]
         return {
             "repository": repository_id,
             "observed_commit": observed_commit,
             "workspace_commit": workspace_commit,
             "workspace_state": workspace_state,
             "execution_mode": "immutable-archive",
+            "environment_mode": environment_mode,
             "quality_gate_hash": quality_gate_hash,
             "status": "FAILED" if any(gate["status"] == "FAILED" for gate in gates) else "PASSED",
             "gates": gates,
@@ -274,15 +357,16 @@ def run_child_quality_gates(
     workspace_root: Path,
     timeout_seconds: int = 60,
     run_id: str = "v12-child-gates",
+    python_root: Path | None = None,
 ) -> dict:
-    """Execute every manifest gate only from its exact observed commit archive."""
+    """Execute every manifest gate from its exact archive and selected environment."""
     manifest_errors = _validate_gate_manifest(manifest)
     if manifest_errors:
         raise ValueError("\n".join(manifest_errors))
     if timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive; remediation: use a finite positive timeout")
     results = [
-        _run_repository(repository, workspace_root, timeout_seconds)
+        _run_repository(repository, workspace_root, timeout_seconds, python_root)
         for repository in sorted(manifest["repositories"], key=lambda item: item["id"])
     ]
     report = {
@@ -321,6 +405,11 @@ def main() -> int:
     parser.add_argument("--workspace-root", type=Path, default=DEFAULT_WORKSPACE_ROOT)
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--run-id", default="v12-child-gates")
+    parser.add_argument(
+        "--python-root",
+        type=Path,
+        help="optional root of pre-provisioned per-child environments; no installation is performed",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true", help="compare generated bytes without writing")
     args = parser.parse_args()
@@ -329,7 +418,16 @@ def main() -> int:
         manifest_errors = validate_manifest(manifest, str(args.manifest))
         if manifest_errors:
             raise ValueError("\n".join(manifest_errors))
-        report = run_child_quality_gates(manifest, args.workspace_root, args.timeout, args.run_id)
+        python_root = args.python_root
+        if python_root is not None and not python_root.is_absolute():
+            python_root = Path.cwd() / python_root
+        report = run_child_quality_gates(
+            manifest,
+            args.workspace_root,
+            args.timeout,
+            args.run_id,
+            python_root,
+        )
     except (OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

@@ -1150,3 +1150,14 @@
 - 2026-08-26 01:01 JST、`<verified-child-workspace>`を前回のverified workspaceへ解決し、validator PASS後にv1.4.0 qualificationを3 runsで再実行した。report SHA-256は`ab2a533127ad7430dac40e2a0db6eb9f5faab4db19ca5d2da3974d7924a58ab4`。
 - 結果は前回と同じく、pin 5/5 MATCHED、child gate 4/5 PASS、agentic-art-productionは`PyYAML 6.0.3`対`PyYAML==6.0.2`のexact mismatchでENV_UNSATISFIED・3 gate NOT_RUN。v1.2 E2EとProduction exchangeはFAILED、initial-operations E2Eは3/3 PASSだった。
 - `remote_operations=[]`、merge/tag/releaseは未実行。子repo、pin、Drive/GitHub Issue、credential、外部artifactは変更していない。次は、明示承認された実行環境でexact版を満たしてから同じqualificationを再実行する。
+
+## INITIAL-OPS-QUALIFY-001 completed with per-child environments
+
+- 親runnerに、事前準備済みrepo別Python環境を`--python-root`で選択する契約を追加した。依存version probeと宣言gateは同じrepo環境で実行し、環境がない場合は`ENV_UNSATISFIED`・`NOT_RUN`で停止する。runnerによる自動install、子repo変更、pin更新はない。
+- production `PyYAML==6.0.2`とmarketing-trends `PyYAML==6.0.3`を別環境で満たし、child gateは5/5 repositories・14/14 gates PASS、`environment_mode=per-child`となった。長時間gateのため`--child-timeout 180`をqualification commandへ明示した。
+- v1.4.0 qualificationは3/3 deterministic runs、親checks、v1.2 E2E、Production exchange、initial-operations E2E、sandbox evidence、security、historyをすべてPASSした。report SHA-256は`d6e65dfdffd241ad18b11593dd7b4fd77f66fb3b10dfb66d103d18610e6f9afb`。
+- `remote_operations=[]`、merge/tag/releaseは未実行。verified workspaceは5/5 exact pin・clean・detached、子repo、Drive、GitHub Issue、credential、外部artifactは変更していない。acceptanceは1/1、leaseをreleaseし、次のREADYを`PURPOSE-NAMING-001`へ進めた。
+
+## Next exact action
+
+1. `PURPOSE-NAMING-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。

@@ -1,29 +1,29 @@
-version: 47
-updated_at: "2026-08-26T12:39:14+09:00"
+version: 49
+updated_at: "2026-08-26T13:24:06+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
   owner: codex-initial-ops-qualify
-  acquired_at: "2026-08-26T12:39:14+09:00"
-  expires_at: "2026-08-26T13:39:14+09:00"
+  acquired_at: "2026-08-26T12:55:51+09:00"
+  expires_at: "2026-08-26T13:55:51+09:00"
   lane: RELEASE_QUALIFICATION
-  execution_id: INITIAL-OPS-QUALIFY-001:attempt-3
+  execution_id: INITIAL-OPS-QUALIFY-001:attempt-5
   scope:
     repository: agentic-art-orchestration
-    paths: [data/release-check-v14.json, execution/state.yaml, execution/handoff.md, README.md]
-  released_at: "2026-08-26T12:39:14+09:00"
-  release_reason: "INITIAL-OPS-QUALIFY-001 reattempt blocked; exact child requirements conflict between agentic-art-production PyYAML==6.0.2 and marketing-trends PyYAML==6.0.3 in a shared environment"
+    paths: [tools/quality_gates.py, tools/child_quality_gates.py, tools/release_check.py, schemas/child-quality-gates.schema.json, tests/test_child_quality_gates.py, tests/test_release_check.py, docs/operator-runbook.md, docs/agent-ui-runbook.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
+  released_at: "2026-08-26T13:24:06+09:00"
+  release_reason: "INITIAL-OPS-QUALIFY-001 completed; per-child environments resolved conflicting exact requirements and the qualification passed"
 checkpoint:
   task: INITIAL-OPS-QUALIFY-001
   repository: agentic-art-orchestration
-  start_point: 04818b7
-  expected_changes: Run v1.4.0 three-run qualification from a verified manifest-pinned workspace with sandbox evidence; preserve fail-closed evidence when child exact dependency requirements conflict in the shared runner environment.
-  result: blocked; three-run qualification completed fail-closed with 5/5 pins matched, 4/5 child repositories passing, and marketing-trends ENV_UNSATISFIED because PyYAML 6.0.2 cannot satisfy its exact 6.0.3 requirement
-last_completed_task: V14-CHILD-PREFLIGHT-EXACT-001
+  start_point: 1b841af
+  expected_changes: Implement an explicitly selected per-child dependency environment strategy without changing child source or pins, then rerun the v1.4.0 three-run qualification from the verified manifest-pinned workspace.
+  result: completed; per-child environment selection resolved conflicting exact requirements and the v1.4.0 three-run qualification passed.
+last_completed_task: INITIAL-OPS-QUALIFY-001
 resume_from:
-  task: INITIAL-OPS-QUALIFY-001
-  action: Decide and implement an authorized per-child dependency environment strategy, or obtain child-owner reconciliation of the conflicting PyYAML exact pins, then rerun the three-run v1.4.0 qualification without mutating child source or pins automatically.
+  task: PURPOSE-NAMING-001
+  action: Inspect the authoritative naming decision and affected repository instructions, then claim PURPOSE-NAMING-001 without changing child repositories until their SSOT and lease scope are confirmed.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -58,7 +58,7 @@ observation_provenance:
   workspace_status: 5 repositories clean on main with ahead_behind_zero
   child_repository_mutation: false
 reconciliation:
-  status: passed_with_v14_qualification_pending
+  status: passed
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/67
   implementation_commit: 14d6daa
   acceptance: 1/1
@@ -67,9 +67,9 @@ reconciliation:
   v1_4_implementation: complete
   v1_4_offline_aggregate: passed; 3/3 initial-operations, 3/3 production exchange, 5 repositories, 14 child gates
   v1_4_sandbox_live_evidence: passed; attempt-scoped READ/CREATE/READ/REUSE evidence exists outside Git
-  v1_4_aggregate_qualification: pending_rerun_from_verified_manifest_pinned_workspace
+  v1_4_aggregate_qualification: passed; 3/3 deterministic runs with 5 repositories and 14 child gates
   v1_4_release: BLOCKED; explicit human approval required
-  next_task: PROJECT-STATUS-001
+  next_task: PURPOSE-NAMING-001
   external_issue_updates: not_performed; owner approval required for Epic/Issue writes
   child_pins_changed: false
   child_repository_mutation: false
@@ -99,24 +99,24 @@ child_preflight_exact:
   parent_validation: passed
   child_repository_mutation: false
 initial_ops_qualification:
-  status: BLOCKED
+  status: PASSED
   version: 1.4.0
   runs: 3
-  acceptance: 0/1
+  acceptance: 1/1
   report: data/release-check-v14.json
-  report_sha256: f1aeb8586e1fc7ddfa314f9f2ae1efe732f7b6b4f8cbe7e82ee4949545a83f28
-  blocking_check: v1.2-e2e-and-production-exchange
+  report_sha256: d6e65dfdffd241ad18b11593dd7b4fd77f66fb3b10dfb66d103d18610e6f9afb
+  blocking_check: null
   pin_materialization: PASSED
   pinned_repositories: 5/5 MATCHED
-  child_quality_gates: 4/5 repositories PASSED; 1/5 ENV_UNSATISFIED; gates NOT_RUN for marketing-trends
-  env_unsatisfied_repositories: [marketing-trends]
-  exact_requirement_mismatches:
-    marketing-trends: ["PyYAML==6.0.3; installed PyYAML 6.0.2"]
-  v1_2_e2e: FAILED
-  production_exchange: FAILED
+  child_quality_gates: 5/5 repositories PASSED; 14/14 gates PASSED; environment_mode per-child
+  env_unsatisfied_repositories: []
+  exact_requirement_mismatches: {}
+  child_timeout_seconds: 180
+  v1_2_e2e: PASSED
+  production_exchange: PASSED
   initial_operations_e2e: PASSED; 3/3
   initial_operations_live_evidence: PASSED
-  history: NOT_RUN
+  history: PASSED
   source_mutation: false
   network: disabled
   remote_operations: []
@@ -124,8 +124,8 @@ initial_ops_qualification:
   tag_operation: NOT_PERFORMED
   release_operation: NOT_PERFORMED
   sandbox_evidence: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
-  blocker: "exact requirement syntax is supported, but child SSOTs require conflicting exact PyYAML versions: agentic-art-production==6.0.2 and marketing-trends==6.0.3. The current shared qualification environment has PyYAML 6.0.2, so marketing-trends remains ENV_UNSATISFIED with gates NOT_RUN and dependent checks fail closed."
-  remediation: "decide and implement an explicitly authorized per-child environment strategy, or reconcile the conflicting child SSOT requirements with their owners, then rerun from the verified workspace; do not auto-install dependencies, edit child requirements, or update pins"
+  blocker: null
+  remediation: "qualification used pre-provisioned per-child environments selected by repository ID; the runner performed no dependency installation and child SSOTs and pins were unchanged"
   parent_validation: passed
   parent_tests: 329/329
   workspace_status: 5 repositories clean and detached at exact manifest commits

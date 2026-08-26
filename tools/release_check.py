@@ -178,7 +178,7 @@ def _child_repository_observation(result: dict, index: int, locator_prefix: str)
         result,
         f"release-check://{locator_prefix}/{result.get('repository', index)}",
     )
-    return {
+    observation = {
         "repository": result.get("repository"),
         "observed_commit": result.get("observed_commit"),
         "workspace_commit": result.get("workspace_commit"),
@@ -192,6 +192,9 @@ def _child_repository_observation(result: dict, index: int, locator_prefix: str)
         ],
         **provenance,
     }
+    if "environment_mode" in result:
+        observation["environment_mode"] = result["environment_mode"]
+    return observation
 
 
 def _e2e_check(runs: int) -> dict:
@@ -363,6 +366,13 @@ def _v12_e2e_check(
                     "child_statuses": result["child_quality_gates"]["statuses"],
                     "child_workspace_states": result["child_quality_gates"]["workspace_states"],
                     "child_execution_modes": result["child_quality_gates"]["execution_modes"],
+                    "child_environment_modes": sorted(
+                        {
+                            item.get("environment_mode", "shared-runner")
+                            for item in (child_quality_gates or {}).get("results", [])
+                            if isinstance(item, dict)
+                        }
+                    ),
                     "remote_operations": result["remote_operations"],
                 }
             )
@@ -395,6 +405,7 @@ def _v12_e2e_check(
         "child_statuses": summaries[0]["child_statuses"] if summaries else [],
         "child_workspace_states": summaries[0]["child_workspace_states"] if summaries else [],
         "child_execution_modes": summaries[0]["child_execution_modes"] if summaries else [],
+        "child_environment_modes": summaries[0]["child_environment_modes"] if summaries else [],
     }
 
 
@@ -530,6 +541,7 @@ def _child_gate_summary(report: dict) -> dict:
         "gate_statuses": sorted(set(gate_statuses)),
         "workspace_states": sorted({result.get("workspace_state") for result in results}),
         "execution_modes": sorted({result.get("execution_mode") for result in results}),
+        "environment_modes": sorted({result.get("environment_mode", "shared-runner") for result in results}),
         "repositories_match_recorded_commits": repositories_match,
         "repository_observations": repository_observations,
     }
@@ -540,6 +552,8 @@ def _production_exchange_check(
     workspace_root: Path,
     child_python: str,
     child_quality_gates: dict | None = None,
+    python_root: Path | None = None,
+    child_timeout_seconds: int = 60,
 ) -> dict:
     """Qualify the Production exchange without retaining child or bundle content."""
     manifest = load_yaml(V12_MANIFEST)
@@ -570,6 +584,8 @@ def _production_exchange_check(
                         manifest,
                         workspace_root,
                         run_id=f"PRODUCTION-QUALIFY-001:child-{index + 1}",
+                        python_root=python_root,
+                        timeout_seconds=child_timeout_seconds,
                     )
                 )
                 child_summaries.append(_child_gate_summary(child_report))
@@ -735,6 +751,8 @@ def _qualify(
     workspace_root: Path = V12_WORKSPACE_ROOT,
     github_sandbox_evidence: Path | None = None,
     pinned_observations: list[dict] | None = None,
+    python_root: Path | None = None,
+    child_timeout_seconds: int = 60,
 ) -> dict:
     """Return a deterministic qualification report; never create a tag, commit, or release."""
     validate_request(version, runs)
@@ -744,7 +762,9 @@ def _qualify(
         child_quality_gates = run_child_quality_gates(
             load_yaml(V12_MANIFEST),
             workspace_root,
+            timeout_seconds=child_timeout_seconds,
             run_id="release-qualification-child-gates",
+            python_root=python_root,
         )
     checks = [
         _command_check("status-materialize", [python, "tools/status.py", "--offline-fixture"]),
@@ -818,7 +838,14 @@ def _qualify(
     e2e = _e2e_check(runs)
     interaction_e2e = _interaction_e2e_check(runs) if version in {"1.1.0", "1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
     v12_e2e = _v12_e2e_check(runs, workspace_root, child_quality_gates) if version in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"} else None
-    production_exchange = _production_exchange_check(runs, workspace_root, python, child_quality_gates) if version in {"1.3.0", "1.4.0"} else None
+    production_exchange = _production_exchange_check(
+        runs,
+        workspace_root,
+        python,
+        child_quality_gates,
+        python_root,
+        child_timeout_seconds,
+    ) if version in {"1.3.0", "1.4.0"} else None
     initial_operations_e2e = _initial_operations_e2e_check(runs) if version == "1.4.0" else None
     live_evidence = _sandbox_live_evidence_check(github_sandbox_evidence) if version == "1.4.0" else None
     history = _history_forbidden_findings()
@@ -944,11 +971,28 @@ def qualify(
     runs: int = 3,
     workspace_root: Path = V12_WORKSPACE_ROOT,
     github_sandbox_evidence: Path | None = None,
+    python_root: Path | None = None,
+    child_timeout_seconds: int = 60,
 ) -> dict:
     """Qualify using immutable child clones for every version with child gates."""
     validate_request(version, runs)
     if version not in {"1.2.0", "1.2.1", "1.3.0", "1.4.0"}:
-        return _qualify(version, runs, workspace_root, github_sandbox_evidence)
+        if python_root is None:
+            return _qualify(
+                version,
+                runs,
+                workspace_root,
+                github_sandbox_evidence,
+                child_timeout_seconds=child_timeout_seconds,
+            )
+        return _qualify(
+            version,
+            runs,
+            workspace_root,
+            github_sandbox_evidence,
+            python_root=python_root,
+            child_timeout_seconds=child_timeout_seconds,
+        )
     manifest = load_yaml(V12_MANIFEST)
     with tempfile.TemporaryDirectory(prefix="release-pinned-workspace-") as temporary_name:
         pinned_root = Path(temporary_name)
@@ -956,7 +1000,24 @@ def qualify(
             observations = materialize_pinned_workspace(manifest, workspace_root, pinned_root)
         except PinnedWorkspaceError as exc:
             return _pinned_workspace_failure(version, runs, exc)
-        return _qualify(version, runs, pinned_root, github_sandbox_evidence, observations)
+        if python_root is None:
+            return _qualify(
+                version,
+                runs,
+                pinned_root,
+                github_sandbox_evidence,
+                observations,
+                child_timeout_seconds=child_timeout_seconds,
+            )
+        return _qualify(
+            version,
+            runs,
+            pinned_root,
+            github_sandbox_evidence,
+            observations,
+            python_root=python_root,
+            child_timeout_seconds=child_timeout_seconds,
+        )
 
 
 def _write_atomic(path: Path, content: str) -> None:
@@ -976,15 +1037,36 @@ def main() -> int:
     parser.add_argument("--version", required=True)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workspace-root", type=Path, default=V12_WORKSPACE_ROOT)
+    parser.add_argument(
+        "--python-root",
+        type=Path,
+        help="optional root of pre-provisioned per-child environments; no installation is performed",
+    )
+    parser.add_argument(
+        "--child-timeout",
+        type=int,
+        default=60,
+        help="timeout in seconds for each manifest child quality gate",
+    )
     parser.add_argument("--github-sandbox-evidence", type=Path, help="metadata-only evidence produced by the dedicated live sandbox lane")
     parser.add_argument("--output", type=Path, default=ROOT / "data/release-check.json")
     args = parser.parse_args()
     try:
         workspace_root = args.workspace_root if args.workspace_root.is_absolute() else Path.cwd() / args.workspace_root
+        python_root = args.python_root
+        if python_root is not None and not python_root.is_absolute():
+            python_root = Path.cwd() / python_root
         evidence_path = args.github_sandbox_evidence
         if evidence_path is not None and not evidence_path.is_absolute():
             evidence_path = Path.cwd() / evidence_path
-        result = qualify(args.version, args.runs, workspace_root.resolve(), evidence_path.resolve() if evidence_path is not None else None)
+        result = qualify(
+            args.version,
+            args.runs,
+            workspace_root.resolve(),
+            evidence_path.resolve() if evidence_path is not None else None,
+            python_root.resolve() if python_root is not None else None,
+            args.child_timeout,
+        )
         output = args.output if args.output.is_absolute() else Path.cwd() / args.output
         _write_atomic(output.resolve(), json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     except (OSError, ReleaseCheckError, ValueError, KeyError):

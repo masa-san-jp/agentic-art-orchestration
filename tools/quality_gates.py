@@ -38,7 +38,7 @@ _RUNTIME_PATH_PATTERN = re.compile(r"(?:/private)?/var/folders/\S+|/tmp/\S+")
 _TEST_DURATION_PATTERN = re.compile(r"(Ran \d+ tests? in )\d+(?:\.\d+)?s")
 
 
-def _runtime_bin_dirs() -> list[str]:
+def _runtime_bin_dirs(python_executable: str | Path | None = None) -> list[str]:
     """Prefer the active virtualenv's scripts over the resolved Python binary.
 
     On macOS, ``sys.executable`` can resolve a virtualenv symlink to the
@@ -47,11 +47,15 @@ def _runtime_bin_dirs() -> list[str]:
     installed in the virtualenv are silently skipped.
     """
     candidates: list[Path] = []
-    prefix = Path(sys.prefix)
-    base_prefix = Path(getattr(sys, "base_prefix", sys.prefix))
-    if prefix != base_prefix:
-        candidates.extend([prefix / "bin", prefix / "Scripts"])
-    candidates.append(Path(sys.executable).resolve().parent)
+    if python_executable is not None:
+        # Keep the virtualenv bin directory even when its python is a symlink.
+        candidates.append(Path(python_executable).absolute().parent)
+    else:
+        prefix = Path(sys.prefix)
+        base_prefix = Path(getattr(sys, "base_prefix", sys.prefix))
+        if prefix != base_prefix:
+            candidates.extend([prefix / "bin", prefix / "Scripts"])
+        candidates.append(Path(sys.executable).resolve().parent)
     result: list[str] = []
     for candidate in candidates:
         if candidate.is_dir() and str(candidate) not in result:
@@ -107,7 +111,12 @@ def _gate_result(
     return result
 
 
-def _run_gate(command: str, repository_path: Path, timeout_seconds: int) -> dict:
+def _run_gate(
+    command: str,
+    repository_path: Path,
+    timeout_seconds: int,
+    python_executable: str | Path | None = None,
+) -> dict:
     if not isinstance(command, str) or not command.strip():
         return _gate_result(
             command if isinstance(command, str) else repr(command),
@@ -145,7 +154,7 @@ def _run_gate(command: str, repository_path: Path, timeout_seconds: int) -> dict
     started = time.monotonic()
     environment = os.environ.copy()
     environment["PATH"] = os.pathsep.join(
-        _runtime_bin_dirs() + [environment.get("PATH", "")]
+        _runtime_bin_dirs(python_executable) + [environment.get("PATH", "")]
     )
     try:
         completed = subprocess.run(
