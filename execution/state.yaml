@@ -1,29 +1,29 @@
-version: 46
-updated_at: "2026-08-26T01:01:15+09:00"
+version: 47
+updated_at: "2026-08-26T12:39:14+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
   owner: codex-initial-ops-qualify
-  acquired_at: "2026-08-26T01:01:15+09:00"
-  expires_at: "2026-08-26T02:01:15+09:00"
+  acquired_at: "2026-08-26T12:39:14+09:00"
+  expires_at: "2026-08-26T13:39:14+09:00"
   lane: RELEASE_QUALIFICATION
   execution_id: INITIAL-OPS-QUALIFY-001:attempt-3
   scope:
     repository: agentic-art-orchestration
     paths: [data/release-check-v14.json, execution/state.yaml, execution/handoff.md, README.md]
-  released_at: "2026-08-26T01:01:15+09:00"
-  release_reason: INITIAL-OPS-QUALIFY-001 reattempt blocked; exact requirement syntax is supported but agentic-art-production PyYAML==6.0.2 is not satisfied by installed 6.0.3
+  released_at: "2026-08-26T12:39:14+09:00"
+  release_reason: "INITIAL-OPS-QUALIFY-001 reattempt blocked; exact child requirements conflict between agentic-art-production PyYAML==6.0.2 and marketing-trends PyYAML==6.0.3 in a shared environment"
 checkpoint:
   task: INITIAL-OPS-QUALIFY-001
   repository: agentic-art-orchestration
-  start_point: 3ec458b
-  expected_changes: Extend the bounded parent child-gate dependency preflight to recognize exact numeric == requirements while preserving fail-closed ENV_UNSATISFIED and no-install behavior.
-  result: blocked; three-run qualification completed fail-closed with 5/5 pins matched, 4/5 child repositories passing, and agentic-art-production ENV_UNSATISFIED for exact PyYAML version mismatch
+  start_point: 04818b7
+  expected_changes: Run v1.4.0 three-run qualification from a verified manifest-pinned workspace with sandbox evidence; preserve fail-closed evidence when child exact dependency requirements conflict in the shared runner environment.
+  result: blocked; three-run qualification completed fail-closed with 5/5 pins matched, 4/5 child repositories passing, and marketing-trends ENV_UNSATISFIED because PyYAML 6.0.2 cannot satisfy its exact 6.0.3 requirement
 last_completed_task: V14-CHILD-PREFLIGHT-EXACT-001
 resume_from:
   task: INITIAL-OPS-QUALIFY-001
-  action: Resolve the agentic-art-production PyYAML==6.0.2 environment requirement in an explicitly authorized environment, then rerun the three-run v1.4.0 qualification from the verified pinned workspace without mutating child source.
+  action: Decide and implement an authorized per-child dependency environment strategy, or obtain child-owner reconciliation of the conflicting PyYAML exact pins, then rerun the three-run v1.4.0 qualification without mutating child source or pins automatically.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -104,14 +104,14 @@ initial_ops_qualification:
   runs: 3
   acceptance: 0/1
   report: data/release-check-v14.json
-  report_sha256: ab2a533127ad7430dac40e2a0db6eb9f5faab4db19ca5d2da3974d7924a58ab4
+  report_sha256: f1aeb8586e1fc7ddfa314f9f2ae1efe732f7b6b4f8cbe7e82ee4949545a83f28
   blocking_check: v1.2-e2e-and-production-exchange
   pin_materialization: PASSED
   pinned_repositories: 5/5 MATCHED
-  child_quality_gates: 4/5 repositories PASSED; 1/5 ENV_UNSATISFIED; gates NOT_RUN for agentic-art-production
-  env_unsatisfied_repositories: [agentic-art-production]
+  child_quality_gates: 4/5 repositories PASSED; 1/5 ENV_UNSATISFIED; gates NOT_RUN for marketing-trends
+  env_unsatisfied_repositories: [marketing-trends]
   exact_requirement_mismatches:
-    agentic-art-production: ["PyYAML==6.0.2; installed PyYAML 6.0.3"]
+    marketing-trends: ["PyYAML==6.0.3; installed PyYAML 6.0.2"]
   v1_2_e2e: FAILED
   production_exchange: FAILED
   initial_operations_e2e: PASSED; 3/3
@@ -124,8 +124,8 @@ initial_ops_qualification:
   tag_operation: NOT_PERFORMED
   release_operation: NOT_PERFORMED
   sandbox_evidence: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
-  blocker: exact requirement syntax is supported, but the verified qualification environment has PyYAML 6.0.3 while agentic-art-production requires exact PyYAML==6.0.2; that repository remains ENV_UNSATISFIED with gates NOT_RUN and dependent checks fail closed
-  remediation: provide an explicitly authorized environment satisfying the child SSOT exact version, then rerun from the verified workspace; do not auto-install dependencies, edit child requirements, or update pins
+  blocker: "exact requirement syntax is supported, but child SSOTs require conflicting exact PyYAML versions: agentic-art-production==6.0.2 and marketing-trends==6.0.3. The current shared qualification environment has PyYAML 6.0.2, so marketing-trends remains ENV_UNSATISFIED with gates NOT_RUN and dependent checks fail closed."
+  remediation: "decide and implement an explicitly authorized per-child environment strategy, or reconcile the conflicting child SSOT requirements with their owners, then rerun from the verified workspace; do not auto-install dependencies, edit child requirements, or update pins"
   parent_validation: passed
   parent_tests: 329/329
   workspace_status: 5 repositories clean and detached at exact manifest commits

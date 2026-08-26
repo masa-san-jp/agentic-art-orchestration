@@ -1139,6 +1139,12 @@
 - v1.2 E2EとProduction exchangeはchild gate blockerによりFAILED、initial-operations E2Eは3/3 PASS、既存sandbox live evidenceもPASS。総合acceptanceは0/1のまま。
 - productionのrequirementsは未対応構文ではなく、exact version mismatchとして観測できる状態になった。解除条件は、明示承認された実行環境で`PyYAML==6.0.2`を満たしてから、同じverified workspaceで再qualificationすること。自動install、子repo変更、pin更新、外部writeは行っていない。
 
+## INITIAL-OPS-QUALIFY-001 shared-environment conflict observed
+
+- qualification用一時venvで`PyYAML==6.0.2`と`jsonschema==4.23.0`を満たし、`VIRTUAL_ENV`を除外してv1.4.0 qualificationを3 runsで再実行した。report SHA-256は`f1aeb8586e1fc7ddfa314f9f2ae1efe732f7b6b4f8cbe7e82ee4949545a83f28`。
+- agentic-art-productionは3 gateすべてPASSしたが、marketing-trendsはchild SSOTの`PyYAML==6.0.3`に対して実行環境が6.0.2のためENV_UNSATISFIED、2 gate NOT_RUNとなった。v1.2 E2EとProduction exchangeはFAILED、initial-operations E2Eは3/3 PASS、総合acceptanceは0/1。
+- 観測されたblockerは、子repoごとのexact PyYAML要件が`6.0.2`と`6.0.3`で衝突し、単一shared environmentでは両方を満たせないこと。per-child isolated environmentを親契約として導入するか、子repo ownersが要件を統一するまで、qualificationはBLOCKEDのままとする。子repo変更、pin更新、外部writeは行っていない。
+
 ## INITIAL-OPS-QUALIFY-001 reattempt blocked after explicit qualification command
 
 - 2026-08-26 01:01 JST、`<verified-child-workspace>`を前回のverified workspaceへ解決し、validator PASS後にv1.4.0 qualificationを3 runsで再実行した。report SHA-256は`ab2a533127ad7430dac40e2a0db6eb9f5faab4db19ca5d2da3974d7924a58ab4`。
