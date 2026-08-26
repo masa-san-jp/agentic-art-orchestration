@@ -1,30 +1,30 @@
-version: 53
-updated_at: "2026-08-26T14:03:52+09:00"
+version: 55
+updated_at: "2026-08-26T14:14:47+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-purpose-inspiration
-  acquired_at: "2026-08-26T13:29:06+09:00"
-  expires_at: "2026-08-26T14:29:06+09:00"
-  lane: FRONTSTAGE_INTERACTION
-  execution_id: PURPOSE-INSPIRATION-001:attempt-1
+  owner: codex-self-export-source
+  acquired_at: "2026-08-26T14:07:05+09:00"
+  expires_at: "2026-08-26T15:07:05+09:00"
+  lane: CHILD_SOURCE
+  execution_id: PURPOSE-SELF-EXPORT-SOURCE-001:attempt-1
   scope:
-    repository: agentic-art-orchestration
-    paths: [tools/agent_ui.py, tools/inspiration.py, schemas/inspiration-input.schema.json, schemas/agent-ui-result.schema.json, tools/input_pipeline.py, tests, docs, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
-    child_repositories: []
-  released_at: "2026-08-26T14:03:52+09:00"
-  release_reason: "PURPOSE-INSPIRATION-001 completed; capture, settlement, provenance, privacy, and candidate pipeline gates passed"
+    repository: self-model
+    paths: [docs/interop-mapping.md, tools/export_signals.py, tests/contracts/research-signals-v1.schema.json, tests/contracts/agentic-art-research-consumer-v1.fixture.json, tests/test_export_signals.py, tests/test_e2e.py, execution/tasks.yaml, execution/state.yaml, execution/handoff.md]
+    child_repositories: [self-model]
+  released_at: "2026-08-26T14:14:47+09:00"
+  release_reason: "PURPOSE-SELF-EXPORT-SOURCE-001 completed; existing SM-018 source implementation was pinned and all child export/privacy gates passed without mutating the child checkout"
 checkpoint:
-  task: PURPOSE-INSPIRATION-001
-  repository: agentic-art-orchestration
-  start_point: 8744e56
-  expected_changes: Add a structured inspiration capture and explicit settlement contract that retains provenance and consent, excludes conversation text and direct identifiers, and supplies a settled input to the existing candidate pipeline.
-  result: completed; structured capture and SETTLED candidate-pipeline output passed all parent and interaction gates.
-last_completed_task: PURPOSE-INSPIRATION-001
-resume_from:
   task: PURPOSE-SELF-EXPORT-SOURCE-001
-  action: Select the self-model child task and inspect its Issue SSOT, AGENTS, export schema, and quality gates before any child change.
+  repository: self-model
+  start_point: fda3e29c76ba8fbd40ee6946589d6789029d92d6
+  expected_changes: Complete the approved Claim/Pattern export boundary at the pinned self-model source commit with consent, provenance, deterministic fixed-field DTO, and raw-voice exclusion gates.
+  result: completed; child implementation commit 04095bfa4115ef4fde8a8f475bf31743ecdff962 passed exact pinned source gates; parent pin remains unchanged for SELF-EXPORT-E2E-001.
+last_completed_task: PURPOSE-SELF-EXPORT-SOURCE-001
+resume_from:
+  task: SELF-EXPORT-E2E-001
+  action: Promote and claim SELF-EXPORT-E2E-001, then run the parent validator before inspecting the self-model adapter and normalized consumer path.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -302,6 +302,24 @@ purpose_inspiration:
   audit: FINDINGS; one known nonblocking marketing freshness warning
   security: PASSED
   raw_conversation_or_credentials: false
+  child_repository_mutation: false
+  external_issue_drive_or_release_mutation: false
+purpose_self_export_source:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/40
+  child_task: SM-018
+  acceptance: 1/1
+  source_repository: self-model
+  implementation_commit: 04095bfa4115ef4fde8a8f475bf31743ecdff962
+  implementation_lineage: 85eecee4864df997870a1f9137fdcd6a3ce6eb46
+  pinned_validation: exact commit 04095bfa4115ef4fde8a8f475bf31743ecdff962 in isolated detached workspace
+  focused_tests: 17/17
+  child_tests: 90/90
+  child_quality_gates: build_graph check/build, audit dry-run, export CLI, diff checks passed
+  export_contract: research-signal-export/v1; fixed 26 fields; signal_count 3
+  consent_provenance_raw_voice: passed; approved-derived-only consent, source commit, evidence locators, raw voice body excluded
+  current_main_observed_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+  parent_pin_changed: false
   child_repository_mutation: false
   external_issue_drive_or_release_mutation: false
 blocked:

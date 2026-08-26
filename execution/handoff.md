@@ -1183,3 +1183,15 @@
 ## Next exact action
 
 1. `PURPOSE-SELF-EXPORT-SOURCE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、self-model childのIssue SSOT、AGENTS、export schema、quality gateを読む。
+
+## PURPOSE-SELF-EXPORT-SOURCE-001 completed
+
+- Issue #40 / child task `SM-018`の既存実装を、親pin `fda3e29…`へ無理に継ぎ足さず、実装完了記録commit `04095bfa4115ef4fde8a8f475bf31743ecdff962`で観測した。SM-018の実装commitは`85eecee4864df997870a1f9137fdcd6a3ce6eb46`である。
+- child exportは`research-signal-export/v1`、1 Claim/Pattern=1 record、固定26 fields、決定論的sort、source commit/evidence/consentを保持し、raw voice本文・外部locator・直接識別情報を含めない。rejected/superseded、consent denial、dirty worktreeはfail closedする。
+- `04095bfa…`をcheckoutした隔離detached workspaceでfocused 17/17、全90/90、`tools/build_graph.py --check`、生成、`tools/audit.py --dry-run`、export CLI、`git diff --check`、generated diff checkをPASSした。auditの3件は既知のsoft review findings。
+- 実際の`/Users/masa/マイドライブ/Dev/self-model-notes` checkoutはcleanなmainのまま、親manifest pin、外部Issue、Drive、PR、merge、releaseは変更していない。親pin更新は後続`SELF-EXPORT-E2E-001`の責務とする。
+- acceptance: 1/1。機微情報、会話全文、credentialの追加はなく、外部artifactの作成・更新もない。inferred feedbackは扱っていない。
+
+## Next exact action
+
+1. `SELF-EXPORT-E2E-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、self-model exportをadapterとconsumerへ渡すE2E契約を読む。

@@ -790,7 +790,7 @@ tasks:
   - id: PURPOSE-SELF-EXPORT-SOURCE-001
     milestone: M16
     title: Complete the self-model export boundary at its source repository
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/40
     target_repositories: [self-model]
     agent_terminal: DRAFT_PR_READY
@@ -801,7 +801,7 @@ tasks:
   - id: SELF-EXPORT-E2E-001
     milestone: M16
     title: Pin self-model export through adapter and consumer without loss
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/105
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
