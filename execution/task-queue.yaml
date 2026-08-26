@@ -856,7 +856,7 @@ tasks:
   - id: PURPOSE-RESEARCH-VISUAL-001
     milestone: M16
     title: Add visual language as the research-to-production medium SSOT
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/49
     target_repositories: [agentic-art-research]
     agent_terminal: DRAFT_PR_READY

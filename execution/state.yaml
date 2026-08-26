@@ -1,30 +1,30 @@
-version: 65
-updated_at: "2026-08-26T16:38:42+09:00"
+version: 67
+updated_at: "2026-08-26T16:55:02+09:00"
 active_task: null
 active_repository: agentic-art-research
 lease:
   status: released
-  owner: codex-research-decisions
-  acquired_at: "2026-08-26T16:26:24+09:00"
-  expires_at: "2026-08-26T17:26:24+09:00"
+  owner: codex-research-visual
+  acquired_at: "2026-08-26T16:53:09+09:00"
+  expires_at: "2026-08-26T17:53:09+09:00"
   lane: CHILD_SOURCE
-  execution_id: PURPOSE-RESEARCH-DECISIONS-001:attempt-1
+  execution_id: PURPOSE-RESEARCH-VISUAL-001:attempt-1
   scope:
     repository: agentic-art-research
-    paths: [schemas/rejected-option.schema.json, schemas/uncertainty.schema.json, schemas/decision.schema.json, config/vocabularies.yaml, tools/validate.py, tools/bundle.py, tools/complete.py, docs/schema-reference.md, tests/test_validation.py, tests/test_bundle.py, tests/test_complete.py, tests/test_schemas.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [schemas/visual-language.schema.json, templates/project/05_production/visual-language.yaml, tools/_common.py, tools/new_project.py, tools/validate.py, tools/context_pack.py, tools/bundle.py, tools/export_handoff.py, config/vocabularies.yaml, config/task-roles.yaml, docs/schema-reference.md, docs/operations.md, tests/test_visual_language.py, tests/test_handoff_validation.py, tests/test_handoff_build.py, tests/test_handoff_e2e.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
     child_repositories: [agentic-art-research]
-  released_at: "2026-08-26T16:38:42+09:00"
-  release_reason: "PURPOSE-RESEARCH-DECISIONS-001 completed; existing child Issue #48 implementation and all declared quality gates passed in an isolated clone"
+  released_at: "2026-08-26T16:55:02+09:00"
+  release_reason: "PURPOSE-RESEARCH-VISUAL-001 completed; existing child Issue #49 implementation and all applicable quality gates passed in an isolated clone"
 checkpoint:
-  task: PURPOSE-RESEARCH-DECISIONS-001
+  task: PURPOSE-RESEARCH-VISUAL-001
   repository: agentic-art-research
   start_point: 07f8cf5
-  expected_changes: Verify the child Issue #48 implementation of typed rejected-option and uncertainty registries, bidirectional decision references, deterministic executive brief, and safety boundary without modifying the parent or child checkout.
-  result: completed; child Issue #48 implementation observed at ee214b6 and verified at 07f8cf5 with compileall, validator, graph check, security check, docs check, focused 39 tests, and full 251 tests; parent Research pin d947fdd remains unchanged because pin adoption is out of scope
-last_completed_task: PURPOSE-RESEARCH-DECISIONS-001
+  expected_changes: Verify the child Issue #49 implementation of typed visual language, lifecycle/reference validation, production-translator contract, and handoff/export integration without modifying the parent or child checkout.
+  result: completed; child Issue #49 implementation observed at ee214b6 and verified at 07f8cf5 with compileall, validator, graph check, security check, docs check, focused 48 tests, and previously completed full 251 tests at the same clean HEAD; parent Research pin d947fdd remains unchanged because pin adoption is out of scope
+last_completed_task: PURPOSE-RESEARCH-VISUAL-001
 resume_from:
-  task: PURPOSE-RESEARCH-VISUAL-001
-  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #49 and the Research child visual-language handoff contract.
+  task: PURPOSE-PRODUCTION-OBSERVATION-001
+  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #34 and the Production child observation/result contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
