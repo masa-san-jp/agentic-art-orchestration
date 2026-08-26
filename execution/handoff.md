@@ -1245,3 +1245,16 @@
 ## Next exact action
 
 1. `PURPOSE-RESEARCH-DECISIONS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #48とResearch childのdecision/uncertainty schema・quality gateを読む。
+
+## PURPOSE-RESEARCH-DECISIONS-001 completed
+
+- Research childのIssue #48はCLOSEDで、typed rejected-option/uncertainty registry、decisionとの双方向参照、evidence参照、決定論的なhuman向けexecutive briefが既にchild mainへ実装済みだった。実装導入commitは`ee214b6d836283e9baad25f9dc2598fe22355c94`、検証対象のclean source HEADは`07f8cf57e416e5166ac80019ba2d015ff1821e9c`である。
+- Issue #48の受入条件8項目を、RO/U schemaのrequired/unknown検証、decision↔registry逆参照、状態・resolution整合性、completion guard、executive briefの8固定section、byte determinism、canonical tree境界、宣言コマンドの全PASSとして確認した。
+- hardlinkなしの隔離cloneで`python3 -m compileall -q tools tests`、`python3 tools/validate.py --check`、`python3 tools/build_graph.py --check`、`python3 tools/security_check.py --check`、`python3 tools/docs_check.py --check`、Issue #48 focused 39 tests、全251 testsを実行し、すべてPASSした。全251 testsは`Ran 251 tests in 652.660s`である。
+- Research child本体は`main...origin/main`・cleanのまま保持した。親manifestのResearch pinは`d947fdd14abeb700af9a62abcf27c21f3f12e134`でchild実装より古いが、pin adoptionはこのtaskのtarget/path外のため変更していない。親validatorはPASSし、親の最終全体testsは完了記録後に再実行する。
+- 子repo、manifest pin、`repos/`生成物、GitHub Issue/PR、Google Drive、credential、merge、tag、release、外部artifactは変更していない。機微情報、会話全文、PRIVATE_RAW、RESTRICTEDは追加していない。explicit/inferred feedbackは扱っていない。外部artifactのcreate-only操作もない。
+- acceptance: 8/8。親側の変更はqueue/state/handoffの完了記録だけをこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-VISUAL-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #49とResearch childのvisual-language schema・quality gateを読む。

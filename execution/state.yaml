@@ -1,30 +1,30 @@
-version: 63
-updated_at: "2026-08-26T16:03:08+09:00"
+version: 65
+updated_at: "2026-08-26T16:38:42+09:00"
 active_task: null
 active_repository: agentic-art-research
 lease:
   status: released
-  owner: codex-research-knowledge
-  acquired_at: "2026-08-26T15:59:00+09:00"
-  expires_at: "2026-08-26T16:59:00+09:00"
+  owner: codex-research-decisions
+  acquired_at: "2026-08-26T16:26:24+09:00"
+  expires_at: "2026-08-26T17:26:24+09:00"
   lane: CHILD_SOURCE
-  execution_id: PURPOSE-RESEARCH-KNOWLEDGE-001:attempt-1
+  execution_id: PURPOSE-RESEARCH-DECISIONS-001:attempt-1
   scope:
     repository: agentic-art-research
-    paths: [schemas/observation.schema.json, schemas/relationship.schema.json, schemas/contradiction.schema.json, schemas/external-reference.schema.json, schemas/aesthetic-signal.schema.json, templates/profile/README.md, templates/profile/aesthetic-signals.yaml, config/vocabularies.yaml, tools/validate.py, tools/build_graph.py, tools/impact.py, docs/schema-reference.md, tests/test_knowledge.py, tests/test_schemas.py, tests/test_graph.py, tests/test_validation.py]
+    paths: [schemas/rejected-option.schema.json, schemas/uncertainty.schema.json, schemas/decision.schema.json, config/vocabularies.yaml, tools/validate.py, tools/bundle.py, tools/complete.py, docs/schema-reference.md, tests/test_validation.py, tests/test_bundle.py, tests/test_complete.py, tests/test_schemas.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
     child_repositories: [agentic-art-research]
-  released_at: "2026-08-26T16:03:08+09:00"
-  release_reason: "PURPOSE-RESEARCH-KNOWLEDGE-001 completed; existing child Issue #47 implementation and all declared quality gates passed in an isolated clone"
+  released_at: "2026-08-26T16:38:42+09:00"
+  release_reason: "PURPOSE-RESEARCH-DECISIONS-001 completed; existing child Issue #48 implementation and all declared quality gates passed in an isolated clone"
 checkpoint:
-  task: PURPOSE-RESEARCH-KNOWLEDGE-001
+  task: PURPOSE-RESEARCH-DECISIONS-001
   repository: agentic-art-research
   start_point: 07f8cf5
-  expected_changes: Verify the child Issue #47 implementation of typed knowledge records, reference resolution, deterministic graph connectivity, and external aesthetic-profile protocol without modifying the parent or child checkout.
-  result: completed; child Issue #47 implementation observed at ee214b6 and verified at 07f8cf5 with compileall, validator, 251 tests, and graph check; parent pin d947fdd remains unchanged because pin adoption is out of scope
-last_completed_task: PURPOSE-RESEARCH-KNOWLEDGE-001
+  expected_changes: Verify the child Issue #48 implementation of typed rejected-option and uncertainty registries, bidirectional decision references, deterministic executive brief, and safety boundary without modifying the parent or child checkout.
+  result: completed; child Issue #48 implementation observed at ee214b6 and verified at 07f8cf5 with compileall, validator, graph check, security check, docs check, focused 39 tests, and full 251 tests; parent Research pin d947fdd remains unchanged because pin adoption is out of scope
+last_completed_task: PURPOSE-RESEARCH-DECISIONS-001
 resume_from:
-  task: PURPOSE-RESEARCH-DECISIONS-001
-  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #48 and the Research child decision contract.
+  task: PURPOSE-RESEARCH-VISUAL-001
+  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #49 and the Research child visual-language handoff contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence

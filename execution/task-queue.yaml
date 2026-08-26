@@ -845,7 +845,7 @@ tasks:
   - id: PURPOSE-RESEARCH-DECISIONS-001
     milestone: M16
     title: Connect rejected options and uncertainty to the research brief
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/48
     target_repositories: [agentic-art-research]
     agent_terminal: DRAFT_PR_READY
