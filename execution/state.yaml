@@ -1,30 +1,30 @@
-version: 67
-updated_at: "2026-08-26T16:55:02+09:00"
+version: 69
+updated_at: "2026-08-26T17:20:46+09:00"
 active_task: null
-active_repository: agentic-art-research
+active_repository: agentic-art-production
 lease:
   status: released
-  owner: codex-research-visual
-  acquired_at: "2026-08-26T16:53:09+09:00"
-  expires_at: "2026-08-26T17:53:09+09:00"
+  owner: codex-production-observation
+  acquired_at: "2026-08-26T17:08:55+09:00"
+  expires_at: "2026-08-26T18:08:55+09:00"
   lane: CHILD_SOURCE
-  execution_id: PURPOSE-RESEARCH-VISUAL-001:attempt-1
+  execution_id: PURPOSE-PRODUCTION-OBSERVATION-001:attempt-1
   scope:
-    repository: agentic-art-research
-    paths: [schemas/visual-language.schema.json, templates/project/05_production/visual-language.yaml, tools/_common.py, tools/new_project.py, tools/validate.py, tools/context_pack.py, tools/bundle.py, tools/export_handoff.py, config/vocabularies.yaml, config/task-roles.yaml, docs/schema-reference.md, docs/operations.md, tests/test_visual_language.py, tests/test_handoff_validation.py, tests/test_handoff_build.py, tests/test_handoff_e2e.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-    child_repositories: [agentic-art-research]
-  released_at: "2026-08-26T16:55:02+09:00"
-  release_reason: "PURPOSE-RESEARCH-VISUAL-001 completed; existing child Issue #49 implementation and all applicable quality gates passed in an isolated clone"
+    repository: agentic-art-production
+    paths: [schemas/observation-record.schema.json, schemas/observations.schema.json, schemas/execution-event.schema.json, config/schema-registry.yaml, config/project-layout.yaml, tools/lib/execution.py, tools/run_execution.py, tools/lib/result.py, tools/build_result.py, tools/lib/evaluation.py, tools/validate.py, tests/test_observation.py, tests/test_result.py, tests/test_execution.py, docs/observation-migration.md, docs/operations-runbook.md, docs/schema-reference.md, execution/task-queue.yaml, README.md]
+    child_repositories: [agentic-art-production]
+  released_at: "2026-08-26T17:20:46+09:00"
+  release_reason: "PURPOSE-PRODUCTION-OBSERVATION-001 completed; existing child Issue #34 implementation and all declared quality gates passed in an isolated clone; branch and pin integration remain separate"
 checkpoint:
-  task: PURPOSE-RESEARCH-VISUAL-001
-  repository: agentic-art-research
-  start_point: 07f8cf5
-  expected_changes: Verify the child Issue #49 implementation of typed visual language, lifecycle/reference validation, production-translator contract, and handoff/export integration without modifying the parent or child checkout.
-  result: completed; child Issue #49 implementation observed at ee214b6 and verified at 07f8cf5 with compileall, validator, graph check, security check, docs check, focused 48 tests, and previously completed full 251 tests at the same clean HEAD; parent Research pin d947fdd remains unchanged because pin adoption is out of scope
-last_completed_task: PURPOSE-RESEARCH-VISUAL-001
-resume_from:
   task: PURPOSE-PRODUCTION-OBSERVATION-001
-  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #34 and the Production child observation/result contract.
+  repository: agentic-art-production
+  start_point: d07ed69
+  expected_changes: Verify the child Issue #34 implementation of append-only production observations, zero-observation result behavior, lossless ACTIVE revision projection, replay integrity, and privacy boundary without modifying the parent or child checkout.
+  result: completed; child Issue #34 implementation observed at 313e368 and verified at d07ed69 with compileall, validator, focused 7 tests, full 62 tests, evaluation, diff check, and clean isolated checkout; child source branch is not main and parent pin 51a817c remains unchanged because integration is out of scope
+last_completed_task: PURPOSE-PRODUCTION-OBSERVATION-001
+resume_from:
+  task: PURPOSE-PRODUCTION-REVISION-001
+  action: Promote and claim the lowest-ID eligible task, run the parent validator, then inspect Issue #36 and the Production child superseding-handoff contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence

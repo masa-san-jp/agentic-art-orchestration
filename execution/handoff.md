@@ -1271,3 +1271,16 @@
 ## Next exact action
 
 1. `PURPOSE-PRODUCTION-OBSERVATION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #34とProduction childのobservation/result contractを読む。
+
+## PURPOSE-PRODUCTION-OBSERVATION-001 completed
+
+- Production childのIssue #34はOPENのままだが、childの`execution/task-queue.yaml`では`OBSERVATION-001=DONE`であり、観測のappend-only record、zero-observation result、lossless ACTIVE revision、RETRACTED履歴、replay/hash integrity、reference解決、privacy boundaryが実装済みだった。実装commitは`313e36827f15d06caa1ce0942553d9f32541da33`、検証対象HEADは`d07ed695a961c9ce3d4e12dc9c9dabbaf3a263b0`である。
+- Issue #34の完了条件12項目を、観測なし、合成観測のlog/projection/result反映、idempotency、identity衝突、revision/RETRACTED、dangling reference、partial/hash/projection tamper、PRIVATE_RAW/credential/signed URL/asset body拒否、Research consumer互換、正常・失敗・再実行test、schema/reference/runbook/plan/queue更新として確認した。
+- hardlinkなしの隔離cloneでchild指定の`.venv/bin/python tools/validate.py --check --format json`（`[]`）、`tests.test_observation tests.test_result` 7/7、全62 tests、`tools/run_evaluation.py --format json`（6 checks PASS）、`git diff --check`、`git status --short`を実行し、すべてPASSした。評価出力の失敗系diagnosticはテストfixtureの期待出力である。
+- Production本体は`agent/runtime-guards-002...origin/agent/runtime-guards-002`でcleanだった。mainではないbranchをcheckout変更せず、branch作成・commit・PR・merge・releaseも行っていない。親manifestのProduction pinは`51a817c8fcfe292069b85717f5e973b1e860bd4b`のままであり、pin adoption/integrationは未解決の別作業として保持する。
+- 親validatorはclaim後と完了記録後にPASSした。親の最終全体testsは完了記録後に再実行する。子repo、`repos/`生成物、GitHub Issue/PR、Google Drive、credential、外部artifactは変更していない。機微情報、会話全文、PRIVATE_RAW、RESTRICTEDは追加していない。explicit/inferred feedbackは扱っていない。
+- acceptance: 12/12。親側の変更はqueue/state/handoffの完了記録だけをこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-PRODUCTION-REVISION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #36とProduction childのsuperseding-handoff contractを読む。
