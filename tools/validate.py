@@ -37,6 +37,7 @@ TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
+SELF_DIVERSITY_SCHEMA_PATH = ROOT / "schemas/self-diversity-report.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
@@ -100,6 +101,7 @@ REQUIRED_FILES = [
     "tools/candidate_gates.py",
     "schemas/research-selection.schema.json",
     "tools/candidate_selection.py",
+    "schemas/self-diversity-report.schema.json",
     "schemas/child-quality-gates.schema.json",
     "tools/child_quality_gates.py",
     "tools/pinned_workspace.py",
@@ -1516,6 +1518,113 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
                     )
     if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
         errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
+    return errors
+
+
+def validate_self_diversity_report(data: dict, source: str = "self-diversity") -> list[str]:
+    """Validate opaque self-model anchor counts, distribution, and provenance."""
+    errors: list[str] = []
+    schema = load_json(SELF_DIVERSITY_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the self-diversity-report field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    anchor_ids = data.get("anchor_ids")
+    attribute_counts = data.get("attribute_counts")
+    selected_anchor_ids = data.get("selected_anchor_ids")
+    if isinstance(anchor_ids, list) and isinstance(data.get("eligible_anchor_count"), int):
+        if data["eligible_anchor_count"] != len(anchor_ids):
+            errors.append(
+                _signal_error(
+                    source,
+                    "eligible_anchor_count does not equal anchor_ids length",
+                    "derive the count from the complete eligible anchor set",
+                )
+            )
+        if len(anchor_ids) != len(set(anchor_ids)):
+            errors.append(_signal_error(source, "anchor_ids contains duplicates", "deduplicate anchors by their stable hash ID"))
+    if isinstance(attribute_counts, dict) and isinstance(data.get("eligible_anchor_count"), int):
+        if sum(value for value in attribute_counts.values() if isinstance(value, int) and not isinstance(value, bool)) != data["eligible_anchor_count"]:
+            errors.append(
+                _signal_error(
+                    source,
+                    "attribute_counts does not sum to eligible_anchor_count",
+                    "count each tensions or recurring_patterns anchor exactly once",
+                )
+            )
+    if isinstance(selected_anchor_ids, list):
+        selected_count = data.get("selected_count")
+        if selected_count != len(selected_anchor_ids):
+            errors.append(
+                _signal_error(
+                    source,
+                    "selected_count does not equal selected_anchor_ids length",
+                    "derive selected_count from the selected candidate anchors",
+                )
+            )
+        distinct_count = len(set(selected_anchor_ids))
+        if data.get("distinct_selected_count") != distinct_count:
+            errors.append(
+                _signal_error(
+                    source,
+                    "distinct_selected_count does not equal unique selected anchor IDs",
+                    "derive distinct_selected_count from selected_anchor_ids",
+                )
+            )
+        if isinstance(anchor_ids, list) and not set(selected_anchor_ids).issubset(set(anchor_ids)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "selected_anchor_ids contains an ineligible anchor",
+                    "select only anchors present in the same immutable eligibility report",
+                )
+            )
+        frequencies: dict[str, int] = {}
+        for anchor_id in selected_anchor_ids:
+            frequencies[anchor_id] = frequencies.get(anchor_id, 0) + 1
+        selected_count = len(selected_anchor_ids)
+        expected_share = max((count / selected_count for count in frequencies.values()), default=0.0)
+        observed_share = data.get("max_anchor_share")
+        if isinstance(observed_share, (int, float)) and not isinstance(observed_share, bool) and abs(observed_share - expected_share) > 1e-12:
+            errors.append(
+                _signal_error(
+                    source,
+                    "max_anchor_share does not match selected anchor frequencies",
+                    "derive the maximum selected anchor frequency divided by selected_count",
+                )
+            )
+
+    eligible_count = data.get("eligible_anchor_count")
+    selected_count = data.get("selected_count")
+    selection_limit = data.get("selection_limit")
+    distinct_count = data.get("distinct_selected_count")
+    max_share = data.get("max_anchor_share")
+    status = data.get("status")
+    expected_status = "PASS"
+    if isinstance(eligible_count, int) and eligible_count < 3:
+        expected_status = "INSUFFICIENT_SELF_DIVERSITY"
+    elif isinstance(selected_count, int) and isinstance(selection_limit, int):
+        if selected_count > selection_limit or (selected_count > 0 and selected_count < selection_limit):
+            expected_status = "REJECT"
+        elif selection_limit >= 10 and (
+            not isinstance(distinct_count, int)
+            or distinct_count < 3
+            or not isinstance(max_share, (int, float))
+            or isinstance(max_share, bool)
+            or max_share > 0.4
+        ):
+            expected_status = "REJECT"
+    if status != expected_status:
+        errors.append(
+            _signal_error(
+                source,
+                f"status {status!r} does not match observed diversity conditions; expected {expected_status!r}",
+                "preserve INSUFFICIENT_SELF_DIVERSITY, REJECT, or PASS without fallback or waterfilling",
+            )
+        )
     return errors
 
 

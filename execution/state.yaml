@@ -1,30 +1,30 @@
-version: 57
-updated_at: "2026-08-26T14:24:58+09:00"
+version: 59
+updated_at: "2026-08-26T14:48:26+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-self-export-e2e
-  acquired_at: "2026-08-26T14:20:36+09:00"
-  expires_at: "2026-08-26T15:20:36+09:00"
-  lane: CHILD_SOURCE
-  execution_id: SELF-EXPORT-E2E-001:attempt-1
+  owner: codex-self-diversity
+  acquired_at: "2026-08-26T14:26:10+09:00"
+  expires_at: "2026-08-26T15:26:10+09:00"
+  lane: CANDIDATE_QUALITY
+  execution_id: PURPOSE-SELF-DIVERSITY-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tests/fixtures/signal/self_export_bundle.json, tests/test_self_model_export_e2e.py, docs/cross-repository-contract.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/candidate_space.py, tools/candidate_selection.py, tools/candidate_gates.py, schemas/self-diversity-report.schema.json, schemas/research-candidate.schema.json, schemas/research-selection.schema.json, tools/validate.py, tests/test_candidate_space.py, tests/test_candidate_selection.py, tests/test_candidate_gates.py, docs/cross-repository-contract.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
     child_repositories: []
-  released_at: "2026-08-26T14:24:58+09:00"
-  release_reason: "SELF-EXPORT-E2E-001 completed; pinned self-model export passed adapter, normalized schema, consumer, provenance, count, domain, and privacy gates"
+  released_at: "2026-08-26T14:48:26+09:00"
+  release_reason: "PURPOSE-SELF-DIVERSITY-001 completed; versioned opaque self-diversity report and fail-closed anchor selection passed all required checks"
 checkpoint:
-  task: SELF-EXPORT-E2E-001
+  task: PURPOSE-SELF-DIVERSITY-001
   repository: agentic-art-orchestration
-  start_point: 6ac878c
-  expected_changes: Pin the completed self-model export source and prove every exported record survives the parent adapter, normalized schema, and consumer with provenance, domain mapping, consent, and raw-voice privacy intact.
-  result: completed; fixture source commit 04095bfa4115ef4fde8a8f475bf31743ecdff962 passed adapter, schema, consumer, provenance, count, domain, and privacy E2E; parent manifest pin remained unchanged.
-last_completed_task: SELF-EXPORT-E2E-001
+  start_point: 8415acf
+  expected_changes: Enforce a versioned self-diversity report over tensions and recurring_patterns, fail closed below three eligible anchors, and bound repeated-anchor selection without inventing self facts or weakening provenance.
+  result: completed; self-diversity-report/v1, consented tensions/recurring_patterns anchors, insufficient-diversity stop, round-robin selection, share bound, provenance, privacy, and determinism checks passed
+last_completed_task: PURPOSE-SELF-DIVERSITY-001
 resume_from:
-  task: SELF-EXPORT-E2E-001
-  action: Promote and claim PURPOSE-SELF-DIVERSITY-001, then run the parent validator before inspecting the diversity selection contract and Issue #99.
+  task: PURPOSE-INTENT-RANK-001
+  action: Claim the lowest-ID READY task, run the parent validator, then inspect Issue #102 and the existing candidate selection contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence

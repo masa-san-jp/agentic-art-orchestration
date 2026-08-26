@@ -86,3 +86,11 @@ qualificationはpinを専用workspaceへmaterializeして実行し、source chec
 E2Eでは、envelopeの`signal_count`・一意な`signal_id`・全recordの`commit`一致を確認した後、全recordを`adapt_self_model_signal()`へ個別に渡し、`validate_signal()`を通してから1回の`import_signals()`へ渡す。入力・normalized・imported・provenanceの件数、ID順、source commit、entity/evidence locator、certainty、unknowns、constraints、freshness、self-model domain fieldsは一致しなければならない。
 
 raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換結果に含めない。`raw_voice_locator`とsource/evidence locatorは`self-model://`のopaque locatorだけを許可する。Issue #90の材料数や多様性の判断、child schema、adapter、consumerの変更はこのE2Eの範囲外である。
+
+## Self-model diversity report
+
+`self-diversity-report/v1` は、利用許可済みnormalized signalの`domain.self_model.tensions`と`recurring_patterns`のunionだけを対象にする。各値は`signal_id`、属性名、canonical valueを改行で連結したSHA-256のopaque anchor IDへ変換し、reportには生のstatement、voice本文、属性値、直接識別情報を保存しない。同一signal内の重複値はanchor IDで一つにまとめる。
+
+`eligible_anchor_count`が3未満の場合は`INSUFFICIENT_SELF_DIVERSITY`とし、候補を複製したり選択数を水増ししたりしない。明示的な多様性要求でselection limitが10以上の場合は、少なくとも3つのdistinct anchorを含み、各anchorのshareを40%以下にする。passing candidateがselection limitに満たない場合も、limitを下げずに拒否する。候補の選択順はanchor単位の決定的round-robinとし、各anchor内では既存のseeded SHA-256 score順を保持する。
+
+reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。

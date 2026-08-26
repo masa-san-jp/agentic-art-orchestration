@@ -1207,3 +1207,16 @@
 ## Next exact action
 
 1. `PURPOSE-SELF-DIVERSITY-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #99とcandidate selectionの多様性契約を読む。
+
+## PURPOSE-SELF-DIVERSITY-001 completed
+
+- `self-diversity-report/v1` schemaとvalidatorを追加し、`domain.self_model.tensions`と`recurring_patterns`のunionから、`signal_id`・属性名・canonical valueのSHA-256だけでopaque anchor IDを計算する。reportにはselfの生値、statement、voice本文、直接識別情報を保存しない。
+- 3未満のeligible anchorは`INSUFFICIENT_SELF_DIVERSITY`で停止し、既存のv1候補フローでは候補数を水増ししない。3以上では全anchorを候補へ展開し、personal_tensionのattributeとして`tensions`または`recurring_patterns`を保持する。candidate gatesも両属性を受理する。
+- `--require-self-diversity`を追加し、normalized signalを明示的に渡した場合だけ、selection limit不足、passing candidate不足、distinct anchor 3未満、anchor share 40%超を拒否する。selection limit 10以上はanchor単位の決定的round-robinで、各anchor内の順序はseeded SHA-256 score順を保持する。`--diversity-report`で独立reportを生成できる。
+- `tests.test_candidate_space`、`tests.test_candidate_selection`、`tests.test_candidate_gates`、`tests.test_adapter_self_model`: 26/26。4 anchors×25 historical candidatesの100件fixtureでselection limit 10/100を検証し、同一入力・seedのbyte一致、2 anchorsの停止、recurring_patterns除去の回帰、source commit保持、raw data非出力を確認した。
+- 親全体: 345/345。`.venv/bin/python tools/validate.py --check`、`git diff --check`、candidate-space CLI、diversity-report CLIが成功した。auditは既知の非blocking marketing freshness warning 1件、workspace statusは5 repositories clean on main/ahead_behind_zero。子repo、manifest pin、Issue/PR、Drive artifact、credential、merge、releaseは変更していない。
+- acceptance: 1/1。inferred feedbackは扱っていない。外部artifactは作成していない。
+
+## Next exact action
+
+1. `PURPOSE-INTENT-RANK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #102と既存candidate selection契約を読む。

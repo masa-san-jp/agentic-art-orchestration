@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/self-diversity-report.schema.json",
+  "title": "Self-model diversity report v1",
+  "description": "An opaque, provenance-preserving report over consented tensions and recurring patterns.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "eligible_anchor_count",
+    "attribute_counts",
+    "anchor_ids",
+    "selection_limit",
+    "selected_count",
+    "distinct_selected_count",
+    "selected_anchor_ids",
+    "max_anchor_share",
+    "status",
+    "source"
+  ],
+  "properties": {
+    "contract_version": {"const": "self-diversity-report/v1"},
+    "eligible_anchor_count": {"type": "integer", "minimum": 0},
+    "attribute_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tensions", "recurring_patterns"],
+      "properties": {
+        "tensions": {"type": "integer", "minimum": 0},
+        "recurring_patterns": {"type": "integer", "minimum": 0}
+      }
+    },
+    "anchor_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "selection_limit": {"type": "integer", "minimum": 1},
+    "selected_count": {"type": "integer", "minimum": 0},
+    "distinct_selected_count": {"type": "integer", "minimum": 0},
+    "selected_anchor_ids": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "max_anchor_share": {"type": "number", "minimum": 0, "maximum": 1},
+    "status": {"type": "string", "enum": ["PASS", "INSUFFICIENT_SELF_DIVERSITY", "REJECT"]},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "signal_ids", "source_commits"],
+      "properties": {
+        "repository": {"const": "self-model"},
+        "signal_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "source_commits": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        }
+      }
+    }
+  }
+}

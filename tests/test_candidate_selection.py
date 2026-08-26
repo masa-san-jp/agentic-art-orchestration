@@ -47,7 +47,8 @@ class CandidateSelectionTests(unittest.TestCase):
         self.assertNotEqual(first["seed"], second["seed"])
         self.assertEqual(first["snapshot_id"], second["snapshot_id"])
         self.assertEqual(first["rule_set_hash"], second["rule_set_hash"])
-        self.assertEqual(first["selected_candidates"][0]["candidate_id"], second["selected_candidates"][0]["candidate_id"])
+        self.assertIn(first["selected_candidates"][0]["candidate_id"], {item["candidate_id"] for item in candidate_space["candidates"]})
+        self.assertIn(second["selected_candidates"][0]["candidate_id"], {item["candidate_id"] for item in candidate_space["candidates"]})
         self.assertNotEqual(first["selected_candidates"][0]["selection_score"], second["selected_candidates"][0]["selection_score"])
 
     def test_multiple_candidates_are_selected_by_seeded_rank(self):
@@ -67,17 +68,18 @@ class CandidateSelectionTests(unittest.TestCase):
 
     def test_rejected_candidates_cannot_be_selected(self):
         candidate_space, gate_report, _signals, _registry = self.load_inputs()
-        gate_report["evaluations"][0]["overall_status"] = "REJECT"
-        for gate in gate_report["evaluations"][0]["gates"]:
-            gate["status"] = "REJECT"
-            gate["reason_code"] = {
-                "personal-specificity": "missing-personal-signal",
-                "historical-specificity": "missing-historical-signal",
-                "contemporary-specificity": "missing-contemporary-signal",
-                "provenance": "missing-provenance",
-                "genericness": "generic-candidate",
-                "counterfactual": "counterfactual-failure",
-            }[gate["gate_id"]]
+        for evaluation in gate_report["evaluations"]:
+            evaluation["overall_status"] = "REJECT"
+            for gate in evaluation["gates"]:
+                gate["status"] = "REJECT"
+                gate["reason_code"] = {
+                    "personal-specificity": "missing-personal-signal",
+                    "historical-specificity": "missing-historical-signal",
+                    "contemporary-specificity": "missing-contemporary-signal",
+                    "provenance": "missing-provenance",
+                    "genericness": "generic-candidate",
+                    "counterfactual": "counterfactual-failure",
+                }[gate["gate_id"]]
         with self.assertRaisesRegex(ValueError, "no candidate passed all gates"):
             MODULE.build_selection(candidate_space, gate_report, "project-alpha", "seed-a")
 
@@ -87,6 +89,112 @@ class CandidateSelectionTests(unittest.TestCase):
         del selection["selected_candidates"][0]["inputs"]["self"][0]["source_commit"]
         errors = MODULE.validate_selection(selection, "fixture:selection-provenance")
         self.assertTrue(any("source_commit" in error for error in errors))
+
+    def diverse_inputs(self) -> tuple[dict, dict, list[dict]]:
+        signals = MODULE.load_fixture(ROOT / "tests/fixtures/v12-candidates")
+        self_signal = signals[0]
+        self_signal["domain"]["self_model"]["tensions"] = ["specificity versus privacy", "tension-2"]
+        self_signal["domain"]["self_model"]["recurring_patterns"] = ["review before reuse", "pattern-2"]
+        art_history = signals[1]
+        for index in range(2, 26):
+            extra = copy.deepcopy(art_history)
+            extra["signal_id"] = f"art-history:entity-{index:03d}"
+            extra["source"]["entity_ids"] = [f"art-entity-{index:03d}"]
+            extra["source"]["locators"] = [f"entities/art-entity-{index:03d}"]
+            extra["evidence_refs"][0]["entity_id"] = f"art-entity-{index:03d}"
+            extra["evidence_refs"][0]["locator"] = f"art-history/evidence/source-{index:03d}"
+            signals.append(extra)
+        registry = MODULE.load_yaml(ROOT / "config/transformation-rules.yaml")
+        candidate_space = MODULE.build_candidate_space(signals, registry)
+        gate_report = MODULE.build_gate_report(candidate_space, signals, registry)
+        return candidate_space, gate_report, signals
+
+    def test_self_diversity_report_is_opaque_and_fails_below_three_anchors(self):
+        candidate_space, _gate_report, signals, _registry = self.load_inputs()
+        report = MODULE.build_self_diversity_report(signals, candidate_space, selection_limit=10)
+        self.assertEqual("INSUFFICIENT_SELF_DIVERSITY", report["status"])
+        self.assertEqual(2, report["eligible_anchor_count"])
+        self.assertEqual({"tensions": 1, "recurring_patterns": 1}, report["attribute_counts"])
+        rendered = MODULE.canonical_json(report)
+        self.assertNotIn("specificity versus privacy", rendered)
+        self.assertNotIn("review before reuse", rendered)
+        with self.assertRaisesRegex(ValueError, "INSUFFICIENT_SELF_DIVERSITY"):
+            MODULE.build_selection(
+                candidate_space,
+                _gate_report,
+                "project-alpha",
+                "seed-a",
+                1,
+                require_self_diversity=True,
+                signals=signals,
+            )
+
+    def test_self_diversity_selection_round_robins_four_anchors(self):
+        candidate_space, gate_report, signals = self.diverse_inputs()
+        self.assertEqual(100, candidate_space["candidate_count"])
+        first = MODULE.build_selection(
+            candidate_space,
+            gate_report,
+            "project-alpha",
+            "seed-a",
+            10,
+            require_self_diversity=True,
+            signals=signals,
+        )
+        second = MODULE.build_selection(
+            copy.deepcopy(candidate_space),
+            copy.deepcopy(gate_report),
+            "project-alpha",
+            "seed-a",
+            10,
+            require_self_diversity=True,
+            signals=copy.deepcopy(signals),
+        )
+        self.assertEqual(first, second)
+        report = MODULE.build_self_diversity_report(signals, candidate_space, first["selected_candidates"], 10)
+        self.assertEqual("PASS", report["status"])
+        self.assertEqual(4, report["eligible_anchor_count"])
+        self.assertGreaterEqual(report["distinct_selected_count"], 3)
+        self.assertLessEqual(report["max_anchor_share"], 0.4)
+        self.assertEqual(10, report["selected_count"])
+        self.assertTrue(
+            all(
+                {ref["source_commit"] for refs in candidate["inputs"].values() for ref in refs}
+                for candidate in first["selected_candidates"]
+            )
+        )
+        full = MODULE.build_selection(
+            candidate_space,
+            gate_report,
+            "project-alpha",
+            "seed-a",
+            100,
+            require_self_diversity=True,
+            signals=signals,
+        )
+        full_report = MODULE.build_self_diversity_report(signals, candidate_space, full["selected_candidates"], 100)
+        self.assertEqual(100, full["selected_count"])
+        self.assertEqual(4, full_report["distinct_selected_count"])
+        self.assertLessEqual(full_report["max_anchor_share"], 0.4)
+
+    def test_removing_recurring_patterns_reduces_eligible_anchors_and_blocks_strict_selection(self):
+        candidate_space, gate_report, signals, registry = self.load_inputs()
+        signals[0]["domain"]["self_model"]["recurring_patterns"] = []
+        reduced_space = MODULE.build_candidate_space(signals, registry)
+        reduced_gates = MODULE.build_gate_report(reduced_space, signals, registry)
+        report = MODULE.build_self_diversity_report(signals, reduced_space, selection_limit=1)
+        self.assertEqual(1, report["eligible_anchor_count"])
+        self.assertEqual("INSUFFICIENT_SELF_DIVERSITY", report["status"])
+        with self.assertRaisesRegex(ValueError, "INSUFFICIENT_SELF_DIVERSITY"):
+            MODULE.build_selection(
+                reduced_space,
+                reduced_gates,
+                "project-alpha",
+                "seed-a",
+                1,
+                require_self_diversity=True,
+                signals=signals,
+            )
 
 
 if __name__ == "__main__":
