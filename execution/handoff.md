@@ -1158,6 +1158,15 @@
 - v1.4.0 qualificationは3/3 deterministic runs、親checks、v1.2 E2E、Production exchange、initial-operations E2E、sandbox evidence、security、historyをすべてPASSした。report SHA-256は`d6e65dfdffd241ad18b11593dd7b4fd77f66fb3b10dfb66d103d18610e6f9afb`。
 - `remote_operations=[]`、merge/tag/releaseは未実行。verified workspaceは5/5 exact pin・clean・detached、子repo、Drive、GitHub Issue、credential、外部artifactは変更していない。acceptanceは1/1、leaseをreleaseし、次のREADYを`PURPOSE-NAMING-001`へ進めた。
 
+## PURPOSE-NAMING-001 completed
+
+- 親の`docs/cross-repository-contract.md`にあるIssue #43のローカル正本を基準に、cross-repository `source-ref-index.yaml` の正規形をtop-level `references`と各recordの`record_hash`へ統一した。親owned `normalized-research-signal-bundle/v1`の`records`は別契約として維持した。
+- `agentic-art-research`はexporter、handoff contract test、schema reference、実行計画を更新し、branch `agent/issue-43-contract-naming` の独立commit `acc751a47f53471fd4bc7b69fded1af568ba5ccd`へ固定した。validator、全120 tests、focused handoff tests 21件、diff checkがPASSした。
+- `agentic-art-production`はplan builder、canonical fixture、manifest hash、旧形式拒否test、仕様・schema reference、実行計画を更新し、branch `agent/issue-43-contract-naming` の独立commit `ffc4df0e4a0871ac3086a474c6b350de976080ec`へ固定した。validator、全52 tests、focused bootstrap tests 37件、diff checkがPASSした。
+- Productionは旧top-level `records`と旧hash key `record_sha256`を補正せずfail closedで拒否する。Researchは旧キーを生成しない。manifest fixtureのraw hashとfile-set hashは再計算済みである。
+- 親manifestのchild pin、qualified workspace、`repos/`生成物、GitHub Issue、Drive artifact、credential、merge、tag、releaseは変更していない。変更はGit外の独立作業コピーで行い、機微情報・会話全文・PRIVATE_RAW・RESTRICTEDは追加していない。remote Issue参照は利用不能だったため外部writeは行わず、親repo内の記録済み決定を使った。
+- acceptance: 1/1。親の命名決定、Research生成、Production受理、旧形式拒否、独立commit、各品質ゲートを確認した。
+
 ## Next exact action
 
-1. `PURPOSE-NAMING-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+1. `PURPOSE-INSPIRATION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。

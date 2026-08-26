@@ -1,29 +1,30 @@
-version: 49
-updated_at: "2026-08-26T13:24:06+09:00"
+version: 51
+updated_at: "2026-08-26T13:39:24+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-initial-ops-qualify
-  acquired_at: "2026-08-26T12:55:51+09:00"
-  expires_at: "2026-08-26T13:55:51+09:00"
-  lane: RELEASE_QUALIFICATION
-  execution_id: INITIAL-OPS-QUALIFY-001:attempt-5
+  owner: codex-purpose-naming
+  acquired_at: "2026-08-26T13:29:06+09:00"
+  expires_at: "2026-08-26T14:29:06+09:00"
+  lane: CROSS_REPOSITORY_CONTRACT
+  execution_id: PURPOSE-NAMING-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/quality_gates.py, tools/child_quality_gates.py, tools/release_check.py, schemas/child-quality-gates.schema.json, tests/test_child_quality_gates.py, tests/test_release_check.py, docs/operator-runbook.md, docs/agent-ui-runbook.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
-  released_at: "2026-08-26T13:24:06+09:00"
-  release_reason: "INITIAL-OPS-QUALIFY-001 completed; per-child environments resolved conflicting exact requirements and the qualification passed"
+    paths: [docs/cross-repository-contract.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
+    child_repositories: [agentic-art-research, agentic-art-production]
+  released_at: "2026-08-26T13:39:24+09:00"
+  release_reason: "PURPOSE-NAMING-001 completed; separate child commits and quality gates passed"
 checkpoint:
-  task: INITIAL-OPS-QUALIFY-001
-  repository: agentic-art-orchestration
-  start_point: 1b841af
-  expected_changes: Implement an explicitly selected per-child dependency environment strategy without changing child source or pins, then rerun the v1.4.0 three-run qualification from the verified manifest-pinned workspace.
-  result: completed; per-child environment selection resolved conflicting exact requirements and the v1.4.0 three-run qualification passed.
-last_completed_task: INITIAL-OPS-QUALIFY-001
-resume_from:
   task: PURPOSE-NAMING-001
-  action: Inspect the authoritative naming decision and affected repository instructions, then claim PURPOSE-NAMING-001 without changing child repositories until their SSOT and lease scope are confirmed.
+  repository: agentic-art-orchestration
+  start_point: 800212d
+  expected_changes: Align Research source-ref-index and Production consumption to the parent-authoritative references/record_hash naming decision, update affected child docs/tests/fixtures, and preserve separate child commits without changing parent pins.
+  result: completed; Research acc751a and Production ffc4df0 independently implement the references/record_hash boundary and pass their quality gates; parent pins remain unchanged.
+last_completed_task: PURPOSE-NAMING-001
+resume_from:
+  task: PURPOSE-INSPIRATION-001
+  action: Claim PURPOSE-INSPIRATION-001 and run the parent validator before inspecting the agent UI capture and settlement contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -69,7 +70,7 @@ reconciliation:
   v1_4_sandbox_live_evidence: passed; attempt-scoped READ/CREATE/READ/REUSE evidence exists outside Git
   v1_4_aggregate_qualification: passed; 3/3 deterministic runs with 5 repositories and 14 child gates
   v1_4_release: BLOCKED; explicit human approval required
-  next_task: PURPOSE-NAMING-001
+  next_task: PURPOSE-INSPIRATION-001
   external_issue_updates: not_performed; owner approval required for Epic/Issue writes
   child_pins_changed: false
   child_repository_mutation: false
@@ -263,6 +264,27 @@ release:
   issue_mutation: false
   drive_mutation: false
   physical_or_external_effect: false
+purpose_naming:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/43
+  acceptance: 1/1
+  decision_source: parent docs/cross-repository-contract.md; remote Issue lookup was unavailable and no external write was attempted
+  affected_repositories:
+    agentic-art-orchestration:
+      status: compliant; existing references/record_hash decision and documentation test retained
+    agentic-art-research:
+      branch: agent/issue-43-contract-naming
+      commit: acc751a47f53471fd4bc7b69fded1af568ba5ccd
+      status: passed; validator, full tests 120/120, focused handoff tests 21/21, diff check
+    agentic-art-production:
+      branch: agent/issue-43-contract-naming
+      commit: ffc4df0e4a0871ac3086a474c6b350de976080ec
+      status: passed; validator, full tests 52/52, focused bootstrap tests 37/37, diff check
+  parent_pins_changed: false
+  pinned_qualification_workspace_changed: false
+  isolated_child_workspaces_only: true
+  sensitive_information_added: false
+  external_issue_drive_or_release_mutation: false
 blocked:
   - task: ISSUE-38-REAL-CHAIN-CI-001
     repository: agentic-art-orchestration

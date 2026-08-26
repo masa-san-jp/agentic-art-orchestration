@@ -1,7 +1,7 @@
 # Agentic Art Orchestration リポジトリ完成実行計画
 
 作成日: 2026-08-11  
-最終更新: 2026-08-12
+最終更新: 2026-08-26
 対象: masa-san-jp/agentic-art-orchestration  
 実行者: GPT-5.6 Luna / Claude Sonnet相当以上  
 目標: v1.2.1の5repo基線を公開し、v1.3.0でProduction交換を実運用化し、v1.4.0でCodex/Claude CodeをUIとする初期運用を安全に開始できること
@@ -39,8 +39,9 @@ python3 -m unittest discover -s tests -v
 - [x] M11: `agentic-art-production`を同一repo Issue SSOTとhandoff/result exchange契約付きで親manifestへ追加し、5repo snapshot・quality gate・auditへ接続する（MANIFEST-PRODUCTION-001、MANIFEST-PRODUCTION-002、親PR #15 merge済み）。
 - [x] M12: post-v1.2.0 mainを5repo v1.2.1基線として整合・3回qualification・human-gated releaseする（V121-RECONCILE-001、V121-QUALIFY-001、V121-RELEASE-001完了。release操作はhuman gateの実承認後に完了）。
 - [x] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする（PRODUCTION-PIN-001、PRODUCTION-E2E-001、PRODUCTION-QUALIFY-001、PRODUCTION-RELEASE-001完了）。
-- [ ] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidenceは完了。総合qualification再実行とv1.4.0 human-gated releaseは未完了）。
-- [ ] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
+- [x] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidence、総合qualificationは完了。v1.4.0 human-gated releaseは未完了）。
+- [x] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-NAMING-001`は完了し、次は`PURPOSE-INSPIRATION-001`である。
 
 ## Surprises & Discoveries
 
@@ -58,6 +59,7 @@ python3 -m unittest discover -s tests -v
 - 2026-08-12: manifestのProduction契約宣言とchild gate成功だけではResearch→Production→Researchの往復を証明しない。親mainが固定するResearch `9bfa07d...`にはhandoff export/result import CLIがなく、remote mainの後続commitには存在するため、M13冒頭で両子commitをread-only再qualificationする必要がある。
 - 2026-08-12: 子repoは随時更新されるため、remote head観測とrun入力pinを分離する。起動時に差分を検知しても、自動checkout・pin更新・正常化をしない。
 - 2026-08-12: MANIFEST-PRODUCTION-001/002のDraft PR #15がhuman gateでmergeされ、production Issue SSOTと親main manifestの結線が実運用状態になった。子repoの正本は変更せず、親mainのmerge commitだけをpost-merge stateへ記録する。
+- 2026-08-26: 親Issue #43のローカル正本に記録されたcross-repository naming decisionと、Research/Productionの現行実装（`records` / `record_sha256`）が不一致だった。Research exporterとProduction plannerを独立commitで`references` / `record_hash`へ揃え、旧形式はfail closedで拒否した。親のmanifest pinは変更せず、採用・push・mergeは別工程に残した。
 
 ## Decision Log
 
@@ -74,6 +76,7 @@ python3 -m unittest discover -s tests -v
 - D-016: 初期監査と全manifest repoのremote update確認をorchestration起動時に毎回実行する。
 - D-017: 運用化をv1.2.1基線、v1.3.0 Production exchange、v1.4.0 initial operationsの順にreleaseする。
 - D-013: Productionの親manifest結線は、PR作成ではなくhuman merge後の親main再確認を完了条件とする。
+- D-018: source-ref indexのcross-repository正規形はtop-level `references` と各recordの `record_hash` とし、Research/Productionの旧名を互換補正しない。親owned aggregateの`records`は別契約として維持する。
 
 詳細は execution/decisions.md を正本とする。
 
@@ -82,6 +85,8 @@ python3 -m unittest discover -s tests -v
 M0時点では構造と実行可能なqueueを確定した。M1でmanifest schema、workspace lifecycle、非破壊Git guard、決定的snapshotを実装し、M2でnormalized research signal v1、3 adapter、consumer compatibility、requirement-to-source traceを完成した。M3ではWORKITEM-001でowner、target、allowed paths、dependency、checks、risk、attempts、lease、checkpoint、terminal evidenceを機械検証するschemaを追加し、SCHEDULER-001で依存DONE・path conflictなしの候補だけをID順に選び、除外理由を返す処理を追加した。RUNTIME-001では期限切れleaseからcheckpointとdecisionを保持して再開し、evidenceをidempotentに記録するstate transitionを追加した。GATES-001では変更repoだけのmanifest quality gate実行、shell制御構文拒否、出力redact/hash、失敗時blockingを実装した。DISPATCH-001ではrequired files以外を除外し、rules/contracts/acceptance/allowed pathsとrecoveryをdeterministicにpackし、unsafe pathとsensitive assignmentを拒否するCLIを実装した。M3の運用基盤は完了した。STATUS-001ではsnapshot、live Git状態、queue、stateを統合し、commit、drift、child progress、compatibility、blocker、next workをJSON/Markdownへ決定的に出力した。PROJECT-001ではProject #4のstatus/priority/target/human gate/run IDをstable task IDでmappingし、重複remote itemを拒否、CREATE/UPDATE/UNCHANGEDを冪等に計画し、API unavailable時はlocal-onlyでqueue実行を継続可能にした。AUDIT-001ではmanifest/snapshot pin、contract schema、signal freshness/consent/orphan、queue duplicate、boundary test coverageをread-onlyで非blocking監査し、clean fixtureでfinding 0、注入fixtureで各findingを観測可能にした。SECURITY-001ではparent payloadとnormalized signalを再帰的にscanし、forbidden class、likely secret、unapproved exportをsanitized findingとしてcommit前にblockingできる境界を実装した。FIXTURE-001では一時rootに4 synthetic repoをcloneし、network disabledでclean/stale/dirty/diverged/incompatible/privacyの6シナリオを再現できるfixture builderを実装した。E2E-001ではconsumer、trace、security、quality gate、runtimeを4-repository offline fixtureへ接続し、cleanのCOMPLETEと9 failure injectionの終端・復旧経路をdeterministicに確認した。DOCS-001とRELEASE-001でv1.0 control planeをqualifiedにした。v1.1ではこの基盤を変更せず、interaction、external artifact、feedback、retrieval、improvement、asynchronous auditを後続milestoneとして追加する。
 
 M11では、追加runtimeのDraft PR #15をhuman gate経由でmergeした後、親mainのmanifest、Issue SSOT、子commit pin、quality gate結線を再確認し、post-merge状態を親state/handoffへ記録した。親mainの実効結線とDraft PRの存在を別状態として扱えるようになった。
+
+M16の`PURPOSE-NAMING-001`では、Researchのhandoff exporterとProductionのsource-ref plannerを同じ境界命名へ揃えた。Researchは`references` / `record_hash`を生成し、Productionは同じ形だけを受理し、`records` / `record_sha256`を自動変換せず拒否する。各子repoは独立branch・commitと全品質ゲートを持ち、親manifest pin、外部Issue、Drive、releaseは変更していない。
 
 ## Context and Orientation
 

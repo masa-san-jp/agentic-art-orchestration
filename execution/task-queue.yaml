@@ -768,7 +768,7 @@ tasks:
   - id: PURPOSE-NAMING-001
     milestone: M16
     title: Apply the cross-repository envelope naming decision
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/43
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: DRAFT_PR_READY
