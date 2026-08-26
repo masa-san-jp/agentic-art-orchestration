@@ -1,0 +1,148 @@
+{
+  "contract_version": "research-signal-export/v1",
+  "generated_at": "2026-08-26T14:21:39+09:00",
+  "purpose": "artistic-research",
+  "signal_count": 3,
+  "signals": [
+    {
+      "adapter_version": "1.0.0",
+      "avoids": [],
+      "certainty": {
+        "basis": "Derived Claim claim/challenge-is-inherently-irrational with confidence low.",
+        "level": "uncertain"
+      },
+      "commit": "04095bfa4115ef4fde8a8f475bf31743ecdff962",
+      "consent_scope": "approved-derived-only",
+      "constraints": [
+        "Condition: 結果の見通しが立たない試みについて語るとき",
+        "Use only for artistic-research under approved-derived-only consent."
+      ],
+      "contexts": [
+        "結果の見通しが立たない試みについて語るとき"
+      ],
+      "entity_id": "claim/challenge-is-inherently-irrational",
+      "evidence_kind": "derived",
+      "evidence_locator": "self-model://claim/challenge-is-inherently-irrational#evidence",
+      "export_permitted": true,
+      "freshness": {
+        "retrieved_at": "2026-08-26T14:21:39+09:00",
+        "revalidate_at": "2026-08-26T14:21:39+09:00",
+        "status": "unknown"
+      },
+      "generated_at": "2026-08-26T14:21:39+09:00",
+      "protects": [],
+      "raw_voice_locator": "self-model://claim/challenge-is-inherently-irrational#raw-voice-not-exported",
+      "recurring_patterns": [],
+      "repository": "self-model",
+      "seeks": [],
+      "signal_id": "self:claim:challenge-is-inherently-irrational",
+      "source_locator": "self-model://claim/challenge-is-inherently-irrational",
+      "statement": "挑戦とは本質的に非合理なものだと本人が捉えている可能性がある",
+      "states": [],
+      "tensions": [],
+      "traits": [],
+      "unknowns": [
+        "confidence is low"
+      ],
+      "validity": {
+        "checked_at": "2026-08-26T14:21:39+09:00",
+        "status": "valid"
+      }
+    },
+    {
+      "adapter_version": "1.0.0",
+      "avoids": [],
+      "certainty": {
+        "basis": "Derived Claim claim/close-but-cannot-reach with confidence low.",
+        "level": "uncertain"
+      },
+      "commit": "04095bfa4115ef4fde8a8f475bf31743ecdff962",
+      "consent_scope": "approved-derived-only",
+      "constraints": [
+        "Condition: 身近な人が、結果の見通しが立たない試みの途中にあるとき",
+        "Use only for artistic-research under approved-derived-only consent."
+      ],
+      "contexts": [],
+      "entity_id": "claim/close-but-cannot-reach",
+      "evidence_kind": "derived",
+      "evidence_locator": "self-model://claim/close-but-cannot-reach#evidence",
+      "export_permitted": true,
+      "freshness": {
+        "retrieved_at": "2026-08-26T14:21:39+09:00",
+        "revalidate_at": "2026-08-26T14:21:39+09:00",
+        "status": "unknown"
+      },
+      "generated_at": "2026-08-26T14:21:39+09:00",
+      "protects": [],
+      "raw_voice_locator": "self-model://claim/close-but-cannot-reach#raw-voice-not-exported",
+      "recurring_patterns": [],
+      "repository": "self-model",
+      "seeks": [],
+      "signal_id": "self:claim:close-but-cannot-reach",
+      "source_locator": "self-model://claim/close-but-cannot-reach",
+      "statement": "距離が近いために目を離せない一方で、その近さが介入を可能にはしていない",
+      "states": [
+        "距離が近いために目を離せない一方で、その近さが介入を可能にはしていない"
+      ],
+      "tensions": [
+        "距離が近いために目を離せない一方で、その近さが介入を可能にはしていない"
+      ],
+      "traits": [],
+      "unknowns": [
+        "confidence is low"
+      ],
+      "validity": {
+        "checked_at": "2026-08-26T14:21:39+09:00",
+        "status": "valid"
+      }
+    },
+    {
+      "adapter_version": "1.0.0",
+      "avoids": [],
+      "certainty": {
+        "basis": "Derived Claim claim/proximity-drives-attention with confidence low.",
+        "level": "uncertain"
+      },
+      "commit": "04095bfa4115ef4fde8a8f475bf31743ecdff962",
+      "consent_scope": "approved-derived-only",
+      "constraints": [
+        "Condition: 同種の挑戦をしている人が他にも存在する状況で",
+        "Use only for artistic-research under approved-derived-only consent."
+      ],
+      "contexts": [],
+      "entity_id": "claim/proximity-drives-attention",
+      "evidence_kind": "derived",
+      "evidence_locator": "self-model://claim/proximity-drives-attention#evidence",
+      "export_permitted": true,
+      "freshness": {
+        "retrieved_at": "2026-08-26T14:21:39+09:00",
+        "revalidate_at": "2026-08-26T14:21:39+09:00",
+        "status": "unknown"
+      },
+      "generated_at": "2026-08-26T14:21:39+09:00",
+      "protects": [],
+      "raw_voice_locator": "self-model://claim/proximity-drives-attention#raw-voice-not-exported",
+      "recurring_patterns": [],
+      "repository": "self-model",
+      "seeks": [],
+      "signal_id": "self:claim:proximity-drives-attention",
+      "source_locator": "self-model://claim/proximity-drives-attention",
+      "statement": "注意を捕らえているのは挑戦の非合理さではなく、対象との距離の近さである可能性がある",
+      "states": [
+        "注意を捕らえているのは挑戦の非合理さではなく、対象との距離の近さである可能性がある"
+      ],
+      "tensions": [],
+      "traits": [],
+      "unknowns": [
+        "confidence is low",
+        "motivation direction is unknown"
+      ],
+      "validity": {
+        "checked_at": "2026-08-26T14:21:39+09:00",
+        "status": "valid"
+      }
+    }
+  ],
+  "source_commit": "04095bfa4115ef4fde8a8f475bf31743ecdff962",
+  "source_repository": "self-model"
+}

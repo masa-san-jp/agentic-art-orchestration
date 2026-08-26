@@ -1195,3 +1195,15 @@
 ## Next exact action
 
 1. `SELF-EXPORT-E2E-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、self-model exportをadapterとconsumerへ渡すE2E契約を読む。
+
+## SELF-EXPORT-E2E-001 completed
+
+- Issue #105の許可pathだけを変更し、child Issue #40の完了記録commit `04095bfa4115ef4fde8a8f475bf31743ecdff962`から生成した`tests/fixtures/signal/self_export_bundle.json`を追加した。fixtureは`research-signal-export/v1`、3 records、全recordのcommit一致、ID一意・sort済みである。
+- 新規E2Eは3件すべてを`adapt_self_model_signal()`→`validate_signal()`→`import_signals()`へ通し、件数、ID順、source repository/commit、entity/evidence locator、certainty、unknowns、constraints、validity、freshness、self-model domainを入力からimport後まで一致検証する。
+- raw voice本文、直接識別情報、Drive/Telegram locatorを拒否し、`self-model://...#raw-voice-not-exported`だけを許可した。入力recordの不変性も検証した。Issue #90の閾値・多様性・新規self dataには触れていない。
+- focused 5/5、親全体342/342、親validator、diff checkがPASSした。親manifest pin、child checkout、adapter、schema、consumer、外部Issue、Drive、PR、merge、releaseは変更していない。README/PLANSはIssue #105の許可外のため変更していない。
+- acceptance: 10/10。機微情報、会話全文、credentialの追加はなく、外部artifactの作成・更新もない。explicit/inferred feedbackは扱っていない。
+
+## Next exact action
+
+1. `PURPOSE-SELF-DIVERSITY-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #99とcandidate selectionの多様性契約を読む。

@@ -78,3 +78,11 @@ qualificationはpinを専用workspaceへmaterializeして実行し、source chec
 - art-historyの解釈relationを事実relationへ変換する。
 - 原典未読のURLを読了済みとして扱う。
 - source repositoryまたはcommitを落とす。
+
+## Self-model export E2E pin
+
+`tests/fixtures/signal/self_export_bundle.json` は、self-model-notes Issue #40 の完了記録を含む固定commit `04095bfa4115ef4fde8a8f475bf31743ecdff962` から `tools/export_signals.py --purpose artistic-research --limit 0` で生成した `research-signal-export/v1` envelopeである。これは親manifestのqualification pinを浮動参照へ置換するものではなく、E2E fixtureが参照するchild source pinを固定する。
+
+E2Eでは、envelopeの`signal_count`・一意な`signal_id`・全recordの`commit`一致を確認した後、全recordを`adapt_self_model_signal()`へ個別に渡し、`validate_signal()`を通してから1回の`import_signals()`へ渡す。入力・normalized・imported・provenanceの件数、ID順、source commit、entity/evidence locator、certainty、unknowns、constraints、freshness、self-model domain fieldsは一致しなければならない。
+
+raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換結果に含めない。`raw_voice_locator`とsource/evidence locatorは`self-model://`のopaque locatorだけを許可する。Issue #90の材料数や多様性の判断、child schema、adapter、consumerの変更はこのE2Eの範囲外である。

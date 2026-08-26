@@ -801,7 +801,7 @@ tasks:
   - id: SELF-EXPORT-E2E-001
     milestone: M16
     title: Pin self-model export through adapter and consumer without loss
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/105
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -812,7 +812,7 @@ tasks:
   - id: PURPOSE-SELF-DIVERSITY-001
     milestone: M16
     title: Enforce personal-anchor diversity without inventing self facts
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/99
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
