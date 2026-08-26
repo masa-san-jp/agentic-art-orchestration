@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/agent-action.schema.json",
+  "title": "Provider-neutral agent action v1",
+  "description": "Metadata-only action envelope passed to an external worker.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "stage", "child_repository", "source_commit", "project_path", "allowed_paths", "forbidden_operations", "completion_command", "resume_command", "requested_operations", "attempt"],
+  "properties": {
+    "contract_version": {"const": "agent-action/v1"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "stage": {"enum": ["research"]},
+    "child_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "project_path": {"type": "string", "minLength": 1},
+    "allowed_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"}},
+    "forbidden_operations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "completion_command": {"type": "string", "minLength": 1},
+    "resume_command": {"type": "string", "minLength": 1},
+    "requested_operations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "attempt": {"type": "integer", "minimum": 1}
+  }
+}

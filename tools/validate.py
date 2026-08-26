@@ -52,6 +52,10 @@ DRIVE_LIVE_SCHEMA_PATH = ROOT / "schemas/drive-live-evidence.schema.json"
 GITHUB_SANDBOX_LIVE_SCHEMA_PATH = ROOT / "schemas/github-sandbox-live-evidence.schema.json"
 GITHUB_SANDBOX_LIVE_POLICY_PATH = ROOT / "config/github-sandbox-live-policy.yaml"
 DRIVE_LIVE_POLICY_PATH = ROOT / "config/drive-live-policy.yaml"
+HUMAN_GATES_PATH = ROOT / "config/human-gates.yaml"
+AGENT_ACTION_SCHEMA_PATH = ROOT / "schemas/agent-action.schema.json"
+AGENT_RESULT_SCHEMA_PATH = ROOT / "schemas/agent-result.schema.json"
+AUTONOMOUS_RUN_SCHEMA_PATH = ROOT / "schemas/autonomous-run.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -95,6 +99,11 @@ REQUIRED_FILES = [
     "tools/signal_bundle.py",
     "tools/input_pipeline.py",
     "tools/run.py",
+    "config/human-gates.yaml",
+    "schemas/agent-action.schema.json",
+    "schemas/agent-result.schema.json",
+    "schemas/autonomous-run.schema.json",
+    "tools/autonomous_runner.py",
     "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
@@ -353,6 +362,50 @@ def _schema_errors(value, schema: dict, path: str = "$", root_schema: dict | Non
             errors.append(
                 f"{path}: must satisfy exactly one schema alternative"
             )
+    return errors
+
+
+def validate_autonomous_contract(
+    human_gates: dict,
+    action_schema: dict | None = None,
+    result_schema: dict | None = None,
+    run_schema: dict | None = None,
+    source: str = "autonomous-runner",
+) -> list[str]:
+    """Keep the worker boundary versioned, closed, and human-gated."""
+    errors: list[str] = []
+    expected_operations = [
+        "merge",
+        "release",
+        "public_share",
+        "consent_expansion",
+        "destructive_git",
+        "external_cost_over_declared_budget",
+        "physical_action",
+    ]
+    if not isinstance(human_gates, dict):
+        return [f"{source}: human gate policy must be an object; remediation: restore config/human-gates.yaml"]
+    if human_gates.get("contract_version") != "human-gates/v1":
+        errors.append(f"{source}: unsupported human gate policy version; remediation: use human-gates/v1")
+    if human_gates.get("human_operations") != expected_operations:
+        errors.append(f"{source}: human operation vocabulary is incomplete or reordered; remediation: preserve the seven fixed human gates")
+    if human_gates.get("default_status") != "BLOCKED_HUMAN":
+        errors.append(f"{source}: default human gate status is unsafe; remediation: use BLOCKED_HUMAN")
+    if human_gates.get("worker_may_request") is not True or human_gates.get("execution_policy") != "never_execute_requested_human_operation":
+        errors.append(f"{source}: worker human-operation policy is unsafe; remediation: never execute requested human operations")
+    schemas = (
+        ("agent-action/v1", action_schema, "agent action"),
+        ("agent-result/v1", result_schema, "agent result"),
+        ("autonomous-run/v1", run_schema, "autonomous run"),
+    )
+    for version, schema, label in schemas:
+        if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+            errors.append(f"{source}: {label} schema must be Draft 2020-12; remediation: restore the closed versioned schema")
+        if isinstance(schema, dict):
+            if schema.get("additionalProperties") is not False:
+                errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
+            if not any(property_schema.get("const") == version for property_schema in [schema.get("properties", {}).get("contract_version", {})] if isinstance(property_schema, dict)):
+                errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
     return errors
 
 
@@ -3573,6 +3626,14 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_yaml(manifest_path),
                 _source_label(GITHUB_SANDBOX_LIVE_POLICY_PATH),
                 _source_label(GITHUB_SANDBOX_LIVE_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_autonomous_contract(
+                load_yaml(HUMAN_GATES_PATH),
+                load_json(AGENT_ACTION_SCHEMA_PATH),
+                load_json(AGENT_RESULT_SCHEMA_PATH),
+                load_json(AUTONOMOUS_RUN_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

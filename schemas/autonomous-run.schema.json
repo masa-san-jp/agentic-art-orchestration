@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/autonomous-run.schema.json",
+  "title": "Autonomous runner state v1",
+  "description": "Atomic, resumable, metadata-only supervisor state stored outside Git.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "status", "stage", "child_repository", "source_commit", "project_path", "allowed_paths", "attempts", "retry_counts", "checkpoint", "lease", "history", "privacy"],
+  "properties": {
+    "contract_version": {"const": "autonomous-run/v1"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "status": {"enum": ["RESEARCH_PENDING", "RUNNING", "RESEARCH_WORKER_RUNNING", "PLAN_READY", "BLOCKED_HUMAN", "BLOCKED_EXTERNAL", "FAILED_RETRY_EXHAUSTED"]},
+    "stage": {"enum": ["research", "plan"]},
+    "child_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "project_path": {"type": "string", "minLength": 1},
+    "allowed_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"}},
+    "attempts": {"type": "integer", "minimum": 0},
+    "retry_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "accepted_result_digest": {"oneOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"}, {"type": "null"}]},
+    "checkpoint": {"$ref": "#/$defs/checkpoint"},
+    "lease": {"$ref": "#/$defs/lease"},
+    "history": {"type": "array", "items": {"$ref": "#/$defs/history"}},
+    "privacy": {"$ref": "#/$defs/privacy"}
+  },
+  "$defs": {
+    "timestamp": {"type": "string", "format": "date-time"},
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "next_action", "last_result_digest"],
+      "properties": {
+        "status": {"type": "string", "minLength": 1},
+        "next_action": {"type": "string", "minLength": 1},
+        "last_result_digest": {"oneOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"}, {"type": "null"}]}
+      }
+    },
+    "lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "owner", "expires_at"],
+      "properties": {
+        "status": {"enum": ["available", "held"]},
+        "owner": {"type": "string", "minLength": 1},
+        "expires_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt", "stage", "outcome", "result_digest", "error_fingerprint"],
+      "properties": {
+        "attempt": {"type": "integer", "minimum": 1},
+        "stage": {"enum": ["research"]},
+        "outcome": {"enum": ["COMPLETED", "BLOCKED", "FAILED", "RETRY_EXHAUSTED"]},
+        "result_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "error_fingerprint": {"oneOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"}, {"type": "null"}]}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_conversation_stored", "credentials_stored", "private_raw_stored", "restricted_stored"],
+      "properties": {
+        "raw_conversation_stored": {"const": false},
+        "credentials_stored": {"const": false},
+        "private_raw_stored": {"const": false},
+        "restricted_stored": {"const": false}
+      }
+    }
+  }
+}

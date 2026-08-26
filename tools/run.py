@@ -31,6 +31,15 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
 
 DEFAULT_RULES_PATH = ROOT / "config/transformation-rules.yaml"
 DEFAULT_OUTPUT_PATH = ROOT / "data/run.json"
+HUMAN_OPERATIONS = [
+    "merge",
+    "release",
+    "public_share",
+    "consent_expansion",
+    "destructive_git",
+    "external_cost_over_declared_budget",
+    "physical_action",
+]
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -76,6 +85,8 @@ def run(
         "gate_report": gate_report,
         "selection": selection,
         "provenance": provenance,
+        "execution_status": "RESEARCH_PENDING",
+        "next_action": _next_action(bundle, project_id),
     }
     if intent is not None:
         # Normalize and hash only at the boundary. The supplied text is never
@@ -88,6 +99,29 @@ def run(
 
 def _render(data: dict[str, Any]) -> bytes:
     return (canonical_json(data) + "\n").encode("utf-8")
+
+
+def _next_action(bundle: dict[str, Any], project_id: str) -> dict[str, Any]:
+    """Expose only the metadata needed to hand a pending run to a worker."""
+    repositories = bundle.get("source_repositories", [])
+    research_source = next(
+        (item for item in repositories if item.get("repository") == "agentic-art-research"),
+        repositories[0],
+    )
+    return {
+        "contract_version": "agent-action/v1",
+        "run_id": project_id,
+        "stage": "research",
+        "child_repository": "agentic-art-research",
+        "source_commit": research_source["commit"],
+        "project_path": "project",
+        "allowed_paths": ["project"],
+        "forbidden_operations": HUMAN_OPERATIONS,
+        "completion_command": "return agent-result/v1 with all declared checks",
+        "resume_command": "resume the same run_id from supervisor.json",
+        "requested_operations": [],
+        "attempt": 1,
+    }
 
 
 def main() -> int:

@@ -268,3 +268,29 @@ v1.1のnetworkless E2Eは、frontstageのretrievalが返したrepository@commit/
 - 次taskと最初の1操作。
 
 最後にstateの`active_task`とleaseを解放し、generated dataを再生成してから、statusとdiffを再確認する。
+
+## 12. 自律Research実行と再開
+
+`tools/run.py`の`RESEARCH_PENDING`は、構造化された`agent-action/v1`を
+`tools/autonomous_runner.py`へ渡す開始点である。workerは絶対実行ファイルをargvで起動し、
+`--request <agent-action.json> --response <agent-result.json>`だけを受け取る。SDK、shell文字列、
+会話本文、credentialはworker境界へ渡さない。
+
+stateはGit外の外部rootへ置く。初回はrun-id単位でleaseを取得し、`supervisor.json`をatomic replace
+する。同じrun-idの再実行は`PLAN_READY`またはblocked terminalを再利用し、accepted resultを二重に
+受理しない。worker完了後にprocessが停止しても、responseが残っていれば次回起動時に同じrun-idで
+checkpointから受理する。別processのlease競合、期限切れでないlease、stateの契約不整合は変更せず
+拒否する。
+
+~~~bash
+.venv/bin/python tools/autonomous_runner.py --run-id <run-id> \
+  --state-root <external-state-root> --worker-command <absolute-worker-path> \
+  --source-commit <40-char-commit> --project-path <project-path> \
+  --allowed-path project
+.venv/bin/python -m unittest tests.test_run tests.test_autonomous_runner tests.test_runtime_recovery -v
+~~~
+
+human gate対象は`merge`、`release`、`public_share`、`consent_expansion`、`destructive_git`、
+`external_cost_over_declared_budget`、`physical_action`である。workerが要求しても実行せず、観測事実・
+影響・解除条件を保持した`BLOCKED_HUMAN`で停止する。worker契約失敗は同じstageとerror fingerprint
+で3回まで再試行し、4回目は`FAILED_RETRY_EXHAUSTED`とする。

@@ -65,3 +65,24 @@ kind別score、total scoreだけを残す。CLIの実行結果とselectionのdig
 python3 tools/run.py --bundle <normalized-bundle.json> --project-id <project-id> \
   --seed-input <seed> --intent <intent-text> --output <run.json> --check
 ~~~
+
+## 自律Research runner
+
+`tools/run.py`は同期pipelineの結果にraw intentを含めず、`execution_status=RESEARCH_PENDING`と
+metadata-onlyの`next_action`を返す。`tools/autonomous_runner.py`はそのaction境界をworkerへ
+渡し、Git管理外の明示`state-root/<run-id>/supervisor.json`だけをatomic replaceする。
+workerはSDKではなく、絶対パスの実行ファイルをargvで次の形に限定する。
+
+~~~bash
+.venv/bin/python tools/autonomous_runner.py \
+  --run-id <run-id> --state-root <external-state-root> \
+  --worker-command <absolute-worker-path> \
+  --source-commit <40-char-commit> --project-path <project-path> \
+  --allowed-path project
+~~~
+
+workerのrequestは`agent-action/v1`、responseは`agent-result/v1`のclosed metadata-only JSONである。
+responseのCOMPLETEDと全check PASSだけが`PLAN_READY`へ進み、同じrun-idの再実行はaccepted resultを
+再利用する。human gate対象の要求は実行せず`BLOCKED_HUMAN`、外部境界違反は`BLOCKED_EXTERNAL`、
+同一stage・error fingerprintの失敗は3回まで再試行して4回目を`FAILED_RETRY_EXHAUSTED`とする。
+会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderrはstateへ保存しない。

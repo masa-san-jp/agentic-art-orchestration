@@ -1,0 +1,12 @@
+contract_version: human-gates/v1
+human_operations:
+  - merge
+  - release
+  - public_share
+  - consent_expansion
+  - destructive_git
+  - external_cost_over_declared_budget
+  - physical_action
+default_status: BLOCKED_HUMAN
+worker_may_request: true
+execution_policy: never_execute_requested_human_operation
