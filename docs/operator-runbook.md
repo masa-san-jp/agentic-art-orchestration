@@ -59,7 +59,7 @@ M14完了前はこのcommandが存在しないため、従来のnetworkless smok
 .venv/bin/python tools/e2e.py --offline-fixture --check
 ~~~
 
-期待値は、manifest記載repo数（coreは4、現在はProductionを含む5）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、audit finding 0、security `PASSED`、E2E clean `COMPLETE`である。legacy failure fixtureが4repoであることはmanifestの5repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
+期待値は、manifest記載repo数（coreは4、現在はProductionとviewer-response-notesを含む6）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、security `PASSED`、E2E clean `COMPLETE`である。auditは既知の非blocking findingを保持し、失敗を正常値へ変換しない。legacy failure fixtureが4repoであることはmanifestの6repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
 
 ### 実repo workspace
 

@@ -507,7 +507,7 @@ def _v12_release_checks(
         return checks
 
 
-def _child_gate_summary(report: dict) -> dict:
+def _child_gate_summary(report: dict, manifest: dict) -> dict:
     """Reduce child gate evidence to release-safe observations."""
     results = report.get("results", [])
     gate_statuses = [
@@ -515,16 +515,23 @@ def _child_gate_summary(report: dict) -> dict:
         for result in results
         for gate in result.get("gates", [])
     ]
+    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
+    expected_repository_count = len(repositories)
+    expected_gate_count = sum(
+        len(repository.get("quality_gates", []))
+        for repository in repositories
+        if isinstance(repository, dict) and isinstance(repository.get("quality_gates", []), list)
+    )
     repositories_match = all(
         result.get("workspace_state") == "MATCHED"
         and result.get("workspace_commit") == result.get("observed_commit")
         for result in results
     )
     passed = (
-        len(results) == 5
+        len(results) == expected_repository_count
         and repositories_match
         and all(result.get("status") == "PASSED" for result in results)
-        and len(gate_statuses) == 14
+        and len(gate_statuses) == expected_gate_count
         and all(status == "PASSED" for status in gate_statuses)
         and all(result.get("execution_mode") == "immutable-archive" for result in results)
     )
@@ -588,7 +595,7 @@ def _production_exchange_check(
                         timeout_seconds=child_timeout_seconds,
                     )
                 )
-                child_summaries.append(_child_gate_summary(child_report))
+                child_summaries.append(_child_gate_summary(child_report, manifest))
             except Exception as exc:  # qualification report must remain sanitized
                 error_types.append(type(exc).__name__)
     deterministic = bool(e2e_bytes) and len(e2e_bytes) == runs and all(

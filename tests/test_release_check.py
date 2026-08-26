@@ -25,6 +25,10 @@ from tools.release_check import (
     validate_request,
 )
 from tools.pinned_workspace import PinnedWorkspaceError
+from tools.validate import load_yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def git(root: Path, *args: str) -> str:
@@ -224,7 +228,8 @@ class ReleaseCheckTests(unittest.TestCase):
             "child_mutations": [],
         }
         child_results = []
-        for index in range(5):
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
+        for index, repository in enumerate(manifest["repositories"]):
             commit = f"{index + 1:040x}"
             child_results.append(
                 {
@@ -233,7 +238,7 @@ class ReleaseCheckTests(unittest.TestCase):
                     "workspace_commit": commit,
                     "observed_commit": commit,
                     "execution_mode": "immutable-archive",
-                    "gates": [{"status": "PASSED"}] * (2 if index == 4 else 3),
+                    "gates": [{"status": "PASSED"}] * len(repository["quality_gates"]),
                 }
             )
         with patch("tools.release_check.run_exchange_e2e", return_value=exchange), patch(

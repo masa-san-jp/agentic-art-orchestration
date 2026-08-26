@@ -31,6 +31,7 @@ def run_workspace(*arguments: str) -> subprocess.CompletedProcess[str]:
 class WorkspaceInitTests(unittest.TestCase):
     def test_offline_workspace_onboards_an_additional_repository_idempotently(self):
         manifest = copy.deepcopy(MODULE.load_manifest())
+        base_repository_count = len(manifest["repositories"])
         added = copy.deepcopy(manifest["repositories"][0])
         added.update(
             {
@@ -52,12 +53,13 @@ class WorkspaceInitTests(unittest.TestCase):
             first = MODULE.init_workspace(manifest, workspace, True, fixture)
             second = MODULE.init_workspace(manifest, workspace, True, fixture)
             status = MODULE.status_workspace(manifest, workspace)
-            self.assertEqual(6, first["changed_count"])
+            self.assertEqual(base_repository_count + 1, first["changed_count"])
             self.assertEqual(0, second["changed_count"])
-            self.assertEqual(6, len(status["repositories"]))
+            self.assertEqual(base_repository_count + 1, len(status["repositories"]))
             self.assertTrue(all(repo["state"] == "clean" for repo in status["repositories"]))
 
     def test_offline_init_is_idempotent_and_status_is_clean(self):
+        expected_repository_count = len(MODULE.load_manifest()["repositories"])
         with tempfile.TemporaryDirectory(prefix="workspace-test-") as temporary:
             root = Path(temporary)
             workspace = root / "repos"
@@ -72,7 +74,7 @@ class WorkspaceInitTests(unittest.TestCase):
             )
             self.assertEqual(0, first.returncode, first.stderr)
             first_payload = json.loads(first.stdout)
-            self.assertEqual(5, first_payload["changed_count"])
+            self.assertEqual(expected_repository_count, first_payload["changed_count"])
             self.assertTrue(first_payload["fixture_created"])
             self.assertEqual({"cloned"}, {repo["action"] for repo in first_payload["repositories"]})
 
@@ -97,13 +99,14 @@ class WorkspaceInitTests(unittest.TestCase):
             status = run_workspace("status", "--json", "--workspace-root", str(workspace))
             self.assertEqual(0, status.returncode, status.stderr)
             status_payload = json.loads(status.stdout)
-            self.assertEqual(5, len(status_payload["repositories"]))
+            self.assertEqual(expected_repository_count, len(status_payload["repositories"]))
             self.assertTrue(all(repo["exists"] for repo in status_payload["repositories"]))
             self.assertTrue(all(repo["state"] == "clean" for repo in status_payload["repositories"]))
             self.assertTrue(all(repo["branch"] == "main" for repo in status_payload["repositories"]))
             self.assertTrue(all(not repo["dirty"] for repo in status_payload["repositories"]))
 
     def test_offline_fetch_does_not_checkout_or_change_stable_refs(self):
+        expected_repository_count = len(MODULE.load_manifest()["repositories"])
         with tempfile.TemporaryDirectory(prefix="workspace-fetch-test-") as temporary:
             root = Path(temporary)
             workspace = root / "repos"
@@ -128,7 +131,7 @@ class WorkspaceInitTests(unittest.TestCase):
             self.assertEqual(0, fetched.returncode, fetched.stderr)
             payload = json.loads(fetched.stdout)
             self.assertEqual(0, payload["changed_count"])
-            self.assertEqual(5, len(payload["repositories"]))
+            self.assertEqual(expected_repository_count, len(payload["repositories"]))
 
 
 if __name__ == "__main__":

@@ -900,7 +900,7 @@ tasks:
   - id: PURPOSE-VIEWER-RESPONSE-001
     milestone: M16
     title: Add viewer response notes and conservative requirement assessment
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/98
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: DRAFT_PR_READY
@@ -911,7 +911,7 @@ tasks:
   - id: PURPOSE-AUTONOMOUS-RUNNER-001
     milestone: M16
     title: Resume RESEARCH_PENDING through an agent worker to PLAN_READY
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

@@ -191,3 +191,40 @@ repositories:
     exchange_contracts:
       imports: [production-handoff/v1]
       exports: [production-result/v1]
+
+  - id: viewer-response-notes
+    full_name: masa-san-jp/viewer-response-notes
+    url: https://github.com/masa-san-jp/viewer-response-notes.git
+    path: viewer-response-notes
+    role: input-kb
+    authority: aggregate viewer response records, privacy boundary, and conservative requirement assessments
+    default_branch: main
+    observed_commit: cf411086b0693bfcde8d034fe27bb7a8d4110222
+    instructions: AGENTS.md
+    requirement_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/2
+    quality_gates:
+      - python3 tools/validate.py --check
+      - python3 -m unittest discover -s tests -v
+    knowledge_profile:
+      answerable_questions:
+        - "What aggregate viewer response evidence exists for a work and requirement?"
+        - "What conservative assessment and required blind/frame review follow from that evidence?"
+      canonical_entities: [viewer-response-record, viewer-response-assessment, research-signal-export]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: source scope and privacy boundary}
+        - {kind: directory, locator: records, purpose: append-only aggregate response records}
+        - {kind: file, locator: schemas/viewer-response-assessment.schema.json, purpose: conservative assessment contract}
+      evidence_rules:
+        allowed_kinds: [measured, external, derived]
+        requires_locator: true
+        minimum_quality: derived
+      freshness_rules:
+        policy: explicit
+        allowed_statuses: [current, stale, unknown]
+        revalidation_required: true
+      feedback_owner: viewer-response-notes
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [records, assessments, exports, schemas, README.md, AGENTS.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier, free_text, psychological_inference, medical_inference]
+    export_contract: normalized-research-signal/v1

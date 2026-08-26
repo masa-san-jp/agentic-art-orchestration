@@ -1309,3 +1309,48 @@
 ## Next exact action
 
 1. `PURPOSE-VIEWER-RESPONSE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、viewer responseのappend-only記録とUNKNOWN/SUPPORTED/CONTRADICTED評価を実装・検証する。
+
+## PURPOSE-VIEWER-RESPONSE-001 in progress
+
+- 2026-08-26 21:02 JST、`PURPOSE-VIEWER-RESPONSE-001`（Issue #98）をclaimした。親manifestへ既存coreを置換せず`viewer-response-notes`をappendし、parent assessment gateとResearch/Production child連携を対象にした。
+- viewer childの独立commit `cf411086b0693bfcde8d034fe27bb7a8d4110222`を確認した。record/export/assessment schema、privacy boundary、append-only契約、deterministic validator/testsを含み、draft PR #1（`https://github.com/masa-san-jp/viewer-response-notes/pull/1`）が存在する。childの宣言gateは12/12 PASS、validator PASS、diff check PASSである。
+- 親に`schemas/viewer-response-assessment.schema.json`と`tools/viewer_response_gate.py`を追加した。childの実際の`signals` record形式（`record_id`から`dedup_key`までの厳密field set）を受け取り、完全一致のwork/requirement/modeとtag交差だけを評価する。measured sample 5未満は`UNKNOWN`、Wilson 95% lower bound 0.60以上だけを`SUPPORTED`、upper bound 0.60未満だけを`CONTRADICTED`、measuredなし・独立external ref 2件以上を`EXTERNALLY_SUPPORTED`とし、measured/external conflictとblind/frame review要求を保持する。
+- 親gateはPII、自由文、心理・医療推測、PRIVATE_RAW、RESTRICTED、絶対path、externalの架空sample、count不一致、unknown field、dedup不一致、timezoneなし時刻を拒否する。Production planのviewer-facing requirementは保守的statusのままblind/frame acceptance testなしでは通さない。
+- viewer追加後に旧5repo前提だったoffline workspace/snapshot/v1.2/release testsをmanifest件数から導出するよう修正した。offline fixtureを6repoへ再生成し、workspace status/guard、snapshot check、audit checkを確認した。auditは既知のmarketing freshness warning 1件だけでblockingではない。
+- 親検証は`.venv/bin/python tools/validate.py --check` PASS、親全体`358/358` PASS、viewer focused `7/7` PASS、release-check focused `22/22` PASS、`git diff --check` PASS。v1.4.0 qualificationはrepo別事前準備venvで`blocking=false`、3/3 deterministic、6/6 repositories MATCHED、16/16 child gates PASS、v1.2 E2E/Production exchange/initial operations/live evidence/history PASS、`remote_operations=[]`、merge/tag/release未実行となった。
+- Production childの隔離commit `db3ad6541c13440e36ada4ab1ce84d550f2293c9`はfocused 40/40、full 64/64、evaluation 6/6、validator/diff check PASS。ただしGitHub branch push/draft PRは外部可視mutationの許可が必要で、pushしていない。Research childはclean branchに変更なしで、`import_production_result.py`からviewer repoへappendする実装はcross-repository writeの安全ゲートにより未適用である。
+- Issue #98の完了条件は未達のまま保持する。未解決は (1) Research→viewer append-only実装と同一production-result 2回の1件性、(2) Production commitのGitHub push/draft PR、(3) viewer repoのIssue #1作成である。これらは外部repoへの書込み権限・明示承認が必要であり、親側で推測して実行しない。
+- 機微情報、会話全文、raw response、direct identifier、credential、PRIVATE_RAW、RESTRICTED、外部artifactは追加していない。親repoの変更は未commitで、child commitは親履歴へvendorしていない。
+
+## Next exact action
+
+1. Research→viewer append-only write、Production branch push/draft PR、viewer Issue #1の外部操作について明示承認を得た後、各childのclean状態を再確認してから実装・push・draft PRを別々に行う。
+
+## PURPOSE-VIEWER-RESPONSE-001 authorized continuation
+
+- 2026-08-27、ユーザーからResearchのappend-only実装、Productionのpush/draft PR、viewer要件Issue作成の明示承認を受領した。
+- Research isolated branch `feat/viewer-response-import`へ `fe2d9a9`（`feat: append aggregate viewer responses`）をcommitし、GitHub draft PR #78（`https://github.com/masa-san-jp/agentic-art-research/pull/78`）を作成した。Production resultの明示`test_results[*].viewer_response`だけをclosed aggregate recordへ変換し、明示`--viewer-root`、atomic append、同一result再実行、privacy/count/evidence/provenance/dedup拒否を実装した。
+- Research品質ゲートはfocused feedback-import 9/9、全255/255、validator、security、docs、graph、diffがPASSした。実測データを捏造しないため、実viewer ledgerへ合成fixtureを追記せず、append動作はtemporary viewer rootのE2E testで1件性と再実行を確認した。
+- Productionの隔離commit `db3ad6541c13440e36ada4ab1ce84d550f2293c9`を `feat/viewer-response-production` としてpushし、GitHub draft PR #50（`https://github.com/masa-san-jp/agentic-art-production/pull/50`）を作成した。全64/64、evaluation 6/6、validator、diffがPASSした。
+- viewer-response-notesのdraft PR #1（`https://github.com/masa-san-jp/viewer-response-notes/pull/1`）がGitHub番号#1を占有していたため、要件Issueは#2（`https://github.com/masa-san-jp/viewer-response-notes/issues/2`）として作成し、親manifestの`requirement_ssot`をIssue #2へ修正した。Issue #1はPR #1として存在し、削除・変更していない。
+- viewer childは12/12、validator、diff PASS。親側のviewer gateは7/7、親全体は直前の358/358、v1.4 qualificationは3/3 deterministic・6repo・16 gate PASS済み。外部操作のmerge、tag、release、Drive artifact作成は実行していない。
+- 機微情報、会話全文、raw response、個人識別子、credential、PRIVATE_RAW、RESTRICTEDは追加していない。Research/Production/viewerの作業ツリーはcleanである。
+
+## Next exact action
+
+1. 親の`config/repositories.yaml` Issue #2参照とstate/handoffを含む全parent gateを再実行し、`PURPOSE-VIEWER-RESPONSE-001`を完了記録へ遷移する。続いて親所有変更だけを1 commitにまとめる。merge/releaseは人間承認待ち。
+
+## PURPOSE-VIEWER-RESPONSE-001 completed
+
+- 親のviewer-response gate、Research append-only importer、Production aggregate DTO、viewer child contractを接続した。viewer recordsは明示rootへのappend-only、privacy-safe、aggregate-only、provenance/count/dedup検証付きで、同一production resultの再実行は重複効果を作らない。
+- Researchの実装commitは`fe2d9a9`、draft PRは`https://github.com/masa-san-jp/agentic-art-research/pull/78`。Productionの実装commitは`db3ad6541c13440e36ada4ab1ce84d550f2293c9`、draft PRは`https://github.com/masa-san-jp/agentic-art-production/pull/50`。viewer childのcommitは`cf411086b0693bfcde8d034fe27bb7a8d4110222`、draft PRは`https://github.com/masa-san-jp/viewer-response-notes/pull/1`。
+- Research側の完了記録commitは`b315717`で、既存draft PR #78へ通常push済み。実装commitと完了記録を分け、force pushは行っていない。
+- viewer要件Issueは、PR #1がGitHub番号#1を占有しているためIssue #2（`https://github.com/masa-san-jp/viewer-response-notes/issues/2`）として作成し、親manifestのSSOTも#2へ修正した。Issue #1/PR #1は変更・削除していない。
+- 親focused 7/7、親全体358/358、Research全255/255、Production全64/64、viewer child 12/12、Production evaluation 6/6、親qualification 3/3 deterministic・6repo・16/16 child gates、validator/security/docs/graph/diffはPASS。auditは既知のmarketing freshness warning 1件のみで、blockingではない。
+- 最終v1.4 qualificationは`blocking=false`、`status=PASSED`、`remote_operations=[]`、merge/tag/releaseは`NOT_PERFORMED`。snapshot hashは`8143f0ece10c5e6012528819c705ab7322f3258d96ea296f7bafe34b74712439`。
+- 実測viewer responseが提供されていないため、実viewer ledgerへ合成データは追記していない。機微情報、会話全文、raw response、個人識別子、credential、PRIVATE_RAW、RESTRICTED、Drive artifactは追加していない。merge、tag、release、Drive外部送信は未実行。
+- acceptance: 1/1。viewer leaseを解放し、次の`PURPOSE-AUTONOMOUS-RUNNER-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `PURPOSE-AUTONOMOUS-RUNNER-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #103とrun/autonomous-runner/runtime-recoveryの現行契約・テストを読む。

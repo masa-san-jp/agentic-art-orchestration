@@ -10,6 +10,14 @@ art-history-notes ----------> normalized research signals -> agentic-art-researc
 marketing-trends-notes -----/
 ~~~
 
+## Viewer response boundary
+
+`viewer-response-notes`は、既存の4repo core setを置き換えない独立した入力repoである。viewer repoが`viewer-response-record/v1`、`viewer-response-assessment/v1`、`research-signal-export/v1`のdomain SSOTを持ち、Productionは明示的なaggregate DTOだけを`production-result/v1`へ運び、ResearchはそのDTOをviewer repoへappend-onlyで変換する。親repoはassessment boundaryとroutingだけを検証し、viewerの内部record schemaを正本化しない。
+
+viewer response recordは`work_id`、`requirement_id`、表示モード、要件タグ、`pass`/`fail`/`unknown`の集計、opaqueな証拠参照、source commit、`aggregate-only`の同意scopeに限定する。名前、連絡先、自由文、心理・医療推測、RAW、asset body、credentialは全repoで拒否する。`sample_size`とoutcome合計が一致しない入力、external evidenceに測定標本を付けた入力、重複dedup keyの内容差はfail closedとする。
+
+assessmentは完全一致のwork/requirement/presentation modeとタグ交差だけを対象にし、測定標本5未満は`UNKNOWN`、Wilson 95% lower boundが0.60以上だけを`SUPPORTED`、upper boundが0.60未満だけを`CONTRADICTED`とする。測定なしで独立external参照が2件以上の場合は`EXTERNALLY_SUPPORTED`だが`SUPPORTED`とは同一視しない。測定とexternalの衝突は測定を判定に優先し、衝突状態を保持する。`UNKNOWN`、`CONTRADICTED`、`EXTERNALLY_SUPPORTED`はblind/frame reviewなしに要件受入へ昇格させない。
+
 ## Required signal fields
 
 - contract_version

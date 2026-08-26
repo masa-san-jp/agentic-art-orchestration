@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_TOOL = ROOT / "tools/workspace.py"
+from tools.workspace import load_manifest
 
 
 def run_workspace(*arguments: str) -> subprocess.CompletedProcess[str]:
@@ -80,7 +81,7 @@ class SnapshotTests(unittest.TestCase):
             first_json_bytes = snapshot_json.read_bytes()
             first_markdown_bytes = snapshot_markdown.read_bytes()
             payload = json.loads(first_json_bytes)
-            self.assertEqual(5, len(payload["repositories"]))
+            self.assertEqual(len(load_manifest()["repositories"]), len(payload["repositories"]))
             self.assertRegex(payload["captured_at"], r"Z$")
             self.assertEqual(first_result["snapshot_hash"], payload["snapshot_hash"])
             for repository in payload["repositories"]:
