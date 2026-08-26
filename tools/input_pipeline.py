@@ -38,7 +38,15 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def run_input_pipeline(bundle: dict[str, Any], *, project_id: str, seed_input: str, selection_limit: int = 1, rules: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_input_pipeline(
+    bundle: dict[str, Any],
+    *,
+    project_id: str,
+    seed_input: str,
+    selection_limit: int = 1,
+    rules: dict[str, Any] | None = None,
+    inspiration: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     errors = validate_signal_bundle(bundle)
     if errors:
         raise ValueError("\n".join(errors))
@@ -51,7 +59,7 @@ def run_input_pipeline(bundle: dict[str, Any], *, project_id: str, seed_input: s
     gate_report = build_gate_report(candidate_space, signals, registry, "input-pipeline.gates")
     selection = build_selection(candidate_space, gate_report, project_id, seed_input, selection_limit, "input-pipeline.selection")
     provenance = build_provenance(selection, candidate_space, gate_report, signals, registry, "input-pipeline.provenance")
-    return {
+    result = {
         "bundle": bundle,
         "consumer_package": imported,
         "candidate_space": candidate_space,
@@ -59,6 +67,11 @@ def run_input_pipeline(bundle: dict[str, Any], *, project_id: str, seed_input: s
         "selection": selection,
         "provenance": provenance,
     }
+    if inspiration is not None:
+        from tools.inspiration import settle_inspiration
+
+        result["inspiration"] = settle_inspiration(inspiration, result)
+    return result
 
 
 def _write(path: Path, value: dict[str, Any]) -> None:

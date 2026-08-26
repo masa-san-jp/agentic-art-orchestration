@@ -41,7 +41,7 @@ python3 -m unittest discover -s tests -v
 - [x] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする（PRODUCTION-PIN-001、PRODUCTION-E2E-001、PRODUCTION-QUALIFY-001、PRODUCTION-RELEASE-001完了）。
 - [x] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidence、総合qualificationは完了。v1.4.0 human-gated releaseは未完了）。
 - [x] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-NAMING-001`は完了し、次は`PURPOSE-INSPIRATION-001`である。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-NAMING-001`と`PURPOSE-INSPIRATION-001`は完了し、次は`PURPOSE-SELF-EXPORT-SOURCE-001`である。
 
 ## Surprises & Discoveries
 
@@ -60,6 +60,7 @@ python3 -m unittest discover -s tests -v
 - 2026-08-12: 子repoは随時更新されるため、remote head観測とrun入力pinを分離する。起動時に差分を検知しても、自動checkout・pin更新・正常化をしない。
 - 2026-08-12: MANIFEST-PRODUCTION-001/002のDraft PR #15がhuman gateでmergeされ、production Issue SSOTと親main manifestの結線が実運用状態になった。子repoの正本は変更せず、親mainのmerge commitだけをpost-merge stateへ記録する。
 - 2026-08-26: 親Issue #43のローカル正本に記録されたcross-repository naming decisionと、Research/Productionの現行実装（`records` / `record_sha256`）が不一致だった。Research exporterとProduction plannerを独立commitで`references` / `record_hash`へ揃え、旧形式はfail closedで拒否した。親のmanifest pinは変更せず、採用・push・mergeは別工程に残した。
+- 2026-08-26: ユーザーの着想を候補pipelineへ渡す境界がなく、自由文保存なしに再実行できなかった。`inspiration-input/v1`を追加し、intent/capability/goal code、retrieval provenance、候補・gate・selection hashだけでcaptureとsettlementを結ぶ。source commit不一致、改ざん、raw field、候補なしはfail closedとした。
 
 ## Decision Log
 
@@ -77,6 +78,7 @@ python3 -m unittest discover -s tests -v
 - D-017: 運用化をv1.2.1基線、v1.3.0 Production exchange、v1.4.0 initial operationsの順にreleaseする。
 - D-013: Productionの親manifest結線は、PR作成ではなくhuman merge後の親main再確認を完了条件とする。
 - D-018: source-ref indexのcross-repository正規形はtop-level `references` と各recordの `record_hash` とし、Research/Productionの旧名を互換補正しない。親owned aggregateの`records`は別契約として維持する。
+- D-019: inspirationは自由文やユーザー属性ではなく、structured intent/capability/goal codeとしてcaptureする。settlementは同じretrieval source commitに対するcandidate/gate/selection hashと選択候補IDを結び、profile updateとraw storageを許可しない。
 
 詳細は execution/decisions.md を正本とする。
 

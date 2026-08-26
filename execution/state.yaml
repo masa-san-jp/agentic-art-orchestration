@@ -1,30 +1,30 @@
-version: 51
-updated_at: "2026-08-26T13:39:24+09:00"
+version: 53
+updated_at: "2026-08-26T14:03:52+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-purpose-naming
+  owner: codex-purpose-inspiration
   acquired_at: "2026-08-26T13:29:06+09:00"
   expires_at: "2026-08-26T14:29:06+09:00"
-  lane: CROSS_REPOSITORY_CONTRACT
-  execution_id: PURPOSE-NAMING-001:attempt-1
+  lane: FRONTSTAGE_INTERACTION
+  execution_id: PURPOSE-INSPIRATION-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [docs/cross-repository-contract.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
-    child_repositories: [agentic-art-research, agentic-art-production]
-  released_at: "2026-08-26T13:39:24+09:00"
-  release_reason: "PURPOSE-NAMING-001 completed; separate child commits and quality gates passed"
+    paths: [tools/agent_ui.py, tools/inspiration.py, schemas/inspiration-input.schema.json, schemas/agent-ui-result.schema.json, tools/input_pipeline.py, tests, docs, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, README.md]
+    child_repositories: []
+  released_at: "2026-08-26T14:03:52+09:00"
+  release_reason: "PURPOSE-INSPIRATION-001 completed; capture, settlement, provenance, privacy, and candidate pipeline gates passed"
 checkpoint:
-  task: PURPOSE-NAMING-001
-  repository: agentic-art-orchestration
-  start_point: 800212d
-  expected_changes: Align Research source-ref-index and Production consumption to the parent-authoritative references/record_hash naming decision, update affected child docs/tests/fixtures, and preserve separate child commits without changing parent pins.
-  result: completed; Research acc751a and Production ffc4df0 independently implement the references/record_hash boundary and pass their quality gates; parent pins remain unchanged.
-last_completed_task: PURPOSE-NAMING-001
-resume_from:
   task: PURPOSE-INSPIRATION-001
-  action: Claim PURPOSE-INSPIRATION-001 and run the parent validator before inspecting the agent UI capture and settlement contract.
+  repository: agentic-art-orchestration
+  start_point: 8744e56
+  expected_changes: Add a structured inspiration capture and explicit settlement contract that retains provenance and consent, excludes conversation text and direct identifiers, and supplies a settled input to the existing candidate pipeline.
+  result: completed; structured capture and SETTLED candidate-pipeline output passed all parent and interaction gates.
+last_completed_task: PURPOSE-INSPIRATION-001
+resume_from:
+  task: PURPOSE-SELF-EXPORT-SOURCE-001
+  action: Select the self-model child task and inspect its Issue SSOT, AGENTS, export schema, and quality gates before any child change.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
@@ -284,6 +284,25 @@ purpose_naming:
   pinned_qualification_workspace_changed: false
   isolated_child_workspaces_only: true
   sensitive_information_added: false
+  external_issue_drive_or_release_mutation: false
+purpose_inspiration:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/47
+  acceptance: 1/1
+  contracts: [inspiration-input/v1, agent-ui/v1, normalized-research-signal-bundle/v1, research-candidate/v1]
+  capture: structured intent_code/capability_codes/goal_code only; retrieval evidence and source repository@commit retained
+  settlement: candidate space, gate report, and selection hashes; selected candidate IDs; pipeline source snapshots; candidate input references
+  focused_tests: 6/6
+  interaction_tests: 31/31
+  parent_tests: 337/337
+  parent_validation: passed
+  cli_capture_and_settlement: passed; signal-bundle CLI and agent-ui CLI materialized and check-mode outputs byte-identical
+  interaction_e2e: passed; networkless interaction E2E, Fake Drive create/replay, feedback routing, and privacy boundaries
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  raw_conversation_or_credentials: false
+  child_repository_mutation: false
   external_issue_drive_or_release_mutation: false
 blocked:
   - task: ISSUE-38-REAL-CHAIN-CI-001

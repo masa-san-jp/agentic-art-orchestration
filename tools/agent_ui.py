@@ -19,6 +19,8 @@ if str(ROOT) not in sys.path:
 
 from tools.drive_live_bridge import DriveLiveBridge, FakeDriveLiveProvider, GoogleDriveProvider
 from tools.github_issue_adapter import FixtureProvider, GithubApiProvider, deliver
+from tools.input_pipeline import run_input_pipeline
+from tools.inspiration import capture_inspiration
 from tools.issue_router import route_feedback
 from tools.retrieval import route_query
 from tools.startup import build_startup_report
@@ -165,6 +167,46 @@ def _remote_summary(artifact_result: Mapping[str, object] | None, delivery: Mapp
     return [dict(item) for item in unique]
 
 
+def _inspiration_summary(settled: Mapping[str, object] | None) -> dict:
+    if not isinstance(settled, Mapping):
+        return {
+            "status": "NOT_REQUESTED",
+            "inspiration_id": None,
+            "capture_ref": None,
+            "settlement_ref": None,
+            "intent": None,
+            "candidate_space_hash": None,
+            "gate_report_hash": None,
+            "selection_hash": None,
+            "selected_candidate_ids": [],
+            "retrieval_source_snapshots": [],
+            "pipeline_source_snapshots": [],
+            "candidate_input_refs": [],
+            "privacy": {
+                "raw_inspiration_stored": False,
+                "raw_conversation_stored": False,
+                "direct_identifiers_stored": False,
+            },
+        }
+    inspiration_id = settled["inspiration_id"]
+    settlement = settled["settlement"]
+    return {
+        "status": "SETTLED",
+        "inspiration_id": inspiration_id,
+        "capture_ref": f"inspiration:capture:{inspiration_id}",
+        "settlement_ref": f"inspiration:settlement:{inspiration_id}",
+        "intent": settled["capture"]["intent"],
+        "candidate_space_hash": settlement["candidate_space_hash"],
+        "gate_report_hash": settlement["gate_report_hash"],
+        "selection_hash": settlement["selection_hash"],
+        "selected_candidate_ids": settlement["selected_candidate_ids"],
+        "retrieval_source_snapshots": settled["provenance"]["retrieval_source_snapshots"],
+        "pipeline_source_snapshots": settled["provenance"]["pipeline_source_snapshots"],
+        "candidate_input_refs": settled["provenance"]["candidate_input_refs"],
+        "privacy": settled["privacy"],
+    }
+
+
 def run_agent_ui(
     *,
     request: Mapping[str, object],
@@ -179,6 +221,8 @@ def run_agent_ui(
     confirm_drive: bool = False,
     confirm_issue: bool = False,
     artifact_content: str | bytes = "synthetic agent UI output; content remains outside the evidence envelope",
+    inspiration: Mapping[str, object] | None = None,
+    signal_bundle: Mapping[str, object] | None = None,
 ) -> dict:
     if not isinstance(run_id, str) or re.fullmatch(ID_PATTERN, run_id) is None:
         raise _error("run_id is invalid", "use a stable interaction execution ID")
@@ -193,6 +237,18 @@ def run_agent_ui(
     if (artifact_mode == "live" or issue_mode == "live") and startup["status"] != "READY" and not offline_fixture:
         raise _error("external CREATE requires a clean READY startup", "resolve startup findings and keep the interaction read-only")
     retrieval = route_query(request, index, manifest, f"{run_id}:retrieval")
+    settled_inspiration = None
+    if inspiration is not None:
+        if signal_bundle is None:
+            raise _error("inspiration requires a normalized signal bundle", "pass the validated bundle to reach the candidate pipeline")
+        capture = capture_inspiration(request, retrieval, run_id=run_id, inspiration=inspiration)
+        pipeline = run_input_pipeline(
+            dict(signal_bundle),
+            project_id="inspiration-project",
+            seed_input="inspiration",
+            inspiration=capture,
+        )
+        settled_inspiration = pipeline["inspiration"]
     routing = route_feedback(list(feedback), manifest, f"{run_id}:feedback")
     candidates = [route["issue_candidate"] for route in routing["routes"] if isinstance(route.get("issue_candidate"), Mapping)]
     issue_provider = None
@@ -248,6 +304,7 @@ def run_agent_ui(
         "answer": _answer_context(retrieval),
         "artifact": artifact_summary,
         "feedback": _feedback_summary(routing, delivery),
+        "inspiration": _inspiration_summary(settled_inspiration),
         "privacy": {
             "raw_query_stored": False,
             "raw_conversation_stored": False,
@@ -287,6 +344,8 @@ def main() -> int:
     parser.add_argument("--confirm-drive", action="store_true")
     parser.add_argument("--confirm-issue", action="store_true")
     parser.add_argument("--artifact-content-file", type=Path)
+    parser.add_argument("--inspiration", type=Path, help="structured inspiration codes; raw text is not accepted")
+    parser.add_argument("--signal-bundle", type=Path, help="normalized signal bundle used by the candidate pipeline")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
@@ -295,6 +354,10 @@ def main() -> int:
         artifact_content: str | bytes = "synthetic agent UI output; content remains outside the evidence envelope"
         if args.artifact_content_file:
             artifact_content = args.artifact_content_file.read_bytes()
+        inspiration = _load(args.inspiration) if args.inspiration else None
+        signal_bundle = _load(args.signal_bundle) if args.signal_bundle else None
+        if inspiration is not None and signal_bundle is None:
+            raise _error("--signal-bundle is required with --inspiration", "pass a validated normalized signal bundle")
         result = run_agent_ui(
             request=_load(args.request),
             index=_load(args.index),
@@ -308,6 +371,8 @@ def main() -> int:
             confirm_drive=args.confirm_drive,
             confirm_issue=args.confirm_issue,
             artifact_content=artifact_content,
+            inspiration=inspiration,
+            signal_bundle=signal_bundle,
         )
         _write_or_check(result, args.output.resolve(), args.check)
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:

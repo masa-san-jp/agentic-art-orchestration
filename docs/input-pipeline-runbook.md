@@ -42,6 +42,19 @@ python3 tools/research_start.py \
 - 同じbundle、seed、request ID、requested_atを使えば候補とrequestは再生成できる。`research_start.py` はdry-runなのでResearch projectを作らない。
 - `export_signal.py` はadapterをテスト専用にせず、実行時の入力境界として呼び出すための唯一の入口である。
 
+## Inspiration settlement
+
+`tools/inspiration.py` はAgent UIで受け取った着想を、自由文ではなく `goal_code` と既存の `retrieval-request/v1` のintent/capability codeへ固定する。`capture_inspiration` は検索結果のevidenceと `repository@commit` を保存し、`run_input_pipeline(..., inspiration=capture)` は通常のconsumer → candidate → gates → selection → provenance経路を実行した後、`inspiration-input/v1` の `SETTLED` envelopeを返す。
+
+```sh
+python3 -m unittest tests.test_inspiration -v
+python3 tools/agent_ui.py --offline-fixture --artifact-mode none \
+  --inspiration /tmp/inspiration-codes.json \
+  --signal-bundle /tmp/inspiration-signal-bundle.json
+```
+
+settlementにはcandidate space、gate report、selectionのSHA-256と選択候補ID、pipelineへ渡った全source commit、選択候補のinput referenceだけを残す。raw inspiration、会話本文、direct identifier、profile updateは保存しない。captureとpipelineのsource commitが一致しない、候補が選択されない、またはartifactが改ざんされている場合はsettleせず失敗する。
+
 ## pin更新の採用
 
 `tools/qualify_pin_update.py` は、指定したworkspaceの全childについて、dirtyでないHEADを候補pinとして読み取る。候補manifestを一時的に作り、manifest-pinned archiveのchild quality gatesとProduction exchange E2Eを通す。子checkoutへのfetch、checkout、commit、書き込みは行わない。

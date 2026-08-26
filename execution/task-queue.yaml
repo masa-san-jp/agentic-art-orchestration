@@ -779,7 +779,7 @@ tasks:
   - id: PURPOSE-INSPIRATION-001
     milestone: M16
     title: Capture and settle a user inspiration into the research pipeline
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/47
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -790,7 +790,7 @@ tasks:
   - id: PURPOSE-SELF-EXPORT-SOURCE-001
     milestone: M16
     title: Complete the self-model export boundary at its source repository
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/40
     target_repositories: [self-model]
     agent_terminal: DRAFT_PR_READY

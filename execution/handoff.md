@@ -1170,3 +1170,16 @@
 ## Next exact action
 
 1. `PURPOSE-INSPIRATION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## PURPOSE-INSPIRATION-001 completed
+
+- `schemas/inspiration-input.schema.json`と`tools/inspiration.py`を追加し、自由文を保存せず、`intent_code`・`capability_codes`・`goal_code`、interaction/request参照、retrieval evidence、immutable source commitだけを持つ`inspiration-input/v1`を定義した。CAPTUREDとSETTLEDを分け、profile updateは常にfalseとした。
+- `tools/agent_ui.py`にstructured inspiration入力とnormalized signal bundle入力を追加し、`tools/input_pipeline.py`の既存consumer→candidate→gates→selection→provenance経路へ接続した。settlementはcandidate space/gate report/selection hash、selected candidate ID、全pipeline source snapshot、候補input referenceを保持する。
+- capture/retrievalのsource commit不一致、raw/unsupported field、改ざんされたpipeline hash、unknown/non-passing candidate、pipeline snapshot外のinput reference、候補なしはfail closedする。Agent UI出力には構造化settlement summaryだけを含め、raw inspiration、会話本文、direct identifier、credentialは含めない。
+- `tests/test_inspiration.py`: 6/6、interaction関連focused tests: 31/31、親全体: 337/337。`.venv/bin/python tools/validate.py --check`、`tools/agent_ui.py --offline-fixture --check`、`tools/interaction_e2e.py --check`、Fake Drive/feedback/interaction focused gates、`git diff --check`がPASSした。
+- workspace statusは5 repositories clean on main/ahead_behind_zero。auditは既知のmarketing freshness warning 1件のみのFINDINGS、securityはPASS。child repository、GitHub Issue、Google Drive、PR、merge、release、pin、credentialは変更していない。
+- acceptance: 1/1。親repoの変更はこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-SELF-EXPORT-SOURCE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、self-model childのIssue SSOT、AGENTS、export schema、quality gateを読む。

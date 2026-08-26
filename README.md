@@ -20,16 +20,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-26T13:39:24+09:00`.
+Source updated at: `2026-08-26T14:03:52+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 16 | 0 | 0 | 2 | 80 | 98 |
+| 14 | 1 | 0 | 2 | 81 | 98 |
 
-Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `PURPOSE-NAMING-001`.
-Next action: Claim PURPOSE-INSPIRATION-001 and run the parent validator before inspecting the agent UI capture and settlement contract.
-Ready: none.
-Next task: `PURPOSE-INSPIRATION-001`.
+Current task: `null`; repository: `agentic-art-orchestration`; checkpoint: `PURPOSE-INSPIRATION-001`.
+Next action: Select the self-model child task and inspect its Issue SSOT, AGENTS, export schema, and quality gates before any child change.
+Ready: `PURPOSE-SELF-EXPORT-SOURCE-001`.
+Next task: `PURPOSE-SELF-EXPORT-SOURCE-001`.
 Blocked:
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.

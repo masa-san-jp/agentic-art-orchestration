@@ -29,6 +29,7 @@ IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
 INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
 AGENT_UI_SCHEMA_PATH = ROOT / "schemas/agent-ui-result.schema.json"
 INITIAL_OPERATIONS_E2E_SCHEMA_PATH = ROOT / "schemas/initial-operations-e2e.schema.json"
+INSPIRATION_SCHEMA_PATH = ROOT / "schemas/inspiration-input.schema.json"
 V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.json"
 V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
@@ -78,6 +79,7 @@ REQUIRED_FILES = [
     "schemas/interaction-e2e.schema.json",
     "schemas/agent-ui-result.schema.json",
     "schemas/initial-operations-e2e.schema.json",
+    "schemas/inspiration-input.schema.json",
     "schemas/research-execution-boundary.schema.json",
     "config/research-execution-boundary.yaml",
     "tools/v12_boundary.py",
@@ -89,6 +91,7 @@ REQUIRED_FILES = [
     "tools/candidate_space.py",
     "tools/signal_bundle.py",
     "tools/input_pipeline.py",
+    "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
     "tools/qualify_pin_update.py",
@@ -2972,6 +2975,51 @@ def validate_agent_ui_result(data: dict, source: str = "agent-ui") -> list[str]:
     privacy = data.get("privacy", {})
     if isinstance(privacy, dict) and any(privacy.get(field) is not False for field in ("raw_query_stored", "raw_conversation_stored", "drive_content_stored", "credentials_stored", "direct_identifiers_stored")):
         errors.append(_interaction_error(source, "agent UI privacy boundary is open", "store only structured metadata and opaque references"))
+    return errors
+
+
+def validate_inspiration(data: dict, source: str = "inspiration-input") -> list[str]:
+    """Validate the code-only inspiration capture and its optional settlement."""
+    errors: list[str] = []
+    schema = load_json(INSPIRATION_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the inspiration input field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+
+    provenance = data.get("provenance")
+    if isinstance(provenance, dict):
+        snapshots = provenance.get("retrieval_source_snapshots")
+        if isinstance(snapshots, list):
+            repositories = [item.get("repository") for item in snapshots if isinstance(item, dict)]
+            if len(repositories) != len(set(repositories)):
+                errors.append(_interaction_error(source, "retrieval source snapshots must be unique", "retain one immutable commit per repository"))
+        pipeline_snapshots = provenance.get("pipeline_source_snapshots")
+        if data.get("phase") == "SETTLED" and isinstance(pipeline_snapshots, list) and not pipeline_snapshots:
+            errors.append(_interaction_error(source, "settled inspiration lacks pipeline source snapshots", "settle only after the candidate pipeline has run"))
+        if data.get("phase") == "SETTLED" and not provenance.get("candidate_input_refs"):
+            errors.append(_interaction_error(source, "settled inspiration lacks candidate input references", "retain the selected candidate provenance without copying signal content"))
+
+    phase = data.get("phase")
+    settlement = data.get("settlement")
+    consent = data.get("consent")
+    if phase == "CAPTURED" and settlement is not None:
+        errors.append(_interaction_error(source, "CAPTURED inspiration must not contain settlement", "run the explicit settlement step after candidate generation"))
+    if phase == "SETTLED":
+        if not isinstance(settlement, dict) or settlement.get("status") != "SETTLED":
+            errors.append(_interaction_error(source, "SETTLED inspiration lacks a settled result", "retain candidate pipeline hashes and selected candidate IDs"))
+        if not isinstance(consent, dict) or consent.get("settlement_confirmed") is not True:
+            errors.append(_interaction_error(source, "settlement consent is not confirmed", "settle only within the captured consent scope"))
+    if isinstance(consent, dict) and consent.get("profile_update_permitted") is not False:
+        errors.append(_interaction_error(source, "profile_update_permitted must be false", "do not promote an inspiration into a user profile fact"))
+    privacy = data.get("privacy")
+    if isinstance(privacy, dict):
+        for field in ("raw_inspiration_stored", "raw_conversation_stored", "direct_identifiers_stored"):
+            if privacy.get(field) is not False:
+                errors.append(_interaction_error(source, f"privacy.{field} must be false", "retain only codes, hashes, and opaque provenance references"))
     return errors
 
 
