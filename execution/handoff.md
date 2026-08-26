@@ -1233,3 +1233,15 @@
 ## Next exact action
 
 1. `PURPOSE-RESEARCH-KNOWLEDGE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #47とResearch childのknowledge schema/quality gateを読む。
+
+## PURPOSE-RESEARCH-KNOWLEDGE-001 completed
+
+- Research childのIssue #47はCLOSEDで、typed knowledge record 4種（observation、relationship、contradiction、external-reference）、aesthetic-signal protocol/template、reference resolution、deterministic graph/impact接続が既にchild mainへ実装済みだった。実装導入commitは`ee214b6d836283e9baad25f9dc2598fe22355c94`、検証対象のclean source HEADは`07f8cf57e416e5166ac80019ba2d015ff1821e9c`である。
+- 実checkout `/Users/masa/マイドライブ/Dev/agentic-art-research` は`main...origin/main`・cleanのまま保持した。隔離cloneで`python3 -m compileall -q tools tests`、`python3 tools/validate.py --check`、`python3 -m unittest discover -s tests -v`（251/251）、`python3 tools/build_graph.py --check`を実行し、すべてPASSした。knowledge focused testはschema、最小valid record、参照解決、重複ID、自己relationship、未知語彙、contradiction resolution、profile期間/参照、graph node/edge、impact到達性、決定性を含む。
+- 親manifestのResearch pinは`d947fdd14abeb700af9a62abcf27c21f3f12e134`で、child実装より古い。pin adoptionはこのtaskのtarget/path外であり、親pin、`repos/`、子repo、Issue/PR、Drive、credential、merge、releaseは変更していない。pin mismatchは未解決としてstateへ記録し、child SSOTを親へ複製しない。
+- 親validatorはPASS。子repo品質gateは4/4 PASS、親の追加変更はqueue/state/handoffの記録のみ。機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credentialは追加していない。explicit/inferred feedback、外部artifactは扱っていない。
+- acceptance: 8/8。実装は既存child commitの観測・検証で満たし、親側の完了記録をこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-DECISIONS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #48とResearch childのdecision/uncertainty schema・quality gateを読む。

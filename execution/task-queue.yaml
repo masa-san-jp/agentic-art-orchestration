@@ -834,7 +834,7 @@ tasks:
   - id: PURPOSE-RESEARCH-KNOWLEDGE-001
     milestone: M16
     title: Complete structured research knowledge for purpose execution
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/47
     target_repositories: [agentic-art-research]
     agent_terminal: DRAFT_PR_READY
