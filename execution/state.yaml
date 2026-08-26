@@ -1,30 +1,30 @@
-version: 59
-updated_at: "2026-08-26T14:48:26+09:00"
+version: 61
+updated_at: "2026-08-26T16:18:00+09:00"
 active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: released
-  owner: codex-self-diversity
-  acquired_at: "2026-08-26T14:26:10+09:00"
-  expires_at: "2026-08-26T15:26:10+09:00"
+  owner: codex-intent-rank
+  acquired_at: "2026-08-26T15:32:09+09:00"
+  expires_at: "2026-08-26T16:32:09+09:00"
   lane: CANDIDATE_QUALITY
-  execution_id: PURPOSE-SELF-DIVERSITY-001:attempt-1
+  execution_id: PURPOSE-INTENT-RANK-001:attempt-1
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/candidate_space.py, tools/candidate_selection.py, tools/candidate_gates.py, schemas/self-diversity-report.schema.json, schemas/research-candidate.schema.json, schemas/research-selection.schema.json, tools/validate.py, tests/test_candidate_space.py, tests/test_candidate_selection.py, tests/test_candidate_gates.py, docs/cross-repository-contract.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/candidate_selection.py, tools/run.py, schemas/research-selection-v2.schema.json, tools/validate.py, tests/test_candidate_selection.py, tests/test_run.py, docs/agent-runtime-guide.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
     child_repositories: []
-  released_at: "2026-08-26T14:48:26+09:00"
-  release_reason: "PURPOSE-SELF-DIVERSITY-001 completed; versioned opaque self-diversity report and fail-closed anchor selection passed all required checks"
+  released_at: "2026-08-26T16:18:00+09:00"
+  release_reason: "PURPOSE-INTENT-RANK-001 completed; deterministic intent ranking, v1 compatibility, privacy boundary, and run E2E passed"
 checkpoint:
-  task: PURPOSE-SELF-DIVERSITY-001
-  repository: agentic-art-orchestration
-  start_point: 8415acf
-  expected_changes: Enforce a versioned self-diversity report over tensions and recurring_patterns, fail closed below three eligible anchors, and bound repeated-anchor selection without inventing self facts or weakening provenance.
-  result: completed; self-diversity-report/v1, consented tensions/recurring_patterns anchors, insufficient-diversity stop, round-robin selection, share bound, provenance, privacy, and determinism checks passed
-last_completed_task: PURPOSE-SELF-DIVERSITY-001
-resume_from:
   task: PURPOSE-INTENT-RANK-001
-  action: Claim the lowest-ID READY task, run the parent validator, then inspect Issue #102 and the existing candidate selection contract.
+  repository: agentic-art-orchestration
+  start_point: 2a83d68
+  expected_changes: Add deterministic intent-rank/v1 normalization and multiset weighted-Jaccard ranking, emit selection v2 only when intent is supplied, preserve v1 bytes without intent, and pass the intent digest through run E2E without persisting raw intent.
+  result: completed; intent-rank/v1, research-selection/v2, no-intent v1 byte compatibility, gate-preserving ranking, privacy-safe digest, normalization, rounding, and run E2E checks passed
+last_completed_task: PURPOSE-INTENT-RANK-001
+resume_from:
+  task: PURPOSE-RESEARCH-KNOWLEDGE-001
+  action: Claim the lowest-ID READY task, run the parent validator, then inspect Issue #47 and the research child knowledge contract.
   command: .venv/bin/python tools/validate.py --check
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence

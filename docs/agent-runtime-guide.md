@@ -48,3 +48,20 @@ checkpointにはtask、repo、branch、HEAD、dirty state、checks、未完了ac
 | quality | child test失敗 | owner repoで最小再現、完了禁止 |
 | safety | secret、同意違反、公開範囲 | 即時停止、出力へ含めない |
 | authority | merge、release、破壊操作 | 人間ゲート |
+
+## Intent付き実行
+
+候補順位へ人のintentを反映する場合は `tools/run.py --intent` を使う。intentは
+hard filterではなく、既存の安全・鮮度・根拠gateを通過した候補の順位付けだけに使う。
+実行は `intent-rank/v1` のローカル決定的処理で、Unicode NFKC、casefold、空白圧縮を
+行った文字bigramのmultiset weighted Jaccardを計算する。intentがない実行は既存の
+`research-selection/v1` のままで、intent付き実行だけ `research-selection/v2` を出力する。
+
+生intentは成果物・ログ・Gitへ保存しない。成果物には `intent_sha256`、algorithm名、
+kind別score、total scoreだけを残す。CLIの実行結果とselectionのdigestが一致することを
+確認し、空白だけのintentは入力エラーとして扱う。intent付き実行の再現確認は次の形で行う。
+
+~~~bash
+python3 tools/run.py --bundle <normalized-bundle.json> --project-id <project-id> \
+  --seed-input <seed> --intent <intent-text> --output <run.json> --check
+~~~

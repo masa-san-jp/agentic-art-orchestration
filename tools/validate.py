@@ -6,6 +6,7 @@ import json
 import re
 import shlex
 import sys
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 import yaml
@@ -37,6 +38,7 @@ TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
+SELECTION_V2_SCHEMA_PATH = ROOT / "schemas/research-selection-v2.schema.json"
 SELF_DIVERSITY_SCHEMA_PATH = ROOT / "schemas/self-diversity-report.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
@@ -92,6 +94,7 @@ REQUIRED_FILES = [
     "tools/candidate_space.py",
     "tools/signal_bundle.py",
     "tools/input_pipeline.py",
+    "tools/run.py",
     "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
@@ -100,6 +103,7 @@ REQUIRED_FILES = [
     "schemas/research-candidate-gates.schema.json",
     "tools/candidate_gates.py",
     "schemas/research-selection.schema.json",
+    "schemas/research-selection-v2.schema.json",
     "tools/candidate_selection.py",
     "schemas/self-diversity-report.schema.json",
     "schemas/child-quality-gates.schema.json",
@@ -1446,7 +1450,8 @@ def validate_candidate_gates(data: dict, source: str = "candidate-gates") -> lis
 def validate_selection(data: dict, source: str = "selection") -> list[str]:
     """Validate seeded selection ranks and ensure selected references retain provenance."""
     errors: list[str] = []
-    schema = load_json(SELECTION_SCHEMA_PATH)
+    is_v2 = isinstance(data, dict) and data.get("contract_version") == "research-selection/v2"
+    schema = load_json(SELECTION_V2_SCHEMA_PATH if is_v2 else SELECTION_SCHEMA_PATH)
     errors.extend(
         _signal_error(source, schema_error, "correct the research-selection field")
         for schema_error in _schema_errors(data, schema)
@@ -1492,6 +1497,55 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
             if score in scores:
                 errors.append(_signal_error(source, f"selected_candidates[{index}] duplicates selection_score", "use the deterministic candidate score for each ranked candidate"))
             scores.add(score)
+        if is_v2:
+            kind_scores = candidate.get("intent_kind_scores")
+            total_score = candidate.get("intent_score")
+            if isinstance(kind_scores, dict) and isinstance(total_score, (int, float)) and not isinstance(total_score, bool):
+                try:
+                    quantum = Decimal("0.000001")
+                    for kind in ("self", "art-history", "marketing"):
+                        score_value = Decimal(str(kind_scores[kind]))
+                        if score_value != score_value.quantize(quantum, rounding=ROUND_HALF_UP):
+                            errors.append(
+                                _signal_error(
+                                    source,
+                                    f"selected_candidates[{index}].intent_kind_scores.{kind} is not rounded to six decimals",
+                                    "round every kind score with ROUND_HALF_UP to six decimal places",
+                                )
+                            )
+                    expected = sum(
+                        (
+                            Decimal(weight) * Decimal(str(kind_scores[kind]))
+                            for kind, weight in (
+                                ("self", "0.50"),
+                                ("art-history", "0.30"),
+                                ("marketing", "0.20"),
+                            )
+                        ),
+                        Decimal("0"),
+                    ).quantize(quantum, rounding=ROUND_HALF_UP)
+                    observed_unrounded = Decimal(str(total_score))
+                    observed = observed_unrounded.quantize(quantum, rounding=ROUND_HALF_UP)
+                    if observed_unrounded != observed:
+                        errors.append(
+                            _signal_error(
+                                source,
+                                f"selected_candidates[{index}].intent_score is not rounded to six decimals",
+                                "round total intent_score with ROUND_HALF_UP to six decimal places",
+                            )
+                        )
+                    if observed != expected:
+                        errors.append(
+                            _signal_error(
+                                source,
+                                f"selected_candidates[{index}].intent_score does not match weighted kind scores",
+                                "derive total intent_score from the declared self, art-history, and marketing scores",
+                            )
+                        )
+                except (InvalidOperation, KeyError, TypeError, ValueError):
+                    # The JSON schema error above is the actionable report for
+                    # malformed score values; avoid masking it with arithmetic.
+                    pass
         inputs = candidate.get("inputs")
         input_refs: dict[tuple[str, str, str], dict] = {}
         if isinstance(inputs, dict):

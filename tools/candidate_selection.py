@@ -8,6 +8,9 @@ import copy
 import hashlib
 import json
 import sys
+import unicodedata
+from collections import Counter
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 try:
@@ -61,6 +64,13 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
 DEFAULT_OUTPUT_PATH = ROOT / "data/selection.json"
 DEFAULT_DIVERSITY_OUTPUT_PATH = ROOT / "data/self-diversity-report.json"
 SIGNAL_KINDS = ("self", "art-history", "marketing")
+INTENT_ALGORITHM = "intent-rank/v1"
+INTENT_KIND_WEIGHTS = {
+    "self": Decimal("0.50"),
+    "art-history": Decimal("0.30"),
+    "marketing": Decimal("0.20"),
+}
+SCORE_QUANTUM = Decimal("0.000001")
 
 
 def sha256_hex(value: object) -> str:
@@ -71,8 +81,138 @@ def _error(source: str, detail: str, remediation: str) -> str:
     return f"{source}: {detail}; remediation: {remediation}"
 
 
-def _copy_candidate(candidate: dict, rank: int, score: str) -> dict:
+def normalize_intent(intent: str, source: str = "intent") -> str:
+    """Normalize intent without retaining or echoing the supplied raw value."""
+    if not isinstance(intent, str):
+        raise ValueError(_error(source, "intent must be a string", "pass a UTF-8 text intent"))
+    normalized = unicodedata.normalize("NFKC", intent).casefold()
+    normalized = " ".join(normalized.split())
+    if not normalized:
+        raise ValueError(_error(source, "intent must contain non-whitespace text", "pass a non-empty intent"))
+    return normalized
+
+
+def intent_sha256(intent: str) -> str:
+    """Hash only the normalized intent; raw intent never enters a result object."""
+    return hashlib.sha256(normalize_intent(intent).encode("utf-8")).hexdigest()
+
+
+def _bigram_multiset(value: str) -> Counter[str]:
+    padded = f"^{value}$"
+    return Counter(padded[index : index + 2] for index in range(len(padded) - 1))
+
+
+def _weighted_jaccard(left: Counter[str], right: Counter[str]) -> Decimal:
+    features = set(left) | set(right)
+    numerator = sum(min(left[feature], right[feature]) for feature in features)
+    denominator = sum(max(left[feature], right[feature]) for feature in features)
+    if denominator == 0:
+        return Decimal("0")
+    return Decimal(numerator) / Decimal(denominator)
+
+
+def _score_decimal(value: Decimal) -> Decimal:
+    return value.quantize(SCORE_QUANTUM, rounding=ROUND_HALF_UP)
+
+
+def _attribute_values(value: object) -> list[str]:
+    if isinstance(value, list):
+        values = value
+    else:
+        values = [value]
+    return [item if isinstance(item, str) else canonical_json(item) for item in values]
+
+
+def _index_signals(signals: list[dict], source: str) -> dict[str, dict]:
+    signal_by_id: dict[str, dict] = {}
+    for index, signal in enumerate(signals):
+        errors = validate_signal(signal, f"{source}.signals[{index}]")
+        if errors:
+            raise ValueError("\n".join(errors))
+        signal_id = signal["signal_id"]
+        if signal_id in signal_by_id:
+            raise ValueError(_error(source, f"duplicate signal_id {signal_id!r}", "provide one signal per stable ID"))
+        signal_by_id[signal_id] = signal
+    return signal_by_id
+
+
+def _candidate_kind_texts(
+    candidate: dict,
+    signals: list[dict],
+    source: str,
+    signal_by_id: dict[str, dict] | None = None,
+) -> dict[str, list[str]]:
+    signal_by_id = signal_by_id if signal_by_id is not None else _index_signals(signals, source)
+
+    referenced_ids: dict[str, set[str]] = {kind: set() for kind in SIGNAL_KINDS}
+    for kind in SIGNAL_KINDS:
+        for ref in candidate.get("inputs", {}).get(kind, []):
+            signal_id = ref.get("signal_id")
+            if signal_id not in signal_by_id:
+                raise ValueError(_error(source, f"candidate references unknown signal {signal_id!r}", "pass the exact normalized signals used to build the candidate"))
+            referenced_ids[kind].add(signal_id)
+    for slot in candidate.get("composition", {}).values():
+        signal_id = slot.get("signal_id")
+        kind = slot.get("signal_kind")
+        if signal_id not in signal_by_id:
+            raise ValueError(_error(source, f"candidate references unknown signal {signal_id!r}", "pass the exact normalized signals used to build the candidate"))
+        if kind in referenced_ids:
+            referenced_ids[kind].add(signal_id)
+
+    domain_keys = {"self": "self_model", "art-history": "art_history", "marketing": "marketing"}
+    composition_records: dict[tuple[str, str], list[tuple[str, str]]] = {}
+    for slot in candidate.get("composition", {}).values():
+        kind = slot["signal_kind"]
+        signal_id = slot["signal_id"]
+        attribute = slot["attribute"]
+        signal = signal_by_id[signal_id]
+        domain = signal.get("domain", {}).get(domain_keys[kind], {})
+        if attribute not in domain:
+            raise ValueError(_error(source, f"candidate composition references absent attribute {attribute!r}", "score only the composition domain attribute value"))
+        for value in _attribute_values(domain[attribute]):
+            composition_records.setdefault((kind, signal_id), []).append((attribute, value))
+
+    texts: dict[str, list[str]] = {kind: [] for kind in SIGNAL_KINDS}
+    for kind in SIGNAL_KINDS:
+        for signal_id in sorted(referenced_ids[kind]):
+            signal = signal_by_id[signal_id]
+            records = [("statement", signal["statement"])]
+            records.extend(composition_records.get((kind, signal_id), []))
+            records.sort(key=lambda item: (item[0], item[1]))
+            texts[kind].append(" ".join(normalize_intent(value, source) for _attribute, value in records))
+    return texts
+
+
+def build_intent_scores(
+    candidate: dict,
+    signals: list[dict],
+    intent: str,
+    source: str = "intent-rank",
+    signal_by_id: dict[str, dict] | None = None,
+) -> dict[str, object]:
+    """Score one candidate using equal signal weights within each kind."""
+    normalized = normalize_intent(intent, source)
+    intent_features = _bigram_multiset(normalized)
+    kind_texts = _candidate_kind_texts(candidate, signals, source, signal_by_id)
+    kind_scores: dict[str, Decimal] = {}
+    for kind in SIGNAL_KINDS:
+        scores = [_weighted_jaccard(intent_features, _bigram_multiset(text)) for text in kind_texts[kind]]
+        kind_scores[kind] = sum(scores, Decimal("0")) / Decimal(len(scores)) if scores else Decimal("0")
+    rounded_kind_decimals = {kind: _score_decimal(kind_scores[kind]) for kind in SIGNAL_KINDS}
+    total = _score_decimal(
+        sum((INTENT_KIND_WEIGHTS[kind] * rounded_kind_decimals[kind] for kind in SIGNAL_KINDS), Decimal("0"))
+    )
+    rounded_kind_scores = {kind: float(value) for kind, value in rounded_kind_decimals.items()}
     return {
+        "intent_sha256": hashlib.sha256(normalized.encode("utf-8")).hexdigest(),
+        "intent_algorithm": INTENT_ALGORITHM,
+        "intent_kind_scores": rounded_kind_scores,
+        "intent_score": float(total),
+    }
+
+
+def _copy_candidate(candidate: dict, rank: int, score: str, intent_scores: dict | None = None) -> dict:
+    result = {
         "candidate_id": candidate["candidate_id"],
         "rule_id": candidate["rule_id"],
         "rank": rank,
@@ -80,6 +220,14 @@ def _copy_candidate(candidate: dict, rank: int, score: str) -> dict:
         "inputs": copy.deepcopy(candidate["inputs"]),
         "composition": copy.deepcopy(candidate["composition"]),
     }
+    if intent_scores is not None:
+        result.update(
+            {
+                "intent_kind_scores": copy.deepcopy(intent_scores["intent_kind_scores"]),
+                "intent_score": intent_scores["intent_score"],
+            }
+        )
+    return result
 
 
 def _signal_ids_by_kind(candidate: dict) -> dict[str, str]:
@@ -251,6 +399,7 @@ def build_selection(
     source: str = "selection",
     require_self_diversity: bool = False,
     signals: list[dict] | None = None,
+    intent: str | None = None,
 ) -> dict:
     """Select top passing candidates using SHA-256 ordering independent of runtime PRNGs."""
     candidate_errors = validate_candidate_space(candidate_space, f"{source}.candidates")
@@ -294,16 +443,36 @@ def build_selection(
         if len(passing) < selection_limit:
             raise ValueError(_error(source, "candidate shortage under self-diversity enforcement", "provide at least selection_limit passing candidates; do not lower the requested count"))
         passing = _fair_order(passing, candidate_space, signals)
-    selected = [
-        _copy_candidate(candidate, rank, score)
-        for rank, (score, candidate) in enumerate(passing[:selection_limit], start=1)
-    ]
+    if intent is None:
+        selected = [
+            _copy_candidate(candidate, rank, score)
+            for rank, (score, candidate) in enumerate(passing[:selection_limit], start=1)
+        ]
+    else:
+        if signals is None:
+            raise ValueError(_error(source, "intent ranking requires normalized signals", "pass the exact signals used to build the candidate space"))
+        signal_by_id = _index_signals(signals, f"{source}.intent")
+        intent_metadata: dict[str, dict[str, object]] = {}
+        scored_passing: list[tuple[str, dict, dict[str, object]]] = []
+        for score, candidate in passing:
+            metadata = build_intent_scores(candidate, signals, intent, f"{source}.intent", signal_by_id)
+            intent_metadata[candidate["candidate_id"]] = metadata
+            scored_passing.append((score, candidate, metadata))
+        # Stable multi-sort spells out the contract: candidate ID ascending is
+        # the final tie-breaker, seeded score is descending before it.
+        scored_passing.sort(key=lambda item: item[1]["candidate_id"])
+        scored_passing.sort(key=lambda item: item[0], reverse=True)
+        scored_passing.sort(key=lambda item: item[2]["intent_score"], reverse=True)
+        selected = [
+            _copy_candidate(candidate, rank, score, intent_metadata[candidate["candidate_id"]])
+            for rank, (score, candidate, _metadata) in enumerate(scored_passing[:selection_limit], start=1)
+        ]
     if require_self_diversity:
         report = build_self_diversity_report(signals or [], candidate_space, selected, selection_limit, f"{source}.self-diversity")
         if report["status"] != "PASS":
             raise ValueError(_error(source, f"self-diversity report status {report['status']!r}", "retain the full requested selection and satisfy the anchor distribution limits"))
     result = {
-        "contract_version": "research-selection/v1",
+        "contract_version": "research-selection/v2" if intent is not None else "research-selection/v1",
         "project_id": project_id,
         "snapshot_id": candidate_space["snapshot_id"],
         "rule_set_hash": candidate_space["rule_set_hash"],
@@ -315,6 +484,10 @@ def build_selection(
         "selected_count": len(selected),
         "selected_candidates": selected,
     }
+    if intent is not None:
+        first_metadata = intent_metadata[selected[0]["candidate_id"]]
+        result["intent_sha256"] = first_metadata["intent_sha256"]
+        result["intent_algorithm"] = first_metadata["intent_algorithm"]
     errors = validate_selection(result, source)
     if errors:
         raise ValueError("\n".join(errors))
@@ -340,6 +513,7 @@ def main() -> int:
     parser.add_argument("--project-id", required=True)
     parser.add_argument("--seed-input", default="default")
     parser.add_argument("--limit", type=int, default=1)
+    parser.add_argument("--intent", help="rank passing candidates by a privacy-safe derived intent score")
     parser.add_argument("--require-self-diversity", action="store_true", help="enforce at least three consented self-model anchors")
     parser.add_argument("--diversity-report", type=Path, help="write the versioned self-diversity report")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH)
@@ -347,7 +521,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         candidate_space, gate_report = load_runtime_inputs(args.candidates, args.fixture, args.rules)
-        signals = load_fixture(args.fixture) if args.require_self_diversity or args.diversity_report else None
+        signals = load_fixture(args.fixture) if args.require_self_diversity or args.diversity_report or args.intent is not None else None
         result = build_selection(
             candidate_space,
             gate_report,
@@ -356,6 +530,7 @@ def main() -> int:
             args.limit,
             require_self_diversity=args.require_self_diversity,
             signals=signals,
+            intent=args.intent,
         )
         if args.diversity_report:
             report = build_self_diversity_report(signals or [], candidate_space, result["selected_candidates"], args.limit)

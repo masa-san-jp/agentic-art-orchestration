@@ -27,6 +27,16 @@ class CandidateSelectionTests(unittest.TestCase):
         self.assertIn("source_commit", schema["$defs"]["input_ref"]["required"])
         self.assertIn("seed", schema["required"])
 
+    def test_intent_normalization_uses_nfkc_casefold_and_single_spaces(self):
+        self.assertEqual("日本", MODULE.normalize_intent(" 日本 "))
+        self.assertEqual(["^日", "日本", "本$"], sorted(MODULE._bigram_multiset("日本")))
+        self.assertEqual(["^a", "a$"], sorted(MODULE._bigram_multiset(MODULE.normalize_intent("Ａ"))))
+        self.assertEqual("é", MODULE.normalize_intent("e\u0301"))
+        self.assertEqual("abc", MODULE.normalize_intent("ＡＢＣ"))
+        self.assertEqual("one two three", MODULE.normalize_intent("  ONE\t\n two   THREE  "))
+        with self.assertRaisesRegex(ValueError, "non-whitespace"):
+            MODULE.normalize_intent(" \t\n")
+
     def test_same_project_snapshot_rules_and_seed_are_identical(self):
         candidate_space, gate_report, signals, registry = self.load_inputs()
         first = MODULE.build_selection(candidate_space, gate_report, "project-alpha", "seed-a")
@@ -50,6 +60,67 @@ class CandidateSelectionTests(unittest.TestCase):
         self.assertIn(first["selected_candidates"][0]["candidate_id"], {item["candidate_id"] for item in candidate_space["candidates"]})
         self.assertIn(second["selected_candidates"][0]["candidate_id"], {item["candidate_id"] for item in candidate_space["candidates"]})
         self.assertNotEqual(first["selected_candidates"][0]["selection_score"], second["selected_candidates"][0]["selection_score"])
+
+    def test_intent_selection_is_deterministic_and_changes_the_top_candidate(self):
+        candidate_space, gate_report, signals = self.diverse_inputs()
+        first = MODULE.build_selection(
+            candidate_space,
+            gate_report,
+            "project-alpha",
+            "seed-a",
+            intent="specificity versus privacy",
+            signals=signals,
+        )
+        second = MODULE.build_selection(
+            copy.deepcopy(candidate_space),
+            copy.deepcopy(gate_report),
+            "project-alpha",
+            "seed-a",
+            intent="specificity versus privacy",
+            signals=copy.deepcopy(signals),
+        )
+        self.assertEqual(first, second)
+        self.assertEqual("research-selection/v2", first["contract_version"])
+        self.assertEqual("intent-rank/v1", first["intent_algorithm"])
+        self.assertNotIn("specificity versus privacy", MODULE.canonical_json(first))
+        second_intent = MODULE.build_selection(
+            candidate_space,
+            gate_report,
+            "project-alpha",
+            "seed-a",
+            intent="review before reuse",
+            signals=signals,
+        )
+        self.assertNotEqual(
+            first["selected_candidates"][0]["candidate_id"],
+            second_intent["selected_candidates"][0]["candidate_id"],
+        )
+        self.assertEqual("tensions", first["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
+        self.assertEqual("recurring_patterns", second_intent["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
+
+    def test_intent_ranking_never_selects_a_gate_failed_top_candidate(self):
+        candidate_space, gate_report, signals = self.diverse_inputs()
+        candidates = {candidate["candidate_id"]: candidate for candidate in candidate_space["candidates"]}
+        target_id = max(
+            candidates,
+            key=lambda candidate_id: MODULE.build_intent_scores(
+                candidates[candidate_id], signals, "specificity versus privacy"
+            )["intent_score"],
+        )
+        rejected_gates = copy.deepcopy(gate_report)
+        evaluation = next(item for item in rejected_gates["evaluations"] if item["candidate_id"] == target_id)
+        evaluation["overall_status"] = "REJECT"
+        evaluation["gates"][0]["status"] = "REJECT"
+        evaluation["gates"][0]["reason_code"] = "missing-personal-signal"
+        selected = MODULE.build_selection(
+            candidate_space,
+            rejected_gates,
+            "project-alpha",
+            "seed-a",
+            intent="specificity versus privacy",
+            signals=signals,
+        )
+        self.assertNotEqual(target_id, selected["selected_candidates"][0]["candidate_id"])
 
     def test_multiple_candidates_are_selected_by_seeded_rank(self):
         candidate_space, _gate_report, signals, registry = self.load_inputs()

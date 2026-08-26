@@ -1220,3 +1220,16 @@
 ## Next exact action
 
 1. `PURPOSE-INTENT-RANK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #102と既存candidate selection契約を読む。
+
+## PURPOSE-INTENT-RANK-001 completed
+
+- `intent-rank/v1`を親の`tools/candidate_selection.py`へ追加した。intentはUnicode NFKC、casefold、連続空白圧縮後に境界付き文字bigram multisetへ変換し、signal statementとcompositionのdomain attribute値をkind別に決定的結合してweighted Jaccardを計算する。self/art-history/marketingの重みは`0.50/0.30/0.20`、ROUND_HALF_UPの6桁である。
+- intentなしは既存処理を分岐させず`research-selection/v1`の出力形を維持し、intentありだけ`research-selection/v2`と`schemas/research-selection-v2.schema.json`を使う。順位はintent score、seeded selection score降順、candidate ID昇順で、gate PASS候補だけを対象にする。
+- v2成果物には`intent_sha256`、`intent_algorithm`、候補ごとのkind別scoreとtotal scoreだけを保存し、生intentを成果物・CLI log・provenance・Gitへコピーしない。`tools/run.py --intent`は同じintent digestをselectionへ渡し、CLI summaryとselectionのdigest一致を検証する。
+- `tests.test_candidate_selection tests.test_run`: 15/15、親全体: 351/351。`.venv/bin/python tools/validate.py --check`、`git diff --check`もPASSした。テストには日本語2文字、1文字boundary、結合文字、全角英数、連続空白、intent別候補順位、gate fail閉鎖、v1互換、CLI/E2Eを含む。
+- 子repo変更、子品質ゲート、manifest pin、GitHub Issue/PR、Google Drive、credential、merge、release、外部artifactは変更していない。audit/workspaceの再実行は不要な親専用変更で、既存の非blocking marketing freshness warning以外の未解決はない。explicit/inferred feedbackは扱っていない。
+- acceptance: 7/7。実装コミットはこのtaskの完了コミットにまとめる。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-KNOWLEDGE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #47とResearch childのknowledge schema/quality gateを読む。
