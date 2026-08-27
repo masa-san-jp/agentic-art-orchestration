@@ -41,7 +41,7 @@ autonomous_runner:
   privacy: raw conversation, credential, PRIVATE_RAW, RESTRICTED, and worker stdout/stderr were not persisted
   external_artifact: none; parent draft PR updated, merge and release not performed
   parent_branch: agent/issues-38-41-pipeline
-  parent_head: e032ad2
+  parent_head: 895c28f
   parent_draft_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
 viewer_response:
   status: complete

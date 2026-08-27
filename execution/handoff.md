@@ -1361,7 +1361,7 @@
 - COMPLETEDかつ全check PASSのworker結果だけを`PLAN_READY`へ進め、同じrun-idの再実行はaccepted resultを再呼出ししない。worker responseを受理前にprocessが停止しても、残存responseを同じrun-idで一度だけ受理する。
 - 同一stage・error fingerprintの失敗は3回まで再試行し、4回目を`FAILED_RETRY_EXHAUSTED`にする。7種のhuman operation要求は実行せず`BLOCKED_HUMAN`、変更path逸脱は`BLOCKED_EXTERNAL`へ分類する。
 - focused `tests.test_run tests.test_autonomous_runner tests.test_runtime_recovery`は14/14、親全体は364/364、validator/security/diffはPASSした。fake workerでPLAN_READY、resume idempotency、lease競合、retry、human gate、privacy rejectionを確認した。
-- 実装commitは`25eec59`、完了記録commitは`e032ad2`。parent branch `agent/issues-38-41-pipeline`を既存draft PR #42（`https://github.com/masa-san-jp/agentic-art-orchestration/pull/42`）へpush済みである。merge/releaseは実行しない。
+- 実装commitは`25eec59`、完了記録commitは`e032ad2`、公開記録commitは`895c28f`。parent branch `agent/issues-38-41-pipeline`を既存draft PR #42（`https://github.com/masa-san-jp/agentic-art-orchestration/pull/42`）へpush済みである。merge/releaseは実行しない。
 - stateはGit外state-rootを要求し、会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderr、Drive artifactを保存しない。child repository変更、外部artifact作成、merge、releaseはない。
 - acceptance: 6/6。runner leaseを解放し、次の`PURPOSE-BATCH-STATUS-001`をREADYへ進めた。
 
