@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 import yaml
 
@@ -574,7 +574,15 @@ def run_exchange_e2e(
     return report
 
 
-def _prepare_research_fixture(work_root: Path, protocol_root: Path, slug: str, generated_at: str) -> None:
+def _prepare_research_fixture(
+    work_root: Path,
+    protocol_root: Path,
+    slug: str,
+    generated_at: str,
+    *,
+    theme: Mapping[str, Any] | None = None,
+    project_title: str | None = None,
+) -> None:
     project = work_root / "projects" / slug
     fixture = protocol_root / "tests" / "fixtures" / "harmony"
     manifest_path = project / "manifest.yaml"
@@ -597,6 +605,8 @@ def _prepare_research_fixture(work_root: Path, protocol_root: Path, slug: str, g
     manifest["workflow_mode"] = "PRODUCTION_HANDOFF"
     project_meta = manifest.setdefault("project", {})
     project_meta.update({"status": "COMPLETE_WITH_GAPS", "version": "0.1.0", "updated_at": generated_at})
+    if project_title:
+        project_meta["title"] = project_title
     manifest.setdefault("entry_points", {}).update({
         "production_hypotheses": "04_decisions/production-hypotheses.yaml",
         "hypothesis_comparison": "04_decisions/hypothesis-comparison.yaml",
@@ -636,6 +646,24 @@ def _prepare_research_fixture(work_root: Path, protocol_root: Path, slug: str, g
         ),
         encoding="utf-8",
     )
+    if theme is not None:
+        if not isinstance(theme, Mapping):
+            raise ExchangeError("theme must be a metadata-only mapping")
+        brief_path = project / "05_production" / "production-brief.yaml"
+        brief = _load_yaml(brief_path)
+        for key in ("completion_image", "theme", "message", "concept", "research_summary"):
+            if key in theme:
+                brief[key] = copy.deepcopy(theme[key])
+        brief_path.write_text(yaml.safe_dump(brief, sort_keys=False, allow_unicode=True), encoding="utf-8")
+        visual_language = theme.get("visual_language")
+        if visual_language is not None:
+            if not isinstance(visual_language, Mapping):
+                raise ExchangeError("theme.visual_language must be a metadata-only mapping")
+            visual_path = project / "05_production" / "visual-language.yaml"
+            visual_path.write_text(yaml.safe_dump(copy.deepcopy(dict(visual_language)), sort_keys=False, allow_unicode=True), encoding="utf-8")
+        direction = project / "05_production" / "creative-direction.md"
+        if direction.is_file() and project_title:
+            direction.write_text(direction.read_text(encoding="utf-8").replace("Harmony Study", project_title), encoding="utf-8")
 
 
 def run_exchange(
@@ -647,6 +675,8 @@ def run_exchange(
     generated_at: str,
     research_project_slug: str = "harmony-study",
     production_project_slug: str = "production-smoke",
+    research_project_title: str = "Harmony Study",
+    theme: Mapping[str, Any] | None = None,
     handoff_id: str = "HO001",
     result_id: str = "PR001",
     child_python: str | None = None,
@@ -722,7 +752,7 @@ def run_exchange(
             production_bundle = run_dir / "result"
             research_project_path = research_work / "projects" / research_project_slug
             _run_command(
-                [child_python, "tools/new_project.py", research_project_slug, "--title", "Harmony Study", "--creator-id", "creator/fixture", "--work-root", str(research_work), "--protocol-root", str(research_protocol)],
+                [child_python, "tools/new_project.py", research_project_slug, "--title", research_project_title, "--creator-id", "creator/fixture", "--work-root", str(research_work), "--protocol-root", str(research_protocol)],
                 cwd=research_protocol,
                 stage_id="research-project",
                 display=_display("python3 tools/new_project.py PROJECT_SLUG --title HARMONY_STUDY --creator-id CREATOR --work-root RESEARCH_WORK --protocol-root RESEARCH_PROTOCOL"),
@@ -735,7 +765,7 @@ def run_exchange(
                 destination = research_project_path / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, destination)
-            _prepare_research_fixture(research_work, research_protocol, research_project_slug, generated_at)
+            _prepare_research_fixture(research_work, research_protocol, research_project_slug, generated_at, theme=theme, project_title=research_project_title)
             _run_command(
                 [child_python, "tools/build_handoff.py", research_project, "--work-root", str(research_work), "--protocol-root", str(research_protocol), "--generated-at", generated_at, "--research-commit", research_commit, "--handoff-id", handoff_id, "--revision", "1"],
                 cwd=research_protocol,

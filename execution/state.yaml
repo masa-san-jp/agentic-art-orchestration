@@ -1,29 +1,29 @@
-version: 89
-updated_at: "2026-08-27T14:46:38+09:00"
-active_task: null
+version: 91
+updated_at: "2026-08-27T15:54:29+09:00"
+active_task: PURPOSE-E2E-001
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-27T10:38:00+09:00"
-  expires_at: "2026-08-27T11:38:00+09:00"
+  acquired_at: "2026-08-27T15:08:00+09:00"
+  expires_at: "2026-08-27T16:08:00+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: PURPOSE-BATCH-100-001:attempt-2
-  released_at: "2026-08-27T14:46:38+09:00"
+  execution_id: PURPOSE-E2E-001:attempt-1
+  released_at: "2026-08-27T15:54:29+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [config/repositories.yaml, tools/batch_run.py, schemas/batch-run.schema.json, tests/test_batch_run.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-    child_repositories: [self-model, agentic-art-research, agentic-art-production]
+    paths: [tools/purpose_e2e.py, schemas/purpose-e2e-evidence.schema.json, tests/test_purpose_e2e.py, docs/purpose-e2e-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    child_repositories: [self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
 checkpoint:
-  task: PURPOSE-BATCH-100-001
+  task: PURPOSE-E2E-001
   repository: agentic-art-orchestration
-  start_point: 48211a62c77efe7904a48036863d01a1d8db041f
-  expected_changes: Implement a deterministic parent batch driver over qualified immutable child contracts, qualify the self-model export pin, execute 100 Git-external plans, and record G1-G6 without claiming unperformed work as complete.
-  result: completed; 100-plan batch and G1-G6 evidence passed in a Git-external create-only run
+  start_point: 81da27c
+  expected_changes: Implement and execute the networkless/live-private new-theme E2E from intent digest through Research PLAN_READY and Production plan with conservative viewer evidence and zero forbidden external effects.
+  result: blocked; networkless lane passed, live-private first failed at self diversity, and agentic-art-research child unittest gate timed out
 last_completed_task: PURPOSE-BATCH-100-001
 resume_from:
   task: PURPOSE-E2E-001
-  action: "Run the parent validator, then inspect Issue #104 and the current new-theme E2E contracts before claiming the task."
+  action: "After the two upstream blockers are resolved, rerun the exact-pin live-private E2E and child quality gates; do not invent self anchors or skip the research gate."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -470,6 +470,60 @@ purpose_batch_100:
   generated_outputs_scope: Git-external create-only output/state roots; no parent data/ or child canonical tree output
   external_issue_drive_or_release_mutation: false
   raw_conversation_credentials_private_raw_restricted_added: false
+  explicit_feedback: none
+  inferred_feedback: none
+purpose_e2e:
+  status: BLOCKED
+  task: PURPOSE-E2E-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/104
+  observed_at: "2026-08-27T15:54:29+09:00"
+  implementation:
+    files: [tools/purpose_e2e.py, schemas/purpose-e2e-evidence.schema.json, tests/test_purpose_e2e.py, docs/purpose-e2e-runbook.md]
+    parent_validation: passed
+    focused_tests: 13/13
+    parent_tests: 376/376
+    diff_check: passed
+    target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
+  networkless:
+    status: PASSED
+    attempts: 3
+    canonical_evidence_sha256: f1b16d2d1e67ec9aa7bc27ce2ab83118a9df7a8b2c253c607110c38c7099b257
+    terminal: PLAN_READY
+    fixture_only_personal_anchors: true
+    same_run_resume_worker_invocations: 1
+    forbidden_external_operations: 0
+    external_operations: []
+    child_quality_gates: supplied_only_after_exact_pin_validation
+  source_pins:
+    self-model: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+    art-history: b831f4c57d842f44ad45134a5abd434dc367482f
+    marketing-trends: ff3adca6e52c18095a00c23d39ef2a961ae1d13b
+    agentic-art-research: 07f8cf57e416e5166ac80019ba2d015ff1821e9c
+    agentic-art-production: 63a1ddf4ed303e01c92023baa4737c68dcd10846
+    viewer-response-notes: cf411086b0693bfcde8d034fe27bb7a8d4110222
+  live_private:
+    status: BLOCKED
+    workspace: six repositories clean and exact-pin matched in verified external workspace
+    exports: self-model 3; art-history 96; marketing-trends 60
+    first_failure_stage: self-diversity
+    first_failure_source_repository: self-model
+    first_failure_source_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+    observed_condition: eligible_personal_anchor_count=1; required_minimum=3; status=INSUFFICIENT_SELF_DIVERSITY
+    impact: live selection cannot safely claim new-theme acceptance; Research/Production live handoff and plan were not promoted
+    rerun_command: "python3 tools/purpose_e2e.py --live-private --attempt-id <new-attempt> --workspace-root <verified-child-workspace> --confirm-private-run --output /tmp/purpose-e2e-<new-attempt>.json"
+    unblock_when: self-model exports at least three approved tensions or recurring_patterns anchors in a newly qualified manifest-pinned commit; do not add fixture anchors
+  child_quality_gates:
+    status: BLOCKED
+    report_sha256: 62c40f95d3b824c8ab4cc20584528c7cf4b1828ba1603cd599f1e46d50ca2d3e
+    workspace: six repositories clean and exact-pin matched
+    observed: 15/16 commands PASSED; agentic-art-research unittest gate timed out at 300 seconds
+    failed_repository: agentic-art-research
+    failed_source_commit: 07f8cf57e416e5166ac80019ba2d015ff1821e9c
+    failed_command: "python3 -m unittest discover -s tests -v"
+    impact: all child quality gates cannot be claimed PASS
+    unblock_when: diagnose the child research test or release-harness timeout and rerun the unchanged manifest command with a finite timeout; do not skip or delete the gate
+  privacy: no new raw conversation, credential, direct identifier, PRIVATE_RAW, RESTRICTED, or artifact body stored
+  external_artifact: none created or updated; GitHub, Drive, merge, release, and physical production not performed
   explicit_feedback: none
   inferred_feedback: none
 blocked:

@@ -1,5 +1,5 @@
-version: 14
-updated_at: "2026-08-27T14:46:38+09:00"
+version: 16
+updated_at: "2026-08-27T15:54:29+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -622,7 +622,7 @@ tasks:
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14
     title: Release the initial interactive operations profile through the human gate
-    status: IN_PROGRESS
+    status: BLOCKED
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
@@ -944,10 +944,11 @@ tasks:
   - id: PURPOSE-E2E-001
     milestone: M16
     title: Reach a production plan from one new theme without human intervention
-    status: READY
+    status: BLOCKED
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/104
-    target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production]
+    target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
     agent_terminal: EVIDENCE_READY
     depends_on: [PURPOSE-BATCH-100-001]
+    blocker: live-private self diversity is insufficient (1 eligible personal anchor; 3 required), and the agentic-art-research unittest child gate timed out at 300 seconds
     acceptance: A new non-sensitive theme reaches PLAN_READY through research and production with zero human prompts after input, complete source provenance, conservative viewer evidence, deterministic resume, child gates, and zero forbidden external effects.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/workspace.py status, python3 tools/audit.py]
