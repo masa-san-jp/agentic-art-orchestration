@@ -41,7 +41,7 @@ python3 -m unittest discover -s tests -v
 - [x] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする（PRODUCTION-PIN-001、PRODUCTION-E2E-001、PRODUCTION-QUALIFY-001、PRODUCTION-RELEASE-001完了）。
 - [x] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidence、総合qualificationは完了。v1.4.0 human-gated releaseは未完了）。
 - [x] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足とResearch child gate timeoutが解消待ちである。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足と新pin採用前の6repo fresh gateが解消待ちである。Research新mainの直接gateはPASSした。
 
 ## Surprises & Discoveries
 

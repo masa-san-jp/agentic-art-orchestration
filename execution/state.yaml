@@ -1,5 +1,5 @@
-version: 92
-updated_at: "2026-08-27T16:38:10+09:00"
+version: 94
+updated_at: "2026-08-27T18:39:16+09:00"
 active_task: PURPOSE-E2E-001
 active_repository: agentic-art-orchestration
 lease:
@@ -504,6 +504,24 @@ purpose_e2e:
     agentic-art-research: 07f8cf57e416e5166ac80019ba2d015ff1821e9c
     agentic-art-production: 63a1ddf4ed303e01c92023baa4737c68dcd10846
     viewer-response-notes: cf411086b0693bfcde8d034fe27bb7a8d4110222
+  latest_remote_observation:
+    observed_at: "2026-08-27T18:39:16+09:00"
+    self-model:
+      main_commit: eb2b65738acf65eb01d8431bbd9dc5c978781697
+      issue_state: OPEN
+      export_record_count: 3
+      eligible_personal_anchor_count: 1
+      status: INSUFFICIENT_SELF_DIVERSITY
+      manifest_pin_adopted: false
+    agentic-art-research:
+      main_commit: 496a2e20b21be6fef4ae415529dba4a863e09680
+      issue_state: OPEN
+      compile_gate: PASSED
+      validate_gate: PASSED
+      unittest_gate: PASSED
+      unittest_count: 255
+      manifest_pin_adopted: false
+    parent_manifest_update: not performed; self-model acceptance and complete six-repository qualification remain unresolved
   live_private:
     status: BLOCKED
     workspace: six repositories clean and exact-pin matched in verified external workspace
@@ -524,7 +542,8 @@ purpose_e2e:
     failed_source_commit: 07f8cf57e416e5166ac80019ba2d015ff1821e9c
     failed_command: "python3 -m unittest discover -s tests -v"
     impact: all child quality gates cannot be claimed PASS
-    unblock_when: diagnose the child research test or release-harness timeout and rerun the unchanged manifest command with a finite timeout; do not skip or delete the gate
+    unblock_when: adopt the verified Research commit only through a fresh six-repository exact-pin report with every declared gate PASSED; do not skip or delete the gate
+    latest_research_follow_up: commit 496a2e20b21be6fef4ae415529dba4a863e09680 passed compile, validate, and 255 unittest cases in a read-only clone; a fresh six-repository manifest-pinned report is still required
   privacy: no new raw conversation, credential, direct identifier, PRIVATE_RAW, RESTRICTED, or artifact body stored
   external_artifact: GitHub Issues self-model-notes#71 and agentic-art-research#79 created by explicit user request; Drive, PR, merge, release, and physical production not performed
   issue_mutation: true

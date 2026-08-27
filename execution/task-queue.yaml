@@ -1,5 +1,5 @@
-version: 16
-updated_at: "2026-08-27T15:54:29+09:00"
+version: 17
+updated_at: "2026-08-27T18:39:16+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -949,6 +949,6 @@ tasks:
     target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
     agent_terminal: EVIDENCE_READY
     depends_on: [PURPOSE-BATCH-100-001]
-    blocker: live-private self diversity is insufficient (1 eligible personal anchor; 3 required), and the agentic-art-research unittest child gate timed out at 300 seconds
+    blocker: live-private self diversity is insufficient (1 eligible personal anchor; 3 required); Research timeout was resolved at 496a2e2 but a fresh six-repository exact-pin gate report is still required before pin adoption
     acceptance: A new non-sensitive theme reaches PLAN_READY through research and production with zero human prompts after input, complete source provenance, conservative viewer evidence, deterministic resume, child gates, and zero forbidden external effects.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/workspace.py status, python3 tools/audit.py]

@@ -38,7 +38,7 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
 - [x] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する。進捗表示は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足とResearch child gate timeoutが解消待ちである。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足と新pin採用前の6repo fresh gateが解消待ちである。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
@@ -165,13 +165,13 @@ summaryが存在するrunは`ALREADY_COMPLETED`として再利用し、partial s
 
 ### Interfaces and Dependencies
 
-`PURPOSE-E2E-001`は実装とnetworkless証跡を完了したが、queueではBLOCKEDである。self-modelのeligible personal anchorが1件（要求3件）しかなく、agentic-art-researchのunittest gateも300秒でtimeoutした。最初の再開操作は、上流解消後に`.venv/bin/python tools/validate.py --check`を実行し、同じmanifest pinでlive-privateとchild gatesを再実行することである。
+`PURPOSE-E2E-001`は実装とnetworkless証跡を完了したが、queueではBLOCKEDである。self-modelのeligible personal anchorが1件（要求3件）しかない。Researchは新main `496a2e2`で直接gateが通ったが、parent manifestへのpin採用には6repoのfresh exact-pin reportが必要である。最初の再開操作は、self-model解消後に`.venv/bin/python tools/validate.py --check`を実行し、child gatesとlive-privateを再実行することである。
 
 ## PURPOSE-E2E-001 — blocked evidence record
 
 `tools/purpose_e2e.py`、閉じた`schemas/purpose-e2e-evidence.schema.json`、focused test、runbookを追加した。networkless fixtureは3回のcanonical evidence hashが一致し、`PLAN_READY`、intent ranking、fixture-only self diversity、Research/Production metadata-only plan、conservative viewer、same-run resume、forbidden operation 0を確認した。canonical hashは`f1b16d2d1e67ec9aa7bc27ce2ab83118a9df7a8b2c253c607110c38c7099b257`である。
 
-live-privateはcleanかつmanifest exact-pinの6 child workspaceで実行したが、self-model commit `1864fa92dde2bc8f25756bd5e5885268fa4b38fc`のexport 3件中、eligible anchorが1件だけだったため`INSUFFICIENT_SELF_DIVERSITY`でfail closedした。fixture anchorの追加や個人事実の合成は行わない。別途、child quality gatesは15/16 PASSで、Research commit `07f8cf57e416e5166ac80019ba2d015ff1821e9c`の`python3 -m unittest discover -s tests -v`が300秒timeoutした。未実行・未達のResearch/Production live planを成功扱いにしない。
+live-privateはcleanかつmanifest exact-pinの6 child workspaceで実行したが、self-model commit `1864fa92dde2bc8f25756bd5e5885268fa4b38fc`のexport 3件中、eligible anchorが1件だけだったため`INSUFFICIENT_SELF_DIVERSITY`でfail closedした。fixture anchorの追加や個人事実の合成は行わない。別途、旧pinのchild quality gatesは15/16 PASSでResearch unittestがtimeoutしたが、新Research main `496a2e2`ではcompile、validate、255 unittestがPASSした。新pin採用前の6repo fresh reportとself-model解消が必要であり、未実行・未達のResearch/Production live planを成功扱いにしない。
 
 ## PURPOSE-AUTONOMOUS-RUNNER-001 ExecPlan
 
