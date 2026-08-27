@@ -1354,3 +1354,17 @@
 ## Next exact action
 
 1. `PURPOSE-AUTONOMOUS-RUNNER-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #103とrun/autonomous-runner/runtime-recoveryの現行契約・テストを読む。
+
+## PURPOSE-AUTONOMOUS-RUNNER-001 completed
+
+- Issue #103のSSOTに従い、`config/human-gates.yaml`、`agent-action/v1`、`agent-result/v1`、`autonomous-run/v1`を追加した。`tools/run.py`は`RESEARCH_PENDING`とmetadata-only structured next actionを返し、`tools/autonomous_runner.py`はabsolute argv workerを外部state-rootの`<run-id>/supervisor.json`へatomic checkpointする。
+- COMPLETEDかつ全check PASSのworker結果だけを`PLAN_READY`へ進め、同じrun-idの再実行はaccepted resultを再呼出ししない。worker responseを受理前にprocessが停止しても、残存responseを同じrun-idで一度だけ受理する。
+- 同一stage・error fingerprintの失敗は3回まで再試行し、4回目を`FAILED_RETRY_EXHAUSTED`にする。7種のhuman operation要求は実行せず`BLOCKED_HUMAN`、変更path逸脱は`BLOCKED_EXTERNAL`へ分類する。
+- focused `tests.test_run tests.test_autonomous_runner tests.test_runtime_recovery`は14/14、親全体は364/364、validator/security/diffはPASSした。fake workerでPLAN_READY、resume idempotency、lease競合、retry、human gate、privacy rejectionを確認した。
+- 実装commitは`25eec59`。parent branchには既存draft PR #42（`https://github.com/masa-san-jp/agentic-art-orchestration/pull/42`）があり、taskの実装commitを同PRへpushする段階まで完了した。merge/releaseは実行しない。
+- stateはGit外state-rootを要求し、会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderr、Drive artifactを保存しない。child repository変更、外部artifact作成、merge、releaseはない。
+- acceptance: 6/6。runner leaseを解放し、次の`PURPOSE-BATCH-STATUS-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `PURPOSE-BATCH-STATUS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #70とbatch status/reportの現行契約・テストを読む。

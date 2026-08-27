@@ -911,7 +911,7 @@ tasks:
   - id: PURPOSE-AUTONOMOUS-RUNNER-001
     milestone: M16
     title: Resume RESEARCH_PENDING through an agent worker to PLAN_READY
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -922,7 +922,7 @@ tasks:
   - id: PURPOSE-BATCH-STATUS-001
     milestone: M16
     title: Generate read-only batch status and completion reports
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/70
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
