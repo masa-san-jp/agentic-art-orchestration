@@ -86,3 +86,20 @@ responseのCOMPLETEDと全check PASSだけが`PLAN_READY`へ進み、同じrun-i
 再利用する。human gate対象の要求は実行せず`BLOCKED_HUMAN`、外部境界違反は`BLOCKED_EXTERNAL`、
 同一stage・error fingerprintの失敗は3回まで再試行して4回目を`FAILED_RETRY_EXHAUSTED`とする。
 会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderrはstateへ保存しない。
+
+## バッチ進捗と完了レポート
+
+`tools/batch_status.py`はworkspace内の`07_runtime/research-state.json`、Productionのhandoff/plan、
+各workspace repoのGit状態をread-onlyで観測する。プロジェクトのstageは
+`NOT_STARTED`、`IN_PROGRESS`、`TERMINAL`、`HANDOFF`、`PLANNED`の固定語彙で、入力ファイルの
+相対locatorとSHA-256、taskの完了数、認識できない状態を併記する。`HEAD..origin/main`の差分が
+取得できない場合は0にせず`UNKNOWN`とする。実行中にstate、claim、Git、外部サービスを書き込まない。
+
+~~~bash
+python3 tools/batch_status.py --workspace-root <workspace-root> --format json
+python3 tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
+~~~
+
+batch driverが作成するJSONLは`batch-report-event/v1`のmetadata-only closed eventをappendする。
+集計器は起動、完了、失敗、再試行、所要時間、token数をまとめ、未提供の時間・tokenは`未計測`として
+表示する。reportの読み取りも書き込みもGit外の入力を変更しない。

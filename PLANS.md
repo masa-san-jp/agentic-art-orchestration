@@ -122,3 +122,33 @@ workerが作ったGit/外部effectはrunnerが作らない。
 `run.py`の`next_action` → `agent-action/v1` → provider-neutral worker → `agent-result/v1` →
 `autonomous-run/v1`という一方向境界である。runnerは既存`tools/runtime.py`のwork-item状態機械を
 変更せず、autonomous run専用の外部stateを管理する。次taskは`PURPOSE-BATCH-STATUS-001`。
+
+## PURPOSE-BATCH-STATUS-001 ExecPlan
+
+### Purpose / Big Picture
+
+Issue #70の契約として、複数プロジェクトのresearch state、Production handoff/plan、workspace Git
+差分を一つのread-onlyコマンドで観測し、batch driverのappend-only JSONLを完了レポートへ集計できる
+状態を作る。未計測値や認識不能な状態を正常値へ変換せず、入力の相対locatorとhashで再確認できるようにする。
+
+### Progress
+
+- [x] `batch-report-event/v1` closed schemaと親validator接続を追加した。
+- [x] `tools/batch_status.py`へ決定的な5段階project status、repoのHEAD/origin差分、JSONL集計、
+  `未計測`表示、duplicate/privacy-safe read-only境界を実装した。
+- [x] fixture五状態、report集計、unknown event、duplicate event、read-only tree hashをテストする。
+- [ ] queue/state/handoff/README、full gate、commit、draft PR記録を完了する。
+
+### Plan of Work
+
+1. research stateをproject単位に走査し、handoff/planの存在・status・readinessを固定stageへ射影する。
+2. workspace直下のGit repoからbranch、HEAD、dirty、`HEAD..origin/main`をread-onlyで取得する。
+3. closed JSONL eventを検証し、起動・完了・失敗・再試行・所要・tokenを集計する。
+4. 同一入力のbyte一致、未知状態の保持、入力tree不変、親validator/full testを確認する。
+
+### Validation and Acceptance
+
+- 5つのfixtureが`NOT_STARTED`、`IN_PROGRESS`、`TERMINAL`、`HANDOFF`、`PLANNED`へ一意に分類される。
+- project/repositoryのsource locatorとSHA-256、task進捗、Git remote差分が出力され、同一入力は決定的である。
+- 集計が起動、完了、失敗、再試行、所要、tokenを区別し、未提供値を`未計測`として表示する。
+- unknown/duplicate/closed-schema違反を拒否し、scan前後でworkspace treeが変化しない。

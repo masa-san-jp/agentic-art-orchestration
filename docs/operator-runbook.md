@@ -269,6 +269,23 @@ v1.1のnetworkless E2Eは、frontstageのretrievalが返したrepository@commit/
 
 最後にstateの`active_task`とleaseを解放し、generated dataを再生成してから、statusとdiffを再確認する。
 
+## 13. バッチ進捗のread-only観測
+
+100件規模の実行前後は、プロジェクトの研究state、Production handoff/plan、workspace repoの
+`HEAD..origin/main`を横断表示する。`batch_status.py`はclaim、state、Git、Issue、Driveを変更しない。
+source fileの相対locatorとhashを出力するため、同じ入力は同じJSONになる。欠損・不明なGit比較・
+認識できない状態は`UNKNOWN`として残し、完了へ丸めない。
+
+~~~bash
+python3 tools/batch_status.py --workspace-root <workspace-root> --format json
+python3 tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
+~~~
+
+batch reportはdriverだけが`<state-root>/<run-id>/batch-report.jsonl`へappendする。
+`batch-report-event/v1`はevent ID、run ID、project/repository、source commit、RFC3339時刻、
+attemptを必須とし、時間・tokenがない場合はnullを許す。DURATION/TOKENS eventがnullの場合は
+拒否する。集計表示の`未計測`は未実行・未提供を示し、ゼロ値を意味しない。
+
 ## 12. 自律Research実行と再開
 
 `tools/run.py`の`RESEARCH_PENDING`は、構造化された`agent-action/v1`を

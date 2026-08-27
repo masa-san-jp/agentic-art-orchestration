@@ -56,6 +56,7 @@ HUMAN_GATES_PATH = ROOT / "config/human-gates.yaml"
 AGENT_ACTION_SCHEMA_PATH = ROOT / "schemas/agent-action.schema.json"
 AGENT_RESULT_SCHEMA_PATH = ROOT / "schemas/agent-result.schema.json"
 AUTONOMOUS_RUN_SCHEMA_PATH = ROOT / "schemas/autonomous-run.schema.json"
+BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -104,6 +105,8 @@ REQUIRED_FILES = [
     "schemas/agent-result.schema.json",
     "schemas/autonomous-run.schema.json",
     "tools/autonomous_runner.py",
+    "schemas/batch-report-event.schema.json",
+    "tools/batch_status.py",
     "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
@@ -406,6 +409,35 @@ def validate_autonomous_contract(
                 errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
             if not any(property_schema.get("const") == version for property_schema in [schema.get("properties", {}).get("contract_version", {})] if isinstance(property_schema, dict)):
                 errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
+    return errors
+
+
+def validate_batch_report_contract(
+    event_schema: dict | None = None,
+    source: str = "schemas/batch-report-event.schema.json",
+) -> list[str]:
+    """Keep batch events closed, metadata-only, and append-only compatible."""
+    event_schema = event_schema if event_schema is not None else load_json(BATCH_REPORT_EVENT_SCHEMA_PATH)
+    errors: list[str] = []
+    if not isinstance(event_schema, dict):
+        return [f"{source}: batch report event schema must be an object; remediation: restore the v1 schema"]
+    if event_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        errors.append(f"{source}: batch report event schema must be Draft 2020-12; remediation: preserve the closed v1 contract")
+    if event_schema.get("additionalProperties") is not False:
+        errors.append(f"{source}: batch report event schema must reject unknown fields; remediation: set additionalProperties to false")
+    version = event_schema.get("properties", {}).get("contract_version", {})
+    if not isinstance(version, dict) or version.get("const") != "batch-report-event/v1":
+        errors.append(f"{source}: batch report event schema has the wrong contract version; remediation: preserve batch-report-event/v1")
+    expected_required = {
+        "contract_version", "event_id", "run_id", "event_type", "project_id",
+        "repository", "source_commit", "observed_at", "attempt",
+        "duration_seconds", "token_count",
+    }
+    if set(event_schema.get("required", [])) != expected_required:
+        errors.append(f"{source}: batch report event required fields are incomplete or expanded; remediation: keep the metadata envelope minimal")
+    event_types = event_schema.get("properties", {}).get("event_type", {}).get("enum")
+    if event_types != ["STARTED", "COMPLETED", "FAILED", "RETRY", "DURATION", "TOKENS"]:
+        errors.append(f"{source}: event type vocabulary is unsafe; remediation: preserve the fixed append-only event types")
     return errors
 
 
@@ -3634,6 +3666,12 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_json(AGENT_ACTION_SCHEMA_PATH),
                 load_json(AGENT_RESULT_SCHEMA_PATH),
                 load_json(AUTONOMOUS_RUN_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_batch_report_contract(
+                load_json(BATCH_REPORT_EVENT_SCHEMA_PATH),
+                _source_label(BATCH_REPORT_EVENT_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")
