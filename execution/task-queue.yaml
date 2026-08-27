@@ -1,5 +1,5 @@
-version: 13
-updated_at: "2026-08-27T10:04:00+09:00"
+version: 14
+updated_at: "2026-08-27T10:29:27+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -933,13 +933,14 @@ tasks:
   - id: PURPOSE-BATCH-100-001
     milestone: M16
     title: Evaluate one hundred candidate plans with explicit terminal evidence
-    status: READY
+    status: BLOCKED
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: EVIDENCE_READY
     depends_on: [PURPOSE-BATCH-STATUS-001]
     acceptance: A 100-plan batch preserves provenance, diversity, gate outcomes, deterministic resume state, and explicit blocked/unknown results without claiming unperformed work as complete.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+    blocker: "Issue #71's zero-prompt 100-project run has no available batch driver: parent run.py has no batch mode, child acceptance and Production materialization are single-project, and the manifest-pinned self export is a legacy aggregate without the required three records."
 
   - id: PURPOSE-E2E-001
     milestone: M16

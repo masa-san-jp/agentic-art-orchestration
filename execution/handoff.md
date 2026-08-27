@@ -1396,3 +1396,18 @@
   JSONL append自体は本taskのread-only集計器の責務外である。
 - Next task: `PURPOSE-BATCH-100-001`。最初の1操作:
   `.venv/bin/python tools/validate.py --check`。
+
+## PURPOSE-BATCH-100-001 blocked
+
+- Task ID: `PURPOSE-BATCH-100-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#71](https://github.com/masa-san-jp/agentic-art-orchestration/issues/71)。2026-08-27にclaimし、実行前提を読み取り専用で確認した。
+- Exact manifest-pinned workspaceは6repoすべてclean・pin一致だった。child quality gateは16/16 PASS。外部preflight reportは親Gitへ取り込まず、SHA-256 `0d87519d9a59f5175311425279e436f120d2ac0bbe26dea8cc7f85dfee1aee2e`をstateへ記録した。
+- 入力の観測はart-history 96 normalized records（`b831f4c57d842f44ad45134a5abd434dc367482f`）、marketing-trends 60 normalized records・stale 0（`ff3adca6e52c18095a00c23d39ef2a961ae1d13b`）、self-modelのmanifest pin `fda3e29c76ba8fbd40ee6946589d6789029d92d6`である。self-model pinのexportはlegacy aggregateでseek 1、tension 1、recurring-pattern 0であり、親adapterが要求する3件のapproved child DTOではない。3 recordのexportは`04095bfa4115ef4fde8a8f475bf31743ecdff962`で観測済みだが、manifestへは採用していない。
+- 親`tools/run.py`は単一project引数のみで`--batch`を受け付けない。Researchの`accept_research_request.py`は一つのrequestを一つのprojectへ受理し、Productionの`new_production.py`は一つのhandoffを一つのslugへmaterializeする。`tools/batch_status.py`はread-only集計器であり、batch driverではない。
+- したがってG1–G6は全て`NOT_RUN`である。production output、100件のplan、10件のrandom decision log、`batch-report.jsonl`はいずれも生成していない。Acceptanceは0/6で、preflight 16/16 PASSとは分離した。未実行のterminal evidenceを完了扱いにしなかった。
+- Blockerの観測事実、選択肢、推奨、影響、解除条件は`execution/state.yaml:purpose_batch_100`に記録した。推奨は、batch driver・child completion/export contract・qualified self-model pin adoptionを明示する別の実装taskを作成し、fresh exact-pin preflight後に再実行することである。
+- 親コード、子repo、`repos/`生成物、GitHub Issue/PR、Google Drive、production output、batch report、credential、raw conversation、PRIVATE_RAW、RESTRICTEDは変更していない。merge、release、pin更新、外部artifact作成も行っていない。explicit/inferred feedbackは扱っていない。
+- Leaseは`available/unassigned`へ解放した。次の実装taskは未登録のため、再開時の最初の1操作は、Issue/queueを現行toolingへ再baselineした後の`.venv/bin/python tools/validate.py --check`である。
+
+## Next exact action
+
+1. batch driver、child completion/export contract、self-model qualified pinを扱う別Issueとqueue taskを登録・reviewし、その後に`.venv/bin/python tools/validate.py --check`から再開する。`PURPOSE-E2E-001`はbatch実測完了まで開始しない。

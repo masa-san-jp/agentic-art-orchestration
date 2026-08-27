@@ -1,29 +1,29 @@
-version: 84
-updated_at: "2026-08-27T10:09:00+09:00"
+version: 87
+updated_at: "2026-08-27T10:31:00+09:00"
 active_task: PURPOSE-BATCH-100-001
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-27T08:25:00+09:00"
-  expires_at: "2026-08-27T09:25:00+09:00"
-  lane: CHILD_SOURCE
-  execution_id: PURPOSE-BATCH-STATUS-001:attempt-1
-  released_at: "2026-08-27T10:04:00+09:00"
+  acquired_at: "2026-08-27T10:19:01+09:00"
+  expires_at: "2026-08-27T11:19:01+09:00"
+  lane: PARENT_CONTROL_PLANE
+  execution_id: PURPOSE-BATCH-100-001:attempt-1
+  released_at: "2026-08-27T10:29:27+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/batch-report-event.schema.json, tools/batch_status.py, tools/validate.py, tests/test_batch_status.py, docs/operator-runbook.md, docs/agent-runtime-guide.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-    child_repositories: []
+    paths: [execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    child_repositories: [agentic-art-research, agentic-art-production]
 checkpoint:
-  task: PURPOSE-BATCH-STATUS-001
+  task: PURPOSE-BATCH-100-001
   repository: agentic-art-orchestration
-  start_point: 25eec59
-  expected_changes: Add read-only batch project status, repository HEAD/origin observation, append-only report event contract, deterministic aggregation, and privacy-safe tests.
-  result: complete; batch status and report aggregation passed deterministic, read-only, provenance, unknown-state, and unmeasured-value checks
+  start_point: 48211a62c77efe7904a48036863d01a1d8db041f
+  expected_changes: Execute the one-hundred-plan batch from qualified immutable child pins in a Git-external output root and record G1-G6 evidence without changing code or claiming blocked/unknown work as complete.
+  result: blocked; the qualified pins are available, but the required batch driver and compatible self export are not available at the recorded source commits
 last_completed_task: PURPOSE-BATCH-STATUS-001
 resume_from:
   task: PURPOSE-BATCH-100-001
-  action: Claim the lowest-ID READY task, run .venv/bin/python tools/validate.py --check, then read Issue #71 and the one-hundred-plan evidence contract.
+  action: "Re-baseline Issue #71 as a separate implementation task for a batch driver, child completion contract, and qualified self export pin; then rerun the preflight before any output generation."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -398,6 +398,56 @@ self_export_e2e:
   parent_manifest_pin_changed: false
   child_repository_mutation: false
   external_issue_drive_or_release_mutation: false
+purpose_batch_100:
+  status: BLOCKED
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
+  task: PURPOSE-BATCH-100-001
+  observed_at: "2026-08-27T10:29:27+09:00"
+  acceptance: 0/6
+  preflight:
+    manifest_repository_count: 6
+    exact_pin_workspace: passed; all six repositories clean and detached at manifest pins
+    child_quality_gates: 16/16 PASS
+    child_gate_report_sha256: 0d87519d9a59f5175311425279e436f120d2ac0bbe26dea8cc7f85dfee1aee2e
+    evidence_locator: external-run://PURPOSE-BATCH-100-001/child-gates
+  source_exports:
+    art-history:
+      source_commit: b831f4c57d842f44ad45134a5abd434dc367482f
+      normalized_records: 96
+    marketing-trends:
+      source_commit: ff3adca6e52c18095a00c23d39ef2a961ae1d13b
+      normalized_records: 60
+      stale_records: 0
+    self-model:
+      source_commit: fda3e29c76ba8fbd40ee6946589d6789029d92d6
+      contract: urn:self-model-notes:research-signals:v1
+      aggregate_groups: {certainty: 3, evidence_refs: 1, recurring_patterns: 0, seeks: 1, tensions: 1}
+      required_three_record_export: unavailable_at_manifest_pin
+      compatible_source_observed_but_not_adopted: 04095bfa4115ef4fde8a8f475bf31743ecdff962
+  observed_contract_mismatch:
+    parent_batch_entry: tools/run.py accepts one project and has no --batch option
+    research_entry: accept_research_request.py accepts one request and creates one project; no batch completion driver is present
+    production_entry: new_production.py materializes one slug from one handoff; no batch materialization entry is present
+    self_adapter: legacy aggregate input is rejected because the current adapter requires one approved child DTO with fixed provenance, consent, freshness, and signal fields
+  g1_g6:
+    G1: NOT_RUN; no 100-project production output was created
+    G2: NOT_RUN; no 100 production-plan.yaml files were created
+    G3: NOT_RUN; no 100 research briefs were created
+    G4: NOT_RUN; no batch output exists to audit for human authority
+    G5: NOT_RUN; no 10 random decision logs were created
+    G6: NOT_RUN; no batch-report.jsonl was created or aggregated
+  blocker:
+    condition: The acceptance cannot be observed from the current qualified pins and tools without implementing an unqueued batch driver, changing the source pin/contract, or fabricating terminal evidence.
+    observed: Issue #71 requires a zero-prompt 100-project run, while the inspected parent and child CLIs expose only single-project operations; the exact manifest self pin has one seek group, one tension group, and zero recurring-pattern records rather than three export records.
+    recommendation: Create a separate current-main implementation task for the batch driver and child completion contract, and separately qualify/adopt a self-model export pin that satisfies the parent adapter contract.
+    options: [rebaseline_and_implement, manually_attempt_and_record_failures, do_not_claim_batch]
+    impact: G1-G6 remain unperformed and PURPOSE-E2E-001 remains blocked by dependency; no generated project, production plan, report, Issue, Drive artifact, or child write is claimed.
+    unblock_when: A reviewed implementation task provides a deterministic batch driver and compatible child completion/export contracts, and a fresh exact-pin preflight passes.
+  parent_code_changed: false
+  child_repository_mutation: false
+  generated_outputs_created: false
+  external_issue_drive_or_release_mutation: false
+  raw_conversation_credentials_private_raw_restricted_added: false
 blocked:
   - task: ISSUE-38-REAL-CHAIN-CI-001
     repository: agentic-art-orchestration

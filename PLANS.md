@@ -38,11 +38,79 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
 - [x] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する。進捗表示は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-NAMING-001`、`PURPOSE-INSPIRATION-001`、`PURPOSE-SELF-EXPORT-SOURCE-001`は完了し、次は`SELF-EXPORT-E2E-001`である。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-AUTONOMOUS-RUNNER-001`、`PURPOSE-BATCH-STATUS-001`まで完了し、`PURPOSE-BATCH-100-001`は現行pin/toolingの不整合によりBLOCKEDである。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
 project statusの確認は `.venv/bin/python tools/project_status.py --check-readme`、validatorの最初の操作は `.venv/bin/python tools/validate.py --check` とする。
+
+## PURPOSE-BATCH-100-001 ExecPlan — blocked
+
+### Purpose / Big Picture
+
+Issue #71の100件バッチについて、qualified immutable child pinsからG1–G6を実測し、未実行の作業を完了扱いにしない。今回の試行では、実行前提と入口の不整合を証拠化して停止する。
+
+### Progress
+
+- [x] manifest固定の6repoを一時detached workspaceへmaterializeし、clean・pin一致を確認した。
+- [x] 6repoの宣言quality gate 16/16を実行し、全てPASSした。
+- [x] art-history 96件、marketing-trends 60件、self-model旧aggregateを読み取り専用で観測した。
+- [x] 親`run.py`、Research acceptor、Production materializerにbatch入口がないことを確認した。
+- [x] G1–G6はNOT_RUNとして記録し、queue/state/handoffをBLOCKEDへ戻してleaseをreleaseした。
+
+### Surprises & Discoveries
+
+- Issue #71は5repo前提だが、現在のmanifestはviewer-response-notesを含む6repoである。
+- manifest pinのself-modelは`urn:self-model-notes:research-signals:v1`のlegacy aggregateで、seek 1、tension 1、recurring-pattern 0である。3 recordの`research-signal-export/v1`は別commitで観測済みだが、manifest pinではない。
+- `tools/batch_status.py`はread-only集計器であり、JSONL appendや100件のproject completionを駆動しない。
+
+### Decision Log
+
+- 100件のproject、Production plan、batch-report.jsonlは生成しない。存在しないG1–G6を推測で埋めると、provenanceとterminal evidenceの受入条件に反する。
+- 子repoのpin更新、親コード追加、Issue/PR/Drive書込みは、このtaskの範囲を越えるため実行しない。
+
+### Outcomes & Retrospective
+
+- Acceptanceは0/6。preflightのchild quality gate 16/16 PASSは、batch acceptanceの達成とは分離して記録した。
+- 変更は親のqueue/state/PLANS/handoffと生成README statusだけ。子repo、`repos/`、Issue、Drive、production output、batch reportは変更していない。
+- 次に必要なのは、batch driver・child completion contract・self export pin adoptionを明示する別の実装taskである。
+
+### Context and Orientation
+
+- batch issue: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
+- parent batch entry: `tools/run.py`
+- child request entry: `agentic-art-research/tools/accept_research_request.py`
+- child production entry: `agentic-art-production/tools/new_production.py`
+- read-only status aggregator: `tools/batch_status.py`
+
+### Plan of Work
+
+1. 別Issueでbatch driverと子の完了・export契約を定義する。
+2. self-modelの3 record exportを含む候補pinをread-only qualificationし、manifest採用は別human-reviewed操作として扱う。
+3. fresh exact-pin preflight後にだけ100件runを開始し、各projectのJSONL eventとG1–G6を記録する。
+
+### Concrete Steps
+
+~~~bash
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python tools/project_status.py --check-readme
+git diff --check
+~~~
+
+### Validation and Acceptance
+
+- child preflight: 6/6 repositories, 16/16 gates PASS。
+- G1–G6: 全てNOT_RUN。100件のterminal evidenceは存在しないため、batch acceptance 0/6。
+- block解除条件: deterministic batch driver、compatible child completion/export contract、fresh exact-pin qualificationの3条件が揃うこと。
+
+### Idempotence and Recovery
+
+生成物を作っていないため、再開時は現在のqueue/stateを読み、別taskの最初のvalidatorから開始する。今回の一時workspaceと外部preflight reportは親Gitへ取り込まず、report hashだけをstateに記録した。
+
+### Interfaces and Dependencies
+
+`PURPOSE-E2E-001`はこのtaskに依存しているため、現在は実行しない。次taskは未登録のbatch implementation taskであり、最初の操作はIssue/queueの再baseline後に`.venv/bin/python tools/validate.py --check`を実行すること。
 
 ## PURPOSE-AUTONOMOUS-RUNNER-001 ExecPlan
 
