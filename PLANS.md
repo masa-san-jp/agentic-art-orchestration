@@ -137,7 +137,7 @@ Issue #70の契約として、複数プロジェクトのresearch state、Produc
 - [x] `tools/batch_status.py`へ決定的な5段階project status、repoのHEAD/origin差分、JSONL集計、
   `未計測`表示、duplicate/privacy-safe read-only境界を実装した。
 - [x] fixture五状態、report集計、unknown event、duplicate event、read-only tree hashをテストする。
-- [ ] queue/state/handoff/README、full gate、commit、draft PR記録を完了する。
+- [x] queue/state/handoff/README、full gate、commit、draft PR記録を完了する。
 
 ### Plan of Work
 
@@ -152,3 +152,10 @@ Issue #70の契約として、複数プロジェクトのresearch state、Produc
 - project/repositoryのsource locatorとSHA-256、task進捗、Git remote差分が出力され、同一入力は決定的である。
 - 集計が起動、完了、失敗、再試行、所要、tokenを区別し、未提供値を`未計測`として表示する。
 - unknown/duplicate/closed-schema違反を拒否し、scan前後でworkspace treeが変化しない。
+
+### Outcomes & Retrospective
+
+focused 5/5、親全体369/369、validator、README status、JSON CLI assertion、diff checkがPASSした。
+実装commitは`aee287f`。子repo変更、外部artifact、Issue/Drive操作、merge、tag、releaseはない。
+child-owned stateの未対応・未知語彙は`state_quality=UNKNOWN`として保持し、batch driverのappend自体は
+このread-only toolの責務に含めなかった。次taskは`PURPOSE-BATCH-100-001`。

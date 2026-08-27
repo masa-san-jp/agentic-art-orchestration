@@ -1,29 +1,29 @@
-version: 82
-updated_at: "2026-08-27T08:18:00+09:00"
-active_task: PURPOSE-BATCH-STATUS-001
+version: 83
+updated_at: "2026-08-27T10:04:00+09:00"
+active_task: PURPOSE-BATCH-100-001
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-27T08:07:00+09:00"
-  expires_at: "2026-08-27T09:07:00+09:00"
+  acquired_at: "2026-08-27T08:25:00+09:00"
+  expires_at: "2026-08-27T09:25:00+09:00"
   lane: CHILD_SOURCE
-  execution_id: PURPOSE-AUTONOMOUS-RUNNER-001:attempt-1
-  released_at: "2026-08-27T08:16:00+09:00"
+  execution_id: PURPOSE-BATCH-STATUS-001:attempt-1
+  released_at: "2026-08-27T10:04:00+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [config/human-gates.yaml, docs/agent-runtime-guide.md, docs/operator-runbook.md, schemas/agent-action.schema.json, schemas/agent-result.schema.json, schemas/autonomous-run.schema.json, tools/autonomous_runner.py, tools/run.py, tools/validate.py, tests/test_autonomous_runner.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    paths: [schemas/batch-report-event.schema.json, tools/batch_status.py, tools/validate.py, tests/test_batch_status.py, docs/operator-runbook.md, docs/agent-runtime-guide.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: PURPOSE-AUTONOMOUS-RUNNER-001
-  repository: agentic-art-orchestration
-  start_point: 121e692
-  expected_changes: Add provider-neutral agent action/result/autonomous-run contracts, human-gate policy, checkpointed worker execution, retry and lease recovery, and networkless fake-worker E2E without raw data.
-  result: complete; provider-neutral worker, atomic external checkpoint, resume, lease, human gate, retry, and privacy contracts passed
-last_completed_task: PURPOSE-AUTONOMOUS-RUNNER-001
-resume_from:
   task: PURPOSE-BATCH-STATUS-001
-  action: Claim the lowest-ID READY task, run .venv/bin/python tools/validate.py --check, then read Issue #70 and the batch status/report contracts.
+  repository: agentic-art-orchestration
+  start_point: 25eec59
+  expected_changes: Add read-only batch project status, repository HEAD/origin observation, append-only report event contract, deterministic aggregation, and privacy-safe tests.
+  result: complete; batch status and report aggregation passed deterministic, read-only, provenance, unknown-state, and unmeasured-value checks
+last_completed_task: PURPOSE-BATCH-STATUS-001
+resume_from:
+  task: PURPOSE-BATCH-100-001
+  action: Claim the lowest-ID READY task, run .venv/bin/python tools/validate.py --check, then read Issue #71 and the one-hundred-plan evidence contract.
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -69,6 +69,21 @@ viewer_response:
   snapshot_hash: 8143f0ece10c5e6012528819c705ab7322f3258d96ea296f7bafe34b74712439
   sensitive_data: none added; no raw response, direct identifier, credential, PRIVATE_RAW, or RESTRICTED value stored
   external_artifact: none created or updated; merge, tag, and release not performed
+batch_status:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/70
+  implementation_commit: aee287f
+  acceptance: 6/6
+  focused_tests: 5/5
+  parent_tests: 369/369
+  parent_validation: passed
+  deterministic_scan: repeated fixture scan produced identical JSON
+  read_only: workspace tree hash unchanged; no claim, state, Git, Issue, or Drive write
+  provenance: project source locators and SHA-256 plus repository HEAD/origin counts retained
+  unknowns: missing or unrecognized state and unavailable Git comparison remain UNKNOWN; unmeasured duration/tokens remain 未計測
+  parent_draft_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
+  parent_head: aee287f
+  external_artifact: none; merge, tag, and release not performed
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence
   implementation_commit: 37883f3

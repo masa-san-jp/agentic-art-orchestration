@@ -1368,3 +1368,31 @@
 ## Next exact action
 
 1. `PURPOSE-BATCH-STATUS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #70とbatch status/reportの現行契約・テストを読む。
+
+## PURPOSE-BATCH-STATUS-001 completed
+
+- Task ID: `PURPOSE-BATCH-STATUS-001`; target repository: `agentic-art-orchestration`。
+- Observable changes: `tools/batch_status.py`がresearch state、Production handoff/plan、workspace
+  repoのbranch/HEAD/dirty/`HEAD..origin/main`をread-onlyで集計する。`batch-report-event/v1`の
+  closed schemaとvalidator接続、JSONLの重複・event-specific値検証、起動/完了/失敗/再試行/所要/token
+  集計、未計測表示を追加した。
+- Acceptance: 6/6。五段階fixture、決定性、provenance hash、Git remote差分、未知状態の保持、
+  report集計、未計測、closed/duplicate rejection、tree hash不変を観測した。
+- Parent validation: `.venv/bin/python tools/validate.py --check` PASS。
+- Focused test: `.venv/bin/python -m unittest tests.test_batch_status -v` 5/5 PASS。
+- Parent full test: `.venv/bin/python -m unittest discover -s tests -v` 369/369 PASS。
+- Other gates: `git diff --check` PASS、`tools/batch_status.py --workspace-root repos --format json`
+  のstage vocabulary assertion PASS、README status check PASS。
+- Child repositories: なし。子repo品質ゲートは対象外。親branchは
+  `agent/issues-38-41-pipeline`、実装commitは`aee287f`、実装時点のworking treeは意図した
+  state/queue/handoff記録を除きclean。
+- Sensitive data: 新規にraw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、
+  report本文を保存していない。出力は相対locator、hash、状態、件数のみ。
+- External artifacts: none. Drive/GitHub Issueの変更なし。既存parent draft PR #42へのpushは
+  記録commit後に行い、merge、tag、releaseは実行しない。
+- Feedback: このtaskでexplicit/inferred feedbackは扱っていない。
+- Unresolved: 実workspaceの各projectが持つchild-owned stateの配置・status語彙が異なる場合は、
+  `state_quality=UNKNOWN`とsource locatorを確認してからchild schemaに合わせる。batch driverによる
+  JSONL append自体は本taskのread-only集計器の責務外である。
+- Next task: `PURPOSE-BATCH-100-001`。最初の1操作:
+  `.venv/bin/python tools/validate.py --check`。

@@ -1,5 +1,5 @@
-version: 12
-updated_at: "2026-08-26T19:40:00+09:00"
+version: 13
+updated_at: "2026-08-27T10:04:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -922,7 +922,7 @@ tasks:
   - id: PURPOSE-BATCH-STATUS-001
     milestone: M16
     title: Generate read-only batch status and completion reports
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/70
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -933,7 +933,7 @@ tasks:
   - id: PURPOSE-BATCH-100-001
     milestone: M16
     title: Evaluate one hundred candidate plans with explicit terminal evidence
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: EVIDENCE_READY

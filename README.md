@@ -20,16 +20,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-27T08:18:00+09:00`.
+Source updated at: `2026-08-27T10:04:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 1 | 0 | 2 | 93 | 98 |
+| 1 | 1 | 0 | 2 | 94 | 98 |
 
-Current task: `PURPOSE-BATCH-STATUS-001`; repository: `agentic-art-orchestration`; checkpoint: `PURPOSE-AUTONOMOUS-RUNNER-001`.
+Current task: `PURPOSE-BATCH-100-001`; repository: `agentic-art-orchestration`; checkpoint: `PURPOSE-BATCH-STATUS-001`.
 Next action: Claim the lowest-ID READY task, run .venv/bin/python tools/validate.py --check, then read Issue
-Ready: `PURPOSE-BATCH-STATUS-001`.
-Next task: `PURPOSE-BATCH-STATUS-001`.
+Ready: `PURPOSE-BATCH-100-001`.
+Next task: `PURPOSE-BATCH-100-001`.
 Blocked:
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
