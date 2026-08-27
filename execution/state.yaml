@@ -1,5 +1,5 @@
-version: 81
-updated_at: "2026-08-27T08:16:00+09:00"
+version: 82
+updated_at: "2026-08-27T08:18:00+09:00"
 active_task: PURPOSE-BATCH-STATUS-001
 active_repository: agentic-art-orchestration
 lease:
@@ -39,7 +39,10 @@ autonomous_runner:
   human_gate_e2e: requested human operation became BLOCKED_HUMAN without execution
   lease_e2e: concurrent same-run process was rejected while the first lease was held
   privacy: raw conversation, credential, PRIVATE_RAW, RESTRICTED, and worker stdout/stderr were not persisted
-  external_artifact: none; merge, release, and parent push not yet performed
+  external_artifact: none; parent draft PR updated, merge and release not performed
+  parent_branch: agent/issues-38-41-pipeline
+  parent_head: e032ad2
+  parent_draft_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
 viewer_response:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/98
