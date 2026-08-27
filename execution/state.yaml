@@ -1,5 +1,5 @@
-version: 91
-updated_at: "2026-08-27T15:54:29+09:00"
+version: 92
+updated_at: "2026-08-27T16:38:10+09:00"
 active_task: PURPOSE-E2E-001
 active_repository: agentic-art-orchestration
 lease:
@@ -476,6 +476,9 @@ purpose_e2e:
   status: BLOCKED
   task: PURPOSE-E2E-001
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/104
+  blocker_issue_ssot:
+    self-model: https://github.com/masa-san-jp/self-model-notes/issues/71
+    agentic-art-research: https://github.com/masa-san-jp/agentic-art-research/issues/79
   observed_at: "2026-08-27T15:54:29+09:00"
   implementation:
     files: [tools/purpose_e2e.py, schemas/purpose-e2e-evidence.schema.json, tests/test_purpose_e2e.py, docs/purpose-e2e-runbook.md]
@@ -523,7 +526,8 @@ purpose_e2e:
     impact: all child quality gates cannot be claimed PASS
     unblock_when: diagnose the child research test or release-harness timeout and rerun the unchanged manifest command with a finite timeout; do not skip or delete the gate
   privacy: no new raw conversation, credential, direct identifier, PRIVATE_RAW, RESTRICTED, or artifact body stored
-  external_artifact: none created or updated; GitHub, Drive, merge, release, and physical production not performed
+  external_artifact: GitHub Issues self-model-notes#71 and agentic-art-research#79 created by explicit user request; Drive, PR, merge, release, and physical production not performed
+  issue_mutation: true
   explicit_feedback: none
   inferred_feedback: none
 blocked:
