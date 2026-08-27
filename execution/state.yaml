@@ -1,5 +1,5 @@
-version: 83
-updated_at: "2026-08-27T10:04:00+09:00"
+version: 84
+updated_at: "2026-08-27T10:09:00+09:00"
 active_task: PURPOSE-BATCH-100-001
 active_repository: agentic-art-orchestration
 lease:
@@ -82,7 +82,7 @@ batch_status:
   provenance: project source locators and SHA-256 plus repository HEAD/origin counts retained
   unknowns: missing or unrecognized state and unavailable Git comparison remain UNKNOWN; unmeasured duration/tokens remain 未計測
   parent_draft_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
-  parent_head: aee287f
+  parent_head: 268e248fae2a683ef02b72f4ffd0d64bf95f7a81
   external_artifact: none; merge, tag, and release not performed
 pin_release_check:
   status: passed_with_fixture_and_fail_closed_pin_evidence

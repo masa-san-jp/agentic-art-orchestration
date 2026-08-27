@@ -1384,7 +1384,7 @@
 - Other gates: `git diff --check` PASS、`tools/batch_status.py --workspace-root repos --format json`
   のstage vocabulary assertion PASS、README status check PASS。
 - Child repositories: なし。子repo品質ゲートは対象外。親branchは
-  `agent/issues-38-41-pipeline`、実装commitは`aee287f`、実装時点のworking treeは意図した
+  `agent/issues-38-41-pipeline`、実装commitは`aee287f`、完了記録commitは`268e248`、実装時点のworking treeは意図した
   state/queue/handoff記録を除きclean。
 - Sensitive data: 新規にraw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、
   report本文を保存していない。出力は相対locator、hash、状態、件数のみ。
