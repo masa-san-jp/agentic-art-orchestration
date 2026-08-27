@@ -1,29 +1,29 @@
-version: 87
-updated_at: "2026-08-27T10:31:00+09:00"
-active_task: PURPOSE-BATCH-100-001
+version: 89
+updated_at: "2026-08-27T14:46:38+09:00"
+active_task: null
 active_repository: agentic-art-orchestration
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-27T10:19:01+09:00"
-  expires_at: "2026-08-27T11:19:01+09:00"
+  acquired_at: "2026-08-27T10:38:00+09:00"
+  expires_at: "2026-08-27T11:38:00+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: PURPOSE-BATCH-100-001:attempt-1
-  released_at: "2026-08-27T10:29:27+09:00"
+  execution_id: PURPOSE-BATCH-100-001:attempt-2
+  released_at: "2026-08-27T14:46:38+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-    child_repositories: [agentic-art-research, agentic-art-production]
+    paths: [config/repositories.yaml, tools/batch_run.py, schemas/batch-run.schema.json, tests/test_batch_run.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    child_repositories: [self-model, agentic-art-research, agentic-art-production]
 checkpoint:
   task: PURPOSE-BATCH-100-001
   repository: agentic-art-orchestration
   start_point: 48211a62c77efe7904a48036863d01a1d8db041f
-  expected_changes: Execute the one-hundred-plan batch from qualified immutable child pins in a Git-external output root and record G1-G6 evidence without changing code or claiming blocked/unknown work as complete.
-  result: blocked; the qualified pins are available, but the required batch driver and compatible self export are not available at the recorded source commits
-last_completed_task: PURPOSE-BATCH-STATUS-001
+  expected_changes: Implement a deterministic parent batch driver over qualified immutable child contracts, qualify the self-model export pin, execute 100 Git-external plans, and record G1-G6 without claiming unperformed work as complete.
+  result: completed; 100-plan batch and G1-G6 evidence passed in a Git-external create-only run
+last_completed_task: PURPOSE-BATCH-100-001
 resume_from:
-  task: PURPOSE-BATCH-100-001
-  action: "Re-baseline Issue #71 as a separate implementation task for a batch driver, child completion contract, and qualified self export pin; then rerun the preflight before any output generation."
+  task: PURPOSE-E2E-001
+  action: "Run the parent validator, then inspect Issue #104 and the current new-theme E2E contracts before claiming the task."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -399,17 +399,22 @@ self_export_e2e:
   child_repository_mutation: false
   external_issue_drive_or_release_mutation: false
 purpose_batch_100:
-  status: BLOCKED
+  status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
   task: PURPOSE-BATCH-100-001
-  observed_at: "2026-08-27T10:29:27+09:00"
-  acceptance: 0/6
+  observed_at: "2026-08-27T14:46:38+09:00"
+  phase: completed
+  acceptance: 6/6
   preflight:
     manifest_repository_count: 6
-    exact_pin_workspace: passed; all six repositories clean and detached at manifest pins
+    exact_pin_workspace: passed; all six repositories clean and detached at candidate manifest pins
     child_quality_gates: 16/16 PASS
     child_gate_report_sha256: 0d87519d9a59f5175311425279e436f120d2ac0bbe26dea8cc7f85dfee1aee2e
     evidence_locator: external-run://PURPOSE-BATCH-100-001/child-gates
+    qualification_report_sha256: 504336548f6d8576a9a68f864629ce356bafa25786942722a1c0d425b1b9569b
+    qualification_status: PASSED
+    candidate_manifest_hash: c0f35de0290502967df17b6386fd6b60582d7e8b84ff4d0b1b73904e64238a2f
+    adopted_pin_changes: 3
   source_exports:
     art-history:
       source_commit: b831f4c57d842f44ad45134a5abd434dc367482f
@@ -419,35 +424,54 @@ purpose_batch_100:
       normalized_records: 60
       stale_records: 0
     self-model:
-      source_commit: fda3e29c76ba8fbd40ee6946589d6789029d92d6
-      contract: urn:self-model-notes:research-signals:v1
-      aggregate_groups: {certainty: 3, evidence_refs: 1, recurring_patterns: 0, seeks: 1, tensions: 1}
-      required_three_record_export: unavailable_at_manifest_pin
-      compatible_source_observed_but_not_adopted: 04095bfa4115ef4fde8a8f475bf31743ecdff962
-  observed_contract_mismatch:
-    parent_batch_entry: tools/run.py accepts one project and has no --batch option
-    research_entry: accept_research_request.py accepts one request and creates one project; no batch completion driver is present
-    production_entry: new_production.py materializes one slug from one handoff; no batch materialization entry is present
-    self_adapter: legacy aggregate input is rejected because the current adapter requires one approved child DTO with fixed provenance, consent, freshness, and signal fields
-  g1_g6:
-    G1: NOT_RUN; no 100-project production output was created
-    G2: NOT_RUN; no 100 production-plan.yaml files were created
-    G3: NOT_RUN; no 100 research briefs were created
-    G4: NOT_RUN; no batch output exists to audit for human authority
-    G5: NOT_RUN; no 10 random decision logs were created
-    G6: NOT_RUN; no batch-report.jsonl was created or aggregated
-  blocker:
-    condition: The acceptance cannot be observed from the current qualified pins and tools without implementing an unqueued batch driver, changing the source pin/contract, or fabricating terminal evidence.
-    observed: Issue #71 requires a zero-prompt 100-project run, while the inspected parent and child CLIs expose only single-project operations; the exact manifest self pin has one seek group, one tension group, and zero recurring-pattern records rather than three export records.
-    recommendation: Create a separate current-main implementation task for the batch driver and child completion contract, and separately qualify/adopt a self-model export pin that satisfies the parent adapter contract.
-    options: [rebaseline_and_implement, manually_attempt_and_record_failures, do_not_claim_batch]
-    impact: G1-G6 remain unperformed and PURPOSE-E2E-001 remains blocked by dependency; no generated project, production plan, report, Issue, Drive artifact, or child write is claimed.
-    unblock_when: A reviewed implementation task provides a deterministic batch driver and compatible child completion/export contracts, and a fresh exact-pin preflight passes.
-  parent_code_changed: false
+      source_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+      contract: research-signal-export/v1
+      normalized_records: 3
+    selection:
+      source_records: 159
+      candidate_space_count: 17280
+      gate_evaluations_passed: 120
+      selected_count: 100
+      unique_signal_tuple_count: 100
+      self_diversity_status: INSUFFICIENT_SELF_DIVERSITY
+      candidate_space_sha256: c3386d5aa5267c9d5b9c6478a5ea9c3b576b50351647daffefa572f5c5749066
+      gate_report_sha256: e4039d32cecfe0e85e47f3c8d51f4b8307169245ca1a99341d9381b44f17d0bb
+      selection_sha256: 439e637a26fd53b65f85a0126d2175f81d26eb052fd09d0b7869fad5840b496f
+    batch:
+      run_id: PURPOSE-BATCH-100-001-run-2
+      status: PASSED
+      summary_sha256: 62361b07e00a646db6bc176b128ec399297fe8e58d6910d2da1da3d3b4fef414
+      summary_locator: run://PURPOSE-BATCH-100-001-run-2/batch-run.json
+      report_locator: run://PURPOSE-BATCH-100-001-run-2/batch-report.jsonl
+      report_event_count: 300
+      requested: 100
+      completed: 100
+      failed: 0
+      retries: 0
+      duration_seconds: 359.823
+      production_plans: 100
+      research_projects: 100
+    g1_g6:
+      G1: PASS; 100 production-plan.md projections
+      G2: PASS; 100 projected production-plan.yaml readiness.startable=true
+      G3: PASS; 100 projected structured briefs with disagreement and concept precedent
+      G4: PASS; final production projection has zero HUMAN authority markers
+      G5: PASS; deterministic sample of 10 decision logs has agent-recommended authority
+      G6: PASS; append-only report has起動100/完了100/失敗0 and measured duration
+    parent_qualification:
+      status: PASSED
+      child_repositories: 6/6
+      child_quality_gates: 16/16
+      production_exchange: PASSED
+      exchange_e2e_report_sha256: 7ea931ab849ae2056babbb25df8bf30109cceb6f6530c917a2a413933c037b6b
+    parent_code_changed: true
   child_repository_mutation: false
-  generated_outputs_created: false
+  generated_outputs_created: true
+  generated_outputs_scope: Git-external create-only output/state roots; no parent data/ or child canonical tree output
   external_issue_drive_or_release_mutation: false
   raw_conversation_credentials_private_raw_restricted_added: false
+  explicit_feedback: none
+  inferred_feedback: none
 blocked:
   - task: ISSUE-38-REAL-CHAIN-CI-001
     repository: agentic-art-orchestration

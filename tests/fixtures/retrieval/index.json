@@ -4,7 +4,7 @@
     {
       "evidence_id": "evidence:self-model:claim-001",
       "repository": "self-model",
-      "source_commit": "fda3e29c76ba8fbd40ee6946589d6789029d92d6",
+      "source_commit": "1864fa92dde2bc8f25756bd5e5885268fa4b38fc",
       "locator": "entities/claim-001",
       "evidence_kind": "observed",
       "freshness_status": "current",
@@ -37,7 +37,7 @@
     {
       "evidence_id": "evidence:agentic-art-research:requirement-001",
       "repository": "agentic-art-research",
-      "source_commit": "d947fdd14abeb700af9a62abcf27c21f3f12e134",
+      "source_commit": "07f8cf57e416e5166ac80019ba2d015ff1821e9c",
       "locator": "requirements/requirement-001",
       "evidence_kind": "derived",
       "freshness_status": "current",

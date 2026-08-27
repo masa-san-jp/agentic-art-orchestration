@@ -1411,3 +1411,21 @@
 ## Next exact action
 
 1. batch driver、child completion/export contract、self-model qualified pinを扱う別Issueとqueue taskを登録・reviewし、その後に`.venv/bin/python tools/validate.py --check`から再開する。`PURPOSE-E2E-001`はbatch実測完了まで開始しない。
+
+## PURPOSE-BATCH-100-001 unblock and completed
+
+- Task ID: `PURPOSE-BATCH-100-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#71](https://github.com/masa-san-jp/agentic-art-orchestration/issues/71)。前回のBLOCKED記録を削除せず、原因を単独runで再現してから同じ失敗runを上書きせずに再開した。
+- 親に`schemas/batch-run.schema.json`、`tools/batch_run.py`、batch projection testを追加した。入力はself-model 3件（`research-signal-export/v1`）、art-history 96件、marketing-trends 60件で、各source repository/commitをmanifest pinと照合する。selectionは159 records、candidate space 17280、gate PASS 120、selected 100、unique signal tuple 100である。
+- self-modelはeligible anchor不足を`INSUFFICIENT_SELF_DIVERSITY`として保持した。3 anchorを合成せず、candidate selectionを水増ししていない。explicit/inferred feedbackは扱っていない。
+- exact-pin qualificationは`PASSED`、6/6 repositories、16/16 child gates、Production exchange `PASSED`。candidate manifest hashは`c0f35de0290502967df17b6386fd6b60582d7e8b84ff4d0b1b73904e64238a2f`で、self-model `1864fa92dde2bc8f25756bd5e5885268fa4b38fc`、Research `07f8cf57e416e5166ac80019ba2d015ff1821e9c`、Production `63a1ddf4ed303e01c92023baa4737c68dcd10846`の3 pinをcandidate hash一致で親manifestへ採用した。
+- final exchange E2Eも`PASSED`。clean exchange、tamper/stale/incompatible/dirty-sourceのterminal failure、replay idempotency、Research result dry-run、remote/child mutation 0を確認した。E2E report SHA-256は`7ea931ab849ae2056babbb25df8bf30109cceb6f6530c917a2a413933c037b6b`。
+- 初回batchの阻害要因は、複製したResearch fixtureのevidence ledgerが旧canonical ID `project/harmony-study`を参照していたことだった。`research-handoff-build/CHILD_COMMAND_FAILED`を観測し、fixtureのproject-reference IDだけをbatch slugへ置換した。子repoのcanonical tree、親`repos/`、remoteは変更していない。
+- Research/Production exchangeは独立Git-external staging cloneで実行し、Researchのfull projectとchild Production stageを一時rootへ保持した。最終outputにはchild canonical planを変更せず、structured brief付きのplan projectionだけをcreate-onlyで生成した。Production側のprototype/reviewにある`HUMAN` authorityはprojectionへ持ち込まず、外部効果は実行していない。
+- batch run `PURPOSE-BATCH-100-001-run-2`は`PASSED`。100/100 projects completed、Production plan 100件、Research decision log 100件、report 300 events、起動100/完了100/失敗0/再試行0、duration 359.823秒。G1–G6、no child mutation、no remote operation、no raw dataは全てPASSした。summary SHA-256は`62361b07e00a646db6bc176b128ec399297fe8e58d6910d2da1da3d3b4fef414`。
+- 親検証: `.venv/bin/python tools/validate.py --check`はPASS済み。子品質ゲートはqualification report SHA-256 `504336548f6d8576a9a68f864629ce356bafa25786942722a1c0d425b1b9569b`の6/6・16/16 PASSを再利用した。最終record後に親全体tests、workspace status、audit、diff checkを実行する。
+- Sensitive data: 会話全文、推定属性、PRIVATE_RAW、RESTRICTED、credential、direct identifier、raw asset bodyは追加していない。External artifact: Drive/GitHub Issue/PR、merge、tag、releaseは変更していない。batch output/stateはGit外部のopaque `run://` locatorでのみ参照する。
+- Acceptance: 6/6。親stateは`status: complete`、leaseは`available/unassigned`へ解放し、queueの次task `PURPOSE-E2E-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `PURPOSE-E2E-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #104とnew-theme E2Eの現行contract/testを読む。merge、release、外部artifact作成は人間承認なしに行わない。

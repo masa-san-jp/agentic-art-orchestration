@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/batch-run.schema.json",
+  "title": "Purpose batch run v1",
+  "description": "Metadata-only summary for a deterministic, networkless production-plan batch.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "generated_at",
+    "network",
+    "status",
+    "requested_count",
+    "completed_count",
+    "failed_count",
+    "source_repositories",
+    "selection",
+    "projects",
+    "acceptance",
+    "report",
+    "remote_operations",
+    "child_mutations"
+  ],
+  "properties": {
+    "contract_version": {"const": "batch-run/v1"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "network": {"const": "DISABLED"},
+    "status": {"enum": ["PASSED", "FAILED", "BLOCKED"]},
+    "requested_count": {"type": "integer", "minimum": 1},
+    "completed_count": {"type": "integer", "minimum": 0},
+    "failed_count": {"type": "integer", "minimum": 0},
+    "source_repositories": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/source_repository"}
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_space_hash",
+        "gate_report_hash",
+        "selection_hash",
+        "selected_count",
+        "unique_signal_tuple_count",
+        "self_diversity_status",
+        "source_commits"
+      ],
+      "properties": {
+        "candidate_space_hash": {"$ref": "#/$defs/hash64"},
+        "gate_report_hash": {"$ref": "#/$defs/hash64"},
+        "selection_hash": {"$ref": "#/$defs/hash64"},
+        "selected_count": {"type": "integer", "minimum": 1},
+        "unique_signal_tuple_count": {"type": "integer", "minimum": 1},
+        "self_diversity_status": {"enum": ["PASS", "INSUFFICIENT_SELF_DIVERSITY", "REJECT"]},
+        "source_commits": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sha40"}
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/project"}
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "g1_production_plan_count",
+        "g2_startable",
+        "g3_structured_brief",
+        "g4_no_human_authority",
+        "g5_agent_recommended_decisions",
+        "g6_append_only_report",
+        "no_remote_operations",
+        "no_child_mutations",
+        "no_raw_data"
+      ],
+      "properties": {
+        "g1_production_plan_count": {"type": "boolean"},
+        "g2_startable": {"type": "boolean"},
+        "g3_structured_brief": {"type": "boolean"},
+        "g4_no_human_authority": {"type": "boolean"},
+        "g5_agent_recommended_decisions": {"type": "boolean"},
+        "g6_append_only_report": {"type": "boolean"},
+        "no_remote_operations": {"type": "boolean"},
+        "no_child_mutations": {"type": "boolean"},
+        "no_raw_data": {"type": "boolean"}
+      }
+    },
+    "report": {"$ref": "#/$defs/report"},
+    "remote_operations": {"type": "array", "maxItems": 0},
+    "child_mutations": {"type": "array", "maxItems": 0}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "hash64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "source_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "record_count"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/id"},
+        "commit": {"$ref": "#/$defs/sha40"},
+        "record_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "candidate_id",
+        "status",
+        "research_locator",
+        "production_locator",
+        "production_plan_sha256",
+        "brief_sha256",
+        "decision_log_sha256"
+      ],
+      "properties": {
+        "project_id": {"$ref": "#/$defs/id"},
+        "candidate_id": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"},
+        "status": {"enum": ["PASSED", "FAILED"]},
+        "research_locator": {"$ref": "#/$defs/locator"},
+        "production_locator": {"$ref": "#/$defs/locator"},
+        "production_plan_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
+        "brief_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
+        "decision_log_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]}
+      }
+    },
+    "locator": {"type": "string", "pattern": "^run://[A-Za-z0-9._:-]{1,128}/[^\\s]+$"},
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "sha256", "event_count", "completed_count", "failed_count", "retry_count", "duration_seconds", "token_count"],
+      "properties": {
+        "locator": {"$ref": "#/$defs/locator"},
+        "sha256": {"$ref": "#/$defs/hash64"},
+        "event_count": {"type": "integer", "minimum": 1},
+        "completed_count": {"type": "integer", "minimum": 0},
+        "failed_count": {"type": "integer", "minimum": 0},
+        "retry_count": {"type": "integer", "minimum": 0},
+        "duration_seconds": {"type": "number", "minimum": 0},
+        "token_count": {
+          "oneOf": [
+            {"type": "integer", "minimum": 0},
+            {"type": "null"}
+          ]
+        }
+      }
+    }
+  }
+}

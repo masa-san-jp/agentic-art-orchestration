@@ -6,13 +6,11 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
-import io
 import json
 import re
 import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
 from pathlib import Path
 from typing import Any, Callable
@@ -253,19 +251,34 @@ def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 def _extract_commit(source: Path, commit: str, target: Path) -> None:
     if not SHA_PATTERN.fullmatch(commit):
         raise ExchangeError("manifest exchange commit is not immutable")
-    archive = subprocess.run(["git", "-C", str(source), "archive", "--format=tar", commit], capture_output=True, check=False)
-    if archive.returncode != 0:
+    cloned = subprocess.run(
+        [
+            "git",
+            "clone",
+            "--quiet",
+            "--no-local",
+            "--no-checkout",
+            str(source),
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if cloned.returncode != 0:
         raise ExchangeError("manifest-pinned child archive is unavailable")
-    target.mkdir(parents=True, exist_ok=False)
-    try:
-        with tarfile.open(fileobj=io.BytesIO(archive.stdout), mode="r:") as bundle:
-            for member in bundle.getmembers():
-                member_path = Path(member.name)
-                if member_path.is_absolute() or ".." in member_path.parts:
-                    raise ExchangeError("child archive contains an unsafe path")
-            bundle.extractall(target)
-    except (OSError, tarfile.TarError) as exc:
-        raise ExchangeError("child archive extraction failed") from exc
+    checked_out = subprocess.run(
+        ["git", "-C", str(target), "checkout", "--quiet", "--detach", commit],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if checked_out.returncode != 0:
+        raise ExchangeError("manifest-pinned child commit is unavailable")
+    head = _git(target, "rev-parse", "HEAD")
+    clean = _git(target, "status", "--porcelain", "--untracked-files=all")
+    if head.returncode != 0 or head.stdout.strip() != commit or clean.stdout.strip():
+        raise ExchangeError("manifest-pinned child clone is not an exact clean commit")
 
 
 def _verify_source(root: Path, commit: str) -> None:
@@ -561,10 +574,25 @@ def run_exchange_e2e(
     return report
 
 
-def _prepare_research_fixture(root: Path, slug: str, generated_at: str) -> None:
-    project = root / "projects" / slug
-    fixture = root / "tests" / "fixtures" / "harmony"
+def _prepare_research_fixture(work_root: Path, protocol_root: Path, slug: str, generated_at: str) -> None:
+    project = work_root / "projects" / slug
+    fixture = protocol_root / "tests" / "fixtures" / "harmony"
     manifest_path = project / "manifest.yaml"
+    # The fixture is copied under a fresh canonical project ID for each
+    # batch item.  Rewrite only the fixture's project-reference IDs; the
+    # child repository remains an immutable source checkout and the full
+    # fixture stays in the Git-external exchange staging area.
+    source_project_id = "project/harmony-study"
+    target_project_id = f"project/{slug}"
+    for path in project.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            rendered = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise ExchangeError(f"cannot normalize research fixture: {path.name}") from exc
+        if source_project_id in rendered:
+            path.write_text(rendered.replace(source_project_id, target_project_id), encoding="utf-8")
     manifest = _load_yaml(manifest_path)
     manifest["workflow_mode"] = "PRODUCTION_HANDOFF"
     project_meta = manifest.setdefault("project", {})
@@ -578,14 +606,36 @@ def _prepare_research_fixture(root: Path, slug: str, generated_at: str) -> None:
         "production_feedback_imports": "07_runtime/production-feedback-imports.jsonl",
     })
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False, allow_unicode=True), encoding="utf-8")
-    hypothesis_path = root / "tests" / "fixtures" / "schema-valid" / "production-hypothesis.json"
-    prototype_path = root / "tests" / "fixtures" / "schema-valid" / "prototype-plan.json"
+    hypothesis_path = protocol_root / "tests" / "fixtures" / "schema-valid" / "production-hypothesis.json"
+    prototype_path = protocol_root / "tests" / "fixtures" / "schema-valid" / "prototype-plan.json"
     hypothesis = json.loads(hypothesis_path.read_text(encoding="utf-8"))
     hypothesis["single_hypothesis_rationale"] = "Only one fixture candidate preserves the adopted perceptual decision without weakening the intended experience."
     prototype = json.loads(prototype_path.read_text(encoding="utf-8"))
+    for task in prototype.get("tasks", []):
+        if isinstance(task, dict):
+            # Batch qualification exercises the read-only planning path.  The
+            # source fixture intentionally omits this optional classification,
+            # which would otherwise conservatively create physical approval
+            # requirements for a plan-only batch.
+            task["effect_type"] = "READ_ONLY"
     (project / "04_decisions" / "production-hypotheses.yaml").write_text(yaml.safe_dump({"hypotheses": [hypothesis]}, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "04_decisions" / "hypothesis-comparison.yaml").write_text(yaml.safe_dump({"comparisons": []}, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "05_production" / "prototype-plans.yaml").write_text(yaml.safe_dump({"prototype_plans": [prototype]}, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    (project / "05_production" / "reference-categories.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "categories": {
+                    "DC001": ["CONCEPT"],
+                    "IN001": ["VISUAL", "METHOD"],
+                    "EV001": ["CONCEPT", "VISUAL", "METHOD"],
+                    "EV002": ["CONCEPT", "VISUAL", "METHOD"],
+                }
+            },
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
 
 
 def run_exchange(
@@ -600,6 +650,8 @@ def run_exchange(
     handoff_id: str = "HO001",
     result_id: str = "PR001",
     child_python: str | None = None,
+    research_output_root: Path | None = None,
+    production_output_root: Path | None = None,
 ) -> dict[str, Any]:
     if not RUN_ID_PATTERN.fullmatch(run_id):
         raise ExchangeError("run_id is not stable")
@@ -652,22 +704,30 @@ def run_exchange(
     try:
         with tempfile.TemporaryDirectory(prefix="aap-exchange-", dir=run_dir) as temporary:
             temp_root = Path(temporary)
-            research_root = temp_root / "research"
+            research_protocol = temp_root / "research-protocol"
+            research_work = temp_root / "research-work"
             production_root = temp_root / "production"
-            _extract_commit(research_source, research_commit, research_root)
+            _extract_commit(research_source, research_commit, research_protocol)
             _extract_commit(production_source, production_commit, production_root)
+            research_work.mkdir()
+            # Research's isolated work-root contract still needs the
+            # protocol-owned config/schema snapshots for validation and the
+            # read-only result preview.  They stay in this disposable child
+            # staging area and never enter the parent repository or bundles.
+            for name in ("config", "schemas"):
+                shutil.copytree(research_protocol / name, research_work / name)
             research_project = f"project/{research_project_slug}"
             research_bundle = run_dir / "handoff"
             production_output = run_dir / "production-output"
             production_bundle = run_dir / "result"
-            research_project_path = research_root / "projects" / research_project_slug
+            research_project_path = research_work / "projects" / research_project_slug
             _run_command(
-                [child_python, "tools/new_project.py", research_project_slug, "--title", "Harmony Study", "--creator-id", "creator/fixture", "--root", str(research_root)],
-                cwd=research_root,
+                [child_python, "tools/new_project.py", research_project_slug, "--title", "Harmony Study", "--creator-id", "creator/fixture", "--work-root", str(research_work), "--protocol-root", str(research_protocol)],
+                cwd=research_protocol,
                 stage_id="research-project",
-                display=_display("python3 tools/new_project.py PROJECT_SLUG --title HARMONY_STUDY --creator-id CREATOR --root RESEARCH_ROOT"),
+                display=_display("python3 tools/new_project.py PROJECT_SLUG --title HARMONY_STUDY --creator-id CREATOR --work-root RESEARCH_WORK --protocol-root RESEARCH_PROTOCOL"),
             )
-            fixture = research_root / "tests" / "fixtures" / "harmony"
+            fixture = research_protocol / "tests" / "fixtures" / "harmony"
             for source in sorted(fixture.rglob("*")):
                 relative = source.relative_to(fixture)
                 if source.is_dir() or relative in {Path("metadata.yaml"), Path("manifest.yaml")}:
@@ -675,20 +735,18 @@ def run_exchange(
                 destination = research_project_path / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, destination)
-            _prepare_research_fixture(research_root, research_project_slug, generated_at)
-            _make_clean_fixture_checkout(research_root, research_commit)
+            _prepare_research_fixture(research_work, research_protocol, research_project_slug, generated_at)
             _run_command(
-                [child_python, "tools/build_handoff.py", research_project, "--root", str(research_root), "--generated-at", generated_at, "--research-commit", research_commit, "--handoff-id", handoff_id, "--revision", "1"],
-                cwd=research_root,
+                [child_python, "tools/build_handoff.py", research_project, "--work-root", str(research_work), "--protocol-root", str(research_protocol), "--generated-at", generated_at, "--research-commit", research_commit, "--handoff-id", handoff_id, "--revision", "1"],
+                cwd=research_protocol,
                 stage_id="research-handoff-build",
-                display=_display("python3 tools/build_handoff.py RESEARCH_PROJECT --root RESEARCH_ROOT --generated-at FIXED_TIME --research-commit RESEARCH_COMMIT --handoff-id HANDOFF_ID --revision 1"),
+                display=_display("python3 tools/build_handoff.py RESEARCH_PROJECT --work-root RESEARCH_WORK --protocol-root RESEARCH_PROTOCOL --generated-at FIXED_TIME --research-commit RESEARCH_COMMIT --handoff-id HANDOFF_ID --revision 1"),
             )
-            _commit_fixture_changes(research_root, "generated handoff fixture")
             _run_command(
-                [child_python, "tools/export_handoff.py", research_project, "--root", str(research_root), "--output", str(research_bundle)],
-                cwd=research_root,
+                [child_python, "tools/export_handoff.py", research_project, "--work-root", str(research_work), "--protocol-root", str(research_protocol), "--output", str(research_bundle)],
+                cwd=research_protocol,
                 stage_id="research-handoff",
-                display=_display("python3 tools/export_handoff.py RESEARCH_PROJECT --root RESEARCH_ROOT --output HANDOFF_OUTPUT"),
+                display=_display("python3 tools/export_handoff.py RESEARCH_PROJECT --work-root RESEARCH_WORK --protocol-root RESEARCH_PROTOCOL --output HANDOFF_OUTPUT"),
             )
             handoff_bundle_id, handoff_file_set_hash, handoff_entry_hash = _bundle_metadata(research_bundle, "production-handoff.yaml")
             stages.append(_stage("research-handoff", "agentic-art-research", research_commit, "python3 tools/export_handoff.py RESEARCH_PROJECT --root RESEARCH_ROOT --output HANDOFF_OUTPUT", "production-handoff/v1", handoff_file_set_hash, "PASSED", "HANDOFF_EXPORTED", _locator(run_id, "handoff")))
@@ -728,16 +786,28 @@ def run_exchange(
             stages.append(_stage("production-result", "agentic-art-production", production_commit, "python3 tools/export_result.py --project-root PRODUCTION_PROJECT --output RESULT_OUTPUT --format json", "production-result/v1", result_file_set_hash, "PASSED", "RESULT_EXPORTED", _locator(run_id, "result")))
             base["acceptance"]["production_result_exported"] = True
             dry_run = _run_command(
-                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--dry-run", "--root", str(research_root)],
-                cwd=research_root,
+                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--dry-run", "--root", str(research_work)],
+                cwd=research_protocol,
                 stage_id="research-result-dry-run",
-                display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_ROOT",
+                display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_WORK",
                 parser=_json_output,
             )
             if dry_run.get("status") != "DRY_RUN":
                 raise StageFailure("research-result-dry-run", "RESEARCH_DRY_RUN_NOT_TERMINAL")
             stages.append(_stage("research-result-dry-run", "agentic-art-research", research_commit, "python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_ROOT", "production-result/v1", result_entry_hash, "PASSED", "RESULT_DRY_RUN", _locator(run_id, "research/result-dry-run")))
             base["acceptance"]["research_result_dry_run"] = True
+            if research_output_root is not None:
+                destination = research_output_root.resolve() / "projects" / research_project_slug
+                if destination.exists():
+                    raise ExchangeError(f"research output already exists: {destination}")
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(research_project_path, destination, symlinks=False)
+            if production_output_root is not None:
+                destination = production_output_root.resolve() / "production" / production_project_slug
+                if destination.exists():
+                    raise ExchangeError(f"production output already exists: {destination}")
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(production_project, destination, symlinks=False)
             base["status"] = "PASSED"
     except StageFailure as exc:
         stages.append(_stage(exc.stage_id, "agentic-art-research" if exc.stage_id.startswith("research") else "agentic-art-production", research_commit if exc.stage_id.startswith("research") else production_commit, f"stage:{exc.stage_id}", None, None, "FAILED", "NOT_RUN", _locator(run_id, "failed"), exc.reason_code))

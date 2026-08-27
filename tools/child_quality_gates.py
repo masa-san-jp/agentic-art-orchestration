@@ -6,12 +6,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.metadata
-import io
 import json
 import re
 import subprocess
 import sys
-import tarfile
 import tempfile
 from pathlib import Path
 
@@ -197,25 +195,46 @@ def _environment_remediation(repository_id: str) -> str:
 
 
 def _extract_archive(root: Path, commit: str, target: Path) -> str | None:
-    raw = subprocess.run(
-        ["git", "-C", str(root), "archive", "--format=tar", commit],
+    """Materialize an immutable disposable checkout with its Git history intact.
+
+    A plain ``git archive`` is sufficient for most commands, but it removes the
+    history that child repositories use to prove entity provenance and clean
+    snapshots.  A local no-link clone keeps that history while ensuring every
+    command runs outside the user's child checkout.  The target is disposable
+    and is always detached at the exact observed commit.
+    """
+    clone = subprocess.run(
+        [
+            "git",
+            "clone",
+            "--quiet",
+            "--no-local",
+            "--no-checkout",
+            str(root),
+            str(target),
+        ],
         capture_output=True,
+        text=True,
         check=False,
     )
-    if raw.returncode != 0:
-        detail = raw.stderr.decode("utf-8", errors="replace").strip() or "git archive returned non-zero"
+    if clone.returncode != 0:
+        detail = clone.stderr.strip() or "git clone returned non-zero"
         return f"observed commit archive unavailable: {detail}; remediation: fetch or pin the observed immutable commit"
-    try:
-        with tarfile.open(fileobj=io.BytesIO(raw.stdout), mode="r:") as bundle:
-            members = bundle.getmembers()
-            for member in members:
-                member_path = Path(member.name)
-                if member_path.is_absolute() or ".." in member_path.parts:
-                    return "observed archive contains an unsafe path; remediation: reject the child archive before execution"
-            for member in members:
-                bundle.extract(member, target)
-    except (OSError, tarfile.TarError) as exc:
-        return f"observed commit archive extraction failed: {exc}; remediation: reject the child archive before execution"
+    checkout = subprocess.run(
+        ["git", "-C", str(target), "checkout", "--quiet", "--detach", commit],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if checkout.returncode != 0:
+        detail = checkout.stderr.strip() or "git checkout returned non-zero"
+        return f"observed commit checkout unavailable: {detail}; remediation: fetch or pin the observed immutable commit"
+    state = _git(target, "status", "--porcelain", "--untracked-files=all")
+    if state.returncode != 0 or state.stdout.strip():
+        return "observed immutable checkout is not clean; remediation: reject the child checkout before execution"
+    head = _git(target, "rev-parse", "HEAD")
+    if head.returncode != 0 or head.stdout.strip() != commit:
+        return "observed immutable checkout does not match the requested commit; remediation: reject the child checkout before execution"
     return None
 
 

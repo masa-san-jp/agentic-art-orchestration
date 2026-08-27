@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -157,25 +158,42 @@ def _run_gate(
         _runtime_bin_dirs(python_executable) + [environment.get("PATH", "")]
     )
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             argv,
             cwd=repository_path,
             env=environment,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout_seconds,
-            check=False,
+            start_new_session=True,
         )
+        try:
+            stdout, stderr = process.communicate(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired as exc:
+            # Child test runners may leave descendants holding the captured
+            # pipes open.  Kill the whole disposable gate process group so a
+            # timeout becomes a terminal, auditable result instead of a hung
+            # parent runner.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except OSError:
+                process.kill()
+            stdout, stderr = process.communicate()
+            if exc.stdout:
+                stdout = (stdout or "") + (exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else exc.stdout)
+            if exc.stderr:
+                stderr = (stderr or "") + (exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else exc.stderr)
+            raise subprocess.TimeoutExpired(argv, timeout_seconds, output=stdout, stderr=stderr)
         duration_ms = int((time.monotonic() - started) * 1000)
-        status = "PASSED" if completed.returncode == 0 else "FAILED"
+        status = "PASSED" if process.returncode == 0 else "FAILED"
         return _gate_result(
             command,
             status,
-            completed.returncode,
+            process.returncode,
             duration_ms,
-            completed.stdout,
-            completed.stderr,
-            None if completed.returncode == 0 else "quality gate returned non-zero; remediation: inspect redacted output and repair the owner repository",
+            stdout,
+            stderr,
+            None if process.returncode == 0 else "quality gate returned non-zero; remediation: inspect redacted output and repair the owner repository",
         )
     except subprocess.TimeoutExpired as exc:
         duration_ms = int((time.monotonic() - started) * 1000)

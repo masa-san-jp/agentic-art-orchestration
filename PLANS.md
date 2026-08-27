@@ -38,13 +38,13 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
 - [x] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する。進捗表示は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-AUTONOMOUS-RUNNER-001`、`PURPOSE-BATCH-STATUS-001`まで完了し、`PURPOSE-BATCH-100-001`は現行pin/toolingの不整合によりBLOCKEDである。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`まで完了し、次は`PURPOSE-E2E-001`である。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
 project statusの確認は `.venv/bin/python tools/project_status.py --check-readme`、validatorの最初の操作は `.venv/bin/python tools/validate.py --check` とする。
 
-## PURPOSE-BATCH-100-001 ExecPlan — blocked
+## PURPOSE-BATCH-100-001 ExecPlan — blocked (historical attempt)
 
 ### Purpose / Big Picture
 
@@ -111,6 +111,61 @@ git diff --check
 ### Interfaces and Dependencies
 
 `PURPOSE-E2E-001`はこのtaskに依存しているため、現在は実行しない。次taskは未登録のbatch implementation taskであり、最初の操作はIssue/queueの再baseline後に`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## PURPOSE-BATCH-100-001 ExecPlan — completed
+
+### Purpose / Big Picture
+
+Issue #71の受入条件を、qualified exact-pin workspace上のnetworkless batch driverで100件実測する。各候補のsource commit、selection hash、project locator、plan/brief/decision hashをGit外部stateへ保持し、Production childのcanonical planを変更せず、親側のplan projectionだけをcreate-onlyで出力する。
+
+### Progress
+
+- [x] self-modelの3件`research-signal-export/v1`、art-history 96件、marketing-trends 60件をmanifest pinとsource commit一致で受理した。
+- [x] self diversity不足を`INSUFFICIENT_SELF_DIVERSITY`として保持し、候補水増しをせず100件のsignal tuple一意性を確認した。
+- [x] 6repoのexact-pin qualificationを再実行し、3件の更新pin（self-model、Research、Production）をcandidate hash一致で親manifestへ採用した。6/6 repositories、16/16 child gatesはPASSした。
+- [x] 4並列・retry上限付きbatch、Research/Production exchange、append-only JSONL report、G1–G6をGit外部rootで実行した。
+
+### Surprises & Discoveries
+
+- 初回batchは全件がResearch handoff前に旧fixture project ID参照で停止した。既存runを再利用せず、原因を単独runで`research-handoff-build/CHILD_COMMAND_FAILED`として観測し、fixtureのcanonical project IDだけを新slugへ整合させた。
+- Research全suiteの180秒上限は過小だったため、child gate timeout時にprocess groupを終端化する親修正を入れ、失敗を隠さずqualificationを再実行した。
+- `production-plan.yaml`にchild側の構造化briefがないため、child canonical planとResearch briefをhash付きの親projectionへ組み合わせた。Production childのHUMAN authorityを含むprototype/review全体は最終batch outputへ持ち込まず、plan projectionだけを保持した。
+
+### Decision Log
+
+- self diversity 3 anchor未満は合成anchorを作らず、selectionへ`require_self_diversity=False`を明示し、summaryへ`INSUFFICIENT_SELF_DIVERSITY`を残した。
+- child checkout、handoff、result、stagingはGit外部の独立rootに置き、親Gitにはsummaryとコード契約だけを保存した。child repo、remote、Drive、Issueは変更していない。
+- batch outputはcreate-onlyとし、失敗run `/PURPOSE-BATCH-100-001`は保持して別run ID `PURPOSE-BATCH-100-001-run-2`を採用した。
+
+### Outcomes & Retrospective
+
+- Acceptance: 6/6。100/100 projects completed、production plan 100件、research decision log 100件、report 300 events、失敗0・retry0、duration 359.823秒を観測した。
+- G1–G6は全てPASS。G4はfinal production plan projectionを対象にHUMAN authority 0件、G5は決定的sample 10件すべて`agent-recommended`、G6はappend-only report集計で起動100/完了100/失敗0を確認した。
+- Parent validationとfull testを完了後に再実行する。childは6/6・16/16 gate PASSのqualification reportを再利用し、child working treeの変更はない。
+- sensitive data、raw conversation、PRIVATE_RAW、RESTRICTED、credential、直接識別子、外部artifactは追加していない。explicit/inferred feedbackは扱っていない。
+
+### Context and Orientation
+
+- batch driver: `tools/batch_run.py`
+- batch contract: `schemas/batch-run.schema.json`
+- exchange boundary: `tools/production_exchange.py`
+- pin qualification: `tools/qualify_pin_update.py`
+- external summary locator: `run://PURPOSE-BATCH-100-001-run-2/batch-run.json`
+- external report locator: `run://PURPOSE-BATCH-100-001-run-2/batch-report.jsonl`
+
+### Validation and Acceptance
+
+- qualification report: status `PASSED`、candidate manifest hash `c0f35de0290502967df17b6386fd6b60582d7e8b84ff4d0b1b73904e64238a2f`、child quality `6/6` repositories PASS、production exchange PASS。
+- batch summary SHA-256: `62361b07e00a646db6bc176b128ec399297fe8e58d6910d2da1da3d3b4fef414`。selection hash `439e637a26fd53b65f85a0126d2175f81d26eb052fd09d0b7869fad5840b496f`、candidate space hash `c3386d5aa5267c9d5b9c6478a5ea9c3b576b50351647daffefa572f5c5749066`、gate report hash `e4039d32cecfe0e85e47f3c8d51f4b8307169245ca1a99341d9381b44f17d0bb`。
+- Parent checks: `.venv/bin/python tools/validate.py --check`、`.venv/bin/python -m unittest discover -s tests -v`、workspace status、audit、`git diff --check`を完了後に実行する。
+
+### Idempotence and Recovery
+
+summaryが存在するrunは`ALREADY_COMPLETED`として再利用し、partial stateや既存outputは新runなしに上書きしない。各eventはevent IDとcanonical bytesで重複を拒否し、child outputはproduction plan projectionへ必要なmetadataだけをコピーする。
+
+### Interfaces and Dependencies
+
+`PURPOSE-E2E-001`が次の最小eligible taskであり、queueではREADYへ進める。最初の操作は`.venv/bin/python tools/validate.py --check`である。
 
 ## PURPOSE-AUTONOMOUS-RUNNER-001 ExecPlan
 

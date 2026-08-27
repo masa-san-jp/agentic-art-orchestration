@@ -114,12 +114,19 @@ def qualify_pin_update(
     timeout_seconds: int = 60,
     run_id: str = "pin-update-qualification",
     child_python: str = sys.executable,
+    python_root: Path | None = None,
 ) -> dict[str, Any]:
     candidate, changes = workspace_candidate(manifest, workspace_root)
     manifest_errors = validate_manifest(candidate, "pin-candidate")
     if manifest_errors:
         raise ValueError("pin candidate is invalid: " + " | ".join(manifest_errors[:5]))
-    quality = run_child_quality_gates(candidate, workspace_root, timeout_seconds, f"{run_id}:child-gates")
+    quality = run_child_quality_gates(
+        candidate,
+        workspace_root,
+        timeout_seconds,
+        f"{run_id}:child-gates",
+        python_root=python_root,
+    )
     gate_statuses = {result["status"] for result in quality["results"]}
     exchange: dict[str, Any] = {"status": "NOT_RUN", "reason": "child quality gates did not pass"}
     if not gate_statuses or gate_statuses == {"PASSED"}:
@@ -154,6 +161,11 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--run-id", default="pin-update-qualification")
     parser.add_argument("--child-python", default=sys.executable)
+    parser.add_argument(
+        "--python-root",
+        type=Path,
+        help="optional root of pre-provisioned per-child environments; no installation is performed",
+    )
     parser.add_argument("--apply", action="store_true", help="adopt qualified workspace HEADs in the parent manifest")
     args = parser.parse_args()
     try:
@@ -161,7 +173,17 @@ def main() -> int:
         manifest_errors = validate_manifest(manifest, str(args.manifest))
         if manifest_errors:
             raise ValueError("\n".join(manifest_errors))
-        report = qualify_pin_update(manifest, args.workspace_root, timeout_seconds=args.timeout, run_id=args.run_id, child_python=args.child_python)
+        python_root = args.python_root
+        if python_root is not None and not python_root.is_absolute():
+            python_root = Path.cwd() / python_root
+        report = qualify_pin_update(
+            manifest,
+            args.workspace_root,
+            timeout_seconds=args.timeout,
+            run_id=args.run_id,
+            child_python=args.child_python,
+            python_root=python_root,
+        )
         if args.apply:
             manifest_hash_after = apply_qualified_pins(args.manifest, manifest, args.workspace_root, report)
             report["applied"] = True
