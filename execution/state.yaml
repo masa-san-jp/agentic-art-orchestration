@@ -1,5 +1,5 @@
-version: 94
-updated_at: "2026-08-27T18:39:16+09:00"
+version: 95
+updated_at: "2026-08-27T19:42:29+09:00"
 active_task: PURPOSE-E2E-001
 active_repository: agentic-art-orchestration
 lease:
@@ -522,6 +522,7 @@ purpose_e2e:
       unittest_count: 255
       manifest_pin_adopted: false
     parent_manifest_update: not performed; self-model acceptance and complete six-repository qualification remain unresolved
+    latest_recheck: self-model owner comment confirms signal_count=3, tensions=1, recurring_patterns=0, eligible=1/3; no new qualified self-model anchor commit observed
   live_private:
     status: BLOCKED
     workspace: six repositories clean and exact-pin matched in verified external workspace
