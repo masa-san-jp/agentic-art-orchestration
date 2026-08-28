@@ -187,6 +187,7 @@ live-privateはcleanかつmanifest exact-pinの6 child workspaceで実行した�
 - Source pins: self-model `1864fa9`、art-history `b831f4c`、marketing-trends `ff3adca`、Research `496a2e2`、Production `63a1ddf`、viewer `cf41108`。6repoすべてclean・exact-pin MATCHED、child canonical tree/remote/Issue/Driveは変更していない。
 - Privacy and external effects: theme、会話全文、credential、PRIVATE_RAW、RESTRICTED、artifact bodyは保存していない。external operations、child mutations、physical production、Drive create、Issue create、merge、tag、releaseは0/未実行。Researchの不足は`COMPLETE_WITH_GAPS`として保持した。
 - Feedback: explicit feedbackは「作家は基本一人、1または3 anchorを許容」。inferred feedbackはnone。残る未解決はM16を阻害しないhuman-gated releaseとstale historical CI taskのみである。
+- Parent checks: validator PASS、focused regression 62/62 PASS、full parent tests 379/379 PASS、project status PASS、snapshot `--check` PASS、workspace 6/6 clean/main/ahead0/behind0、auditは既知の非blocking finding 1件、security PASS、diff check PASS。
 
 ## PURPOSE-AUTONOMOUS-RUNNER-001 ExecPlan
 

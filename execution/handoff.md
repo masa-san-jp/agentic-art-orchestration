@@ -1465,7 +1465,7 @@
 - Acceptance details: zero human prompts、intent reached selection、self-diversity `PASS_LIMITED_DIVERSITY`（eligible anchor 1）、Research `COMPLETE_WITH_GAPS` trace、Production plan builder PASS、viewer `UNKNOWN` + blind/frame、resume reuse、worker invocation 1、forbidden external operation 0、child mutation 0、privacy boundary all falseを確認した。
 - Source observations: 6repoすべてclean・exact-pin MATCHED。self-model `1864fa92`（export 3、eligible 1）、art-history `b831f4c5`、marketing-trends `ff3adca6`、Research `496a2e20`、Production `63a1ddf4`、viewer `cf411086`。Research/Production outputはchild canonical treeを変更せず、physical production・Drive artifact・GitHub Issue/PR・merge・tag・releaseは実行していない。
 - Feedback: explicitは「作家は基本一人、1または3 anchorを許容」。inferredはnone。会話全文、credential、PRIVATE_RAW、RESTRICTED、direct identifier、artifact bodyは追加保存していない。
-- Parent checks after record: validator、full parent tests、workspace status、audit、security、README status、diff checkを実行して結果を記録する。残る未解決はM16を阻害しない`INITIAL-OPS-RELEASE-001`のhuman gateと、現行workflowへ再baselineが必要な`ISSUE-38-REAL-CHAIN-CI-001`である。
+- Parent checks after record: validator PASS、focused regression 62/62 PASS、full parent tests 379/379 PASS、project status PASS、snapshot `--check` PASS、workspace 6/6 clean/main/ahead0/behind0、auditは既知の非blocking finding 1件、security PASS、diff check PASS。残る未解決はM16を阻害しない`INITIAL-OPS-RELEASE-001`のhuman gateと、現行workflowへ再baselineが必要な`ISSUE-38-REAL-CHAIN-CI-001`である。
 
 ## Next exact action
 
