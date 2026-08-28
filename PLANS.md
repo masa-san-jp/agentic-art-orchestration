@@ -38,7 +38,7 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
 - [x] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する。進捗表示は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足と新pin採用前の6repo fresh gateが解消待ちである。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足と新pin採用前の6repo fresh gateが解消待ちである。Researchの修正commitは検証済みだが、最新mainの再検証は未完了である。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
@@ -165,7 +165,7 @@ summaryが存在するrunは`ALREADY_COMPLETED`として再利用し、partial s
 
 ### Interfaces and Dependencies
 
-`PURPOSE-E2E-001`は実装とnetworkless証跡を完了したが、queueではBLOCKEDである。self-modelのeligible personal anchorが1件（要求3件）しかない。Researchは新main `496a2e2`で直接gateが通ったが、parent manifestへのpin採用には6repoのfresh exact-pin reportが必要である。最初の再開操作は、self-model解消後に`.venv/bin/python tools/validate.py --check`を実行し、child gatesとlive-privateを再実行することである。
+`PURPOSE-E2E-001`は実装とnetworkless証跡を完了したが、queueではBLOCKEDである。self-modelのeligible personal anchorが1件（要求3件）しかない。Researchの修正commit `496a2e2`では直接gateが通ったが、最新main `d6293ca`の全テストは別のrelease-checkで300秒超停止したため、parent manifestへのpin採用には6repoのfresh exact-pin reportが必要である。最初の再開操作は、self-model解消後に`.venv/bin/python tools/validate.py --check`を実行し、child gatesとlive-privateを再実行することである。
 
 ## PURPOSE-E2E-001 — blocked evidence record
 

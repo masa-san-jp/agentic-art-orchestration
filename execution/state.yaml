@@ -1,5 +1,5 @@
-version: 95
-updated_at: "2026-08-27T19:42:29+09:00"
+version: 96
+updated_at: "2026-08-28T19:39:07+09:00"
 active_task: PURPOSE-E2E-001
 active_repository: agentic-art-orchestration
 lease:
@@ -508,21 +508,27 @@ purpose_e2e:
     observed_at: "2026-08-27T18:39:16+09:00"
     self-model:
       main_commit: eb2b65738acf65eb01d8431bbd9dc5c978781697
-      issue_state: OPEN
+      issue_state: CLOSED
+      issue_resolution: moved to parent live-private gate; anchor acceptance remains unmet
       export_record_count: 3
       eligible_personal_anchor_count: 1
       status: INSUFFICIENT_SELF_DIVERSITY
       manifest_pin_adopted: false
     agentic-art-research:
-      main_commit: 496a2e20b21be6fef4ae415529dba4a863e09680
-      issue_state: OPEN
-      compile_gate: PASSED
-      validate_gate: PASSED
-      unittest_gate: PASSED
-      unittest_count: 255
+      main_commit: d6293ca419850b943c708347a8fafccabaa73922
+      issue_state: CLOSED
+      issue_resolution_commit: 496a2e20b21be6fef4ae415529dba4a863e09680
+      issue_reported_compile_gate: PASSED
+      issue_reported_validate_gate: PASSED
+      issue_reported_unittest_gate: PASSED
+      issue_reported_unittest_count: 255
+      latest_tip_compile_gate: PASSED
+      latest_tip_validate_gate: PASSED
+      latest_tip_unittest_gate: BLOCKED_TIMEOUT
+      latest_tip_unittest_stop: test_handoff_release_check.test_require_schema_snapshot_passes_after_clean_snapshot_capture; finite recheck exceeded 300 seconds
       manifest_pin_adopted: false
     parent_manifest_update: not performed; self-model acceptance and complete six-repository qualification remain unresolved
-    latest_recheck: self-model owner comment confirms signal_count=3, tensions=1, recurring_patterns=0, eligible=1/3; no new qualified self-model anchor commit observed
+    latest_recheck: self-model owner comment confirms signal_count=3, tensions=1, recurring_patterns=0, eligible=1/3; #71 is closed by responsibility transfer, not by satisfying the parent gate
   live_private:
     status: BLOCKED
     workspace: six repositories clean and exact-pin matched in verified external workspace
@@ -544,7 +550,7 @@ purpose_e2e:
     failed_command: "python3 -m unittest discover -s tests -v"
     impact: all child quality gates cannot be claimed PASS
     unblock_when: adopt the verified Research commit only through a fresh six-repository exact-pin report with every declared gate PASSED; do not skip or delete the gate
-    latest_research_follow_up: commit 496a2e20b21be6fef4ae415529dba4a863e09680 passed compile, validate, and 255 unittest cases in a read-only clone; a fresh six-repository manifest-pinned report is still required
+    latest_research_follow_up: commit 496a2e20b21be6fef4ae415529dba4a863e09680 passed compile, validate, and 255 unittest cases in a read-only clone; latest main d6293ca timed out at a different release-check test, and a fresh six-repository manifest-pinned report is still required
   privacy: no new raw conversation, credential, direct identifier, PRIVATE_RAW, RESTRICTED, or artifact body stored
   external_artifact: GitHub Issues self-model-notes#71 and agentic-art-research#79 created by explicit user request; Drive, PR, merge, release, and physical production not performed
   issue_mutation: true
