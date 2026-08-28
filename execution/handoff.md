@@ -1480,3 +1480,4 @@
 - GitHub Descriptionは空欄だったself-model、Research、Productionへ正確な説明を設定し、viewerの説明もREADMEと一致させた。art-historyとmarketingの既存Descriptionは変更不要だった。Drive、Issue、merge、release、親pushは実行していない。
 - 機微情報: 新たな会話全文、PRIVATE_RAW、RESTRICTED、credential、直接識別子、artifact本文は保存していない。既存のdirtyなローカルchild checkoutは変更していない。
 - 親の変更はREADME、manifest、manifestのdefault branchに追随するoffline fixture処理、workspace test、handoff/state記録。親の必須検証はvalidator PASS、focused 31/31 PASS、full 379/379 PASS、workspace 6/6 clean、snapshot check PASS、project-status README check PASS、security PASS、diff check PASS。auditは既存の`marketing:trend-001` stale warning 1件のみで、再検証制約として保持した。外部PRを有効化するには人間が各PRをreviewしてmergeする必要がある。
+- 親commitは`21be012`（`docs: improve repository usability and branch fixtures`）。このcommitは未pushで、次回は`.venv/bin/python tools/validate.py --check`から再開する。
