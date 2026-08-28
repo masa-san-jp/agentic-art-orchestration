@@ -1,5 +1,5 @@
-version: 101
-updated_at: "2026-08-29T03:05:39+09:00"
+version: 103
+updated_at: "2026-08-29T08:56:29+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -636,3 +636,81 @@ qualification_v14:
   aggregate_qualification: passed_offline; all offline checks, 3/3 initial-operations runs, 3/3 Production exchange runs, 5 repositories, and 14 child gates passed; child evidence was executed once and safely reused only after manifest/commit/gate validation
   github_live_evidence: blocked; no explicitly designated sandbox repository was detected; no Issue CREATE attempted
   release_operation: not_performed
+
+repository_usability_review:
+  status: docs_ready_for_review
+  requested_by: user
+  scope: parent README/manifest plus six registered child repositories
+  findings:
+    - self-model-notes, agentic-art-research, and agentic-art-production had empty GitHub descriptions
+    - viewer-response-notes used feat/viewer-response-contracts as the GitHub default branch while main was empty; the parent manifest incorrectly said main
+    - parent README omitted viewer-response-notes from the integrated repository list
+    - child README files had uneven visibility of user entry points, output boundaries, and privacy limits
+    - self-model-notes main had stale generated self-model artifacts; regeneration restored its declared checks
+  parent_changes:
+    - README.md: added user-oriented entry table and viewer repository description
+    - config/repositories.yaml: aligned viewer-response-notes.default_branch with the observed remote default branch
+    - tools/workspace.py: offline fixture remotes now honor each manifest default_branch
+    - tests/fixtures/build_fixture.py and tests/test_workspace.py: fixture and branch assertions now follow manifest branches
+  child_changes:
+    - repository: self-model-notes
+      base: main
+      commit: 71c63e21086a1770c247735f1adb1aca60c70b20
+      pull_request: https://github.com/masa-san-jp/self-model-notes/pull/76
+      changes: README.md plus regenerated data/self-models/subject/masa.json and masa.md
+      checks: build_self_model_check PASS; bundle_check PASS; build_graph_check PASS; unittest 136/136 PASS
+    - repository: art-history-notes
+      base: main
+      commit: 7768464d2e34d0da0fffc48601e8c97dc1fef96f
+      pull_request: https://github.com/masa-san-jp/art-history-notes/pull/385
+      changes: README.md
+      checks: build_graph_check PASS; build_context_vectors_check PASS; 126/129 tests PASS under Python 3.14; 3 failures are the declared Python 3.12 environment check
+    - repository: marketing-trends-notes
+      base: main
+      commit: a053c6cd99d3f71db7f5bf03b42cee99eff80b37
+      pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/85
+      changes: README.md
+      checks: build_graph_check PASS; audit dry-run PASS
+    - repository: agentic-art-research
+      base: main
+      commit: 3d893f48e85e4f512a3a112b2c2d0e204f863067
+      pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/82
+      changes: README.md
+      checks: compileall PASS; validate PASS; unittest 278/278 PASS; build_graph_check PASS
+    - repository: agentic-art-production
+      base: main
+      commit: 74afd1253d960a64c599dcd84ece8c2c4e71631a
+      pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/51
+      changes: README.md
+      checks: validate PASS; unittest 71/71 PASS; evaluation PASS
+    - repository: viewer-response-notes
+      base: feat/viewer-response-contracts
+      commit: 85f20206662b857ce2cd50936d0c0baf22fcf403
+      pull_request: https://github.com/masa-san-jp/viewer-response-notes/pull/3
+      changes: README.md
+      checks: validate PASS; unittest 12/12 PASS
+  github_metadata:
+    descriptions_updated: [self-model-notes, agentic-art-research, agentic-art-production, viewer-response-notes]
+    descriptions_already_accurate: [art-history-notes, marketing-trends-notes]
+    viewer_default_branch_observed: feat/viewer-response-contracts
+  parent_checks:
+    validator: PASS
+    focused_regression_tests: "31/31 PASS"
+    full_parent_tests: "379/379 PASS"
+    workspace_status: "6/6 clean; no dirty, ahead, or behind checkout"
+    snapshot_check: "PASS; hash 4897206cdee0aedfcb1802a68c7739e7e75c36e57651d17b7098b3be559aa292"
+    project_status_readme: PASS
+    security_offline_fixture: PASS
+    audit_offline_fixture: "FINDINGS; one warning for marketing:trend-001 stale revalidation_at 2026-08-25; preserved as a child revalidation constraint"
+    diff_check: PASS
+  safety:
+    child_main_branches_merged: false
+    parent_pushed: false
+    local_dirty_child_checkouts_modified: false
+    drive_artifact_created: false
+    raw_conversation_credentials_private_raw_restricted_added: false
+  unresolved:
+    - child README PRs require human review and merge before their changes become part of the base branches
+    - art-history and agentic-art-production GitHub PR checks failed before useful step logs; local failures were environment/configuration observations, not README assertions
+    - viewer-response-notes main remains an empty historical branch until its existing feature work is human-merged
+    - audit retains the existing marketing:trend-001 freshness warning until marketing revalidates it; this review did not normalize stale data

@@ -2,6 +2,20 @@
 
 Self Model × Art History × Marketing Trends → Agentic Art Research → Agentic Art Production を、独立したリポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
 
+## 利用者向けの最短ルート
+
+このrepoは各ドメインのデータを一つへコピーする場所ではなく、会話から安全に調査・制作計画へ進むためのcontrol planeです。目的に応じて次の入口を使います。
+
+| したいこと | 入口 |
+| --- | --- |
+| 利用可能なrepoと固定pinを確認する | [`config/repositories.yaml`](config/repositories.yaml)、[`tools/workspace.py`](tools/workspace.py) |
+| 新しいテーマを調査する | [`docs/agent-ui-runbook.md`](docs/agent-ui-runbook.md)、[`docs/input-pipeline-runbook.md`](docs/input-pipeline-runbook.md) |
+| 制作計画へ引き渡す | [`docs/interaction-improvement-runbook.md`](docs/interaction-improvement-runbook.md)、`agentic-art-research` / `agentic-art-production` |
+| viewer反応を保守的に扱う | `viewer-response-notes` の集計・assessment contract |
+| エージェントとして再開する | [`AGENTS.md`](AGENTS.md)、[`execution/state.yaml`](execution/state.yaml)、[`execution/task-queue.yaml`](execution/task-queue.yaml) |
+
+実際の会話全文、PRIVATE_RAW、RESTRICTED、credential、Drive artifact本文は親Gitへ保存しません。各repoの正本とsource commitを固定し、外部artifactはopaque参照だけで追跡します。
+
 ## 現在地
 
 - システム設計: [設計仕様書](docs/20260811-agentic-art-orchestration-system-design-specification.md)
@@ -20,7 +34,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-29T03:05:39+09:00`.
+Source updated at: `2026-08-29T08:56:29+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -60,6 +74,7 @@ Startup update check + audit -> findings / Issue candidate
 - [marketing-trends-notes](https://github.com/masa-san-jp/marketing-trends-notes) — マーケティング変化入力KB
 - [agentic-art-research](https://github.com/masa-san-jp/agentic-art-research) — 制作リサーチ実行・成果物repo
 - [agentic-art-production](https://github.com/masa-san-jp/agentic-art-production) — 制作引き渡し受領、制作実行、結果還流repo（要件SSOT: Issue #10）
+- [viewer-response-notes](https://github.com/masa-san-jp/viewer-response-notes) — 集計viewer反応と保守的な制作要件評価の正本
 
 ## 重要な境界
 

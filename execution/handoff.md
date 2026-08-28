@@ -1470,3 +1470,13 @@
 ## Next exact action
 
 1. `PURPOSE-E2E-001`は完了。READY taskはないため、merge/releaseを開始せず、次回は`.venv/bin/python tools/validate.py --check`からqueue/stateを再確認する。
+
+## REPO-USABILITY-001 — repository usability review
+
+- 利用者向け監査の結果、親READMEに目的別の入口と6repoの境界を追加し、viewer-response-notesを統合対象へ明記した。`viewer-response-notes`のGitHub default branchは`feat/viewer-response-contracts`で、`main`は空の歴史branchだったため、親manifestのdefault_branchを観測値へ合わせた。mainへのmergeは行っていない。
+- 子READMEはfresh cloneで個別に改善した。self-modelは利用者入口・診断利用禁止・privacy/export境界を追加し、staleだった生成snapshotを正本から再生成した。art-history、marketing、Research、Productionは利用目的別の入口、保存/非保存境界、検証導線を追加した。viewerはmeasured/external、UNKNOWN、aggregate-only、append-only、外部送信なしを明記した。
+- 子repoの分離commit/PR: self-model `71c63e2` / [PR #76](https://github.com/masa-san-jp/self-model-notes/pull/76)、art-history `7768464` / [PR #385](https://github.com/masa-san-jp/art-history-notes/pull/385)、marketing `a053c6c` / [PR #85](https://github.com/masa-san-jp/marketing-trends-notes/pull/85)、Research `3d893f4` / [PR #82](https://github.com/masa-san-jp/agentic-art-research/pull/82)、Production `74afd12` / [PR #51](https://github.com/masa-san-jp/agentic-art-production/pull/51)、viewer `85f2020` / [PR #3](https://github.com/masa-san-jp/viewer-response-notes/pull/3)。全てdraft/openであり、mainへのmergeは未実施。
+- 子品質確認: self-model 136/136、Research 278/278、Production 71/71 + evaluation PASS、viewer 12/12、marketing graph/audit PASS。art-historyのgraph/contextはPASSし、129 tests中126 testsがPASS、3件は実行環境Python 3.14がrepo要件Python 3.12に合わないため失敗した。art-history/ProductionのGitHub Actionsはuseful step logs前にfailureとなり、PRをPASS扱いにはしていない。
+- GitHub Descriptionは空欄だったself-model、Research、Productionへ正確な説明を設定し、viewerの説明もREADMEと一致させた。art-historyとmarketingの既存Descriptionは変更不要だった。Drive、Issue、merge、release、親pushは実行していない。
+- 機微情報: 新たな会話全文、PRIVATE_RAW、RESTRICTED、credential、直接識別子、artifact本文は保存していない。既存のdirtyなローカルchild checkoutは変更していない。
+- 親の変更はREADME、manifest、manifestのdefault branchに追随するoffline fixture処理、workspace test、handoff/state記録。親の必須検証はvalidator PASS、focused 31/31 PASS、full 379/379 PASS、workspace 6/6 clean、snapshot check PASS、project-status README check PASS、security PASS、diff check PASS。auditは既存の`marketing:trend-001` stale warning 1件のみで、再検証制約として保持した。外部PRを有効化するには人間が各PRをreviewしてmergeする必要がある。

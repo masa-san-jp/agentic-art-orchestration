@@ -59,7 +59,12 @@ class WorkspaceInitTests(unittest.TestCase):
             self.assertTrue(all(repo["state"] == "clean" for repo in status["repositories"]))
 
     def test_offline_init_is_idempotent_and_status_is_clean(self):
-        expected_repository_count = len(MODULE.load_manifest()["repositories"])
+        manifest = MODULE.load_manifest()
+        expected_repository_count = len(manifest["repositories"])
+        expected_branches = {
+            repository["id"]: repository["default_branch"]
+            for repository in manifest["repositories"]
+        }
         with tempfile.TemporaryDirectory(prefix="workspace-test-") as temporary:
             root = Path(temporary)
             workspace = root / "repos"
@@ -102,7 +107,10 @@ class WorkspaceInitTests(unittest.TestCase):
             self.assertEqual(expected_repository_count, len(status_payload["repositories"]))
             self.assertTrue(all(repo["exists"] for repo in status_payload["repositories"]))
             self.assertTrue(all(repo["state"] == "clean" for repo in status_payload["repositories"]))
-            self.assertTrue(all(repo["branch"] == "main" for repo in status_payload["repositories"]))
+            self.assertEqual(
+                expected_branches,
+                {repo["id"]: repo["branch"] for repo in status_payload["repositories"]},
+            )
             self.assertTrue(all(not repo["dirty"] for repo in status_payload["repositories"]))
 
     def test_offline_fetch_does_not_checkout_or_change_stable_refs(self):

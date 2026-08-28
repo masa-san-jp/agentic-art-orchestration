@@ -44,6 +44,18 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 
 project statusの確認は `.venv/bin/python tools/project_status.py --check-readme`、validatorの最初の操作は `.venv/bin/python tools/validate.py --check` とする。
 
+## REPO-USABILITY-001 — completed review and docs PRs
+
+利用者が初見で各repoの目的・入口・保存境界を理解できるかを6repoのfresh cloneで監査した。親READMEは目的別入口とviewer-response-notesを追加し、viewerの実際のGitHub default branch `feat/viewer-response-contracts`をmanifestへ反映した。child READMEは各repoの正本・利用手順・privacy/output境界に限定して改善し、childごとに分離commitとdraft PRを作成した。self-modelのstale生成物は正本から再生成した。
+
+### 結果
+
+- child PR: self-model #76、art-history #385、marketing #85、Research #82、Production #51、viewer #3。mergeは未実施。
+- child checks: self-model 136/136、Research 278/278、Production 71/71 + evaluation、viewer 12/12、marketing graph/audit PASS。art-historyはgraph/context PASS、129 tests中126 PASSで、3件はPython 3.14とrepo要件3.12の不一致。
+- GitHub Description: self-model、Research、Production、viewerを更新。art-historyとmarketingは既存値を維持。
+- 親検証: validator PASS、focused 31/31 PASS、full 379/379 PASS、workspace 6/6 clean、snapshot check PASS、security PASS、project-status README check PASS。auditは既存のmarketing stale warning 1件を保持。
+- 既存のdirty child checkout、会話全文、機微情報、Drive artifact、親push、merge、releaseは変更していない。
+
 ## PURPOSE-BATCH-100-001 ExecPlan — blocked (historical attempt)
 
 ### Purpose / Big Picture
