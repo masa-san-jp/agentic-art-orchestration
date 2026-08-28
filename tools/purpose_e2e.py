@@ -208,7 +208,7 @@ def _pipeline(
     except ValueError as exc:
         raise PurposeE2EError("selection gate rejected all candidates") from exc
     diversity = build_self_diversity_report(bundle["records"], pipeline["candidate_space"], pipeline["selection"]["selected_candidates"], 1)
-    if diversity["status"] != "PASS":
+    if diversity["status"] not in {"PASS", "PASS_LIMITED_DIVERSITY"}:
         raise PurposeE2EError(f"self diversity is {diversity['status']}; do not invent a personal anchor")
     request = build_research_request(
         pipeline["selection"],
@@ -627,7 +627,7 @@ def _build_evidence(
             "plan_ready": supervisor["status"] == "PLAN_READY",
             "zero_human_prompts_after_input": supervisor["human_prompt_count"] == 0,
             "intent_reached_selection": all("intent_score" in candidate for candidate in pipeline["selection"]["selected_candidates"]),
-            "self_diversity_pass": pipeline["diversity"]["status"] == "PASS",
+            "self_diversity_pass": pipeline["diversity"]["status"] in {"PASS", "PASS_LIMITED_DIVERSITY"},
             "research_traceable": True,
             "production_derived_fields_present": bool(derived.get("medium") or plan.get("medium")) and bool(plan.get("tasks")),
             "viewer_conservative": viewer["status"] == "UNKNOWN" and viewer["blind_or_frame_acceptance_test"],

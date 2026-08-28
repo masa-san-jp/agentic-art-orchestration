@@ -55,7 +55,7 @@ python3 tools/purpose_e2e.py --live-private \
 
 The live lane exports only the child-defined normalized signal contracts, creates a new research project in Git-external staging, and retains only hashes and opaque run locators in parent evidence. It does not publish, submit, send, purchase, contract, create Drive artifacts, create GitHub Issues, merge, release, or physically produce anything.
 
-If the actual self export has fewer than three eligible `tensions`/`recurring_patterns` anchors, or selection rejects all candidates, the lane stops with the observed reason. Do not add synthetic anchors to make live evidence pass. Resolve that condition in the self-model/research source of truth, obtain a new pinned commit through the normal qualification flow, and rerun with a new attempt ID.
+If the actual self export has no eligible `tensions`/`recurring_patterns` anchor, or selection rejects all candidates, the lane stops with the observed reason. One or two eligible anchors are accepted as `PASS_LIMITED_DIVERSITY`; three or more receive full diversity controls. Do not add synthetic anchors to make live evidence pass. Resolve a zero-anchor condition in the self-model/research source of truth, obtain a new pinned commit through the normal qualification flow, and rerun with a new attempt ID.
 
 ## Required final checks
 

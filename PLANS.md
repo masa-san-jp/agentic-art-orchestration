@@ -38,7 +38,7 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
 - [x] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する。進捗表示は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了したが、live-privateのself diversity不足と新pin採用前の6repo fresh gateが解消待ちである。Researchの修正commitは検証済みだが、最新mainの再検証は未完了である。
+- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了した。単一作家の1アンカーは`PASS_LIMITED_DIVERSITY`として受理する親ポリシーへ修正済みだが、Researchの品質ゲートと新pin採用前の6repo fresh gateが解消待ちである。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
@@ -133,7 +133,11 @@ Issue #71の受入条件を、qualified exact-pin workspace上のnetworkless bat
 
 ### Decision Log
 
-- self diversity 3 anchor未満は合成anchorを作らず、selectionへ`require_self_diversity=False`を明示し、summaryへ`INSUFFICIENT_SELF_DIVERSITY`を残した。
+- self diversityは0 anchorのみ`INSUFFICIENT_SELF_DIVERSITY`で停止し、1〜2 anchorは`PASS_LIMITED_DIVERSITY`、3 anchor以上は`PASS`として扱う。合成anchorを作らず、1〜2 anchorで完全な多様性を主張しない。
+
+### Single-author self-diversity policy correction
+
+ユーザー明示要件として、作家数は一人を基本とし、self-modelの適格アンカーは1個でも実行可能、3個以上なら通常の多様性制御を適用することを確定した。親repoのself-diversity判定を、0個のみ`INSUFFICIENT_SELF_DIVERSITY`、1〜2個を`PASS_LIMITED_DIVERSITY`、3個以上を`PASS`へ変更した。self-modelへ架空のアンカーを追加せず、既存のlive export（3 records、eligible anchor 1）を限定実行として扱う。Researchの最新tip品質ゲートとfresh 6repo exact-pin gateは別の未解決条件として保持する。
 - child checkout、handoff、result、stagingはGit外部の独立rootに置き、親Gitにはsummaryとコード契約だけを保存した。child repo、remote、Drive、Issueは変更していない。
 - batch outputはcreate-onlyとし、失敗run `/PURPOSE-BATCH-100-001`は保持して別run ID `PURPOSE-BATCH-100-001-run-2`を採用した。
 
@@ -165,7 +169,7 @@ summaryが存在するrunは`ALREADY_COMPLETED`として再利用し、partial s
 
 ### Interfaces and Dependencies
 
-`PURPOSE-E2E-001`は実装とnetworkless証跡を完了したが、queueではBLOCKEDである。self-modelのeligible personal anchorが1件（要求3件）しかない。Researchの修正commit `496a2e2`では直接gateが通ったが、最新main `d6293ca`の全テストは別のrelease-checkで300秒超停止したため、parent manifestへのpin採用には6repoのfresh exact-pin reportが必要である。最初の再開操作は、self-model解消後に`.venv/bin/python tools/validate.py --check`を実行し、child gatesとlive-privateを再実行することである。
+`PURPOSE-E2E-001`は実装とnetworkless証跡を完了したが、queueではBLOCKEDである。self-modelのeligible personal anchorは1件だが、単一作家ポリシーにより`PASS_LIMITED_DIVERSITY`として受理する。Researchの修正commit `496a2e2`では直接gateが通ったが、最新main `d6293ca`の全テストは別のrelease-checkで300秒超停止したため、parent manifestへのpin採用には6repoのfresh exact-pin reportが必要である。最初の再開操作は、Research qualified pin候補で`.venv/bin/python tools/validate.py --check`を実行し、child gatesとlive-privateを再実行することである。
 
 ## PURPOSE-E2E-001 — blocked evidence record
 

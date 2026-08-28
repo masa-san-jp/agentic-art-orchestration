@@ -43,7 +43,7 @@
       "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
     },
     "max_anchor_share": {"type": "number", "minimum": 0, "maximum": 1},
-    "status": {"type": "string", "enum": ["PASS", "INSUFFICIENT_SELF_DIVERSITY", "REJECT"]},
+    "status": {"type": "string", "enum": ["PASS", "PASS_LIMITED_DIVERSITY", "INSUFFICIENT_SELF_DIVERSITY", "REJECT"]},
     "source": {
       "type": "object",
       "additionalProperties": false,

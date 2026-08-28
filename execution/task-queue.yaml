@@ -817,7 +817,7 @@ tasks:
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
     depends_on: [SELF-EXPORT-E2E-001]
-    acceptance: tensions and recurring_patterns are selected as distinct approved anchors, insufficient diversity stops honestly, and selected anchor share is bounded without raw self data or fabricated facts.
+    acceptance: zero approved tensions/recurring_patterns anchors stop honestly, one or two approved anchors are accepted as PASS_LIMITED_DIVERSITY, three or more receive full diversity controls, and selected anchor share is bounded without raw self data or fabricated facts.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
 
   - id: PURPOSE-INTENT-RANK-001
@@ -949,6 +949,6 @@ tasks:
     target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
     agent_terminal: EVIDENCE_READY
     depends_on: [PURPOSE-BATCH-100-001]
-    blocker: live-private self diversity is insufficient (1 eligible personal anchor; 3 required); Research fix 496a2e2 is verified but latest main d6293ca is not yet qualified and a fresh six-repository exact-pin gate report is required before pin adoption
+    blocker: single-author self export is now accepted with PASS_LIMITED_DIVERSITY (1 eligible personal anchor); Research fix 496a2e2 is verified but latest main d6293ca is not yet qualified and a fresh six-repository exact-pin gate report is required before pin adoption
     acceptance: A new non-sensitive theme reaches PLAN_READY through research and production with zero human prompts after input, complete source provenance, conservative viewer evidence, deterministic resume, child gates, and zero forbidden external effects.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/workspace.py status, python3 tools/audit.py]

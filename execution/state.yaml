@@ -1,5 +1,5 @@
-version: 96
-updated_at: "2026-08-28T19:39:07+09:00"
+version: 98
+updated_at: "2026-08-29T00:54:52+09:00"
 active_task: PURPOSE-E2E-001
 active_repository: agentic-art-orchestration
 lease:
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 81da27c
   expected_changes: Implement and execute the networkless/live-private new-theme E2E from intent digest through Research PLAN_READY and Production plan with conservative viewer evidence and zero forbidden external effects.
-  result: blocked; networkless lane passed, live-private first failed at self diversity, and agentic-art-research child unittest gate timed out
+  result: blocked; single-author self-diversity policy correction passed parent tests, but Research qualification and fresh exact-pin child gates are still pending
 last_completed_task: PURPOSE-BATCH-100-001
 resume_from:
   task: PURPOSE-E2E-001
-  action: "After the two upstream blockers are resolved, rerun the exact-pin live-private E2E and child quality gates; do not invent self anchors or skip the research gate."
+  action: "After Research is qualified, run a fresh six-repository exact-pin gate and rerun live-private E2E; the single-author self-diversity policy is already satisfied and the research gate must not be skipped."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -481,11 +481,12 @@ purpose_e2e:
     agentic-art-research: https://github.com/masa-san-jp/agentic-art-research/issues/79
   observed_at: "2026-08-27T15:54:29+09:00"
   implementation:
-    files: [tools/purpose_e2e.py, schemas/purpose-e2e-evidence.schema.json, tests/test_purpose_e2e.py, docs/purpose-e2e-runbook.md]
+    files: [tools/candidate_space.py, tools/candidate_selection.py, tools/validate.py, tools/purpose_e2e.py, schemas/self-diversity-report.schema.json, schemas/purpose-e2e-evidence.schema.json, schemas/batch-run.schema.json, tests/test_candidate_space.py, tests/test_candidate_gates.py, tests/test_candidate_selection.py, tests/test_purpose_e2e.py, tests/test_v12_e2e.py, docs/cross-repository-contract.md, docs/purpose-e2e-runbook.md]
     parent_validation: passed
-    focused_tests: 13/13
-    parent_tests: 376/376
+    focused_tests: 39/39
+    parent_tests: 379/379
     diff_check: passed
+    single_author_policy: one or more eligible anchors are accepted; one or two are PASS_LIMITED_DIVERSITY; three or more are PASS with full diversity controls
     target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
   networkless:
     status: PASSED
@@ -509,10 +510,10 @@ purpose_e2e:
     self-model:
       main_commit: eb2b65738acf65eb01d8431bbd9dc5c978781697
       issue_state: CLOSED
-      issue_resolution: moved to parent live-private gate; anchor acceptance remains unmet
+      issue_resolution: moved to parent live-private gate; one-anchor export is accepted by the parent single-author policy as limited diversity
       export_record_count: 3
       eligible_personal_anchor_count: 1
-      status: INSUFFICIENT_SELF_DIVERSITY
+      status: PASS_LIMITED_DIVERSITY
       manifest_pin_adopted: false
     agentic-art-research:
       main_commit: d6293ca419850b943c708347a8fafccabaa73922
@@ -527,19 +528,19 @@ purpose_e2e:
       latest_tip_unittest_gate: BLOCKED_TIMEOUT
       latest_tip_unittest_stop: test_handoff_release_check.test_require_schema_snapshot_passes_after_clean_snapshot_capture; finite recheck exceeded 300 seconds
       manifest_pin_adopted: false
-    parent_manifest_update: not performed; self-model acceptance and complete six-repository qualification remain unresolved
-    latest_recheck: self-model owner comment confirms signal_count=3, tensions=1, recurring_patterns=0, eligible=1/3; #71 is closed by responsibility transfer, not by satisfying the parent gate
+    parent_manifest_update: not performed; complete six-repository qualification remains unresolved
+    latest_recheck: "self-model owner comment confirms signal_count=3, tensions=1, recurring_patterns=0, eligible=1; #71 is closed by responsibility transfer, and the parent single-author policy now accepts this as PASS_LIMITED_DIVERSITY"
   live_private:
     status: BLOCKED
     workspace: six repositories clean and exact-pin matched in verified external workspace
     exports: self-model 3; art-history 96; marketing-trends 60
-    first_failure_stage: self-diversity
+    first_failure_stage: self-diversity (historical policy; rerun required after policy correction)
     first_failure_source_repository: self-model
     first_failure_source_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
-    observed_condition: eligible_personal_anchor_count=1; required_minimum=3; status=INSUFFICIENT_SELF_DIVERSITY
-    impact: live selection cannot safely claim new-theme acceptance; Research/Production live handoff and plan were not promoted
+    observed_condition: eligible_personal_anchor_count=1; current parent policy accepts one anchor as PASS_LIMITED_DIVERSITY
+    impact: historical self-diversity stop is resolved by parent policy; Research qualification and fresh exact-pin child gate still prevent live handoff and plan promotion
     rerun_command: "python3 tools/purpose_e2e.py --live-private --attempt-id <new-attempt> --workspace-root <verified-child-workspace> --confirm-private-run --output /tmp/purpose-e2e-<new-attempt>.json"
-    unblock_when: self-model exports at least three approved tensions or recurring_patterns anchors in a newly qualified manifest-pinned commit; do not add fixture anchors
+    unblock_when: qualify Research and complete a fresh exact-pin six-repository gate, then rerun live-private with the current self-model pin; do not add fixture anchors
   child_quality_gates:
     status: BLOCKED
     report_sha256: 62c40f95d3b824c8ab4cc20584528c7cf4b1828ba1603cd599f1e46d50ca2d3e
@@ -554,7 +555,7 @@ purpose_e2e:
   privacy: no new raw conversation, credential, direct identifier, PRIVATE_RAW, RESTRICTED, or artifact body stored
   external_artifact: GitHub Issues self-model-notes#71 and agentic-art-research#79 created by explicit user request; Drive, PR, merge, release, and physical production not performed
   issue_mutation: true
-  explicit_feedback: none
+  explicit_feedback: user confirmed that an artist is basically one person and one or three anchors are both acceptable
   inferred_feedback: none
 blocked:
   - task: ISSUE-38-REAL-CHAIN-CI-001

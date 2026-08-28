@@ -227,7 +227,7 @@ def build_candidate_space(signals: list[dict], registry: dict, source: str = "ca
             for slot in rule["composition"]["slots"].values()
         )
         eligible_anchor_total = sum(len(_personal_anchor_options(signal)) for signal in by_kind["self"])
-        uses_personal_anchors = uses_personal_anchors and eligible_anchor_total >= 3
+        uses_personal_anchors = uses_personal_anchors and eligible_anchor_total >= 1
         if uses_personal_anchors:
             self_options: list[tuple[dict, dict | None]] = []
             for signal in sorted(by_kind["self"], key=lambda item: item["signal_id"]):

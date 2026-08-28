@@ -8,6 +8,8 @@ import unittest
 from tools.child_quality_gates import sha256_hex
 from tools.purpose_e2e import (
     THEME,
+    _offline_signals,
+    _pipeline,
     canonical_evidence_hash,
     run_purpose_e2e,
     validate_purpose_e2e,
@@ -84,6 +86,22 @@ class PurposeE2ETests(unittest.TestCase):
                 self.assertEqual([], validate_purpose_e2e(evidence))
                 hashes.append(canonical_evidence_hash(evidence))
         self.assertEqual(1, len(set(hashes)))
+
+    def test_single_anchor_reaches_pipeline_as_limited_diversity(self) -> None:
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
+        signals = _offline_signals(manifest)
+        self_records = [record for record in signals if record.get("signal_kind") == "self"]
+        for record in self_records[1:]:
+            record["domain"]["self_model"]["tensions"] = []
+            record["domain"]["self_model"]["recurring_patterns"] = []
+        pipeline = _pipeline(
+            signals,
+            project_id="project-single-anchor",
+            generated_at="2026-08-28T00:00:00+09:00",
+        )
+        self.assertEqual(1, pipeline["diversity"]["eligible_anchor_count"])
+        self.assertEqual("PASS_LIMITED_DIVERSITY", pipeline["diversity"]["status"])
+        self.assertEqual(1, pipeline["selection"]["selected_count"])
 
     def test_live_lane_requires_clean_pin_matched_workspace(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "workspace-root"):

@@ -97,8 +97,8 @@ raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換
 
 ## Self-model diversity report
 
-`self-diversity-report/v1` は、利用許可済みnormalized signalの`domain.self_model.tensions`と`recurring_patterns`のunionだけを対象にする。各値は`signal_id`、属性名、canonical valueを改行で連結したSHA-256のopaque anchor IDへ変換し、reportには生のstatement、voice本文、属性値、直接識別情報を保存しない。同一signal内の重複値はanchor IDで一つにまとめる。
+`self-diversity-report/v1` は、利用許可済みnormalized signalの`domain.self_model.tensions`と`recurring_patterns`のunionだけを対象にする。各値は`signal_id`、属性名、canonical valueを改行で連結したSHA-256のopaque anchor IDへ変換し、reportには生のstatement、voice本文、属性値、直接識別情報を保存しない。同一signal内の重複値はanchor IDで一つにまとめる。適格アンカーが1個以上あれば候補の`personal_tension`へその属性を結線し、0個の場合は候補を個人アンカー付きとして生成しない。
 
-`eligible_anchor_count`が3未満の場合は`INSUFFICIENT_SELF_DIVERSITY`とし、候補を複製したり選択数を水増ししたりしない。明示的な多様性要求でselection limitが10以上の場合は、少なくとも3つのdistinct anchorを含み、各anchorのshareを40%以下にする。passing candidateがselection limitに満たない場合も、limitを下げずに拒否する。候補の選択順はanchor単位の決定的round-robinとし、各anchor内では既存のseeded SHA-256 score順を保持する。
+`eligible_anchor_count`が0の場合は`INSUFFICIENT_SELF_DIVERSITY`として停止し、候補を複製したり選択数を水増ししたりしない。1〜2個の場合は`PASS_LIMITED_DIVERSITY`として実行を許可するが、3個未満であることを証跡に残す。3個以上の場合は`PASS`とし、明示的な多様性要求でselection limitが10以上の場合は、少なくとも3つのdistinct anchorを含み、各anchorのshareを40%以下にする。1〜2個の場合はこの完全多様性条件を適用せず、限定的な多様性として扱う。passing candidateがselection limitに満たない場合も、limitを下げずに拒否する。候補の選択順はanchor単位の決定的round-robinとし、各anchor内では既存のseeded SHA-256 score順を保持する。
 
-reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。
+reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`PASS_LIMITED_DIVERSITY`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。

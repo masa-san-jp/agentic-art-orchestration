@@ -29,7 +29,7 @@ class CandidateGateTests(unittest.TestCase):
     def test_clean_candidate_passes_all_six_gates(self):
         candidate_space, signals, registry = self.load_inputs()
         report = MODULE.build_gate_report(candidate_space, signals, registry)
-        self.assertEqual(1, len(report["evaluations"]))
+        self.assertEqual(2, len(report["evaluations"]))
         for evaluation in report["evaluations"]:
             self.assertEqual("PASS", evaluation["overall_status"])
             self.assertEqual(set(MODULE.GATE_IDS), {gate["gate_id"] for gate in evaluation["gates"]})

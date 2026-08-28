@@ -55,7 +55,7 @@
         "selection_hash": {"$ref": "#/$defs/hash64"},
         "selected_count": {"type": "integer", "minimum": 1},
         "unique_signal_tuple_count": {"type": "integer", "minimum": 1},
-        "self_diversity_status": {"enum": ["PASS", "INSUFFICIENT_SELF_DIVERSITY", "REJECT"]},
+        "self_diversity_status": {"enum": ["PASS", "PASS_LIMITED_DIVERSITY", "INSUFFICIENT_SELF_DIVERSITY", "REJECT"]},
         "source_commits": {
           "type": "array",
           "minItems": 3,

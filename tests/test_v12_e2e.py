@@ -21,7 +21,7 @@ class V12E2ETests(unittest.TestCase):
         self.assertEqual("v12-e2e/v1", result["contract_version"])
         self.assertEqual("disabled", result["network"])
         self.assertEqual(3, result["pipeline"]["signal_count"])
-        self.assertEqual(1, result["pipeline"]["candidate_count"])
+        self.assertEqual(2, result["pipeline"]["candidate_count"])
         self.assertEqual(1, result["pipeline"]["selection"]["selected_count"])
         self.assertEqual("research-provenance/v1", result["pipeline"]["provenance"]["contract_version"])
         self.assertEqual(len(manifest["repositories"]), result["child_quality_gates"]["repository_count"])

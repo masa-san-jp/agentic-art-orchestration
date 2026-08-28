@@ -44,7 +44,7 @@ class CandidateSelectionTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(MODULE.canonical_json(first), MODULE.canonical_json(second))
         selected = first["selected_candidates"][0]
-        self.assertEqual(candidate_space["candidates"][0]["candidate_id"], selected["candidate_id"])
+        self.assertIn(selected["candidate_id"], {item["candidate_id"] for item in candidate_space["candidates"]})
         self.assertEqual(
             {ref["source_commit"] for refs in candidate_space["candidates"][0]["inputs"].values() for ref in refs},
             {ref["source_commit"] for refs in selected["inputs"].values() for ref in refs},
@@ -180,25 +180,26 @@ class CandidateSelectionTests(unittest.TestCase):
         gate_report = MODULE.build_gate_report(candidate_space, signals, registry)
         return candidate_space, gate_report, signals
 
-    def test_self_diversity_report_is_opaque_and_fails_below_three_anchors(self):
+    def test_self_diversity_report_is_opaque_and_marks_below_three_anchors_limited(self):
         candidate_space, _gate_report, signals, _registry = self.load_inputs()
         report = MODULE.build_self_diversity_report(signals, candidate_space, selection_limit=10)
-        self.assertEqual("INSUFFICIENT_SELF_DIVERSITY", report["status"])
+        self.assertEqual("PASS_LIMITED_DIVERSITY", report["status"])
         self.assertEqual(2, report["eligible_anchor_count"])
         self.assertEqual({"tensions": 1, "recurring_patterns": 1}, report["attribute_counts"])
         rendered = MODULE.canonical_json(report)
         self.assertNotIn("specificity versus privacy", rendered)
         self.assertNotIn("review before reuse", rendered)
-        with self.assertRaisesRegex(ValueError, "INSUFFICIENT_SELF_DIVERSITY"):
-            MODULE.build_selection(
-                candidate_space,
-                _gate_report,
-                "project-alpha",
-                "seed-a",
-                1,
-                require_self_diversity=True,
-                signals=signals,
-            )
+        selection = MODULE.build_selection(
+            candidate_space,
+            _gate_report,
+            "project-alpha",
+            "seed-a",
+            1,
+            require_self_diversity=True,
+            signals=signals,
+        )
+        selected_report = MODULE.build_self_diversity_report(signals, candidate_space, selection["selected_candidates"], 1)
+        self.assertEqual("PASS_LIMITED_DIVERSITY", selected_report["status"])
 
     def test_self_diversity_selection_round_robins_four_anchors(self):
         candidate_space, gate_report, signals = self.diverse_inputs()
@@ -248,15 +249,51 @@ class CandidateSelectionTests(unittest.TestCase):
         self.assertEqual(4, full_report["distinct_selected_count"])
         self.assertLessEqual(full_report["max_anchor_share"], 0.4)
 
-    def test_removing_recurring_patterns_reduces_eligible_anchors_and_blocks_strict_selection(self):
+    def test_one_anchor_is_accepted_as_limited_diversity(self):
         candidate_space, gate_report, signals, registry = self.load_inputs()
         signals[0]["domain"]["self_model"]["recurring_patterns"] = []
         reduced_space = MODULE.build_candidate_space(signals, registry)
         reduced_gates = MODULE.build_gate_report(reduced_space, signals, registry)
         report = MODULE.build_self_diversity_report(signals, reduced_space, selection_limit=1)
         self.assertEqual(1, report["eligible_anchor_count"])
+        self.assertEqual("PASS_LIMITED_DIVERSITY", report["status"])
+        selection = MODULE.build_selection(
+            reduced_space,
+            reduced_gates,
+            "project-alpha",
+            "seed-a",
+            1,
+            require_self_diversity=True,
+            signals=signals,
+        )
+        self.assertEqual(1, selection["selected_count"])
+
+    def test_one_recurring_pattern_anchor_is_selected_with_its_declared_attribute(self):
+        candidate_space, gate_report, signals, registry = self.load_inputs()
+        signals[0]["domain"]["self_model"]["tensions"] = []
+        reduced_space = MODULE.build_candidate_space(signals, registry)
+        reduced_gates = MODULE.build_gate_report(reduced_space, signals, registry)
+        selection = MODULE.build_selection(
+            reduced_space,
+            reduced_gates,
+            "project-recurring-anchor",
+            "seed-a",
+            1,
+            require_self_diversity=True,
+            signals=signals,
+        )
+        self.assertEqual("recurring_patterns", selection["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
+
+    def test_zero_anchors_still_block_strict_selection(self):
+        candidate_space, gate_report, signals, registry = self.load_inputs()
+        signals[0]["domain"]["self_model"]["tensions"] = []
+        signals[0]["domain"]["self_model"]["recurring_patterns"] = []
+        reduced_space = MODULE.build_candidate_space(signals, registry)
+        reduced_gates = MODULE.build_gate_report(reduced_space, signals, registry)
+        report = MODULE.build_self_diversity_report(signals, reduced_space, selection_limit=1)
+        self.assertEqual(0, report["eligible_anchor_count"])
         self.assertEqual("INSUFFICIENT_SELF_DIVERSITY", report["status"])
-        with self.assertRaisesRegex(ValueError, "INSUFFICIENT_SELF_DIVERSITY"):
+        with self.assertRaisesRegex(ValueError, "no candidate passed all gates"):
             MODULE.build_selection(
                 reduced_space,
                 reduced_gates,

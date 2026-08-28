@@ -28,7 +28,7 @@ class CandidateSpaceTests(unittest.TestCase):
     def test_generation_preserves_ids_commits_and_locators(self):
         signals, registry = self.load_inputs()
         result = MODULE.build_candidate_space(signals, registry)
-        self.assertEqual(1, result["candidate_count"])
+        self.assertEqual(2, result["candidate_count"])
         candidate = result["candidates"][0]
         self.assertEqual({"R17"}, {candidate["rule_id"]})
         refs = [ref for refs in candidate["inputs"].values() for ref in refs]

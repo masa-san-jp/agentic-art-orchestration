@@ -1750,12 +1750,12 @@ def validate_self_diversity_report(data: dict, source: str = "self-diversity") -
     max_share = data.get("max_anchor_share")
     status = data.get("status")
     expected_status = "PASS"
-    if isinstance(eligible_count, int) and eligible_count < 3:
+    if isinstance(eligible_count, int) and eligible_count == 0:
         expected_status = "INSUFFICIENT_SELF_DIVERSITY"
     elif isinstance(selected_count, int) and isinstance(selection_limit, int):
         if selected_count > selection_limit or (selected_count > 0 and selected_count < selection_limit):
             expected_status = "REJECT"
-        elif selection_limit >= 10 and (
+        elif selection_limit >= 10 and isinstance(eligible_count, int) and eligible_count >= 3 and (
             not isinstance(distinct_count, int)
             or distinct_count < 3
             or not isinstance(max_share, (int, float))
@@ -1763,12 +1763,14 @@ def validate_self_diversity_report(data: dict, source: str = "self-diversity") -
             or max_share > 0.4
         ):
             expected_status = "REJECT"
+        elif isinstance(eligible_count, int) and eligible_count < 3:
+            expected_status = "PASS_LIMITED_DIVERSITY"
     if status != expected_status:
         errors.append(
             _signal_error(
                 source,
                 f"status {status!r} does not match observed diversity conditions; expected {expected_status!r}",
-                "preserve INSUFFICIENT_SELF_DIVERSITY, REJECT, or PASS without fallback or waterfilling",
+                "preserve INSUFFICIENT_SELF_DIVERSITY, PASS_LIMITED_DIVERSITY, REJECT, or PASS without fallback or waterfilling",
             )
         )
     return errors

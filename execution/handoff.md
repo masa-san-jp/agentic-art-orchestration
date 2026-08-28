@@ -1446,4 +1446,11 @@
 
 ## Next exact action
 
-1. self-modelの3 anchor以上のqualified exportとResearch child unittest timeoutの解消を確認後、`.venv/bin/python tools/validate.py --check`を実行し、同じmanifest pinでchild gatesとlive-private E2Eを再実行する。
+1. 単一作家の1 anchor受理ポリシー反映後、Research qualified pin候補で`.venv/bin/python tools/validate.py --check`を実行し、fresh child gatesとlive-private E2Eを再実行する。
+
+## PURPOSE-E2E-001 single-author policy correction
+
+- ユーザー明示要件として、作家は基本一人であり、self-modelの適格アンカーは1個でも実行可能、3個以上なら通常の多様性制御を適用することを確定した。これはself-modelの出力欠陥ではなく、親repoの受入条件が単一作家の運用に対して過剰だったための仕様修正である。
+- 親のself-diversity reportは、適格アンカー0個を`INSUFFICIENT_SELF_DIVERSITY`、1〜2個を`PASS_LIMITED_DIVERSITY`、3個以上を`PASS`として表現する。1〜2個では完全な多様性（selection limit 10以上の3 distinct anchor・share 40%以下）を主張せず、3個以上の場合のみ適用する。合成anchor、候補水増し、raw self dataの保存は行わない。
+- `tools/candidate_space.py`、`tools/candidate_selection.py`、`tools/validate.py`、`tools/purpose_e2e.py`、self-diversity/purpose-E2E/batch schema、cross-repository contract、runbook、queue/state/plan記録、focused testsを更新した。self-modelの既存exportは3 records・eligible anchor 1のまま、`PASS_LIMITED_DIVERSITY`として扱う。親全体testsは379/379、関連focused testsは39/39でPASSした。
+- この修正後もResearchの最新main `d6293ca`で全unittestがtimeoutした観測と、fresh six-repository exact-pin gate未実施は残る。次はResearchを`496a2e2`でpin候補としてfresh gateし、親validator・child gate・live-private E2Eを実行する。Research未qualifiedのままlive成功扱いにしない。
