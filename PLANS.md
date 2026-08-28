@@ -38,7 +38,7 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 目的ギャップの実装順、Issue SSOT、対象repo、terminal、依存関係は親Issue [#107](https://github.com/masa-san-jp/agentic-art-orchestration/issues/107) と `execution/task-queue.yaml` を正本とする。
 
 - [x] M15: v1.4 sandbox evidence、child preflight、pin/provenance reconciliation、queue/state progress SSOTを実装する。進捗表示は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless実装・検証は完了した。単一作家の1アンカーは`PASS_LIMITED_DIVERSITY`として受理する親ポリシーへ修正済みだが、Researchの品質ゲートと新pin採用前の6repo fresh gateが解消待ちである。
+- [x] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-BATCH-100-001`と`PURPOSE-E2E-001`のnetworkless/live-private実装・検証が完了した。単一作家の1アンカーは`PASS_LIMITED_DIVERSITY`として受理し、Research `496a2e2`のfresh 6repo exact-pin gateとlive-private PLAN_READYを確認した。
 
 旧M14の資格記録に残る期限切れleaseや過去の外部credential名は履歴情報であり、現在の再開点ではない。merge、tag、releaseは引き続きhuman gateとする。
 
@@ -176,6 +176,17 @@ summaryが存在するrunは`ALREADY_COMPLETED`として再利用し、partial s
 `tools/purpose_e2e.py`、閉じた`schemas/purpose-e2e-evidence.schema.json`、focused test、runbookを追加した。networkless fixtureは3回のcanonical evidence hashが一致し、`PLAN_READY`、intent ranking、fixture-only self diversity、Research/Production metadata-only plan、conservative viewer、same-run resume、forbidden operation 0を確認した。canonical hashは`f1b16d2d1e67ec9aa7bc27ce2ab83118a9df7a8b2c253c607110c38c7099b257`である。
 
 live-privateはcleanかつmanifest exact-pinの6 child workspaceで実行したが、self-model commit `1864fa92dde2bc8f25756bd5e5885268fa4b38fc`のexport 3件中、eligible anchorが1件だけだったため`INSUFFICIENT_SELF_DIVERSITY`でfail closedした。fixture anchorの追加や個人事実の合成は行わない。別途、旧pinのchild quality gatesは15/16 PASSでResearch unittestがtimeoutしたが、新Research main `496a2e2`ではcompile、validate、255 unittestがPASSした。新pin採用前の6repo fresh reportとself-model解消が必要であり、未実行・未達のResearch/Production live planを成功扱いにしない。
+
+## PURPOSE-E2E-001 — completed live-private evidence
+
+`PURPOSE-E2E-001`は、qualified exact-pin workspaceでlive-private laneを完了した。Research pin `07f8cf5`から`496a2e2`への更新は、candidate manifest hash `472eeb0a8826bc23d46ea624655dcea78672ccccbbc1f519b43ae77fcaf49abd`の6repo qualificationがPASSした後、親manifest commit `f591bff`で採用した。
+
+- Acceptance: 12/12。`PLAN_READY`、zero human prompts、intent reached selection、self-diversity `PASS_LIMITED_DIVERSITY`（eligible anchor 1）、Research traceability、Production derived fields、conservative viewer `UNKNOWN`、resume reuse、child quality gates、zero forbidden external effects、privacy boundaryを確認した。
+- Evidence: attempt `PURPOSE-E2E-001-live-private-496`、canonical evidence SHA-256 `537c917f83b2c4f33d9709eca14b4ff4b7f54b519b698d21671e90a4cc07f895`、evidence file SHA-256 `83db0f55db357186182444d7bca6d1ccf5b1410b7078f8f5f504fd5a9ad48f2a`。出力はGit外部stagingに置き、親Gitへ本文を保存していない。
+- Child qualification: 6/6 repositories、16/16 commands PASSED。詳細report SHA-256 `dc0ac341b9e6663318edcc29ad6cc8327061475ff148ed051ac1b8c697047632`、qualification report SHA-256 `d787d9ce7d2cd64c8788c64aaf9e4ad37ac1ff9d8d03200d26d92a941e8f604f`。Researchの255 testsは630.194秒で完走した。
+- Source pins: self-model `1864fa9`、art-history `b831f4c`、marketing-trends `ff3adca`、Research `496a2e2`、Production `63a1ddf`、viewer `cf41108`。6repoすべてclean・exact-pin MATCHED、child canonical tree/remote/Issue/Driveは変更していない。
+- Privacy and external effects: theme、会話全文、credential、PRIVATE_RAW、RESTRICTED、artifact bodyは保存していない。external operations、child mutations、physical production、Drive create、Issue create、merge、tag、releaseは0/未実行。Researchの不足は`COMPLETE_WITH_GAPS`として保持した。
+- Feedback: explicit feedbackは「作家は基本一人、1または3 anchorを許容」。inferred feedbackはnone。残る未解決はM16を阻害しないhuman-gated releaseとstale historical CI taskのみである。
 
 ## PURPOSE-AUTONOMOUS-RUNNER-001 ExecPlan
 
