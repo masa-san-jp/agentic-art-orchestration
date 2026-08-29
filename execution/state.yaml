@@ -1,5 +1,5 @@
-version: 104
-updated_at: "2026-08-29T08:57:08+09:00"
+version: 105
+updated_at: "2026-08-29T17:48:03+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -638,7 +638,7 @@ qualification_v14:
   release_operation: not_performed
 
 repository_usability_review:
-  status: docs_ready_for_review
+  status: partially_merged
   requested_by: user
   scope: parent README/manifest plus six registered child repositories
   findings:
@@ -706,12 +706,16 @@ repository_usability_review:
     diff_check: PASS
   safety:
     child_main_branches_merged: false
+    viewer_docs_pr_merged: true
+    viewer_docs_merge_commit: 205eeeb8dd03e29e2b4628e00bcf69738b77f973
     parent_pushed: false
     local_dirty_child_checkouts_modified: false
     drive_artifact_created: false
     raw_conversation_credentials_private_raw_restricted_added: false
   unresolved:
-    - child README PRs require human review and merge before their changes become part of the base branches
+    - remaining child README PRs require human review and merge before their changes become part of the base branches
+    - self-model, art-history, marketing, and agentic-art-research README PRs conflict with newer README changes on their main branches; no automatic conflict resolution was pushed
+    - agentic-art-production PR is mergeable at Git level but its GitHub test (3.11/3.12) checks are failing; it was not merged or bypassed
     - art-history and agentic-art-production GitHub PR checks failed before useful step logs; local failures were environment/configuration observations, not README assertions
     - viewer-response-notes main remains an empty historical branch until its existing feature work is human-merged
     - audit retains the existing marketing:trend-001 freshness warning until marketing revalidates it; this review did not normalize stale data

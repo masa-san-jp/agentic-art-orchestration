@@ -50,11 +50,12 @@ project statusの確認は `.venv/bin/python tools/project_status.py --check-rea
 
 ### 結果
 
-- child PR: self-model #76、art-history #385、marketing #85、Research #82、Production #51、viewer #3。mergeは未実施。
+- child PR: self-model #76、art-history #385、marketing #85、Research #82、Production #51、viewer #3。viewer #3は`feat/viewer-response-contracts`へmerge済み、他5件は保留。
 - child checks: self-model 136/136、Research 278/278、Production 71/71 + evaluation、viewer 12/12、marketing graph/audit PASS。art-historyはgraph/context PASS、129 tests中126 PASSで、3件はPython 3.14とrepo要件3.12の不一致。
 - GitHub Description: self-model、Research、Production、viewerを更新。art-historyとmarketingは既存値を維持。
 - 親検証: validator PASS、focused 31/31 PASS、full 379/379 PASS、workspace 6/6 clean、snapshot check PASS、security PASS、project-status README check PASS。auditは既存のmarketing stale warning 1件を保持。
 - 親commit: `21be012`（未push）。
+- ユーザー依頼でviewer-response-notes PR #3を`feat/viewer-response-contracts`へsquash merge（`205eeeb8`）。他PRはREADME競合またはGitHub checks failureのため保留。
 - 既存のdirty child checkout、会話全文、機微情報、Drive artifact、親push、merge、releaseは変更していない。
 
 ## PURPOSE-BATCH-100-001 ExecPlan — blocked (historical attempt)
