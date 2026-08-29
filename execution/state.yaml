@@ -1,5 +1,5 @@
-version: 105
-updated_at: "2026-08-29T17:48:03+09:00"
+version: 106
+updated_at: "2026-08-29T18:41:19+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -719,3 +719,12 @@ repository_usability_review:
     - art-history and agentic-art-production GitHub PR checks failed before useful step logs; local failures were environment/configuration observations, not README assertions
     - viewer-response-notes main remains an empty historical branch until its existing feature work is human-merged
     - audit retains the existing marketing:trend-001 freshness warning until marketing revalidates it; this review did not normalize stale data
+
+repository_usability_reaudit:
+  observed_at: "2026-08-29T18:41:19+09:00"
+  result: current_default_branches_are_usable_without_duplicate_changes
+  repositories_checked: [self-model-notes, art-history-notes, marketing-trends-notes, agentic-art-research, agentic-art-production, viewer-response-notes]
+  readme_findings: all six current default branches expose purpose, first-use entry points, canonical-data boundaries, and privacy/output limitations; viewer default branch is feat/viewer-response-contracts
+  description_findings: all six GitHub descriptions are non-empty and consistent with their current README scope
+  action: no new README/Description PR; existing stale draft PRs remain open for historical review, while viewer documentation PR #3 is merged
+  checks: validator PASS; project_status_readme PASS; snapshot_check PASS; offline_workspace 6/6 clean; parent_worktree clean
