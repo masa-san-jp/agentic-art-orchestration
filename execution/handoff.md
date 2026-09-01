@@ -1497,3 +1497,8 @@
 - `ISSUE-38-REAL-CHAIN-CI-001` は BLOCKED のまま。#116 が要求されていた再ベースラインSSOTであり、issue_ssot の付替えは `HARNESS-REALCHAIN-REBASE-001` の作業に含まれる。secret 設定（AAP_CHILD_REPOS_TOKEN）と remote green 証拠は human gate として受入条件から分離した。
 - push は #115 が「`agent/issues-38-41-pipeline` の fast-forward push のみ」を task 明示として許可する。merge・ready化・main push・force push は引き続き人間承認。
 - 次の1操作: `HARNESS-BOOTSTRAP-001` を claim し、`.venv/bin/python tools/validate.py --check` から開始する。
+
+## 2026-09-01 UX gap issues
+
+- ユーザーとのUX議論から未起票の修正点2件をSSOT起票した。(1) self-model-notes#79: 会話・音声メモ→entities/ の取り込み導線（素材供給停止の恒久対策、子repoドメイン）。(2) 親#117: PR triageレポート（merge判断の圧縮支援。オープンPR 18件滞留の観測に基づく。自動mergeは導入せず、将来の緩和判断の材料化まで）。
+- 既存Issue #88（自律ループ）と#90（素材3件）は重複起票していない。#117のqueue登録はHARNESS-INTAKE-001の初回適用に委ねる。#79はself-model-notes側harnessの管轄。

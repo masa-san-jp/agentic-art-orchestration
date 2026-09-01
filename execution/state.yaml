@@ -1,5 +1,5 @@
-version: 108
-updated_at: "2026-09-01T11:05:00+09:00"
+version: 109
+updated_at: "2026-09-01T12:10:00+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -749,6 +749,14 @@ harness_autonomy_audit:
     action: issues 113-116 rewritten as agent-resolvable implementation SSOTs with scope, allowed paths, authority, observable acceptance, verification commands, and explicit human gates
     queue_registration: M17 tasks HARNESS-BOOTSTRAP-001 (READY), HARNESS-INTAKE-001, HARNESS-SSOT-PUSH-001, HARNESS-REALCHAIN-REBASE-001 registered as a serialized DAG; ISSUE-38-REAL-CHAIN-CI-001 remains BLOCKED until HARNESS-REALCHAIN-REBASE-001 re-points it
     push_authority: Issue 115 explicitly authorizes a fast-forward push of agent/issues-38-41-pipeline only; merge and release remain human-gated
+  ux_gap_issues:
+    observed_at: "2026-09-01T12:10:00+09:00"
+    requested_by: user
+    conversational_material_intake: https://github.com/masa-san-jp/self-model-notes/issues/79
+    pr_triage_support: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+    open_pr_backlog_observed: 18 across 7 repositories
+    queue_registration: deferred to HARNESS-INTAKE-001 first application; child issue 79 belongs to the self-model-notes harness
+    duplicates_avoided: existing issues 88 and 90 were not re-filed
   child_repository_mutation: false
   external_mutation: four parent GitHub Issues created by explicit user request; no PR, merge, release, or Drive operation
   raw_conversation_credentials_private_raw_restricted_added: false
