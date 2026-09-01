@@ -1576,6 +1576,12 @@
 - Production #10とviewer #2はmanifestに記録済みの要件SSOTで、新規qualified implementation Issueは0件。fixture intakeも`queued 22 / qualified_unqueued 0 / UNQUEUED_NEEDS_SSOT 16`で変化なし。queue登録、Issue create/update/comment/close/label、子repo変更は行っていない。
 - 観測はmetadata-onlyで、機微情報・Issue本文・会話全文・Drive artifactは保存していない。既存の#116 secret/green runとPR #42 merge判断のhuman gateも変更していない。
 
+## 2026-09-02 PR merge gate observation
+
+- PR #42はhead `1e71e7e`、base `origin/main` `e7d123c`、OPEN/DRAFT、`CONFLICTING`/`DIRTY`、CI未報告だった。workflow、manifestのchild数・pin、cross-repository docs、fixtures、run/validation/pinned-workspaceのtools/testsが両側で変更されている。
+- `git merge --no-commit --no-ff origin/main`で競合をread-only相当で確認したが、片側優先や自動解消は行わず、mergeはabortして作業branchを元のclean状態へ戻した。commit、push、既定branchへのmerge、CI bypassは行っていない。
+- 推奨は、mainの後続child-pin/contract変更とPR #42の6repo harness/safety変更を意味的に統合し、parent/child quality gateとCIを再実行すること。統合方針が確定するまでPR mergeはBLOCKEDとする。
+
 ## Next exact action
 
-1. 現在はeligibleなREADY/BACKLOGがなく、新しいIssueまたはSSOT補完が現れるまで実装・queue登録をせず、変化時に`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`を再実行する。
+1. PR #42の競合解消方針（推奨: semantic integration merge）を確定し、確定後に作業branchへ統合・検証・通常pushする。方針未確定中はmerge/rebase/force-pushを行わない。

@@ -1,5 +1,5 @@
 version: 127
-updated_at: "2026-09-02T00:05:22+09:00"
+updated_at: "2026-09-02T00:15:55+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -99,6 +99,26 @@ issue_intake_live_observation:
   project_status: PASS
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
+pr_merge_observation:
+  status: BLOCKED
+  observed_at: "2026-09-01T15:15:55Z"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
+  head_branch: agent/issues-38-41-pipeline
+  head_commit: 1e71e7ed5b4e0ec79ba2dd444f4cb6015fa56c1e
+  base_branch: main
+  base_commit: e7d123c
+  pr_state: OPEN
+  draft: true
+  mergeable: CONFLICTING
+  merge_state: DIRTY
+  checks: none_reported
+  conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
+  local_operation: "merge --no-commit --no-ff origin/main was inspected and aborted without commit or push"
+  remote_operations: [READ]
+  recommendation: "perform a semantic integration merge that preserves both main's later child-pin/contract changes and PR #42's six-repository harness changes"
+  impact: "片側優先ではviewer entry、AAP_CHILD_REPOS_TOKEN real-chain、pin adoption/signal export、intent/run API、または安全境界を失う可能性がある"
+  unblock_condition: "明示的な統合方針を選び、競合解消後にparent/child quality gatesとCIを再実行する"
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
