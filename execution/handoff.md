@@ -1,5 +1,17 @@
 # Handoff
 
+## HARNESS-BOOTSTRAP-001 completed
+
+- Issue SSOT: [agentic-art-orchestration#113](https://github.com/masa-san-jp/agentic-art-orchestration/issues/113)。fresh cloneの最初の検証経路をrepo内`.venv`へ統一し、READMEを正準bootstrapの単一入口にした。
+- 変更: [README.md](../README.md)にGit/python3だけの前提、`gh auth login`と`--offline-fixture`の分岐、逐語4行、fresh-clone用の一時fixture materialization列を追加。`AGENTS.md`と[operator runbook](../docs/operator-runbook.md)はREADMEを参照し、検証コマンドを`.venv/bin/python`へ統一した。`tests/test_docs.py`に文書回帰テストを追加した。
+- Acceptanceは3/3。fresh cloneでvenv作成、依存関係導入、validator PASS、unique fixture rootによるnetworkless生成、materialized full suite `379/379 PASS`を確認した。親repoではvalidator PASS、文書focused `7/7 PASS`、full suite `380/380 PASS`、snapshot check、diff checkがPASSした。
+- 子repo、Issue/Drive、CI、merge、release、push、生成物の正本は変更していない。raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。explicit/inferred feedbackはnone。
+- README生成ステータスは最終state反映後に`project_status.py --update-readme`と`--check-readme`で同期する。親commit SHAはrecord完了後に追記する。
+
+### Next exact action
+
+1. `HARNESS-INTAKE-001` / Issue #114をclaimし、最初に`.venv/bin/python tools/validate.py --check`を実行する。
+
 ## ISSUE-39-KB-PIPE-001 completed
 
 - Parent-owned `normalized-research-signal-bundle/v1` contract and validator are present in `schemas/normalized-research-signal-bundle.schema.json` and `tools/signal_bundle.py`.

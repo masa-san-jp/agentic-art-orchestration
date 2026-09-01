@@ -12,6 +12,8 @@ git status --short
 
 次に必ず [AGENTS.md](../AGENTS.md)、設計仕様、実行計画、`PLANS.md`、`execution/task-queue.yaml`、`execution/state.yaml`、[handoff](../execution/handoff.md)を読む。`state.yaml`の`active_task`とleaseが自分の作業範囲と一致しない場合、同じpathを編集しない。
 
+Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstrap](../README.md#ブートストラップ検証)を上から実行する。GitHub認証がない環境では、実repoを操作せずREADME記載の`--offline-fixture`経路を使う。
+
 ## 1. 正本と安全境界
 
 - `config/repositories.yaml`: 統合対象、workspace path、source commit、contract、子repo quality gateの正本。
@@ -48,16 +50,19 @@ M14完了前はこのcommandが存在しないため、従来のnetworkless smok
 ネットワークを使わない再現確認は次の順で行う。
 
 ~~~bash
-.venv/bin/python tools/validate.py --check
-.venv/bin/python tools/workspace.py init --offline-fixture
+FIXTURE_ROOT="$(mktemp -d /tmp/agentic-art-orchestration-offline.XXXXXX)"
+.venv/bin/python tools/workspace.py init --offline-fixture --fixture-root "$FIXTURE_ROOT"
 .venv/bin/python tools/workspace.py status --json
-.venv/bin/python tools/workspace.py guard --offline-fixture --json
-.venv/bin/python tools/workspace.py snapshot --check
+.venv/bin/python tools/workspace.py guard --offline-fixture --fixture-root "$FIXTURE_ROOT" --json
+.venv/bin/python tools/workspace.py snapshot --fixture-root "$FIXTURE_ROOT"
+.venv/bin/python tools/workspace.py snapshot --fixture-root "$FIXTURE_ROOT" --check
 .venv/bin/python tools/status.py --check --offline-fixture
 .venv/bin/python tools/audit.py --check --offline-fixture
 .venv/bin/python tools/security.py --offline-fixture
 .venv/bin/python tools/e2e.py --offline-fixture --check
 ~~~
+
+fresh cloneからfull suiteまで行う場合は、READMEのbootstrap節にあるoffline fixture生成列を先に実行し、その後にREADME記載のvalidatorとfull suiteを実行する。`FIXTURE_ROOT`は毎回新しい一時ディレクトリにし、別のmanifestや古いbranchのremoteを再利用しない。
 
 期待値は、manifest記載repo数（coreは4、現在はProductionとviewer-response-notesを含む6）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、security `PASSED`、E2E clean `COMPLETE`である。auditは既知の非blocking findingを保持し、失敗を正常値へ変換しない。legacy failure fixtureが4repoであることはmanifestの6repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
 
@@ -277,8 +282,8 @@ source fileの相対locatorとhashを出力するため、同じ入力は同じJ
 認識できない状態は`UNKNOWN`として残し、完了へ丸めない。
 
 ~~~bash
-python3 tools/batch_status.py --workspace-root <workspace-root> --format json
-python3 tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
+.venv/bin/python tools/batch_status.py --workspace-root <workspace-root> --format json
+.venv/bin/python tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
 ~~~
 
 batch reportはdriverだけが`<state-root>/<run-id>/batch-report.jsonl`へappendする。

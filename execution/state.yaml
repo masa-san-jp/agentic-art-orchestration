@@ -1,29 +1,29 @@
-version: 109
-updated_at: "2026-09-01T12:10:00+09:00"
+version: 111
+updated_at: "2026-09-01T15:40:15+09:00"
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-08-27T15:08:00+09:00"
-  expires_at: "2026-08-27T16:08:00+09:00"
+  acquired_at: "2026-09-01T15:26:14+09:00"
+  expires_at: "2026-09-01T16:26:14+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: PURPOSE-E2E-001:attempt-1
-  released_at: "2026-08-29T02:38:48+09:00"
+  execution_id: HARNESS-BOOTSTRAP-001:attempt-1
+  released_at: "2026-09-01T15:40:15+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/purpose_e2e.py, schemas/purpose-e2e-evidence.schema.json, tests/test_purpose_e2e.py, docs/purpose-e2e-runbook.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
-    child_repositories: [self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
+    paths: [README.md, AGENTS.md, docs/operator-runbook.md, tests/test_docs.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    child_repositories: []
 checkpoint:
-  task: PURPOSE-E2E-001
-  repository: agentic-art-orchestration
-  start_point: 81da27c
-  expected_changes: Implement and execute the networkless/live-private new-theme E2E from intent digest through Research PLAN_READY and Production plan with conservative viewer evidence and zero forbidden external effects.
-  result: complete; live-private new-theme E2E reached PLAN_READY with all acceptance booleans true
-last_completed_task: PURPOSE-E2E-001
-resume_from:
   task: HARNESS-BOOTSTRAP-001
-  action: "Implement Issue #113: make the documented fresh-clone bootstrap succeed verbatim; M17 harness-autonomy DAG (#113-#116) is registered with one READY task."
+  repository: agentic-art-orchestration
+  start_point: 099460fdd28a7505fb97439c70b53edbce741dd5
+  expected_changes: Make the documented fresh-clone bootstrap succeed verbatim using a local venv; align README, AGENTS, and operator-runbook command notation; add documentation regression tests.
+  result: complete; Issue #113 acceptance 3/3 observed with fresh-clone venv bootstrap, offline materialization, documentation regression, validator, and full-suite evidence
+last_completed_task: HARNESS-BOOTSTRAP-001
+resume_from:
+  task: HARNESS-INTAKE-001
+  action: "Implement Issue #114: add a read-only deterministic open-Issue intake path and apply it to register SSOT-qualified Issues."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -769,3 +769,37 @@ repository_usability_reaudit:
   description_findings: all six GitHub descriptions are non-empty and consistent with their current README scope
   action: no new README/Description PR; existing stale draft PRs remain open for historical review, while viewer documentation PR #3 is merged
   checks: validator PASS; project_status_readme PASS; snapshot_check PASS; offline_workspace 6/6 clean; parent_worktree clean
+
+harness_bootstrap:
+  status: complete
+  observed_at: "2026-09-01T15:40:15+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+  target_repository: agentic-art-orchestration
+  acceptance: 3/3
+  changes:
+    - README defines the canonical four-line local-venv bootstrap and prerequisites for GitHub authentication versus offline fixtures.
+    - AGENTS.md and docs/operator-runbook.md reference the README bootstrap and use .venv/bin/python for verification commands.
+    - README documents fresh-clone offline materialization with a unique fixture root before the generated-data-dependent full suite.
+    - tests/test_docs.py rejects missing canonical lines and bare python3 verification regressions.
+  verification:
+    focused_documentation_tests: "7/7 PASS"
+    fresh_clone_venv_and_pip: PASS
+    fresh_clone_offline_materialization: PASS; unique fixture root, no GitHub or Drive operation
+    fresh_clone_validator: PASS
+    fresh_clone_materialized_full_suite: "379/379 PASS"
+    parent_validator: PASS
+    parent_full_suite: "380/380 PASS"
+    snapshot_check: PASS
+    diff_check: PASS
+    project_status_readme: pending final record update
+  repository_commits:
+    parent: pending final commit
+    child_repositories: none
+  external_artifact: none; no Issue, Drive, child repository, merge, release, or push mutation
+  sensitive_data: none; no raw conversation, credential, PRIVATE_RAW, RESTRICTED, or direct identifier added
+  feedback:
+    explicit: none
+    inferred: none
+  unresolved:
+    - fresh-clone full-suite materialization remains an explicit prerequisite because generated data/ outputs are intentionally ignored; the README documents this networkless path.
+    - the next task is HARNESS-INTAKE-001; no task was auto-started after lease release.

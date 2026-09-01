@@ -34,16 +34,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-01T12:10:00+09:00`.
+Source updated at: `2026-09-01T15:40:15+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 1 | 0 | 2 | 96 | 102 |
+| 3 | 0 | 0 | 2 | 97 | 102 |
 
-Current task: `null`; repository: `null`; checkpoint: `PURPOSE-E2E-001`.
-Next action: Implement Issue #113: make the documented fresh-clone bootstrap succeed verbatim; M17 harness-autonomy DAG (#113-#116) is registered with one READY task.
-Ready: `HARNESS-BOOTSTRAP-001`.
-Next task: `HARNESS-BOOTSTRAP-001`.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-BOOTSTRAP-001`.
+Next action: Implement Issue #114: add a read-only deterministic open-Issue intake path and apply it to register SSOT-qualified Issues.
+Ready: none.
+Next task: `HARNESS-INTAKE-001`.
 Blocked:
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
@@ -101,10 +101,39 @@ Startup update check + audit -> findings / Issue candidate
 
 ## ブートストラップ検証
 
+Fresh cloneに必要なのはGitと`python3`だけです。依存関係はシステムPythonへ入れず、repo内の`.venv`へ入れます。実repoの子repo操作には`gh auth login`済みのGitHub認証が必要です。認証がない環境では、実repo操作をせず`--offline-fixture`付きのnetworkless経路を使ってください。
+
 ~~~bash
-python3 -m pip install -r requirements-dev.txt
-python3 tools/validate.py --check
-python3 -m unittest discover -s tests -v
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest discover -s tests -v
+~~~
+
+この4行が親repoの正準bootstrapです。AGENTS.mdと[operator runbook](docs/operator-runbook.md)からもこの手順を参照します。
+
+full suiteは、実行時に参照する`data/snapshot.json`や`data/audit.json`などのnetworkless生成物を必要とします。fresh cloneからfull suiteまで確認する場合は、共有tempに残った古いoffline remoteを再利用しないよう、一時fixture rootを作り、次を上から実行してください。実repo・GitHub・Driveへの操作は発生しません。
+
+~~~bash
+FIXTURE_ROOT="$(mktemp -d /tmp/agentic-art-orchestration-offline.XXXXXX)"
+.venv/bin/python tools/workspace.py init --offline-fixture --fixture-root "$FIXTURE_ROOT"
+.venv/bin/python tools/workspace.py snapshot --fixture-root "$FIXTURE_ROOT"
+.venv/bin/python tools/status.py --offline-fixture
+.venv/bin/python tools/audit.py --offline-fixture
+.venv/bin/python tools/startup.py --offline-fixture --fixture-root "$FIXTURE_ROOT"
+.venv/bin/python tools/startup.py --offline-fixture --fixture-root "$FIXTURE_ROOT" --check
+.venv/bin/python tools/retrieval.py
+.venv/bin/python tools/issue_router.py
+.venv/bin/python tools/github_issue_adapter.py --fixture
+.venv/bin/python tools/github_issue_adapter.py --fixture --check
+.venv/bin/python tools/drive_live_check.py --plan
+.venv/bin/python tools/drive_live_check.py --plan --check
+.venv/bin/python tools/improvement_loop.py
+.venv/bin/python tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml
+.venv/bin/python tools/interaction_e2e.py
+.venv/bin/python tools/security.py --offline-fixture
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest discover -s tests -v
 ~~~
 
 ## 構造

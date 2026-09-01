@@ -77,9 +77,11 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 
 ## Required checks
 
+Fresh cloneでは、まず[README.mdの正準bootstrap](README.md#ブートストラップ検証)を上から実行する。READMEにはrepo内`.venv`の作成と依存関係準備を含める。full suiteまで行う場合は、同じ節のoffline fixture生成を先に完了する。GitHub認証がない場合の子repo確認はREADME記載の`--offline-fixture`経路を使い、システムPythonへ依存関係をインストールしない。
+
 ~~~bash
-python3 tools/validate.py --check
-python3 -m unittest discover -s tests -v
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest discover -s tests -v
 ~~~
 
 workspace実装後は workspace status、audit、変更子repoのmanifest記載commandも実行する。

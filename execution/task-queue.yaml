@@ -956,11 +956,12 @@ tasks:
   - id: HARNESS-BOOTSTRAP-001
     milestone: M17
     title: Make the documented bootstrap succeed on a fresh clone without human help
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
     depends_on: [PURPOSE-E2E-001]
+    completion: README canonical venv bootstrap and offline materialization path verified from a fresh clone; validator PASS, documentation regression 7/7 PASS, parent full suite 380/380 PASS, and fresh-clone materialized full suite 379/379 PASS
     acceptance: A fresh clone with only git and python3 reaches a passing validator and full test suite by following the documented commands verbatim, the venv creation sequence exists in README and is referenced by AGENTS.md and the operator runbook, interpreter notation is consistent across documents, and a test rejects documentation regressions to bare python3 bootstrap.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
 

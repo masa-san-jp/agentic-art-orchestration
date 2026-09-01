@@ -44,6 +44,77 @@ ExecPlanは、複数repo・複数セッションにまたがる変更を、会�
 
 project statusの確認は `.venv/bin/python tools/project_status.py --check-readme`、validatorの最初の操作は `.venv/bin/python tools/validate.py --check` とする。
 
+## HARNESS-BOOTSTRAP-001 ExecPlan — completed
+
+### Purpose / Big Picture
+
+Issue #113に従い、fresh cloneの外部エージェントがシステムPythonやセッション記憶に依存せず、READMEを唯一の正準入口としてvalidatorとfull suiteへ到達できる状態にする。GitHub認証が無い場合でも、unique offline fixture rootによるnetworkless検証へ進める。
+
+### Progress
+
+- [x] READMEにlocal venvの逐語4行、前提条件、live/offlineの分岐を追加した。
+- [x] AGENTS.mdとoperator runbookからREADMEを参照し、verification command notationを`.venv/bin/python`へ統一した。
+- [x] fresh cloneで必要な生成物をmaterializeするoffline sequenceをREADMEへ追加した。
+- [x] 文書回帰テスト、validator、focused/full suite、snapshot、diffを実行した。
+- [x] state、handoff、queueへ結果と次の再開点を記録した。
+
+### Surprises & Discoveries
+
+- `.venv`を用意してvalidatorはPASSするが、生成物を持たないclean cloneのfull suiteは`snapshot.json`等を参照するため失敗する。これはREADMEにoffline materializationを明記して解消した。
+- 共有の既定offline fixture rootには古いbranch remoteが残り得るため、fresh verificationでは毎回uniqueな`FIXTURE_ROOT`を使う必要がある。子repoや既存生成物は変更していない。
+
+### Decision Log
+
+- allowed pathsを越えてCLIや生成物の挙動を変更せず、Issueの文書・テスト範囲でbootstrap手順を修正した。
+- task-queue.yamlに残る歴史的な`python3` check表記は書き換えず、利用者向けのREADME、AGENTS、runbookだけを修正した。
+- live GitHub/Drive操作は行わず、認証不要のoffline fixture経路を正準の代替として明示した。
+
+### Outcomes & Retrospective
+
+- Acceptanceは3/3。fresh cloneのvenv/pip/validator、offline materialization、materialized full suite `379/379 PASS`を観測した。
+- 親repoの文書focused testsは`7/7 PASS`、親full suiteは`380/380 PASS`、validator、snapshot check、diff checkもPASSした。
+- 子repo、Issue、Drive、CI、merge、release、pushは変更していない。親commit SHAはrecord commit後にstate/handoffへ記録する。
+
+### Context and Orientation
+
+- Issue SSOT: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+- canonical bootstrap: `README.md#ブートストラップ検証`
+- related instructions: `AGENTS.md`, `docs/operator-runbook.md`
+- regression test: `tests/test_docs.py::DocumentationTests.test_fresh_clone_bootstrap_is_canonical_and_venv_based`
+
+### Plan of Work
+
+1. READMEのbootstrapと前提条件を修正する。
+2. AGENTS/runbookの参照とcommand notationを修正する。
+3. 文書回帰テストを追加する。
+4. fresh cloneをunique offline fixture rootで検証し、親state/handoff/queueへ記録する。
+
+### Concrete Steps
+
+~~~bash
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest tests.test_docs -v
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python tools/workspace.py snapshot --check
+.venv/bin/python tools/project_status.py --check-readme
+git diff --check
+~~~
+
+### Validation and Acceptance
+
+- READMEに指定4行が逐語で存在し、AGENTS/runbookがREADMEを参照する。
+- 文書focused `7/7 PASS`がbare `python3` verification回帰を検出する。
+- fresh cloneでvenv作成、依存関係導入、offline materialization、validator、full suiteがPASSする。
+- 親full suite `380/380 PASS`、validator、snapshot、diffがPASSする。
+
+### Idempotence and Recovery
+
+READMEのoffline列は毎回新しい一時fixture rootを作るため、古いremote branchを再利用しない。子repo、GitHub、Driveを変更しない。途中停止時は`execution/state.yaml`のlease/checkpointとこのhandoffのNext exact actionから再開する。
+
+### Interfaces and Dependencies
+
+READMEが正準bootstrap契約、AGENTS/runbookが参照層、`tools/workspace.py`がnetworkless materialization、`tools/validate.py`とunittestが検証層である。次の依存タスクは`HARNESS-INTAKE-001`（Issue #114）。
+
 ## REPO-USABILITY-001 — completed review and docs PRs
 
 利用者が初見で各repoの目的・入口・保存境界を理解できるかを6repoのfresh cloneで監査した。親READMEは目的別入口とviewer-response-notesを追加し、viewerの実際のGitHub default branch `feat/viewer-response-contracts`をmanifestへ反映した。child READMEは各repoの正本・利用手順・privacy/output境界に限定して改善し、childごとに分離commitとdraft PRを作成した。self-modelのstale生成物は正本から再生成した。
