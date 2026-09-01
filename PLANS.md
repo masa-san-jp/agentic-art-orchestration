@@ -144,7 +144,7 @@ Issue #114に従い、READYも依存完了済みBACKLOGも無いときに、外�
 
 - Acceptanceは4/4。intake focused `6/6 PASS`、docs+intake `13/13 PASS`、親full suite `386/386 PASS`、validator、diff checkがPASSした。
 - 事前reportは38件、qualified unqueuedは#117、登録後reportは22件queued・16件`UNQUEUED_NEEDS_SSOT`で、最終queue反映後report SHA-256は`cbbd7142c0be8d659b4f53b1367bdef48818bc3785a378f07967b919ff352861`、queue SHA-256は`869a6d365f1b1adbedc1fb866381090e91157e41d828719f0fdf63ce32fc3389`。
-- 子repo、Issue/Drive、merge、release、push、credential、raw inputは変更していない。
+- 子repo、Issue/Drive、merge、release、push、credential、raw inputは変更していない。親実装・初回record commitは`a631040`である。
 
 ### Context and Orientation
 

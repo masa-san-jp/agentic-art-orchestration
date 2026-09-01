@@ -19,7 +19,7 @@
 - 初回適用: 2026-09-01観測の38件をfixtureで再現し、登録前にSSOT品質を満たした#117を`HARNESS-PR-TRIAGE-001`として1回だけBACKLOG登録した。登録後は22件queued、16件`UNQUEUED_NEEDS_SSOT`、qualified unqueued 0件となった。登録前report SHA-256は`ffa1f27d`、最終queue反映後reportは`cbbd7142`、queue SHA-256は`869a6d36`。
 - Acceptanceは4/4。Issue intake `6/6 PASS`、docs+intake `13/13 PASS`、親validator PASS、親full suite `386/386 PASS`、diff check PASS。live `gh issue list`はネットワーク unavailableだったためfixture経路を採用し、Issueコメントや外部artifactは作成していない。
 - 子repo、Drive、CI、merge、release、push、credential、raw conversation、PRIVATE_RAW、RESTRICTED、direct identifierは変更していない。explicit/inferred feedbackはnone。
-- 親commit SHAは最終record commit後に追記する。
+- 親実装・初回record commitは`a631040`。最終state record commitはこの後に行う。
 
 ### Next exact action
 
