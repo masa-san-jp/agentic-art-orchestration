@@ -109,13 +109,19 @@ jobs:
         run: |
           python3 -m pip install -r requirements-dev.txt
           child_python_root="$RUNNER_TEMP/child-python"
+          child_requirements_root="$RUNNER_TEMP/child-requirements"
           mkdir -p "$child_python_root"
+          mkdir -p "$child_requirements_root"
           while IFS='|' read -r repository_id child; do
             python3 -m venv "$child_python_root/$repository_id"
             child_python="$child_python_root/$repository_id/bin/python"
             if [ -f "$child/requirements-dev.txt" ]; then "$child_python" -m pip install -r "$child/requirements-dev.txt"; fi
             if [ -f "$child/requirements.txt" ]; then "$child_python" -m pip install -r "$child/requirements.txt"; fi
-            if [ -f "$child/pyproject.toml" ]; then "$child_python" -m pip install "$child"; fi
+            if [ -f "$child/pyproject.toml" ]; then
+              dependency_file="$child_requirements_root/$repository_id.txt"
+              "$child_python" -c 'import pathlib, sys, tomllib; source = tomllib.loads(pathlib.Path(sys.argv[1]).read_text()); dependencies = source.get("project", {}).get("dependencies", []); pathlib.Path(sys.argv[2]).write_text("\n".join(dependencies) + ("\n" if dependencies else ""))' "$child/pyproject.toml" "$dependency_file"
+              if [ -s "$dependency_file" ]; then "$child_python" -m pip install -r "$dependency_file"; fi
+            fi
           done <<'EOF'
           self-model|repos/self-model-notes
           art-history|repos/art-history-notes

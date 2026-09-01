@@ -1616,6 +1616,12 @@
 - Researchの実測timeoutは300秒で不合格だったため、real-chainだけqualification timeoutを有限の900秒へ拡張する。汎用child gate既定値300秒は変更せず、real-chain固有の実repo負荷をworkflowに明示する。
 - gate-level出力はrepo ID、宣言command、status、exit code、安全なerror metadataだけであり、stdout/stderr、secret、pin値、raw dataは出さない。次のremote runで3repoの再検証結果とProduction exchange実行可否を確認する。
 
+## 2026-09-02 pyproject provisioning correction
+
+- run `33535508799`はcredential確認と6 child checkoutをPASSしたが、provisioningでart-historyのpyprojectをpip packageとして導入しようとした際、setuptoolsが`data/config/contexts/entities/overviews`の複数top-level packageを検出してexit 1となった。品質gateは実行されていない。bootstrapとproduction-exchangeはPASSした。
+- 子repo本体をインストールする必要はなく、品質gateが必要とする依存だけが必要である。親workflowはpyprojectの`project.dependencies`をPython 3.12標準の`tomllib`で一時requirementsへ抽出し、そのrequirementsだけを各venvへ導入する。子repoのpyproject、データ、package layoutは変更しない。
+- 最新workflow修正はfocused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkがPASS。次のremote runでart-history/self-modelのgate実行とResearch timeout 900秒の効果を確認する。
+
 ## Next exact action
 
 1. 親変更をfeature branchへcommit・pushし、PR #42のworkflow再実行でreal-chain greenを確認する。確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。

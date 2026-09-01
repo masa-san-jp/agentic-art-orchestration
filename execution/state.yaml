@@ -1,5 +1,5 @@
-version: 131
-updated_at: "2026-09-02T01:48:00+09:00"
+version: 132
+updated_at: "2026-09-02T02:07:00+09:00"
 active_task: ISSUE-38-REAL-CHAIN-CI-001
 active_repository: agentic-art-orchestration
 lease:
@@ -19,7 +19,7 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: d80d6b7
   expected_changes: Isolate real-chain child quality-gate dependencies in six pre-provisioned per-child environments, install pyproject dependencies under a compatible Python version, use a finite 900-second timeout for the observed slow Research suite, and preserve read-only pin qualification without applying updates.
-  result: in progress; run 33534392847 authenticated all six child checkouts and provisioned per-child environments. Production, Research, marketing, and viewer gates passed; art-history and self-model gates failed, Research tests timed out at 300 seconds, and exchange was not run. The workflow is being requalified with Python 3.12, pyproject installation, and a 900-second timeout.
+  result: in progress; run 33535508799 authenticated all six child checkouts but provisioning failed when pip attempted to install art-history as a package and setuptools rejected its flat layout. The workflow now extracts pyproject project dependencies only, uses Python 3.12, and keeps the finite 900-second timeout before the next rerun.
 last_completed_task: HARNESS-PR-TRIAGE-001
 resume_from:
   task: null
@@ -100,24 +100,24 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: REMOTE_REAL_CHAIN_CHILD_GATES_FAILED_NEEDS_PYPROJECT_AND_TIMEOUT
-  observed_at: "2026-09-02T02:00:52+09:00"
+  status: REMOTE_REAL_CHAIN_PROVISIONING_FAILED_PYPROJECT_PACKAGE_LAYOUT
+  observed_at: "2026-09-02T02:04:00+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: e6141ab
+  head_commit: e79e1fe
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
   draft: true
   mergeable: MERGEABLE
   merge_state: UNSTABLE
-  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_ART_HISTORY_AND_SELF_MODEL_GATES_AND_RESEARCH_TIMEOUT"
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_DURING_PYPROJECT_PROVISIONING"
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
   local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
   remote_operations: [READ, PUSH]
-  recommendation: "run with Python 3.12, pyproject dependency installation, and 900-second timeout; then route any remaining child failures to their owner repositories; keep default-branch merge behind human review"
-  impact: "art-history/self-modelの依存未導入とResearchの300秒timeoutを解消しない限り、6件のpin候補のProduction exchangeを資格付けできない"
+  recommendation: "extract only pyproject project dependencies into each child environment, rerun qualification, then route any remaining child failures to their owner repositories; keep default-branch merge behind human review"
+  impact: "art-historyのflat-layout package buildを依存導入と誤認している間は、品質gateを実行できず6件のpin候補を資格付けできない"
   unblock_condition: "the per-child qualification workflow completes green with the external read-only credential, then human review may decide the default-branch merge"
   integration:
     status: complete
@@ -150,15 +150,15 @@ pr_merge_observation:
       explicit: none
       inferred: none
   latest_remote_run:
-    id: 33533135712
-    head_sha: 3bebf1b
-    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33533135712
+    id: 33535508799
+    head_sha: e79e1fe
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33535508799
     bootstrap: PASSED
     production_exchange: PASSED
     real_chain_preflight: PASSED
-    real_chain_qualification: FAILED
-    real_chain_observed: "credential, six child checkouts, and per-child dependency provisioning passed; agentic-art-production, agentic-art-research, marketing-trends, and viewer-response-notes passed; art-history and self-model failed; agentic-art-research tests timed out at 300 seconds; production exchange was NOT_RUN"
-    child_repository_statuses: exposed at repository and declared-gate level; art-history and self-model dependency setup and Python compatibility remain under repair
+    real_chain_qualification: NOT_RUN
+    real_chain_observed: "credential and six child checkouts passed; provisioning failed while pip tried to install art-history as a package and setuptools reported multiple top-level packages in its flat layout; bootstrap and production-exchange passed"
+    child_repository_statuses: not produced because provisioning failed before qualification
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
