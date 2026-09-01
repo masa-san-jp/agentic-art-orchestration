@@ -1,5 +1,5 @@
-version: 125
-updated_at: "2026-09-01T21:20:22+09:00"
+version: 126
+updated_at: "2026-09-01T21:39:42+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -91,6 +91,13 @@ issue_intake_live_observation:
   source: GitHub metadata-only number/title/url observation
   issue_body_read: false
   remote_operations: [READ]
+  record_commit: fcc0a3dc4bbc426a1bba8c8267e659e57a6582ee
+  parent_branch: agent/issues-38-41-pipeline
+  parent_head: fcc0a3dc4bbc426a1bba8c8267e659e57a6582ee
+  validation: PASS
+  project_status: PASS
+  audit: "FINDINGS; one known nonblocking marketing freshness warning"
+  workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
