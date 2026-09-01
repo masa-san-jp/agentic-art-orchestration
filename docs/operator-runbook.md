@@ -168,6 +168,19 @@ gh pr view <number> --json headRefOid,isDraft,baseRefName,headRefName
 
 pushまたはremote／PRの確認ができない場合は、未pushまたは`UNKNOWN`をstateとhandoffへ残し、leaseを解放せず停止する。確認後、依存完了後の次taskをREADYへ進める。merge/releaseはhuman gateで停止する。
 
+### PR triageと人間のマージ判断
+
+open PRの確認が人間レビューのボトルネックになった場合は、全manifest repo（親control planeを含む）のメタデータだけをread-onlyで観測する。
+
+~~~bash
+.venv/bin/python tools/pr_triage.py --fixture tests/fixtures/pr-triage/open-prs.json --check
+.venv/bin/python tools/pr_triage.py --live --observed-at <fixed-ISO-8601-time> --output /tmp/pr-triage-live.json --check
+~~~
+
+レポートの`MERGE_CANDIDATE`から人間が差分、根拠、品質ゲート、Issue SSOTを確認する。`NEEDS_REBASE`は競合解消後に再観測し、`NEEDS_CI_FIX`は失敗ゲートの修正後に再観測する。`SUPERSEDED_CANDIDATE`はbase到達または完了済みtaskへの包含候補を示すだけで、PRを自動closeしない。`HUMAN_JUDGMENT`はchecksまたは競合状態が不明なため、人間が追加確認する。
+
+change classは`config/human-gates.yaml`の`merge_classes`に従い、record、docs、code、contractのいずれも`auto_merge: false`である。triageはmerge、close、rebase、force push、ready化を実行せず、PR本文・diff・コメント・credentialをレポートへ保存しない。実際のmerge判断と操作は既存のhuman gateで行う。
+
 ### 空queue時のIssue intake
 
 READYも依存完了済みBACKLOGも無い場合は、open Issueを自動昇格・クローズせず、まずread-onlyのintake reportを作る。Issue本文全文は出力せず、番号・タイトル・URL・SSOT品質判定・推奨アクションだけを保持する。live入力には`gh auth login`済みのread権限が必要で、認証できない場合はfixtureを使う。

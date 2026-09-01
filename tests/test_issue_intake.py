@@ -85,7 +85,7 @@ class IssueIntakeTests(unittest.TestCase):
         ]
         self.assertEqual(1, len(matches))
         self.assertEqual("HARNESS-PR-TRIAGE-001", matches[0]["id"])
-        self.assertEqual("BACKLOG", matches[0]["status"])
+        self.assertIn(matches[0]["status"], {"BACKLOG", "READY", "IN_PROGRESS", "DONE"})
         self.assertEqual(["HARNESS-REALCHAIN-REBASE-001"], matches[0]["depends_on"])
 
 

@@ -101,6 +101,8 @@ REQUIRED_FILES = [
     "tools/input_pipeline.py",
     "tools/run.py",
     "config/human-gates.yaml",
+    "schemas/pr-triage-report.schema.json",
+    "tools/pr_triage.py",
     "schemas/agent-action.schema.json",
     "schemas/agent-result.schema.json",
     "schemas/autonomous-run.schema.json",

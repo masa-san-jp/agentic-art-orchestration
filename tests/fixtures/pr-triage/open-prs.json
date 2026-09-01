@@ -1,0 +1,104 @@
+{
+  "source": {
+    "kind": "fixture",
+    "locator": "fixture://pr-triage/open-prs-2026-09-01",
+    "observed_at": "2026-09-01T00:00:00Z"
+  },
+  "repositories": [
+    {"repository": "agentic-art-orchestration", "full_name": "masa-san-jp/agentic-art-orchestration", "default_branch": "main", "source_commit": "2ca466acd2a2907b03c434439d16e09f0af47ae0"},
+    {"repository": "agentic-art-production", "full_name": "masa-san-jp/agentic-art-production", "default_branch": "main", "source_commit": "63a1ddf4ed303e01c92023baa4737c68dcd10846"},
+    {"repository": "agentic-art-research", "full_name": "masa-san-jp/agentic-art-research", "default_branch": "main", "source_commit": "496a2e20b21be6fef4ae415529dba4a863e09680"},
+    {"repository": "art-history", "full_name": "masa-san-jp/art-history-notes", "default_branch": "main", "source_commit": "b831f4c57d842f44ad45134a5abd434dc367482f"},
+    {"repository": "marketing-trends", "full_name": "masa-san-jp/marketing-trends-notes", "default_branch": "main", "source_commit": "ff3adca6e52c18095a00c23d39ef2a961ae1d13b"},
+    {"repository": "self-model", "full_name": "masa-san-jp/self-model-notes", "default_branch": "main", "source_commit": "1864fa92dde2bc8f25756bd5e5885268fa4b38fc"},
+    {"repository": "viewer-response-notes", "full_name": "masa-san-jp/viewer-response-notes", "default_branch": "feat/viewer-response-contracts", "source_commit": "cf411086b0693bfcde8d034fe27bb7a8d4110222"}
+  ],
+  "pull_requests": [
+    {
+      "repository": "agentic-art-orchestration",
+      "number": 42,
+      "title": "Resolve KB pipeline, Research request, pin qualification, and real-chain CI",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/42",
+      "baseRefName": "main",
+      "headRefName": "agent/issues-38-41-pipeline",
+      "headRefOid": "2ca466acd2a2907b03c434439d16e09f0af47ae0",
+      "baseRefOid": "e7d123c73f29015c8e54b39a4c1f97eb882f632d",
+      "createdAt": "2026-08-20T00:00:00Z",
+      "checks": {"status": "GREEN", "total": 3, "passed": 3, "failed": 0, "pending": 0},
+      "conflict": "YES",
+      "files": ["execution/state.yaml", "execution/handoff.md", "execution/task-queue.yaml"],
+      "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/116"
+    },
+    {
+      "repository": "agentic-art-production",
+      "number": 50,
+      "title": "Complete production exchange evidence",
+      "url": "https://github.com/masa-san-jp/agentic-art-production/pull/50",
+      "baseRefName": "main",
+      "headRefName": "agent/production-exchange",
+      "headRefOid": "db3ad6541c13440e36ada4ab1ce84d550f2293c9",
+      "baseRefOid": "63a1ddf4ed303e01c92023baa4737c68dcd10846",
+      "createdAt": "2026-08-23T00:00:00Z",
+      "checks": {"status": "RED", "total": 3, "passed": 2, "failed": 1, "pending": 0},
+      "conflict": "NO",
+      "files": ["README.md", "docs/production-exchange.md"],
+      "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/98"
+    },
+    {
+      "repository": "agentic-art-research",
+      "number": 78,
+      "title": "Add viewer response exchange append path",
+      "url": "https://github.com/masa-san-jp/agentic-art-research/pull/78",
+      "baseRefName": "main",
+      "headRefName": "agent/viewer-response",
+      "headRefOid": "fe2d9a9000000000000000000000000000000000",
+      "baseRefOid": "b315717000000000000000000000000000000000",
+      "createdAt": "2026-08-25T00:00:00Z",
+      "checks": {"status": "GREEN", "total": 4, "passed": 4, "failed": 0, "pending": 0},
+      "conflict": "NO",
+      "files": ["tools/viewer_response.py", "tests/test_viewer_response.py"]
+    },
+    {
+      "repository": "art-history",
+      "number": 385,
+      "title": "Rebuild the contract snapshot",
+      "url": "https://github.com/masa-san-jp/art-history-notes/pull/385",
+      "baseRefName": "main",
+      "headRefName": "agent/rebuild-snapshot",
+      "headRefOid": "b831f4c57d842f44ad45134a5abd434dc367482f",
+      "baseRefOid": "b831f4c57d842f44ad45134a5abd434dc367482f",
+      "createdAt": "2026-08-26T00:00:00Z",
+      "checks": {"status": "GREEN", "total": 2, "passed": 2, "failed": 0, "pending": 0},
+      "conflict": "NO",
+      "files": ["schemas/graph.schema.json", ".github/workflows/validate.yml"]
+    },
+    {
+      "repository": "marketing-trends",
+      "number": 7,
+      "title": "Clarify the freshness boundary",
+      "url": "https://github.com/masa-san-jp/marketing-trends-notes/pull/7",
+      "baseRefName": "main",
+      "headRefName": "agent/freshness-docs",
+      "headRefOid": "7777777777777777777777777777777777777777",
+      "baseRefOid": "8888888888888888888888888888888888888888",
+      "createdAt": "2026-08-27T00:00:00Z",
+      "checks": {"status": "GREEN", "total": 1, "passed": 1, "failed": 0, "pending": 0},
+      "conflict": "UNKNOWN",
+      "files": ["README.md", "docs/freshness.md"]
+    },
+    {
+      "repository": "viewer-response-notes",
+      "number": 1,
+      "title": "Define aggregate viewer response records",
+      "url": "https://github.com/masa-san-jp/viewer-response-notes/pull/1",
+      "baseRefName": "feat/viewer-response-contracts",
+      "headRefName": "agent/response-records",
+      "headRefOid": "9999999999999999999999999999999999999999",
+      "baseRefOid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "createdAt": "2026-08-28T00:00:00Z",
+      "checks": {"status": "PENDING", "total": 2, "passed": 1, "failed": 0, "pending": 1},
+      "conflict": "UNKNOWN",
+      "files": ["records/README.md", "records/valid.json"]
+    }
+  ]
+}

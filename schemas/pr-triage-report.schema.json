@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/pr-triage-report.schema.json",
+  "title": "Read-only PR triage report v1",
+  "description": "A deterministic metadata-only observation used to support human merge decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "source", "queue", "pull_requests", "summary", "remote_operations"],
+  "properties": {
+    "contract_version": {"const": "pr-triage-report/v1"},
+    "source": {"$ref": "#/$defs/source"},
+    "queue": {"$ref": "#/$defs/queue"},
+    "pull_requests": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/pull_request"}},
+    "summary": {"$ref": "#/$defs/summary"},
+    "remote_operations": {"type": "array", "uniqueItems": true, "items": {"enum": ["READ"]}}
+  },
+  "$defs": {
+    "timestamp": {"type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"},
+    "sha": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+    "source_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "repository": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "full_name": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "locator", "observed_at", "repositories"],
+      "properties": {
+        "kind": {"enum": ["fixture", "live", "json"]},
+        "locator": {"type": "string", "minLength": 1},
+        "observed_at": {"$ref": "#/$defs/timestamp"},
+        "repositories": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["repository", "full_name", "default_branch", "source_commit"],
+            "properties": {
+              "repository": {"$ref": "#/$defs/repository"},
+              "full_name": {"$ref": "#/$defs/full_name"},
+              "default_branch": {"type": "string", "minLength": 1},
+              "source_commit": {"$ref": "#/$defs/source_sha"}
+            }
+          }
+        }
+      }
+    },
+    "queue": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    },
+    "checks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "total", "passed", "failed", "pending"],
+      "properties": {
+        "status": {"enum": ["GREEN", "RED", "PENDING", "UNKNOWN"]},
+        "total": {"type": "integer", "minimum": 0},
+        "passed": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0},
+        "pending": {"type": "integer", "minimum": 0}
+      }
+    },
+    "pull_request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "source_commit", "number", "title", "url", "base_branch", "head_branch", "head_sha", "base_sha", "created_at", "age_days", "checks", "conflict", "changed_paths", "change_class", "task_id", "task_status", "issue_ssot", "superseded_reason", "recommendation"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/repository"},
+        "source_commit": {"$ref": "#/$defs/source_sha"},
+        "number": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[1-9][0-9]*$"},
+        "base_branch": {"type": "string", "minLength": 1},
+        "head_branch": {"type": "string", "minLength": 1},
+        "head_sha": {"$ref": "#/$defs/sha"},
+        "base_sha": {"$ref": "#/$defs/sha"},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "age_days": {"type": "integer", "minimum": 0},
+        "checks": {"$ref": "#/$defs/checks"},
+        "conflict": {"enum": ["YES", "NO", "UNKNOWN"]},
+        "changed_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "change_class": {"enum": ["CLASS_RECORD", "CLASS_DOCS", "CLASS_CODE", "CLASS_CONTRACT"]},
+        "task_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "task_status": {"enum": ["BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE", "UNKNOWN"]},
+        "issue_ssot": {"type": ["string", "null"], "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[1-9][0-9]*$"},
+        "superseded_reason": {"type": ["string", "null"], "enum": ["HEAD_REACHED_BASE", "TASK_DONE_LATER_COMMIT", null]},
+        "recommendation": {"enum": ["MERGE_CANDIDATE", "NEEDS_REBASE", "NEEDS_CI_FIX", "SUPERSEDED_CANDIDATE", "HUMAN_JUDGMENT"]}
+      }
+    },
+    "class_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["CLASS_RECORD", "CLASS_DOCS", "CLASS_CODE", "CLASS_CONTRACT"],
+      "properties": {
+        "CLASS_RECORD": {"type": "integer", "minimum": 0},
+        "CLASS_DOCS": {"type": "integer", "minimum": 0},
+        "CLASS_CODE": {"type": "integer", "minimum": 0},
+        "CLASS_CONTRACT": {"type": "integer", "minimum": 0}
+      }
+    },
+    "recommendation_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["MERGE_CANDIDATE", "NEEDS_REBASE", "NEEDS_CI_FIX", "SUPERSEDED_CANDIDATE", "HUMAN_JUDGMENT"],
+      "properties": {
+        "MERGE_CANDIDATE": {"type": "integer", "minimum": 0},
+        "NEEDS_REBASE": {"type": "integer", "minimum": 0},
+        "NEEDS_CI_FIX": {"type": "integer", "minimum": 0},
+        "SUPERSEDED_CANDIDATE": {"type": "integer", "minimum": 0},
+        "HUMAN_JUDGMENT": {"type": "integer", "minimum": 0}
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository_count", "pull_request_count", "change_class_counts", "recommendation_counts"],
+      "properties": {
+        "repository_count": {"type": "integer", "minimum": 0},
+        "pull_request_count": {"type": "integer", "minimum": 0},
+        "change_class_counts": {"$ref": "#/$defs/class_counts"},
+        "recommendation_counts": {"$ref": "#/$defs/recommendation_counts"}
+      }
+    }
+  }
+}

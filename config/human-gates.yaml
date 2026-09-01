@@ -10,3 +10,24 @@ human_operations:
 default_status: BLOCKED_HUMAN
 worker_may_request: true
 execution_policy: never_execute_requested_human_operation
+merge_classes:
+  CLASS_RECORD:
+    description: execution state, handoff, and task-queue records only
+    path_prefixes: [execution/]
+    auto_merge: false
+    human_approval_required: true
+  CLASS_DOCS:
+    description: documentation and repository guidance only
+    path_prefixes: [README.md, AGENTS.md, PLANS.md, docs/]
+    auto_merge: false
+    human_approval_required: true
+  CLASS_CODE:
+    description: tools and tests
+    path_prefixes: [tools/, tests/]
+    auto_merge: false
+    human_approval_required: true
+  CLASS_CONTRACT:
+    description: schemas, manifest pins, configuration contracts, and CI workflows
+    path_prefixes: [schemas/, config/, .github/workflows/]
+    auto_merge: false
+    human_approval_required: true
