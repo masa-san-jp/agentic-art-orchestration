@@ -1581,12 +1581,12 @@
 - 対象: `agentic-art-orchestration` feature branch `agent/issues-38-41-pipeline`; base `origin/main` は `e7d123c73f29015c8e54b39a4c1f97eb882f632d`、統合前のfeature HEADは `65f03ab9a7ad539d74fa1479f060a80d344e27a2`。PR #42の競合を `merge --no-commit --no-ff` で解消し、merge commit `50880258b64f08eab3fa53c99f9985a376466dd9` を作成した。default branchには触れていない。
 - 統合方針: PR側の6repo harness、viewer boundary、AAP_CHILD_REPOS_TOKEN real-chain、intent/run API、安全境界を保持し、main側の pin-adoption、research-signal-export、後続 transformation-rule schema、Production exchange workflowを追加した。main側の5repo旧pinは現在のqualified `data/snapshot.json`と一致しなかったため、feature側の6repo qualified pin（self `1864fa92`、art `b831f4c5`、marketing `ff3adca6`、Research `496a2e20`、Production `63a1ddf4`、viewer `cf411086`）を採用した。
 - viewer exporterはchild-owned `viewer-response-record/v1` envelopeで、親の3種 normalized signalへ偽装しない。generic `tools/ingest_signals.py`からは分離し、`SEPARATE_BOUNDARY`として `tools/viewer_response_gate.py`へ送る構成にした。親signal export schemaはself/art-history/marketingのまま維持した。
-- 追加・統合した観測可能な変更: `tools/pinned_workspace.py`のlocal exact-pin materialize、`tools/run.py`のlegacy orchestrationとbundle/intent入口の両立、`tools/validate.py`のv1.2 validatorsとpin/export validators、child gate timeout 300秒、pin adoption/signal ingest、workflowのreal-chain/production-exchange、cross-repository contract/runbookの器名・enum・pin採用手順。
-- Acceptance: 親 `tools/validate.py --check` PASS、`tools/project_status.py --check-readme` PASS、親full suite **453/453 PASS**、`git diff --cached --check` PASS。focused run/pinned-workspace/pin-adopt/signal-export/validate/transformation tests、viewer専用境界テスト、initial operations/startup/release testsもPASS。
-- 運用確認: workspace statusは6/6 child fixture clean。auditは既知のnonblocking marketing freshness warning 1件のみ。securityはPASS。子repo、Issue/PR、Drive artifact、default branch、release、tag、force pushは変更していない。外部artifactは作成していない。
+- 追加・統合した観測可能な変更: `tools/pinned_workspace.py`のlocal exact-pin materialize、runのlegacy orchestrationとbundle/intent入口の両立、`tools/validate.py`のv1.2 validatorsとpin/export validators、child gate timeout 300秒、pin adoption/signal ingest、workflowのreal-chain/production-exchange、cross-repository contract/runbookの器名・enum・pin採用手順。production exchangeはResearch/Productionだけを明示materializeする`--repository`選択を追加し、viewer権限への不要な依存を除いた。
+- Acceptance: 親 `tools/validate.py --check` PASS、`tools/project_status.py --check-readme` PASS、親full suite **456/456 PASS**、`git diff --check` PASS。focused pinned-workspace/real-chain 16/16、viewer専用境界テスト、initial operations/startup/release testsもPASS。PR #42 run `33528830980`はbootstrap PASS、production-exchange PASS、real-chainは`AAP_CHILD_REPOS_TOKEN`未設定でfail-closed。
+- 運用確認: workspace statusは6/6 child fixture clean。auditは既知のnonblocking marketing freshness warning 1件のみ。securityはPASS。子repo、Issue/PR本文、Drive artifact、default branch、release、tag、force pushは変更していない。親feature branchへの通常pushとPR check観測だけを実行した。外部artifactは作成していない。
 - 機微情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。explicit feedback / inferred feedbackはいずれもnone。
-- 未解決: feature branchへの通常push後に、PR #42のGitHub checksを確認する。AAP_CHILD_REPOS_TOKEN設定とremote green runは#116のhuman gateのまま。default branchへのmerge、ready化、releaseは人間承認を要する。
-- 次の1操作: `git push origin agent/issues-38-41-pipeline` を実行し、remote headとPR checksを確認する。
+- 未解決: #116のhuman gateであるread-only `AAP_CHILD_REPOS_TOKEN`設定と、それを使ったreal-chain green runの確認。production-exchangeとbootstrapはgreen。default branchへのmerge、ready化、releaseは人間承認を要する。
+- 次の1操作: repository administratorが`AAP_CHILD_REPOS_TOKEN`を設定し、PR #42のworkflowを再実行してreal-chain greenを確認する。secretの取得・保存・出力は行わない。
 
 ## 2026-09-02 PR merge gate observation (superseded by semantic integration)
 
@@ -1596,4 +1596,4 @@
 
 ## Next exact action
 
-1. 作成済みmerge commit `50880258b64f08eab3fa53c99f9985a376466dd9` を含むfeature branchを `git push origin agent/issues-38-41-pipeline` で通常pushし、PR checksを確認する。default branchへのmerge、release、force-pushは人間gateのまま。
+1. `AAP_CHILD_REPOS_TOKEN`設定後のPR #42 workflow再実行でreal-chain greenを確認し、確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。

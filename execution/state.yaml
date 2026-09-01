@@ -1,5 +1,5 @@
-version: 128
-updated_at: "2026-09-02T00:47:41+09:00"
+version: 129
+updated_at: "2026-09-02T00:59:37+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -100,25 +100,25 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: SEMANTICALLY_RESOLVED_PENDING_PUSH
-  observed_at: "2026-09-02T00:47:41+09:00"
+  status: PUSHED_CHECKS_PARTIAL_EXTERNAL_CREDENTIAL
+  observed_at: "2026-09-02T00:59:37+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: 50880258b64f08eab3fa53c99f9985a376466dd9
+  head_commit: 622acc52caeeceb1f56affd7b4ab82d9a1c94b50
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
   draft: true
-  mergeable: CONFLICTING
-  merge_state: DIRTY
-  checks: none_reported
+  mergeable: MERGEABLE
+  merge_state: UNSTABLE
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_EXTERNAL_CREDENTIAL"
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
-  local_operation: "semantic integration merge commit 50880258b64f08eab3fa53c99f9985a376466dd9 created; normal feature-branch push is pending"
-  remote_operations: [READ]
-  recommendation: "create the verified merge commit and normal-push the feature branch; keep default-branch merge behind human review"
+  local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
+  remote_operations: [READ, PUSH]
+  recommendation: "configure AAP_CHILD_REPOS_TOKEN and rerun real-chain; keep default-branch merge behind human review"
   impact: "片側優先ではviewer entry、AAP_CHILD_REPOS_TOKEN real-chain、pin adoption/signal export、intent/run API、または安全境界を失う可能性がある"
-  unblock_condition: "merge commit and feature-branch push complete, then PR checks pass; default-branch merge remains a human gate"
+  unblock_condition: "configure the external read-only AAP_CHILD_REPOS_TOKEN, rerun real-chain to green, then human review may decide the default-branch merge"
   integration:
     status: complete
     base_commit: e7d123c73f29015c8e54b39a4c1f97eb882f632d
@@ -135,6 +135,14 @@ pr_merge_observation:
     diff_check: PASS
     merge_commit: 50880258b64f08eab3fa53c99f9985a376466dd9
     merge_commit_status: CREATED
+    feature_head: 622acc52caeeceb1f56affd7b4ab82d9a1c94b50
+    record_commit: 51e037bc2f0e8ed06aa01d50d4d8a1e24084c3c9
+    push_verified: true
+    ci_run: 33528830980
+    ci_bootstrap: PASSED
+    ci_production_exchange: PASSED
+    ci_real_chain: FAILED_EXTERNAL_CREDENTIAL
+    ci_real_chain_reason: "AAP_CHILD_REPOS_TOKEN is unset; checkout and qualification were skipped fail-closed"
     child_repository_mutation: false
     sensitive_data: none
     external_artifact: none
