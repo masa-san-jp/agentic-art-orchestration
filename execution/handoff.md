@@ -1630,6 +1630,16 @@
 - 親変更のfocused testは8/8、validator、diff checkがPASS。子repo、Issue、Drive、pin、default branch、merge、releaseは変更していない。secret値、PRIVATE_RAW、RESTRICTED、raw conversationは保存していない。explicit feedback / inferred feedbackはいずれもnone。
 - leaseはattempt-2の期限切れを確認後、同じtaskのattempt-3として2026-09-02 02:30 JSTに再取得した。未解決はsetup-uv反映後のremote real-chain green evidenceのみである。
 
+## ISSUE-38-REAL-CHAIN-CI-001 completed
+
+- Task ID: `ISSUE-38-REAL-CHAIN-CI-001`。対象repoは`agentic-art-orchestration`のみで、親workflow/test/SSOTを変更した。実装commitは`c9c9e1ce5c08b61554f2b88f654a1474656362fc`。子repoは全てread-only checkoutで、子側commit・Issue・branch・データは変更していない。
+- 観測可能な変更: real-chainをPython 3.12へ固定し、`astral-sh/setup-uv@v6`を追加、manifestのpyproject依存だけを子repo別venvへ導入、Research用timeoutを有限900秒に固定、qualificationのstatusをrepo/gate単位で安全に出力する構成を完成させた。
+- Acceptance: `1/1`。run [`33538995358`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33538995358)で外部read-only credential、6 checkout、6 dependency provisioning、6/6 immutable child repository、15/15 declared child gates、bootstrap、Production exchangeがPASS。qualificationは`changed_pins=6`でも`applied=false`で、pin自動採用なし。
+- 親検証: `tools/validate.py --check` PASS、`tests.test_real_chain_ci tests.test_pin_update` 8/8 PASS、親full suite 457/457 PASS、project-status/readme PASS、workspace 6/6 clean、security PASS、auditは既知のnonblocking finding 1件、`git diff --check` PASS。remote PR #42はhead `c9c9e1c`、OPEN/DRAFT、MERGEABLE/CLEAN。
+- repoごとの変更commit: 親`c9c9e1c`、self-model/art-history/marketing-trends/agentic-art-research/agentic-art-production/viewer-response-notesは`no mutation`。外部資格runは各childの実体を一時immutable archiveへ複製して実行し、親へchild schema/dataをvendor copyしていない。
+- 機微情報: secret値、PRIVATE_RAW、RESTRICTED、direct identifier、raw conversationは保存していない。外部artifactは作成しておらず、Driveのcreate-only操作もない。explicit feedback / inferred feedbackはいずれもnone。
+- 未解決: PR #42のdefault branch merge、ready化、tag、releaseは人間承認が必要。qualificationで検出した6件のpin差分は、別途明示的なpin adoptionを行うまで未採用。auditの既知nonblocking finding 1件は残る。
+
 ## Next exact action
 
-1. 親変更をfeature branchへcommit・pushし、PR #42のworkflow再実行でreal-chain greenを確認する。確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。
+1. 人間がPR #42をreviewし、default branchへのmerge可否を判断する。merge後に必要ならread-onlyのpost-merge確認を行う。release、force-push、pin adoptionは別の人間gateのまま。

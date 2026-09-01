@@ -1,5 +1,5 @@
-version: 22
-updated_at: "2026-09-01T21:13:06+09:00"
+version: 23
+updated_at: "2026-09-02T02:54:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -668,7 +668,7 @@ tasks:
   - id: ISSUE-38-REAL-CHAIN-CI-001
     milestone: M15
     title: Run real pinned child and Production exchange qualification in CI
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -678,8 +678,8 @@ tasks:
     depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
     acceptance: Pull-request CI checks out all six current manifest children at their declared default branch using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails closed on a missing credential before checkout, and never adopts pins or mutates child repositories.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain --timeout 900 --python-root <child-environment-root>]
-    progress: AAP_CHILD_REPOS_TOKEN is configured. Run 33535915349 passed credential, six checkouts, all six dependency provisions, bootstrap, and production-exchange. Five child repositories passed; art-history graph/context-vector gates passed but its unit-test gate failed because the parent Python 3.12 runner did not provide uv, which the child agent-doctor tests require. The workflow now adds setup-uv before the next rerun, while retaining pyproject dependency extraction and the finite 900-second Research timeout.
-    blocker: Remote green evidence is still required; human review remains required before default-branch merge, ready-for-review, or release.
+    progress: Complete. Run 33538995358 passed credential, six checkouts, all six dependency provisions, bootstrap, production-exchange, and all six immutable child repositories with 15/15 declared gates PASS. Qualification reported changed_pins=6 and applied=false; no pin or child repository was changed.
+    blocker: Human review remains required before default-branch merge, ready-for-review, tag, or release.
 
   - id: GAP-DAG-001
     milestone: M15
