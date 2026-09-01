@@ -156,6 +156,14 @@ def qualify_pin_update(
                     "status": result["status"],
                     "execution_mode": result["execution_mode"],
                     "environment_mode": result["environment_mode"],
+                    "gates": [
+                        {
+                            key: gate[key]
+                            for key in ("command", "status", "exit_code", "error")
+                            if key in gate
+                        }
+                        for gate in result.get("gates", [])
+                    ],
                 }
                 for result in quality["results"]
             ],

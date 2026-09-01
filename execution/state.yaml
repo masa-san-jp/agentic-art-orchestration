@@ -1,5 +1,5 @@
-version: 130
-updated_at: "2026-09-02T01:22:00+09:00"
+version: 131
+updated_at: "2026-09-02T01:48:00+09:00"
 active_task: ISSUE-38-REAL-CHAIN-CI-001
 active_repository: agentic-art-orchestration
 lease:
@@ -19,7 +19,7 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: d80d6b7
   expected_changes: Isolate real-chain child quality-gate dependencies in six pre-provisioned per-child environments, align qualification timeout with the 300-second gate default, and preserve read-only pin qualification without applying updates.
-  result: in progress; latest remote run 33529218639 authenticated all six child checkouts but qualification returned FAILED after observing six changed pins; workflow fix is being qualified.
+  result: in progress; run 33533135712 authenticated all six child checkouts and provisioned per-child environments. Production, Research, marketing, and viewer gates passed; art-history and self-model gates failed, so exchange was not run. Safe gate-level status output is being added before selecting child-owned remediation.
 last_completed_task: HARNESS-PR-TRIAGE-001
 resume_from:
   task: null
@@ -100,24 +100,24 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: REMOTE_REAL_CHAIN_STATUS_OBSERVABILITY_PENDING
-  observed_at: "2026-09-02T01:34:40+09:00"
+  status: REMOTE_REAL_CHAIN_CHILD_GATES_FAILED
+  observed_at: "2026-09-02T01:46:39+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: 3d4f2ea86b594e908cbeafe1c75c60ba2f289fe5
+  head_commit: 3bebf1b
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
   draft: true
   mergeable: MERGEABLE
   merge_state: UNSTABLE
-  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_AFTER_AUTHENTICATED_CHECKOUT_AND_PER_CHILD_PROVISIONING"
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_ART_HISTORY_AND_SELF_MODEL_CHILD_GATES"
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
   local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
   remote_operations: [READ, PUSH]
-  recommendation: "rerun with sanitized per-child gate and exchange statuses, then repair the owner gate if needed; keep default-branch merge behind human review"
-  impact: "qualificationの集約ログだけでは、6件のpin候補のどの品質ゲートまたは交換処理が不合格かを識別できない"
+  recommendation: "rerun with sanitized gate-level statuses, then route art-history and self-model failures to their owner repositories; keep default-branch merge behind human review"
+  impact: "art-historyとself-modelの品質ゲート不合格を解消しない限り、6件のpin候補のProduction exchangeを資格付けできない"
   unblock_condition: "the per-child qualification workflow completes green with the external read-only credential, then human review may decide the default-branch merge"
   integration:
     status: complete
@@ -150,15 +150,15 @@ pr_merge_observation:
       explicit: none
       inferred: none
   latest_remote_run:
-    id: 33531743915
-    head_sha: 3d4f2ea86b594e908cbeafe1c75c60ba2f289fe5
-    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33531743915
+    id: 33533135712
+    head_sha: 3bebf1b
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33533135712
     bootstrap: PASSED
     production_exchange: PASSED
     real_chain_preflight: PASSED
     real_chain_qualification: FAILED
-    real_chain_observed: "credential, six child checkouts, and per-child dependency provisioning passed; qualification ended with exit 2 after about 8 minutes"
-    child_repository_statuses: not exposed by the prior CLI summary; next run will emit repository IDs, status, execution mode, and environment mode only
+    real_chain_observed: "credential, six child checkouts, and per-child dependency provisioning passed; agentic-art-production, agentic-art-research, marketing-trends, and viewer-response-notes passed; art-history and self-model failed; production exchange was NOT_RUN"
+    child_repository_statuses: exposed at repository level; next run will also emit declared gate command, status, exit code, and safe error metadata
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103

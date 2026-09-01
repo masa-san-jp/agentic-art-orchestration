@@ -26,6 +26,14 @@ class PinUpdateTests(unittest.TestCase):
                     "status": "ENV_UNSATISFIED",
                     "execution_mode": "NOT_RUN",
                     "environment_mode": "per-child",
+                    "gates": [
+                        {
+                            "command": "python3 tools/validate.py --check",
+                            "status": "NOT_RUN",
+                            "exit_code": None,
+                            "error": "dependency preflight failed",
+                        }
+                    ],
                 }
             ]
         }
@@ -42,6 +50,14 @@ class PinUpdateTests(unittest.TestCase):
                     "status": "ENV_UNSATISFIED",
                     "execution_mode": "NOT_RUN",
                     "environment_mode": "per-child",
+                    "gates": [
+                        {
+                            "command": "python3 tools/validate.py --check",
+                            "status": "NOT_RUN",
+                            "exit_code": None,
+                            "error": "dependency preflight failed",
+                        }
+                    ],
                 }
             ],
             report["child_quality_gates"]["repositories"],

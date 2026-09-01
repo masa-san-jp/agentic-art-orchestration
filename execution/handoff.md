@@ -1605,7 +1605,8 @@
 ## 2026-09-02 qualification status observability follow-up
 
 - 修正後run [`33531743915`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33531743915)は、credential確認、6 child checkout、6つのper-child dependency environment provisioning、bootstrap、production-exchangeをPASSした。real-chain qualificationは約8分後にexit 2でFAILEDとなった。
-- 子repo別の品質ゲート結果は従来のCLI標準出力に含まれず、外部reportの存在だけではこのセッションから理由を断定できなかった。`tools/qualify_pin_update.py`を、repo ID・status・execution mode・environment modeとproduction exchangeの集約statusだけをreport/標準出力へ出すよう変更した。gate stdout/stderr、secret、pin値、raw dataは出さない。
+- その後のrun [`33533135712`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33533135712)で子repo別statusを確認した。agentic-art-production、agentic-art-research、marketing-trends、viewer-response-notesはPASS、art-historyとself-modelはFAILED、Production exchangeはNOT_RUNだった。失敗gateの名称はまだ標準出力に出ていないため、子repo側の原因は断定していない。
+- `tools/qualify_pin_update.py`を、repo ID・status・execution mode・environment modeに加えて、宣言gateのcommand・status・exit code・安全なerror metadataだけをreport/標準出力へ出すよう変更した。gate stdout/stderr、secret、pin値、raw dataは出さない。
 - CLIの既定timeoutを`child_quality_gates.DEFAULT_GATE_TIMEOUT_SECONDS`（300秒）へ統一した。focused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkはPASS。次のremote runで失敗repoまたはexchange失敗を確定する。
 
 ## Next exact action

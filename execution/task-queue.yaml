@@ -678,7 +678,7 @@ tasks:
     depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
     acceptance: Pull-request CI checks out all six current manifest children at their declared default branch using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails closed on a missing credential before checkout, and never adopts pins or mutates child repositories.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain --timeout 300 --python-root <child-environment-root>]
-    progress: AAP_CHILD_REPOS_TOKEN is configured and run 33529218639 authenticated all six checkouts, but qualification failed after observing six changed pins. Run 33531743915 also passed credential, six checkouts, and per-child provisioning before qualification failed; the next rerun will expose sanitized child-gate and exchange statuses.
+    progress: AAP_CHILD_REPOS_TOKEN is configured. Run 33533135712 passed credential, six checkouts, per-child provisioning, bootstrap, and production-exchange; agentic-art-production, Research, marketing-trends, and viewer-response-notes gates passed, while art-history and self-model gates failed, so exchange was not run. The next rerun will expose safe gate-level failure metadata for owner-repository remediation.
     blocker: Remote green evidence is still required; human review remains required before default-branch merge, ready-for-review, or release.
 
   - id: GAP-DAG-001
