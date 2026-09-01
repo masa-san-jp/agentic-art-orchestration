@@ -100,24 +100,24 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: REMOTE_REAL_CHAIN_AUTHENTICATED_QUALIFICATION_FAILED
-  observed_at: "2026-09-02T01:15:22+09:00"
+  status: REMOTE_REAL_CHAIN_STATUS_OBSERVABILITY_PENDING
+  observed_at: "2026-09-02T01:34:40+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: d80d6b7dd91e35af10561583f006dac465b8edc4
+  head_commit: 3d4f2ea86b594e908cbeafe1c75c60ba2f289fe5
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
   draft: true
   mergeable: MERGEABLE
   merge_state: UNSTABLE
-  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_AFTER_AUTHENTICATED_CHECKOUT_AND_SIX_PIN_CHANGES"
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_AFTER_AUTHENTICATED_CHECKOUT_AND_PER_CHILD_PROVISIONING"
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
   local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
   remote_operations: [READ, PUSH]
-  recommendation: "isolate child quality-gate dependencies per repository, align qualification timeout, rerun real-chain; keep default-branch merge behind human review"
-  impact: "共有依存環境のままでは子repoごとの品質ゲートがENV_UNSATISFIEDまたはtimeoutになり、6件のpin候補を安全に資格付けできない"
+  recommendation: "rerun with sanitized per-child gate and exchange statuses, then repair the owner gate if needed; keep default-branch merge behind human review"
+  impact: "qualificationの集約ログだけでは、6件のpin候補のどの品質ゲートまたは交換処理が不合格かを識別できない"
   unblock_condition: "the per-child qualification workflow completes green with the external read-only credential, then human review may decide the default-branch merge"
   integration:
     status: complete
@@ -149,6 +149,16 @@ pr_merge_observation:
     feedback:
       explicit: none
       inferred: none
+  latest_remote_run:
+    id: 33531743915
+    head_sha: 3d4f2ea86b594e908cbeafe1c75c60ba2f289fe5
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33531743915
+    bootstrap: PASSED
+    production_exchange: PASSED
+    real_chain_preflight: PASSED
+    real_chain_qualification: FAILED
+    real_chain_observed: "credential, six child checkouts, and per-child dependency provisioning passed; qualification ended with exit 2 after about 8 minutes"
+    child_repository_statuses: not exposed by the prior CLI summary; next run will emit repository IDs, status, execution mode, and environment mode only
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103

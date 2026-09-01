@@ -4,11 +4,51 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from tools.qualify_pin_update import _manifest_hash, _replace_pins, apply_qualified_pins, workspace_candidate
+from tools.qualify_pin_update import (
+    DEFAULT_GATE_TIMEOUT_SECONDS,
+    _manifest_hash,
+    _replace_pins,
+    apply_qualified_pins,
+    qualify_pin_update,
+    workspace_candidate,
+)
 
 
 class PinUpdateTests(unittest.TestCase):
+    def test_qualification_summary_preserves_sanitized_child_statuses(self) -> None:
+        manifest = {"version": 1, "repositories": []}
+        quality = {
+            "results": [
+                {
+                    "repository": "agentic-art-production",
+                    "status": "ENV_UNSATISFIED",
+                    "execution_mode": "NOT_RUN",
+                    "environment_mode": "per-child",
+                }
+            ]
+        }
+        with patch("tools.qualify_pin_update.workspace_candidate", return_value=(manifest, [])), patch(
+            "tools.qualify_pin_update.validate_manifest", return_value=[]
+        ), patch("tools.qualify_pin_update.run_child_quality_gates", return_value=quality):
+            report = qualify_pin_update(manifest, Path("/tmp/qualification-workspace"))
+
+        self.assertEqual(DEFAULT_GATE_TIMEOUT_SECONDS, 300)
+        self.assertEqual(
+            [
+                {
+                    "repository": "agentic-art-production",
+                    "status": "ENV_UNSATISFIED",
+                    "execution_mode": "NOT_RUN",
+                    "environment_mode": "per-child",
+                }
+            ],
+            report["child_quality_gates"]["repositories"],
+        )
+        self.assertEqual("FAILED", report["status"])
+        self.assertEqual("NOT_RUN", report["production_exchange"]["status"])
+
     def test_workspace_candidate_reads_clean_head_without_changing_manifest(self) -> None:
         with tempfile.TemporaryDirectory(prefix="pin-update-test-") as temporary:
             root = Path(temporary)

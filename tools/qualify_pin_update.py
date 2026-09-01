@@ -15,12 +15,12 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from tools.child_quality_gates import run_child_quality_gates
+    from tools.child_quality_gates import DEFAULT_GATE_TIMEOUT_SECONDS, run_child_quality_gates
     from tools.production_exchange import run_exchange_e2e
     from tools.validate import load_yaml, validate_manifest
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from tools.child_quality_gates import run_child_quality_gates
+    from tools.child_quality_gates import DEFAULT_GATE_TIMEOUT_SECONDS, run_child_quality_gates
     from tools.production_exchange import run_exchange_e2e
     from tools.validate import load_yaml, validate_manifest
 
@@ -111,7 +111,7 @@ def qualify_pin_update(
     manifest: dict[str, Any],
     workspace_root: Path,
     *,
-    timeout_seconds: int = 60,
+    timeout_seconds: int = DEFAULT_GATE_TIMEOUT_SECONDS,
     run_id: str = "pin-update-qualification",
     child_python: str = sys.executable,
     python_root: Path | None = None,
@@ -147,7 +147,19 @@ def qualify_pin_update(
         "manifest_hash": _manifest_hash(manifest),
         "candidate_manifest_hash": _manifest_hash(candidate),
         "changes": changes,
-        "child_quality_gates": {"status": child_status, "repository_count": len(quality["results"])},
+        "child_quality_gates": {
+            "status": child_status,
+            "repository_count": len(quality["results"]),
+            "repositories": [
+                {
+                    "repository": result["repository"],
+                    "status": result["status"],
+                    "execution_mode": result["execution_mode"],
+                    "environment_mode": result["environment_mode"],
+                }
+                for result in quality["results"]
+            ],
+        },
         "production_exchange": {"status": exchange.get("status", "BLOCKED")},
         "applied": False,
     }
@@ -158,7 +170,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--workspace-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--timeout", type=int, default=60)
+    parser.add_argument("--timeout", type=int, default=DEFAULT_GATE_TIMEOUT_SECONDS)
     parser.add_argument("--run-id", default="pin-update-qualification")
     parser.add_argument("--child-python", default=sys.executable)
     parser.add_argument(
@@ -190,7 +202,19 @@ def main() -> int:
             report["manifest_hash_after"] = manifest_hash_after
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps({"command": "qualify-pin-update", "status": report["status"], "changed_pins": len(report["changes"]), "applied": report["applied"]}, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    "command": "qualify-pin-update",
+                    "status": report["status"],
+                    "changed_pins": len(report["changes"]),
+                    "applied": report["applied"],
+                    "child_quality_gates": report["child_quality_gates"],
+                    "production_exchange": report["production_exchange"],
+                },
+                sort_keys=True,
+            )
+        )
         return 0 if report["status"] == "PASSED" else 2
     except (OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

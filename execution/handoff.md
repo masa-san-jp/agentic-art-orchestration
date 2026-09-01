@@ -1602,6 +1602,12 @@
 - focused `tests.test_real_chain_ci` 4/4、`tools/validate.py --check`、`git diff --check`はPASS。変更は親repoのworkflow/test/SSOTのみで、子repo、Issue、Drive、pin、default branch、merge、releaseは変更していない。secret値、PRIVATE_RAW、RESTRICTED、raw conversationは保存していない。explicit feedback / inferred feedbackはいずれもnone。
 - 未解決: 修正後のremote real-chain green run。green確認後もPR #42のmerge・ready化・releaseは人間gateとして残る。
 
+## 2026-09-02 qualification status observability follow-up
+
+- 修正後run [`33531743915`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33531743915)は、credential確認、6 child checkout、6つのper-child dependency environment provisioning、bootstrap、production-exchangeをPASSした。real-chain qualificationは約8分後にexit 2でFAILEDとなった。
+- 子repo別の品質ゲート結果は従来のCLI標準出力に含まれず、外部reportの存在だけではこのセッションから理由を断定できなかった。`tools/qualify_pin_update.py`を、repo ID・status・execution mode・environment modeとproduction exchangeの集約statusだけをreport/標準出力へ出すよう変更した。gate stdout/stderr、secret、pin値、raw dataは出さない。
+- CLIの既定timeoutを`child_quality_gates.DEFAULT_GATE_TIMEOUT_SECONDS`（300秒）へ統一した。focused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkはPASS。次のremote runで失敗repoまたはexchange失敗を確定する。
+
 ## Next exact action
 
 1. 親変更をfeature branchへcommit・pushし、PR #42のworkflow再実行でreal-chain greenを確認する。確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。
