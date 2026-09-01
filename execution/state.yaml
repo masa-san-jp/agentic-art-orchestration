@@ -1,5 +1,5 @@
-version: 127
-updated_at: "2026-09-02T00:15:55+09:00"
+version: 128
+updated_at: "2026-09-02T00:47:41+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -101,11 +101,11 @@ issue_intake_live_observation:
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
   status: SEMANTICALLY_RESOLVED_PENDING_PUSH
-  observed_at: "2026-09-02T00:45:16+09:00"
+  observed_at: "2026-09-02T00:47:41+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: 65f03ab9a7ad539d74fa1479f060a80d344e27a2
+  head_commit: 50880258b64f08eab3fa53c99f9985a376466dd9
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
@@ -114,7 +114,7 @@ pr_merge_observation:
   merge_state: DIRTY
   checks: none_reported
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
-  local_operation: "semantic integration merge --no-commit --no-ff origin/main resolved locally; merge commit is pending after verification"
+  local_operation: "semantic integration merge commit 50880258b64f08eab3fa53c99f9985a376466dd9 created; normal feature-branch push is pending"
   remote_operations: [READ]
   recommendation: "create the verified merge commit and normal-push the feature branch; keep default-branch merge behind human review"
   impact: "片側優先ではviewer entry、AAP_CHILD_REPOS_TOKEN real-chain、pin adoption/signal export、intent/run API、または安全境界を失う可能性がある"
@@ -133,6 +133,8 @@ pr_merge_observation:
     audit: "FINDINGS; one known nonblocking marketing freshness warning"
     security: PASS
     diff_check: PASS
+    merge_commit: 50880258b64f08eab3fa53c99f9985a376466dd9
+    merge_commit_status: CREATED
     child_repository_mutation: false
     sensitive_data: none
     external_artifact: none
