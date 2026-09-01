@@ -1,5 +1,5 @@
-version: 124
-updated_at: "2026-09-01T21:16:00+09:00"
+version: 125
+updated_at: "2026-09-01T21:20:22+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 2ca466a
   expected_changes: Implement a deterministic metadata-only open-PR triage report for all manifest repositories, path-based human merge classes, fixture/live inputs, tests, and operator guidance without any GitHub write operation.
-  result: complete; Issue #117 acceptance 2/2 fixture dimensions and live all-repository observation completed with no remote write operation
+  result: complete; Issue #117 acceptance 3/3: fixture dimensions, live all-repository observation, and human gate preservation completed with no remote write operation
 last_completed_task: HARNESS-PR-TRIAGE-001
 resume_from:
   task: null
-  action: "Read-only intake observed 38 open Issues: 22 already queued, 0 qualified unqueued, and 16 UNQUEUED_NEEDS_SSOT; do not register or implement without a complete Issue SSOT."
+  action: "Fixture intake found 0 qualified unqueued Issues; metadata-only live observation found parent 38, Production 1, viewer 1, and no new implementation SSOT. Do not register or implement without a complete Issue SSOT."
   command: .venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check
 
 pr_triage:
@@ -71,6 +71,26 @@ pr_triage:
     - human review remains required for MERGE_CANDIDATE and all other recommendations; no automatic merge was introduced
     - HARNESS-REALCHAIN-REBASE-001 remains human-gated on AAP_CHILD_REPOS_TOKEN configuration and a remote green run
     - issue intake remains at 16 UNQUEUED_NEEDS_SSOT; no new task was registered without observable acceptance, target repository, checks, and human gate
+
+issue_intake_live_observation:
+  status: complete
+  observed_at: "2026-09-01T12:20:22Z"
+  repositories: 7
+  open_issue_counts:
+    agentic-art-orchestration: 38
+    agentic-art-production: 1
+    agentic-art-research: 0
+    art-history: 0
+    marketing-trends: 0
+    self-model: 0
+    viewer-response-notes: 1
+  existing_manifest_requirement_ssots:
+    - https://github.com/masa-san-jp/agentic-art-production/issues/10
+    - https://github.com/masa-san-jp/viewer-response-notes/issues/2
+  new_qualified_implementation_issues: 0
+  source: GitHub metadata-only number/title/url observation
+  issue_body_read: false
+  remote_operations: [READ]
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103

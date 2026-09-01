@@ -630,6 +630,12 @@
 - 変更子repo: なし。子repo品質ゲート: 対象なし。子repoのIssue、schema、canonical data、Google Drive、GitHub remote operationは変更していない。機微情報findingなし。
 - acceptance: 1/1達成。leaseを解放し、最低IDの依存完了済み`V12-CHILD-GATES-001`をREADYへ進めた。
 
+## 2026-09-01 continuation observation
+
+- queue/state確認後、Issue本文を取得せず、GitHubの番号・タイトル・URL相当のmetadata-only件数を7repoでread-only観測した。open Issueは親38、Production 1、viewer 1、self-model/art-history/marketing-trends/Research 0だった。
+- Production #10とviewer #2はmanifestに記録済みの要件SSOTであり、新しい実装taskではない。新規qualified implementation Issueは0件。Issue bodyは読まず、Issue create/update/comment/close/labelは行っていない。
+- したがってqueue登録・実装は行わず、16件の`UNQUEUED_NEEDS_SSOT`は観測事実のまま保持する。既存のhuman gate（#116 secret/green run、PR merge判断）も変更しない。
+
 ## Next exact action
 
 1. `V12-PROVENANCE-001`をclaimし、Research Propositionからselection decision、candidate、rule、normalized signal、source commit、evidence locatorまでの逆引きtraceを実装する。最初の操作は`.venv/bin/python tools/validate.py --check`。
@@ -1565,4 +1571,4 @@
 
 ## Next exact action
 
-1. 現在はeligibleなREADY/BACKLOGがなく、read-only intakeは38件中22件queued・0件qualified unqueued・16件`UNQUEUED_NEEDS_SSOT`だった。新しいIssueまたはSSOT補完が現れるまで実装・queue登録をせず、変化時に`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`を再実行する。
+1. 現在はeligibleなREADY/BACKLOGがなく、fixture intakeは0件qualified unqueued。metadata-only live観測は親38、Production 1、viewer 1、その他0で、新規実装SSOTは0件だった。新しいIssueまたはSSOT補完が現れるまで実装・queue登録をせず、変化時に`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`を再実行する。
