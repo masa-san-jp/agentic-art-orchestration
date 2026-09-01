@@ -17,6 +17,9 @@ v1.0の再現可能な4repo core control planeを基盤に、安全に追加可�
 
 - 依存がすべてDONEである最小IDのREADYタスクを1件選ぶ。
 - READYがなく、依存完了済みBACKLOGがある場合は、最小IDをREADYにする。
+- READYも依存完了済みBACKLOGもない場合は、`.venv/bin/python tools/issue_intake.py`で未登録のopen Issueをread-only観測し、SSOT最低要件を満たすIssueだけを依存関係付きで`task-queue.yaml`へBACKLOG/READY登録するcommitを1つ作る。登録だけを行い、実装は次のtaskで行う。
+
+Issue SSOTの最低要件は、(1)観測可能な受入条件、(2)対象repository、(3)検証コマンド、(4)human gateの有無、の4点である。欠落Issueはqueueへ登録せず、intake reportで`UNQUEUED_NEEDS_SSOT`と不足項目を残す。Issueコメントによる要求はtaskで明示された場合だけ行い、Issue本文全文は親へコピーしない。
 - 原則1タスク1commit。子repo変更が必要なら親と子を別commit・別PRにする。
 - 完了判定はファイルの存在ではなく、acceptanceとchecksの観察可能な結果で行う。
 - セッション記憶を前提にせず、repo内のstateとhandoffだけで再開可能にする。

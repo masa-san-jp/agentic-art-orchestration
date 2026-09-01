@@ -115,6 +115,78 @@ READMEのoffline列は毎回新しい一時fixture rootを作るため、古いr
 
 READMEが正準bootstrap契約、AGENTS/runbookが参照層、`tools/workspace.py`がnetworkless materialization、`tools/validate.py`とunittestが検証層である。次の依存タスクは`HARNESS-INTAKE-001`（Issue #114）。
 
+## HARNESS-INTAKE-001 ExecPlan — completed
+
+### Purpose / Big Picture
+
+Issue #114に従い、READYも依存完了済みBACKLOGも無いときに、外部エージェントがopen Issueを安全に観測し、SSOT品質を満たすIssueだけをqueueへ登録できる常設経路を作る。Issue本文全文や推定feedbackを親へ取り込まず、登録と実装を分離する。
+
+### Progress
+
+- [x] AGENTS.mdへ空queueの第三ルールとIssue SSOT最低要件を追加した。
+- [x] metadata-onlyの`issue-intake-report/v1` schemaとread-only CLIを追加した。
+- [x] fixtureで38件のopen Issue観測を再現し、#117だけをqualified unqueuedとして特定した。
+- [x] `HARNESS-PR-TRIAGE-001`を#117へ一度だけ登録し、16件を`UNQUEUED_NEEDS_SSOT`として残した。
+- [x] focused/full tests、validator、diff、report byte determinismを実行した。
+
+### Surprises & Discoveries
+
+- queueには既存のIssue SSOTが多数あるため、intakeは番号の重複ではなくcanonical Issue URLで`ALREADY_QUEUED`を判定する必要がある。
+- GitHubのread-only APIが実行時にネットワーク unavailableとなったため、取得済みの番号・タイトル・URLと#117のSSOT見出しをfixtureで固定した。本文未取得のIssueは保守的に`UNQUEUED_NEEDS_SSOT`へ分類し、コメントで不足を補わなかった。
+
+### Decision Log
+
+- Issue品質は観測可能な受入条件、対象repository、検証コマンド、human gateの有無の4点だけで判定し、domain内容の採否は判定しない。
+- `REGISTER_BACKLOG`候補を自動昇格せず、依存関係を人間可読に確認したqueue commitで登録する。今回の#117は次の実装taskへ分離した。
+- Issue本文のコピー、Issueコメント、Issue close、GitHub/Drive write、child repo操作は行わない。
+
+### Outcomes & Retrospective
+
+- Acceptanceは4/4。intake focused `6/6 PASS`、docs+intake `13/13 PASS`、親full suite `386/386 PASS`、validator、diff checkがPASSした。
+- 事前reportは38件、qualified unqueuedは#117、登録後reportは22件queued・16件`UNQUEUED_NEEDS_SSOT`で、最終queue反映後report SHA-256は`cbbd7142c0be8d659b4f53b1367bdef48818bc3785a378f07967b919ff352861`、queue SHA-256は`869a6d365f1b1adbedc1fb866381090e91157e41d828719f0fdf63ce32fc3389`。
+- 子repo、Issue/Drive、merge、release、push、credential、raw inputは変更していない。
+
+### Context and Orientation
+
+- Issue SSOT: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+- report schema: `schemas/issue-intake-report.schema.json`
+- tool: `tools/issue_intake.py`
+- operator entry: `docs/operator-runbook.md` の `空queue時のIssue intake`
+- fixture/test: `tests/fixtures/issue-intake/current-open-issues.json`, `tests/test_issue_intake.py`
+
+### Plan of Work
+
+1. Task selectionとSSOT最低要件を文書化する。
+2. queue比較付きのmetadata-only report contractを実装する。
+3. fixtureで決定論・privacy・read-only境界を検証する。
+4. 現行open Issueを観測し、qualified候補だけを依存関係付きでqueueへ登録する。
+
+### Concrete Steps
+
+~~~bash
+.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check
+.venv/bin/python -m unittest tests.test_issue_intake -v
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python tools/project_status.py --check-readme
+git diff --check
+~~~
+
+### Validation and Acceptance
+
+- open Issue reportはschema valid、2回のCLI実行でbyte一致、queue bytes不変である。
+- AGENTS.mdのTask selectionは第三ルールを持ち、4つのSSOT最低要件を説明する。
+- #117は重複なく`HARNESS-PR-TRIAGE-001`として登録され、依存は`HARNESS-REALCHAIN-REBASE-001`である。
+- 本文未取得Issueは16件の`UNQUEUED_NEEDS_SSOT`として出力され、正常値へ丸められない。
+
+### Idempotence and Recovery
+
+intakeはqueueをread-onlyで読み、Issue URLの集合だけを比較する。`--check`は同一入力を再評価し、同じJSON bytesを要求する。登録commit後に中断した場合はstate/handoffのreport SHAとqueue statusから再開し、同じIssueを二重登録しない。
+
+### Interfaces and Dependencies
+
+`gh issue list` JSONまたはfixture → `issue_intake.py` → `issue-intake-report/v1` → 人間確認付きqueue registration → 次の実装task、という一方向の境界である。#117の実装は`HARNESS-PR-TRIAGE-001`、次に実行可能なtaskは`HARNESS-SSOT-PUSH-001`（Issue #115）。
+
 ## REPO-USABILITY-001 — completed review and docs PRs
 
 利用者が初見で各repoの目的・入口・保存境界を理解できるかを6repoのfresh cloneで監査した。親READMEは目的別入口とviewer-response-notesを追加し、viewerの実際のGitHub default branch `feat/viewer-response-contracts`をmanifestへ反映した。child READMEは各repoの正本・利用手順・privacy/output境界に限定して改善し、childごとに分離commitとdraft PRを作成した。self-modelのstale生成物は正本から再生成した。

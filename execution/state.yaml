@@ -1,29 +1,29 @@
-version: 112
-updated_at: "2026-09-01T15:41:47+09:00"
+version: 115
+updated_at: "2026-09-01T15:58:48+09:00"
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-09-01T15:26:14+09:00"
-  expires_at: "2026-09-01T16:26:14+09:00"
+  acquired_at: "2026-09-01T15:46:11+09:00"
+  expires_at: "2026-09-01T16:46:11+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-BOOTSTRAP-001:attempt-1
-  released_at: "2026-09-01T15:40:15+09:00"
+  execution_id: HARNESS-INTAKE-001:attempt-1
+  released_at: "2026-09-01T15:57:29+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [README.md, AGENTS.md, docs/operator-runbook.md, tests/test_docs.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    paths: [AGENTS.md, docs/operator-runbook.md, tools/issue_intake.py, schemas/issue-intake-report.schema.json, tests/test_issue_intake.py, tests/fixtures/issue-intake, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: HARNESS-BOOTSTRAP-001
-  repository: agentic-art-orchestration
-  start_point: 099460fdd28a7505fb97439c70b53edbce741dd5
-  expected_changes: Make the documented fresh-clone bootstrap succeed verbatim using a local venv; align README, AGENTS, and operator-runbook command notation; add documentation regression tests.
-  result: complete; Issue #113 acceptance 3/3 observed with fresh-clone venv bootstrap, offline materialization, documentation regression, validator, and full-suite evidence
-last_completed_task: HARNESS-BOOTSTRAP-001
-resume_from:
   task: HARNESS-INTAKE-001
-  action: "Implement Issue #114: add a read-only deterministic open-Issue intake path and apply it to register SSOT-qualified Issues."
+  repository: agentic-art-orchestration
+  start_point: 486c16d
+  expected_changes: Add a read-only deterministic open-Issue intake report, document the empty-queue and Issue SSOT rules, and register SSOT-qualified open Issues in the queue without automatic promotion or close.
+  result: complete; Issue #114 acceptance 4/4 observed with deterministic metadata-only intake, initial queue application, and parent regression evidence
+last_completed_task: HARNESS-INTAKE-001
+resume_from:
+  task: HARNESS-SSOT-PUSH-001
+  action: "Implement Issue #115: record the push-before-release rule, observe parent ahead-of-origin safely, and fast-forward push only the authorized working branch."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete
@@ -803,3 +803,45 @@ harness_bootstrap:
   unresolved:
     - fresh-clone full-suite materialization remains an explicit prerequisite because generated data/ outputs are intentionally ignored; the README documents this networkless path.
     - the next task is HARNESS-INTAKE-001; no task was auto-started after lease release.
+
+harness_intake:
+  status: complete
+  observed_at: "2026-09-01T15:57:29+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+  target_repository: agentic-art-orchestration
+  acceptance: 4/4
+  changes:
+    - AGENTS.md now has the empty-queue third task-selection rule and four-field Issue SSOT minimum.
+    - docs/operator-runbook.md documents read-only intake, fixture/live commands, and REGISTER_BACKLOG/ALREADY_QUEUED/UNQUEUED_NEEDS_SSOT handling.
+    - tools/issue_intake.py and schemas/issue-intake-report.schema.json implement a deterministic metadata-only report with queue SHA-256 and no Issue body output.
+    - tests/fixtures/issue-intake and tests/test_issue_intake.py cover schema, determinism, input immutability, privacy, documentation, and one-time queue registration.
+  first_application:
+    source: fixture://issue-intake/current-open-issues-2026-09-01
+    observed_open_issues: 38
+    qualified_unqueued_before_registration: [117]
+    registered_tasks: [HARNESS-PR-TRIAGE-001]
+    registration_status: BACKLOG; depends on HARNESS-REALCHAIN-REBASE-001; implementation is deferred to its own task
+    unqueued_needs_ssot: [1, 2, 58, 84, 86, 88, 89, 90, 91, 94, 95, 108, 109, 110, 111, 112]
+    pre_registration_report_sha256: ffa1f27d5b501f390b2955b88a397413ebf71f6e84bf14b914241346378cb9bb
+    post_registration_report_sha256: cbbd7142c0be8d659b4f53b1367bdef48818bc3785a378f07967b919ff352861
+    final_queue_sha256: 869a6d365f1b1adbedc1fb866381090e91157e41d828719f0fdf63ce32fc3389
+    post_registration_summary: "38 total; 22 queued; 0 qualified unqueued; 16 UNQUEUED_NEEDS_SSOT"
+  verification:
+    focused_issue_intake_tests: "6/6 PASS"
+    focused_docs_and_issue_intake_tests: "13/13 PASS"
+    parent_validator: PASS
+    parent_full_suite: "386/386 PASS"
+    diff_check: PASS
+    project_status_readme: pending final record update
+  repository_commits:
+    parent: pending final commit
+    child_repositories: none
+  live_input: unavailable; gh read-only API was network-unavailable, so the observed metadata fixture was used and no live Issue mutation was attempted
+  external_artifact: none; no Issue comments, Issue close, Drive, child repository, merge, release, or push mutation
+  sensitive_data: none; Issue body text is not copied to the report or state
+  feedback:
+    explicit: none
+    inferred: none
+  unresolved:
+    - 16 open Issues remain UNQUEUED_NEEDS_SSOT; no comments were created because Issue comments were not authorized by this task.
+    - HARNESS-SSOT-PUSH-001 is the next READY task and has an explicit fast-forward push scope.

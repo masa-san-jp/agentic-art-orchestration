@@ -157,6 +157,17 @@ git diff --check
 8. acceptanceの観測結果、checks、repoごとのHEAD/commit、機微情報確認、未解決、次の1操作をqueue/state/handoffへ記録する。
 9. leaseを解放し、依存完了後の次taskをREADYへ進める。merge/releaseはhuman gateで停止する。
 
+### 空queue時のIssue intake
+
+READYも依存完了済みBACKLOGも無い場合は、open Issueを自動昇格・クローズせず、まずread-onlyのintake reportを作る。Issue本文全文は出力せず、番号・タイトル・URL・SSOT品質判定・推奨アクションだけを保持する。live入力には`gh auth login`済みのread権限が必要で、認証できない場合はfixtureを使う。
+
+~~~bash
+.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check
+.venv/bin/python tools/issue_intake.py --live --repository <owner/name> --observed-at <fixed-ISO-8601-time> --check
+~~~
+
+`REGISTER_BACKLOG`だけがqueue登録候補であり、登録は依存関係、対象repo、Issue SSOT URLを確認してから1つのcommitで行う。`ALREADY_QUEUED`は重複登録せず、`UNQUEUED_NEEDS_SSOT`は実装せずにレポートへ残す。intake tool自体はGit、Issue、queueを書き換えない。
+
 ## 4. signalから成果物まで
 
 子repoのadapterは`normalized-research-signal/v1`の境界形式だけを出力する。consumerはmajor version不一致を拒否し、source repositoryとimmutable commitを保持する。

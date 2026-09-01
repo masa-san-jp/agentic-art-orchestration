@@ -968,18 +968,19 @@ tasks:
   - id: HARNESS-INTAKE-001
     milestone: M17
     title: Add a standing empty-queue intake path from open Issues to the task queue
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
     depends_on: [HARNESS-BOOTSTRAP-001]
+    completion: Read-only issue_intake report and SSOT minimum rules implemented; 38 observed open Issues classified, #117 registered once as HARNESS-PR-TRIAGE-001, 16 unqueued Issues retained as UNQUEUED_NEEDS_SSOT, and deterministic/report/privacy tests passed
     acceptance: AGENTS.md task selection gains a third rule covering the empty-queue case, Issue SSOT minimum requirements are documented, a read-only deterministic issue_intake tool reports unqueued open Issues with SSOT-quality judgments from live or fixture input without writing to Git or Issues, and its first real application registers SSOT-qualified open Issues into the queue in one commit while listing unqualified Issues as UNQUEUED_NEEDS_SSOT.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_issue_intake -v, python3 -m unittest discover -s tests -v, python3 tools/project_status.py --check-readme]
 
   - id: HARNESS-SSOT-PUSH-001
     milestone: M17
     title: Require pushing execution SSOT commits at lease release and resolve the current backlog
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -997,3 +998,14 @@ tasks:
     depends_on: [HARNESS-SSOT-PUSH-001]
     acceptance: The real-chain job is redefined for the six current child repositories with a fail-closed MISSING_EXTERNAL_SECRET preflight before any checkout, read-only persist-credentials false full-history checkouts, qualification without pin adoption, contract tests asserting the fail-closed and read-only behavior, and the legacy blocked task re-pointed to the re-baseline Issue while secret configuration and remote green evidence remain an explicit human gate outside this acceptance.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci -v, python3 -m unittest discover -s tests -v]
+
+  - id: HARNESS-PR-TRIAGE-001
+    milestone: M17
+    title: Add read-only PR triage evidence for the human merge decision
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-REALCHAIN-REBASE-001]
+    acceptance: A read-only deterministic report classifies all manifest repository open PRs by checks, conflicts, change class, task/Issue SSOT, age, and recommendation while preserving human-approved merge as a gate and never executing merge, close, rebase, force push, or ready operations.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_pr_triage -v, .venv/bin/python -m unittest discover -s tests -v]

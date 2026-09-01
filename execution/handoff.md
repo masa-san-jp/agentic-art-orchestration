@@ -12,6 +12,19 @@
 
 1. `HARNESS-INTAKE-001` / Issue #114をclaimし、最初に`.venv/bin/python tools/validate.py --check`を実行する。
 
+## HARNESS-INTAKE-001 completed
+
+- Issue SSOT: [agentic-art-orchestration#114](https://github.com/masa-san-jp/agentic-art-orchestration/issues/114)。空queueで合法的に停止しないための第三のtask-selection ruleと、Issue SSOT最低要件（観測可能な受入条件・対象repository・検証コマンド・human gate）を追加した。
+- 変更: [issue_intake.py](../tools/issue_intake.py)と[issue-intake-report.schema.json](../schemas/issue-intake-report.schema.json)が、open Issueの番号・タイトル・URL、queue登録状態、4項目の品質判定、推奨アクションだけを決定論的に出力する。Issue本文全文、Git、Issue、queueへのread-only report処理による書き込みは行わない。
+- 初回適用: 2026-09-01観測の38件をfixtureで再現し、登録前にSSOT品質を満たした#117を`HARNESS-PR-TRIAGE-001`として1回だけBACKLOG登録した。登録後は22件queued、16件`UNQUEUED_NEEDS_SSOT`、qualified unqueued 0件となった。登録前report SHA-256は`ffa1f27d`、最終queue反映後reportは`cbbd7142`、queue SHA-256は`869a6d36`。
+- Acceptanceは4/4。Issue intake `6/6 PASS`、docs+intake `13/13 PASS`、親validator PASS、親full suite `386/386 PASS`、diff check PASS。live `gh issue list`はネットワーク unavailableだったためfixture経路を採用し、Issueコメントや外部artifactは作成していない。
+- 子repo、Drive、CI、merge、release、push、credential、raw conversation、PRIVATE_RAW、RESTRICTED、direct identifierは変更していない。explicit/inferred feedbackはnone。
+- 親commit SHAは最終record commit後に追記する。
+
+### Next exact action
+
+1. `HARNESS-SSOT-PUSH-001` / Issue #115をclaimし、最初に`.venv/bin/python tools/validate.py --check`を実行する。pushはIssue #115の許可範囲（対象branchのfast-forwardのみ）に限定する。
+
 ## ISSUE-39-KB-PIPE-001 completed
 
 - Parent-owned `normalized-research-signal-bundle/v1` contract and validator are present in `schemas/normalized-research-signal-bundle.schema.json` and `tools/signal_bundle.py`.

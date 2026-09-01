@@ -1,0 +1,28 @@
+{
+  "source": {
+    "kind": "fixture",
+    "locator": "fixture://issue-intake/open-issues",
+    "observed_at": "2026-09-01T00:00:00Z"
+  },
+  "repository": "masa-san-jp/agentic-art-orchestration",
+  "issues": [
+    {
+      "number": 113,
+      "title": "Bootstrap is documented",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/113",
+      "body": "## 目的\n\nbootstrap.\n\n## 受入条件\n\n- [ ] validator passes from a fresh clone.\n\n## 検証コマンド\n\n```bash\n.venv/bin/python tools/validate.py --check\n```\n\n## human gate\n\nなし"
+    },
+    {
+      "number": 999,
+      "title": "Qualified fixture issue",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/999",
+      "body": "## Purpose\n\nfixture.\n\n## Acceptance\n\n- [ ] The report is deterministic.\n\n## Verification commands\n\n```bash\n.venv/bin/python -m unittest tests.test_issue_intake -v\n```\n\n## Human gate\n\nNone"
+    },
+    {
+      "number": 998,
+      "title": "Incomplete fixture issue",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/998",
+      "body": "## Purpose\n\nfixture without the required SSOT sections."
+    }
+  ]
+}

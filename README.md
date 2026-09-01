@@ -34,16 +34,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-01T15:41:47+09:00`.
+Source updated at: `2026-09-01T15:58:48+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 0 | 0 | 2 | 97 | 102 |
+| 2 | 1 | 0 | 2 | 98 | 103 |
 
-Current task: `null`; repository: `null`; checkpoint: `HARNESS-BOOTSTRAP-001`.
-Next action: Implement Issue #114: add a read-only deterministic open-Issue intake path and apply it to register SSOT-qualified Issues.
-Ready: none.
-Next task: `HARNESS-INTAKE-001`.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-INTAKE-001`.
+Next action: Implement Issue #115: record the push-before-release rule, observe parent ahead-of-origin safely, and fast-forward push only the authorized working branch.
+Ready: `HARNESS-SSOT-PUSH-001`.
+Next task: `HARNESS-SSOT-PUSH-001`.
 Blocked:
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
