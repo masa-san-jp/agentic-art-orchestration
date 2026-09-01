@@ -676,9 +676,9 @@
 
 | Repository | Commit |
 |---|---|
-| self-model-notes | 2ac31805ed8a6c3361822c7351becba465c8769a |
-| art-history-notes | 83703055f11019f905ffdfa23cdd674d48522698 |
-| marketing-trends-notes | edcb49c4522364ae69f627bea996754dcc8cfe56 |
+| self-model-notes | 2bb28dc23f45e497e0b36925b314d77e21558dbf |
+| art-history-notes | 1c0c1734e97f3c56c58a90ba93bc02638a62b947 |
+| marketing-trends-notes | d776a2fd1212c6a6c7b99f2fa72dd3b670b89533 |
 | agentic-art-research | 9bfa07d80c7962840031e0607f431c3bb997245f |
 
 これらは2026-08-11の観測値。運用開始後はsnapshot生成物が現在値を保持する。
@@ -774,7 +774,7 @@
 
 ## PRODUCTION-PIN-001 evidence
 
-- v1.2.1 release済みの親mainを起点に、5つの子repoのremote `main` headをread-onlyで観測した。Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf` はhandoff exportとproduction-result import、Production `9f1e332ae9faa1ecf098dd2f406f04c0506562b2` はhandoff receiptとproduction-result exportを公開していることを確認した。
+- v1.2.1 release済みの親mainを起点に、5つの子repoのremote `main` headをread-onlyで観測した。Research `9fca76c47811d80d8a68dd11daba696837616c93` はhandoff exportとproduction-result import、Production `030e5d8ead5dae97e4c2fb144fa2118768fcab79` はhandoff receiptとproduction-result exportを公開していることを確認した。
 - self-model `53cdcb00d26a71ccf02d81b5a09e67804b9a2b73`、art-history `ab18a70fb3a16f62d89550e6b342aa17da4fc93e`、marketing `e9b86f3a352be43cd6e19624c481b446b4337077`を含む5つのclean immutable archiveを一時workspaceへ配置した。親manifestのResearch/Production pinを更新し、handoff schemaのSHA-256 `715f2426474de9d957ef3129e0a65d69492ff7e75181272b52cb4cbb850cf0f7`、production-result schemaのSHA-256 `5b69090476891629932e5b01260a6217273f8a4771cc004d4922fcd04a0a104a`が各子境界で一致することを確認した。
 - `child_quality_gates.py`は5 repository、14/14 gateを`PASSED`、全pinを`MATCHED`として出力した。候補workspaceを明示した親statusは`CLEAN / blocker 0`、auditはfinding 0、securityは`PASSED`、validatorとdiff checkもpassした。候補のsnapshotは親正本へ反映済みである。
 - 安全境界として、常設`repos/`の旧pin checkoutは自動更新していない。したがってデフォルトworkspaceを指定しないstatusは旧checkoutとの差分を検出するが、qualified candidate workspaceはCLEANである。常設checkoutの同期は別途明示した操作として扱う。
@@ -788,7 +788,7 @@
 ## PRODUCTION-EXCHANGE-001 evidence
 
 - `schemas/production-exchange-evidence.schema.json`と`tools/production_exchange.py`を親repoへ追加した。親owned contractはResearch→Production→Researchの順序、owner repo@immutable commit、child command metadata、contract version、bundle semantic hash、terminal status、`run://` opaque locator、privacy/mutation boundaryだけを保持し、child schema・bundle本文・asset bodyを保持しない。
-- runnerはmanifest-pinned Research `92a2c1ba1e80f2eb62b258374cd712e1d0c342cf`とProduction `9f1e332ae9faa1ecf098dd2f406f04c0506562b2`をarchive化し、Git外run rootで子CLIをargument listとして実行する。Research handoff export、Production handoff receipt、plan/prototype/runtime projection、production-result export、Research result `--dry-run` importの8段階が`PASSED`した。
+- runnerはmanifest-pinned Research `9fca76c47811d80d8a68dd11daba696837616c93`とProduction `030e5d8ead5dae97e4c2fb144fa2118768fcab79`をarchive化し、Git外run rootで子CLIをargument listとして実行する。Research handoff export、Production handoff receipt、plan/prototype/runtime projection、production-result export、Research result `--dry-run` importの8段階が`PASSED`した。
 - 同じmanifest、commit、run ID、generated_atを2つの独立Git外run rootで実行し、`exchange-evidence.json`がbyte-identicalだった。`tests/test_production_exchange.py`は正常系、remote/child mutation、shell control syntax、raw/sensitive marker、unsafe locator、provenance欠落をfail-closedで確認する。
 - Productionの物理作業、購入、契約、公開、外部送信は実行していない。Research result importは`--dry-run`のみで、child applyはしていない。remote operations、child mutationsは空配列である。
 - 子repoのbranch、working tree、Issue、PR、schema、canonical data、quality gate、commitは変更していない。親の一時fixtureだけをGit外へ生成し、Research child CLIの受入条件を満たすためのfixture metadataと生成handoffを一時commitした。親へ残したのは証跡metadataだけで、raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、asset body、signed URLは含めていない。
@@ -1576,12 +1576,24 @@
 - Production #10とviewer #2はmanifestに記録済みの要件SSOTで、新規qualified implementation Issueは0件。fixture intakeも`queued 22 / qualified_unqueued 0 / UNQUEUED_NEEDS_SSOT 16`で変化なし。queue登録、Issue create/update/comment/close/label、子repo変更は行っていない。
 - 観測はmetadata-onlyで、機微情報・Issue本文・会話全文・Drive artifactは保存していない。既存の#116 secret/green runとPR #42 merge判断のhuman gateも変更していない。
 
-## 2026-09-02 PR merge gate observation
+## 2026-09-02 semantic integration of PR #42
+
+- 対象: `agentic-art-orchestration` feature branch `agent/issues-38-41-pipeline`; base `origin/main` は `e7d123c73f29015c8e54b39a4c1f97eb882f632d`、統合前のfeature HEADは `65f03ab9a7ad539d74fa1479f060a80d344e27a2`。PR #42の競合を `merge --no-commit --no-ff` で解消し、default branchには触れていない。
+- 統合方針: PR側の6repo harness、viewer boundary、AAP_CHILD_REPOS_TOKEN real-chain、intent/run API、安全境界を保持し、main側の pin-adoption、research-signal-export、後続 transformation-rule schema、Production exchange workflowを追加した。main側の5repo旧pinは現在のqualified `data/snapshot.json`と一致しなかったため、feature側の6repo qualified pin（self `1864fa92`、art `b831f4c5`、marketing `ff3adca6`、Research `496a2e20`、Production `63a1ddf4`、viewer `cf411086`）を採用した。
+- viewer exporterはchild-owned `viewer-response-record/v1` envelopeで、親の3種 normalized signalへ偽装しない。generic `tools/ingest_signals.py`からは分離し、`SEPARATE_BOUNDARY`として `tools/viewer_response_gate.py`へ送る構成にした。親signal export schemaはself/art-history/marketingのまま維持した。
+- 追加・統合した観測可能な変更: `tools/pinned_workspace.py`のlocal exact-pin materialize、`tools/run.py`のlegacy orchestrationとbundle/intent入口の両立、`tools/validate.py`のv1.2 validatorsとpin/export validators、child gate timeout 300秒、pin adoption/signal ingest、workflowのreal-chain/production-exchange、cross-repository contract/runbookの器名・enum・pin採用手順。
+- Acceptance: 親 `tools/validate.py --check` PASS、`tools/project_status.py --check-readme` PASS、親full suite **453/453 PASS**、`git diff --cached --check` PASS。focused run/pinned-workspace/pin-adopt/signal-export/validate/transformation tests、viewer専用境界テスト、initial operations/startup/release testsもPASS。
+- 運用確認: workspace statusは6/6 child fixture clean。auditは既知のnonblocking marketing freshness warning 1件のみ。securityはPASS。子repo、Issue/PR、Drive artifact、default branch、release、tag、force pushは変更していない。外部artifactは作成していない。
+- 機微情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。explicit feedback / inferred feedbackはいずれもnone。
+- 未解決: merge commit作成・feature branchへの通常push後に、PR #42のGitHub checksを確認する。AAP_CHILD_REPOS_TOKEN設定とremote green runは#116のhuman gateのまま。default branchへのmerge、ready化、releaseは人間承認を要する。
+- 次の1操作: `git commit -m "Merge origin/main into agent/issues-38-41-pipeline"` を実行し、commit後に `git push origin agent/issues-38-41-pipeline` する。
+
+## 2026-09-02 PR merge gate observation (superseded by semantic integration)
 
 - PR #42はhead `1e71e7e`、base `origin/main` `e7d123c`、OPEN/DRAFT、`CONFLICTING`/`DIRTY`、CI未報告だった。workflow、manifestのchild数・pin、cross-repository docs、fixtures、run/validation/pinned-workspaceのtools/testsが両側で変更されている。
 - `git merge --no-commit --no-ff origin/main`で競合をread-only相当で確認したが、片側優先や自動解消は行わず、mergeはabortして作業branchを元のclean状態へ戻した。commit、push、既定branchへのmerge、CI bypassは行っていない。
-- 推奨は、mainの後続child-pin/contract変更とPR #42の6repo harness/safety変更を意味的に統合し、parent/child quality gateとCIを再実行すること。統合方針が確定するまでPR mergeはBLOCKEDとする。
+- この初回観測時点の推奨は、その後のユーザー承認（semantic integration）で実施済み。現時点の結果と次操作は上記 `semantic integration of PR #42` を正本とする。
 
 ## Next exact action
 
-1. PR #42の競合解消方針（推奨: semantic integration merge）を確定し、確定後に作業branchへ統合・検証・通常pushする。方針未確定中はmerge/rebase/force-pushを行わない。
+1. 検証済み競合解消を `git commit -m "Merge origin/main into agent/issues-38-41-pipeline"` で確定し、`git push origin agent/issues-38-41-pipeline` 後にPR checksを確認する。default branchへのmerge、release、force-pushは人間gateのまま。

@@ -130,6 +130,30 @@ pip install --user -r <child-repository-path>/requirements.txt
 .venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --python-root <child-environment-root> --output data/child-quality-gates.json
 ~~~
 
+## 2.9 pin を採用する
+
+検査が通っていても、採用する手段が無ければ pin は止まったままになる。`tools/startup.py` が出す `remote_update_candidate` を確認し、候補の child quality gate が通ったときだけ採用する。
+
+### 確認する
+
+```bash
+python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン>
+```
+
+リポジトリごとに現在の pin、候補コミット、候補での quality gate、採用可否と理由を出す。`config/repositories.yaml` は書き換えない。
+
+### 採用する
+
+```bash
+python3 tools/pin_adopt.py --apply --workspace-root <実クローン>
+```
+
+全ての検査が PASS のときだけ書き換える。1つでも塞がっていれば何も書かずに非0で終わる。部分的な採用はしない。`--dry-run` と `--apply` は排他で、どちらも省略するとエラーになる。
+
+同じコミットが manifest 以外にも fixture、retrieval index、test module、handoff record などへ繰り返し書かれている場合、`--apply` は全ての出現箇所を書き換え、`written_files` に残す。child checkout が dirty、候補が remote より古い、または候補の gate が FAILED の場合は `BLOCKED` として停止し、pin を書き換えない。
+
+書き換えたあとの PR 作成と merge は人間が行う。manifest に関わる操作が人間の関門であることは変わらない。
+
 ## 3. taskを実行する
 
 1. queueから依存が`DONE`の最小ID `READY` taskを選ぶ。

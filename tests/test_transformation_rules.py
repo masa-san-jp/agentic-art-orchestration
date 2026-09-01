@@ -24,7 +24,7 @@ class TransformationRuleTests(unittest.TestCase):
     def test_rule_schema_is_versioned_and_finite(self):
         schema = MODULE.load_json(ROOT / "schemas/transformation-rule.schema.json")
         self.assertEqual("https://json-schema.org/draft/2020-12/schema", schema["$schema"])
-        self.assertEqual("transformation-rule/v1", schema["properties"]["contract_version"]["const"])
+        self.assertEqual("transformation-rule/v2", schema["properties"]["contract_version"]["const"])
         self.assertIn("composition", schema["$defs"]["rule"]["required"])
 
     def test_checked_in_registry_passes(self):
@@ -56,6 +56,53 @@ class TransformationRuleTests(unittest.TestCase):
         rendered = "\n".join(errors)
         self.assertIn("composition.slots.personal_tension", rendered)
         self.assertIn("remediation:", rendered)
+
+
+    def test_template_is_no_longer_a_fixed_sentence(self):
+        schema = MODULE.load_json(ROOT / "schemas/transformation-rule.schema.json")
+        template = schema["$defs"]["rule"]["properties"]["composition"]["properties"]["template"]
+
+        self.assertNotIn("const", template)
+        self.assertEqual("string", template["type"])
+
+    def test_rule_may_declare_a_slot_beyond_the_required_three(self):
+        registry = self.load_registry()
+        composition = registry["rules"][0]["composition"]
+        composition["slots"]["counterevidence"] = {"signal_kind": "marketing", "attribute": "counterevidence"}
+        composition["template"] = composition["template"] + " despite {counterevidence}"
+
+        errors = MODULE.validate_transformation_rule_registry(registry, "fixture:extra-slot")
+
+        self.assertEqual([], errors)
+
+    def test_declared_slot_absent_from_the_template_is_rejected(self):
+        registry = self.load_registry()
+        composition = registry["rules"][0]["composition"]
+        composition["slots"]["counterevidence"] = {"signal_kind": "marketing", "attribute": "counterevidence"}
+
+        errors = MODULE.validate_transformation_rule_registry(registry, "fixture:unused-slot")
+        rendered = "\n".join(errors)
+
+        self.assertIn("does not use declared slots", rendered)
+        self.assertIn("remediation:", rendered)
+
+    def test_dropping_a_required_signal_kind_is_still_rejected(self):
+        registry = self.load_registry()
+        composition = registry["rules"][0]["composition"]
+        del composition["slots"]["contemporary_condition"]
+
+        errors = MODULE.validate_transformation_rule_registry(registry, "fixture:missing-kind")
+
+        self.assertTrue(errors)
+
+    def test_checked_in_registry_still_produces_the_same_proposition(self):
+        registry = self.load_registry()
+        template = registry["rules"][0]["composition"]["template"]
+
+        self.assertEqual(
+            "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}",
+            template,
+        )
 
     def test_rule_registry_does_not_authorize_free_form_operations(self):
         registry = self.load_registry()

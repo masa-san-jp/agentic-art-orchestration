@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "config/repositories.yaml"
 MANIFEST_SCHEMA_PATH = ROOT / "schemas/repository-manifest.schema.json"
 SIGNAL_SCHEMA_PATH = ROOT / "schemas/normalized-research-signal.schema.json"
+SIGNAL_EXPORT_SCHEMA_PATH = ROOT / "schemas/research-signal-export.schema.json"
 WORKITEM_SCHEMA_PATH = ROOT / "schemas/work-item.schema.json"
 EXTERNAL_ARTIFACT_SCHEMA_PATH = ROOT / "schemas/external-artifact.schema.json"
 INTERACTION_SCHEMA_PATH = ROOT / "schemas/interaction-event.schema.json"
@@ -41,6 +42,7 @@ SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
 SELECTION_V2_SCHEMA_PATH = ROOT / "schemas/research-selection-v2.schema.json"
 SELF_DIVERSITY_SCHEMA_PATH = ROOT / "schemas/self-diversity-report.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
+PIN_ADOPTION_SCHEMA_PATH = ROOT / "schemas/pin-adoption-report.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 PROJECT_STATUS_SCHEMA_PATH = ROOT / "schemas/project-status.schema.json"
@@ -71,6 +73,7 @@ REQUIRED_FILES = [
     "schemas/repository-manifest.schema.json",
     "schemas/normalized-research-signal.schema.json",
     "schemas/normalized-research-signal-bundle.schema.json",
+    "schemas/research-signal-export.schema.json",
     "schemas/work-item.schema.json",
     "schemas/external-artifact.schema.json",
     "schemas/interaction-event.schema.json",
@@ -125,6 +128,8 @@ REQUIRED_FILES = [
     "schemas/child-quality-gates.schema.json",
     "tools/child_quality_gates.py",
     "tools/pinned_workspace.py",
+    "schemas/pin-adoption-report.schema.json",
+    "tools/pin_adopt.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
     "schemas/v12-e2e.schema.json",
@@ -929,12 +934,25 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                     for slot in slots.values()
                     if isinstance(slot, dict)
                 }
-                if slot_kinds != expected_kinds:
+                # A rule may add slots beyond the three required kinds, so require
+                # coverage rather than rejecting useful additional slots.
+                if not expected_kinds <= slot_kinds:
                     errors.append(
                         _signal_error(
                             source,
                             f"{prefix}.composition.slots must cover all signal kinds; observed {sorted(slot_kinds)!r}",
                             "declare one explicit composition slot for self, art-history, and marketing",
+                        )
+                    )
+            template = composition.get("template")
+            if isinstance(slots, dict) and isinstance(template, str):
+                unused = sorted(name for name in slots if "{" + str(name) + "}" not in template)
+                if unused:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"{prefix}.composition.template does not use declared slots {unused!r}",
+                            "reference every declared slot in the template, or remove the slot",
                         )
                     )
 
@@ -1778,6 +1796,30 @@ def validate_self_diversity_report(data: dict, source: str = "self-diversity") -
     return errors
 
 
+def validate_pin_adoption(data: dict, source: str = "pin-adoption") -> list[str]:
+    """Validate an adoption report. A partly-adopted manifest describes a workspace that never existed."""
+    errors: list[str] = []
+    schema = load_json(PIN_ADOPTION_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the pin-adoption field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    repositories = data.get("repositories")
+    if isinstance(repositories, list):
+        adoptable = [item for item in repositories if isinstance(item, dict) and item.get("adoptable")]
+        if data.get("status") == "READY" and not adoptable:
+            errors.append(_signal_error(source, "status READY with nothing adoptable", "use UNCHANGED"))
+        if data.get("adoptable_count") != len(adoptable):
+            errors.append(_signal_error(source, "adoptable_count does not match the repositories", "recount"))
+        for item in adoptable:
+            if not item.get("occurrences"):
+                errors.append(_signal_error(source, f"{item.get('repository')} is adoptable with no occurrences recorded",
+                                            "record every file that repeats the pin"))
+    return errors
+
+
 def validate_child_quality_gates(data: dict, source: str = "child-quality-gates") -> list[str]:
     """Validate immutable child gate evidence and preserve stale/unknown/failed states."""
     errors: list[str] = []
@@ -1991,6 +2033,46 @@ def validate_v12_e2e(data: dict, manifest: dict | None = None, source: str = "v1
             errors.append(_signal_error(source, "v1.1 regression acceptance is incomplete", "preserve every v1.1 interaction and artifact invariant"))
     if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
         errors.append(_signal_error(source, "v1.2 E2E acceptance is incomplete", "keep every research, child gate, regression, and remote safety invariant true"))
+    return errors
+
+
+def validate_signal_export(data: dict, source: str = "signal-export") -> list[str]:
+    """Validate the metadata envelope emitted by a knowledge-base export."""
+    errors: list[str] = []
+    schema = load_json(SIGNAL_EXPORT_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the signal export field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    signals = data.get("signals")
+    declared = data.get("signal_count")
+    if isinstance(signals, list) and isinstance(declared, int) and declared != len(signals):
+        errors.append(
+            _signal_error(
+                source,
+                f"signal_count {declared} does not match the {len(signals)} records carried",
+                "report the number of records the payload actually contains",
+            )
+        )
+    if isinstance(signals, list):
+        seen: set[str] = set()
+        for index, record in enumerate(signals):
+            if not isinstance(record, dict):
+                continue
+            identifier = record.get("signal_id")
+            if isinstance(identifier, str):
+                if identifier in seen:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"signals[{index}].signal_id {identifier!r} appears more than once",
+                            "give every exported record a unique signal_id",
+                        )
+                    )
+                seen.add(identifier)
     return errors
 
 

@@ -1,11 +1,21 @@
 from __future__ import annotations
 
-import subprocess
 import tempfile
+import subprocess
 import unittest
 from pathlib import Path
 
-from tools.pinned_workspace import PinnedWorkspaceError, materialize_pinned_workspace
+import yaml
+
+from tools.pinned_workspace import (
+    MANIFEST,
+    PinnedWorkspaceError,
+    WorkspaceError,
+    _authenticated,
+    _redacted,
+    materialize,
+    materialize_pinned_workspace,
+)
 
 
 def git(root: Path, *args: str) -> str:
@@ -18,7 +28,7 @@ def git(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def make_repo(root: Path) -> tuple[dict, str, str]:
+def make_local_repo(root: Path) -> tuple[dict, str, str]:
     root.mkdir(parents=True)
     git(root, "init", "-q", "-b", "main")
     git(root, "config", "user.email", "fixture@example.invalid")
@@ -39,11 +49,60 @@ def make_repo(root: Path) -> tuple[dict, str, str]:
     }, observed, current
 
 
-class PinnedWorkspaceTests(unittest.TestCase):
+class AuthenticatedRemoteTests(unittest.TestCase):
+    def test_token_is_injected_for_github_https_remotes(self) -> None:
+        url = _authenticated("https://github.com/owner/repo.git", "secret-token")
+
+        self.assertEqual(url, "https://x-access-token:secret-token@github.com/owner/repo.git")
+
+    def test_url_is_unchanged_without_a_token(self) -> None:
+        url = _authenticated("https://github.com/owner/repo.git", None)
+
+        self.assertEqual(url, "https://github.com/owner/repo.git")
+
+    def test_non_github_remote_never_receives_the_token(self) -> None:
+        url = _authenticated("/tmp/offline-fixture/remotes/child.git", "secret-token")
+
+        self.assertNotIn("secret-token", url)
+
+
+class RedactionTests(unittest.TestCase):
+    def test_token_is_removed_from_reported_output(self) -> None:
+        text = _redacted("fatal: could not read https://x-access-token:secret@github.com/o/r", "secret")
+
+        self.assertNotIn("secret", text)
+
+    def test_output_is_unchanged_without_a_token(self) -> None:
+        self.assertEqual(_redacted("fatal: repository not found", None), "fatal: repository not found")
+
+
+class MaterializeGuardTests(unittest.TestCase):
+    def test_existing_destination_is_rejected_before_cloning(self) -> None:
+        manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+        first = manifest["repositories"][0]["path"]
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "workspace"
+            (output / first).mkdir(parents=True)
+
+            with self.assertRaises(WorkspaceError) as raised:
+                materialize(output, None)
+
+        self.assertIn("already exists", str(raised.exception))
+
+    def test_every_manifest_entry_declares_a_full_commit(self) -> None:
+        manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+
+        for repository in manifest["repositories"]:
+            with self.subTest(repository=repository["id"]):
+                self.assertRegex(str(repository["observed_commit"]), r"^[0-9a-f]{40}$")
+
+
+class LocalPinnedWorkspaceTests(unittest.TestCase):
     def test_advanced_dirty_and_detached_sources_materialize_the_same_pin(self):
         with tempfile.TemporaryDirectory(prefix="pinned-workspace-") as temporary:
             root = Path(temporary)
-            repository, observed, current = make_repo(root / "source" / "child-one")
+            repository, observed, current = make_local_repo(root / "source" / "child-one")
             source = root / "source"
             before_head = git(source / "child-one", "rev-parse", "HEAD")
             first = materialize_pinned_workspace({"repositories": [repository]}, source, root / "pinned-advanced")
@@ -69,7 +128,7 @@ class PinnedWorkspaceTests(unittest.TestCase):
     def test_unavailable_observed_commit_fails_closed_with_exact_pin_finding(self):
         with tempfile.TemporaryDirectory(prefix="pinned-workspace-missing-") as temporary:
             root = Path(temporary)
-            repository, _observed, _current = make_repo(root / "source" / "child-one")
+            repository, _observed, _current = make_local_repo(root / "source" / "child-one")
             repository["observed_commit"] = "0" * 40
             with self.assertRaises(PinnedWorkspaceError) as raised:
                 materialize_pinned_workspace({"repositories": [repository]}, root / "source", root / "pinned")
@@ -78,10 +137,10 @@ class PinnedWorkspaceTests(unittest.TestCase):
             self.assertEqual("NOT_RUN", raised.exception.findings[0]["materialized_state"])
             self.assertFalse((root / "pinned" / "child-one").exists())
 
-    def test_existing_destination_is_not_overwritten(self):
+    def test_existing_destination_is_not_overwritten_by_local_materialization(self):
         with tempfile.TemporaryDirectory(prefix="pinned-workspace-existing-") as temporary:
             root = Path(temporary)
-            repository, _observed, _current = make_repo(root / "source" / "child-one")
+            repository, _observed, _current = make_local_repo(root / "source" / "child-one")
             destination = root / "pinned"
             destination.mkdir()
             (destination / "sentinel").write_text("keep\n", encoding="utf-8")

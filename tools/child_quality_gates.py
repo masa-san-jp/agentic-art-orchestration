@@ -32,6 +32,9 @@ DEFAULT_MANIFEST = ROOT / "config/repositories.yaml"
 DEFAULT_WORKSPACE_ROOT = ROOT / "repos"
 DEFAULT_OUTPUT = ROOT / "data/child-quality-gates.json"
 
+# Gates run from a fresh archive; allow the slowest measured child suite to finish.
+DEFAULT_GATE_TIMEOUT_SECONDS = 300
+
 _REQUIREMENT_PATTERN = re.compile(
     r"^(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*))(?:\[[^\]]+\])?"
     r"\s*(?:(?P<operator>>=|==)\s*(?P<version>[0-9]+(?:\.[0-9]+)*))?(?:\s*,.*)?$"
@@ -374,7 +377,7 @@ def _run_repository(
 def run_child_quality_gates(
     manifest: dict,
     workspace_root: Path,
-    timeout_seconds: int = 60,
+    timeout_seconds: int = DEFAULT_GATE_TIMEOUT_SECONDS,
     run_id: str = "v12-child-gates",
     python_root: Path | None = None,
 ) -> dict:
@@ -422,7 +425,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run manifest child gates from immutable observed commits")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--workspace-root", type=Path, default=DEFAULT_WORKSPACE_ROOT)
-    parser.add_argument("--timeout", type=int, default=60)
+    parser.add_argument("--timeout", type=int, default=DEFAULT_GATE_TIMEOUT_SECONDS)
     parser.add_argument("--run-id", default="v12-child-gates")
     parser.add_argument(
         "--python-root",

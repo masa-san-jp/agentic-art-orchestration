@@ -18,6 +18,8 @@ viewer response recordは`work_id`、`requirement_id`、表示モード、要件
 
 assessmentは完全一致のwork/requirement/presentation modeとタグ交差だけを対象にし、測定標本5未満は`UNKNOWN`、Wilson 95% lower boundが0.60以上だけを`SUPPORTED`、upper boundが0.60未満だけを`CONTRADICTED`とする。測定なしで独立external参照が2件以上の場合は`EXTERNALLY_SUPPORTED`だが`SUPPORTED`とは同一視しない。測定とexternalの衝突は測定を判定に優先し、衝突状態を保持する。`UNKNOWN`、`CONTRADICTED`、`EXTERNALLY_SUPPORTED`はblind/frame reviewなしに要件受入へ昇格させない。
 
+viewer responseはgenericな`tools/ingest_signals.py`のnormalized signal列には混ぜない。子repo固有のrecord/export schemaを`tools/viewer_response_gate.py`で検証し、Production/Researchのviewer boundaryでaggregate DTOとして扱う。viewerをself、art-history、marketingのいずれかへ変換して多様性・候補選択へ流すことは禁止する。
+
 ## Required signal fields
 
 - contract_version
@@ -102,3 +104,26 @@ raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換
 `eligible_anchor_count`が0の場合は`INSUFFICIENT_SELF_DIVERSITY`として停止し、候補を複製したり選択数を水増ししたりしない。1〜2個の場合は`PASS_LIMITED_DIVERSITY`として実行を許可するが、3個未満であることを証跡に残す。3個以上の場合は`PASS`とし、明示的な多様性要求でselection limitが10以上の場合は、少なくとも3つのdistinct anchorを含み、各anchorのshareを40%以下にする。1〜2個の場合はこの完全多様性条件を適用せず、限定的な多様性として扱う。passing candidateがselection limitに満たない場合も、limitを下げずに拒否する。候補の選択順はanchor単位の決定的round-robinとし、各anchor内では既存のseeded SHA-256 score順を保持する。
 
 reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`PASS_LIMITED_DIVERSITY`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。
+
+## 器の名前
+
+境界を渡る成果物は、**中身の形だけでなく、それを束ねる器の名前も契約で定める**。中身だけ定めて器を定めずにいると、独立に実装した両側が別の名前を選び、片側の出力をもう片側が読めなくなる。
+
+規則は1つ。**器の名前は消費側の契約が定める。定めが無いときは中身の名詞の複数形にする。** 生産側は複数の相手に出しうるが、消費側は自分が読む形を1つしか持てないためである。
+
+| 成果物 | 器のキー | 定めた場所 |
+|---|---|---|
+| `source-ref-index.yaml` | `references`（レコードのハッシュは `record_hash`） | production の実装契約 |
+| 知識ベースの signal 書き出し | `signals`（契約は `contract_version`、時刻は `generated_at`、件数は `signal_count`） | `schemas/research-signal-export.schema.json` |
+
+signal の書き出しは、封筒だけを検証して**レコードの中身は検証しない**。種別ごとに形が違い、それを吸収するのが adapter の役目である。封筒が保証するのは、誰がいつどの版から出したかと件数の整合だけである。
+
+## 境界を渡る enum
+
+器の名前と同じ問題が、**中身の語**でも起きる。語彙は消費側の契約が定め、生産側がそれに揃える。
+
+| 値 | 語彙 | 定めた場所 | 生産側 |
+|---|---|---|---|
+| 受入試験の `result` | `NOT_RUN` / `PASS` / `FAIL` / `EXTERNAL_VALIDATION_REQUIRED` / `BLOCKED` | production `schemas/planning.schema.json` の `$defs.acceptanceTest.result` | research `config/vocabularies.yaml` の `test_results` |
+
+**この表に載る語を増やすときは、消費側の schema を先に変える。** 受理は後の工程が要求する語彙をその場で検査し、計画生成が拒む値を含む bundle を ACCEPTED にしない。

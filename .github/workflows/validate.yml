@@ -118,3 +118,26 @@ jobs:
             --workspace-root repos \
             --output /tmp/pin-update-qualification.json \
             --run-id ci-real-chain
+
+  # The bootstrap job validates against the offline fixture mirror. This job also
+  # exercises the Research/Production exchange against the exact manifest pins.
+  production-exchange:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 -m pip install -r requirements-dev.txt
+      - name: Materialize the manifest-pinned children
+        env:
+          CHILD_REPOS_TOKEN: ${{ secrets.CHILD_REPOS_TOKEN }}
+        run: python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
+      - name: Run the Research/Production exchange against the real children
+        run: |
+          python3 tools/production_exchange.py \
+            --workspace-root "$RUNNER_TEMP/pinned" \
+            --output-root "$RUNNER_TEMP/exchange" \
+            --evidence "$RUNNER_TEMP/exchange-evidence.json"

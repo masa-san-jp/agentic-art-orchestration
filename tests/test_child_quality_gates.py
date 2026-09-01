@@ -64,6 +64,19 @@ class ChildQualityGateTests(unittest.TestCase):
         second = {"duration_ms": 99, "nested": [{"duration_ms": 80, "status": "PASSED"}]}
         self.assertEqual(MODULE._deterministic_view(first), MODULE._deterministic_view(second))
 
+    def test_default_timeout_outlasts_the_slowest_measured_child_suite(self):
+        """agentic-art-production's suite took 100s on 2026-08-20; a shorter cap reports a passing repository as broken."""
+        self.assertGreater(MODULE.DEFAULT_GATE_TIMEOUT_SECONDS, 100)
+
+    def test_a_slow_gate_is_not_cut_short_by_the_default(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-slow-") as temporary:
+            workspace = Path(temporary)
+            repository, _, _ = make_repo(workspace / "child-one", "import time\ntime.sleep(1.5)\nprint('slow')\n")
+
+            report = MODULE.run_child_quality_gates({"repositories": [repository]}, workspace)
+
+            self.assertEqual("PASSED", report["results"][0]["status"])
+
     def test_runs_gates_from_observed_archive_and_does_not_change_stale_checkout(self):
         with tempfile.TemporaryDirectory(prefix="child-gates-") as temporary:
             workspace = Path(temporary)

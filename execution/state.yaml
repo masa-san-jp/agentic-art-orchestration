@@ -100,12 +100,12 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: BLOCKED
-  observed_at: "2026-09-01T15:15:55Z"
+  status: SEMANTICALLY_RESOLVED_PENDING_PUSH
+  observed_at: "2026-09-02T00:45:16+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: 1e71e7ed5b4e0ec79ba2dd444f4cb6015fa56c1e
+  head_commit: 65f03ab9a7ad539d74fa1479f060a80d344e27a2
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
@@ -114,11 +114,31 @@ pr_merge_observation:
   merge_state: DIRTY
   checks: none_reported
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
-  local_operation: "merge --no-commit --no-ff origin/main was inspected and aborted without commit or push"
+  local_operation: "semantic integration merge --no-commit --no-ff origin/main resolved locally; merge commit is pending after verification"
   remote_operations: [READ]
-  recommendation: "perform a semantic integration merge that preserves both main's later child-pin/contract changes and PR #42's six-repository harness changes"
+  recommendation: "create the verified merge commit and normal-push the feature branch; keep default-branch merge behind human review"
   impact: "片側優先ではviewer entry、AAP_CHILD_REPOS_TOKEN real-chain、pin adoption/signal export、intent/run API、または安全境界を失う可能性がある"
-  unblock_condition: "明示的な統合方針を選び、競合解消後にparent/child quality gatesとCIを再実行する"
+  unblock_condition: "merge commit and feature-branch push complete, then PR checks pass; default-branch merge remains a human gate"
+  integration:
+    status: complete
+    base_commit: e7d123c73f29015c8e54b39a4c1f97eb882f632d
+    feature_parent: 65f03ab9a7ad539d74fa1479f060a80d344e27a2
+    preserved: [six_repository_manifest, viewer_boundary, real_chain_secret_gate, pin_adoption, signal_export, intent_run_api, v12_safety_contracts]
+    pin_policy: "retain the feature branch's qualified six-repository pins because origin/main's older five-repository pins did not match the current qualified snapshot"
+    viewer_policy: "keep viewer-response-notes outside generic three-kind normalized signal ingest and route it through viewer_response_gate.py"
+    parent_validation: PASS
+    parent_tests: "453/453 PASS"
+    project_status: PASS
+    workspace: "6/6 child fixture repositories clean"
+    audit: "FINDINGS; one known nonblocking marketing freshness warning"
+    security: PASS
+    diff_check: PASS
+    child_repository_mutation: false
+    sensitive_data: none
+    external_artifact: none
+    feedback:
+      explicit: none
+      inferred: none
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
