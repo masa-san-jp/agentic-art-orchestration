@@ -1,5 +1,5 @@
-version: 106
-updated_at: "2026-08-29T18:41:19+09:00"
+version: 107
+updated_at: "2026-09-01T10:48:47+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -719,6 +719,34 @@ repository_usability_review:
     - art-history and agentic-art-production GitHub PR checks failed before useful step logs; local failures were environment/configuration observations, not README assertions
     - viewer-response-notes main remains an empty historical branch until its existing feature work is human-merged
     - audit retains the existing marketing:trend-001 freshness warning until marketing revalidates it; this review did not normalize stale data
+
+harness_autonomy_audit:
+  observed_at: "2026-09-01T10:48:47+09:00"
+  requested_by: user
+  scope: can a fresh external agent bootstrap, select work, and proceed without human intervention
+  verification:
+    documented_bootstrap_system_python: FAILED; python3 tools/validate.py --check raised ModuleNotFoundError No module named yaml
+    venv_validator: PASSED
+    venv_full_tests: 379/379 OK in 170.186s
+    ready_tasks: 0
+    backlog_tasks: 0
+    blocked_tasks: [ISSUE-38-REAL-CHAIN-CI-001, INITIAL-OPS-RELEASE-001]
+    open_parent_issues_not_in_queue: approximately 30 including 84, 86, 88-91, 108-112
+    unpushed_commits: [276abae, 21be012, 17e25a6, 4149f1f, f1b7456]
+    offline_workspace: 6/6 clean
+  findings:
+    - no document in the repository explains creating .venv while all runbook and state commands require it
+    - task selection rules cover READY and BACKLOG but not an empty queue with open Issues, so a fresh agent stalls legally
+    - execution SSOT commits including state v106 existed only locally, so remote clones resume from a stale point
+    - the ISSUE-38 blocked entry demanded a separate re-baseline Issue that had not been created
+  issues_created:
+    bootstrap_venv_docs: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+    issue_to_queue_intake: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+    unpushed_execution_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
+    issue38_rebaseline_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+  child_repository_mutation: false
+  external_mutation: four parent GitHub Issues created by explicit user request; no PR, merge, release, or Drive operation
+  raw_conversation_credentials_private_raw_restricted_added: false
 
 repository_usability_reaudit:
   observed_at: "2026-08-29T18:41:19+09:00"

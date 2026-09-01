@@ -1483,3 +1483,9 @@
 - 親commitは`21be012`（`docs: improve repository usability and branch fixtures`）。このcommitは未pushで、次回は`.venv/bin/python tools/validate.py --check`から再開する。
 - ユーザー指示によりviewer-response-notes PR #3をReady化してsquash mergeした。merge commitは`205eeeb8dd03e29e2b4628e00bcf69738b77f973`で、`feat/viewer-response-contracts`へ入り、PR branchは削除していない。self-model、art-history、marketing、Researchはmain側の新しいREADME更新との競合、ProductionはGitHub test (3.11/3.12) failureがあるため未merge。強制merge・checks bypass・競合の自動解消は行っていない。
 - 再監査では各repoの現在のdefault branch READMEとGitHub Descriptionを確認し、6repoとも目的・最短入口・正本/非保存境界が利用者に読める状態だった。新しい重複変更は行っていない。validator、project-status、snapshot、offline workspace 6/6 clean、親working tree cleanを再確認した。
+
+## 2026-09-01 harness autonomy audit
+
+- ユーザー依頼で「外部エージェントが自律的に探索・作業できるハーネスか」を実地検証した。fresh視点で文書記載のブートストラップを実行し、`python3 tools/validate.py --check` は `ModuleNotFoundError: No module named 'yaml'` で失敗、`.venv/bin/python` 経由では validator PASS・full suite 379/379 OK を確認した。
+- 構造的ブロッカー4件をIssue化した: venv作成手順の欠落（#113）、READY/BACKLOG 0件でIssue→queue常設経路が無い（#114）、実行SSOT 5コミット未push（#115）、ISSUE-38-REAL-CHAIN-CI-001の再ベースラインSSOT（#116、AAP_CHILD_REPOS_TOKEN未設定を含む）。
+- 子repo・Issue以外の外部mutationなし。merge・release・push・Drive操作なし。次の推奨操作は #113/#114 のqueue登録（gap-DAG方式）と、人間による branch push・secret設定の判断。
