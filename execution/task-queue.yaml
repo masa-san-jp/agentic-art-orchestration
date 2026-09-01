@@ -1,5 +1,5 @@
-version: 19
-updated_at: "2026-09-01T16:08:16+09:00"
+version: 20
+updated_at: "2026-09-01T16:20:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -669,13 +669,16 @@ tasks:
     milestone: M15
     title: Run real pinned child and Production exchange qualification in CI
     status: BLOCKED
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
     depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
-    acceptance: Pull-request CI checks out each registered child at an immutable ref using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails on missing credential, stale, unavailable, failed, or incompatible real-chain evidence, and never adopts pins or mutates child repositories.
+    acceptance: Pull-request CI checks out all six current manifest children at their declared default branch using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails closed on a missing credential before checkout, and never adopts pins or mutates child repositories.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain]
-    blocker: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.
+    blocker: Re-baselined by HARNESS-REALCHAIN-REBASE-001 / Issue #116; remains BLOCKED until an administrator configures AAP_CHILD_REPOS_TOKEN and a remote green run records its URL and head SHA.
 
   - id: GAP-DAG-001
     milestone: M15
@@ -992,7 +995,7 @@ tasks:
   - id: HARNESS-REALCHAIN-REBASE-001
     milestone: M17
     title: Re-baseline the real-chain CI contract for six child repositories with fail-closed secret preflight
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

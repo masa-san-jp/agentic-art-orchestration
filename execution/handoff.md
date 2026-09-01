@@ -1539,3 +1539,11 @@
 - Final post-push auditは既知のmarketing freshness warning 1件のみで、`PARENT_SSOT_UNPUSHED`は解消された。事前のahead 4とremote未観測`UNKNOWN`は監査・state/handoffへ記録済みである。
 - 機微情報: raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。external artifactは作成していない。explicit/inferred feedbackはnone。
 - pushとPR確認後、stateのleaseを`available/unassigned`へ解放し、依存完了済みの`HARNESS-REALCHAIN-REBASE-001`（Issue #116）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## HARNESS-REALCHAIN-REBASE-001 in progress
+
+- Task ID: `HARNESS-REALCHAIN-REBASE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#116](https://github.com/masa-san-jp/agentic-art-orchestration/issues/116)。claim時点のparent HEADは`f5f4c4c8834c2e1cc789e07f4d571c0cc16f6295`で、leaseは`codex-harness-realchain`が保持している。
+- 現行`.github/workflows/validate.yml`はreal-chain jobを持つが、private child checkoutが5件でviewer-response-notesを欠き、secret未設定時のfinding名が`MISSING_EXTERNAL_SECRET`として明示されていない。現行manifestは6件で、viewerの宣言済みdefault branchは`feat/viewer-response-contracts`であり、空の`main`へは切り替えない。
+- 今回の実装範囲はworkflowと`tests/test_real_chain_ci.py`の現行化、旧`ISSUE-38-REAL-CHAIN-CI-001`の`issue_ssot`を#116へ付替え、target/terminalを補完し、secret設定とremote green証拠はhuman gateとしてBLOCKEDに保持することである。
+- 実装要件: checkout前に`MISSING_EXTERNAL_SECRET`でfail-closed、6 child checkoutは`fetch-depth: 0`・`persist-credentials: false`・token secret、qualificationは`tools/qualify_pin_update.py`を`--apply`なしで実行し、secret値をログへ出さない。
+- まだremote runは実行していない。次の1操作は`tests.test_real_chain_ci`とparent validator/full suiteを実行し、implementation commitを作成してから作業branchへ通常pushし、secret未設定ならcheckout前停止するrun URLをread-onlyで確認すること。merge/release、secret設定、child mutationは行わない。

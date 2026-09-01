@@ -1,29 +1,29 @@
-version: 119
-updated_at: "2026-09-01T16:10:42+09:00"
-active_task: null
-active_repository: null
+version: 120
+updated_at: "2026-09-01T16:20:00+09:00"
+active_task: HARNESS-REALCHAIN-REBASE-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: "2026-09-01T16:02:30+09:00"
-  expires_at: "2026-09-01T17:02:30+09:00"
+  status: held
+  owner: codex-harness-realchain
+  acquired_at: "2026-09-01T16:20:00+09:00"
+  expires_at: "2026-09-01T17:20:00+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-SSOT-PUSH-001:attempt-1
-  released_at: "2026-09-01T16:10:42+09:00"
+  execution_id: HARNESS-REALCHAIN-REBASE-001:attempt-1
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [AGENTS.md, docs/operator-runbook.md, tools/audit.py, tests/test_audit.py, tests/test_docs.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: HARNESS-SSOT-PUSH-001
+  task: HARNESS-REALCHAIN-REBASE-001
   repository: agentic-art-orchestration
-  start_point: 5d15148
-  expected_changes: Require a fast-forward push of execution SSOT commits before lease release, document the human-safe release check, and add a non-blocking parent ahead-of-origin audit finding that preserves UNKNOWN when comparison is unavailable.
-  result: complete; Issue #115 acceptance 3/3 observed with documented push-before-release rule, named non-blocking PARENT_SSOT_UNPUSHED finding, UNKNOWN preservation, and authorized branch push/PR verification
+  start_point: f5f4c4c
+  expected_changes: Re-baseline the real-chain workflow and contract tests for six current private child repositories, fail closed with MISSING_EXTERNAL_SECRET before checkout, preserve read-only full-history checkout and no pin adoption, and re-point the legacy blocked task to Issue #116.
+  result: in_progress; claimed Issue #116 and observed the current workflow still enumerates five children
 last_completed_task: HARNESS-SSOT-PUSH-001
 resume_from:
   task: HARNESS-REALCHAIN-REBASE-001
-  action: "Claim HARNESS-REALCHAIN-REBASE-001 and run the validator before reading Issue #116 and the real-chain CI contract."
+  action: "Update validate.yml and test_real_chain_ci.py, run focused and parent checks, then record the human-gated remote run state."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete

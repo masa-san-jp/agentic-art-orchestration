@@ -498,3 +498,36 @@ Issue #115に従い、実行SSOTをremote cloneから再開可能にするため
 ### Next exact action
 
 1. `HARNESS-REALCHAIN-REBASE-001`をclaimし、`.venv/bin/python tools/validate.py --check`からIssue #116の再ベースライン作業を開始する。
+
+## HARNESS-REALCHAIN-REBASE-001 ExecPlan — in progress
+
+### Purpose / Big Picture
+
+Issue #116に従い、現行6 child構成に対するreal-chain CIを、credential未設定時にcheckout前で
+fail-closedするread-only qualificationとして再ベースラインする。secret設定とremote greenは人間gateのまま残す。
+
+### Progress
+
+- [x] 現行workflowとmanifestを照合し、5 child checkout、viewerの宣言済みdefault branch、secret preflightを観測した。
+- [x] `validate.yml`を6 child、`MISSING_EXTERNAL_SECRET`、full-history、`persist-credentials: false`、no `--apply`へ更新した。
+- [x] `tests/test_real_chain_ci.py`を6 child、preflight順序、secret非出力、pin非採用の契約へ更新した。
+- [x] 旧`ISSUE-38-REAL-CHAIN-CI-001`をIssue #116へ付替え、target repositoryとterminalを補完した。
+- [ ] 親検証、commit、remote runのfail-closed観測、state/handoff最終記録を完了する。
+
+### Surprises & Discoveries
+
+- viewer-response-notesの正本branchはmanifestで`feat/viewer-response-contracts`と宣言されている。したがって「main固定」ではなくmanifest観測値を使う。空のmainを参照すると現行pin検証を壊す。
+- parent workflowのsecret preflightはcheckoutより先に存在したが、既存runのログ・secret状態はこのローカル実行から推定せず、remote runで明示確認する。
+
+### Decision Log
+
+- secret値は作成・取得・出力せず、Actions secretの存在だけをshell条件で確認する。
+- qualificationは`--apply`を含めず、checkoutとchild gateをread-onlyで行う。旧BLOCKED taskはremote green evidenceが得られるまでDONEにしない。
+
+### Validation and Acceptance
+
+- 実装focused testは3/3 PASS、validatorはPASS。remote run URLとcheckout前`MISSING_EXTERNAL_SECRET`停止は未観測で、現時点のacceptanceは1/3である。
+
+### Next exact action
+
+1. `.venv/bin/python -m unittest tests.test_real_chain_ci -v`、parent full suite、`git diff --check`を実行し、作業branchへpushしてremote runをread-only確認する。
