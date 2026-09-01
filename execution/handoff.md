@@ -1540,10 +1540,13 @@
 - 機微情報: raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。external artifactは作成していない。explicit/inferred feedbackはnone。
 - pushとPR確認後、stateのleaseを`available/unassigned`へ解放し、依存完了済みの`HARNESS-REALCHAIN-REBASE-001`（Issue #116）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。
 
-## HARNESS-REALCHAIN-REBASE-001 in progress
+## HARNESS-REALCHAIN-REBASE-001 completed
 
 - Task ID: `HARNESS-REALCHAIN-REBASE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#116](https://github.com/masa-san-jp/agentic-art-orchestration/issues/116)。claim時点のparent HEADは`f5f4c4c8834c2e1cc789e07f4d571c0cc16f6295`で、leaseは`codex-harness-realchain`が保持している。
 - 現行`.github/workflows/validate.yml`はreal-chain jobを持つが、private child checkoutが5件でviewer-response-notesを欠き、secret未設定時のfinding名が`MISSING_EXTERNAL_SECRET`として明示されていない。現行manifestは6件で、viewerの宣言済みdefault branchは`feat/viewer-response-contracts`であり、空の`main`へは切り替えない。
 - 今回の実装範囲はworkflowと`tests/test_real_chain_ci.py`の現行化、旧`ISSUE-38-REAL-CHAIN-CI-001`の`issue_ssot`を#116へ付替え、target/terminalを補完し、secret設定とremote green証拠はhuman gateとしてBLOCKEDに保持することである。
 - 実装要件: checkout前に`MISSING_EXTERNAL_SECRET`でfail-closed、6 child checkoutは`fetch-depth: 0`・`persist-credentials: false`・token secret、qualificationは`tools/qualify_pin_update.py`を`--apply`なしで実行し、secret値をログへ出さない。
-- まだremote runは実行していない。次の1操作は`tests.test_real_chain_ci`とparent validator/full suiteを実行し、implementation commitを作成してから作業branchへ通常pushし、secret未設定ならcheckout前停止するrun URLをread-onlyで確認すること。merge/release、secret設定、child mutationは行わない。
+- 実装commitは`b2a896d53afb6e1fd791920d08465ec49feb57b7`、manual dispatchを有効化した追加commitは`d5a819a8d6735cb5a9230ca3eb799b5eca23b71`。real-chain run `33481638691`（head `d5a819a8d6735cb5a9230ca3eb799b5eca23b71`）は`MISSING_EXTERNAL_SECRET`で停止し、parent checkout、6 child checkout、依存インストール、qualificationはすべてskipされた。ログにsecret値はなく、checkout前停止を確認した。
+- Acceptance: 3/3。focused `tests.test_real_chain_ci` 3/3、parent full suite 390/390、validator、diff checkはPASS。workflowはcontents read、6 child（viewerはmanifest宣言branch `feat/viewer-response-contracts`）、`fetch-depth: 0`、`persist-credentials: false`、`--apply`なしを満たす。bootstrap jobはclaim中stateにREADMEが未追随だったためproject-status checkで失敗したが、最終queue/state反映後にREADMEを再生成して整合させた。これはreal-chain fail-closed証拠とは分離して記録する。
+- Human gate: 管理者によるread-only `AAP_CHILD_REPOS_TOKEN` Actions secret設定と、設定後のremote green run URL/head SHA記録。secret作成・取得・出力、child mutation、pin採用、merge、releaseは行っていない。旧`ISSUE-38-REAL-CHAIN-CI-001`はIssue #116を`issue_ssot`として参照し、BLOCKED理由をsecret設定＋green run証拠へ更新した。
+- leaseは`available/unassigned`へ解放し、依存完了済みの`HARNESS-PR-TRIAGE-001`（Issue #117）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。

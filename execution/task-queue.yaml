@@ -995,18 +995,19 @@ tasks:
   - id: HARNESS-REALCHAIN-REBASE-001
     milestone: M17
     title: Re-baseline the real-chain CI contract for six child repositories with fail-closed secret preflight
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
     depends_on: [HARNESS-SSOT-PUSH-001]
     acceptance: The real-chain job is redefined for the six current child repositories with a fail-closed MISSING_EXTERNAL_SECRET preflight before any checkout, read-only persist-credentials false full-history checkouts, qualification without pin adoption, contract tests asserting the fail-closed and read-only behavior, and the legacy blocked task re-pointed to the re-baseline Issue while secret configuration and remote green evidence remain an explicit human gate outside this acceptance.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci -v, python3 -m unittest discover -s tests -v]
+    completion: Six-child real-chain workflow and contract tests re-baselined; remote run 33481638691 stopped before checkout with MISSING_EXTERNAL_SECRET, and the legacy blocked task now points to Issue #116 while secret configuration and green evidence remain human-gated
 
   - id: HARNESS-PR-TRIAGE-001
     milestone: M17
     title: Add read-only PR triage evidence for the human merge decision
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

@@ -499,7 +499,7 @@ Issue #115に従い、実行SSOTをremote cloneから再開可能にするため
 
 1. `HARNESS-REALCHAIN-REBASE-001`をclaimし、`.venv/bin/python tools/validate.py --check`からIssue #116の再ベースライン作業を開始する。
 
-## HARNESS-REALCHAIN-REBASE-001 ExecPlan — in progress
+## HARNESS-REALCHAIN-REBASE-001 ExecPlan — completed
 
 ### Purpose / Big Picture
 
@@ -512,7 +512,7 @@ fail-closedするread-only qualificationとして再ベースラインする。s
 - [x] `validate.yml`を6 child、`MISSING_EXTERNAL_SECRET`、full-history、`persist-credentials: false`、no `--apply`へ更新した。
 - [x] `tests/test_real_chain_ci.py`を6 child、preflight順序、secret非出力、pin非採用の契約へ更新した。
 - [x] 旧`ISSUE-38-REAL-CHAIN-CI-001`をIssue #116へ付替え、target repositoryとterminalを補完した。
-- [ ] 親検証、commit、remote runのfail-closed観測、state/handoff最終記録を完了する。
+- [x] 親検証、commit、remote runのfail-closed観測、state/handoff最終記録を完了した。
 
 ### Surprises & Discoveries
 
@@ -526,8 +526,8 @@ fail-closedするread-only qualificationとして再ベースラインする。s
 
 ### Validation and Acceptance
 
-- 実装focused testは3/3 PASS、validatorはPASS。remote run URLとcheckout前`MISSING_EXTERNAL_SECRET`停止は未観測で、現時点のacceptanceは1/3である。
+- Acceptanceは3/3。focused testは3/3、parent full suiteは390/390、validator、diff checkはPASS。remote run `33481638691`はsecret未設定のため`MISSING_EXTERNAL_SECRET`でcheckout前停止し、親・6 child checkoutとqualificationをskipした。secret設定とgreen runはhuman gateとして残る。
 
 ### Next exact action
 
-1. `.venv/bin/python -m unittest tests.test_real_chain_ci -v`、parent full suite、`git diff --check`を実行し、作業branchへpushしてremote runをread-only確認する。
+1. `HARNESS-PR-TRIAGE-001`をclaimし、`.venv/bin/python tools/validate.py --check`からIssue #117のread-only PR triage作業を開始する。
