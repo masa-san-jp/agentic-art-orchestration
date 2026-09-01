@@ -3,10 +3,12 @@
 
     python3 tools/pinned_workspace.py --output /tmp/pinned
 
-Reads `config/repositories.yaml` and clones each declared repository, then checks
-out its `observed_commit`. `tools/production_exchange.py` requires HEAD to equal
-that commit exactly, so this is the only supported way to run the exchange
-against the real children instead of the offline fixture mirror.
+Reads `config/repositories.yaml` and clones each selected repository, then checks
+out its `observed_commit`. By default every declared repository is selected;
+callers with a narrower contract can repeat `--repository` to select only the
+required children. `tools/production_exchange.py` requires HEAD to equal that
+commit exactly, so this is the only supported way to run the exchange against
+the real children instead of the offline fixture mirror.
 
 Authentication comes from `CHILD_REPOS_TOKEN` (a read-only fine-grained token).
 The token is injected per invocation and never written to disk or logged.
@@ -89,7 +91,7 @@ def _api_visibility(full_name: str, token: str) -> str:
 
 
 def _unreachable(manifest: dict, token: str | None) -> list[str]:
-    """Name every repository the credential cannot read, not just the first one.
+    """Name every selected repository the credential cannot read, not just the first one.
 
     Only runs when a token is supplied. Without one the caller is relying on an
     ambient credential helper, and probing every remote would put the network in
@@ -108,17 +110,38 @@ def _unreachable(manifest: dict, token: str | None) -> list[str]:
     return denied
 
 
-def materialize(output: Path, token: str | None) -> list[tuple[str, str]]:
+def _selected_repositories(manifest: dict[str, Any], repository_ids: list[str] | None) -> list[dict[str, Any]]:
+    repositories = manifest.get("repositories")
+    if not isinstance(repositories, list) or not repositories:
+        raise WorkspaceError("manifest has no repositories")
+    if repository_ids is None:
+        return repositories
+    requested = set(repository_ids)
+    known = {repository.get("id") for repository in repositories}
+    unknown = sorted(requested - known)
+    if not requested:
+        raise WorkspaceError("--repository requires at least one repository id")
+    if unknown:
+        raise WorkspaceError("unknown repository id(s): " + ", ".join(unknown))
+    return [repository for repository in repositories if repository.get("id") in requested]
+
+
+def materialize(
+    output: Path,
+    token: str | None,
+    repository_ids: list[str] | None = None,
+) -> list[tuple[str, str]]:
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
-    denied = _unreachable(manifest, token)
+    selected = _selected_repositories(manifest, repository_ids)
+    denied = _unreachable({"repositories": selected}, token)
     if denied:
         raise WorkspaceError(
             "the credential cannot read: " + ", ".join(denied)
-            + " — grant the token Contents:Read-only on every manifest repository"
+            + " — grant the token Contents:Read-only on every selected manifest repository"
         )
     output.mkdir(parents=True, exist_ok=True)
     materialized: list[tuple[str, str]] = []
-    for repository in manifest["repositories"]:
+    for repository in selected:
         commit = repository["observed_commit"]
         if not isinstance(commit, str) or len(commit) != COMMIT_LENGTH:
             raise WorkspaceError(f"{repository['id']} has no 40-character observed_commit")
@@ -273,9 +296,16 @@ def materialize_pinned_workspace(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="empty directory outside this repository")
+    parser.add_argument(
+        "--repository",
+        dest="repository_ids",
+        action="append",
+        metavar="ID",
+        help="select one manifest repository; repeat for a scoped workspace (default: all)",
+    )
     args = parser.parse_args(argv)
     try:
-        materialized = materialize(args.output, os.environ.get("CHILD_REPOS_TOKEN"))
+        materialized = materialize(args.output, os.environ.get("CHILD_REPOS_TOKEN"), args.repository_ids)
     except (WorkspaceError, OSError, yaml.YAMLError) as exc:
         print(f"ERROR {exc}", file=sys.stderr)
         return 1

@@ -13,6 +13,7 @@ from tools.pinned_workspace import (
     WorkspaceError,
     _authenticated,
     _redacted,
+    _selected_repositories,
     materialize,
     materialize_pinned_workspace,
 )
@@ -77,6 +78,23 @@ class RedactionTests(unittest.TestCase):
 
 
 class MaterializeGuardTests(unittest.TestCase):
+    def test_repository_selection_is_explicit_and_defaults_to_all(self) -> None:
+        manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+        all_repositories = _selected_repositories(manifest, None)
+        selected = _selected_repositories(manifest, ["agentic-art-research", "agentic-art-production"])
+
+        self.assertEqual(len(manifest["repositories"]), len(all_repositories))
+        self.assertEqual(
+            ["agentic-art-research", "agentic-art-production"],
+            [repository["id"] for repository in selected],
+        )
+
+    def test_unknown_repository_selection_fails_closed(self) -> None:
+        manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+
+        with self.assertRaisesRegex(WorkspaceError, "unknown repository"):
+            _selected_repositories(manifest, ["viewer-response-notes", "not-in-manifest"])
+
     def test_existing_destination_is_rejected_before_cloning(self) -> None:
         manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
         first = manifest["repositories"][0]["path"]

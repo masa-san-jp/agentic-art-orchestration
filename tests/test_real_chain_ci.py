@@ -82,6 +82,14 @@ class RealChainCITests(unittest.TestCase):
         qualification = next(step for step in real_chain["steps"] if step.get("name") == "Qualify the real immutable exchange chain")
         self.assertNotIn("--apply", qualification["run"])
 
+    def test_production_exchange_materializes_only_its_required_children(self):
+        production = self.workflow()["jobs"]["production-exchange"]
+        materialize = next(step for step in production["steps"] if step.get("name") == "Materialize the manifest-pinned children")
+        command = materialize["run"]
+        self.assertIn("--repository agentic-art-research", command)
+        self.assertIn("--repository agentic-art-production", command)
+        self.assertNotIn("--repository viewer-response-notes", command)
+
 
 if __name__ == "__main__":
     unittest.main()

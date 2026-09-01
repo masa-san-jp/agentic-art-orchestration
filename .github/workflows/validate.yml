@@ -134,7 +134,10 @@ jobs:
       - name: Materialize the manifest-pinned children
         env:
           CHILD_REPOS_TOKEN: ${{ secrets.CHILD_REPOS_TOKEN }}
-        run: python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
+        run: >-
+          python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
+          --repository agentic-art-research
+          --repository agentic-art-production
       - name: Run the Research/Production exchange against the real children
         run: |
           python3 tools/production_exchange.py \
