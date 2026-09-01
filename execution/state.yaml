@@ -1,15 +1,15 @@
-version: 118
-updated_at: "2026-09-01T16:08:16+09:00"
-active_task: HARNESS-SSOT-PUSH-001
-active_repository: agentic-art-orchestration
+version: 119
+updated_at: "2026-09-01T16:10:42+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-harness-ssot-push
+  status: available
+  owner: unassigned
   acquired_at: "2026-09-01T16:02:30+09:00"
   expires_at: "2026-09-01T17:02:30+09:00"
   lane: PARENT_CONTROL_PLANE
   execution_id: HARNESS-SSOT-PUSH-001:attempt-1
-  released_at: null
+  released_at: "2026-09-01T16:10:42+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [AGENTS.md, docs/operator-runbook.md, tools/audit.py, tests/test_audit.py, tests/test_docs.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 5d15148
   expected_changes: Require a fast-forward push of execution SSOT commits before lease release, document the human-safe release check, and add a non-blocking parent ahead-of-origin audit finding that preserves UNKNOWN when comparison is unavailable.
-  result: implementation complete; Issue #115 acceptance 2/3 observed, with authorized branch push and draft PR HEAD verification pending before lease release
-last_completed_task: HARNESS-INTAKE-001
+  result: complete; Issue #115 acceptance 3/3 observed with documented push-before-release rule, named non-blocking PARENT_SSOT_UNPUSHED finding, UNKNOWN preservation, and authorized branch push/PR verification
+last_completed_task: HARNESS-SSOT-PUSH-001
 resume_from:
-  task: HARNESS-SSOT-PUSH-001
-  action: "Fast-forward push agent/issues-38-41-pipeline, verify draft PR 42 headRefOid, then release the lease and promote HARNESS-REALCHAIN-REBASE-001."
+  task: HARNESS-REALCHAIN-REBASE-001
+  action: "Claim HARNESS-REALCHAIN-REBASE-001 and run the validator before reading Issue #116 and the real-chain CI contract."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete

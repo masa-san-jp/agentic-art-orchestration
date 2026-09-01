@@ -463,7 +463,7 @@ focused 5/5、親全体369/369、validator、README status、JSON CLI assertion�
 child-owned stateの未対応・未知語彙は`state_quality=UNKNOWN`として保持し、batch driverのappend自体は
 このread-only toolの責務に含めなかった。次taskは`PURPOSE-BATCH-100-001`。
 
-## HARNESS-SSOT-PUSH-001 ExecPlan — implementation complete; push pending
+## HARNESS-SSOT-PUSH-001 ExecPlan — completed
 
 ### Purpose / Big Picture
 
@@ -475,7 +475,7 @@ Issue #115に従い、実行SSOTをremote cloneから再開可能にするため
 - [x] AGENTS.mdとoperator runbookに、実行SSOTのpush、force/default-branch禁止、remote確認不能時の停止を記録した。
 - [x] `tools/audit.py`にlocal tracking refのread-only観測と`PARENT_SSOT_UNPUSHED` findingを追加した。
 - [x] ahead状態とnetwork UNKNOWN、文書規則、入力非変更・非blockingをfocused testsで検証した。
-- [ ] Issueで明示されたworking branchをpushし、draft PR #42のHEAD一致をread-only確認する。
+- [x] Issueで明示されたworking branchをpushし、draft PR #42のHEAD一致をread-only確認した。
 
 ### Surprises & Discoveries
 
@@ -489,8 +489,7 @@ Issue #115に従い、実行SSOTをremote cloneから再開可能にするため
 
 ### Validation and Acceptance
 
-- 実装段階のacceptanceは2/3。focused `tests.test_audit`/`tests.test_docs`は15/15、parent full suiteは389/389、validator、audit check、diff checkはPASS。
-- 残り1/3はauthorized branch pushとPR #42の`headRefOid == local HEAD`確認。push完了までleaseを解放しない。
+- Acceptanceは3/3。focused `tests.test_audit`/`tests.test_docs`は15/15、parent full suiteは389/389、validator、audit check、diff checkはPASS。`HEAD == origin/agent/issues-38-41-pipeline == PR #42 headRefOid`を確認した。
 
 ### Idempotence and Recovery
 
@@ -498,41 +497,4 @@ Issue #115に従い、実行SSOTをremote cloneから再開可能にするため
 
 ### Next exact action
 
-1. `git push origin agent/issues-38-41-pipeline`を実行し、PR #42をread-only確認する。成功後にstate/handoff/queueを最終記録し、leaseを解放する。
-
-## HARNESS-SSOT-PUSH-001 ExecPlan — completed implementation; push pending
-
-### Purpose / Big Picture
-
-Issue #115に従い、実行SSOTをremote cloneから再開可能にするため、lease解放前のfast-forward pushを
-正準手順へ追加し、親branchの未push状態を監査でnon-blockingかつUNKNOWN保持で観測する。
-
-### Progress
-
-- [x] AGENTS.mdとoperator runbookに、実行SSOTのpush、force/default-branch禁止、remote確認不能時の停止を記録した。
-- [x] `tools/audit.py`にlocal tracking refのread-only観測と`PARENT_SSOT_UNPUSHED` findingを追加した。
-- [x] ahead状態とnetwork UNKNOWN、文書規則、入力非変更・非blockingをfocused testsで検証した。
-- [ ] Issueで明示されたworking branchをpushし、draft PR #42のHEAD一致をread-only確認する。
-
-### Surprises & Discoveries
-
-- 現在のparent branchは`origin/agent/issues-38-41-pipeline`に対してahead 4。監査はremote fetchを行わず、local tracking ref比較と`network_status=UNKNOWN`を分離して保持する。
-- parent full suiteは389/389 PASS。child repositoryの品質gateは対象外で、child checkoutを変更していない。
-
-### Decision Log
-
-- auditはnetworkを暗黙に成功扱いせず、remote headをfetchしないread-only設計にした。比較不能時は`PARENT_SSOT_UNPUSHED`の`status=UNKNOWN`を出力する。
-- push対象はIssue #115で明示された`agent/issues-38-41-pipeline`だけとし、merge、ready化、default branch push、force pushは行わない。
-
-### Validation and Acceptance
-
-- 実装段階のacceptanceは2/3。focused `tests.test_audit`/`tests.test_docs`は15/15、parent full suiteは389/389、validator、audit check、diff checkはPASS。
-- 残り1/3はauthorized branch pushとPR #42の`headRefOid == local HEAD`確認。push完了までleaseを解放しない。
-
-### Idempotence and Recovery
-
-- Gitの通常pushはnon-fast-forwardなら失敗する。force push、reset、rebase、mergeを代替操作にしない。失敗時は未push事実とremote UNKNOWNをstate/handoffへ残す。
-
-### Next exact action
-
-1. `git push origin agent/issues-38-41-pipeline`を実行し、PR #42をread-only確認する。成功後にstate/handoff/queueを最終記録し、leaseを解放する。
+1. `HARNESS-REALCHAIN-REBASE-001`をclaimし、`.venv/bin/python tools/validate.py --check`からIssue #116の再ベースライン作業を開始する。

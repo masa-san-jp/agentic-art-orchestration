@@ -1528,12 +1528,14 @@
 - ユーザーとのUX議論から未起票の修正点2件をSSOT起票した。(1) self-model-notes#79: 会話・音声メモ→entities/ の取り込み導線（素材供給停止の恒久対策、子repoドメイン）。(2) 親#117: PR triageレポート（merge判断の圧縮支援。オープンPR 18件滞留の観測に基づく。自動mergeは導入せず、将来の緩和判断の材料化まで）。
 - 既存Issue #88（自律ループ）と#90（素材3件）は重複起票していない。#117のqueue登録はHARNESS-INTAKE-001の初回適用に委ねる。#79はself-model-notes側harnessの管轄。
 
-## HARNESS-SSOT-PUSH-001 in progress — push pending
+## HARNESS-SSOT-PUSH-001 completed
 
 - Task ID: `HARNESS-SSOT-PUSH-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#115](https://github.com/masa-san-jp/agentic-art-orchestration/issues/115)。
 - AGENTS.mdのWork protocolとoperator runbookに、`state.yaml`・`handoff.md`・`task-queue.yaml`を含む実行SSOTをlease解放前に作業branchへfast-forward pushする規則を追加した。force push、既定branchへの直接push、merge、ready化は許可しない。pushまたはremote/PR確認が不能な場合は`UNKNOWN`／未pushを記録してleaseを解放しない。
 - `tools/audit.py`にread-onlyの`observe_parent_git()`を追加し、local tracking refのahead/behindを観測する。remote headはfetchせず`network_status=UNKNOWN`と`unknowns`を保持するため、未pushをcleanへ正規化しない。aheadまたはdivergedはnon-blocking finding `PARENT_SSOT_UNPUSHED`、比較不能は同じfindingの`status=UNKNOWN`として出力する。
-- Acceptance: 実装段階で2/3。実監査は`PARENT_SSOT_UNPUSHED`（branch `agent/issues-38-41-pipeline`、ahead 4、behind 0、`network_status=UNKNOWN`）と既知のmarketing freshness warningの2 findingを返し、監査自体はnon-blocking。focused testsは`tests.test_audit`/`tests.test_docs` 15/15、親full suiteは389/389、validator・audit check・diff checkはPASSした。残りはauthorized branch pushとPR #42のHEAD一致である。
-- Parent implementation commit: `9fbbedf38a7d6a976c0e888891c6c4a8bd2c59b8`。child repository、Drive artifact、Issue/PRの編集・merge・release・tagは行っていない。Issue #115で明示された`agent/issues-38-41-pipeline`のfast-forward pushだけを実行対象とし、PR #42はdraftのままHEAD一致をread-only確認する。
+- Acceptance: 3/3。実監査は`PARENT_SSOT_UNPUSHED`（branch `agent/issues-38-41-pipeline`、ahead 4、behind 0、`network_status=UNKNOWN`）と既知のmarketing freshness warningの2 findingを返し、監査自体はnon-blocking。focused testsは`tests.test_audit`/`tests.test_docs` 15/15、親full suiteは389/389、validator・audit check・diff checkはPASSした。
+- Parent commits: implementation `9fbbedf38a7d6a976c0e888891c6c4a8bd2c59b8`、SSOT checkpoint `5d8bf565dc9f7d21a344a852c9afd32fcaca803a`。child repository、Drive artifact、Issue/PRの編集・merge・release・tagは行っていない。Issue #115で明示された`agent/issues-38-41-pipeline`だけをfast-forward pushした。
+- Push verification: `HEAD == origin/agent/issues-38-41-pipeline == 5d8bf565dc9f7d21a344a852c9afd32fcaca803a`。`gh pr view 42`は`headRefOid=5d8bf565dc9f7d21a344a852c9afd32fcaca803a`、`isDraft=true`、base `main`、head `agent/issues-38-41-pipeline`を返した。merge、ready-for-review、default branch push、force pushは行っていない。
+- Final post-push auditは既知のmarketing freshness warning 1件のみで、`PARENT_SSOT_UNPUSHED`は解消された。事前のahead 4とremote未観測`UNKNOWN`は監査・state/handoffへ記録済みである。
 - 機微情報: raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。external artifactは作成していない。explicit/inferred feedbackはnone。
-- 実装と親検証を先にcommitしたが、Work protocolに従いleaseはまだ保持している。次の1操作は、Issue #115が明示した`git push origin agent/issues-38-41-pipeline`をfast-forwardで実行し、`gh pr view 42 --json headRefOid,isDraft,baseRefName,headRefName`でdraft PRのHEAD一致をread-only確認すること。確認後にのみstate/handoffのleaseを解放し、Issue #116をREADYへ進める。
+- pushとPR確認後、stateのleaseを`available/unassigned`へ解放し、依存完了済みの`HARNESS-REALCHAIN-REBASE-001`（Issue #116）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。

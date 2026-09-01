@@ -34,16 +34,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-01T16:00:04+09:00`.
+Source updated at: `2026-09-01T16:10:42+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 1 | 0 | 2 | 98 | 103 |
+| 1 | 1 | 0 | 2 | 99 | 103 |
 
-Current task: `null`; repository: `null`; checkpoint: `HARNESS-INTAKE-001`.
-Next action: Implement Issue #115: record the push-before-release rule, observe parent ahead-of-origin safely, and fast-forward push only the authorized working branch.
-Ready: `HARNESS-SSOT-PUSH-001`.
-Next task: `HARNESS-SSOT-PUSH-001`.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-SSOT-PUSH-001`.
+Next action: Claim HARNESS-REALCHAIN-REBASE-001 and run the validator before reading Issue #116 and the real-chain CI contract.
+Ready: `HARNESS-REALCHAIN-REBASE-001`.
+Next task: `HARNESS-REALCHAIN-REBASE-001`.
 Blocked:
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.

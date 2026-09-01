@@ -980,18 +980,19 @@ tasks:
   - id: HARNESS-SSOT-PUSH-001
     milestone: M17
     title: Require pushing execution SSOT commits at lease release and resolve the current backlog
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
     depends_on: [HARNESS-INTAKE-001]
     acceptance: The work protocol requires pushing the working branch before lease release with force push and default-branch push forbidden, an ahead-of-origin parent branch is observable as a named non-blocking finding with UNKNOWN preserved when the network is unavailable, and the current agent branch is fast-forward pushed so draft PR 42 matches local HEAD without merge or ready-for-review changes.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: Parent execution SSOT push rule and non-blocking parent Git observation implemented; ahead-of-origin state is reported as PARENT_SSOT_UNPUSHED with network UNKNOWN preserved, and the authorized working branch was fast-forward pushed with draft PR 42 HEAD verification
 
   - id: HARNESS-REALCHAIN-REBASE-001
     milestone: M17
     title: Re-baseline the real-chain CI contract for six child repositories with fail-closed secret preflight
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
