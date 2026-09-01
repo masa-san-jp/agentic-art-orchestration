@@ -115,6 +115,50 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(render_markdown(first), render_markdown(second))
         self.assertEqual(before, inputs)
 
+    def test_parent_ahead_of_origin_is_a_named_non_blocking_finding(self):
+        tested = {boundary: True for boundary in EXPECTED_BOUNDARIES}
+        parent_git = {
+            "status": "AHEAD",
+            "branch": "agent/issues-38-41-pipeline",
+            "head": "a" * 40,
+            "upstream": "origin/agent/issues-38-41-pipeline",
+            "ahead": 4,
+            "behind": 0,
+            "observed_via": "local_tracking_ref",
+            "network_status": "UNKNOWN",
+            "unknowns": ["remote_head_not_fetched"],
+            "remote_operations": [],
+        }
+        result = build_audit(manifest(), snapshot(), queue(), state(), signals(), requirements(), tested, parent_git)
+
+        finding = next(item for item in result["findings"] if item["code"] == "PARENT_SSOT_UNPUSHED")
+        self.assertEqual("AHEAD", finding["observed"]["status"])
+        self.assertEqual("UNKNOWN", finding["observed"]["network_status"])
+        self.assertFalse(result["blocking"])
+        self.assertEqual(0, result["summary"]["error_count"])
+
+    def test_parent_network_unknown_is_preserved_without_false_clean_result(self):
+        tested = {boundary: True for boundary in EXPECTED_BOUNDARIES}
+        parent_git = {
+            "status": "UNKNOWN",
+            "branch": "agent/issues-38-41-pipeline",
+            "head": "b" * 40,
+            "upstream": None,
+            "ahead": None,
+            "behind": None,
+            "observed_via": "local_tracking_ref",
+            "network_status": "UNKNOWN",
+            "unknowns": ["network_unavailable"],
+            "remote_operations": [],
+        }
+        result = build_audit(manifest(), snapshot(), queue(), state(), signals(), requirements(), tested, parent_git)
+
+        finding = next(item for item in result["findings"] if item["code"] == "PARENT_SSOT_UNPUSHED")
+        self.assertEqual("UNKNOWN", finding["observed"]["status"])
+        self.assertEqual(["network_unavailable"], finding["observed"]["unknowns"])
+        self.assertIsNone(finding["observed"]["ahead"])
+        self.assertFalse(result["blocking"])
+
 
 if __name__ == "__main__":
     unittest.main()

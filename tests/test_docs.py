@@ -92,6 +92,15 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_execution_ssot_is_pushed_before_lease_release(self):
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        self.assertIn("lease解放前に作業branchからoriginへ通常のfast-forward push", agents)
+        self.assertIn("force pushと既定branchへの直接pushは禁止", agents)
+        self.assertIn("実行SSOTを作業branchへfast-forward push", runbook)
+        self.assertIn("git push origin <working-branch>", runbook)
+        self.assertIn("UNKNOWN", runbook)
+
     def test_incident_runbook_covers_failure_and_resume_paths(self):
         text = (ROOT / "docs/incident-runbook.md").read_text(encoding="utf-8")
         for required in (

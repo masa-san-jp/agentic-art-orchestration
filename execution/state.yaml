@@ -1,29 +1,29 @@
-version: 116
-updated_at: "2026-09-01T16:00:04+09:00"
-active_task: null
-active_repository: null
+version: 117
+updated_at: "2026-09-01T16:02:30+09:00"
+active_task: HARNESS-SSOT-PUSH-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: "2026-09-01T15:46:11+09:00"
-  expires_at: "2026-09-01T16:46:11+09:00"
+  status: held
+  owner: codex-harness-ssot-push
+  acquired_at: "2026-09-01T16:02:30+09:00"
+  expires_at: "2026-09-01T17:02:30+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-INTAKE-001:attempt-1
-  released_at: "2026-09-01T15:57:29+09:00"
+  execution_id: HARNESS-SSOT-PUSH-001:attempt-1
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [AGENTS.md, docs/operator-runbook.md, tools/issue_intake.py, schemas/issue-intake-report.schema.json, tests/test_issue_intake.py, tests/fixtures/issue-intake, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    paths: [AGENTS.md, docs/operator-runbook.md, tools/audit.py, tests/test_audit.py, tests/test_docs.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: HARNESS-INTAKE-001
+  task: HARNESS-SSOT-PUSH-001
   repository: agentic-art-orchestration
-  start_point: 486c16d
-  expected_changes: Add a read-only deterministic open-Issue intake report, document the empty-queue and Issue SSOT rules, and register SSOT-qualified open Issues in the queue without automatic promotion or close.
-  result: complete; Issue #114 acceptance 4/4 observed with deterministic metadata-only intake, initial queue application, and parent regression evidence
+  start_point: 5d15148
+  expected_changes: Require a fast-forward push of execution SSOT commits before lease release, document the human-safe release check, and add a non-blocking parent ahead-of-origin audit finding that preserves UNKNOWN when comparison is unavailable.
+  result: in_progress; claimed Issue #115 and verified the current branch is ahead of its tracked origin branch by four commits
 last_completed_task: HARNESS-INTAKE-001
 resume_from:
   task: HARNESS-SSOT-PUSH-001
-  action: "Implement Issue #115: record the push-before-release rule, observe parent ahead-of-origin safely, and fast-forward push only the authorized working branch."
+  action: "Implement the rule and named audit finding, verify all gates, record the result, then fast-forward push only agent/issues-38-41-pipeline."
   command: .venv/bin/python tools/validate.py --check
 autonomous_runner:
   status: complete

@@ -37,7 +37,8 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 5. 親checkと変更した各子repoの品質ゲートを実行する。
 6. repoごとのGit状態と差分を個別確認する。
 7. task、判断、発見、commit、テスト、次の開始点を更新する。
-8. leaseを解放する。
+8. `state.yaml`、`handoff.md`、`task-queue.yaml`を含む実行SSOTのcommitを、lease解放前に作業branchからoriginへ通常のfast-forward pushで公開する。force pushと既定branchへの直接pushは禁止し、pushまたはremote確認ができない場合は`UNKNOWN`／未pushを記録してleaseを解放せず停止する。
+9. leaseを解放する。
 
 ## Ownership and authority
 

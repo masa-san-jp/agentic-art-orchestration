@@ -155,7 +155,18 @@ git diff --check
 
 7. `git status --short`と`git diff --stat`で、対象外の変更がないことを確認する。
 8. acceptanceの観測結果、checks、repoごとのHEAD/commit、機微情報確認、未解決、次の1操作をqueue/state/handoffへ記録する。
-9. leaseを解放し、依存完了後の次taskをREADYへ進める。merge/releaseはhuman gateで停止する。
+9. leaseを解放する前に、実行SSOTを作業branchへfast-forward pushし、remoteとdraft PRのHEAD一致をread-onlyで確認する。force push、既定branchへの直接push、merge、ready化は行わない。
+
+~~~bash
+git status --short
+git log --oneline origin/<working-branch>..HEAD
+git push origin <working-branch>
+git rev-parse HEAD
+git rev-parse origin/<working-branch>
+gh pr view <number> --json headRefOid,isDraft,baseRefName,headRefName
+~~~
+
+pushまたはremote／PRの確認ができない場合は、未pushまたは`UNKNOWN`をstateとhandoffへ残し、leaseを解放せず停止する。確認後、依存完了後の次taskをREADYへ進める。merge/releaseはhuman gateで停止する。
 
 ### 空queue時のIssue intake
 

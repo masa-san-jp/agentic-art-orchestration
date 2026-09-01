@@ -19,11 +19,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 try:
     from tools.validate import validate_signal
-    from tools.workspace import load_manifest
+    from tools.workspace import load_manifest, run_git_optional
 except ModuleNotFoundError:  # pragma: no cover - exercised by direct CLI use
     sys.path.insert(0, str(ROOT))
     from tools.validate import validate_signal
-    from tools.workspace import load_manifest
+    from tools.workspace import load_manifest, run_git_optional
 
 
 class AuditError(ValueError):
@@ -243,6 +243,77 @@ def _audit_queue(tasks: list[dict], findings: list[dict]) -> None:
             findings.append(_finding("schema-drift", str(task_id), {"status": task.get("status")}, "repair the queue state", "error"))
 
 
+def observe_parent_git(repository_root: Path = ROOT) -> dict:
+    """Observe the parent branch without fetching or changing any Git state.
+
+    The comparison is against the locally cached upstream ref.  The current
+    remote head is deliberately not fetched by audit, so that uncertainty is
+    retained as ``UNKNOWN`` instead of being presented as a clean state.
+    """
+    observation = {
+        "status": "UNKNOWN",
+        "branch": None,
+        "head": None,
+        "upstream": None,
+        "ahead": None,
+        "behind": None,
+        "observed_via": "local_tracking_ref",
+        "network_status": "UNKNOWN",
+        "unknowns": ["remote_head_not_fetched"],
+        "remote_operations": [],
+    }
+    branch_code, branch, _ = run_git_optional(["symbolic-ref", "--short", "-q", "HEAD"], cwd=repository_root)
+    if branch_code == 0 and branch:
+        observation["branch"] = branch
+    head_code, head, _ = run_git_optional(["rev-parse", "--verify", "HEAD"], cwd=repository_root)
+    if head_code == 0 and head:
+        observation["head"] = head
+    upstream_code, upstream, _ = run_git_optional(
+        ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], cwd=repository_root
+    )
+    if upstream_code != 0 or not upstream:
+        observation["unknowns"] = ["upstream_ref_unavailable", "remote_head_not_fetched"]
+        return observation
+    observation["upstream"] = upstream
+    counts_code, counts, _ = run_git_optional(
+        ["rev-list", "--left-right", "--count", f"HEAD...{upstream}"], cwd=repository_root
+    )
+    if counts_code != 0:
+        observation["unknowns"] = ["upstream_comparison_unavailable", "remote_head_not_fetched"]
+        return observation
+    try:
+        ahead, behind = (int(value) for value in counts.split())
+    except (TypeError, ValueError):
+        observation["unknowns"] = ["upstream_comparison_malformed", "remote_head_not_fetched"]
+        return observation
+    observation["ahead"] = ahead
+    observation["behind"] = behind
+    if ahead and behind:
+        observation["status"] = "DIVERGED"
+    elif ahead:
+        observation["status"] = "AHEAD"
+    elif behind:
+        observation["status"] = "BEHIND"
+    else:
+        observation["status"] = "CLEAN"
+    return observation
+
+
+def _audit_parent_git(parent_git: Mapping[str, object] | None, findings: list[dict]) -> None:
+    if parent_git is None:
+        return
+    status = parent_git.get("status")
+    if status in {"AHEAD", "DIVERGED", "UNKNOWN"}:
+        findings.append(
+            _finding(
+                "PARENT_SSOT_UNPUSHED",
+                "agentic-art-orchestration",
+                dict(parent_git),
+                "push the working branch fast-forward before releasing the lease; preserve UNKNOWN when remote observation is unavailable",
+            )
+        )
+
+
 def build_audit(
     manifest: dict,
     snapshot: dict,
@@ -251,6 +322,7 @@ def build_audit(
     signals: list[dict],
     requirements: list[dict],
     tested_boundaries: Mapping[str, bool],
+    parent_git: Mapping[str, object] | None = None,
 ) -> dict:
     """Return findings without changing any input and without blocking execution."""
     findings: list[dict] = []
@@ -258,6 +330,7 @@ def build_audit(
     reference_time = _parse_timestamp(_generated_at(snapshot.get("captured_at"), queue.get("updated_at"), state.get("updated_at")))
     _audit_signals(signals, requirements, manifest, reference_time, findings)
     _audit_queue(queue.get("tasks", []), findings)
+    _audit_parent_git(parent_git, findings)
     for boundary in sorted(EXPECTED_BOUNDARIES):
         if not tested_boundaries.get(boundary, False):
             findings.append(_finding("untested-boundary", boundary, EXPECTED_BOUNDARIES[boundary], "add or restore the boundary test before claiming coverage"))
@@ -337,13 +410,13 @@ def _inputs() -> tuple[dict, dict, dict, dict, list[dict], list[dict], dict[str,
 
 def run_audit(output_dir: Path, check: bool) -> dict:
     manifest, snapshot, queue, state, signals, requirements, tested = _inputs()
-    audit = build_audit(manifest, snapshot, queue, state, signals, requirements, tested)
+    audit = build_audit(manifest, snapshot, queue, state, signals, requirements, tested, observe_parent_git())
     markdown = render_markdown(audit)
     json_content = json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     json_path = output_dir / "audit.json"
     markdown_path = output_dir / "audit.md"
     if check:
-        second = build_audit(*_inputs())
+        second = build_audit(*_inputs(), observe_parent_git())
         if audit != second or markdown != render_markdown(second):
             raise _error("audit generation is not deterministic", "sort findings and remove wall-clock values")
         if not json_path.is_file() or not markdown_path.is_file():

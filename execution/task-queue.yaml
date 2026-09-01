@@ -980,7 +980,7 @@ tasks:
   - id: HARNESS-SSOT-PUSH-001
     milestone: M17
     title: Require pushing execution SSOT commits at lease release and resolve the current backlog
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
