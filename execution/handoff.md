@@ -6,7 +6,7 @@
 - 変更: [README.md](../README.md)にGit/python3だけの前提、`gh auth login`と`--offline-fixture`の分岐、逐語4行、fresh-clone用の一時fixture materialization列を追加。`AGENTS.md`と[operator runbook](../docs/operator-runbook.md)はREADMEを参照し、検証コマンドを`.venv/bin/python`へ統一した。`tests/test_docs.py`に文書回帰テストを追加した。
 - Acceptanceは3/3。fresh cloneでvenv作成、依存関係導入、validator PASS、unique fixture rootによるnetworkless生成、materialized full suite `379/379 PASS`を確認した。親repoではvalidator PASS、文書focused `7/7 PASS`、full suite `380/380 PASS`、snapshot check、diff checkがPASSした。
 - 子repo、Issue/Drive、CI、merge、release、push、生成物の正本は変更していない。raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。explicit/inferred feedbackはnone。
-- README生成ステータスは最終state反映後に`project_status.py --update-readme`と`--check-readme`で同期する。親commit SHAはrecord完了後に追記する。
+- README生成ステータスは最終state反映後に`project_status.py --update-readme`と`--check-readme`で同期する。親実装・初回record commitは`887d043`。
 
 ### Next exact action
 

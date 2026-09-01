@@ -73,7 +73,7 @@ Issue #113に従い、fresh cloneの外部エージェントがシステムPytho
 
 - Acceptanceは3/3。fresh cloneのvenv/pip/validator、offline materialization、materialized full suite `379/379 PASS`を観測した。
 - 親repoの文書focused testsは`7/7 PASS`、親full suiteは`380/380 PASS`、validator、snapshot check、diff checkもPASSした。
-- 子repo、Issue、Drive、CI、merge、release、pushは変更していない。親commit SHAはrecord commit後にstate/handoffへ記録する。
+- 子repo、Issue、Drive、CI、merge、release、pushは変更していない。親実装・初回record commitは`887d043`である。
 
 ### Context and Orientation
 
