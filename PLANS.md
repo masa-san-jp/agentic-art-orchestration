@@ -531,3 +531,43 @@ fail-closedするread-only qualificationとして再ベースラインする。s
 ### Next exact action
 
 1. `HARNESS-PR-TRIAGE-001`をclaimし、`.venv/bin/python tools/validate.py --check`からIssue #117のread-only PR triage作業を開始する。
+
+## HARNESS-PR-TRIAGE-001 ExecPlan — completed
+
+### Purpose / Big Picture
+
+Issue #117に従い、各repositoryのopen PRを人間が安全に短時間で確認できるread-only triage evidenceを追加した。自動mergeは導入せず、checks・競合・変更クラス・Issue SSOT・経過日数を同じreportへ束ねる。
+
+### Progress
+
+- [x] `tools/pr_triage.py`と閉じた`pr-triage-report/v1` schemaを追加した。
+- [x] fixtureで5 recommendationと4 change class、入力非変更、byte determinism、metadata-only境界を検証した。
+- [x] `config/human-gates.yaml`へ4 change classを追加し、全て`auto_merge: false`・`human_approval_required: true`へ固定した。
+- [x] operator runbookへ`MERGE_CANDIDATE`から開始する人間の確認経路と、各recommendationの再観測条件を追加した。
+- [x] 7repositoryのlive open PRをread-only観測し、state/handoffへreport hashと集計を記録した。
+
+### Surprises & Discoveries
+
+- GitHub APIは通常のPython子プロセスではネットワーク遮断となったが、read-onlyのsandbox外実行で観測を完了した。reportには認証情報を含めていない。
+- Issue起票時の「18件」からlive観測時点では17件だった。liveの固定観測値17件を採用し、PR状態の時間変動を推測で補正していない。
+- 親PR #42は現時点でconflictがあり`NEEDS_REBASE`、childを含む他PRもchecks/mergeableの観測値に従って分類した。superseded候補は0件だった。
+
+### Decision Log
+
+- path classは`config/human-gates.yaml`のprefixを正本にし、mixed changeはcontractを優先する。schemas、manifest/config、CI workflowはcontract、tools/testsはcode、executionはrecord、docs/README等はdocsとした。
+- checksまたはconflictが`UNKNOWN`の場合は`HUMAN_JUDGMENT`へ留め、greenやmergeableへ正規化しない。conflictとCI failureが同時なら`NEEDS_REBASE`を先に示す。
+- supersededはhead/base SHA一致、または入力で明示されたDONE taskへのlater-commit包含だけを候補化し、PR closeやmergeは行わない。
+
+### Validation and Acceptance
+
+- Acceptanceは2/2。focused `tests.test_pr_triage`は6/6、parent full suiteは396/396、validator、diff checkはPASS。
+- Fixture reportは6 PR・7 repositoryで5 recommendationと4 classを再現し、live reportは7 repository・17 open PRを`READ`のみで観測した。live report SHA-256は`b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301`。
+- live集計: `CLASS_RECORD 0 / CLASS_DOCS 4 / CLASS_CODE 8 / CLASS_CONTRACT 5`; `MERGE_CANDIDATE 6 / NEEDS_REBASE 8 / NEEDS_CI_FIX 2 / SUPERSEDED_CANDIDATE 0 / HUMAN_JUDGMENT 1`。
+
+### Idempotence and Recovery
+
+fixtureまたは同一live payloadの再生成はbyte一致する。toolはGitHub PR/Issue、Git、Driveへ書き込まず、途中停止時は同じ固定observed_atと入力fixtureで再実行できる。live report本体はGit外`/tmp`にのみ置いた。
+
+### Next exact action
+
+1. 現在eligibleなREADY/BACKLOG taskはないため、`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`で新規Issue SSOT候補をread-only確認する。merge/releaseと#116のsecret設定は人間承認後に別途扱う。

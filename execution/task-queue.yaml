@@ -1,5 +1,5 @@
-version: 20
-updated_at: "2026-09-01T16:20:00+09:00"
+version: 22
+updated_at: "2026-09-01T21:13:06+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1007,10 +1007,11 @@ tasks:
   - id: HARNESS-PR-TRIAGE-001
     milestone: M17
     title: Add read-only PR triage evidence for the human merge decision
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
     depends_on: [HARNESS-REALCHAIN-REBASE-001]
     acceptance: A read-only deterministic report classifies all manifest repository open PRs by checks, conflicts, change class, task/Issue SSOT, age, and recommendation while preserving human-approved merge as a gate and never executing merge, close, rebase, force push, or ready operations.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_pr_triage -v, .venv/bin/python -m unittest discover -s tests -v]
+    completion: Read-only triage tool, closed report schema, four human-gated change classes, deterministic fixture, operator runbook, and live seven-repository observation implemented; fixture acceptance 2/2 and live report observed 17 open PRs with READ-only remote operation

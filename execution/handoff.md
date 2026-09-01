@@ -1550,3 +1550,19 @@
 - Acceptance: 3/3。focused `tests.test_real_chain_ci` 3/3、parent full suite 390/390、validator、diff checkはPASS。workflowはcontents read、6 child（viewerはmanifest宣言branch `feat/viewer-response-contracts`）、`fetch-depth: 0`、`persist-credentials: false`、`--apply`なしを満たす。bootstrap jobはclaim中stateにREADMEが未追随だったためproject-status checkで失敗したが、最終queue/state反映後にREADMEを再生成して整合させた。これはreal-chain fail-closed証拠とは分離して記録する。
 - Human gate: 管理者によるread-only `AAP_CHILD_REPOS_TOKEN` Actions secret設定と、設定後のremote green run URL/head SHA記録。secret作成・取得・出力、child mutation、pin採用、merge、releaseは行っていない。旧`ISSUE-38-REAL-CHAIN-CI-001`はIssue #116を`issue_ssot`として参照し、BLOCKED理由をsecret設定＋green run証拠へ更新した。
 - leaseは`available/unassigned`へ解放し、依存完了済みの`HARNESS-PR-TRIAGE-001`（Issue #117）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## HARNESS-PR-TRIAGE-001 completed
+
+- Task ID: `HARNESS-PR-TRIAGE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#117](https://github.com/masa-san-jp/agentic-art-orchestration/issues/117)。claim時点のparent HEADは`2ca466acd2a2907b03c434439d16e09f0af47ae0`、実装commitは`ccd05f2e8c35850b3ac388d10fa948e57d4e0625`。
+- `tools/pr_triage.py`と`schemas/pr-triage-report.schema.json`を追加し、fixtureまたは`gh pr list`のmetadata-only入力から、checks、conflict、path-based change class、task/Issue SSOT、age、recommendationを決定論的に出力する。PR本文、diff、comment、credentialは出力へ取り込まない。
+- `config/human-gates.yaml`へ`CLASS_RECORD`、`CLASS_DOCS`、`CLASS_CODE`、`CLASS_CONTRACT`を追加した。全クラスは`auto_merge: false`かつ`human_approval_required: true`であり、merge、close、rebase、force push、ready-for-reviewは実行しない。operator runbookには`MERGE_CANDIDATE`から人間が読む手順と各recommendationの扱いを追加した。
+- Fixture acceptanceは2/2。6件のsynthetic PRで5種類のrecommendationと4種類のchange classを再現し、schema valid、2回生成byte一致、input/queue read-only、metadata/privacy、human merge gateをfocused `6/6 PASS`で確認した。
+- live read-only観測は`2026-09-01T12:02:09Z`に7repo・17 open PRへ実行した。classは`CLASS_RECORD 0 / CLASS_DOCS 4 / CLASS_CODE 8 / CLASS_CONTRACT 5`、recommendationは`MERGE_CANDIDATE 6 / NEEDS_REBASE 8 / NEEDS_CI_FIX 2 / SUPERSEDED_CANDIDATE 0 / HUMAN_JUDGMENT 1`。remote operationは`READ`のみで、reportはGit外`/tmp/pr-triage-live-20260901-ccd05f2.json`、SHA-256は`b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301`。
+- Acceptanceは2/2。親validator PASS、focused 6/6 PASS、parent full suite `396/396 PASS`、`git diff --check` PASS。既存`tests/test_issue_intake.py`はclaim中の`IN_PROGRESS`を正しく許容するようライフサイクル検証を補正した。
+- 子repo変更はなし。機微情報は追加していない。Drive artifact、Issue/PRのcreate/update/close/comment/label、merge、release、child mutationは行っていない。explicit/inferred feedbackはnone。
+- 未解決: triage結果の実マージ判断は人間gate。#116の`AAP_CHILD_REPOS_TOKEN`設定とremote green runも引き続きhuman gate。`.local/state/gh/device-id`はGitHub CLIが作成した未追跡ローカルファイルで、機微値を読み取らず、commit対象から除外した。
+- leaseは`available/unassigned`へ解放した。現在READYまたは依存完了済みBACKLOGはなく、次はread-only Issue intakeで新規SSOT候補を確認する。
+
+## Next exact action
+
+1. 現在はeligibleなREADY/BACKLOGがなく、read-only intakeは38件中22件queued・0件qualified unqueued・16件`UNQUEUED_NEEDS_SSOT`だった。新しいIssueまたはSSOT補完が現れるまで実装・queue登録をせず、変化時に`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`を再実行する。

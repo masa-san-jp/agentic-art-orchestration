@@ -1,30 +1,75 @@
-version: 121
-updated_at: "2026-09-01T16:26:00+09:00"
+version: 123
+updated_at: "2026-09-01T21:13:06+09:00"
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: unassigned
-  acquired_at: "2026-09-01T16:20:00+09:00"
-  expires_at: "2026-09-01T17:20:00+09:00"
+  acquired_at: "2026-09-01T16:25:00+09:00"
+  expires_at: "2026-09-01T17:25:00+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-REALCHAIN-REBASE-001:attempt-1
-  released_at: "2026-09-01T16:26:00+09:00"
+  execution_id: HARNESS-PR-TRIAGE-001:attempt-1
+  released_at: "2026-09-01T21:13:06+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    paths: [tools/pr_triage.py, schemas/pr-triage-report.schema.json, tests/test_pr_triage.py, tests/fixtures/pr-triage, docs/operator-runbook.md, config/human-gates.yaml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: HARNESS-REALCHAIN-REBASE-001
-  repository: agentic-art-orchestration
-  start_point: f5f4c4c
-  expected_changes: Re-baseline the real-chain workflow and contract tests for six current private child repositories, fail closed with MISSING_EXTERNAL_SECRET before checkout, preserve read-only full-history checkout and no pin adoption, and re-point the legacy blocked task to Issue #116.
-  result: complete; Issue #116 acceptance 3/3 observed with six-child read-only real-chain workflow, named fail-closed MISSING_EXTERNAL_SECRET preflight before checkout, no pin adoption, and remote run evidence
-last_completed_task: HARNESS-SSOT-PUSH-001
-resume_from:
   task: HARNESS-PR-TRIAGE-001
-  action: "Claim HARNESS-PR-TRIAGE-001 and run the validator before reading Issue #117 and the PR triage contract."
-  command: .venv/bin/python tools/validate.py --check
+  repository: agentic-art-orchestration
+  start_point: 2ca466a
+  expected_changes: Implement a deterministic metadata-only open-PR triage report for all manifest repositories, path-based human merge classes, fixture/live inputs, tests, and operator guidance without any GitHub write operation.
+  result: complete; Issue #117 acceptance 2/2 fixture dimensions and live all-repository observation completed with no remote write operation
+last_completed_task: HARNESS-PR-TRIAGE-001
+resume_from:
+  task: null
+  action: "Read-only intake observed 38 open Issues: 22 already queued, 0 qualified unqueued, and 16 UNQUEUED_NEEDS_SSOT; do not register or implement without a complete Issue SSOT."
+  command: .venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check
+
+pr_triage:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+  target_repository: agentic-art-orchestration
+  implementation_commit: ccd05f2e8c35850b3ac388d10fa948e57d4e0625
+  acceptance: 2/2 fixture dimensions plus live all-repository observation
+  focused_tests: "6/6 PASS"
+  parent_full_suite: "396/396 PASS"
+  parent_validation: PASS
+  diff_check: PASS
+  fixture:
+    source: fixture://pr-triage/open-prs-2026-09-01
+    repositories: 7
+    pull_requests: 6
+    change_classes: [CLASS_RECORD, CLASS_DOCS, CLASS_CODE, CLASS_CONTRACT]
+    recommendations: [MERGE_CANDIDATE, NEEDS_REBASE, NEEDS_CI_FIX, SUPERSEDED_CANDIDATE, HUMAN_JUDGMENT]
+    deterministic: PASS
+    report_schema: pr-triage-report/v1
+  live:
+    source: gh pr list --state open --json metadata
+    observed_at: "2026-09-01T12:02:09Z"
+    source_parent_commit: ccd05f2e8c35850b3ac388d10fa948e57d4e0625
+    repositories: 7
+    open_pull_requests: 17
+    change_class_counts: {CLASS_RECORD: 0, CLASS_DOCS: 4, CLASS_CODE: 8, CLASS_CONTRACT: 5}
+    recommendation_counts: {MERGE_CANDIDATE: 6, NEEDS_REBASE: 8, NEEDS_CI_FIX: 2, SUPERSEDED_CANDIDATE: 0, HUMAN_JUDGMENT: 1}
+    remote_operations: [READ]
+    report_path_external: /tmp/pr-triage-live-20260901-ccd05f2.json
+    report_sha256: b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301
+  human_gate:
+    merge_classes: [CLASS_RECORD, CLASS_DOCS, CLASS_CODE, CLASS_CONTRACT]
+    auto_merge: false
+    human_approval_required: true
+    operation: triage only; merge, close, rebase, force push, and ready-for-review not performed
+  child_repositories: none
+  sensitive_data: none; no PR body, diff, comment, credential, PRIVATE_RAW, RESTRICTED, or direct identifier stored
+  external_artifact: none; no Drive or GitHub Issue/PR mutation performed by triage
+  feedback:
+    explicit: none
+    inferred: none
+  unresolved:
+    - human review remains required for MERGE_CANDIDATE and all other recommendations; no automatic merge was introduced
+    - HARNESS-REALCHAIN-REBASE-001 remains human-gated on AAP_CHILD_REPOS_TOKEN configuration and a remote green run
+    - issue intake remains at 16 UNQUEUED_NEEDS_SSOT; no new task was registered without observable acceptance, target repository, checks, and human gate
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
