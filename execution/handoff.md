@@ -1570,6 +1570,12 @@
 - 未解決: triage結果の実マージ判断は人間gate。#116の`AAP_CHILD_REPOS_TOKEN`設定とremote green runも引き続きhuman gate。`.local/state/gh/device-id`はGitHub CLIが作成した未追跡ローカルファイルで、機微値を読み取らず、commit対象から除外した。
 - leaseは`available/unassigned`へ解放した。現在READYまたは依存完了済みBACKLOGはなく、次はread-only Issue intakeで新規SSOT候補を確認する。
 
+## 2026-09-02 continuation observation
+
+- 2026-09-02 JSTにIssue本文・PR本文・diffを取得せず、7repoのIssue番号・タイトル・URLだけをread-only再確認した。前回観測から変化はなく、open Issueは親38、Production 1（#10）、viewer 1（#2）、self-model/art-history/marketing-trends/Research 0だった。
+- Production #10とviewer #2はmanifestに記録済みの要件SSOTで、新規qualified implementation Issueは0件。fixture intakeも`queued 22 / qualified_unqueued 0 / UNQUEUED_NEEDS_SSOT 16`で変化なし。queue登録、Issue create/update/comment/close/label、子repo変更は行っていない。
+- 観測はmetadata-onlyで、機微情報・Issue本文・会話全文・Drive artifactは保存していない。既存の#116 secret/green runとPR #42 merge判断のhuman gateも変更していない。
+
 ## Next exact action
 
-1. 現在はeligibleなREADY/BACKLOGがなく、fixture intakeは0件qualified unqueued。metadata-only live観測は親38、Production 1、viewer 1、その他0で、新規実装SSOTは0件だった。新しいIssueまたはSSOT補完が現れるまで実装・queue登録をせず、変化時に`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`を再実行する。
+1. 現在はeligibleなREADY/BACKLOGがなく、新しいIssueまたはSSOT補完が現れるまで実装・queue登録をせず、変化時に`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`を再実行する。
