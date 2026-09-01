@@ -1609,6 +1609,13 @@
 - `tools/qualify_pin_update.py`を、repo ID・status・execution mode・environment modeに加えて、宣言gateのcommand・status・exit code・安全なerror metadataだけをreport/標準出力へ出すよう変更した。gate stdout/stderr、secret、pin値、raw dataは出さない。
 - CLIの既定timeoutを`child_quality_gates.DEFAULT_GATE_TIMEOUT_SECONDS`（300秒）へ統一した。focused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkはPASS。次のremote runで失敗repoまたはexchange失敗を確定する。
 
+## 2026-09-02 child gate root-cause follow-up
+
+- run `33534392847`のgate-level結果で、Researchのunit testsは300秒timeout、art-historyはgraph/context-vectors/testsの全3 gateがexit 1、self-modelはgraph/testsの全2 gateがexit 1だった。Production、Researchの他3 gate、marketing、viewerはPASSし、exchangeはNOT_RUNだった。
+- art-historyの`pyproject.toml`はPython `>=3.12,<3.13`と`PyYAML>=6.0.2,<7`を宣言し、self-modelもpyprojectでPyYAMLを宣言している。前runのper-child provisioningはrequirementsファイルしか導入していなかったため、art-history/self-modelの専用venvが依存不足だった。親workflowをPython 3.12へ合わせ、pyproject依存を各venvへ導入する。
+- Researchの実測timeoutは300秒で不合格だったため、real-chainだけqualification timeoutを有限の900秒へ拡張する。汎用child gate既定値300秒は変更せず、real-chain固有の実repo負荷をworkflowに明示する。
+- gate-level出力はrepo ID、宣言command、status、exit code、安全なerror metadataだけであり、stdout/stderr、secret、pin値、raw dataは出さない。次のremote runで3repoの再検証結果とProduction exchange実行可否を確認する。
+
 ## Next exact action
 
 1. 親変更をfeature branchへcommit・pushし、PR #42のworkflow再実行でreal-chain greenを確認する。確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。

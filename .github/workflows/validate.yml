@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/self-model-notes
@@ -115,6 +115,7 @@ jobs:
             child_python="$child_python_root/$repository_id/bin/python"
             if [ -f "$child/requirements-dev.txt" ]; then "$child_python" -m pip install -r "$child/requirements-dev.txt"; fi
             if [ -f "$child/requirements.txt" ]; then "$child_python" -m pip install -r "$child/requirements.txt"; fi
+            if [ -f "$child/pyproject.toml" ]; then "$child_python" -m pip install "$child"; fi
           done <<'EOF'
           self-model|repos/self-model-notes
           art-history|repos/art-history-notes
@@ -129,7 +130,7 @@ jobs:
             --workspace-root repos \
             --output /tmp/pin-update-qualification.json \
             --run-id ci-real-chain \
-            --timeout 300 \
+            --timeout 900 \
             --python-root "$RUNNER_TEMP/child-python"
 
   # The bootstrap job validates against the offline fixture mirror. This job also

@@ -17,6 +17,8 @@ class RealChainCITests(unittest.TestCase):
         workflow = self.workflow()
         real_chain = workflow["jobs"]["real-chain"]
         self.assertEqual("read", real_chain["permissions"]["contents"])
+        setup_python = next(step for step in real_chain["steps"] if step.get("uses") == "actions/setup-python@v5")
+        self.assertEqual("3.12", setup_python["with"]["python-version"])
         checkout_repositories = {
             step["with"]["repository"]
             for step in real_chain["steps"]
@@ -60,7 +62,7 @@ class RealChainCITests(unittest.TestCase):
         self.assertIn("tools/qualify_pin_update.py", command)
         self.assertIn("--workspace-root repos", command)
         self.assertIn("--run-id ci-real-chain", command)
-        self.assertIn("--timeout 300", command)
+        self.assertIn("--timeout 900", command)
         self.assertIn('--python-root "$RUNNER_TEMP/child-python"', command)
         self.assertNotIn("--apply", command)
 
@@ -72,6 +74,7 @@ class RealChainCITests(unittest.TestCase):
         self.assertIn("python3 -m pip install -r requirements-dev.txt", provisioning_command)
         self.assertIn('python3 -m venv "$child_python_root/$repository_id"', provisioning_command)
         self.assertIn('"$child_python" -m pip install -r "$child/requirements.txt"', provisioning_command)
+        self.assertIn('"$child_python" -m pip install "$child"', provisioning_command)
         self.assertIn("marketing-trends|repos/marketing-trends-notes", provisioning_command)
         self.assertIn("agentic-art-production|repos/agentic-art-production", provisioning_command)
         self.assertNotIn('python3 -m pip install -r "$child/requirements.txt"', provisioning_command)
