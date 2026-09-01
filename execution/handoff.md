@@ -1622,6 +1622,14 @@
 - 子repo本体をインストールする必要はなく、品質gateが必要とする依存だけが必要である。親workflowはpyprojectの`project.dependencies`をPython 3.12標準の`tomllib`で一時requirementsへ抽出し、そのrequirementsだけを各venvへ導入する。子repoのpyproject、データ、package layoutは変更しない。
 - 最新workflow修正はfocused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkがPASS。次のremote runでart-history/self-modelのgate実行とResearch timeout 900秒の効果を確認する。
 
+## 2026-09-02 parent runner dependency follow-up
+
+- run [`33535915349`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33535915349)はcredential、6 child checkout、6つのper-child dependency provisioning、bootstrap、production-exchangeをPASSした。agentic-art-production、agentic-art-research、marketing-trends、self-model、viewer-response-notesは全gate PASS、art-historyはgraph/context-vectors PASS後にunit testだけがexit 1となり、exchangeはNOT_RUNだった。
+- 失敗ログは安全な集約情報のみを出力するため、子repoの正確な理由は親側で直接推測せず、同じcommit `de5a3c3` のart-history自身のvalidate run [`33523697488`](https://github.com/masa-san-jp/art-history-notes/actions/runs/33523697488)を照合した。子repoの正準検証はsetup-uv後に129 tests PASSであり、親runnerとの差分は`uv`コマンドの未導入だった。ローカル3.14での再現失敗は子repoが3.12を要求するため証拠には採用していない。
+- 親workflowへ`astral-sh/setup-uv@v6`を追加し、`tests/test_real_chain_ci.py`でPython 3.12とuvの両方を要求するようにした。manifestのart-historyゲートは、現在のpin `b831...`に`tools/verify.py`が存在しないため旧3ゲートへ戻し、pinとゲート定義の整合性を保持した。pyprojectはpackageとしてインストールせず、project.dependenciesだけを一時requirementsへ抽出する。
+- 親変更のfocused testは8/8、validator、diff checkがPASS。子repo、Issue、Drive、pin、default branch、merge、releaseは変更していない。secret値、PRIVATE_RAW、RESTRICTED、raw conversationは保存していない。explicit feedback / inferred feedbackはいずれもnone。
+- leaseはattempt-2の期限切れを確認後、同じtaskのattempt-3として2026-09-02 02:30 JSTに再取得した。未解決はsetup-uv反映後のremote real-chain green evidenceのみである。
+
 ## Next exact action
 
 1. 親変更をfeature branchへcommit・pushし、PR #42のworkflow再実行でreal-chain greenを確認する。確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。

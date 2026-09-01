@@ -1,14 +1,14 @@
-version: 132
-updated_at: "2026-09-02T02:07:00+09:00"
+version: 133
+updated_at: "2026-09-02T02:30:00+09:00"
 active_task: ISSUE-38-REAL-CHAIN-CI-001
 active_repository: agentic-art-orchestration
 lease:
   status: held
   owner: codex-realchain-qualification
-  acquired_at: "2026-09-02T01:22:00+09:00"
-  expires_at: "2026-09-02T02:22:00+09:00"
+  acquired_at: "2026-09-02T02:30:00+09:00"
+  expires_at: "2026-09-02T03:30:00+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: ISSUE-38-REAL-CHAIN-CI-001:attempt-2
+  execution_id: ISSUE-38-REAL-CHAIN-CI-001:attempt-3
   released_at: null
   scope:
     repository: agentic-art-orchestration
@@ -19,7 +19,7 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: d80d6b7
   expected_changes: Isolate real-chain child quality-gate dependencies in six pre-provisioned per-child environments, install pyproject dependencies under a compatible Python version, use a finite 900-second timeout for the observed slow Research suite, and preserve read-only pin qualification without applying updates.
-  result: in progress; run 33535508799 authenticated all six child checkouts but provisioning failed when pip attempted to install art-history as a package and setuptools rejected its flat layout. The workflow now extracts pyproject project dependencies only, uses Python 3.12, and keeps the finite 900-second timeout before the next rerun.
+  result: in progress; run 33535915349 authenticated all six child checkouts and provisioned every per-child environment. Five child repositories passed; art-history's three declared gates reached the unit-test gate, which failed because the parent runner had not installed the child-required uv command. The workflow now installs uv on the Python 3.12 real-chain runner before the next rerun.
 last_completed_task: HARNESS-PR-TRIAGE-001
 resume_from:
   task: null
@@ -100,24 +100,24 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: REMOTE_REAL_CHAIN_PROVISIONING_FAILED_PYPROJECT_PACKAGE_LAYOUT
-  observed_at: "2026-09-02T02:04:00+09:00"
+  status: REMOTE_REAL_CHAIN_ART_HISTORY_UNIT_TEST_FAILED_MISSING_UV
+  observed_at: "2026-09-02T02:25:00+09:00"
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: e79e1fe
+  head_commit: 3608f78
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
   draft: true
   mergeable: MERGEABLE
   merge_state: UNSTABLE
-  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_DURING_PYPROJECT_PROVISIONING"
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_ART_HISTORY_UNIT_TEST"
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
   local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
   remote_operations: [READ, PUSH]
-  recommendation: "extract only pyproject project dependencies into each child environment, rerun qualification, then route any remaining child failures to their owner repositories; keep default-branch merge behind human review"
-  impact: "art-historyのflat-layout package buildを依存導入と誤認している間は、品質gateを実行できず6件のpin候補を資格付けできない"
+  recommendation: "install uv on the Python 3.12 real-chain runner before child gates, rerun qualification, then route any remaining child failures to their owner repositories; keep default-branch merge behind human review"
+  impact: "親runnerが子repoの正準テストが要求するuvを提供しない間は、art-historyの単体テストが失敗し6件のpin候補を資格付けできない"
   unblock_condition: "the per-child qualification workflow completes green with the external read-only credential, then human review may decide the default-branch merge"
   integration:
     status: complete
@@ -150,15 +150,16 @@ pr_merge_observation:
       explicit: none
       inferred: none
   latest_remote_run:
-    id: 33535508799
-    head_sha: e79e1fe
-    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33535508799
+    id: 33535915349
+    head_sha: 3608f78
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33535915349
     bootstrap: PASSED
     production_exchange: PASSED
     real_chain_preflight: PASSED
-    real_chain_qualification: NOT_RUN
-    real_chain_observed: "credential and six child checkouts passed; provisioning failed while pip tried to install art-history as a package and setuptools reported multiple top-level packages in its flat layout; bootstrap and production-exchange passed"
-    child_repository_statuses: not produced because provisioning failed before qualification
+    real_chain_qualification: FAILED
+    real_chain_observed: "credential, six child checkouts, and all six per-child dependency provisions passed; agentic-art-production, agentic-art-research, marketing-trends, self-model, and viewer-response-notes passed; art-history graph and context-vector gates passed but its unit-test gate failed with exit 1; production exchange was not run"
+    child_repository_statuses: "5/6 PASSED; art-history FAILED; 14/15 gates PASSED"
+    root_cause: "art-history agent-doctor tests require uv; parent real-chain had Python 3.12 but no setup-uv step, while art-history's own validate run 33523697488 passed after setup-uv and its 129-test canonical verification"
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103

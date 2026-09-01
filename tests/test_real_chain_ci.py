@@ -19,6 +19,10 @@ class RealChainCITests(unittest.TestCase):
         self.assertEqual("read", real_chain["permissions"]["contents"])
         setup_python = next(step for step in real_chain["steps"] if step.get("uses") == "actions/setup-python@v5")
         self.assertEqual("3.12", setup_python["with"]["python-version"])
+        self.assertIn(
+            "astral-sh/setup-uv@v6",
+            {step.get("uses") for step in real_chain["steps"]},
+        )
         checkout_repositories = {
             step["with"]["repository"]
             for step in real_chain["steps"]
