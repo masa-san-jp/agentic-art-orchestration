@@ -60,7 +60,21 @@ class RealChainCITests(unittest.TestCase):
         self.assertIn("tools/qualify_pin_update.py", command)
         self.assertIn("--workspace-root repos", command)
         self.assertIn("--run-id ci-real-chain", command)
+        self.assertIn("--timeout 300", command)
+        self.assertIn('--python-root "$RUNNER_TEMP/child-python"', command)
         self.assertNotIn("--apply", command)
+
+        provisioning = next(
+            step for step in real_chain["steps"]
+            if step.get("name") == "Provision parent and per-child dependencies"
+        )
+        provisioning_command = provisioning["run"]
+        self.assertIn("python3 -m pip install -r requirements-dev.txt", provisioning_command)
+        self.assertIn('python3 -m venv "$child_python_root/$repository_id"', provisioning_command)
+        self.assertIn('"$child_python" -m pip install -r "$child/requirements.txt"', provisioning_command)
+        self.assertIn("marketing-trends|repos/marketing-trends-notes", provisioning_command)
+        self.assertIn("agentic-art-production|repos/agentic-art-production", provisioning_command)
+        self.assertNotIn('python3 -m pip install -r "$child/requirements.txt"', provisioning_command)
 
     def test_private_child_access_requires_an_external_actions_secret(self):
         workflow = self.workflow()

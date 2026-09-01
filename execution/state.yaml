@@ -1,25 +1,25 @@
-version: 129
-updated_at: "2026-09-02T00:59:37+09:00"
-active_task: null
-active_repository: null
+version: 130
+updated_at: "2026-09-02T01:22:00+09:00"
+active_task: ISSUE-38-REAL-CHAIN-CI-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: "2026-09-01T16:25:00+09:00"
-  expires_at: "2026-09-01T17:25:00+09:00"
+  status: held
+  owner: codex-realchain-qualification
+  acquired_at: "2026-09-02T01:22:00+09:00"
+  expires_at: "2026-09-02T02:22:00+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-PR-TRIAGE-001:attempt-1
-  released_at: "2026-09-01T21:13:06+09:00"
+  execution_id: ISSUE-38-REAL-CHAIN-CI-001:attempt-2
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/pr_triage.py, schemas/pr-triage-report.schema.json, tests/test_pr_triage.py, tests/fixtures/pr-triage, docs/operator-runbook.md, config/human-gates.yaml, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md, PLANS.md]
+    paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/state.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: HARNESS-PR-TRIAGE-001
+  task: ISSUE-38-REAL-CHAIN-CI-001
   repository: agentic-art-orchestration
-  start_point: 2ca466a
-  expected_changes: Implement a deterministic metadata-only open-PR triage report for all manifest repositories, path-based human merge classes, fixture/live inputs, tests, and operator guidance without any GitHub write operation.
-  result: complete; Issue #117 acceptance 3/3: fixture dimensions, live all-repository observation, and human gate preservation completed with no remote write operation
+  start_point: d80d6b7
+  expected_changes: Isolate real-chain child quality-gate dependencies in six pre-provisioned per-child environments, align qualification timeout with the 300-second gate default, and preserve read-only pin qualification without applying updates.
+  result: in progress; latest remote run 33529218639 authenticated all six child checkouts but qualification returned FAILED after observing six changed pins; workflow fix is being qualified.
 last_completed_task: HARNESS-PR-TRIAGE-001
 resume_from:
   task: null
@@ -100,25 +100,25 @@ issue_intake_live_observation:
   audit: "FINDINGS; one known nonblocking marketing freshness warning"
   workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
 pr_merge_observation:
-  status: PUSHED_CHECKS_PARTIAL_EXTERNAL_CREDENTIAL
-  observed_at: "2026-09-02T00:59:37+09:00"
-  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+  status: REMOTE_REAL_CHAIN_AUTHENTICATED_QUALIFICATION_FAILED
+  observed_at: "2026-09-02T01:15:22+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
   head_branch: agent/issues-38-41-pipeline
-  head_commit: 622acc52caeeceb1f56affd7b4ab82d9a1c94b50
+  head_commit: d80d6b7dd91e35af10561583f006dac465b8edc4
   base_branch: main
   base_commit: e7d123c
   pr_state: OPEN
   draft: true
   mergeable: MERGEABLE
   merge_state: UNSTABLE
-  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_EXTERNAL_CREDENTIAL"
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=FAILED_AFTER_AUTHENTICATED_CHECKOUT_AND_SIX_PIN_CHANGES"
   conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
   local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
   remote_operations: [READ, PUSH]
-  recommendation: "configure AAP_CHILD_REPOS_TOKEN and rerun real-chain; keep default-branch merge behind human review"
-  impact: "片側優先ではviewer entry、AAP_CHILD_REPOS_TOKEN real-chain、pin adoption/signal export、intent/run API、または安全境界を失う可能性がある"
-  unblock_condition: "configure the external read-only AAP_CHILD_REPOS_TOKEN, rerun real-chain to green, then human review may decide the default-branch merge"
+  recommendation: "isolate child quality-gate dependencies per repository, align qualification timeout, rerun real-chain; keep default-branch merge behind human review"
+  impact: "共有依存環境のままでは子repoごとの品質ゲートがENV_UNSATISFIEDまたはtimeoutになり、6件のpin候補を安全に資格付けできない"
+  unblock_condition: "the per-child qualification workflow completes green with the external read-only credential, then human review may decide the default-branch merge"
   integration:
     status: complete
     base_commit: e7d123c73f29015c8e54b39a4c1f97eb882f632d
@@ -127,7 +127,7 @@ pr_merge_observation:
     pin_policy: "retain the feature branch's qualified six-repository pins because origin/main's older five-repository pins did not match the current qualified snapshot"
     viewer_policy: "keep viewer-response-notes outside generic three-kind normalized signal ingest and route it through viewer_response_gate.py"
     parent_validation: PASS
-    parent_tests: "453/453 PASS"
+    parent_tests: "456/456 PASS"
     project_status: PASS
     workspace: "6/6 child fixture repositories clean"
     audit: "FINDINGS; one known nonblocking marketing freshness warning"
@@ -135,14 +135,14 @@ pr_merge_observation:
     diff_check: PASS
     merge_commit: 50880258b64f08eab3fa53c99f9985a376466dd9
     merge_commit_status: CREATED
-    feature_head: 622acc52caeeceb1f56affd7b4ab82d9a1c94b50
+    feature_head: d80d6b7dd91e35af10561583f006dac465b8edc4
     record_commit: 51e037bc2f0e8ed06aa01d50d4d8a1e24084c3c9
     push_verified: true
     ci_run: 33528830980
     ci_bootstrap: PASSED
     ci_production_exchange: PASSED
-    ci_real_chain: FAILED_EXTERNAL_CREDENTIAL
-    ci_real_chain_reason: "AAP_CHILD_REPOS_TOKEN is unset; checkout and qualification were skipped fail-closed"
+    ci_real_chain: FAILED_AFTER_AUTHENTICATED_CHECKOUT
+    ci_real_chain_reason: "AAP_CHILD_REPOS_TOKEN authentication and all six child checkouts passed; qualification returned FAILED with changed_pins=6; child-specific report remained external and no pin was applied"
     child_repository_mutation: false
     sensitive_data: none
     external_artifact: none

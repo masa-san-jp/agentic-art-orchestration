@@ -105,19 +105,32 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
           persist-credentials: false
-      - name: Install parent and child dependencies
+      - name: Provision parent and per-child dependencies
         run: |
           python3 -m pip install -r requirements-dev.txt
-          for child in repos/self-model-notes repos/art-history-notes repos/marketing-trends-notes repos/agentic-art-research repos/agentic-art-production repos/viewer-response-notes; do
-            if [ -f "$child/requirements-dev.txt" ]; then python3 -m pip install -r "$child/requirements-dev.txt"; fi
-            if [ -f "$child/requirements.txt" ]; then python3 -m pip install -r "$child/requirements.txt"; fi
-          done
+          child_python_root="$RUNNER_TEMP/child-python"
+          mkdir -p "$child_python_root"
+          while IFS='|' read -r repository_id child; do
+            python3 -m venv "$child_python_root/$repository_id"
+            child_python="$child_python_root/$repository_id/bin/python"
+            if [ -f "$child/requirements-dev.txt" ]; then "$child_python" -m pip install -r "$child/requirements-dev.txt"; fi
+            if [ -f "$child/requirements.txt" ]; then "$child_python" -m pip install -r "$child/requirements.txt"; fi
+          done <<'EOF'
+          self-model|repos/self-model-notes
+          art-history|repos/art-history-notes
+          marketing-trends|repos/marketing-trends-notes
+          agentic-art-research|repos/agentic-art-research
+          agentic-art-production|repos/agentic-art-production
+          viewer-response-notes|repos/viewer-response-notes
+          EOF
       - name: Qualify the real immutable exchange chain
         run: |
           python3 tools/qualify_pin_update.py \
             --workspace-root repos \
             --output /tmp/pin-update-qualification.json \
-            --run-id ci-real-chain
+            --run-id ci-real-chain \
+            --timeout 300 \
+            --python-root "$RUNNER_TEMP/child-python"
 
   # The bootstrap job validates against the offline fixture mirror. This job also
   # exercises the Research/Production exchange against the exact manifest pins.

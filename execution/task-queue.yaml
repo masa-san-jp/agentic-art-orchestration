@@ -668,7 +668,7 @@ tasks:
   - id: ISSUE-38-REAL-CHAIN-CI-001
     milestone: M15
     title: Run real pinned child and Production exchange qualification in CI
-    status: BLOCKED
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -677,8 +677,9 @@ tasks:
     user_artifact_policy: READ_ONLY
     depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
     acceptance: Pull-request CI checks out all six current manifest children at their declared default branch using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails closed on a missing credential before checkout, and never adopts pins or mutates child repositories.
-    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain]
-    blocker: Re-baselined by HARNESS-REALCHAIN-REBASE-001 / Issue #116; remains BLOCKED until an administrator configures AAP_CHILD_REPOS_TOKEN and a remote green run records its URL and head SHA.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain --timeout 300 --python-root <child-environment-root>]
+    progress: AAP_CHILD_REPOS_TOKEN is configured and run 33529218639 authenticated all six checkouts, but qualification failed after observing six changed pins; the workflow now provisions per-child environments and uses the 300-second gate timeout before the required green rerun.
+    blocker: Remote green evidence is still required; human review remains required before default-branch merge, ready-for-review, or release.
 
   - id: GAP-DAG-001
     milestone: M15

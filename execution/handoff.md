@@ -1594,6 +1594,14 @@
 - `git merge --no-commit --no-ff origin/main`で競合をread-only相当で確認したが、片側優先や自動解消は行わず、mergeはabortして作業branchを元のclean状態へ戻した。commit、push、既定branchへのmerge、CI bypassは行っていない。
 - この初回観測時点の推奨は、その後のユーザー承認（semantic integration）で実施済み。現時点の結果と次操作は上記 `semantic integration of PR #42` を正本とする。
 
+## 2026-09-02 real-chain qualification reattempt
+
+- 管理者による`AAP_CHILD_REPOS_TOKEN`設定後、PR #42のrun [`33529218639`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33529218639)（head `d80d6b7dd91e35af10561583f006dac465b8edc4`）をread-onlyで再確認した。bootstrapとproduction-exchangeはPASSし、real-chainは6子repoすべてのcredential検証・checkout・依存導入を通過した後、`changed_pins: 6`を検出してqualification `FAILED`となった。pinの自動採用は行われていない。
+- 失敗ログには集約サマリだけが残り、子repo別の品質ゲート理由は外部report `/tmp/pin-update-qualification.json`に出力される設計のため、子repo別理由を推測していない。観測可能な次の構造要因は、CLIの既定timeout 60秒とchild gate標準300秒の不一致、およびmarketingの`PyYAML==6.0.3`とProductionの`PyYAML==6.0.2`を共有runnerへ順番に導入する依存衝突である。
+- 親workflowのreal-chainを、manifestに登録された6つのrepo IDごとの一時venvへ依存を導入し、`--python-root "$RUNNER_TEMP/child-python" --timeout 300`で資格判定する構成へ変更した。Production exchangeは親runner環境を使い、child gateの依存隔離と交換実行の依存を分離した。checkoutは引き続き`fetch-depth: 0`・`persist-credentials: false`、qualificationは`--apply`なしである。
+- focused `tests.test_real_chain_ci` 4/4、`tools/validate.py --check`、`git diff --check`はPASS。変更は親repoのworkflow/test/SSOTのみで、子repo、Issue、Drive、pin、default branch、merge、releaseは変更していない。secret値、PRIVATE_RAW、RESTRICTED、raw conversationは保存していない。explicit feedback / inferred feedbackはいずれもnone。
+- 未解決: 修正後のremote real-chain green run。green確認後もPR #42のmerge・ready化・releaseは人間gateとして残る。
+
 ## Next exact action
 
-1. `AAP_CHILD_REPOS_TOKEN`設定後のPR #42 workflow再実行でreal-chain greenを確認し、確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。
+1. 親変更をfeature branchへcommit・pushし、PR #42のworkflow再実行でreal-chain greenを確認する。確認後に人間がPRをreviewしてdefault branchへのmerge可否を判断する。release、force-pushは人間gateのまま。
