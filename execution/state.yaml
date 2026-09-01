@@ -1,5 +1,5 @@
-version: 123
-updated_at: "2026-09-01T21:13:06+09:00"
+version: 124
+updated_at: "2026-09-01T21:16:00+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -31,12 +31,13 @@ pr_triage:
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
   target_repository: agentic-art-orchestration
   implementation_commit: ccd05f2e8c35850b3ac388d10fa948e57d4e0625
-  acceptance: 2/2 fixture dimensions plus live all-repository observation
+  acceptance: 3/3
   focused_tests: "6/6 PASS"
   parent_full_suite: "396/396 PASS"
   parent_validation: PASS
   diff_check: PASS
   fixture:
+    acceptance: 2/2 fixture dimensions
     source: fixture://pr-triage/open-prs-2026-09-01
     repositories: 7
     pull_requests: 6

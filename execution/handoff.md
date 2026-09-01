@@ -1558,7 +1558,7 @@
 - `config/human-gates.yaml`へ`CLASS_RECORD`、`CLASS_DOCS`、`CLASS_CODE`、`CLASS_CONTRACT`を追加した。全クラスは`auto_merge: false`かつ`human_approval_required: true`であり、merge、close、rebase、force push、ready-for-reviewは実行しない。operator runbookには`MERGE_CANDIDATE`から人間が読む手順と各recommendationの扱いを追加した。
 - Fixture acceptanceは2/2。6件のsynthetic PRで5種類のrecommendationと4種類のchange classを再現し、schema valid、2回生成byte一致、input/queue read-only、metadata/privacy、human merge gateをfocused `6/6 PASS`で確認した。
 - live read-only観測は`2026-09-01T12:02:09Z`に7repo・17 open PRへ実行した。classは`CLASS_RECORD 0 / CLASS_DOCS 4 / CLASS_CODE 8 / CLASS_CONTRACT 5`、recommendationは`MERGE_CANDIDATE 6 / NEEDS_REBASE 8 / NEEDS_CI_FIX 2 / SUPERSEDED_CANDIDATE 0 / HUMAN_JUDGMENT 1`。remote operationは`READ`のみで、reportはGit外`/tmp/pr-triage-live-20260901-ccd05f2.json`、SHA-256は`b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301`。
-- Acceptanceは2/2。親validator PASS、focused 6/6 PASS、parent full suite `396/396 PASS`、`git diff --check` PASS。既存`tests/test_issue_intake.py`はclaim中の`IN_PROGRESS`を正しく許容するようライフサイクル検証を補正した。
+- Issue #117 acceptanceは3/3（fixture、実環境live、human gate保持）。親validator PASS、focused 6/6 PASS、parent full suite `396/396 PASS`、`git diff --check` PASS。既存`tests/test_issue_intake.py`はclaim中の`IN_PROGRESS`を正しく許容するようライフサイクル検証を補正した。
 - 子repo変更はなし。機微情報は追加していない。Drive artifact、Issue/PRのcreate/update/close/comment/label、merge、release、child mutationは行っていない。explicit/inferred feedbackはnone。
 - 未解決: triage結果の実マージ判断は人間gate。#116の`AAP_CHILD_REPOS_TOKEN`設定とremote green runも引き続きhuman gate。`.local/state/gh/device-id`はGitHub CLIが作成した未追跡ローカルファイルで、機微値を読み取らず、commit対象から除外した。
 - leaseは`available/unassigned`へ解放した。現在READYまたは依存完了済みBACKLOGはなく、次はread-only Issue intakeで新規SSOT候補を確認する。

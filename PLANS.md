@@ -560,7 +560,7 @@ Issue #117に従い、各repositoryのopen PRを人間が安全に短時間で�
 
 ### Validation and Acceptance
 
-- Acceptanceは2/2。focused `tests.test_pr_triage`は6/6、parent full suiteは396/396、validator、diff checkはPASS。
+- Issue #117 acceptanceは3/3（決定論的fixture、7repositoryのlive観測、人間merge gate保持）。focused `tests.test_pr_triage`は6/6、parent full suiteは396/396、validator、diff checkはPASS。
 - Fixture reportは6 PR・7 repositoryで5 recommendationと4 classを再現し、live reportは7 repository・17 open PRを`READ`のみで観測した。live report SHA-256は`b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301`。
 - live集計: `CLASS_RECORD 0 / CLASS_DOCS 4 / CLASS_CODE 8 / CLASS_CONTRACT 5`; `MERGE_CANDIDATE 6 / NEEDS_REBASE 8 / NEEDS_CI_FIX 2 / SUPERSEDED_CANDIDATE 0 / HUMAN_JUDGMENT 1`。
 
