@@ -1489,3 +1489,11 @@
 - ユーザー依頼で「外部エージェントが自律的に探索・作業できるハーネスか」を実地検証した。fresh視点で文書記載のブートストラップを実行し、`python3 tools/validate.py --check` は `ModuleNotFoundError: No module named 'yaml'` で失敗、`.venv/bin/python` 経由では validator PASS・full suite 379/379 OK を確認した。
 - 構造的ブロッカー4件をIssue化した: venv作成手順の欠落（#113）、READY/BACKLOG 0件でIssue→queue常設経路が無い（#114）、実行SSOT 5コミット未push（#115）、ISSUE-38-REAL-CHAIN-CI-001の再ベースラインSSOT（#116、AAP_CHILD_REPOS_TOKEN未設定を含む）。
 - 子repo・Issue以外の外部mutationなし。merge・release・push・Drive操作なし。次の推奨操作は #113/#114 のqueue登録（gap-DAG方式）と、人間による branch push・secret設定の判断。
+
+## 2026-09-01 harness SSOT issues and M17 queue registration
+
+- ユーザー指示により、監査で起票した #113〜#116 を「エージェント単独で完遂可能な実装SSOT」へ書き直した。各Issueは目的（Mission接続）、観測事実、スコープ（allowed paths）、実装要件、禁止事項、観測可能な受入条件、検証コマンド、human gate、完了報告要件を持つ。
+- task-queue.yaml v18 に M17 として4タスクを直列DAGで登録した: `HARNESS-BOOTSTRAP-001`（READY, #113）→ `HARNESS-INTAKE-001`（#114）→ `HARNESS-SSOT-PUSH-001`（#115）→ `HARNESS-REALCHAIN-REBASE-001`（#116）。直列化は AGENTS.md / README / operator-runbook の path 競合回避のため。
+- `ISSUE-38-REAL-CHAIN-CI-001` は BLOCKED のまま。#116 が要求されていた再ベースラインSSOTであり、issue_ssot の付替えは `HARNESS-REALCHAIN-REBASE-001` の作業に含まれる。secret 設定（AAP_CHILD_REPOS_TOKEN）と remote green 証拠は human gate として受入条件から分離した。
+- push は #115 が「`agent/issues-38-41-pipeline` の fast-forward push のみ」を task 明示として許可する。merge・ready化・main push・force push は引き続き人間承認。
+- 次の1操作: `HARNESS-BOOTSTRAP-001` を claim し、`.venv/bin/python tools/validate.py --check` から開始する。

@@ -34,16 +34,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-08-29T18:41:19+09:00`.
+Source updated at: `2026-09-01T11:05:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 2 | 96 | 98 |
+| 3 | 1 | 0 | 2 | 96 | 102 |
 
 Current task: `null`; repository: `null`; checkpoint: `PURPOSE-E2E-001`.
-Next action: No READY task remains; keep INITIAL-OPS-RELEASE-001 human-gated and ISSUE-38-REAL-CHAIN-CI-001 isolated until re-baselined.
-Ready: none.
-Next task: `null`.
+Next action: Implement Issue #113: make the documented fresh-clone bootstrap succeed verbatim; M17 harness-autonomy DAG (#113-#116) is registered with one READY task.
+Ready: `HARNESS-BOOTSTRAP-001`.
+Next task: `HARNESS-BOOTSTRAP-001`.
 Blocked:
 - `INITIAL-OPS-RELEASE-001`: explicit human approval for merge/tag/release; does not block M16
 - `ISSUE-38-REAL-CHAIN-CI-001`: Historical task state is stale on this branch; the latest remote main qualification run passed bootstrap and Production exchange with a different workflow shape, but did not expose the old real-chain job. Re-baseline the task against the current main workflow before claiming DONE.

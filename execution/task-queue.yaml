@@ -1,5 +1,5 @@
-version: 17
-updated_at: "2026-08-27T18:39:16+09:00"
+version: 18
+updated_at: "2026-09-01T11:05:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -952,3 +952,47 @@ tasks:
     completion: live-private E2E reached PLAN_READY; 12/12 acceptance booleans true; six-repository exact-pin child gates 16/16 PASSED; Production exchange PASSED; evidence and report remain Git-external and are referenced by SHA-256
     acceptance: A new non-sensitive theme reaches PLAN_READY through research and production with zero human prompts after input, complete source provenance, conservative viewer evidence, deterministic resume, child gates, and zero forbidden external effects.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/workspace.py status, python3 tools/audit.py]
+
+  - id: HARNESS-BOOTSTRAP-001
+    milestone: M17
+    title: Make the documented bootstrap succeed on a fresh clone without human help
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-E2E-001]
+    acceptance: A fresh clone with only git and python3 reaches a passing validator and full test suite by following the documented commands verbatim, the venv creation sequence exists in README and is referenced by AGENTS.md and the operator runbook, interpreter notation is consistent across documents, and a test rejects documentation regressions to bare python3 bootstrap.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: HARNESS-INTAKE-001
+    milestone: M17
+    title: Add a standing empty-queue intake path from open Issues to the task queue
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-BOOTSTRAP-001]
+    acceptance: AGENTS.md task selection gains a third rule covering the empty-queue case, Issue SSOT minimum requirements are documented, a read-only deterministic issue_intake tool reports unqueued open Issues with SSOT-quality judgments from live or fixture input without writing to Git or Issues, and its first real application registers SSOT-qualified open Issues into the queue in one commit while listing unqualified Issues as UNQUEUED_NEEDS_SSOT.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_issue_intake -v, python3 -m unittest discover -s tests -v, python3 tools/project_status.py --check-readme]
+
+  - id: HARNESS-SSOT-PUSH-001
+    milestone: M17
+    title: Require pushing execution SSOT commits at lease release and resolve the current backlog
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-INTAKE-001]
+    acceptance: The work protocol requires pushing the working branch before lease release with force push and default-branch push forbidden, an ahead-of-origin parent branch is observable as a named non-blocking finding with UNKNOWN preserved when the network is unavailable, and the current agent branch is fast-forward pushed so draft PR 42 matches local HEAD without merge or ready-for-review changes.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: HARNESS-REALCHAIN-REBASE-001
+    milestone: M17
+    title: Re-baseline the real-chain CI contract for six child repositories with fail-closed secret preflight
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-SSOT-PUSH-001]
+    acceptance: The real-chain job is redefined for the six current child repositories with a fail-closed MISSING_EXTERNAL_SECRET preflight before any checkout, read-only persist-credentials false full-history checkouts, qualification without pin adoption, contract tests asserting the fail-closed and read-only behavior, and the legacy blocked task re-pointed to the re-baseline Issue while secret configuration and remote green evidence remain an explicit human gate outside this acceptance.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci -v, python3 -m unittest discover -s tests -v]
