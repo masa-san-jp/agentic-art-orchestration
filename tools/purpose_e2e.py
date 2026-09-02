@@ -33,6 +33,7 @@ try:
     from tools.run import run as run_pipeline
     from tools.signal_bundle import build_signal_bundle
     from tools.validate import ROOT, load_json, load_yaml, validate_child_quality_gates
+    from tools.visual_package_boundary import build_fixture_visual_package, project_visual_package
     from tools.viewer_response_gate import assess_records
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +49,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     from tools.signal_bundle import build_signal_bundle
     from tools.viewer_response_gate import assess_records
     from tools.validate import ROOT, load_json, load_yaml, validate_child_quality_gates
+    from tools.visual_package_boundary import build_fixture_visual_package, project_visual_package
 
 
 SCHEMA_PATH = ROOT / "schemas" / "purpose-e2e-evidence.schema.json"
@@ -375,7 +377,7 @@ def _run_supervisor(state_root: Path, project_root: Path, run_id: str, research_
     }
 
 
-def _offline_plan(pipeline: Mapping[str, Any], project_slug: str, output_root: Path) -> dict[str, Any]:
+def _offline_plan(pipeline: Mapping[str, Any], project_slug: str, output_root: Path, production_commit: str, run_id: str) -> dict[str, Any]:
     plan = {
         "schema_version": "purpose-production-plan/v1",
         "project_id": f"project/{project_slug}",
@@ -402,13 +404,21 @@ def _offline_plan(pipeline: Mapping[str, Any], project_slug: str, output_root: P
             raise PurposeE2EError("existing offline production markdown plan is missing")
         return {"plan": existing, "plan_path": plan_path, "markdown_path": markdown, "plan_builder_status": "PASSED", "output_root": output_root, "project_slug": project_slug}
     plan_path.parent.mkdir(parents=True, exist_ok=True)
-    plan_path.write_text(yaml.safe_dump(plan, sort_keys=False, allow_unicode=True), encoding="utf-8")
     markdown = plan_path.with_suffix(".md")
-    markdown.write_text("# Production plan\n\nStatus: PLAN_READY\n\nMedium: light installation\n\nViewer review: blind/frame review\n", encoding="utf-8")
+    markdown.write_text(
+        "# Production plan\n\nStatus: PLAN_READY\n\nMedium: light installation\n\nViewer review: blind/frame review\n\n"
+        "## Visual package\n\n"
+        "[visual-reference-board.svg](visual-package/visual-reference-board.svg)\n\n"
+        "[concept-mockup.svg](visual-package/concept-mockup.svg)\n",
+        encoding="utf-8",
+    )
+    package = build_fixture_visual_package(plan_path.parent.parent, production_commit=production_commit, run_id=run_id)
+    plan["visual_package"] = package
+    plan_path.write_text(yaml.safe_dump(plan, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return {"plan": plan, "plan_path": plan_path, "markdown_path": markdown, "plan_builder_status": "PASSED", "output_root": output_root, "project_slug": project_slug}
 
 
-def _live_plan(output_root: Path) -> dict[str, Any]:
+def _live_plan(output_root: Path, *, production_commit: str, run_id: str) -> dict[str, Any]:
     plan_path = output_root / "production" / "production-smoke" / "03_plan" / "production-plan.yaml"
     if not plan_path.is_file():
         raise PurposeE2EError("live production plan was not retained in Git-external state")
@@ -417,6 +427,20 @@ def _live_plan(output_root: Path) -> dict[str, Any]:
         raise PurposeE2EError("live production plan is not a mapping")
     if not plan_path.with_suffix(".md").is_file():
         raise PurposeE2EError("live production markdown plan is missing")
+    package_path = plan_path.parent / "visual-package.yaml"
+    if not package_path.is_file():
+        raise PurposeE2EError("live visual package metadata is missing")
+    package = yaml.safe_load(package_path.read_text(encoding="utf-8"))
+    if not isinstance(package, Mapping) or package != plan.get("visual_package"):
+        raise PurposeE2EError("live visual package metadata does not match the production plan")
+    project_root = plan_path.parent.parent
+    project_visual_package(
+        package,
+        project_root=project_root,
+        production_commit=production_commit,
+        run_id=run_id,
+        fixture_only=False,
+    )
     source = plan_path.parent.parent / "00_handoff" / "source-bundle" / "artifacts"
     visual_path = source / "visual-language.yaml"
     visual = yaml.safe_load(visual_path.read_text(encoding="utf-8")) if visual_path.is_file() else {}
@@ -443,6 +467,7 @@ def _live_plan(output_root: Path) -> dict[str, Any]:
     selection_record = plan.get("selection_record") if isinstance(plan.get("selection_record"), Mapping) else {}
     return {
         "plan": plan,
+        "visual_package": package,
         "plan_path": plan_path,
         "markdown_path": plan_path.with_suffix(".md"),
         "plan_builder_status": "PASSED",
@@ -579,6 +604,14 @@ def _build_evidence(
             "handoff_sha256": _digest(pipeline["request"]),
         }
     derived = production.get("derived") if isinstance(production.get("derived"), Mapping) else {}
+    project_root = production["output_root"] / "production" / production["project_slug"]
+    visual_package = project_visual_package(
+        production.get("visual_package") or plan.get("visual_package"),
+        project_root=project_root,
+        production_commit=str(_manifest_map(manifest)["agentic-art-production"]["observed_commit"]),
+        run_id=_run_id(attempt_id),
+        fixture_only=lane == "networkless",
+    )
     privacy = {"theme_stored": False, "raw_conversation_stored": False, "credentials_stored": False, "private_raw_stored": False, "restricted_stored": False, "artifact_body_stored": False}
     evidence: dict[str, Any] = {
         "contract_version": "purpose-e2e-evidence/v1",
@@ -604,6 +637,9 @@ def _build_evidence(
         "production": {
             "plan_sha256": _digest(plan),
             "plan_locator": f"run://{_run_id(attempt_id)}/production/{production.get('project_slug', _project_slug(attempt_id))}/03_plan/production-plan.yaml",
+            "source_repository": "agentic-art-production",
+            "source_commit": _manifest_map(manifest)["agentic-art-production"]["observed_commit"],
+            "visual_package": visual_package,
             "medium": derived.get("medium", plan.get("medium", "UNKNOWN")),
             "materials": derived.get("materials", plan.get("materials", [])),
             "task_count": len(plan.get("tasks", [])) if isinstance(plan.get("tasks"), list) else 0,
@@ -630,6 +666,7 @@ def _build_evidence(
             "self_diversity_pass": pipeline["diversity"]["status"] in {"PASS", "PASS_LIMITED_DIVERSITY"},
             "research_traceable": True,
             "production_derived_fields_present": bool(derived.get("medium") or plan.get("medium")) and bool(plan.get("tasks")),
+            "visual_package_present_and_verified": True,
             "viewer_conservative": viewer["status"] == "UNKNOWN" and viewer["blind_or_frame_acceptance_test"],
             "resume_idempotent": supervisor["resume_reused"],
             "child_quality_gates_passed": _quality_passed(quality_gate_report),
@@ -659,7 +696,13 @@ def _run_lane(
     if lane == "networkless":
         pipeline = _pipeline(_offline_signals(manifest), project_id=PROJECT_SLUG_PREFIX + "canonical", project_slug=project_slug, generated_at=generated_at)
         supervisor = _run_supervisor(state_root, output_root / "research" / "projects" / project_slug, _run_id(attempt_id), research_commit)
-        production = _offline_plan(pipeline, project_slug, output_root)
+        production = _offline_plan(
+            pipeline,
+            project_slug,
+            output_root,
+            str(_manifest_map(manifest)["agentic-art-production"]["observed_commit"]),
+            _run_id(attempt_id),
+        )
         return _build_evidence(manifest, pipeline, supervisor, production, observations, attempt_id=attempt_id, lane=lane, generated_at=generated_at, quality_gate_report=quality_gate_report)
 
     if workspace_root is None:
@@ -685,7 +728,11 @@ def _run_lane(
     if exchange.get("status") != "PASSED":
         raise PurposeE2EError("live-private Research/Production exchange did not pass")
     supervisor = _run_supervisor(state_root, output_root / "research" / "projects" / project_slug, _run_id(attempt_id), research_commit)
-    production = _live_plan(output_root)
+    production = _live_plan(
+        output_root,
+        production_commit=str(_manifest_map(manifest)["agentic-art-production"]["observed_commit"]),
+        run_id=_run_id(attempt_id),
+    )
     exchange_dir = exchange_output / re.sub(r"[^A-Za-z0-9._-]+", "-", _run_id(attempt_id))
     production["handoff_path"] = exchange_dir / "handoff" / "production-handoff.yaml"
     return _build_evidence(manifest, pipeline, supervisor, production, observations, attempt_id=attempt_id, lane=lane, generated_at=generated_at, quality_gate_report=quality_gate_report)

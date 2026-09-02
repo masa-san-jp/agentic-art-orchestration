@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-02T23:46:29+09:00`.
+Source updated at: `2026-09-03T00:31:06+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 1 | 0 | 0 | 105 | 107 |
+| 0 | 0 | 1 | 0 | 106 | 107 |
 
-Current task: `null`; repository: `null`; checkpoint: `HARNESS-ISSUE-INTAKE-LIVE-001`.
-Next action: Claim the smallest dependency-complete READY task and inspect Production Issue #52 before editing.
-Ready: `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`.
-Next task: `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`.
+Current task: `PURPOSE-VISUAL-PACKAGE-001`; repository: `agentic-art-orchestration`; checkpoint: `PURPOSE-VISUAL-PACKAGE-001`.
+Next action: Run the parent validator, then read Issue #124 and the nearest purpose E2E, Production exchange, schema, and test contracts before editing.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 

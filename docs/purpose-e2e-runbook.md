@@ -39,6 +39,8 @@ python3 tools/purpose_e2e.py --offline-fixture \
 
 `--check` validates an already written evidence file. The canonical hashes must match after excluding only runtime timestamps and attempt-scoped IDs. The fixture's personal anchors are labelled fixture-only; they must never be copied into the live lane.
 
+Each successful production output now includes the child-owned visual package beside `production-plan.yaml`: a viewable `visual-reference-board.svg`, a conceptual/simulated `concept-mockup.svg`, and `visual-package.yaml`. The parent evidence keeps only the package metadata, source repository and commit, opaque run locators, media type, content hashes, and rights/safety states. It verifies both relative links from `production-plan.md` and the file hashes. Missing files, broken links, tampered hashes, missing provenance, or unknown rights/safety stop the run; SVG bodies remain in the explicitly supplied Git-external output root.
+
 ## Live-private qualification
 
 Use a clean workspace whose six repository heads exactly match `config/repositories.yaml`. The workspace and per-child Python environments are supplied by the operator; no checkout is repaired by this tool:
