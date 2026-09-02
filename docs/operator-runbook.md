@@ -366,6 +366,12 @@ stateはGit外の外部rootへ置く。初回はrun-id単位でleaseを取得し
 checkpointから受理する。別processのlease競合、期限切れでないlease、stateの契約不整合は変更せず
 拒否する。
 
+Productionの成果物はcheckpointのrunディレクトリへ閉じ込めない。`<state-root>/production/production/<slug>/`
+をプロジェクトの永続rootとし、`<state-root>/production-history.jsonl`にはrun-id、project-id、時刻、状態だけを
+追記する。別run-idで同じ制作を再開する場合は同じslugを指定し、変更handoffはchildの明示的なrevision受理へ
+渡す。履歴・台帳・resultを含むProduction rootが壊れている場合は自動的に新rootへ作り直さず、childのnamed
+diagnosticと失敗時点を確認してから再開する。
+
 ~~~bash
 .venv/bin/python tools/autonomous_runner.py --run-id <run-id> \
   --state-root <external-state-root> --worker-command <absolute-worker-path> \

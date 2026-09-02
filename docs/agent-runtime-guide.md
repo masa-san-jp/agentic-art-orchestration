@@ -26,6 +26,8 @@ state、handoff、ExecPlanを更新し、次のREADYタスクへ進んでくだ�
 
 この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
 
+Productionまで進んだ後の再開では、`<state-root>/production/production/<slug>/`がrun-idをまたぐ同一プロジェクトの出力rootになる。各runの`<state-root>/<run-id>/`は実行ごとのcheckpointであり、`<state-root>/production-history.jsonl`はrun-idとproject-idだけを結ぶGit外の追記型メタデータ台帳である。既存プロジェクトを別run-idで続けるときは、初回と同じ`--slug`を明示する。handoffが変わった場合はProduction childのrevision受理へ進み、過去のexecution、quality、resultを新しいrunの空ディレクトリへリセットしない。
+
 実repoを読めない環境では、合成signalだけを使うnetworkless確認として次を明示実行できる。
 
 ~~~bash
