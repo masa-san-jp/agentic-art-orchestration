@@ -34,14 +34,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-02T02:54:00+09:00`.
+Source updated at: `2026-09-02T12:24:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | 0 | 0 | 1 | 102 | 103 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-38-REAL-CHAIN-CI-001`.
-Next action: Human review is required for the qualified PR #42 before any default-branch merge, ready-for-review transition, tag, or release; after approval, first agent operation is a read-only PR/head recheck.
+Current task: `INITIAL-OPS-RELEASE-001`; repository: `agentic-art-orchestration`; checkpoint: `INITIAL-OPS-RELEASE-001`.
+Next action: Commit and push the applied six-pin manifest and fixture provenance update, create the parent PR, then wait for checks before merge.
 Ready: none.
 Next task: `null`.
 Blocked:
