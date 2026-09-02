@@ -333,5 +333,132 @@ class RequestForwardingTests(unittest.TestCase):
             self.assertEqual("RESEARCH_PENDING", report["status"])
 
 
+class ProductionHistoryTests(unittest.TestCase):
+    def test_production_root_is_stable_when_run_id_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state_root = Path(temporary) / "state"
+
+            self.assertEqual(state_root.resolve() / "production", MODULE._production_output_root(state_root))
+
+    def test_run_to_project_history_is_append_only_and_idempotent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state_root = Path(temporary) / "state"
+            history = MODULE._record_production_run(
+                state_root, "RUN001", "harmony", "2026-08-20T00:00:00+09:00"
+            )
+            MODULE._record_production_run(
+                state_root, "RUN001", "harmony", "2026-08-21T00:00:00+09:00"
+            )
+            MODULE._record_production_run(
+                state_root, "RUN002", "harmony", "2026-08-21T00:00:00+09:00"
+            )
+
+            entries = [json.loads(line) for line in history.read_text(encoding="utf-8").splitlines()]
+
+        self.assertEqual(2, len(entries))
+        self.assertEqual(["RUN001", "RUN002"], [entry["run_id"] for entry in entries])
+        self.assertEqual({"production/harmony"}, {entry["project_id"] for entry in entries})
+        self.assertEqual({"MATERIALIZED"}, {entry["status"] for entry in entries})
+
+    def test_changed_handoff_retries_through_revision_acceptance(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bundle = root / "bundle"
+            bundle.mkdir()
+            outcomes = [
+                {"status": "NOT_READY", "detail": "PROJECT_IDEMPOTENCY_MISMATCH: supersedes required"},
+                {"status": "PASSED"},
+            ]
+
+            with patch.object(MODULE, "_run_child", side_effect=outcomes) as child:
+                outcome, mode = MODULE._production_acceptance(
+                    root / "production-repository",
+                    root / "persistent-production",
+                    bundle,
+                    "harmony",
+                    "2026-08-20T00:00:00+09:00",
+                    "RUN002",
+                    sys.executable,
+                )
+
+            retry_args = child.call_args_list[1].args[1]
+
+        self.assertEqual("PASSED", outcome["status"])
+        self.assertEqual("ACCEPT_REVISION", mode)
+        self.assertEqual(str(root / "persistent-production"), retry_args[retry_args.index("--output-root") + 1])
+        self.assertIn("--accept-revision", retry_args)
+        self.assertEqual("RUN002/production/harmony", retry_args[retry_args.index("--idempotency-key") + 1])
+
+    def test_two_run_ids_share_production_records_and_second_plan_sees_first(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state_root = root / "state"
+            (root / "research").mkdir()
+            captured: list[dict] = []
+
+            def fake_tool(args: list[str], python: str) -> dict:
+                if args[0] == "tools/build_research_request.py":
+                    output = Path(args[args.index("--output") + 1])
+                    output.mkdir(parents=True, exist_ok=True)
+                    (output / "RR001.yaml").write_text(
+                        "request_id: RR001\nintent:\n  creative_question: derived\n",
+                        encoding="utf-8",
+                    )
+                return {"status": "PASSED"}
+
+            def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
+                if args[0] == "tools/complete.py":
+                    return {"status": "COMPLETE"}
+                if args[0] == "tools/new_production.py":
+                    output_root = Path(args[args.index("--output-root") + 1])
+                    project = output_root / "production" / "harmony"
+                    previously_materialized = (project / "05_execution" / "output-versions.yaml").is_file()
+                    ledger = project / "05_execution" / "output-versions.yaml"
+                    ledger.parent.mkdir(parents=True, exist_ok=True)
+                    ledger.write_text("version: 1\n", encoding="utf-8")
+                    captured.append({"step": "accept", "previously_materialized": previously_materialized,
+                                     "output_root": output_root})
+                elif args[0] == "tools/build_plan.py":
+                    project = Path(args[args.index("--project-root") + 1])
+                    captured.append({"step": "plan", "prior_records_visible":
+                                     (project / "05_execution" / "output-versions.yaml").is_file()})
+                return {"status": "PASSED"}
+
+            with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                    patch.object(MODULE, "_run_child", side_effect=fake_child), \
+                    patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                    patch.object(MODULE, "_handoff_arguments", return_value=[
+                        "--generated-at", "2026-08-20T00:00:00+09:00",
+                        "--research-commit", "a" * 40,
+                        "--handoff-id", "HO001", "--revision", "1",
+                    ]):
+                first = MODULE._run_orchestration(
+                    "調和", root / "workspace", state_root, "RUN001", "artistic-research",
+                    "harmony", "調和", "2026-08-20T00:00:00+09:00", sys.executable,
+                    research_root=root / "research", production_root=root / "production",
+                    offline_fixture=True,
+                )
+                second = MODULE._run_orchestration(
+                    "調和", root / "workspace", state_root, "RUN002", "artistic-research",
+                    "harmony", "調和", "2026-08-21T00:00:00+09:00", sys.executable,
+                    research_root=root / "research", production_root=root / "production",
+                    offline_fixture=True,
+                )
+
+            entries = [json.loads(line) for line in
+                       (state_root / "production-history.jsonl").read_text(encoding="utf-8").splitlines()]
+
+        self.assertEqual("PLAN_READY", first["status"])
+        self.assertEqual("PLAN_READY", second["status"])
+        self.assertEqual(first["production_root"], second["production_root"])
+        self.assertEqual(first["plan"], second["plan"])
+        self.assertEqual(["RUN001", "RUN002"], [entry["run_id"] for entry in entries])
+        accepts = [item for item in captured if item["step"] == "accept"]
+        plans = [item for item in captured if item["step"] == "plan"]
+        self.assertEqual([False, True], [item["previously_materialized"] for item in accepts])
+        self.assertEqual([True, True], [item["prior_records_visible"] for item in plans])
+
+
 if __name__ == "__main__":
     unittest.main()

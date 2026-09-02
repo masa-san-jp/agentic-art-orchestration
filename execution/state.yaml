@@ -1,30 +1,30 @@
-version: 158
-updated_at: "2026-09-03T06:30:35+09:00"
-active_task: null
-active_repository: null
+version: 159
+updated_at: "2026-09-03T06:49:29+09:00"
+active_task: HARNESS-PRODUCTION-HISTORY-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-03T05:20:09+09:00"
+  status: held
+  owner: codex
+  acquired_at: "2026-09-03T06:49:29+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-AUDIT-PORTFOLIO-001:20260903-060400
-  released_at: "2026-09-03T06:30:35+09:00"
+  execution_id: HARNESS-PRODUCTION-HISTORY-001:20260903-064929
+  released_at: null
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
     child_repositories: []
 checkpoint:
-  task: HARNESS-AUDIT-PORTFOLIO-001
+  task: HARNESS-PRODUCTION-HISTORY-001
   repository: agentic-art-orchestration
-  start_point: 561b68ca557be232713bae766b8522318be33d9d
-  expected_changes: Select explicit or latest deterministic run signal portfolios for audit/startup, preserve explicit offline fixture behavior, and defer orphan checks until requirements exist.
-  result: completed; parent PR #136 merged as c2f1d10167a5f3add35c8fa33f51dd2687557989 after all required CI gates passed; Issue #110 is closed with acceptance evidence.
+  start_point: 109f2945a3aed8423d699d750299379d5cbe9246
+  expected_changes: Persist one Production project output root across run IDs, append metadata-only run-to-project history, and route changed handoffs through the child revision acceptance path without resetting failed prior state.
+  result: in_progress; Issue #109 is the smallest dependency-complete remaining parent implementation issue.
 last_completed_task: HARNESS-AUDIT-PORTFOLIO-001
 resume_from:
-  task: null
-  action: "Re-run repository-scoped live Issue intake and select the smallest remaining implementation issue, currently #109."
-  command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
+  task: HARNESS-PRODUCTION-HISTORY-001
+  action: "Add regression tests for stable Production output/history and revision recovery, then run focused and full gates."
+  command: .venv/bin/python -m unittest tests.test_run -v
 
 issue_intake:
   status: complete

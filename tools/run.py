@@ -211,6 +211,81 @@ def _head(root: Path) -> str:
     return result.stdout.strip() if result.returncode == 0 else "0" * 40
 
 
+def _production_output_root(state_root: Path) -> Path:
+    """Keep production projects stable across run IDs while keeping them external to Git history."""
+    return state_root.resolve() / "production"
+
+
+def _record_production_run(
+    state_root: Path,
+    run_id: str,
+    project_slug: str,
+    requested_at: str,
+) -> Path:
+    """Append one metadata-only run-to-project relation, idempotently."""
+    history_path = state_root.resolve() / "production-history.jsonl"
+    history_path.parent.mkdir(parents=True, exist_ok=True)
+    project_id = f"production/{project_slug}"
+    expected = {
+        "version": 1,
+        "run_id": run_id,
+        "project_id": project_id,
+        "recorded_at": requested_at,
+        "status": "MATERIALIZED",
+    }
+    if history_path.is_file():
+        try:
+            lines = history_path.read_text(encoding="utf-8").splitlines()
+            entries = [json.loads(line) for line in lines if line.strip()]
+        except (OSError, json.JSONDecodeError) as exc:
+            raise StepFailure(f"production history cannot be read: {history_path}") from exc
+        for entry in entries:
+            if not isinstance(entry, Mapping):
+                raise StepFailure(f"production history entry is not an object: {history_path}")
+            if entry.get("run_id") != run_id:
+                continue
+            if entry.get("project_id") != project_id or entry.get("status") != "MATERIALIZED":
+                raise StepFailure(
+                    f"production history maps run {run_id!r} to a different project; "
+                    "remediation: inspect the Git-external history before resuming"
+                )
+            return history_path
+    with history_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(expected, ensure_ascii=False, sort_keys=True) + "\n")
+    return history_path
+
+
+def _production_acceptance(
+    production_repository: Path,
+    output_root: Path,
+    bundle_path: Path,
+    project_slug: str,
+    requested_at: str,
+    run_id: str,
+    python: str,
+) -> tuple[dict, str]:
+    """Materialize or safely accept a revision into the persistent project path."""
+    args = [
+        "tools/new_production.py", project_slug,
+        "--handoff", str(bundle_path),
+        "--output-root", str(output_root),
+    ]
+    outcome = _run_child(production_repository, args, python, allow_failure=True)
+    if outcome.get("status") != "NOT_READY":
+        return outcome, "INITIAL_OR_IDEMPOTENT"
+    detail = str(outcome.get("detail", ""))
+    if "PROJECT_IDEMPOTENCY_MISMATCH" not in detail:
+        raise StepFailure(f"tools/new_production.py failed: {detail or 'unknown production acceptance failure'}")
+    revision_args = args + [
+        "--accept-revision",
+        "--occurred-at", requested_at,
+        "--actor-kind", "AGENT",
+        "--actor-id", "agentic-art-orchestration",
+        "--idempotency-key", f"{run_id}/production/{project_slug}",
+    ]
+    return _run_child(production_repository, revision_args, python), "ACCEPT_REVISION"
+
+
 def _handoff_arguments(
     research_root: Path,
     project_slug: str,
@@ -445,15 +520,31 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         record("export", _run_child(
             research_root, ["tools/export_handoff.py", f"projects/{project_slug}", "--root", ".",
                             "--output", str(work / "bundle")], python))
-        record("accept-production", _run_child(
-            production_root, ["tools/new_production.py", project_slug, "--handoff", str(work / "bundle"),
-                              "--output-root", str(work / "production")], python))
+        persistent_production_root = _production_output_root(state_root)
+        production_outcome, acceptance_mode = _production_acceptance(
+            production_root,
+            persistent_production_root,
+            work / "bundle",
+            project_slug,
+            requested_at,
+            run_id,
+            python,
+        )
+        record("accept-production", {
+            **production_outcome,
+            "mode": acceptance_mode,
+            "output_root": str(persistent_production_root),
+            "project": f"production/{project_slug}",
+        })
+        history_path = _record_production_run(state_root, run_id, project_slug, requested_at)
         plan = _run_child(production_root, ["tools/build_plan.py", "--project-root",
-                                            str(work / "production" / "production" / project_slug)], python)
+                                            str(persistent_production_root / "production" / project_slug)], python)
         record("plan", plan)
         report = {
             "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
-            "plan": str(work / "production" / "production" / project_slug / "03_plan/production-plan.md"),
+            "plan": str(persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"),
+            "production_root": str(persistent_production_root),
+            "production_history": str(history_path),
             "theme_proposal": theme_proposal,
             "state": str(work),
         }
