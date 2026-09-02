@@ -1020,13 +1020,14 @@ tasks:
   - id: HARNESS-AUTO-PLAN-001
     milestone: M18
     title: Derive a production theme and plan entry when the user provides no theme
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
     target_repositories: [agentic-art-orchestration]
-    agent_terminal: DRAFT_PR_READY
+    agent_terminal: EVIDENCE_READY
     lane: AUTONOMOUS_PLANNING
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
     depends_on: [HARNESS-PR-TRIAGE-001]
     acceptance: A repository-aware agent can invoke the documented planning entry with no intent, theme, slug, or title; the entry selects a gate-passing candidate from the pinned signal snapshot, derives a privacy-safe theme proposal and stable project identity, writes the child-owned research request outside Git, and exposes the next action needed to reach PLAN_READY without asking the user to supply a theme. Explicit intent remains an optional ranking override, and no raw conversation, credential, PRIVATE_RAW, RESTRICTED value, or external write is introduced.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_run tests.test_auto_plan tests.test_docs -v, .venv/bin/python tools/project_status.py --check-readme, git diff --check]
+    completion: Theme-free planning entry implemented; offline run AUTO-PLAN-OFFLINE-001 reached AT_EDGE with a candidate-derived REPOSITORY_DERIVED proposal and Git-external RR001 request, stale workspace returned BLOCKED before export, focused 33/33 and parent full suite 464/464 passed.

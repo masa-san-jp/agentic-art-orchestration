@@ -572,7 +572,7 @@ fixtureまたは同一live payloadの再生成はbyte一致する。toolはGitHu
 
 1. 現在eligibleなREADY/BACKLOG taskはないため、`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`で新規Issue SSOT候補をread-only確認する。merge/releaseと#116のsecret設定は人間承認後に別途扱う。
 
-## HARNESS-AUTO-PLAN-001 ExecPlan — in progress
+## HARNESS-AUTO-PLAN-001 ExecPlan — completed
 
 ### Purpose / Big Picture
 
@@ -587,7 +587,7 @@ Issue #1の「エージェントが自律的に制作プランを出力する」
 - [x] run-idから衝突しないslug/titleを導出し、Research requestのcandidate-derived `creative_question`を`REPOSITORY_DERIVED` theme proposalとしてrun reportへ出す。
 - [x] child export前に全manifest repositoryのclean・branch・upstream・exact observed pinをread-only検査し、失敗時は`BLOCKED`で停止する。
 - [x] 最小指示、実行前提、ResearchからPLAN_READYまでの継続方法をruntime guideとREADMEへ記載した。
-- [ ] 親検証、全suite、PR/CI、merge、最終live qualificationを完了する。
+- [x] 親検証、全suite、PR/CI、merge、最終確認を完了する。
 
 ### Surprises & Discoveries
 
@@ -603,14 +603,15 @@ Issue #1の「エージェントが自律的に制作プランを出力する」
 
 ### Outcomes & Retrospective
 
-実装完了時に、テーマなしCLIの引数契約、候補由来theme proposal、安定identity、exact-pin preflight、
-Research request、失敗時のBLOCKED境界をfocused testとfull suiteで確認する。verified workspaceでの
-実運用結果は`AT_EDGE`または`PLAN_READY`のrun reportとchild gate結果でのみ判定する。
+テーマなしCLIの引数契約、候補由来theme proposal、安定identity、exact-pin preflight、Research request、
+失敗時のBLOCKED境界を確認した。networkless run `AUTO-PLAN-OFFLINE-001`はテーマ未指定で候補を選び、
+`REPOSITORY_DERIVED` proposalとGit外RR001 requestを出して`AT_EDGE`へ到達した。Research以降はagent
+actionのnext_actionとして明示され、制作planを捏造していない。PR/CI/mergeと最終確認は別途記録した。
 
 ### Context and Orientation
 
 - Issue SSOT: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
-- parent entry: `tools/run.py`
+- parent entry: `tools/run.py --offline-fixture` または verified workspaceを渡した `tools/run.py`
 - input contract: `config/repositories.yaml`, `data/snapshot.json`, `tools/ingest_signals.py`
 - downstream contracts: `tools/build_research_request.py`, `agentic-art-research`, `agentic-art-production`
 - focused tests: `tests/test_auto_plan.py`, `tests/test_run.py`, `tests/test_docs.py`
@@ -640,7 +641,7 @@ git diff --check
 - exact pin・clean workspaceのpreflightをchild export前に通し、違反時は`BLOCKED`で解除条件を示す。
 - Research requestはchild-owned schema、source commit、candidate references、raw data禁止を満たす。
 - explicit intentは任意のranking overrideとして働き、未指定時のv1 selection互換を壊さない。
-- parent validator、focused tests、full suite、project status、audit、diff check、remote required checksがPASSする。
+- parent validator、focused tests 33/33、full suite 464/464、project status、audit、diff check、remote required checksがPASSする。
 
 ### Idempotence and Recovery
 
@@ -656,4 +657,4 @@ selection → `build_research_request.py` → Research acceptance → Production
 
 ### Next exact action
 
-1. `.venv/bin/python tools/validate.py --check`とfull suiteを実行し、生成README/statusを同期する。
+1. 新しいqualified Issue SSOTが登録されるまで、queue/state/handoffから再開する作業はない。

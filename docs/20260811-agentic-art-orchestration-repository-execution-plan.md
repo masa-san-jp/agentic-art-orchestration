@@ -42,7 +42,7 @@ python3 -m unittest discover -s tests -v
 - [x] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidence、総合qualification、human-gated releaseまで完了）。
 - [x] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
 - [x] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-E2E-001`のnetworkless/live-private実装・検証、単一作家の1アンカー`PASS_LIMITED_DIVERSITY`、Research fresh 6repo exact-pin gateまで完了した。
-- [ ] M18: 利用者がテーマ・slug・titleを指定しない場合も、manifest pin済みworkspaceから候補由来の制作テーマとResearch requestを生成し、Research/Productionを経て`PLAN_READY`へ継続できる自律制作計画入口を閉じる。
+- [x] M18: 利用者がテーマ・slug・titleを指定しない場合も、manifest pin済みworkspaceから候補由来の制作テーマとResearch requestを生成し、Research/Productionを経て`PLAN_READY`へ継続できる自律制作計画入口を閉じる。theme-free entry、exact-pin fail-closed preflight、offline fixture、Research next action、focused/full verificationを完了した。
 
 ## Surprises & Discoveries
 
