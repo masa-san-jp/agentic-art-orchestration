@@ -1,15 +1,15 @@
-version: 157
-updated_at: "2026-09-03T06:04:00+09:00"
-active_task: HARNESS-AUDIT-PORTFOLIO-001
-active_repository: agentic-art-orchestration
+version: 158
+updated_at: "2026-09-03T06:30:35+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-03T05:20:09+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
   execution_id: HARNESS-AUDIT-PORTFOLIO-001:20260903-060400
-  released_at: null
+  released_at: "2026-09-03T06:30:35+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 561b68ca557be232713bae766b8522318be33d9d
   expected_changes: Select explicit or latest deterministic run signal portfolios for audit/startup, preserve explicit offline fixture behavior, and defer orphan checks until requirements exist.
-  result: in_progress; Issue #110 is the smallest remaining parent implementation issue after the Issue #91 completion audit.
-last_completed_task: HARNESS-HANDOFF-ID-001
+  result: completed; parent PR #136 merged as c2f1d10167a5f3add35c8fa33f51dd2687557989 after all required CI gates passed; Issue #110 is closed with acceptance evidence.
+last_completed_task: HARNESS-AUDIT-PORTFOLIO-001
 resume_from:
-  task: HARNESS-AUDIT-PORTFOLIO-001
-  action: "Implement real portfolio selection and orphan-audit timing, run focused/full checks, then record evidence and release the lease."
+  task: null
+  action: "Re-run repository-scoped live Issue intake and select the smallest remaining implementation issue, currently #109."
   command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:
