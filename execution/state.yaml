@@ -1,5 +1,5 @@
-version: 148
-updated_at: "2026-09-03T01:40:00+09:00"
+version: 149
+updated_at: "2026-09-03T02:14:00+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -124,7 +124,7 @@ production_palette_compatibility:
   root_cause: "Production visual package renderer indexed palette[1] although a valid Research visual-language handoff may contain one preferred palette label."
   fix: "Reuse the source-owned first palette color for secondary board text; do not invent a second palette value."
   parent_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/127
-  parent_pr_checks: "bootstrap PASS; production-exchange PASS; real-chain PASS (run 33654637807)"
+  parent_pr_checks: "PR #127 bootstrap/production-exchange/real-chain PASS (run 33654637807); PR #128 all checks PASS (run 33656732339); post-merge main all checks PASS (run 33658223543)"
   parent_merge_commit: c25f4d7764e78e17b7e44b25e88f95104c40bf70
   parent_issue_state: CLOSED
   parent_remote_main: c25f4d7764e78e17b7e44b25e88f95104c40bf70
@@ -145,7 +145,7 @@ parent_visual_package:
   merge_commit: c25f4d7764e78e17b7e44b25e88f95104c40bf70
   remote_main: c25f4d7764e78e17b7e44b25e88f95104c40bf70
   issue_state: CLOSED
-  parent_pr_checks: "bootstrap PASS; production-exchange PASS; real-chain PASS (run 33654637807)"
+  parent_pr_checks: "PR #127 bootstrap/production-exchange/real-chain PASS (run 33654637807); PR #128 all checks PASS (run 33656732339); post-merge main all checks PASS (run 33658223543)"
   acceptance: 1/1
   focused_tests: "6/6 PASS"
   parent_full_suite: "467/467 PASS"
