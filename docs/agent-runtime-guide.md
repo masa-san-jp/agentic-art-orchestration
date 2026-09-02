@@ -14,6 +14,38 @@ state、handoff、ExecPlanを更新し、次のREADYタスクへ進んでくだ�
 該当する場合だけBLOCKEDにし、観測事実、選択肢、推奨、影響、解除条件を残してください。
 ~~~
 
+## テーマ未指定の制作計画
+
+利用者はテーマ、作品slug、作品titleを指定しなくてよい。制作計画を作るよう依頼されたエージェントは、`--intent`、`--slug`、`--title`を付けずに次を実行する。
+
+~~~bash
+.venv/bin/python tools/run.py \
+  --workspace-root <verified-child-workspace> \
+  --state-root <external-state-root>
+~~~
+
+この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
+
+実repoを読めない環境では、合成signalだけを使うnetworkless確認として次を明示実行できる。
+
+~~~bash
+.venv/bin/python tools/run.py \
+  --offline-fixture \
+  --state-root <external-state-root>
+~~~
+
+`--offline-fixture`は実child checkoutや外部サービスを読まず、checked-in fixtureのsource commitがmanifestとsnapshotのpinに一致する場合だけ進む。実repoの制作計画と取り違えないため、この結果のsourceはfixtureとして扱う。
+
+実行開始時には、入口自身がmanifestの全repoについてread-only guardを行い、clean・通常branch・upstream有り・`observed_commit`一致を確認する。いずれかが満たされなければchild exportを実行せず、`BLOCKED`と解除条件を返す。既存checkoutを自動checkout、reset、fetch、pin更新してはならない。`<verified-child-workspace>`はこの検査とchild quality gateを通過したGit外workspaceを指定する。
+
+したがって、別エージェントへ渡す最小指示は次の一文で足りる。
+
+~~~text
+このrepoのAGENTS.mdとREADME.mdに従い、テーマ・slug・titleを質問せず、pin済みworkspaceで`tools/run.py`を実行してPLAN_READYまで自律的に進める。
+~~~
+
+startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テーマやPLAN_READYを捏造せず、startup reportの解除条件を返す。外部CREATE、merge、releaseなどのhuman gateは別途必要である。
+
 ## Context loading
 
 manifest記載の全repoを無条件に全文読込しない。task context packは次だけを含める。
@@ -65,6 +97,10 @@ kind別score、total scoreだけを残す。CLIの実行結果とselectionのdig
 python3 tools/run.py --bundle <normalized-bundle.json> --project-id <project-id> \
   --seed-input <seed> --intent <intent-text> --output <run.json> --check
 ~~~
+
+intentがない実行でも、候補空間から最初のgate-passing候補を選び、Research requestの
+`intent.creative_question`をテーマ提案として扱う。したがって制作計画の開始に、利用者のテーマ・
+slug・titleは不要である。
 
 ## 自律Research runner
 

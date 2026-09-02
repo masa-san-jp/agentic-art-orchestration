@@ -1016,3 +1016,17 @@ tasks:
     acceptance: A read-only deterministic report classifies all manifest repository open PRs by checks, conflicts, change class, task/Issue SSOT, age, and recommendation while preserving human-approved merge as a gate and never executing merge, close, rebase, force push, or ready operations.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_pr_triage -v, .venv/bin/python -m unittest discover -s tests -v]
     completion: Issue #117 acceptance 3/3: read-only triage tool, closed report schema, four human-gated change classes, deterministic fixture, operator runbook, and live seven-repository observation implemented; live report observed 17 open PRs with READ-only remote operation
+
+  - id: HARNESS-AUTO-PLAN-001
+    milestone: M18
+    title: Derive a production theme and plan entry when the user provides no theme
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMOUS_PLANNING
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-PR-TRIAGE-001]
+    acceptance: A repository-aware agent can invoke the documented planning entry with no intent, theme, slug, or title; the entry selects a gate-passing candidate from the pinned signal snapshot, derives a privacy-safe theme proposal and stable project identity, writes the child-owned research request outside Git, and exposes the next action needed to reach PLAN_READY without asking the user to supply a theme. Explicit intent remains an optional ranking override, and no raw conversation, credential, PRIVATE_RAW, RESTRICTED value, or external write is introduced.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_run tests.test_auto_plan tests.test_docs -v, .venv/bin/python tools/project_status.py --check-readme, git diff --check]
