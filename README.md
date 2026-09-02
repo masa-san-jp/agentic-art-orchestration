@@ -35,14 +35,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T06:04:00+09:00`.
+Source updated at: `2026-09-03T06:30:35+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 1 | 0 | 111 | 112 |
+| 0 | 0 | 0 | 0 | 112 | 112 |
 
-Current task: `HARNESS-AUDIT-PORTFOLIO-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-AUDIT-PORTFOLIO-001`.
-Next action: Implement real portfolio selection and orphan-audit timing, run focused/full checks, then record evidence and release the lease.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-AUDIT-PORTFOLIO-001`.
+Next action: Re-run repository-scoped live Issue intake and select the smallest remaining implementation issue, currently #109.
 Ready: none.
 Next task: `null`.
 Blocked:

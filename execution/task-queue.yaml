@@ -1,5 +1,5 @@
-version: 30
-updated_at: "2026-09-03T06:04:00+09:00"
+version: 31
+updated_at: "2026-09-03T06:30:35+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1140,7 +1140,7 @@ tasks:
   - id: HARNESS-AUDIT-PORTFOLIO-001
     milestone: M23
     title: Audit the selected real signal portfolio instead of test fixtures
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/110
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -1150,3 +1150,4 @@ tasks:
     depends_on: [HARNESS-HANDOFF-ID-001]
     acceptance: The audit and startup paths select an explicit or deterministically latest run signal portfolio, use the offline fixture only when explicitly requested, and do not apply orphan checks to an ingest portfolio before requirements exist. A stale test fixture timestamp cannot alter startup when a real run portfolio is supplied, and regression tests prove source selection, latest-run determinism, and the no-fixture startup path. No threshold is loosened and no child repository, external artifact, raw conversation, or credential is written.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_audit tests.test_startup_audit -v, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/audit.py --offline-fixture --check, git diff --check]
+    completion: "Parent PR #136 merged to main as c2f1d10167a5f3add35c8fa33f51dd2687557989 after bootstrap, production-exchange, and real-chain all PASS in run 33683861663. Focused audit/startup/docs tests passed 25/25; E2E tests and offline check passed; the parent full suite passed 478/478 with one expected Research checkout skip; validator, README check, offline operational gates, and diff check passed. Normal audit selects explicit or deterministic latest run portfolios, offline fixtures require explicit mode, and empty ingest requirements defer orphan findings. No child repository, external artifact, raw conversation, or credential was written."

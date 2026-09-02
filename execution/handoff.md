@@ -1820,3 +1820,17 @@
 ### Next exact action
 
 1. `gh issue list --repo masa-san-jp/agentic-art-orchestration --state open`を再取得し、#110を最小の未解決実装Issueとしてqueue登録・claimする。
+
+## HARNESS-AUDIT-PORTFOLIO-001 completed
+
+- Task ID: `HARNESS-AUDIT-PORTFOLIO-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#110](https://github.com/masa-san-jp/agentic-art-orchestration/issues/110)。親PR [#136](https://github.com/masa-san-jp/agentic-art-orchestration/pull/136)はrequired checks通過後にmergeされ、mainは`c2f1d10167a5f3add35c8fa33f51dd2687557989`。
+- Observable changes: `tools/audit.py`は通常時に明示portfolioまたは`data/runs/*/signals/portfolio.json`の決定的最新runを読み、test fixtureは`--offline-fixture`時だけ読み込む。`tools/startup.py`と`tools/e2e.py`はportfolio rootを受け取れる。ingest直後の空requirementsではorphan検査を延期し、portfolio欠測時はwarningを残す。
+- Acceptance: `1/1`。focused audit/startup/docs tests `25/25 PASS`、E2E tests/offline check PASS、親full suite `478/478 PASS`（Research sibling checkoutなしの想定skip 1件）、validator、README check、offline operational gates、diff check PASS。
+- Parent CI: run [33683861663](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33683861663)で`bootstrap=PASS`、`production-exchange=PASS`、`real-chain=PASS`。
+- Child gates and safety: child repositoryのschema/dataは変更せず、子repoのportfolioはread-only境界として扱った。credential、PRIVATE_RAW、RESTRICTED、直接識別子、会話全文、Drive artifact、外部artifactは保存していない。外部操作はPR作成・mergeとIssue #110 closeのみ。
+- Feedback: explicitはユーザーの「Issueを確認し、エージェントハーネスを完成させる」要求。inferredはnone。
+- Unresolved: 親の未解決Issueは#109、#58、umbrellaの#1/#2。Production #10とViewer #2は各子repoの要件SSOTとしてopenのまま。次は#109の制作履歴永続化を確認する。
+
+### Next exact action
+
+1. #109の受入条件とProduction `new_production.py`の出力root/history contractを読み、必要ならqueue登録・claimする。
