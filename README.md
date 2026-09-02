@@ -35,14 +35,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T06:49:29+09:00`.
+Source updated at: `2026-09-03T07:08:01+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 1 | 0 | 112 | 113 |
+| 0 | 0 | 0 | 0 | 113 | 113 |
 
-Current task: `HARNESS-PRODUCTION-HISTORY-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-PRODUCTION-HISTORY-001`.
-Next action: Add regression tests for stable Production output/history and revision recovery, then run focused and full gates.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-PRODUCTION-HISTORY-001`.
+Next action: Re-run repository-scoped live Issue intake, inspect the remaining parent #58 and child open PRs, then select the next qualified task.
 Ready: none.
 Next task: `null`.
 Blocked:

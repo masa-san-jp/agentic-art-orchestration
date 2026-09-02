@@ -1834,3 +1834,18 @@
 ### Next exact action
 
 1. #109の受入条件とProduction `new_production.py`の出力root/history contractを読み、必要ならqueue登録・claimする。
+
+## HARNESS-PRODUCTION-HISTORY-001 completed
+
+- Task ID: `HARNESS-PRODUCTION-HISTORY-001`; target repository: `agentic-art-orchestration`; Issue [#109](https://github.com/masa-san-jp/agentic-art-orchestration/issues/109) is CLOSED. Parent PR [#138](https://github.com/masa-san-jp/agentic-art-orchestration/pull/138) merged to main as `c07b221eb1bb85cf09d97b95ddd00667b01f4887`.
+- Observable changes: `tools/run.py` now sends every Production acceptance for a project to the Git-external `<state-root>/production` root, records metadata-only `run_id` to `production/<slug>` relations in append-only `production-history.jsonl`, and preserves idempotent retries. A `PROJECT_IDEMPOTENCY_MISMATCH` is routed to the child `--accept-revision` contract with explicit timestamp, actor, and idempotency key. README, agent runtime guide, and operator runbook describe the resume boundary.
+- Acceptance: `1/1`. Focused `tests.test_run` passed `25/25`; the parent full suite passed `482/482` with one expected Research checkout skip. Tests cover stable output roots, append-only/idempotent history, a second run seeing prior Production records, and changed-handoff revision recovery.
+- Parent verification: PR #138 run `33687985797` passed `bootstrap`, `production-exchange`, and `real-chain`; local `tools/validate.py --check`, `project_status.py --check-readme`, `py_compile`, and `git diff --check` passed.
+- Child gates and safety: no child repository was changed; Production's revision CLI is invoked only through its fixed child boundary. No credential, PRIVATE_RAW, RESTRICTED value, direct identifier, raw conversation, Drive artifact, external artifact, or generated parent data was added.
+- External artifact policy: the Production root and history ledger are Git-external; the parent stores only output-path and run-to-project metadata, with no artifact body or overwrite/delete operation.
+- Feedback: explicit is the user's request to confirm and resolve Issues and complete the agent harness; inferred is none.
+- Unresolved: parent Issue #58 remains open because the viewer-response child implementation PRs are stale/conflicting or draft; umbrella Issues #1/#2 remain open pending epic-level evidence. Child Production Issue #10 and Viewer Issue #2 remain child-owned requirement SSOTs.
+
+### Next exact action
+
+1. Run repository-scoped live Issue intake again, inspect the remaining #58 dependency chain and open child PRs, then register and claim the next qualified task.
