@@ -1,29 +1,29 @@
-version: 154
-updated_at: "2026-09-03T05:19:03+09:00"
-active_task: null
-active_repository: null
+version: 155
+updated_at: "2026-09-03T05:20:09+09:00"
+active_task: HARNESS-HANDOFF-ID-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-03T04:51:21+09:00"
+  status: held
+  owner: codex
+  acquired_at: "2026-09-03T05:20:09+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-REQUEST-ID-001:20260903-045121
-  released_at: "2026-09-03T05:19:03+09:00"
+  execution_id: HARNESS-HANDOFF-ID-001:20260903-052009
+  released_at: null
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
     child_repositories: []
 checkpoint:
-  task: HARNESS-REQUEST-ID-001
+  task: HARNESS-HANDOFF-ID-001
   repository: agentic-art-orchestration
-  start_point: a7ffe89648af4161d19549a92caba74c848751de
-  expected_changes: Allocate Research request IDs from accepted child requests plus current-run output, pass research-root through the orchestration entry, and add regression evidence for the second-intent collision.
-  result: completed; parent PR #133 merged as a08de1fa8ce93cb66fbe8de776d930f3b04335e9 after all three required CI gates passed in run 33676747517; Issue #84 is ready to close after this record is pushed.
+  start_point: a08de1fa8ce93cb66fbe8de776d930f3b04335e9
+  expected_changes: Read existing child-owned handoff metadata, allocate a new handoff ID/revision with supersedes only when the source changed, and preserve existing handoff identity and generated_at for idempotent reruns.
+  result: in_progress; Issue #91 is the smallest remaining parent implementation issue after closing completed and policy-resolved Issues.
 last_completed_task: HARNESS-REQUEST-ID-001
 resume_from:
-  task: null
-  action: "Re-run repository-scoped live Issue intake and select the next unresolved implementation issue."
+  task: HARNESS-HANDOFF-ID-001
+  action: "Implement handoff identity allocation, run focused/full checks, then record evidence and release the lease."
   command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:

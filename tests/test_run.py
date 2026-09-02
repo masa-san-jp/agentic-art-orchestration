@@ -226,6 +226,76 @@ class HandoverArgumentTests(unittest.TestCase):
                            "harmony", "調和", "2026-08-20T00:00:00+09:00", sys.executable,
                            research_root=Path(tmp))
 
+    @staticmethod
+    def _write_handoff(root: Path, project_slug: str, handoff_id: str, revision: int, commit: str, generated_at: str) -> None:
+        path = root / "projects" / project_slug / "05_production" / "production-handoff.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            "\n".join(
+                [
+                    f"handoff_id: {handoff_id}",
+                    f"revision: {revision}",
+                    f"research_commit: {commit}",
+                    f"generated_at: '{generated_at}'",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def test_first_handoff_uses_ho001_revision_one(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            args = MODULE._handoff_arguments(
+                Path(temporary), "harmony", "2026-08-20T00:00:00+09:00", "a" * 40
+            )
+
+        self.assertEqual(
+            [
+                "--generated-at", "2026-08-20T00:00:00+09:00",
+                "--research-commit", "a" * 40,
+                "--handoff-id", "HO001",
+                "--revision", "1",
+            ],
+            args,
+        )
+
+    def test_changed_source_allocates_next_handoff_and_supersedes_previous(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_handoff(root, "harmony", "HO009", 9, "a" * 40, "2026-08-19T00:00:00+09:00")
+            args = MODULE._handoff_arguments(
+                root, "harmony", "2026-08-20T00:00:00+09:00", "b" * 40
+            )
+
+        self.assertEqual(
+            [
+                "--generated-at", "2026-08-20T00:00:00+09:00",
+                "--research-commit", "b" * 40,
+                "--handoff-id", "HO010",
+                "--revision", "10",
+                "--supersedes", "HO009",
+            ],
+            args,
+        )
+
+    def test_unchanged_source_reuses_existing_handoff_identity_and_timestamp(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_handoff(root, "harmony", "HO009", 9, "a" * 40, "2026-08-19T00:00:00+09:00")
+            args = MODULE._handoff_arguments(
+                root, "harmony", "2026-08-20T00:00:00+09:00", "a" * 40
+            )
+
+        self.assertEqual(
+            [
+                "--generated-at", "2026-08-19T00:00:00+09:00",
+                "--research-commit", "a" * 40,
+                "--handoff-id", "HO009",
+                "--revision", "9",
+            ],
+            args,
+        )
+
 
 class RequestForwardingTests(unittest.TestCase):
     def test_full_run_passes_research_root_to_request_builder(self):

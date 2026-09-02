@@ -46,6 +46,7 @@ HUMAN_OPERATIONS = [
     "physical_action",
 ]
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+HANDOFF_ID_PATTERN = re.compile(r"^HO(\d{3,})$")
 
 
 class StepFailure(RuntimeError):
@@ -210,6 +211,69 @@ def _head(root: Path) -> str:
     return result.stdout.strip() if result.returncode == 0 else "0" * 40
 
 
+def _handoff_arguments(
+    research_root: Path,
+    project_slug: str,
+    requested_at: str,
+    research_commit: str,
+) -> list[str]:
+    """Choose a child-owned handoff identity without changing the child schema."""
+    handoff_path = research_root / "projects" / project_slug / "05_production" / "production-handoff.yaml"
+    if not handoff_path.is_file():
+        return [
+            "--generated-at", requested_at,
+            "--research-commit", research_commit,
+            "--handoff-id", "HO001",
+            "--revision", "1",
+        ]
+
+    try:
+        existing = yaml.safe_load(handoff_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise StepFailure(f"existing handoff cannot be read: {handoff_path}") from exc
+    if not isinstance(existing, Mapping):
+        raise StepFailure(f"existing handoff is not a mapping: {handoff_path}")
+
+    existing_id = existing.get("handoff_id")
+    existing_revision = existing.get("revision")
+    existing_commit = existing.get("research_commit")
+    existing_generated_at = existing.get("generated_at")
+    match = HANDOFF_ID_PATTERN.fullmatch(str(existing_id))
+    if match is None or type(existing_revision) is not int or existing_revision < 1:
+        raise StepFailure(
+            f"existing handoff identity is invalid: {handoff_path}; "
+            "remediation: repair it with the child repository's handoff tool"
+        )
+    if not isinstance(existing_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", existing_commit):
+        raise StepFailure(
+            f"existing handoff source commit is invalid: {handoff_path}; "
+            "remediation: repair it with the child repository's handoff tool"
+        )
+    if not isinstance(existing_generated_at, str) or not existing_generated_at.strip():
+        raise StepFailure(
+            f"existing handoff generated_at is missing: {handoff_path}; "
+            "remediation: repair it with the child repository's handoff tool"
+        )
+
+    if existing_commit == research_commit:
+        return [
+            "--generated-at", existing_generated_at,
+            "--research-commit", existing_commit,
+            "--handoff-id", str(existing_id),
+            "--revision", str(existing_revision),
+        ]
+
+    next_number = int(match.group(1)) + 1
+    next_id = f"HO{next_number:03d}"
+    return [
+        "--generated-at", requested_at,
+        "--research-commit", research_commit,
+        "--handoff-id", next_id,
+        "--revision", str(existing_revision + 1),
+        "--supersedes", str(existing_id),
+    ]
+
+
 def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool = False,
                allow_failure: bool = False) -> dict:
     """Run a child repository's tool. Already-done steps are not failures on a resume."""
@@ -372,10 +436,12 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
             return _at_research(work, run_id, intent, steps, research_root, project_slug, theme_proposal)
 
+        handoff_args = _handoff_arguments(
+            research_root, project_slug, requested_at, _head(research_root)
+        )
         record("handoff", _run_child(
             research_root, ["tools/build_handoff.py", f"projects/{project_slug}", "--root", ".",
-                            "--generated-at", requested_at, "--research-commit", _head(research_root),
-                            "--handoff-id", "HO001", "--revision", "1"], python, allow_conflict=True))
+                            *handoff_args], python, allow_conflict=True))
         record("export", _run_child(
             research_root, ["tools/export_handoff.py", f"projects/{project_slug}", "--root", ".",
                             "--output", str(work / "bundle")], python))

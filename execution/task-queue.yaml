@@ -1,5 +1,5 @@
-version: 27
-updated_at: "2026-09-03T04:51:21+09:00"
+version: 28
+updated_at: "2026-09-03T05:20:09+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1121,3 +1121,17 @@ tasks:
     acceptance: The research-request builder reads already accepted request_id values from the child Research repository when a research root is supplied, combines them with IDs written during the current run, preserves the legacy run-local allocation when no research root is supplied, and the full orchestration entry passes research-root through so a second intent cannot collide with RR001. No child repository, external artifact, raw conversation, or credential is written.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_build_research_request tests.test_run -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
     completion: "Parent PR #133 merged to main as a08de1fa8ce93cb66fbe8de776d930f3b04335e9 after bootstrap, production-exchange, and real-chain all PASS in run 33676747517. Focused request/run tests passed 29/29; bootstrap full suite passed 471/471; validator and diff check passed. Accepted Research request IDs are read from projects/*/00_intake/research-request.yaml, same-run files remain included, and no-root behavior is preserved. No child repository, external artifact, raw conversation, or credential was written."
+
+  - id: HARNESS-HANDOFF-ID-001
+    milestone: M22
+    title: Allocate idempotent handoff revisions across resumed runs
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/91
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: RESEARCH_HANDOFF
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-REQUEST-ID-001]
+    acceptance: The full orchestration entry reads the existing child-owned handoff before building a handoff, creates HO001 revision 1 for a project without a handoff, allocates the next handoff ID and revision with supersedes when the accepted research source changed, and reuses the existing ID/revision and original generated_at when the source is unchanged so a repeated run is idempotent. No child schema/data is copied and no raw conversation, credential, or external artifact is written.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_run -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
