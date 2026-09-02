@@ -1806,3 +1806,17 @@
 ### Next exact action
 
 1. `gh pr close 83` にsuperseded理由を記録し、#91を`HARNESS-HANDOFF-ID-001`としてqueueへ登録してclaimする。
+
+## HARNESS-HANDOFF-ID-001 completed
+
+- Task ID: `HARNESS-HANDOFF-ID-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#91](https://github.com/masa-san-jp/agentic-art-orchestration/issues/91)。親PR [#134](https://github.com/masa-san-jp/agentic-art-orchestration/pull/134)はrequired checks通過後にmergeされ、mainは`44c004f53455fd6fbe3849630eb5aef367a667da`。
+- Observable changes: `tools/run.py`がResearch childの既存`production-handoff.yaml`を読み、初回はHO001/revision 1、source commit変更時は次のhandoff ID/revisionと`supersedes`、source不変時は既存ID/revisionと元の`generated_at`をhandoff builderへ渡す。`tests/test_run.py`に3つの再開経路回帰テストを追加した。
+- Acceptance: `1/1`。focused `tests.test_run`は21/21 PASS、親full suiteは474/474 PASS（Research sibling checkoutなしの想定skip 1件）。validator、README check、offline operational gates、diff checkもPASSした。
+- Parent CI: run [33679879060](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33679879060)で`bootstrap=PASS`、`production-exchange=PASS`、`real-chain=PASS`。
+- Child gates and safety: child repositoryのschema/dataは変更せず、handoff metadataのread-only参照だけを行った。credential、PRIVATE_RAW、RESTRICTED、直接識別子、会話全文、Drive artifact、外部artifactは保存していない。外部操作はPR作成・mergeとIssue #91 closeのみ。
+- Feedback: explicitはユーザーの「Issueを確認し、エージェントハーネスを完成させる」要求。inferredはnone。
+- Unresolved: 親の未解決Issueは#110、#109、#58、umbrellaの#1/#2。Production #10とViewer #2は各子repoの要件SSOTとしてopenのまま。次は#110のaudit portfolio選択を確認する。
+
+### Next exact action
+
+1. `gh issue list --repo masa-san-jp/agentic-art-orchestration --state open`を再取得し、#110を最小の未解決実装Issueとしてqueue登録・claimする。
