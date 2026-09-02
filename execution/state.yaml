@@ -1,15 +1,15 @@
-version: 135
-updated_at: "2026-09-02T12:24:00+09:00"
-active_task: INITIAL-OPS-RELEASE-001
-active_repository: agentic-art-orchestration
+version: 136
+updated_at: "2026-09-02T13:57:24+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-02T12:24:00+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
   execution_id: null
-  released_at: null
+  released_at: "2026-09-02T13:57:24+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/state.yaml, execution/handoff.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 4d3c2d5
   expected_changes: Land the qualified six-repository pins through a parent PR, then create and verify the v1.4.0 tag and GitHub Release after the reviewed merge commit.
-  result: pin adoption and release qualification completed; parent PR and release operations remain in progress.
-last_completed_task: ISSUE-40-PIN-ADOPTION-001
+  result: completed; pin adoption merged in PR #118, v1.4.0 was qualified against reviewed merge commit 37074db and released.
+last_completed_task: INITIAL-OPS-RELEASE-001
 resume_from:
   task: INITIAL-OPS-RELEASE-001
-  action: "Commit and push the applied six-pin manifest and fixture provenance update, create the parent PR, then wait for checks before merge."
+  action: "Resume with the smallest dependency-complete READY task; no release follow-up is pending."
   command: git diff --check
 
 pr_triage:
@@ -197,10 +197,11 @@ pin_adoption:
 release_qualification:
   status: complete
   version: 1.4.0
-  observed_at: "2026-09-02T12:18:23+09:00"
+  observed_at: "2026-09-02T13:57:24+09:00"
   runs: 3
-  report_locator: run://release-qualification-v1.4.0-20260902/release-check.json
-  report_sha256: abe08fec235c2be882ee0c0d9702f7f167cca059ae5d97822c77941bd5bcbd44
+  reviewed_merge_commit: 37074db2824e61c9bd47326ceb05d2a6698d514f
+  report_locator: run://release-qualification-v1.4.0-20260902-merge/release-check-v14-merge.json
+  report_sha256: 1f711c5e76042c7a6b205c7f77842f6c9e48ed1b92491a34883e198e03b3632d
   checks: "29/29 PASS; blocking=false"
   child_quality_gates: "6/6 repositories PASSED; 16/16 gates PASSED"
   production_exchange: PASSED
@@ -208,10 +209,13 @@ release_qualification:
   deterministic_runs: PASSED
   history: PASSED
   security: PASSED
-  remote_operations: []
+  remote_operations: [READ, TAG_CREATE, RELEASE_CREATE]
   sandbox_evidence: "reused prior recorded metadata-only evidence for approved sandbox attempt v14-20260825-ghcli-1; no new Issue was created"
-  tag_operation: NOT_PERFORMED
-  release_operation: NOT_PERFORMED
+  tag_operation: PASSED
+  tag: v1.4.0
+  tag_commit: 37074db2824e61c9bd47326ceb05d2a6698d514f
+  release_operation: PASSED
+  release_url: https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.4.0
 autonomous_runner:
   status: complete
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
