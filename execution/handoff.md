@@ -1670,3 +1670,14 @@
 ## Next exact action
 
 1. Resume from the smallest dependency-complete READY task after confirming the queue/state; the v1.4.0 release has no remaining release gate.
+
+## 2026-09-02 release SSOT completion correction
+
+- Completion audit found that the release itself was complete, but `execution/task-queue.yaml` still left `INITIAL-OPS-RELEASE-001` as `BLOCKED`. This was a record inconsistency, not an unresolved release operation.
+- The task is now `DONE` with explicit completion evidence: approval, PR #118 merge, `v1.4.0` tag and GitHub Release verification. `README.md` now reports `BLOCKED 0 / DONE 103` and `Next task: null`.
+- The remaining `marketing:trend-001` warning is from the parent offline audit fixture. The pinned real marketing child at `de1f77730d3856e7e81d591de48da5aed79a983a` has no such record; the fixture intentionally exercises stale freshness propagation. It must remain stale in that regression fixture and must not be cleared by editing generated `data/` output.
+- Harness completion status: pin adoption, six-child qualification, PR/CI/merge, v1.4.0 qualification, tag/release, task-queue completion, and state/handoff reconciliation are all recorded. No child repository or external artifact content was changed.
+
+## Next exact action
+
+1. Merge the SSOT completion correction PR after its required checks pass; then no v1.4.0 release work remains.

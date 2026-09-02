@@ -622,7 +622,7 @@ tasks:
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14
     title: Release the initial interactive operations profile through the human gate
-    status: BLOCKED
+    status: DONE
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
@@ -630,7 +630,7 @@ tasks:
     depends_on: [INITIAL-OPS-QUALIFY-001]
     acceptance: After explicit human approval, the reviewed initial operations profile is merged and released as v1.4.0; the release itself does not create or change child content, Issues, Drive files, permissions, or sharing scope.
     checks: [git tag --points-at <reviewed-merge-sha>, gh release view v1.4.0]
-    blocker: explicit human approval for merge/tag/release; does not block M16
+    completion: Explicit approval was provided; PR #118 was merged, v1.4.0 was tagged on reviewed merge commit 37074db, and the GitHub Release was verified. No child, Issue, Drive, permission, or sharing mutation occurred.
 
   - id: ISSUE-39-KB-PIPE-001
     milestone: M15
