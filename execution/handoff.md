@@ -1643,3 +1643,17 @@
 ## Next exact action
 
 1. 人間がPR #42をreviewし、default branchへのmerge可否を判断する。merge後に必要ならread-onlyのpost-merge確認を行う。release、force-push、pin adoptionは別の人間gateのまま。
+
+## 2026-09-02 pin adoption and v1.4.0 release qualification
+
+- Task ID: `ISSUE-40-PIN-ADOPTION-001` completed for the six-repository manifest update; the follow-on release task is `INITIAL-OPS-RELEASE-001`.
+- Fresh read-only qualification against six clean exact child HEADs passed, then the explicit `--apply` operation changed only the six `observed_commit` lines in `config/repositories.yaml`: self-model `e8424f0`, art-history `de5a3c3`, marketing-trends `de1f777`, agentic-art-research `ce7e214`, agentic-art-production `a35d635`, and viewer-response-notes `205eeeb`.
+- Child quality gates were `6/6 repositories PASS` and `16/16 gates PASS` under immutable-archive/per-child environments; Production exchange PASS. No child repository, branch, issue, or data was mutated.
+- Checked-in contract fixtures were refreshed only where they carry the current manifest source commit, the ignored snapshot was regenerated, and parent validation passed. Full parent suite is `457/457 PASS`; `tools/validate.py --check`, project status/README, security, and `git diff --check` passed. Audit retains one known nonblocking marketing freshness warning.
+- v1.4.0 release qualification passed `29/29` checks over 3 deterministic runs (`blocking=false`), including child gates, Production exchange, initial operations, history, and security. Report locator is `run://release-qualification-v1.4.0-20260902/release-check.json`, SHA-256 `abe08fec235c2be882ee0c0d9702f7f167cca059ae5d97822c77941bd5bcbd44`.
+- GitHub sandbox evidence reused the previously recorded metadata-only attempt `v14-20260825-ghcli-1`; no new Issue or external artifact was created. Tag and GitHub Release were not yet performed because the pin adoption must first land in its own parent PR.
+- Sensitive data: no credential, PRIVATE_RAW, RESTRICTED value, raw conversation, or direct identifier was stored. External artifact: none. Feedback: explicit user request for pin adoption and v1.4.0 release; inferred feedback none.
+
+## Next exact action
+
+1. Commit and push the pin adoption plus provenance fixture update, open the parent PR, wait for all required checks, and merge it. Then rerun release qualification on the reviewed merge commit before creating `v1.4.0` tag and GitHub Release.
