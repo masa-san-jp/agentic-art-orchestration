@@ -1680,4 +1680,4 @@
 
 ## Next exact action
 
-1. Merge the SSOT completion correction PR after its required checks pass; then no v1.4.0 release work remains.
+1. No v1.4.0 release work remains. On resume, inspect the queue and begin the smallest dependency-complete READY task; the current queue has no READY or BACKLOG task.
