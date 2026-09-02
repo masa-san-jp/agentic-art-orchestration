@@ -1,5 +1,5 @@
-version: 25
-updated_at: "2026-09-03T01:26:00+09:00"
+version: 26
+updated_at: "2026-09-03T03:15:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1091,3 +1091,18 @@ tasks:
     acceptance: The parent adopts the reviewed Production main commit that handles a valid single preferred palette, and the immutable networkless production exchange completes through result export and Research dry-run without child mutation or forbidden data.
     checks: [.venv/bin/python tools/production_exchange.py --e2e --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --output-root <git-external-output>, .venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
     completion: "Production Issue #54 was fixed in PR #55 and merged to main as 206f259413147c6d360048e27d4b9c3267ee0580; parent config/repositories.yaml now pins that exact commit. The previously failing single-palette real chain completed as REAL-VP-004/PASSED; no child schema, asset body, credential, or external artifact entered the parent."
+
+  - id: PURPOSE-RESEARCH-SELF-REPETITION-001
+    milestone: M20
+    title: Detect repeated self-model claims across production research history
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/83
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    agent_terminal: EVIDENCE_READY
+    lane: RESEARCH
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PURPOSE-PRODUCTION-PALETTE-COMPAT-001]
+    acceptance: The Research runtime scans supported historical production-plan metadata, reports duplicate or similar self-model signals with project-relative references and a non-UNKNOWN risk, and can append an idempotent metadata-only risk block to the creative direction without exporting conversation text, private raw data, or absolute paths.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/self_repetition.py --candidate tests/fixtures/self-repetition/candidate --history-root tests/fixtures/self-repetition/history --repository agentic-art-research --source-commit <exact-40-lowercase-sha> --now 2026-09-03T00:00:00Z --check, python3 tools/handoff_release_check.py --require-schema-snapshot, git diff --check]
+    completion: "Research PR #84 passed all required CI gates in run 33663246027 and squash-merged to main as 56402d708a6ead011819d2fed8598ffca9722aeb. Issue #83 was closed after verification; the parent now pins that exact child main commit. Four committed synthetic projects are detected as HIGH, empty history is LOW rather than UNKNOWN, and the actual external output scan was read-only with no matching signals and no output mutation."
