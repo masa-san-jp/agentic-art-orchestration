@@ -1,5 +1,5 @@
-version: 29
-updated_at: "2026-09-03T05:48:06+09:00"
+version: 30
+updated_at: "2026-09-03T06:04:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1136,3 +1136,17 @@ tasks:
     acceptance: The full orchestration entry reads the existing child-owned handoff before building a handoff, creates HO001 revision 1 for a project without a handoff, allocates the next handoff ID and revision with supersedes when the accepted research source changed, and reuses the existing ID/revision and original generated_at when the source is unchanged so a repeated run is idempotent. No child schema/data is copied and no raw conversation, credential, or external artifact is written.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_run -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
     completion: "Parent PR #134 merged to main as 44c004f53455fd6fbe3849630eb5aef367a667da after bootstrap, production-exchange, and real-chain all PASS in run 33679879060. Focused run tests passed 21/21; the parent full suite passed 474/474 with one expected Research checkout skip; validator, README check, operational offline gates, and diff check passed. Existing child-owned handoff identity is reused for unchanged research commits; changed commits receive the next HO ID/revision and supersedes. No child repository, external artifact, raw conversation, or credential was written."
+
+  - id: HARNESS-AUDIT-PORTFOLIO-001
+    milestone: M23
+    title: Audit the selected real signal portfolio instead of test fixtures
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/110
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: STARTUP_AUDIT
+    interaction_blocking: true
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-HANDOFF-ID-001]
+    acceptance: The audit and startup paths select an explicit or deterministically latest run signal portfolio, use the offline fixture only when explicitly requested, and do not apply orphan checks to an ingest portfolio before requirements exist. A stale test fixture timestamp cannot alter startup when a real run portfolio is supplied, and regression tests prove source selection, latest-run determinism, and the no-fixture startup path. No threshold is loosened and no child repository, external artifact, raw conversation, or credential is written.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_audit tests.test_startup_audit -v, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/audit.py --offline-fixture --check, git diff --check]

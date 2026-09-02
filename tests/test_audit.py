@@ -3,11 +3,18 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 import yaml
 
-from tools.audit import EXPECTED_BOUNDARIES, build_audit, render_markdown
+from tools.audit import (
+    EXPECTED_BOUNDARIES,
+    _latest_run_portfolio_root,
+    _load_signals_and_requirements,
+    build_audit,
+    render_markdown,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -158,6 +165,36 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(["network_unavailable"], finding["observed"]["unknowns"])
         self.assertIsNone(finding["observed"]["ahead"])
         self.assertFalse(result["blocking"])
+
+    def test_orphan_audit_is_deferred_until_requirements_exist(self):
+        tested = {boundary: True for boundary in EXPECTED_BOUNDARIES}
+        result = build_audit(manifest(), snapshot(), queue(), state(), signals(), [], tested)
+
+        self.assertNotIn("orphan", {finding["code"] for finding in result["findings"]})
+
+    def test_latest_run_portfolio_selection_is_deterministic(self):
+        with tempfile.TemporaryDirectory(prefix="audit-runs-") as temporary:
+            runs_root = Path(temporary)
+            for run_id in ("RUN-009", "RUN-010"):
+                portfolio_root = runs_root / run_id / "signals"
+                portfolio_root.mkdir(parents=True)
+                (portfolio_root / "portfolio.json").write_text(
+                    json.dumps({"version": 1, "signal_files": [], "requirements": []}),
+                    encoding="utf-8",
+                )
+
+            selected = _latest_run_portfolio_root(runs_root)
+
+        self.assertEqual(runs_root / "RUN-010" / "signals", selected)
+
+    def test_normal_loader_does_not_fallback_to_test_fixture(self):
+        with tempfile.TemporaryDirectory(prefix="audit-empty-runs-") as temporary:
+            selected = _latest_run_portfolio_root(Path(temporary))
+            loaded, loaded_requirements = _load_signals_and_requirements(selected, offline_fixture=False)
+
+        self.assertIsNone(selected)
+        self.assertEqual([], loaded)
+        self.assertEqual([], loaded_requirements)
 
 
 if __name__ == "__main__":

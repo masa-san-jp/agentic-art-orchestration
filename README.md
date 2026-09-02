@@ -35,14 +35,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T05:48:06+09:00`.
+Source updated at: `2026-09-03T06:04:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 111 | 111 |
+| 0 | 0 | 1 | 0 | 111 | 112 |
 
-Current task: `null`; repository: `null`; checkpoint: `HARNESS-HANDOFF-ID-001`.
-Next action: Re-run repository-scoped live Issue intake and select the smallest remaining implementation issue.
+Current task: `HARNESS-AUDIT-PORTFOLIO-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-AUDIT-PORTFOLIO-001`.
+Next action: Implement real portfolio selection and orphan-audit timing, run focused/full checks, then record evidence and release the lease.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -113,6 +113,8 @@ python3 -m venv .venv
 この4行が親repoの正準bootstrapです。AGENTS.mdと[operator runbook](docs/operator-runbook.md)からもこの手順を参照します。
 
 full suiteは、実行時に参照する`data/snapshot.json`や`data/audit.json`などのnetworkless生成物を必要とします。fresh cloneからfull suiteまで確認する場合は、共有tempに残った古いoffline remoteを再利用しないよう、一時fixture rootを作り、次を上から実行してください。実repo・GitHub・Driveへの操作は発生しません。
+
+通常のauditは`data/runs/<run-id>/signals/portfolio.json`を対象にし、引数なしではrun IDを決定的に並べた最新runを選びます。再現対象を固定する場合は`tools/audit.py --portfolio-root <signals-directory>`を使います。`tests/fixtures`を読むのは`--offline-fixture`を明示したnetworkless検証だけです。
 
 ~~~bash
 FIXTURE_ROOT="$(mktemp -d /tmp/agentic-art-orchestration-offline.XXXXXX)"
