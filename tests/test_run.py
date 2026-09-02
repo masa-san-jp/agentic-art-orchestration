@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.input_pipeline import run_input_pipeline
 from tools.run import run
@@ -224,6 +225,42 @@ class HandoverArgumentTests(unittest.TestCase):
                 MODULE.run("調和", Path(tmp), Path(tmp), "RUN001", "artistic-research",
                            "harmony", "調和", "2026-08-20T00:00:00+09:00", sys.executable,
                            research_root=Path(tmp))
+
+
+class RequestForwardingTests(unittest.TestCase):
+    def test_full_run_passes_research_root_to_request_builder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            captured: list[list[str]] = []
+
+            def fake_tool(args: list[str], python: str) -> dict:
+                captured.append(args)
+                if args[0] == "tools/build_research_request.py":
+                    output = Path(args[args.index("--output") + 1])
+                    output.mkdir(parents=True, exist_ok=True)
+                    (output / "RR001.yaml").write_text("request_id: RR001\n", encoding="utf-8")
+                return {"status": "PASSED"}
+
+            def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
+                if args[0] == "tools/complete.py":
+                    return {"status": "NOT_READY"}
+                return {"status": "PASSED"}
+
+            with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                    patch.object(MODULE, "_run_child", side_effect=fake_child), \
+                    patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}):
+                report = MODULE._run_orchestration(
+                    "調和", root / "workspace", root / "state", "RUN001", "artistic-research",
+                    None, None, "2026-08-20T00:00:00+09:00", sys.executable,
+                    research_root=root / "research", production_root=root / "production",
+                    offline_fixture=True,
+                )
+
+            request_calls = [args for args in captured if args[0] == "tools/build_research_request.py"]
+            self.assertEqual(1, len(request_calls))
+            self.assertEqual(str(root / "research"), request_calls[0][request_calls[0].index("--research-root") + 1])
+            self.assertEqual("RESEARCH_PENDING", report["status"])
 
 
 if __name__ == "__main__":
