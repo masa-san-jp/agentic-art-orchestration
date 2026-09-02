@@ -24,6 +24,10 @@ Issue SSOTの最低要件は、(1)観測可能な受入条件、(2)対象reposit
 - 完了判定はファイルの存在ではなく、acceptanceとchecksの観察可能な結果で行う。
 - セッション記憶を前提にせず、repo内のstateとhandoffだけで再開可能にする。
 
+## Production planning mode
+
+このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件を返す。
+
 ## Work protocol
 
 ~~~text

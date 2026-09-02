@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Carry one intent all the way to a production plan, without asking anyone.
+"""Carry a repository-derived theme all the way to a production plan, without asking anyone.
 
-    python3 tools/run.py --intent "調和" --workspace-root <実クローン> --run-id RUN001
+    python3 tools/run.py --workspace-root <実クローン>
 
-The human appears once, in the interaction that produces the intent. Everything
-after that runs without asking: ingest, compose, gate, select, trace, request,
-accept, hand over, and build the plan.
+An explicit --intent may rank candidates, but it is optional. Without it, the
+repository snapshot supplies the first gate-passing candidate and its derived
+creative question becomes the working theme. Everything after startup runs
+without asking: ingest, compose, gate, select, trace, request, accept, hand
+over, and build the plan.
 
 One step is not a tool call. Conducting the research means reading, searching,
 and writing records, and the agent driving this repository does it. When the
@@ -17,11 +19,16 @@ It waits for the agent, never for a person.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -38,10 +45,153 @@ HUMAN_OPERATIONS = [
     "external_cost_over_declared_budget",
     "physical_action",
 ]
+RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
 
 class StepFailure(RuntimeError):
     """A mechanical step failed, so the run cannot continue past it."""
+
+
+class BlockedPrecondition(StepFailure):
+    """A safe local precondition is missing; no orchestration step may run."""
+
+
+def _project_identity(run_id: str, slug: str | None = None, title: str | None = None) -> tuple[str, str]:
+    """Derive stable project metadata when the user supplied no naming choice."""
+    if not isinstance(run_id, str) or RUN_ID_PATTERN.fullmatch(run_id) is None:
+        raise StepFailure("run-id must be a stable path-safe identifier")
+    if slug is not None and (not isinstance(slug, str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug)):
+        raise StepFailure("slug must be lowercase hyphenated project metadata")
+    if title is not None and (not isinstance(title, str) or not title.strip()):
+        raise StepFailure("title must be non-empty project metadata")
+    digest = hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:12]
+    base = re.sub(r"[^a-z0-9]+", "-", run_id.lower()).strip("-")[:24] or "plan"
+    return slug or f"auto-{base}-{digest}", title or "Repository-derived production proposal"
+
+
+def _theme_proposal(request_path: Path, *, explicit_intent: bool) -> dict[str, str]:
+    """Expose the candidate-derived question without storing conversation text."""
+    try:
+        request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise StepFailure(f"research request cannot be read: {request_path}") from exc
+    intent = request.get("intent") if isinstance(request, Mapping) else None
+    question = intent.get("creative_question") if isinstance(intent, Mapping) else None
+    if not isinstance(question, str) or not question.strip():
+        raise StepFailure("research request has no derived creative question")
+    return {
+        "status": "PROPOSED",
+        "mode": "INTENT_RANKED" if explicit_intent else "REPOSITORY_DERIVED",
+        "source": "gate-passing-candidate",
+        "creative_question": question,
+        "request": str(request_path),
+    }
+
+
+def _guard_pinned_workspace(workspace_root: Path) -> dict[str, Any]:
+    """Require a clean, fully pinned workspace before reading any child export."""
+    from tools.workspace import guard_workspace, load_manifest
+
+    manifest = load_manifest()
+    guard = guard_workspace(manifest, workspace_root.resolve(), False, workspace_root.parent / ".unused-fixture")
+    blocked = [repository for repository in guard["repositories"] if repository.get("blocked")]
+    if blocked:
+        first = blocked[0]
+        reason = first.get("reasons", [{}])[0]
+        raise BlockedPrecondition(
+            f"workspace BLOCKED for {first.get('id')}: {reason.get('code', 'unknown')} - "
+            f"{reason.get('detail', 'workspace guard failed')}; "
+            f"remediation: {reason.get('remediation', 'repair the workspace manually')}"
+        )
+
+    manifest_by_id = {repository["id"]: repository for repository in manifest["repositories"]}
+    mismatches = []
+    for repository in guard["repositories"]:
+        repository_id = repository["id"]
+        observed_head = repository.get("observed", {}).get("head")
+        expected_head = manifest_by_id[repository_id].get("observed_commit")
+        if observed_head != expected_head:
+            mismatches.append(f"{repository_id} expected {expected_head} got {observed_head}")
+    if mismatches:
+        raise BlockedPrecondition(
+            "workspace BLOCKED: manifest pin mismatch: " + "; ".join(mismatches) +
+            "; remediation: materialize and qualify the declared pins manually"
+        )
+    return {
+        "status": "PASSED",
+        "repository_count": len(guard["repositories"]),
+        "pin_status": "MATCHED",
+        "mutation": "NONE",
+    }
+
+
+def _materialize_offline_signals(output: Path) -> dict[str, Any]:
+    """Materialize only checked-in synthetic signals for an explicit offline run."""
+    from tools.candidate_space import load_fixture
+    from tools.validate import load_json
+    from tools.workspace import load_manifest
+
+    manifest = load_manifest()
+    manifest_by_id = {repository["id"]: repository for repository in manifest["repositories"]}
+    snapshot_path = ROOT / "data/snapshot.json"
+    if not snapshot_path.is_file():
+        raise BlockedPrecondition(
+            "offline fixture BLOCKED: qualified snapshot is missing; "
+            "remediation: run the documented offline bootstrap first"
+        )
+    snapshot = load_json(snapshot_path)
+    snapshot_by_id = {
+        record.get("id"): record
+        for record in snapshot.get("repositories", [])
+        if isinstance(record, Mapping)
+    }
+    signals = load_fixture(ROOT / "tests/fixtures/portfolio")
+    input_ids = {"self-model", "art-history", "marketing-trends"}
+    seen_repositories: set[str] = set()
+    for signal in signals:
+        source = signal.get("source", {})
+        repository_id = source.get("repository")
+        if repository_id not in input_ids or repository_id in seen_repositories:
+            raise BlockedPrecondition(
+                "offline fixture BLOCKED: synthetic input set is incomplete or ambiguous; "
+                "remediation: repair the checked-in signal fixture"
+            )
+        seen_repositories.add(repository_id)
+        expected = manifest_by_id[repository_id].get("observed_commit")
+        snapshot_pin = snapshot_by_id.get(repository_id, {}).get("manifest_observed_commit")
+        if source.get("commit") != expected or snapshot_pin != expected:
+            raise BlockedPrecondition(
+                f"offline fixture BLOCKED: pin mismatch for {repository_id}; "
+                "remediation: regenerate and qualify the fixture against the manifest"
+            )
+    if seen_repositories != input_ids:
+        raise BlockedPrecondition(
+            "offline fixture BLOCKED: not all input repositories are represented; "
+            "remediation: repair the checked-in signal fixture"
+        )
+
+    output.mkdir(parents=True, exist_ok=True)
+    signal_files: list[str] = []
+    for signal in signals:
+        relative = Path(signal["source"]["repository"]) / f"{signal['signal_id'].replace(':', '_')}.json"
+        destination = output / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(signal, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        signal_files.append(str(relative))
+    portfolio = {"version": 1, "signal_files": sorted(signal_files), "requirements": []}
+    (output / "portfolio.json").write_text(
+        json.dumps(portfolio, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return {
+        "status": "PASSED",
+        "signal_count": len(signals),
+        "by_kind": {kind: sum(1 for signal in signals if signal.get("signal_kind") == kind)
+                    for kind in sorted({signal.get("signal_kind") for signal in signals})},
+        "portfolio": str(output / "portfolio.json"),
+        "warnings": [],
+        "deferred_boundaries": [],
+        "mode": "OFFLINE_FIXTURE",
+    }
 
 
 def _run_tool(args: list[str], python: str) -> dict:
@@ -78,11 +228,18 @@ def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool
 
 
 
-def _at_research(work: Path, run_id: str, intent: str, steps: list[dict], research_root: Path, slug: str) -> dict:
+def _at_research(work: Path, run_id: str, intent: str | None, steps: list[dict], research_root: Path, slug: str, theme_proposal: dict[str, str] | None = None) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
         "run_id": run_id,
         "intent": intent,
+        "theme_proposal": theme_proposal or {
+            "status": "PROPOSED",
+            "mode": "REPOSITORY_DERIVED",
+            "source": "gate-passing-candidate",
+            "creative_question": "See the derived creative question in the research request.",
+            "request": "",
+        },
         "status": "RESEARCH_PENDING",
         "steps": steps,
         "next_action": {
@@ -104,27 +261,42 @@ def _at_research(work: Path, run_id: str, intent: str, steps: list[dict], resear
     return report
 
 
-def _run_orchestration(intent: str, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
-        slug: str, title: str, requested_at: str, python: str,
+def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
+        slug: str | None, title: str | None, requested_at: str, python: str,
         research_root: Path | None = None, production_root: Path | None = None,
-        limit: int = 1) -> dict:
+        limit: int = 1, offline_fixture: bool = False) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if (research_root is None) != (production_root is None):
         # Carrying on with one of the two would run a child tool in whatever directory
         # happens to be current, and report a step it did not take.
         raise StepFailure("--research-root and --production-root are given together or not at all")
+    preflight = (
+        {
+            "status": "PASSED",
+            "repository_count": 3,
+            "pin_status": "MATCHED",
+            "mutation": "NONE",
+            "mode": "OFFLINE_FIXTURE",
+        }
+        if offline_fixture else _guard_pinned_workspace(workspace_root)
+    )
     work = state_root / run_id
     work.mkdir(parents=True, exist_ok=True)
     signals = work / "signals"
     steps: list[dict] = []
+    project_slug, project_title = _project_identity(run_id, slug, title)
 
     def record(name: str, detail: dict) -> None:
         steps.append({"step": name, **detail})
 
-    record("ingest", _run_tool([
-        "tools/ingest_signals.py", "--purpose", purpose,
-        "--workspace-root", str(workspace_root), "--output", str(signals),
-    ], python))
+    record("workspace-preflight", preflight)
+    if offline_fixture:
+        record("ingest", _materialize_offline_signals(signals))
+    else:
+        record("ingest", _run_tool([
+            "tools/ingest_signals.py", "--purpose", purpose,
+            "--workspace-root", str(workspace_root), "--output", str(signals),
+        ], python))
 
     record("candidates", _run_tool([
         "tools/candidate_space.py", "--fixture", str(signals), "--output", str(work / "candidates.json"),
@@ -135,11 +307,14 @@ def _run_orchestration(intent: str, workspace_root: Path, state_root: Path, run_
         "--fixture", str(signals), "--output", str(work / "gates.json"),
     ], python))
 
-    record("selection", _run_tool([
+    selection_args = [
         "tools/candidate_selection.py", "--candidates", str(work / "candidates.json"),
-        "--fixture", str(signals), "--project-id", slug, "--limit", str(limit),
+        "--fixture", str(signals), "--project-id", project_slug, "--limit", str(limit),
         "--output", str(work / "selection.json"),
-    ], python))
+    ]
+    if intent is not None:
+        selection_args.extend(["--intent", intent])
+    record("selection", _run_tool(selection_args, python))
 
     record("propositions", _run_tool([
         "tools/proposition_provenance.py", "--selection", str(work / "selection.json"),
@@ -149,14 +324,15 @@ def _run_orchestration(intent: str, workspace_root: Path, state_root: Path, run_
 
     request_args = [
         "tools/build_research_request.py", "--propositions", str(work / "propositions.json"),
-        "--signals", str(signals), "--title", title,
+        "--signals", str(signals), "--title", project_title,
         "--requested-at", requested_at, "--output", str(work / "requests"),
     ]
-    request_args += ["--all", "--slug", slug] if limit > 1 else ["--slug", slug]
+    request_args += ["--all", "--slug", project_slug] if limit > 1 else ["--slug", project_slug]
     record("research-request", _run_tool(request_args, python))
 
     requests = sorted((work / "requests").glob("RR*.yaml"))
     request = requests[-1]
+    theme_proposal = _theme_proposal(request, explicit_intent=intent is not None)
 
     if research_root is not None and limit > 1:
         # 100件を人が100回叩かないための入口。受理まで進めて、どのプロジェクトが
@@ -188,28 +364,29 @@ def _run_orchestration(intent: str, workspace_root: Path, state_root: Path, run_
             research_root, ["tools/accept_research_request.py", str(request), "--apply", "--root", ".",
                             "--accepted-at", requested_at], python, allow_conflict=True))
 
-        complete = _run_child(research_root, ["tools/complete.py", f"project/{slug}"], python, allow_failure=True)
+        complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}"], python, allow_failure=True)
         record("research-complete", complete)
         if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
-            return _at_research(work, run_id, intent, steps, research_root, slug)
+            return _at_research(work, run_id, intent, steps, research_root, project_slug, theme_proposal)
 
         record("handoff", _run_child(
-            research_root, ["tools/build_handoff.py", f"projects/{slug}", "--root", ".",
+            research_root, ["tools/build_handoff.py", f"projects/{project_slug}", "--root", ".",
                             "--generated-at", requested_at, "--research-commit", _head(research_root),
                             "--handoff-id", "HO001", "--revision", "1"], python, allow_conflict=True))
         record("export", _run_child(
-            research_root, ["tools/export_handoff.py", f"projects/{slug}", "--root", ".",
+            research_root, ["tools/export_handoff.py", f"projects/{project_slug}", "--root", ".",
                             "--output", str(work / "bundle")], python))
         record("accept-production", _run_child(
-            production_root, ["tools/new_production.py", slug, "--handoff", str(work / "bundle"),
+            production_root, ["tools/new_production.py", project_slug, "--handoff", str(work / "bundle"),
                               "--output-root", str(work / "production")], python))
         plan = _run_child(production_root, ["tools/build_plan.py", "--project-root",
-                                            str(work / "production" / "production" / slug)], python)
+                                            str(work / "production" / "production" / project_slug)], python)
         record("plan", plan)
         report = {
             "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
-            "plan": str(work / "production" / "production" / slug / "03_plan/production-plan.md"),
+            "plan": str(work / "production" / "production" / project_slug / "03_plan/production-plan.md"),
+            "theme_proposal": theme_proposal,
             "state": str(work),
         }
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -242,6 +419,7 @@ def _run_orchestration(intent: str, workspace_root: Path, state_root: Path, run_
         "intent": intent,
         "status": "AT_EDGE",
         "steps": steps,
+        "theme_proposal": theme_proposal,
         "next_action": next_action,
         "state": str(work),
     }
@@ -345,18 +523,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--project-id")
     parser.add_argument("--seed-input")
     parser.add_argument("--selection-limit", type=int, default=1)
-    parser.add_argument("--intent", help="入力段の対話で人間から受け取ったもの")
+    parser.add_argument("--intent", help="任意。指定しない場合は、pin済み候補からテーマを自動提案する")
     parser.add_argument("--rules", type=Path, default=DEFAULT_RULES_PATH)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--run-id")
-    parser.add_argument("--slug")
-    parser.add_argument("--title")
-    parser.add_argument("--requested-at")
+    parser.add_argument("--run-id", help="任意。省略時はこの実行の安定IDを生成する")
+    parser.add_argument("--slug", help="任意。省略時はrun-idから安定生成する")
+    parser.add_argument("--title", help="任意。省略時は自動生成する")
+    parser.add_argument("--requested-at", help="任意。省略時は起動時刻を使う")
     parser.add_argument("--purpose", default="artistic-research")
-    parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
-    parser.add_argument("--state-root", type=Path, default=DEFAULT_STATE)
+    parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos",
+                        help="clean, manifest-pinned child workspace; it is checked read-only")
+    parser.add_argument("--state-root", type=Path, default=DEFAULT_STATE,
+                        help="Git-external run state directory")
     parser.add_argument("--research-root", type=Path, help="指定すると調査の受理から制作プランまで進む")
     parser.add_argument("--production-root", type=Path)
+    parser.add_argument("--offline-fixture", action="store_true",
+                        help="use the checked-in synthetic signal fixture; do not read child checkouts")
     parser.add_argument("--limit", type=int, default=1,
                         help="選定する命題の件数。2以上でバッチになる")
     parser.add_argument("--child-python", default=sys.executable)
@@ -364,6 +546,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        run_now = datetime.now(timezone.utc)
+        run_id = args.run_id or f"AUTO-PLAN-{run_now.strftime('%Y%m%dT%H%M%SZ')}"
+        requested_at = args.requested_at or run_now.isoformat()
         if args.bundle is not None:
             if not args.project_id or not args.seed_input:
                 parser.error("--bundle requires --project-id and --seed-input")
@@ -400,12 +585,12 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
             return 0
 
-        required = (args.run_id, args.slug, args.title, args.requested_at)
-        if not all(required):
-            parser.error("orchestration mode requires --run-id, --slug, --title, and --requested-at")
-        report = _run_orchestration(args.intent or "", args.workspace_root, args.state_root, args.run_id,
-                                    args.purpose, args.slug, args.title, args.requested_at, args.child_python,
-                                    args.research_root, args.production_root, args.limit)
+        report = _run_orchestration(args.intent, args.workspace_root, args.state_root, run_id,
+                                    args.purpose, args.slug, args.title, requested_at, args.child_python,
+                                    args.research_root, args.production_root, args.limit, args.offline_fixture)
+    except BlockedPrecondition as exc:
+        print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 2
     except (StepFailure, OSError, IndexError, TypeError, ValueError, KeyError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1

@@ -39,9 +39,10 @@ python3 -m unittest discover -s tests -v
 - [x] M11: `agentic-art-production`を同一repo Issue SSOTとhandoff/result exchange契約付きで親manifestへ追加し、5repo snapshot・quality gate・auditへ接続する（MANIFEST-PRODUCTION-001、MANIFEST-PRODUCTION-002、親PR #15 merge済み）。
 - [x] M12: post-v1.2.0 mainを5repo v1.2.1基線として整合・3回qualification・human-gated releaseする（V121-RECONCILE-001、V121-QUALIFY-001、V121-RELEASE-001完了。release操作はhuman gateの実承認後に完了）。
 - [x] M13: Research/Production双方の交換可能commitを固定し、handoff/resultの実往復E2Eを実装・v1.3.0 qualificationする（PRODUCTION-PIN-001、PRODUCTION-E2E-001、PRODUCTION-QUALIFY-001、PRODUCTION-RELEASE-001完了）。
-- [x] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidence、総合qualificationは完了。v1.4.0 human-gated releaseは未完了）。
+- [x] M14: startup contract、全repo remote update確認、起動時audit、create-only Issue、実Drive、Codex/Claude Code UI、初期運用E2Eを実装・v1.4.0 qualificationする（実装、offline aggregate、sandbox live evidence、総合qualification、human-gated releaseまで完了）。
 - [x] M15: 目的ギャップのIssue DAG、child preflight、pin release qualification、observation provenance、project statusを依存順に実装する。進捗は`execution/task-queue.yaml`と`execution/state.yaml`を正本に[project status](../tools/project_status.py)で生成する。
-- [ ] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-E2E-001`のnetworkless実装・検証は完了した。単一作家のself exportは1アンカーを`PASS_LIMITED_DIVERSITY`として受理する親ポリシーへ更新済みだが、Research最新mainの品質ゲートと新pin採用前の6repo fresh gateが解消待ちである。
+- [x] M16: inspiration、self export/diversity、intent ranking、research/production/viewer evidence、autonomous runner、batch、新規テーマE2Eを依存順に閉じる。`PURPOSE-E2E-001`のnetworkless/live-private実装・検証、単一作家の1アンカー`PASS_LIMITED_DIVERSITY`、Research fresh 6repo exact-pin gateまで完了した。
+- [x] M18: 利用者がテーマ・slug・titleを指定しない場合も、manifest pin済みworkspaceから候補由来の制作テーマとResearch requestを生成し、Research/Productionを経て`PLAN_READY`へ継続できる自律制作計画入口を閉じる。theme-free entry、exact-pin fail-closed preflight、offline fixture、Research next action、focused/full verificationを完了した。
 
 ## Surprises & Discoveries
 

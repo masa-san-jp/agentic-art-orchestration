@@ -125,6 +125,18 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("docs/incident-runbook.md", text)
         self.assertIn("docs/interaction-improvement-runbook.md", text)
 
+    def test_theme_free_planning_entry_is_explicit_and_fail_closed(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        guide = (ROOT / "docs/agent-runtime-guide.md").read_text(encoding="utf-8")
+        run = (ROOT / "tools/run.py").read_text(encoding="utf-8")
+        self.assertIn("テーマ未指定で制作計画を始める", readme)
+        self.assertIn("--intent`、`--slug`、`--title`を付けず", guide)
+        self.assertIn("REPOSITORY_DERIVED", guide)
+        self.assertIn("observed_commit", guide)
+        self.assertIn("`BLOCKED`", guide)
+        self.assertIn("_guard_pinned_workspace", run)
+        self.assertIn("テーマを自動提案", run)
+
     def test_v11_runbook_is_operable_without_conversation_history(self):
         text = (ROOT / "docs/interaction-improvement-runbook.md").read_text(encoding="utf-8")
         for required in (

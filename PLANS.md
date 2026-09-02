@@ -571,3 +571,90 @@ fixtureまたは同一live payloadの再生成はbyte一致する。toolはGitHu
 ### Next exact action
 
 1. 現在eligibleなREADY/BACKLOG taskはないため、`.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check`で新規Issue SSOT候補をread-only確認する。merge/releaseと#116のsecret設定は人間承認後に別途扱う。
+
+## HARNESS-AUTO-PLAN-001 ExecPlan — completed
+
+### Purpose / Big Picture
+
+Issue #1の「エージェントが自律的に制作プランを出力する」入口を、利用者がテーマ・slug・titleを
+与えない場合にも成立させる。manifestのpin済みchild workspaceをread-onlyで確認し、gateを通過した
+候補から作業テーマと安定したproject identityを導出してResearchへ渡す。会話全文やraw/private dataを
+保存せず、研究実行と外部human gateは既存の境界を維持する。
+
+### Progress
+
+- [x] `tools/run.py`のfull orchestrationで`--intent`、`--slug`、`--title`、`--run-id`、`--requested-at`を省略可能にした。
+- [x] run-idから衝突しないslug/titleを導出し、Research requestのcandidate-derived `creative_question`を`REPOSITORY_DERIVED` theme proposalとしてrun reportへ出す。
+- [x] child export前に全manifest repositoryのclean・branch・upstream・exact observed pinをread-only検査し、失敗時は`BLOCKED`で停止する。
+- [x] 最小指示、実行前提、ResearchからPLAN_READYまでの継続方法をruntime guideとREADMEへ記載した。
+- [x] 親検証、全suite、PR/CI、merge、最終確認を完了する。
+
+### Surprises & Discoveries
+
+- ローカル`repos/`はcleanでもoffline fixture remoteと旧HEADを持つ生成workspaceで、現行manifest pinのverified workspaceではなかった。export tool不足をテーマ生成の成功として扱わず、preflightでBLOCKEDへ分類する。
+- 既存の`PURPOSE-E2E-001`は「ユーザーがテーマを入力しない」意味ではなく、fixture内のthemeがevidenceへraw保存されない意味であった。今回の入口はその意味を混同せず、候補から導出したquestionをResearch requestから明示する。
+
+### Decision Log
+
+- テーマ未指定時のsourceは`gate-passing-candidate`に固定し、候補が持たないcreative questionを推測で補わない。
+- project identityはrun-idとSHA-256から決定し、ユーザーに命名を質問しない。explicit intentは候補順位のoverrideに限る。
+- verified workspaceの欠落・dirty・detached・upstream欠如・pin mismatchはchild export前に`BLOCKED`へし、checkout/reset/fetch/pin更新を自動実行しない。
+- Research request、run report、production planはGit外で扱い、親Gitへ会話全文、PRIVATE_RAW、RESTRICTED、credential、Drive本文を保存しない。
+
+### Outcomes & Retrospective
+
+テーマなしCLIの引数契約、候補由来theme proposal、安定identity、exact-pin preflight、Research request、
+失敗時のBLOCKED境界を確認した。networkless run `AUTO-PLAN-OFFLINE-001`はテーマ未指定で候補を選び、
+`REPOSITORY_DERIVED` proposalとGit外RR001 requestを出して`AT_EDGE`へ到達した。Research以降はagent
+actionのnext_actionとして明示され、制作planを捏造していない。PR/CI/mergeと最終確認は別途記録した。
+
+### Context and Orientation
+
+- Issue SSOT: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
+- parent entry: `tools/run.py --offline-fixture` または verified workspaceを渡した `tools/run.py`
+- input contract: `config/repositories.yaml`, `data/snapshot.json`, `tools/ingest_signals.py`
+- downstream contracts: `tools/build_research_request.py`, `agentic-art-research`, `agentic-art-production`
+- focused tests: `tests/test_auto_plan.py`, `tests/test_run.py`, `tests/test_docs.py`
+
+### Plan of Work
+
+1. 引数なしfull orchestrationとproject identity/theme proposalを実装する。
+2. verified child workspace preflightを追加し、invalid workspaceはchild export前にBLOCKEDへする。
+3. docs/tests/READMEを同期し、validator、focused/full suite、workspace/auditを実行する。
+4. task/state/handoffを結果で更新し、branch PRのrequired checksを通してmerge後に再検証する。
+
+### Concrete Steps
+
+~~~bash
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest tests.test_run tests.test_auto_plan tests.test_docs -v
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python tools/project_status.py --check-readme
+.venv/bin/python tools/workspace.py status --json
+.venv/bin/python tools/audit.py --check
+git diff --check
+~~~
+
+### Validation and Acceptance
+
+- テーマ、slug、titleを与えないCLI呼び出しがparseされ、候補由来の`REPOSITORY_DERIVED` proposalと安定slugを出す。
+- exact pin・clean workspaceのpreflightをchild export前に通し、違反時は`BLOCKED`で解除条件を示す。
+- Research requestはchild-owned schema、source commit、candidate references、raw data禁止を満たす。
+- explicit intentは任意のranking overrideとして働き、未指定時のv1 selection互換を壊さない。
+- parent validator、focused tests 33/33、full suite 464/464、project status、audit、diff check、remote required checksがPASSする。
+
+### Idempotence and Recovery
+
+同じrun-id、同じpin、同じrequest入力ではproject identityと候補選択が一致する。Research未完了時は
+`RESEARCH_PENDING`のnext actionを返し、同じrun-idで再開する。workspace preflight失敗時はchildと
+既存checkoutを変更せず、観測された最初の解除条件から人間が修復して再実行する。
+
+### Interfaces and Dependencies
+
+`config/repositories.yaml` → workspace preflight → child exporter → normalized signals → candidate/gate/
+selection → `build_research_request.py` → Research acceptance → Production handoff/planという一方向の
+境界である。merge、release、外部CREATE、child repository mutationはこのtaskの自動範囲外である。
+
+### Next exact action
+
+1. 新しいqualified Issue SSOTが登録されるまで、queue/state/handoffから再開する作業はない。
