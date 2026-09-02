@@ -112,7 +112,8 @@ def ensure_offline_remotes(manifest: dict, fixture_root: Path) -> tuple[Path, bo
         try:
             seed = staging_root / "seed"
             staged_remote = staging_root / f"{repository['id']}.git"
-            run_git(["init", "-b", "main", str(seed)])
+            default_branch = repository["default_branch"]
+            run_git(["init", "-b", default_branch, str(seed)])
             (seed / "README.md").write_text(
                 f"Synthetic offline fixture for {repository['id']}\n",
                 encoding="utf-8",
@@ -137,8 +138,8 @@ def ensure_offline_remotes(manifest: dict, fixture_root: Path) -> tuple[Path, bo
             )
             run_git(["init", "--bare", str(staged_remote)])
             run_git(["remote", "add", "origin", str(staged_remote)], cwd=seed)
-            run_git(["push", "origin", "main"], cwd=seed)
-            run_git(["symbolic-ref", "HEAD", "refs/heads/main"], cwd=staged_remote)
+            run_git(["push", "origin", default_branch], cwd=seed)
+            run_git(["symbolic-ref", "HEAD", f"refs/heads/{default_branch}"], cwd=staged_remote)
             os.replace(staged_remote, remote)
             created = True
         finally:

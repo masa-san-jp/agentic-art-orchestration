@@ -1,5 +1,5 @@
-version: 4
-updated_at: "2026-08-13T08:25:00+09:00"
+version: 23
+updated_at: "2026-09-02T02:54:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -611,19 +611,18 @@ tasks:
   - id: INITIAL-OPS-QUALIFY-001
     milestone: M14
     title: Qualify the initial Codex and Claude Code operations profile
-    status: BLOCKED
+    status: DONE
     lane: RELEASE_QUALIFICATION
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
-    depends_on: [INITIAL-OPS-E2E-001]
+    depends_on: [PROJECT-STATUS-001, V14-CHILD-PREFLIGHT-EXACT-001]
     acceptance: Three deterministic qualification runs pass the startup, Production exchange, retrieval, artifact, feedback, Issue delivery, privacy, idempotency, and five child quality gates; separate opt-in sandbox evidence proves one Drive create/read and one GitHub Issue create/deduplicate without modifying production user artifacts or existing Issues.
-    checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>, git diff --check]
-    blocker: GitHub live evidence requires a separately designated sandbox repository; do not use production or existing experiment repositories by inference
+    checks: [python3 tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --python-root <child-environment-root> --child-timeout 180, git diff --check]
 
   - id: INITIAL-OPS-RELEASE-001
     milestone: M14
     title: Release the initial interactive operations profile through the human gate
-    status: BACKLOG
+    status: BLOCKED
     lane: RELEASE
     interaction_blocking: false
     user_artifact_policy: CREATE_ONLY
@@ -631,3 +630,389 @@ tasks:
     depends_on: [INITIAL-OPS-QUALIFY-001]
     acceptance: After explicit human approval, the reviewed initial operations profile is merged and released as v1.4.0; the release itself does not create or change child content, Issues, Drive files, permissions, or sharing scope.
     checks: [git tag --points-at <reviewed-merge-sha>, gh release view v1.4.0]
+    blocker: explicit human approval for merge/tag/release; does not block M16
+
+  - id: ISSUE-39-KB-PIPE-001
+    milestone: M15
+    title: Connect canonical child knowledge bundles to the parent pipeline
+    status: DONE
+    lane: KNOWLEDGE_IMPORT
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [CONSUMER-001, KNOWLEDGE-PROFILE-001, V12-CANDIDATE-001]
+    acceptance: Each approved child DTO enters through its declared parent adapter and a versioned aggregate normalized signal bundle with repository@commit provenance; the parent validates and imports it through the consumer boundary; the candidate pipeline consumes the bundle without manual signal-file wiring; and legacy, raw, or mixed-source envelopes fail closed.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_export_signal tests.test_signal_bundle tests.test_input_pipeline tests.test_consumer_contract tests.test_candidate_space -v, python3 tools/signal_bundle.py --self <self-signal> --art-history <art-signal> --marketing <marketing-signal> --generated-at <timestamp> --check --output <bundle>]
+
+  - id: ISSUE-41-RESEARCH-REQUEST-001
+    milestone: M15
+    title: Generate and dry-run the child research request from selected candidates
+    status: DONE
+    lane: RESEARCH_HANDOFF
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-39-KB-PIPE-001, V12-SELECTION-001, V12-PROVENANCE-001]
+    acceptance: A selected candidate produces the child-owned research-request/v1-shaped request with intent, constraints, open questions, references, source repository@commit, and a raw-data exclusion; the pinned Research acceptor reaches DRY_RUN without creating or changing a child project, and selected signal statements are not copied into the request.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_research_request -v, python3 tools/research_start.py --bundle <bundle> --project-id <id> --project-slug <slug> --seed-input <seed> --request-id <RR###> --requested-at <timestamp> --research-root <pinned-research> --output-dir <output>]
+
+  - id: ISSUE-40-PIN-ADOPTION-001
+    milestone: M15
+    title: Qualify read-only child pin adoption before parent manifest update
+    status: DONE
+    lane: PIN_ADOPTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-41-RESEARCH-REQUEST-001, V12-CHILD-GATES-001, PRODUCTION-E2E-001]
+    acceptance: A read-only qualification observes clean immutable workspace HEADs, runs all candidate child quality gates and the Production exchange against a copied candidate manifest, emits the exact candidate changes, rejects failed or drifted candidates, and applies no manifest update unless a separately invoked apply operation sees the same qualified candidate.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_pin_update -v, python3 tools/qualify_pin_update.py --workspace-root <verified-child-workspace> --output <external-report> --run-id <run-id>]
+
+  - id: ISSUE-38-REAL-CHAIN-CI-001
+    milestone: M15
+    title: Run real pinned child and Production exchange qualification in CI
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: RELEASE_QUALIFICATION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
+    acceptance: Pull-request CI checks out all six current manifest children at their declared default branch using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails closed on a missing credential before checkout, and never adopts pins or mutates child repositories.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain --timeout 900 --python-root <child-environment-root>]
+    progress: Complete. Run 33538995358 passed credential, six checkouts, all six dependency provisions, bootstrap, production-exchange, and all six immutable child repositories with 15/15 declared gates PASS. Qualification reported changed_pins=6 and applied=false; no pin or child repository was changed.
+    blocker: Human review remains required before default-branch merge, ready-for-review, tag, or release.
+
+  - id: GAP-DAG-001
+    milestone: M15
+    title: Register the purpose-gap implementation DAG and queue metadata contract
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/107
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: COMMIT_READY
+    depends_on: [INITIAL-OPS-E2E-001]
+    acceptance: The v1.4 evidence and purpose closure tasks are registered with canonical Issue SSOT, target repository, terminal, dependency, and safety metadata; exactly one next task is READY and state/handoff identify its first operation.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_validate -v, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: V14-SANDBOX-ATTEMPT-001
+    milestone: M15
+    title: Requalify GitHub sandbox evidence with an attempt-scoped CREATE
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/101
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [GAP-DAG-001]
+    acceptance: A dedicated sandbox attempt creates exactly one metadata-only Issue and replays it as REUSE with hashed evidence, without touching production or existing experiment Issues.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_github_sandbox_live_check -v, python3 -m unittest discover -s tests -v]
+
+  - id: V14-CHILD-PREFLIGHT-001
+    milestone: M15
+    title: Revalidate child repository preflight and quality-gate evidence
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/68
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-SANDBOX-ATTEMPT-001]
+    acceptance: Every manifest child has an observed immutable commit, clean workspace status, and passing declared quality gates recorded without child mutation.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V14-CHILD-PREFLIGHT-EXACT-001
+    milestone: M15
+    title: Support exact pinned requirement specifications in child preflight
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/68
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-CHILD-PREFLIGHT-001]
+    acceptance: The parent child-gate preflight accepts the bounded requirement forms of a distribution name, numeric >= lower bound, and numeric == exact version; missing, lower-bound, or exact-version mismatch remains ENV_UNSATISFIED with NOT_RUN gates and remediation, while satisfied and dependency-free repositories retain existing execution behavior without automatic installation.
+    checks: [python3 -m unittest tests.test_child_quality_gates -v, python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: V14-PIN-RELEASE-CHECK-001
+    milestone: M15
+    title: Close the release-check and pinned-workspace qualification gap
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/85
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-CHILD-PREFLIGHT-001]
+    acceptance: Release qualification rejects stale, dirty, unavailable, or failed pins and records the exact observed commits and child gate results.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V14-OBSERVATION-PROVENANCE-001
+    milestone: M15
+    title: Preserve observation provenance through the qualification report
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/56
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-PIN-RELEASE-CHECK-001]
+    acceptance: Every qualification finding retains source repository, source commit, evidence locator or opaque reference, and explicit unknowns without normalizing missing evidence.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: V14-RECONCILE-001
+    milestone: M15
+    title: Reconcile queue, state, handoff, and execution-plan progress
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/67
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-OBSERVATION-PROVENANCE-001]
+    acceptance: Parent queue, state, handoff, README, and execution plan agree on the observed qualified baseline and next task without changing child pins implicitly.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: PROJECT-STATUS-001
+    milestone: M15
+    title: Generate project status from queue and state and reject progress drift
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/100
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [V14-RECONCILE-001]
+    acceptance: Deterministic project-status JSON/Markdown is generated from queue and state, README progress markers match it, and CI rejects stale hand-written progress.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-NAMING-001
+    milestone: M16
+    title: Apply the cross-repository envelope naming decision
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/43
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [INITIAL-OPS-QUALIFY-001]
+    acceptance: Boundary container names and hash keys follow the authoritative naming decision in every affected repository, with separate commits and quality gates.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-INSPIRATION-001
+    milestone: M16
+    title: Capture and settle a user inspiration into the research pipeline
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/47
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-NAMING-001]
+    acceptance: Agent UI capture and settlement produce a provenance-preserving, privacy-safe inspiration input that reaches the candidate pipeline without storing conversation text.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-SELF-EXPORT-SOURCE-001
+    milestone: M16
+    title: Complete the self-model export boundary at its source repository
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/40
+    target_repositories: [self-model]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-INSPIRATION-001]
+    acceptance: The child export emits the versioned approved Claim/Pattern boundary DTO at a pinned commit, with consent, provenance, and raw-voice exclusion gates passing in the child repository.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: SELF-EXPORT-E2E-001
+    milestone: M16
+    title: Pin self-model export through adapter and consumer without loss
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/105
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-SELF-EXPORT-SOURCE-001]
+    acceptance: Pinned self-model export records pass adapter, normalized schema, and consumer with equal counts, provenance, domain fields, and privacy checks.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_self_model_export_e2e -v]
+
+  - id: PURPOSE-SELF-DIVERSITY-001
+    milestone: M16
+    title: Enforce personal-anchor diversity without inventing self facts
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/99
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [SELF-EXPORT-E2E-001]
+    acceptance: zero approved tensions/recurring_patterns anchors stop honestly, one or two approved anchors are accepted as PASS_LIMITED_DIVERSITY, three or more receive full diversity controls, and selected anchor share is bounded without raw self data or fabricated facts.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-INTENT-RANK-001
+    milestone: M16
+    title: Apply user intent as deterministic candidate ranking
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/102
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-SELF-DIVERSITY-001]
+    acceptance: Intent influences only the ranking of gate-passing candidates, raw intent is not persisted, and no-intent selection remains byte-identical.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_candidate_selection tests.test_run -v]
+
+  - id: PURPOSE-RESEARCH-KNOWLEDGE-001
+    milestone: M16
+    title: Complete structured research knowledge for purpose execution
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/47
+    target_repositories: [agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-INTENT-RANK-001]
+    acceptance: The research child exposes its canonical knowledge schema, references, and evidence constraints through its own Issue SSOT and quality gate.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-RESEARCH-DECISIONS-001
+    milestone: M16
+    title: Connect rejected options and uncertainty to the research brief
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/48
+    target_repositories: [agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-RESEARCH-KNOWLEDGE-001]
+    acceptance: Research decisions retain adopted and rejected options, uncertainty, and evidence references in a deterministic executive brief.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-RESEARCH-VISUAL-001
+    milestone: M16
+    title: Add visual language as the research-to-production medium SSOT
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/49
+    target_repositories: [agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-RESEARCH-DECISIONS-001]
+    acceptance: Research emits a validated visual-language handoff artifact with medium, technique, derivation evidence, rejected candidates, and explicit rights/safety status.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-PRODUCTION-OBSERVATION-001
+    milestone: M16
+    title: Preserve production observations losslessly in production results
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/34
+    target_repositories: [agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-RESEARCH-VISUAL-001]
+    acceptance: Production observations are append-only canonical records, preserve zero observations as an honest empty state, and flow losslessly into production-result without synthetic claims.
+    checks: [python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-PRODUCTION-REVISION-001
+    milestone: M16
+    title: Accept superseding handoffs with impact-aware replanning
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/36
+    target_repositories: [agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-PRODUCTION-OBSERVATION-001]
+    acceptance: A superseding handoff is accepted atomically, affected planning state is identified, and unrelated production records remain unchanged.
+    checks: [python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-RESEARCH-FEEDBACK-001
+    milestone: M16
+    title: Export production feedback as an anonymized idempotent research signal
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/45
+    target_repositories: [agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-PRODUCTION-REVISION-001]
+    acceptance: Production feedback is exported as a deduplicated privacy-safe research-signal bundle with source provenance and no external delivery side effect.
+    checks: [python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-VIEWER-RESPONSE-001
+    milestone: M16
+    title: Add viewer response notes and conservative requirement assessment
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/98
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-RESEARCH-FEEDBACK-001]
+    acceptance: Viewer response records are append-only and privacy-safe, measured evidence is assessed with explicit UNKNOWN/SUPPORTED/CONTRADICTED states, and unknowns retain blind/frame review requirements.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-AUTONOMOUS-RUNNER-001
+    milestone: M16
+    title: Resume RESEARCH_PENDING through an agent worker to PLAN_READY
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-VIEWER-RESPONSE-001]
+    acceptance: A provider-neutral worker contract resumes the same run ID, enforces retry and human gates, and reaches PLAN_READY in networkless fake-worker E2E without raw conversation or credential leakage.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_run tests.test_autonomous_runner tests.test_runtime_recovery -v]
+
+  - id: PURPOSE-BATCH-STATUS-001
+    milestone: M16
+    title: Generate read-only batch status and completion reports
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/70
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-AUTONOMOUS-RUNNER-001]
+    acceptance: Batch status reports are deterministic, read-only, provenance-preserving, and distinguish completed, blocked, pending, and unknown child work.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-BATCH-100-001
+    milestone: M16
+    title: Evaluate one hundred candidate plans with explicit terminal evidence
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [PURPOSE-BATCH-STATUS-001]
+    acceptance: A 100-plan batch preserves provenance, diversity, gate outcomes, deterministic resume state, and explicit blocked/unknown results without claiming unperformed work as complete.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v]
+
+  - id: PURPOSE-E2E-001
+    milestone: M16
+    title: Reach a production plan from one new theme without human intervention
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/104
+    target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [PURPOSE-BATCH-100-001]
+    completion: live-private E2E reached PLAN_READY; 12/12 acceptance booleans true; six-repository exact-pin child gates 16/16 PASSED; Production exchange PASSED; evidence and report remain Git-external and are referenced by SHA-256
+    acceptance: A new non-sensitive theme reaches PLAN_READY through research and production with zero human prompts after input, complete source provenance, conservative viewer evidence, deterministic resume, child gates, and zero forbidden external effects.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/workspace.py status, python3 tools/audit.py]
+
+  - id: HARNESS-BOOTSTRAP-001
+    milestone: M17
+    title: Make the documented bootstrap succeed on a fresh clone without human help
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PURPOSE-E2E-001]
+    completion: README canonical venv bootstrap and offline materialization path verified from a fresh clone; validator PASS, documentation regression 7/7 PASS, parent full suite 380/380 PASS, and fresh-clone materialized full suite 379/379 PASS
+    acceptance: A fresh clone with only git and python3 reaches a passing validator and full test suite by following the documented commands verbatim, the venv creation sequence exists in README and is referenced by AGENTS.md and the operator runbook, interpreter notation is consistent across documents, and a test rejects documentation regressions to bare python3 bootstrap.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+
+  - id: HARNESS-INTAKE-001
+    milestone: M17
+    title: Add a standing empty-queue intake path from open Issues to the task queue
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-BOOTSTRAP-001]
+    completion: Read-only issue_intake report and SSOT minimum rules implemented; 38 observed open Issues classified, #117 registered once as HARNESS-PR-TRIAGE-001, 16 unqueued Issues retained as UNQUEUED_NEEDS_SSOT, and deterministic/report/privacy tests passed
+    acceptance: AGENTS.md task selection gains a third rule covering the empty-queue case, Issue SSOT minimum requirements are documented, a read-only deterministic issue_intake tool reports unqueued open Issues with SSOT-quality judgments from live or fixture input without writing to Git or Issues, and its first real application registers SSOT-qualified open Issues into the queue in one commit while listing unqualified Issues as UNQUEUED_NEEDS_SSOT.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_issue_intake -v, python3 -m unittest discover -s tests -v, python3 tools/project_status.py --check-readme]
+
+  - id: HARNESS-SSOT-PUSH-001
+    milestone: M17
+    title: Require pushing execution SSOT commits at lease release and resolve the current backlog
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-INTAKE-001]
+    acceptance: The work protocol requires pushing the working branch before lease release with force push and default-branch push forbidden, an ahead-of-origin parent branch is observable as a named non-blocking finding with UNKNOWN preserved when the network is unavailable, and the current agent branch is fast-forward pushed so draft PR 42 matches local HEAD without merge or ready-for-review changes.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: Parent execution SSOT push rule and non-blocking parent Git observation implemented; ahead-of-origin state is reported as PARENT_SSOT_UNPUSHED with network UNKNOWN preserved, and the authorized working branch was fast-forward pushed with draft PR 42 HEAD verification
+
+  - id: HARNESS-REALCHAIN-REBASE-001
+    milestone: M17
+    title: Re-baseline the real-chain CI contract for six child repositories with fail-closed secret preflight
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-SSOT-PUSH-001]
+    acceptance: The real-chain job is redefined for the six current child repositories with a fail-closed MISSING_EXTERNAL_SECRET preflight before any checkout, read-only persist-credentials false full-history checkouts, qualification without pin adoption, contract tests asserting the fail-closed and read-only behavior, and the legacy blocked task re-pointed to the re-baseline Issue while secret configuration and remote green evidence remain an explicit human gate outside this acceptance.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci -v, python3 -m unittest discover -s tests -v]
+    completion: Six-child real-chain workflow and contract tests re-baselined; remote run 33481638691 stopped before checkout with MISSING_EXTERNAL_SECRET, and the legacy blocked task now points to Issue #116 while secret configuration and green evidence remain human-gated
+
+  - id: HARNESS-PR-TRIAGE-001
+    milestone: M17
+    title: Add read-only PR triage evidence for the human merge decision
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [HARNESS-REALCHAIN-REBASE-001]
+    acceptance: A read-only deterministic report classifies all manifest repository open PRs by checks, conflicts, change class, task/Issue SSOT, age, and recommendation while preserving human-approved merge as a gate and never executing merge, close, rebase, force push, or ready operations.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_pr_triage -v, .venv/bin/python -m unittest discover -s tests -v]
+    completion: Issue #117 acceptance 3/3: read-only triage tool, closed report schema, four human-gated change classes, deterministic fixture, operator runbook, and live seven-repository observation implemented; live report observed 17 open PRs with READ-only remote operation

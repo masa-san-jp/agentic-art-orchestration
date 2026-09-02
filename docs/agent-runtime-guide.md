@@ -48,3 +48,58 @@ checkpointにはtask、repo、branch、HEAD、dirty state、checks、未完了ac
 | quality | child test失敗 | owner repoで最小再現、完了禁止 |
 | safety | secret、同意違反、公開範囲 | 即時停止、出力へ含めない |
 | authority | merge、release、破壊操作 | 人間ゲート |
+
+## Intent付き実行
+
+候補順位へ人のintentを反映する場合は `tools/run.py --intent` を使う。intentは
+hard filterではなく、既存の安全・鮮度・根拠gateを通過した候補の順位付けだけに使う。
+実行は `intent-rank/v1` のローカル決定的処理で、Unicode NFKC、casefold、空白圧縮を
+行った文字bigramのmultiset weighted Jaccardを計算する。intentがない実行は既存の
+`research-selection/v1` のままで、intent付き実行だけ `research-selection/v2` を出力する。
+
+生intentは成果物・ログ・Gitへ保存しない。成果物には `intent_sha256`、algorithm名、
+kind別score、total scoreだけを残す。CLIの実行結果とselectionのdigestが一致することを
+確認し、空白だけのintentは入力エラーとして扱う。intent付き実行の再現確認は次の形で行う。
+
+~~~bash
+python3 tools/run.py --bundle <normalized-bundle.json> --project-id <project-id> \
+  --seed-input <seed> --intent <intent-text> --output <run.json> --check
+~~~
+
+## 自律Research runner
+
+`tools/run.py`は同期pipelineの結果にraw intentを含めず、`execution_status=RESEARCH_PENDING`と
+metadata-onlyの`next_action`を返す。`tools/autonomous_runner.py`はそのaction境界をworkerへ
+渡し、Git管理外の明示`state-root/<run-id>/supervisor.json`だけをatomic replaceする。
+workerはSDKではなく、絶対パスの実行ファイルをargvで次の形に限定する。
+
+~~~bash
+.venv/bin/python tools/autonomous_runner.py \
+  --run-id <run-id> --state-root <external-state-root> \
+  --worker-command <absolute-worker-path> \
+  --source-commit <40-char-commit> --project-path <project-path> \
+  --allowed-path project
+~~~
+
+workerのrequestは`agent-action/v1`、responseは`agent-result/v1`のclosed metadata-only JSONである。
+responseのCOMPLETEDと全check PASSだけが`PLAN_READY`へ進み、同じrun-idの再実行はaccepted resultを
+再利用する。human gate対象の要求は実行せず`BLOCKED_HUMAN`、外部境界違反は`BLOCKED_EXTERNAL`、
+同一stage・error fingerprintの失敗は3回まで再試行して4回目を`FAILED_RETRY_EXHAUSTED`とする。
+会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderrはstateへ保存しない。
+
+## バッチ進捗と完了レポート
+
+`tools/batch_status.py`はworkspace内の`07_runtime/research-state.json`、Productionのhandoff/plan、
+各workspace repoのGit状態をread-onlyで観測する。プロジェクトのstageは
+`NOT_STARTED`、`IN_PROGRESS`、`TERMINAL`、`HANDOFF`、`PLANNED`の固定語彙で、入力ファイルの
+相対locatorとSHA-256、taskの完了数、認識できない状態を併記する。`HEAD..origin/main`の差分が
+取得できない場合は0にせず`UNKNOWN`とする。実行中にstate、claim、Git、外部サービスを書き込まない。
+
+~~~bash
+python3 tools/batch_status.py --workspace-root <workspace-root> --format json
+python3 tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
+~~~
+
+batch driverが作成するJSONLは`batch-report-event/v1`のmetadata-only closed eventをappendする。
+集計器は起動、完了、失敗、再試行、所要時間、token数をまとめ、未提供の時間・tokenは`未計測`として
+表示する。reportの読み取りも書き込みもGit外の入力を変更しない。

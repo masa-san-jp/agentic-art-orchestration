@@ -26,6 +26,25 @@ It proves startup and pinned retrieval, one Drive CREATE followed by idempotent 
 
 The output is `data/agent-ui.json`, which is ignored by Git. It contains only structured metadata and opaque references. Do not copy raw prompts, conversation text, artifact bodies, credentials, signed URLs, or direct provider identifiers into a tracked file.
 
+## Structured inspiration capture
+
+An inspiration can be carried into the research candidate pipeline when the agent has a normalized signal bundle. The persisted input contains only the structured `goal_code`, the request's intent/capability codes, immutable retrieval `repository@commit` references, candidate/gate/selection hashes, and selected candidate IDs. The original wording remains transient and is rejected if passed as a field.
+
+```sh
+python3 tools/signal_bundle.py \
+  --self tests/fixtures/signal/valid_self.json \
+  --art-history tests/fixtures/signal/valid_art_history.json \
+  --marketing tests/fixtures/signal/valid_marketing.json \
+  --generated-at 2026-08-11T21:00:00+09:00 \
+  --output /tmp/inspiration-signal-bundle.json
+printf '%s\n' '{"goal_code":"explore-relations"}' > /tmp/inspiration-codes.json
+python3 tools/agent_ui.py --offline-fixture --artifact-mode none \
+  --inspiration /tmp/inspiration-codes.json \
+  --signal-bundle /tmp/inspiration-signal-bundle.json
+```
+
+The capture is `CAPTURED` until the candidate pipeline produces a passing selection; then it becomes `SETTLED` with `research-candidate/v1` provenance. `profile_update_permitted` and all raw-storage flags remain false. Missing evidence, altered source commits, invalid gates, and zero selected candidates fail closed.
+
 ## Explicit operations
 
 The operation boundaries are independent:
@@ -46,7 +65,7 @@ The initial-operations qualification uses a separate sandbox lane, not the norma
 
 ```sh
 .venv/bin/python tools/github_sandbox_live_check.py --live --confirm-live --output /tmp/github-sandbox-live-evidence.json
-.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --github-sandbox-evidence /tmp/github-sandbox-live-evidence.json
+.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --python-root <child-environment-root> --child-timeout 180 --github-sandbox-evidence /tmp/github-sandbox-live-evidence.json
 ```
 
 The sandbox command searches first, creates at most one metadata-only Issue, then retries the post-create search with the bounded policy schedule (`2s → 4s → 8s → 16s`, at most five searches) before recording reuse. It refuses production repositories and existing ambiguous matches; the evidence file contains hashes and operation metadata only. If the search index still has no single match at the bound, it remains `BLOCKED` and does not claim qualification. Do not run the command against an experiment or production repository by inference.

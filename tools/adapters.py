@@ -384,3 +384,16 @@ def adapt_marketing_signal(record: dict) -> dict:
     if errors:
         raise AdapterError("\n".join(errors))
     return signal
+
+
+def adapt_viewer_response_signal(record: dict) -> dict:
+    """Pass the viewer child-domain DTO to its dedicated boundary unchanged.
+
+    Viewer responses use ``viewer-response-record/v1`` rather than the three
+    normalized research signal kinds. The dedicated viewer gate owns validation;
+    this function exists so manifest adapters are explicit without pretending the
+    record is a marketing or personal signal.
+    """
+    if not isinstance(record, dict):
+        raise _fail("viewer response input must be an object", "pass one viewer-response-record/v1 record")
+    return copy.deepcopy(record)

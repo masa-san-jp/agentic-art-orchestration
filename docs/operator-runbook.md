@@ -12,6 +12,8 @@ git status --short
 
 次に必ず [AGENTS.md](../AGENTS.md)、設計仕様、実行計画、`PLANS.md`、`execution/task-queue.yaml`、`execution/state.yaml`、[handoff](../execution/handoff.md)を読む。`state.yaml`の`active_task`とleaseが自分の作業範囲と一致しない場合、同じpathを編集しない。
 
+Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstrap](../README.md#ブートストラップ検証)を上から実行する。GitHub認証がない環境では、実repoを操作せずREADME記載の`--offline-fixture`経路を使う。
+
 ## 1. 正本と安全境界
 
 - `config/repositories.yaml`: 統合対象、workspace path、source commit、contract、子repo quality gateの正本。
@@ -48,18 +50,21 @@ M14完了前はこのcommandが存在しないため、従来のnetworkless smok
 ネットワークを使わない再現確認は次の順で行う。
 
 ~~~bash
-.venv/bin/python tools/validate.py --check
-.venv/bin/python tools/workspace.py init --offline-fixture
+FIXTURE_ROOT="$(mktemp -d /tmp/agentic-art-orchestration-offline.XXXXXX)"
+.venv/bin/python tools/workspace.py init --offline-fixture --fixture-root "$FIXTURE_ROOT"
 .venv/bin/python tools/workspace.py status --json
-.venv/bin/python tools/workspace.py guard --offline-fixture --json
-.venv/bin/python tools/workspace.py snapshot --check
+.venv/bin/python tools/workspace.py guard --offline-fixture --fixture-root "$FIXTURE_ROOT" --json
+.venv/bin/python tools/workspace.py snapshot --fixture-root "$FIXTURE_ROOT"
+.venv/bin/python tools/workspace.py snapshot --fixture-root "$FIXTURE_ROOT" --check
 .venv/bin/python tools/status.py --check --offline-fixture
 .venv/bin/python tools/audit.py --check --offline-fixture
 .venv/bin/python tools/security.py --offline-fixture
 .venv/bin/python tools/e2e.py --offline-fixture --check
 ~~~
 
-期待値は、manifest記載repo数（coreは4、現在はProductionを含む5）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、audit finding 0、security `PASSED`、E2E clean `COMPLETE`である。legacy failure fixtureが4repoであることはmanifestの5repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
+fresh cloneからfull suiteまで行う場合は、READMEのbootstrap節にあるoffline fixture生成列を先に実行し、その後にREADME記載のvalidatorとfull suiteを実行する。`FIXTURE_ROOT`は毎回新しい一時ディレクトリにし、別のmanifestや古いbranchのremoteを再利用しない。
+
+期待値は、manifest記載repo数（coreは4、現在はProductionとviewer-response-notesを含む6）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、security `PASSED`、E2E clean `COMPLETE`である。auditは既知の非blocking findingを保持し、失敗を正常値へ変換しない。legacy failure fixtureが4repoであることはmanifestの6repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
 
 ### 実repo workspace
 
@@ -88,7 +93,7 @@ v1.1.0のqualificationは、上記v1.0ゲートに加えてretrieval、Drive cre
 .venv/bin/python tools/release_check.py --version 1.1.0 --runs 3
 ~~~
 
-v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、当時manifestが固定した4子repoの品質ゲートを各observed commitのimmutable archiveから実行した。現在mainにはProductionが追加されているため、次の資格判定はv1.2.1として5repoを対象にする。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
+v1.2.0のqualificationは、v1.2の候補生成・gate・seeded selection・provenance E2Eに加え、当時manifestが固定した4子repoの品質ゲートを各observed commitのimmutable archiveから実行した。現在mainにはProductionが追加されているため、次の資格判定はv1.2.1として5repoを対象にする。子repoのstatusが`STALE`、`BLOCKED`、`FAILED`、`ENV_UNSATISFIED`、またはgateが`NOT_RUN`ならqualificationは失敗とし、親manifestや子repoを自動更新しない。
 
 ~~~bash
 .venv/bin/python tools/release_check.py --version 1.2.0 --runs 3 --workspace-root <verified-child-workspace>
@@ -108,44 +113,46 @@ v1.2.1は、Productionを含む5件のmanifest entryを対象に、v1.2.0と同�
 .venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root <verified-child-workspace>
 ~~~
 
-v1.3.0は、Research→Production→Researchのexchange E2Eを3回バイト比較し、clean、tamper、stale、incompatible、dirty-source、replayの終端行列、Productionを含む5repo・14 child gate、親suite、Git外出力、物理/remote effectなしを確認する。child workspaceはmanifest pinと`MATCHED`でなければ失敗とし、detached candidateを使う場合はそのcandidateを先にsnapshotしてstatus driftを混同しない。qualificationはRelease操作ではなく、merge/tag/GitHub Releaseは`PRODUCTION-RELEASE-001`の人間承認後に実行する。
+v1.3.0は、Research→Production→Researchのexchange E2Eを3回バイト比較し、clean、tamper、stale、incompatible、dirty-source、replayの終端行列、Productionを含む5repo・14 child gate、親suite、Git外出力、物理/remote effectなしを確認する。qualificationは`--workspace-root`をpinの実体化元として読み、各manifest `observed_commit`をGit外の一時workspaceへcloneしてからquality gateとexchangeを実行する。実クローンが先行、dirty、detachedでも結果へ混入させず、source checkoutは変更しない。observed commitがsourceに存在しない場合は、対象repositoryとexact pinを含む失敗findingを記録して停止する。Production exchangeのCIは`tools/pinned_workspace.py`へ`--repository agentic-art-research --repository agentic-art-production`を渡し、viewer-response-notesなどexchange非依存のrepo権限を要求しない。qualificationはRelease操作ではなく、merge/tag/GitHub Releaseは`PRODUCTION-RELEASE-001`の人間承認後に実行する。
 
 `data/release-check.json`で`status=PASSED`、`remote_operations=[]`、`merge_operation=NOT_PERFORMED`、`tag_operation=NOT_PERFORMED`、`release_operation=NOT_PERFORMED`を確認する。qualification成功だけではrelease済みとは扱わず、merge、tag、release、公開、共有範囲拡張、artifact削除は人間の明示承認後に別途実行する。
 
+`data/release-check.json`の`pinned_workspace.repositories`には、repository ID、exact `observed_commit`、source checkoutの観測状態、materialized commit、source mutation=falseを保持する。sourceのHEADがpinより先行していても、新しいHEADへ自動追随しない。
+
+### child quality-gate dependency preflight
+
+immutable archiveに`requirements.txt`がある子repoは、quality gate実行前に選択した実行環境で依存名、単純な`>=`下限、または数値の`==`固定版を検査する。repoごとに異なる固定版を持つ場合は、`<child-environment-root>/<repository-id>/bin/python`へ事前準備した環境を`--python-root`で指定する。reportの`environment_mode`は、指定なしなら`shared-runner`、指定ありなら`per-child`となる。依存が未導入、下限未達、固定版不一致、または親runnerが扱えない形式の場合は、repository statusを`ENV_UNSATISFIED`、execution modeを`NOT_RUN`として記録し、gate commandは実行しない。資格判定は失敗のまま維持され、依存不足を`PASSED`や通常のgate failureへ変換しない。
+
+不足時はrunnerが自動インストールせず、結果のremediationに記録された子repoのrequirements SSOTを人間または明示許可された環境で解消してから再実行する。
+
+~~~bash
+pip install --user -r <child-repository-path>/requirements.txt
+.venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --python-root <child-environment-root> --output data/child-quality-gates.json
+~~~
+
 ## 2.9 pin を採用する
 
-検査は動いていたが、採用する手段が無かった。`tools/startup.py` は毎回 `remote_update_candidate` を出す一方、`observed_commit` を書き込むコードは0件で、この文書は「pin を更新しない」と3箇所に書いて更新の仕方をどこにも書いていなかった。**子が動いても pin が止まったままになり、境界が壊れたことを誰も知らせない状態**がそれで生まれる。
+検査が通っていても、採用する手段が無ければ pin は止まったままになる。`tools/startup.py` が出す `remote_update_candidate` を確認し、候補の child quality gate が通ったときだけ採用する。
 
 ### 確認する
 
-```
+```bash
 python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン>
 ```
 
-リポジトリごとに、いまの pin・候補コミット・その候補で子の quality gate を回した結果・採用の可否と理由を出す。**`config/repositories.yaml` は書き換えない。**
+リポジトリごとに現在の pin、候補コミット、候補での quality gate、採用可否と理由を出す。`config/repositories.yaml` は書き換えない。
 
 ### 採用する
 
-```
+```bash
 python3 tools/pin_adopt.py --apply --workspace-root <実クローン>
 ```
 
-**全ての検査が PASS のときだけ書き換える。** 1つでも塞がっていれば何も書かずに非0で終わる。部分的な採用はしない——一部だけ進んだ manifest は、存在したことのない作業空間を指す。
+全ての検査が PASS のときだけ書き換える。1つでも塞がっていれば何も書かずに非0で終わる。部分的な採用はしない。`--dry-run` と `--apply` は排他で、どちらも省略するとエラーになる。
 
-`--dry-run` と `--apply` は排他で、どちらも省略するとエラーになる。
+同じコミットが manifest 以外にも fixture、retrieval index、test module、handoff record などへ繰り返し書かれている場合、`--apply` は全ての出現箇所を書き換え、`written_files` に残す。child checkout が dirty、候補が remote より古い、または候補の gate が FAILED の場合は `BLOCKED` として停止し、pin を書き換えない。
 
-### pin は1行ではない
-
-同じコミットが manifest 以外にも繰り返し書かれている（2026-08-20 実測で15ファイル: fixture 11件・retrieval index・test module・handoff record）。**manifest だけを書き換えると、retrieval index と improvement loop が自分の base commit を拒む。** `--apply` は候補ごとに全ての出現箇所を書き換え、書き換えたファイルを `written_files` に残す。
-
-### 失敗したときの読み方
-
-- `reason: child checkout has uncommitted changes` — その作業ツリーで誰かが作業中。採用の前に片づける
-- `reason: child checkout is N commit(s) behind its remote` — 手元が古い。先に取り込む
-- `child_gate_status: FAILED` — 候補コミットで子の gate が落ちている。**pin を上げれば直る種類の問題ではない**ので、子の側を直す
-- `status: BLOCKED` — 上のいずれかが1件でもある。書き換えは行われていない
-
-書き換えたあとの PR 作成と merge は人間が行う。manifest に関わる操作が人間の関門であることは変えていない。
+書き換えたあとの PR 作成と merge は人間が行う。manifest に関わる操作が人間の関門であることは変わらない。
 
 ## 3. taskを実行する
 
@@ -172,7 +179,42 @@ git diff --check
 
 7. `git status --short`と`git diff --stat`で、対象外の変更がないことを確認する。
 8. acceptanceの観測結果、checks、repoごとのHEAD/commit、機微情報確認、未解決、次の1操作をqueue/state/handoffへ記録する。
-9. leaseを解放し、依存完了後の次taskをREADYへ進める。merge/releaseはhuman gateで停止する。
+9. leaseを解放する前に、実行SSOTを作業branchへfast-forward pushし、remoteとdraft PRのHEAD一致をread-onlyで確認する。force push、既定branchへの直接push、merge、ready化は行わない。
+
+~~~bash
+git status --short
+git log --oneline origin/<working-branch>..HEAD
+git push origin <working-branch>
+git rev-parse HEAD
+git rev-parse origin/<working-branch>
+gh pr view <number> --json headRefOid,isDraft,baseRefName,headRefName
+~~~
+
+pushまたはremote／PRの確認ができない場合は、未pushまたは`UNKNOWN`をstateとhandoffへ残し、leaseを解放せず停止する。確認後、依存完了後の次taskをREADYへ進める。merge/releaseはhuman gateで停止する。
+
+### PR triageと人間のマージ判断
+
+open PRの確認が人間レビューのボトルネックになった場合は、全manifest repo（親control planeを含む）のメタデータだけをread-onlyで観測する。
+
+~~~bash
+.venv/bin/python tools/pr_triage.py --fixture tests/fixtures/pr-triage/open-prs.json --check
+.venv/bin/python tools/pr_triage.py --live --observed-at <fixed-ISO-8601-time> --output /tmp/pr-triage-live.json --check
+~~~
+
+レポートの`MERGE_CANDIDATE`から人間が差分、根拠、品質ゲート、Issue SSOTを確認する。`NEEDS_REBASE`は競合解消後に再観測し、`NEEDS_CI_FIX`は失敗ゲートの修正後に再観測する。`SUPERSEDED_CANDIDATE`はbase到達または完了済みtaskへの包含候補を示すだけで、PRを自動closeしない。`HUMAN_JUDGMENT`はchecksまたは競合状態が不明なため、人間が追加確認する。
+
+change classは`config/human-gates.yaml`の`merge_classes`に従い、record、docs、code、contractのいずれも`auto_merge: false`である。triageはmerge、close、rebase、force push、ready化を実行せず、PR本文・diff・コメント・credentialをレポートへ保存しない。実際のmerge判断と操作は既存のhuman gateで行う。
+
+### 空queue時のIssue intake
+
+READYも依存完了済みBACKLOGも無い場合は、open Issueを自動昇格・クローズせず、まずread-onlyのintake reportを作る。Issue本文全文は出力せず、番号・タイトル・URL・SSOT品質判定・推奨アクションだけを保持する。live入力には`gh auth login`済みのread権限が必要で、認証できない場合はfixtureを使う。
+
+~~~bash
+.venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check
+.venv/bin/python tools/issue_intake.py --live --repository <owner/name> --observed-at <fixed-ISO-8601-time> --check
+~~~
+
+`REGISTER_BACKLOG`だけがqueue登録候補であり、登録は依存関係、対象repo、Issue SSOT URLを確認してから1つのcommitで行う。`ALREADY_QUEUED`は重複登録せず、`UNQUEUED_NEEDS_SSOT`は実装せずにレポートへ残す。intake tool自体はGit、Issue、queueを書き換えない。
 
 ## 4. signalから成果物まで
 
@@ -214,6 +256,20 @@ networklessの回帰は`FakeDrive`と`FakeDriveLiveProvider`で行う。`DRIVE-L
 ~~~
 
 実Google Driveのsmokeは、専用sandbox folder IDとrepo外のcredential環境変数を人間が指定し、`--confirm-live`を明示したときだけ実行する。`AGENTIC_ART_APPROVED_DRIVE_FOLDER_ID`と`AGENTIC_ART_GOOGLE_DRIVE_TOKEN`の値、artifact本文、signed URLはGitへ保存しない。指定がない場合はliveを実行せずBLOCKEDとして再検証経路を残す。実DriveのCREATE/readを通るまで、接続済みとは報告しない。
+
+## 6.1 GitHub sandboxのattempt-scoped CREATE/REUSE
+
+GitHub Issueのlive qualificationは、実証専用の `masa-san-jp/agentic-art-sandbox-2` だけを対象とし、productionまたはmanifest登録repoを指定しない。live CLIには毎回、lowercaseの `--attempt-id`（`^[a-z0-9][a-z0-9._-]{0,63}$`）を明示する。dedup keyは `initial-operations-github-sandbox-v1:<attempt-id>` で、同じattemptの再実行はREUSE、別attemptは別のCREATEとして証跡を分離する。
+
+fixtureだけは `fixture-attempt-1` を既定値として使える。liveの既定attemptは存在しない。証跡はmetadata-onlyで、credential、repository full name、Issue本文を保存せず、live outputはGit外の `/tmp/github-sandbox-live-<attempt-id>.json` に出す。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v
+AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY=masa-san-jp/agentic-art-sandbox-2 .venv/bin/python tools/github_sandbox_live_check.py --live --confirm-live --attempt-id <unused-id> --output /tmp/github-sandbox-live-<unused-id>.json
+AGENTIC_ART_APPROVED_GITHUB_SANDBOX_REPOSITORY=masa-san-jp/agentic-art-sandbox-2 .venv/bin/python tools/github_sandbox_live_check.py --live --confirm-live --attempt-id <same-id> --output /tmp/github-sandbox-live-<same-id>-replay.json
+~~~
+
+qualificationが記録する外部操作はREAD、CREATE一件、CREATE直後の有限READ、REUSEだけである。IssueのUPDATE、CLOSE、DELETE、COMMENT、LABEL、branch、commit、PR、merge、releaseは実行しない。
 
 ## 7. feedbackからIssue候補へのルーティング
 
@@ -276,3 +332,46 @@ v1.1のnetworkless E2Eは、frontstageのretrievalが返したrepository@commit/
 - 次taskと最初の1操作。
 
 最後にstateの`active_task`とleaseを解放し、generated dataを再生成してから、statusとdiffを再確認する。
+
+## 13. バッチ進捗のread-only観測
+
+100件規模の実行前後は、プロジェクトの研究state、Production handoff/plan、workspace repoの
+`HEAD..origin/main`を横断表示する。`batch_status.py`はclaim、state、Git、Issue、Driveを変更しない。
+source fileの相対locatorとhashを出力するため、同じ入力は同じJSONになる。欠損・不明なGit比較・
+認識できない状態は`UNKNOWN`として残し、完了へ丸めない。
+
+~~~bash
+.venv/bin/python tools/batch_status.py --workspace-root <workspace-root> --format json
+.venv/bin/python tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
+~~~
+
+batch reportはdriverだけが`<state-root>/<run-id>/batch-report.jsonl`へappendする。
+`batch-report-event/v1`はevent ID、run ID、project/repository、source commit、RFC3339時刻、
+attemptを必須とし、時間・tokenがない場合はnullを許す。DURATION/TOKENS eventがnullの場合は
+拒否する。集計表示の`未計測`は未実行・未提供を示し、ゼロ値を意味しない。
+
+## 12. 自律Research実行と再開
+
+`tools/run.py`の`RESEARCH_PENDING`は、構造化された`agent-action/v1`を
+`tools/autonomous_runner.py`へ渡す開始点である。workerは絶対実行ファイルをargvで起動し、
+`--request <agent-action.json> --response <agent-result.json>`だけを受け取る。SDK、shell文字列、
+会話本文、credentialはworker境界へ渡さない。
+
+stateはGit外の外部rootへ置く。初回はrun-id単位でleaseを取得し、`supervisor.json`をatomic replace
+する。同じrun-idの再実行は`PLAN_READY`またはblocked terminalを再利用し、accepted resultを二重に
+受理しない。worker完了後にprocessが停止しても、responseが残っていれば次回起動時に同じrun-idで
+checkpointから受理する。別processのlease競合、期限切れでないlease、stateの契約不整合は変更せず
+拒否する。
+
+~~~bash
+.venv/bin/python tools/autonomous_runner.py --run-id <run-id> \
+  --state-root <external-state-root> --worker-command <absolute-worker-path> \
+  --source-commit <40-char-commit> --project-path <project-path> \
+  --allowed-path project
+.venv/bin/python -m unittest tests.test_run tests.test_autonomous_runner tests.test_runtime_recovery -v
+~~~
+
+human gate対象は`merge`、`release`、`public_share`、`consent_expansion`、`destructive_git`、
+`external_cost_over_declared_budget`、`physical_action`である。workerが要求しても実行せず、観測事実・
+影響・解除条件を保持した`BLOCKED_HUMAN`で停止する。worker契約失敗は同じstageとerror fingerprint
+で3回まで再試行し、4回目は`FAILED_RETRY_EXHAUSTED`とする。

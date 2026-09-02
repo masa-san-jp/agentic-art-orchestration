@@ -29,7 +29,7 @@ child_authority:
   canonical_owner: child-repository
   parent_may_change: false
   preserve_canonical_data: true
-  quality_gate_statuses: [NOT_RUN, PASSED, FAILED, BLOCKED]
+  quality_gate_statuses: [NOT_RUN, PASSED, FAILED, BLOCKED, ENV_UNSATISFIED]
 output_policy:
   required_provenance: [signal_id, rule_id, source_repository, source_commit, evidence_locator]
   raw_input_export: false

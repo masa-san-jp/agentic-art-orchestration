@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/agent-result.schema.json",
+  "title": "Provider-neutral agent result v1",
+  "description": "Closed metadata-only result envelope returned by an external worker.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "run_id", "stage", "status", "checks", "changed_paths", "commit_sha", "blocker_category", "requested_operations"],
+  "properties": {
+    "contract_version": {"const": "agent-result/v1"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "stage": {"enum": ["research"]},
+    "status": {"enum": ["COMPLETED", "BLOCKED", "FAILED"]},
+    "checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/check"}},
+    "changed_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"}},
+    "commit_sha": {"oneOf": [{"type": "string", "pattern": "^[0-9a-f]{40}$"}, {"type": "null"}]},
+    "blocker_category": {"enum": ["none", "human", "external", "retryable", "worker_contract"]},
+    "requested_operations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "error_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "status": {"enum": ["PASSED", "FAILED", "BLOCKED"]}
+      }
+    }
+  }
+}

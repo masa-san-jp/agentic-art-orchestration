@@ -58,12 +58,12 @@ def _commit(path: Path, filename: str, content: str, message: str) -> None:
     )
 
 
-def _make_remote_only_commit(remote: Path, root: Path) -> None:
+def _make_remote_only_commit(remote: Path, root: Path, branch: str = "main") -> None:
     with tempfile.TemporaryDirectory(prefix="remote-writer-", dir=root) as temporary:
         checkout = Path(temporary) / "checkout"
         run_git(["clone", str(remote), str(checkout)])
         _commit(checkout, "remote-only.txt", "remote\n", "Remote-only fixture change")
-        run_git(["push", "origin", "main"], cwd=checkout)
+        run_git(["push", "origin", branch], cwd=checkout)
 
 
 def _signal_scenarios() -> dict:
@@ -117,7 +117,7 @@ def build_fixture() -> dict:
         art_repo = workspace / "art-history-notes"
         art_manifest = next(repository for repository in manifest["repositories"] if repository["id"] == "art-history")
         _commit(art_repo, "local-only.txt", "local\n", "Local-only fixture change")
-        _make_remote_only_commit(remotes / "art-history.git", root)
+        _make_remote_only_commit(remotes / "art-history.git", root, art_manifest["default_branch"])
         run_git(["fetch", "origin"], cwd=art_repo)
         diverged_guard = guard_repository(art_manifest, art_repo, expected_remote(art_manifest, remotes))
         _require("diverged" in diverged_guard["reason_codes"], "diverged scenario was not blocked by the Git guard")

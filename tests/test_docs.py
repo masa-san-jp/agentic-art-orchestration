@@ -8,6 +8,59 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_fresh_clone_bootstrap_is_canonical_and_venv_based(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        canonical = "\n".join(
+            (
+                "python3 -m venv .venv",
+                ".venv/bin/pip install -r requirements-dev.txt",
+                ".venv/bin/python tools/validate.py --check",
+                ".venv/bin/python -m unittest discover -s tests -v",
+            )
+        )
+        self.assertIn(canonical, readme)
+        self.assertIn("tools/workspace.py init --offline-fixture --fixture-root", readme)
+        self.assertIn("tools/interaction_e2e.py", readme)
+        self.assertIn("README.md#ブートストラップ検証", agents)
+        self.assertIn("README.md#ブートストラップ検証", runbook)
+        self.assertNotIn("python3 tools/validate.py --check", agents)
+        self.assertNotIn("python3 -m unittest discover -s tests -v", agents)
+        self.assertNotIn("python3 tools/validate.py --check", readme)
+        self.assertNotIn("python3 -m unittest discover -s tests -v", readme)
+        self.assertNotIn("python3 tools/batch_status.py", runbook)
+
+    def test_observation_provenance_contract_and_decision_template_are_present(self):
+        contract = (ROOT / "docs/cross-repository-contract.md").read_text(encoding="utf-8")
+        template = (ROOT / ".github/ISSUE_TEMPLATE/decision.yml").read_text(encoding="utf-8")
+        for required in (
+            "## Observation provenance",
+            "`repository`",
+            "`observed_ref`",
+            "`observed_via`",
+            "`observed_at`",
+            "`manifest_pin` / `remote_head` / `local_worktree`",
+            "source_repository",
+            "source_commit",
+            "evidence_locator",
+            "unknowns",
+            "execution/state.yaml",
+        ):
+            self.assertIn(required, contract)
+        for required in (
+            "Decision with observation provenance",
+            "observed_ref",
+            "observed_via",
+            "observed_at",
+            "evidence_locator",
+            "unknowns",
+            "manifest_pin",
+            "remote_head",
+            "local_worktree",
+        ):
+            self.assertIn(required, template)
+
     def test_operator_runbook_has_complete_lifecycle_and_safety_boundaries(self):
         text = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
         for required in (
@@ -38,6 +91,15 @@ class DocumentationTests(unittest.TestCase):
             "merge/releaseはhuman gate",
         ):
             self.assertIn(required, text)
+
+    def test_execution_ssot_is_pushed_before_lease_release(self):
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        self.assertIn("lease解放前に作業branchからoriginへ通常のfast-forward push", agents)
+        self.assertIn("force pushと既定branchへの直接pushは禁止", agents)
+        self.assertIn("実行SSOTを作業branchへfast-forward push", runbook)
+        self.assertIn("git push origin <working-branch>", runbook)
+        self.assertIn("UNKNOWN", runbook)
 
     def test_incident_runbook_covers_failure_and_resume_paths(self):
         text = (ROOT / "docs/incident-runbook.md").read_text(encoding="utf-8")

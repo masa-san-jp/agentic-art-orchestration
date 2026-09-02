@@ -1,30 +1,433 @@
-version: 10
-updated_at: "2026-08-13T18:17:47+09:00"
+version: 134
+updated_at: "2026-09-02T02:54:00+09:00"
 active_task: null
-active_repository: agentic-art-orchestration
+active_repository: null
 lease:
-  status: released
-  owner: codex-initial-ops-qualify
-  acquired_at: "2026-08-13T16:28:00+09:00"
-  expires_at: "2026-08-13T17:28:00+09:00"
-  lane: RELEASE_QUALIFICATION
-  execution_id: INITIAL-OPS-QUALIFY-001:attempt-1
+  status: available
+  owner: null
+  acquired_at: "2026-09-02T02:30:00+09:00"
+  expires_at: null
+  lane: PARENT_CONTROL_PLANE
+  execution_id: null
+  released_at: "2026-09-02T02:54:00+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/release_check.py, tests/test_release_check.py, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
-  released_at: "2026-08-13T17:08:00+09:00"
-  release_reason: v1.4 offline aggregate qualification completed; GitHub sandbox live evidence remains an external resume gate
+    paths: [.github/workflows/validate.yml, tests/test_real_chain_ci.py, execution/state.yaml, execution/handoff.md]
+    child_repositories: []
 checkpoint:
-  task: INITIAL-OPS-QUALIFY-001
+  task: ISSUE-38-REAL-CHAIN-CI-001
   repository: agentic-art-orchestration
-  start_point: 9698c38a748ef84f850e71a484b378c2e60e7c2c
-  expected_changes: Qualify v1.4.0 through three deterministic initial-operations runs, inherited parent/child gates, and separate opt-in sandbox evidence without performing release operations.
-  result: partial; v1.4.0 offline aggregate qualification passed across three deterministic runs; GitHub sandbox live evidence remains the only blocking gate
-last_completed_task: INITIAL-OPS-E2E-001
+  start_point: d80d6b7
+  expected_changes: Isolate real-chain child quality-gate dependencies in six pre-provisioned per-child environments, install pyproject dependencies under a compatible Python version, use a finite 900-second timeout for the observed slow Research suite, and preserve read-only pin qualification without applying updates.
+  result: completed; run 33538995358 passed bootstrap, all six immutable child repositories with 15/15 declared quality gates, and Production exchange. Qualification remained read-only with changed_pins=6 and applied=false.
+last_completed_task: ISSUE-38-REAL-CHAIN-CI-001
 resume_from:
-  task: INITIAL-OPS-QUALIFY-001
-  action: Run three deterministic initial-operations qualification passes and verify separate Drive and GitHub sandbox evidence before the human release gate.
-  command: .venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace>
+  task: INITIAL-OPS-RELEASE-001
+  action: "Human review is required for the qualified PR #42 before any default-branch merge, ready-for-review transition, tag, or release; after approval, first agent operation is a read-only PR/head recheck."
+  command: gh pr view 42 --repo masa-san-jp/agentic-art-orchestration --json state,isDraft,headRefOid,baseRefOid,mergeStateStatus
+
+pr_triage:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+  target_repository: agentic-art-orchestration
+  implementation_commit: ccd05f2e8c35850b3ac388d10fa948e57d4e0625
+  acceptance: 3/3
+  focused_tests: "6/6 PASS"
+  parent_full_suite: "396/396 PASS"
+  parent_validation: PASS
+  diff_check: PASS
+  fixture:
+    acceptance: 2/2 fixture dimensions
+    source: fixture://pr-triage/open-prs-2026-09-01
+    repositories: 7
+    pull_requests: 6
+    change_classes: [CLASS_RECORD, CLASS_DOCS, CLASS_CODE, CLASS_CONTRACT]
+    recommendations: [MERGE_CANDIDATE, NEEDS_REBASE, NEEDS_CI_FIX, SUPERSEDED_CANDIDATE, HUMAN_JUDGMENT]
+    deterministic: PASS
+    report_schema: pr-triage-report/v1
+  live:
+    source: gh pr list --state open --json metadata
+    observed_at: "2026-09-01T12:02:09Z"
+    source_parent_commit: ccd05f2e8c35850b3ac388d10fa948e57d4e0625
+    repositories: 7
+    open_pull_requests: 17
+    change_class_counts: {CLASS_RECORD: 0, CLASS_DOCS: 4, CLASS_CODE: 8, CLASS_CONTRACT: 5}
+    recommendation_counts: {MERGE_CANDIDATE: 6, NEEDS_REBASE: 8, NEEDS_CI_FIX: 2, SUPERSEDED_CANDIDATE: 0, HUMAN_JUDGMENT: 1}
+    remote_operations: [READ]
+    report_path_external: /tmp/pr-triage-live-20260901-ccd05f2.json
+    report_sha256: b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301
+  human_gate:
+    merge_classes: [CLASS_RECORD, CLASS_DOCS, CLASS_CODE, CLASS_CONTRACT]
+    auto_merge: false
+    human_approval_required: true
+    operation: triage only; merge, close, rebase, force push, and ready-for-review not performed
+  child_repositories: none
+  sensitive_data: none; no PR body, diff, comment, credential, PRIVATE_RAW, RESTRICTED, or direct identifier stored
+  external_artifact: none; no Drive or GitHub Issue/PR mutation performed by triage
+  feedback:
+    explicit: none
+    inferred: none
+  unresolved:
+    - human review remains required for MERGE_CANDIDATE and all other recommendations; no automatic merge was introduced
+    - HARNESS-REALCHAIN-REBASE-001 remains human-gated on AAP_CHILD_REPOS_TOKEN configuration and a remote green run
+    - issue intake remains at 16 UNQUEUED_NEEDS_SSOT; no new task was registered without observable acceptance, target repository, checks, and human gate
+
+issue_intake_live_observation:
+  status: complete
+  observed_at: "2026-09-01T15:05:22Z"
+  previous_observed_at: "2026-09-01T12:20:22Z"
+  comparison: unchanged from previous metadata-only observation
+  repositories: 7
+  open_issue_counts:
+    agentic-art-orchestration: 38
+    agentic-art-production: 1
+    agentic-art-research: 0
+    art-history: 0
+    marketing-trends: 0
+    self-model: 0
+    viewer-response-notes: 1
+  existing_manifest_requirement_ssots:
+    - https://github.com/masa-san-jp/agentic-art-production/issues/10
+    - https://github.com/masa-san-jp/viewer-response-notes/issues/2
+  new_qualified_implementation_issues: 0
+  source: GitHub metadata-only number/title/url observation
+  issue_body_read: false
+  remote_operations: [READ]
+  parent_branch: agent/issues-38-41-pipeline
+  parent_head: cfbadec156e3f030509ee2b1061845bc1a59e2ee
+  validation: PASS
+  project_status: PASS
+  audit: "FINDINGS; one known nonblocking marketing freshness warning"
+  workspace: "6/6 fixture child repositories clean on main with ahead/behind 0"
+pr_merge_observation:
+  status: REMOTE_REAL_CHAIN_GREEN
+  observed_at: "2026-09-02T02:53:00+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
+  head_branch: agent/issues-38-41-pipeline
+  head_commit: c9c9e1c
+  base_branch: main
+  base_commit: e7d123c
+  pr_state: OPEN
+  draft: true
+  mergeable: MERGEABLE
+  merge_state: CLEAN
+  checks: "bootstrap=PASSED; production-exchange=PASSED; real-chain=PASSED"
+  conflict_scope: "workflow, repository manifest pins and child count, cross-repository docs, fixtures, and run/validation/pinned-workspace tools and tests"
+  local_operation: "semantic integration merge commit and scoped production materialization fix were verified; normal feature-branch push was confirmed"
+  remote_operations: [READ, PUSH]
+  recommendation: "human review may now decide the qualified PR's default-branch merge; keep pin adoption, merge, tag, and release behind their separate gates"
+  impact: "real-chain qualification is complete; no pin adoption, child mutation, default-branch merge, tag, or release was performed"
+  unblock_condition: "explicit human review and approval of PR #42 is required before default-branch merge; release remains separately human-gated"
+  integration:
+    status: complete
+    base_commit: e7d123c73f29015c8e54b39a4c1f97eb882f632d
+    feature_parent: 65f03ab9a7ad539d74fa1479f060a80d344e27a2
+    preserved: [six_repository_manifest, viewer_boundary, real_chain_secret_gate, pin_adoption, signal_export, intent_run_api, v12_safety_contracts]
+    pin_policy: "retain the feature branch's qualified six-repository pins because origin/main's older five-repository pins did not match the current qualified snapshot"
+    viewer_policy: "keep viewer-response-notes outside generic three-kind normalized signal ingest and route it through viewer_response_gate.py"
+    parent_validation: PASS
+    parent_tests: "456/456 PASS"
+    project_status: PASS
+    workspace: "6/6 child fixture repositories clean"
+    audit: "FINDINGS; one known nonblocking marketing freshness warning"
+    security: PASS
+    diff_check: PASS
+    merge_commit: 50880258b64f08eab3fa53c99f9985a376466dd9
+    merge_commit_status: CREATED
+    feature_head: d80d6b7dd91e35af10561583f006dac465b8edc4
+    record_commit: 51e037bc2f0e8ed06aa01d50d4d8a1e24084c3c9
+    push_verified: true
+    ci_run: 33528830980
+    ci_bootstrap: PASSED
+    ci_production_exchange: PASSED
+    ci_real_chain: FAILED_AFTER_AUTHENTICATED_CHECKOUT
+    ci_real_chain_reason: "AAP_CHILD_REPOS_TOKEN authentication and all six child checkouts passed; qualification returned FAILED with changed_pins=6; child-specific report remained external and no pin was applied"
+    child_repository_mutation: false
+    sensitive_data: none
+    external_artifact: none
+    feedback:
+      explicit: none
+      inferred: none
+  latest_remote_run:
+    id: 33538995358
+    head_sha: c9c9e1c
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33538995358
+    bootstrap: PASSED
+    production_exchange: PASSED
+    real_chain_preflight: PASSED
+    real_chain_qualification: PASSED
+    real_chain_observed: "credential, six child checkouts, and all six per-child dependency provisions passed; all six repositories passed their declared immutable-archive gates (15/15); Production exchange passed; qualification reported changed_pins=6 and applied=false"
+    child_repository_statuses: "6/6 PASSED; 15/15 gates PASSED"
+    source_mutation: false
+    pin_adoption: NOT_PERFORMED
+autonomous_runner:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/103
+  implementation_commit: 25eec59
+  acceptance: 6/6
+  focused_tests: 14/14
+  parent_tests: 364/364
+  parent_validation: passed
+  security: passed
+  worker_e2e: networkless fake worker reached PLAN_READY and same-run replay made no duplicate worker call
+  retry_e2e: same stage and fingerprint retried three times; fourth failure became FAILED_RETRY_EXHAUSTED
+  human_gate_e2e: requested human operation became BLOCKED_HUMAN without execution
+  lease_e2e: concurrent same-run process was rejected while the first lease was held
+  privacy: raw conversation, credential, PRIVATE_RAW, RESTRICTED, and worker stdout/stderr were not persisted
+  external_artifact: none; parent draft PR updated, merge and release not performed
+  parent_branch: agent/issues-38-41-pipeline
+  parent_head: 895c28f
+  parent_draft_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
+viewer_response:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/98
+  viewer_repository: viewer-response-notes
+  viewer_source_commit: cf411086b0693bfcde8d034fe27bb7a8d4110222
+  viewer_commit: cf411086b0693bfcde8d034fe27bb7a8d4110222
+  viewer_draft_pr: https://github.com/masa-san-jp/viewer-response-notes/pull/1
+  parent_gate: passed; actual child viewer records accepted, exact selectors/tags/mode, aggregate counts, dedup, RFC3339, privacy, and closed assessment schema enforced
+  parent_focused_tests: 7/7
+  parent_full_tests: 358/358
+  parent_validation: passed
+  offline_workspace: 6 repositories clean on main with ahead_behind_zero
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  qualification_v14: passed; 3/3 deterministic runs, 6/6 repositories, 16/16 child gates, remote_operations=[]
+  production_child_commit: db3ad6541c13440e36ada4ab1ce84d550f2293c9
+  production_child_checks: passed; focused 40/40, full 64/64, evaluation 6/6, validator and diff check passed
+  research_child_commit: fe2d9a9
+  research_child_completion_commit: b315717
+  research_child_draft_pr: https://github.com/masa-san-jp/agentic-art-research/pull/78
+  research_append: implemented; explicit --viewer-root append-only path, idempotent replay, privacy/count/provenance/dedup guards; full 255/255 and declared gates pass
+  production_draft_pr: https://github.com/masa-san-jp/agentic-art-production/pull/50
+  viewer_requirement_issue: https://github.com/masa-san-jp/viewer-response-notes/issues/2
+  viewer_requirement_issue_note: GitHub number #1 is occupied by viewer draft PR #1, so the requirement SSOT was corrected to Issue #2
+  snapshot_hash: 8143f0ece10c5e6012528819c705ab7322f3258d96ea296f7bafe34b74712439
+  sensitive_data: none added; no raw response, direct identifier, credential, PRIVATE_RAW, or RESTRICTED value stored
+  external_artifact: none created or updated; merge, tag, and release not performed
+batch_status:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/70
+  implementation_commit: aee287f
+  acceptance: 6/6
+  focused_tests: 5/5
+  parent_tests: 369/369
+  parent_validation: passed
+  deterministic_scan: repeated fixture scan produced identical JSON
+  read_only: workspace tree hash unchanged; no claim, state, Git, Issue, or Drive write
+  provenance: project source locators and SHA-256 plus repository HEAD/origin counts retained
+  unknowns: missing or unrecognized state and unavailable Git comparison remain UNKNOWN; unmeasured duration/tokens remain 未計測
+  parent_draft_pr: https://github.com/masa-san-jp/agentic-art-orchestration/pull/42
+  parent_head: 268e248fae2a683ef02b72f4ffd0d64bf95f7a81
+  external_artifact: none; merge, tag, and release not performed
+pin_release_check:
+  status: passed_with_fixture_and_fail_closed_pin_evidence
+  implementation_commit: 37883f3
+  focused_tests: 16/16
+  parent_validation: passed
+  parent_tests: 315/315
+  pinned_workspace_tests: advanced_dirty_detached_sources_all_materialize_exact_observed_commit
+  unavailable_pin_behavior: FAILED qualification with exact repository and observed_commit findings; no gate or newer HEAD substitution
+  exact_child_observations: recorded in v1.2 child check and production child_gate_runs summaries
+  source_mutation: false
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  local_qualification: BLOCKED_EXPECTED; generated offline fixture lacks manifest observed commit objects; pin update was not attempted
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  child_repository_mutation: false
+observation_provenance:
+  status: passed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/56
+  implementation_commit: 1707190
+  acceptance: 1/1
+  observation_fields: [repository, observed_ref, observed_via, observed_at, source_repository, source_commit, evidence_locator, unknowns]
+  observed_via_values: [manifest_pin, remote_head, local_worktree]
+  qualification_findings: source repository and commit retained; opaque evidence locator and explicit remote/local unknowns retained; missing pin evidence remains unavailable
+  state_command_guard: absolute interpreter, workspace, and output path tokens rejected
+  historical_commands: preserved as NOT_REPLAYABLE historical_provenance; replay commands use repo-relative paths
+  focused_tests: 34/34
+  parent_tests: 320/320
+  parent_validation: passed
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  child_repository_mutation: false
+reconciliation:
+  status: passed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/67
+  implementation_commit: 14d6daa
+  acceptance: 1/1
+  v1_2_1_baseline: qualified_and_released
+  v1_3_0_production_exchange: qualified_and_released
+  v1_4_implementation: complete
+  v1_4_offline_aggregate: passed; 3/3 initial-operations, 3/3 production exchange, 5 repositories, 14 child gates
+  v1_4_sandbox_live_evidence: passed; attempt-scoped READ/CREATE/READ/REUSE evidence exists outside Git
+  v1_4_aggregate_qualification: passed; 3/3 deterministic runs with 5 repositories and 14 child gates
+  v1_4_release: BLOCKED; explicit human approval required
+  next_task: PURPOSE-INSPIRATION-001
+  external_issue_updates: not_performed; owner approval required for Epic/Issue writes
+  child_pins_changed: false
+  child_repository_mutation: false
+project_status:
+  status: passed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/100
+  implementation_commit: e70eef9
+  acceptance: 8/8
+  focused_tests: 7/7
+  parent_tests: 327/327
+  parent_validation: passed
+  readme_check: passed
+  ci_check: python3 tools/project_status.py --check-readme
+  integrity_rejections: [unknown_task_reference, done_current_task, ready_incomplete_dependency, duplicate_task_id, counts_mismatch]
+  source_hashes: queue_and_state_sha256
+  child_repository_mutation: false
+child_preflight_exact:
+  status: passed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/68
+  implementation_commit: df46ce7
+  acceptance: 1/1
+  focused_tests: 10/10
+  parent_tests: 329/329
+  exact_satisfied_fixture: PASSED; gate executed
+  exact_mismatch_fixture: ENV_UNSATISFIED; gate NOT_RUN
+  verified_workspace_observation: 4/5 repositories PASSED; agentic-art-production ENV_UNSATISFIED for PyYAML==6.0.2 with installed 6.0.3
+  parent_validation: passed
+  child_repository_mutation: false
+initial_ops_qualification:
+  status: PASSED
+  version: 1.4.0
+  runs: 3
+  acceptance: 1/1
+  report: data/release-check-v14.json
+  report_sha256: d6e65dfdffd241ad18b11593dd7b4fd77f66fb3b10dfb66d103d18610e6f9afb
+  blocking_check: null
+  pin_materialization: PASSED
+  pinned_repositories: 5/5 MATCHED
+  child_quality_gates: 5/5 repositories PASSED; 14/14 gates PASSED; environment_mode per-child
+  env_unsatisfied_repositories: []
+  exact_requirement_mismatches: {}
+  child_timeout_seconds: 180
+  v1_2_e2e: PASSED
+  production_exchange: PASSED
+  initial_operations_e2e: PASSED; 3/3
+  initial_operations_live_evidence: PASSED
+  history: PASSED
+  source_mutation: false
+  network: disabled
+  remote_operations: []
+  merge_operation: NOT_PERFORMED
+  tag_operation: NOT_PERFORMED
+  release_operation: NOT_PERFORMED
+  sandbox_evidence: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
+  blocker: null
+  remediation: "qualification used pre-provisioned per-child environments selected by repository ID; the runner performed no dependency installation and child SSOTs and pins were unchanged"
+  parent_validation: passed
+  parent_tests: 329/329
+  workspace_status: 5 repositories clean and detached at exact manifest commits
+  security: PASSED
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  child_repository_mutation: false
+child_preflight:
+  status: passed_with_fixture_and_existing_qualified_evidence
+  implementation_commit: 426a8b3
+  focused_tests: 8/8
+  missing_dependency_fixture: ENV_UNSATISFIED; gates NOT_RUN; remediation recorded
+  lower_bound_fixture: ENV_UNSATISFIED; gates NOT_RUN
+  satisfied_dependency_fixture: PASSED; immutable archive gate executed
+  parent_validation: passed
+  parent_tests: 311/311
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  existing_qualified_child_evidence: 5/5 repositories PASSED; 14/14 gates PASSED
+  local_fixture_gate_attempt: BLOCKED; observed manifest commits are not present in generated offline fixture; pins were not changed
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  child_repository_mutation: false
+github_sandbox_attempt:
+  status: passed
+  implementation_commit: e5158e5
+  attempt_id: v14-20260825-ghcli-1
+  repository_id_hash: 3ba61c2060fe01b3dbb4d0c4cf979d2be51abcd0c725192e7c343856d3ae0b70
+  issue_number: 2
+  idempotency_key_hash: 1100a907ee677765d59e5ac0dea2f83ce187ab8da77ef7e5247fa112ba463a15
+  operation_sequence: [READ, CREATE, READ, REUSE]
+  create_count: 1
+  replay_operation: REUSE
+  replay_create_count: 0
+  search_match_count_after_create: 1
+  evidence_path: /tmp/github-sandbox-live-v14-20260825-ghcli-1.json
+  evidence_validation: PASSED
+  cli_attempt_id_guard: PASSED
+  fixture_distinct_attempts: PASSED
+  credential_stored: false
+  child_repository_mutation: false
+  production_repository_mutation: false
+  issue_scope: metadata_only_single_create
+  provider_note: GitHub CLI keyring authenticated provider was used for the external CREATE/READ; no token was exported or persisted
+gap_dag:
+  status: completed
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/107
+  implementation_commit: 7486320
+  issue_ssot_tasks: 24
+  next_ready_task: V14-PIN-RELEASE-CHECK-001
+  ready_task_count: 1
+  parent_validation: passed
+  focused_tests: 11/11
+  full_parent_tests: 305/305
+  diff_check: passed
+  child_repository_mutation: false
+  external_mutation: false
+stale_lease_resolution:
+  prior_task: ISSUE-38-REAL-CHAIN-CI-001
+  prior_owner: codex-issue-38-real-chain-ci
+  observed_expired_at: "2026-08-14T21:03:06+09:00"
+  observed_local_branch: agent/issues-38-41-pipeline
+  resolution: released_as_stale_before_claiming_gap_dag
+  evidence: remote_main_actions_run_32797739061_success
+pin_qualification:
+  status: passed_and_adopted
+  verified_workspace: temporary GitHub main workspace
+  child_quality_gates: "5/5 repositories PASSED"
+  production_exchange: PASSED
+  candidate_changes: 5
+  manifest_mutation: true
+  adopted_commits: [fda3e29c76ba8fbd40ee6946589d6789029d92d6, b831f4c57d842f44ad45134a5abd434dc367482f, ff3adca6e52c18095a00c23d39ef2a961ae1d13b, d947fdd14abeb700af9a62abcf27c21f3f12e134, 51a817c8fcfe292069b85717f5e973b1e860bd4b]
+  child_repository_mutation: false
+  offline_fixture: FAILED_EXPECTED; synthetic fixture lacked installed child dependencies and was not adopted
+real_chain_ci:
+  status: blocked_external_credential
+  observed: parent Actions GITHUB_TOKEN cannot read PRIVATE child repositories; the explicit preflight failed because AAP_CHILD_REPOS_TOKEN is unset
+  remediation: configure AAP_CHILD_REPOS_TOKEN as a read-only GitHub Actions secret outside Git
+  impact: real-chain CI cannot yet provide green remote evidence; the art-history child PR was merged separately, but no Issue, Drive, parent merge, or release mutation was performed
+  latest_remote_run:
+    id: 31794633013
+    head_sha: 6024028bb4654f9d7c04172c9bcc93d053c7a54
+    bootstrap: FAILED_REFERENCE_STALE
+    real_chain: FAILED_MISSING_EXTERNAL_SECRET
+    url: https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31794633013
+  local_validation: parent_tests_303_of_303_passed; validator_passed; diff_check_passed_after_art_history_fixture_sync
+child_pr_review:
+  status: merged_requalified
+  repository: masa-san-jp/art-history-notes
+  pull_request: 349
+  head_commit: b831f4c57d842f44ad45134a5abd434dc367482f
+  base_commit: b914b6989b025e2caa9d7fc49149d787da99f798
+  child_quality_gate: PASSED
+  parent_pin_changed: true
+  next_after_human_merge: wait_for_external_actions_secret; rerun_parent_real_chain_ci
+follow_up_review:
+  status: blocked_by_child_contract_and_pr_conflicts
+  parent_issues: [43, 44, 45, 46, 47, 48, 49, 50, 51]
+  research_pull_request:
+    number: 42
+    head_commit: 85514df96d54d254b785cf786a55b5d1e2162036
+    status: conflicting_with_current_main_and_contract_decision
+    local_validation: validator_passed; tests_120_of_120_passed
+  production_pull_request:
+    number: 21
+    head_commit: 2b3643061b0480e89ee02c7d40c11bccb73b0be5
+    status: conflicting_with_current_main_and_waiting_for_research_contract
+    local_validation: validator_passed; tests_passed; diff_check_passed
+  required_next: resolve_issue_43_contract_names_before_coordinated_child_pr_updates
 drive_live_smoke:
   status: passed
   run_id: DRIVE-LIVE-001:connector-smoke-20260813
@@ -55,14 +458,287 @@ release:
   issue_mutation: false
   drive_mutation: false
   physical_or_external_effect: false
+purpose_naming:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/43
+  acceptance: 1/1
+  decision_source: parent docs/cross-repository-contract.md; remote Issue lookup was unavailable and no external write was attempted
+  affected_repositories:
+    agentic-art-orchestration:
+      status: compliant; existing references/record_hash decision and documentation test retained
+    agentic-art-research:
+      branch: agent/issue-43-contract-naming
+      commit: acc751a47f53471fd4bc7b69fded1af568ba5ccd
+      status: passed; validator, full tests 120/120, focused handoff tests 21/21, diff check
+    agentic-art-production:
+      branch: agent/issue-43-contract-naming
+      commit: ffc4df0e4a0871ac3086a474c6b350de976080ec
+      status: passed; validator, full tests 52/52, focused bootstrap tests 37/37, diff check
+  parent_pins_changed: false
+  pinned_qualification_workspace_changed: false
+  isolated_child_workspaces_only: true
+  sensitive_information_added: false
+  external_issue_drive_or_release_mutation: false
+purpose_inspiration:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/47
+  acceptance: 1/1
+  contracts: [inspiration-input/v1, agent-ui/v1, normalized-research-signal-bundle/v1, research-candidate/v1]
+  capture: structured intent_code/capability_codes/goal_code only; retrieval evidence and source repository@commit retained
+  settlement: candidate space, gate report, and selection hashes; selected candidate IDs; pipeline source snapshots; candidate input references
+  focused_tests: 6/6
+  interaction_tests: 31/31
+  parent_tests: 337/337
+  parent_validation: passed
+  cli_capture_and_settlement: passed; signal-bundle CLI and agent-ui CLI materialized and check-mode outputs byte-identical
+  interaction_e2e: passed; networkless interaction E2E, Fake Drive create/replay, feedback routing, and privacy boundaries
+  workspace_status: 5 repositories clean on main with ahead_behind_zero
+  audit: FINDINGS; one known nonblocking marketing freshness warning
+  security: PASSED
+  raw_conversation_or_credentials: false
+  child_repository_mutation: false
+  external_issue_drive_or_release_mutation: false
+purpose_self_export_source:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/40
+  child_task: SM-018
+  acceptance: 1/1
+  source_repository: self-model
+  implementation_commit: 04095bfa4115ef4fde8a8f475bf31743ecdff962
+  implementation_lineage: 85eecee4864df997870a1f9137fdcd6a3ce6eb46
+  pinned_validation: exact commit 04095bfa4115ef4fde8a8f475bf31743ecdff962 in isolated detached workspace
+  focused_tests: 17/17
+  child_tests: 90/90
+  child_quality_gates: build_graph check/build, audit dry-run, export CLI, diff checks passed
+  export_contract: research-signal-export/v1; fixed 26 fields; signal_count 3
+  consent_provenance_raw_voice: passed; approved-derived-only consent, source commit, evidence locators, raw voice body excluded
+  current_main_observed_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+  parent_pin_changed: false
+  child_repository_mutation: false
+  external_issue_drive_or_release_mutation: false
+self_export_e2e:
+  status: PASSED
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/105
+  acceptance: 10/10
+  source_repository: self-model
+  source_commit: 04095bfa4115ef4fde8a8f475bf31743ecdff962
+  fixture: tests/fixtures/signal/self_export_bundle.json; generated by child export CLI; signal_count 3
+  focused_tests: 5/5
+  parent_tests: 342/342
+  parent_validation: passed
+  adapter_schema_consumer: 3/3 records adapted, normalized validation passed, 3/3 imported with equal provenance
+  preserved_fields: [signal_id, source.repository, source.commit, entity_id, evidence_locator, certainty, unknowns, constraints, validity, freshness, self_model.domain]
+  privacy: passed; raw voice body, direct identifiers, Drive/Telegram locators absent; opaque raw_voice_locator retained
+  fixture_pin: merged Issue #40 completion commit; all record commits match source_commit; IDs unique and sorted
+  issue_90_scope: unchanged; no threshold, diversity, or new self-model data added
+  parent_manifest_pin_changed: false
+  child_repository_mutation: false
+  external_issue_drive_or_release_mutation: false
+purpose_batch_100:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/71
+  task: PURPOSE-BATCH-100-001
+  observed_at: "2026-08-27T14:46:38+09:00"
+  phase: completed
+  acceptance: 6/6
+  preflight:
+    manifest_repository_count: 6
+    exact_pin_workspace: passed; all six repositories clean and detached at candidate manifest pins
+    child_quality_gates: 16/16 PASS
+    child_gate_report_sha256: 0d87519d9a59f5175311425279e436f120d2ac0bbe26dea8cc7f85dfee1aee2e
+    evidence_locator: external-run://PURPOSE-BATCH-100-001/child-gates
+    qualification_report_sha256: 504336548f6d8576a9a68f864629ce356bafa25786942722a1c0d425b1b9569b
+    qualification_status: PASSED
+    candidate_manifest_hash: c0f35de0290502967df17b6386fd6b60582d7e8b84ff4d0b1b73904e64238a2f
+    adopted_pin_changes: 3
+  source_exports:
+    art-history:
+      source_commit: b831f4c57d842f44ad45134a5abd434dc367482f
+      normalized_records: 96
+    marketing-trends:
+      source_commit: ff3adca6e52c18095a00c23d39ef2a961ae1d13b
+      normalized_records: 60
+      stale_records: 0
+    self-model:
+      source_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+      contract: research-signal-export/v1
+      normalized_records: 3
+    selection:
+      source_records: 159
+      candidate_space_count: 17280
+      gate_evaluations_passed: 120
+      selected_count: 100
+      unique_signal_tuple_count: 100
+      self_diversity_status: INSUFFICIENT_SELF_DIVERSITY
+      candidate_space_sha256: c3386d5aa5267c9d5b9c6478a5ea9c3b576b50351647daffefa572f5c5749066
+      gate_report_sha256: e4039d32cecfe0e85e47f3c8d51f4b8307169245ca1a99341d9381b44f17d0bb
+      selection_sha256: 439e637a26fd53b65f85a0126d2175f81d26eb052fd09d0b7869fad5840b496f
+    batch:
+      run_id: PURPOSE-BATCH-100-001-run-2
+      status: PASSED
+      summary_sha256: 62361b07e00a646db6bc176b128ec399297fe8e58d6910d2da1da3d3b4fef414
+      summary_locator: run://PURPOSE-BATCH-100-001-run-2/batch-run.json
+      report_locator: run://PURPOSE-BATCH-100-001-run-2/batch-report.jsonl
+      report_event_count: 300
+      requested: 100
+      completed: 100
+      failed: 0
+      retries: 0
+      duration_seconds: 359.823
+      production_plans: 100
+      research_projects: 100
+    g1_g6:
+      G1: PASS; 100 production-plan.md projections
+      G2: PASS; 100 projected production-plan.yaml readiness.startable=true
+      G3: PASS; 100 projected structured briefs with disagreement and concept precedent
+      G4: PASS; final production projection has zero HUMAN authority markers
+      G5: PASS; deterministic sample of 10 decision logs has agent-recommended authority
+      G6: PASS; append-only report has起動100/完了100/失敗0 and measured duration
+    parent_qualification:
+      status: PASSED
+      child_repositories: 6/6
+      child_quality_gates: 16/16
+      production_exchange: PASSED
+      exchange_e2e_report_sha256: 7ea931ab849ae2056babbb25df8bf30109cceb6f6530c917a2a413933c037b6b
+    parent_code_changed: true
+  child_repository_mutation: false
+  generated_outputs_created: true
+  generated_outputs_scope: Git-external create-only output/state roots; no parent data/ or child canonical tree output
+  external_issue_drive_or_release_mutation: false
+  raw_conversation_credentials_private_raw_restricted_added: false
+  explicit_feedback: none
+  inferred_feedback: none
+purpose_e2e:
+  status: complete
+  task: PURPOSE-E2E-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/104
+  blocker_issue_ssot:
+    self-model: https://github.com/masa-san-jp/self-model-notes/issues/71
+    agentic-art-research: https://github.com/masa-san-jp/agentic-art-research/issues/79
+  observed_at: "2026-08-29T02:38:48+09:00"
+  implementation:
+    implementation_commit: 772c9dc8abbed7ef03c1c4a31fc4572ee5d955e5
+    files: [tools/candidate_space.py, tools/candidate_selection.py, tools/validate.py, tools/purpose_e2e.py, schemas/self-diversity-report.schema.json, schemas/purpose-e2e-evidence.schema.json, schemas/batch-run.schema.json, tests/test_candidate_space.py, tests/test_candidate_gates.py, tests/test_candidate_selection.py, tests/test_purpose_e2e.py, tests/test_v12_e2e.py, docs/cross-repository-contract.md, docs/purpose-e2e-runbook.md]
+    parent_validation: passed
+    focused_tests: 39/39
+    parent_tests: 379/379
+    diff_check: passed
+    single_author_policy: one or more eligible anchors are accepted; one or two are PASS_LIMITED_DIVERSITY; three or more are PASS with full diversity controls
+    target_repositories: [agentic-art-orchestration, self-model, art-history, marketing-trends, agentic-art-research, agentic-art-production, viewer-response-notes]
+  networkless:
+    status: PASSED
+    attempts: 3
+    canonical_evidence_sha256: f1b16d2d1e67ec9aa7bc27ce2ab83118a9df7a8b2c253c607110c38c7099b257
+    terminal: PLAN_READY
+    fixture_only_personal_anchors: true
+    same_run_resume_worker_invocations: 1
+    forbidden_external_operations: 0
+    external_operations: []
+    child_quality_gates: supplied_only_after_exact_pin_validation
+  source_pins:
+    self-model: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+    art-history: b831f4c57d842f44ad45134a5abd434dc367482f
+    marketing-trends: ff3adca6e52c18095a00c23d39ef2a961ae1d13b
+    agentic-art-research: 496a2e20b21be6fef4ae415529dba4a863e09680
+    agentic-art-production: 63a1ddf4ed303e01c92023baa4737c68dcd10846
+    viewer-response-notes: cf411086b0693bfcde8d034fe27bb7a8d4110222
+  pre_run_remote_observation:
+    observed_at: "2026-08-27T18:39:16+09:00"
+    self-model:
+      main_commit: eb2b65738acf65eb01d8431bbd9dc5c978781697
+      issue_state: CLOSED
+      issue_resolution: moved to parent live-private gate; one-anchor export is accepted by the parent single-author policy as limited diversity
+      export_record_count: 3
+      eligible_personal_anchor_count: 1
+      status: PASS_LIMITED_DIVERSITY
+      manifest_pin_adopted: false
+    agentic-art-research:
+      main_commit: d6293ca419850b943c708347a8fafccabaa73922
+      issue_state: CLOSED
+      issue_resolution_commit: 496a2e20b21be6fef4ae415529dba4a863e09680
+      issue_reported_compile_gate: PASSED
+      issue_reported_validate_gate: PASSED
+      issue_reported_unittest_gate: PASSED
+      issue_reported_unittest_count: 255
+      latest_tip_compile_gate: PASSED
+      latest_tip_validate_gate: PASSED
+      latest_tip_unittest_gate: BLOCKED_TIMEOUT
+      latest_tip_unittest_stop: test_handoff_release_check.test_require_schema_snapshot_passes_after_clean_snapshot_capture; finite recheck exceeded 300 seconds
+      manifest_pin_adopted: false
+    parent_manifest_update: completed; Research pin 496a2e20b21be6fef4ae415529dba4a863e09680 adopted after qualified candidate verification
+    latest_recheck: "self-model owner comment confirms signal_count=3, tensions=1, recurring_patterns=0, eligible=1; #71 is closed by responsibility transfer, and the parent single-author policy now accepts this as PASS_LIMITED_DIVERSITY"
+  live_private:
+    status: PASSED
+    attempt_id: PURPOSE-E2E-001-live-private-496
+    canonical_evidence_sha256: 537c917f83b2c4f33d9709eca14b4ff4b7f54b519b698d21671e90a4cc07f895
+    evidence_file_sha256: 83db0f55db357186182444d7bca6d1ccf5b1410b7078f8f5f504fd5a9ad48f2a
+    terminal: PLAN_READY
+    acceptance: 12/12
+    human_prompt_count: 0
+    forbidden_external_operation_count: 0
+    external_operations: []
+    child_mutations: []
+    self_diversity_status: PASS_LIMITED_DIVERSITY
+    eligible_personal_anchor_count: 1
+    research_status: COMPLETE_WITH_GAPS
+    production_plan_status: PASSED
+    viewer_status: UNKNOWN
+    resume_reused: true
+    worker_invocation_count: 1
+    privacy_boundary: passed; theme_stored/raw_conversation_stored/credentials_stored/private_raw_stored/restricted_stored/artifact_body_stored all false
+    workspace: six repositories clean and exact-pin matched in verified external workspace
+    exports: self-model 3; art-history 96; marketing-trends 60
+    historical_first_failure_stage: self-diversity (resolved by parent single-author policy correction)
+    first_failure_source_repository: self-model
+    first_failure_source_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
+    observed_condition: eligible_personal_anchor_count=1; accepted as PASS_LIMITED_DIVERSITY without synthetic anchors
+    impact: historical self-diversity stop was resolved; Research/Production live handoff reached PLAN_READY
+  child_quality_gates:
+    status: PASSED
+    report_sha256: dc0ac341b9e6663318edcc29ad6cc8327061475ff148ed051ac1b8c697047632
+    qualification_report_sha256: d787d9ce7d2cd64c8788c64aaf9e4ad37ac1ff9d8d03200d26d92a941e8f604f
+    qualification_status: PASSED
+    candidate_manifest_hash: 472eeb0a8826bc23d46ea624655dcea78672ccccbbc1f519b43ae77fcaf49abd
+    repository_count: 6
+    command_count: 16
+    passed_command_count: 16
+    workspace: six repositories clean and exact-pin matched
+    observed: 16/16 commands PASSED; Research unittest 255 tests in 630.194 seconds under a 900-second per-gate limit
+    previous_failed_repository: agentic-art-research
+    previous_failed_source_commit: 07f8cf57e416e5166ac80019ba2d015ff1821e9c
+    impact: historical 300-second timeout is superseded by the qualified 496a2e2 report
+    production_exchange: PASSED
+    latest_research_follow_up: commit 496a2e20b21be6fef4ae415529dba4a863e09680 passed compile, validate, 255 unittest cases, and the fresh six-repository manifest-pinned gate; latest main d6293ca remains outside the adopted pin
+  final_parent_checks:
+    validator: PASSED
+    focused_regression: 62/62 PASSED
+    full_parent_tests: 379/379 PASSED
+    project_status: PASSED
+    snapshot_check: PASSED; snapshot_hash 4ce0f4a14d99931d1229d034e603381f383cde4a839284fab66605a9fa0be7b2
+    workspace_status: 6/6 clean on main with ahead=0 and behind=0 in offline fixture workspace
+    audit: FINDINGS; 1 known nonblocking finding
+    security: PASSED
+    diff_check: PASSED
+  privacy: no new raw conversation, credential, direct identifier, PRIVATE_RAW, RESTRICTED, or artifact body stored
+  external_artifact: GitHub Issues self-model-notes#71 and agentic-art-research#79 created by explicit user request; Drive, PR, merge, release, and physical production not performed
+  issue_mutation: true
+  explicit_feedback: user confirmed that an artist is basically one person and one or three anchors are both acceptable
+  inferred_feedback: none
 blocked:
-  - task: INITIAL-OPS-QUALIFY-001
+  - task: ISSUE-38-REAL-CHAIN-CI-001
     repository: agentic-art-orchestration
-    condition: an explicitly designated GitHub sandbox repository for one live Issue CREATE/REUSE is unavailable
-    observed: Read-only repository discovery found Agent-Lab (an active private multi-agent lab with existing Issues) and seedance-api-local-test (an unrelated application repository); neither is designated as the qualification sandbox.
-    recommendation: designate a dedicated GitHub sandbox repository owner/name, confirm that existing Issues and production repositories are out of scope, and provide the credential outside Git.
-    impact: offline v1.4.0 qualification passed, but the live Issue evidence gate remains BLOCKED and INITIAL-OPS-RELEASE-001 must not start.
-    unblock_when: approved sandbox owner/name, external credential/session authority, and explicit one-Issue search→CREATE/REUSE scope are available.
+    condition: the local historical task and current remote workflow are not the same qualification contract
+    observed: local queue expected the old AAP_CHILD_REPOS_TOKEN real-chain job; remote run 32797739061 succeeded for bootstrap and production-exchange, while the real-chain job was not present in the observed job list.
+    recommendation: re-baseline the task against current main in a separate Issue before marking it DONE; do not reuse the expired lease.
+    impact: old real-chain task is isolated as BLOCKED; the new DAG has exactly one READY task.
+    unblock_when: an explicit current-main Issue SSOT and matching CI evidence are available.
+  - task: INITIAL-OPS-RELEASE-001
+    repository: agentic-art-orchestration
+    condition: explicit human approval for merge, tag, and release is required
+    observed: The release task remains a human gate and is intentionally not a dependency of M16 purpose work.
+    recommendation: keep the release task BLOCKED until a human reviews and approves the qualified release.
+    impact: implementation and evidence tasks may continue; release operation must not start.
+    unblock_when: explicit human approval and a reviewed release commit are available.
 startup_audit_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_startup_audit tests.test_startup_repository_updates -v; .venv/bin/python -m unittest discover -s tests -v; .venv/bin/python tools/workspace.py status --json; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/startup.py --offline-fixture --check; git diff --check
   result: passed; startup audit tests 5/5, repository update tests 3/3, startup contract tests 5/5, full parent suite 237/237, validator and diff check passed, workspace five repositories clean, audit CLEAN, security PASSED, startup materialize/check byte-stable READY_WITH_FINDINGS; no changed child repository quality gate required
@@ -75,14 +751,233 @@ startup_contract_validation:
   command: .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest tests.test_startup_contract tests.test_validate -v; .venv/bin/python -m unittest discover -s tests -v; git diff --check
   result: passed; startup policy/report contract valid, dedicated startup contract tests 5/5 passed, full parent suite 230/230 passed, diff check passed; no startup runtime, remote observation, child repository, Issue, Drive, or user artifact mutation; 2026-08-13T12:12:00+09:00
 last_validation:
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root /tmp/aap-production-qualified-5Nhxun --run-id production-qualification-final --output /tmp/aap-production-qualification-final/child-quality-gates.json --check; /tmp/aap-bootstrap-venv/bin/python tools/workspace.py snapshot --check --workspace-root /tmp/aap-production-qualified-5Nhxun; /tmp/aap-bootstrap-venv/bin/python tools/status.py --check --workspace-root /tmp/aap-production-qualified-5Nhxun --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check; gh pr view 18 --repo masa-san-jp/agentic-art-orchestration --json state,mergeCommit,statusCheckRollup; git tag --points-at 302de458495257fca0e754ed4f71f6b5255abbbe; gh release view v1.3.0 --repo masa-san-jp/agentic-art-orchestration
+  command: .venv/bin/python tools/release_check.py --version 1.3.0 --runs 3 --workspace-root repos --output data/release-check-v13.json; .venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root repos --run-id production-qualification-final --output data/child-quality-gates-v13.json --check; .venv/bin/python tools/workspace.py snapshot --check --workspace-root repos; .venv/bin/python tools/status.py --check --workspace-root repos --offline-fixture; .venv/bin/python tools/audit.py --offline-fixture; .venv/bin/python tools/security.py --offline-fixture; .venv/bin/python tools/validate.py --check; .venv/bin/python -m unittest discover -s tests -v; git diff --check; gh pr view 18 --repo masa-san-jp/agentic-art-orchestration --json state,mergeCommit,statusCheckRollup; git tag --points-at 302de458495257fca0e754ed4f71f6b5255abbbe; gh release view v1.3.0 --repo masa-san-jp/agentic-art-orchestration
+  historical_provenance:
+    execution_environment: ephemeral_interpreter_and_workspace
+    replayability: NOT_REPLAYABLE
+    evidence_ref: state://last_validation/historical-qualification-v1.3.0
+    unknowns: [historical_interpreter_and_workspace_no_longer_available]
   result: passed; v1.3.0 qualification PASS, three exchange reports byte-stable at sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93, six terminal scenarios PASS, 5 repositories MATCHED, 14/14 child gates PASS per run, parent 225 tests PASS, audit finding 0, security PASS, tracked output paths empty; PR #18 merge, exact tag, and published GitHub Release verified; 2026-08-13T12:00:33+09:00
 qualification_v14:
   status: offline_passed_live_blocked
-  command: /tmp/aap-bootstrap-venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root /tmp/aap-production-qualified-5Nhxun --output /tmp/aap-release-check-v14-short.json
+  command: .venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root repos --output data/release-check-v14.json
+  historical_provenance:
+    execution_environment: ephemeral_interpreter_and_workspace
+    replayability: NOT_REPLAYABLE
+    evidence_ref: state://qualification_v14/historical-qualification-v1.4.0
+    unknowns: [historical_interpreter_and_workspace_no_longer_available]
   initial_operations: passed; 3/3 deterministic; Drive idempotency, Issue idempotency, privacy, and remote mutation checks passed
   child_quality_gates: passed_isolated; 5/5 repositories MATCHED; 14/14 gates PASSED in isolated fixed-workspace run
   production_exchange: passed; 3/3 deterministic runs; six terminal scenarios; report hash sha256:21b2562f2ab4cd969d431a63fb0856bfded37dfedb8295e7cab397ab847dda93 repeated; remote/physical effect false
   aggregate_qualification: passed_offline; all offline checks, 3/3 initial-operations runs, 3/3 Production exchange runs, 5 repositories, and 14 child gates passed; child evidence was executed once and safely reused only after manifest/commit/gate validation
   github_live_evidence: blocked; no explicitly designated sandbox repository was detected; no Issue CREATE attempted
   release_operation: not_performed
+
+repository_usability_review:
+  status: partially_merged
+  requested_by: user
+  scope: parent README/manifest plus six registered child repositories
+  findings:
+    - self-model-notes, agentic-art-research, and agentic-art-production had empty GitHub descriptions
+    - viewer-response-notes used feat/viewer-response-contracts as the GitHub default branch while main was empty; the parent manifest incorrectly said main
+    - parent README omitted viewer-response-notes from the integrated repository list
+    - child README files had uneven visibility of user entry points, output boundaries, and privacy limits
+    - self-model-notes main had stale generated self-model artifacts; regeneration restored its declared checks
+  parent_changes:
+    - README.md: added user-oriented entry table and viewer repository description
+    - config/repositories.yaml: aligned viewer-response-notes.default_branch with the observed remote default branch
+    - tools/workspace.py: offline fixture remotes now honor each manifest default_branch
+    - tests/fixtures/build_fixture.py and tests/test_workspace.py: fixture and branch assertions now follow manifest branches
+  child_changes:
+    - repository: self-model-notes
+      base: main
+      commit: 71c63e21086a1770c247735f1adb1aca60c70b20
+      pull_request: https://github.com/masa-san-jp/self-model-notes/pull/76
+      changes: README.md plus regenerated data/self-models/subject/masa.json and masa.md
+      checks: build_self_model_check PASS; bundle_check PASS; build_graph_check PASS; unittest 136/136 PASS
+    - repository: art-history-notes
+      base: main
+      commit: 7768464d2e34d0da0fffc48601e8c97dc1fef96f
+      pull_request: https://github.com/masa-san-jp/art-history-notes/pull/385
+      changes: README.md
+      checks: build_graph_check PASS; build_context_vectors_check PASS; 126/129 tests PASS under Python 3.14; 3 failures are the declared Python 3.12 environment check
+    - repository: marketing-trends-notes
+      base: main
+      commit: a053c6cd99d3f71db7f5bf03b42cee99eff80b37
+      pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/85
+      changes: README.md
+      checks: build_graph_check PASS; audit dry-run PASS
+    - repository: agentic-art-research
+      base: main
+      commit: 3d893f48e85e4f512a3a112b2c2d0e204f863067
+      pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/82
+      changes: README.md
+      checks: compileall PASS; validate PASS; unittest 278/278 PASS; build_graph_check PASS
+    - repository: agentic-art-production
+      base: main
+      commit: 74afd1253d960a64c599dcd84ece8c2c4e71631a
+      pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/51
+      changes: README.md
+      checks: validate PASS; unittest 71/71 PASS; evaluation PASS
+    - repository: viewer-response-notes
+      base: feat/viewer-response-contracts
+      commit: 85f20206662b857ce2cd50936d0c0baf22fcf403
+      pull_request: https://github.com/masa-san-jp/viewer-response-notes/pull/3
+      changes: README.md
+      checks: validate PASS; unittest 12/12 PASS
+  github_metadata:
+    descriptions_updated: [self-model-notes, agentic-art-research, agentic-art-production, viewer-response-notes]
+    descriptions_already_accurate: [art-history-notes, marketing-trends-notes]
+    viewer_default_branch_observed: feat/viewer-response-contracts
+  parent_checks:
+    commit: 21be012
+    validator: PASS
+    focused_regression_tests: "31/31 PASS"
+    full_parent_tests: "379/379 PASS"
+    workspace_status: "6/6 clean; no dirty, ahead, or behind checkout"
+    snapshot_check: "PASS; hash 4897206cdee0aedfcb1802a68c7739e7e75c36e57651d17b7098b3be559aa292"
+    project_status_readme: PASS
+    security_offline_fixture: PASS
+    audit_offline_fixture: "FINDINGS; one warning for marketing:trend-001 stale revalidation_at 2026-08-25; preserved as a child revalidation constraint"
+    diff_check: PASS
+  safety:
+    child_main_branches_merged: false
+    viewer_docs_pr_merged: true
+    viewer_docs_merge_commit: 205eeeb8dd03e29e2b4628e00bcf69738b77f973
+    parent_pushed: false
+    local_dirty_child_checkouts_modified: false
+    drive_artifact_created: false
+    raw_conversation_credentials_private_raw_restricted_added: false
+  unresolved:
+    - remaining child README PRs require human review and merge before their changes become part of the base branches
+    - self-model, art-history, marketing, and agentic-art-research README PRs conflict with newer README changes on their main branches; no automatic conflict resolution was pushed
+    - agentic-art-production PR is mergeable at Git level but its GitHub test (3.11/3.12) checks are failing; it was not merged or bypassed
+    - art-history and agentic-art-production GitHub PR checks failed before useful step logs; local failures were environment/configuration observations, not README assertions
+    - viewer-response-notes main remains an empty historical branch until its existing feature work is human-merged
+    - audit retains the existing marketing:trend-001 freshness warning until marketing revalidates it; this review did not normalize stale data
+
+harness_autonomy_audit:
+  observed_at: "2026-09-01T10:48:47+09:00"
+  requested_by: user
+  scope: can a fresh external agent bootstrap, select work, and proceed without human intervention
+  verification:
+    documented_bootstrap_system_python: FAILED; python3 tools/validate.py --check raised ModuleNotFoundError No module named yaml
+    venv_validator: PASSED
+    venv_full_tests: 379/379 OK in 170.186s
+    ready_tasks: 0
+    backlog_tasks: 0
+    blocked_tasks: [ISSUE-38-REAL-CHAIN-CI-001, INITIAL-OPS-RELEASE-001]
+    open_parent_issues_not_in_queue: approximately 30 including 84, 86, 88-91, 108-112
+    unpushed_commits: [276abae, 21be012, 17e25a6, 4149f1f, f1b7456]
+    offline_workspace: 6/6 clean
+  findings:
+    - no document in the repository explains creating .venv while all runbook and state commands require it
+    - task selection rules cover READY and BACKLOG but not an empty queue with open Issues, so a fresh agent stalls legally
+    - execution SSOT commits including state v106 existed only locally, so remote clones resume from a stale point
+    - the ISSUE-38 blocked entry demanded a separate re-baseline Issue that had not been created
+  issues_created:
+    bootstrap_venv_docs: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+    issue_to_queue_intake: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+    unpushed_execution_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/115
+    issue38_rebaseline_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/116
+  ssot_upgrade:
+    observed_at: "2026-09-01T11:05:00+09:00"
+    action: issues 113-116 rewritten as agent-resolvable implementation SSOTs with scope, allowed paths, authority, observable acceptance, verification commands, and explicit human gates
+    queue_registration: M17 tasks HARNESS-BOOTSTRAP-001 (READY), HARNESS-INTAKE-001, HARNESS-SSOT-PUSH-001, HARNESS-REALCHAIN-REBASE-001 registered as a serialized DAG; ISSUE-38-REAL-CHAIN-CI-001 remains BLOCKED until HARNESS-REALCHAIN-REBASE-001 re-points it
+    push_authority: Issue 115 explicitly authorizes a fast-forward push of agent/issues-38-41-pipeline only; merge and release remain human-gated
+  ux_gap_issues:
+    observed_at: "2026-09-01T12:10:00+09:00"
+    requested_by: user
+    conversational_material_intake: https://github.com/masa-san-jp/self-model-notes/issues/79
+    pr_triage_support: https://github.com/masa-san-jp/agentic-art-orchestration/issues/117
+    open_pr_backlog_observed: 18 across 7 repositories
+    queue_registration: deferred to HARNESS-INTAKE-001 first application; child issue 79 belongs to the self-model-notes harness
+    duplicates_avoided: existing issues 88 and 90 were not re-filed
+  child_repository_mutation: false
+  external_mutation: four parent GitHub Issues created by explicit user request; no PR, merge, release, or Drive operation
+  raw_conversation_credentials_private_raw_restricted_added: false
+
+repository_usability_reaudit:
+  observed_at: "2026-08-29T18:41:19+09:00"
+  result: current_default_branches_are_usable_without_duplicate_changes
+  repositories_checked: [self-model-notes, art-history-notes, marketing-trends-notes, agentic-art-research, agentic-art-production, viewer-response-notes]
+  readme_findings: all six current default branches expose purpose, first-use entry points, canonical-data boundaries, and privacy/output limitations; viewer default branch is feat/viewer-response-contracts
+  description_findings: all six GitHub descriptions are non-empty and consistent with their current README scope
+  action: no new README/Description PR; existing stale draft PRs remain open for historical review, while viewer documentation PR #3 is merged
+  checks: validator PASS; project_status_readme PASS; snapshot_check PASS; offline_workspace 6/6 clean; parent_worktree clean
+
+harness_bootstrap:
+  status: complete
+  observed_at: "2026-09-01T15:40:15+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/113
+  target_repository: agentic-art-orchestration
+  acceptance: 3/3
+  changes:
+    - README defines the canonical four-line local-venv bootstrap and prerequisites for GitHub authentication versus offline fixtures.
+    - AGENTS.md and docs/operator-runbook.md reference the README bootstrap and use .venv/bin/python for verification commands.
+    - README documents fresh-clone offline materialization with a unique fixture root before the generated-data-dependent full suite.
+    - tests/test_docs.py rejects missing canonical lines and bare python3 verification regressions.
+  verification:
+    focused_documentation_tests: "7/7 PASS"
+    fresh_clone_venv_and_pip: PASS
+    fresh_clone_offline_materialization: PASS; unique fixture root, no GitHub or Drive operation
+    fresh_clone_validator: PASS
+    fresh_clone_materialized_full_suite: "379/379 PASS"
+    parent_validator: PASS
+    parent_full_suite: "380/380 PASS"
+    snapshot_check: PASS
+    diff_check: PASS
+    project_status_readme: PASS
+  repository_commits:
+    parent: 887d043
+    child_repositories: none
+  external_artifact: none; no Issue, Drive, child repository, merge, release, or push mutation
+  sensitive_data: none; no raw conversation, credential, PRIVATE_RAW, RESTRICTED, or direct identifier added
+  feedback:
+    explicit: none
+    inferred: none
+  unresolved:
+    - fresh-clone full-suite materialization remains an explicit prerequisite because generated data/ outputs are intentionally ignored; the README documents this networkless path.
+    - the next task is HARNESS-INTAKE-001; no task was auto-started after lease release.
+
+harness_intake:
+  status: complete
+  observed_at: "2026-09-01T15:57:29+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+  target_repository: agentic-art-orchestration
+  acceptance: 4/4
+  changes:
+    - AGENTS.md now has the empty-queue third task-selection rule and four-field Issue SSOT minimum.
+    - docs/operator-runbook.md documents read-only intake, fixture/live commands, and REGISTER_BACKLOG/ALREADY_QUEUED/UNQUEUED_NEEDS_SSOT handling.
+    - tools/issue_intake.py and schemas/issue-intake-report.schema.json implement a deterministic metadata-only report with queue SHA-256 and no Issue body output.
+    - tests/fixtures/issue-intake and tests/test_issue_intake.py cover schema, determinism, input immutability, privacy, documentation, and one-time queue registration.
+  first_application:
+    source: fixture://issue-intake/current-open-issues-2026-09-01
+    observed_open_issues: 38
+    qualified_unqueued_before_registration: [117]
+    registered_tasks: [HARNESS-PR-TRIAGE-001]
+    registration_status: BACKLOG; depends on HARNESS-REALCHAIN-REBASE-001; implementation is deferred to its own task
+    unqueued_needs_ssot: [1, 2, 58, 84, 86, 88, 89, 90, 91, 94, 95, 108, 109, 110, 111, 112]
+    pre_registration_report_sha256: ffa1f27d5b501f390b2955b88a397413ebf71f6e84bf14b914241346378cb9bb
+    post_registration_report_sha256: cbbd7142c0be8d659b4f53b1367bdef48818bc3785a378f07967b919ff352861
+    final_queue_sha256: 869a6d365f1b1adbedc1fb866381090e91157e41d828719f0fdf63ce32fc3389
+    post_registration_summary: "38 total; 22 queued; 0 qualified unqueued; 16 UNQUEUED_NEEDS_SSOT"
+  verification:
+    focused_issue_intake_tests: "6/6 PASS"
+    focused_docs_and_issue_intake_tests: "13/13 PASS"
+    parent_validator: PASS
+    parent_full_suite: "386/386 PASS"
+    diff_check: PASS
+    project_status_readme: PASS
+  repository_commits:
+    parent: a631040
+    child_repositories: none
+  live_input: unavailable; gh read-only API was network-unavailable, so the observed metadata fixture was used and no live Issue mutation was attempted
+  external_artifact: none; no Issue comments, Issue close, Drive, child repository, merge, release, or push mutation
+  sensitive_data: none; Issue body text is not copied to the report or state
+  feedback:
+    explicit: none
+    inferred: none
+  unresolved:
+    - 16 open Issues remain UNQUEUED_NEEDS_SSOT; no comments were created because Issue comments were not authorized by this task.
+    - HARNESS-SSOT-PUSH-001 is the next READY task and has an explicit fast-forward push scope.

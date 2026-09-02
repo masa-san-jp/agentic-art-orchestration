@@ -26,6 +26,7 @@ try:
         adapt_art_history_signal,
         adapt_marketing_signal,
         adapt_self_model_signal,
+        adapt_viewer_response_signal,
     )
     from tools.validate import load_yaml, validate_signal, validate_signal_export
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
@@ -35,6 +36,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         adapt_art_history_signal,
         adapt_marketing_signal,
         adapt_self_model_signal,
+        adapt_viewer_response_signal,
     )
     from tools.validate import load_yaml, validate_signal, validate_signal_export
 
@@ -46,7 +48,9 @@ ADAPTERS = {
     "self-model": adapt_self_model_signal,
     "art-history": adapt_art_history_signal,
     "marketing-trends": adapt_marketing_signal,
+    "viewer-response-notes": adapt_viewer_response_signal,
 }
+GENERIC_SIGNAL_REPOSITORIES = {"self-model", "art-history", "marketing-trends"}
 
 
 class IngestError(RuntimeError):
@@ -81,12 +85,20 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str) -> dic
     inputs = [item for item in manifest["repositories"] if item.get("role") == "input-kb"]
     normalized: list[dict] = []
     warnings: list[str] = []
+    deferred_boundaries: list[dict[str, str]] = []
 
     for repository in inputs:
         identifier = repository["id"]
         adapter = ADAPTERS.get(identifier)
         if adapter is None:
             raise IngestError(f"{identifier} is declared as an input but has no adapter")
+        if identifier not in GENERIC_SIGNAL_REPOSITORIES:
+            deferred_boundaries.append({
+                "repository": identifier,
+                "status": "SEPARATE_BOUNDARY",
+                "route": "tools/viewer_response_gate.py",
+            })
+            continue
 
         payload = _export(repository, workspace_root, purpose, python)
         errors = validate_signal_export(payload, identifier)
@@ -128,6 +140,7 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str) -> dic
         "by_kind": {kind: sum(1 for s in normalized if s["signal_kind"] == kind) for kind in sorted({s["signal_kind"] for s in normalized})},
         "portfolio": str(output / "portfolio.json"),
         "warnings": warnings,
+        "deferred_boundaries": deferred_boundaries,
     }
 
 

@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,6 +19,7 @@ jobs:
           python-version: "3.11"
       - run: python3 -m pip install -r requirements-dev.txt
       - run: python3 tools/validate.py --check
+      - run: python3 tools/project_status.py --check-readme
       - name: Materialize deterministic offline inputs
         run: |
           python3 tools/workspace.py init --offline-fixture
@@ -38,11 +40,112 @@ jobs:
           python3 tools/security.py --offline-fixture
       - run: python3 -m unittest discover -s tests -v
 
-  # The bootstrap job validates against the offline fixture mirror. This job is the
-  # only place the real children run against each other, so a boundary that breaks
-  # between repositories fails here and nowhere else.
+  real-chain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Verify read-only private child repository credential
+        env:
+          AAP_CHILD_REPOS_TOKEN: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+        run: |
+          if [ -z "$AAP_CHILD_REPOS_TOKEN" ]; then
+            echo "::error::MISSING_EXTERNAL_SECRET: AAP_CHILD_REPOS_TOKEN is required to read the private child repositories; configure it as an Actions secret without committing the credential."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/self-model-notes
+          ref: main
+          path: repos/self-model-notes
+          fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/art-history-notes
+          ref: main
+          path: repos/art-history-notes
+          fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/marketing-trends-notes
+          ref: main
+          path: repos/marketing-trends-notes
+          fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/agentic-art-research
+          ref: main
+          path: repos/agentic-art-research
+          fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/agentic-art-production
+          ref: main
+          path: repos/agentic-art-production
+          fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: masa-san-jp/viewer-response-notes
+          ref: feat/viewer-response-contracts
+          path: repos/viewer-response-notes
+          fetch-depth: 0
+          token: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
+          persist-credentials: false
+      - name: Provision parent and per-child dependencies
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+          child_python_root="$RUNNER_TEMP/child-python"
+          child_requirements_root="$RUNNER_TEMP/child-requirements"
+          mkdir -p "$child_python_root"
+          mkdir -p "$child_requirements_root"
+          while IFS='|' read -r repository_id child; do
+            python3 -m venv "$child_python_root/$repository_id"
+            child_python="$child_python_root/$repository_id/bin/python"
+            if [ -f "$child/requirements-dev.txt" ]; then "$child_python" -m pip install -r "$child/requirements-dev.txt"; fi
+            if [ -f "$child/requirements.txt" ]; then "$child_python" -m pip install -r "$child/requirements.txt"; fi
+            if [ -f "$child/pyproject.toml" ]; then
+              dependency_file="$child_requirements_root/$repository_id.txt"
+              "$child_python" -c 'import pathlib, sys, tomllib; source = tomllib.loads(pathlib.Path(sys.argv[1]).read_text()); dependencies = source.get("project", {}).get("dependencies", []); pathlib.Path(sys.argv[2]).write_text("\n".join(dependencies) + ("\n" if dependencies else ""))' "$child/pyproject.toml" "$dependency_file"
+              if [ -s "$dependency_file" ]; then "$child_python" -m pip install -r "$dependency_file"; fi
+            fi
+          done <<'EOF'
+          self-model|repos/self-model-notes
+          art-history|repos/art-history-notes
+          marketing-trends|repos/marketing-trends-notes
+          agentic-art-research|repos/agentic-art-research
+          agentic-art-production|repos/agentic-art-production
+          viewer-response-notes|repos/viewer-response-notes
+          EOF
+      - name: Qualify the real immutable exchange chain
+        run: |
+          python3 tools/qualify_pin_update.py \
+            --workspace-root repos \
+            --output /tmp/pin-update-qualification.json \
+            --run-id ci-real-chain \
+            --timeout 900 \
+            --python-root "$RUNNER_TEMP/child-python"
+
+  # The bootstrap job validates against the offline fixture mirror. This job also
+  # exercises the Research/Production exchange against the exact manifest pins.
   production-exchange:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,7 +155,10 @@ jobs:
       - name: Materialize the manifest-pinned children
         env:
           CHILD_REPOS_TOKEN: ${{ secrets.CHILD_REPOS_TOKEN }}
-        run: python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
+        run: >-
+          python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
+          --repository agentic-art-research
+          --repository agentic-art-production
       - name: Run the Research/Production exchange against the real children
         run: |
           python3 tools/production_exchange.py \

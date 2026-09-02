@@ -1,0 +1,71 @@
+name: Decision with observation provenance
+description: Record a cross-repository decision with reproducible observation evidence
+title: "[Decision] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Decisions based on repository state must preserve the observation provenance below.
+
+        | Field | Required value |
+        |---|---|
+        | `repository` | Manifest repository ID |
+        | `observed_ref` | 40-character commit SHA |
+        | `observed_via` | `manifest_pin`, `remote_head`, or `local_worktree` |
+        | `observed_at` | RFC3339 timestamp |
+
+        Keep pin, remote HEAD, and local worktree distinct. Do not turn missing evidence into a normal value.
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      description: Stable repository ID from config/repositories.yaml.
+    validations:
+      required: true
+  - type: input
+    id: observed_ref
+    attributes:
+      label: Observed ref
+      description: The exact 40-character commit SHA that was observed.
+    validations:
+      required: true
+  - type: dropdown
+    id: observed_via
+    attributes:
+      label: Observed via
+      options:
+        - manifest_pin
+        - remote_head
+        - local_worktree
+    validations:
+      required: true
+  - type: input
+    id: observed_at
+    attributes:
+      label: Observed at
+      description: RFC3339 timestamp, including timezone.
+      placeholder: 2026-08-25T18:00:00+09:00
+    validations:
+      required: true
+  - type: input
+    id: evidence_locator
+    attributes:
+      label: Evidence locator or opaque reference
+      description: Stable report locator or opaque reference; do not paste credentials or raw conversation.
+    validations:
+      required: true
+  - type: textarea
+    id: unknowns
+    attributes:
+      label: Explicit unknowns
+      description: List evidence that was not observed or could not be compared. Use NONE only when verified absent.
+      placeholder: "- remote_head_not_observed"
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision and impact
+      description: State the decision, alternatives, and how the observation affects the conclusion.
+    validations:
+      required: true

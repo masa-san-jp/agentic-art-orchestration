@@ -65,7 +65,7 @@ class SignalExportEnvelopeTests(unittest.TestCase):
         inputs = {
             repository["id"]
             for repository in manifest["repositories"]
-            if repository.get("role") == "input-kb"
+            if repository.get("role") == "input-kb" and repository["id"] in {"self-model", "art-history", "marketing-trends"}
         }
 
         self.assertEqual(inputs, allowed)

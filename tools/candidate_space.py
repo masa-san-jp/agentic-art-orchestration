@@ -35,6 +35,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
 
 
 SIGNAL_KINDS = ("self", "art-history", "marketing")
+PERSONAL_ANCHOR_ATTRIBUTES = ("tensions", "recurring_patterns")
 DEFAULT_FIXTURE_DIR = ROOT / "tests/fixtures/v12-candidates"
 DEFAULT_OUTPUT_PATH = ROOT / "data/candidate-space.json"
 
@@ -46,6 +47,12 @@ def canonical_json(value: object) -> str:
 
 def sha256_hex(value: object) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def personal_anchor_id(signal_id: str, attribute: str, value: object) -> str:
+    """Return the stable opaque identity for one consented self-model anchor."""
+    payload = f"{signal_id}\n{attribute}\n{canonical_json(value)}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _error(source: str, detail: str, remediation: str) -> str:
@@ -100,7 +107,58 @@ def _input_ref(signal: dict, attribute: str) -> dict:
     }
 
 
-def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str) -> dict:
+def _personal_anchor_options(signal: dict) -> list[dict]:
+    """Enumerate only valid, export-permitted self-model values as opaque options."""
+    if (
+        signal.get("signal_kind") != "self"
+        or signal.get("validity", {}).get("status") != "valid"
+    ):
+        return []
+    domain = signal.get("domain", {}).get("self_model", {})
+    if domain.get("export_permitted") is not True or not domain.get("consent_scope"):
+        return []
+    options: list[dict] = []
+    for attribute in PERSONAL_ANCHOR_ATTRIBUTES:
+        values = domain.get(attribute)
+        if not isinstance(values, list):
+            continue
+        for value in sorted(values, key=canonical_json):
+            if not isinstance(value, str) or not value.strip():
+                continue
+            options.append(
+                {
+                    "anchor_id": personal_anchor_id(signal["signal_id"], attribute, value),
+                    "attribute": attribute,
+                    "signal": signal,
+                }
+            )
+    return sorted(options, key=lambda option: option["anchor_id"])
+
+
+def eligible_personal_anchors(signals: list[dict], source: str = "self-diversity") -> list[dict]:
+    """Return stable anchor metadata without returning the underlying self facts."""
+    signal_by_id = _validated_signals(signals, f"{source}.signals")
+    anchors: list[dict] = []
+    for signal_id in sorted(signal_by_id):
+        for option in _personal_anchor_options(signal_by_id[signal_id]):
+            anchors.append(
+                {
+                    "anchor_id": option["anchor_id"],
+                    "attribute": option["attribute"],
+                    "signal_id": signal_id,
+                }
+            )
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for anchor in sorted(anchors, key=lambda item: item["anchor_id"]):
+        if anchor["anchor_id"] in seen:
+            continue
+        seen.add(anchor["anchor_id"])
+        unique.append(anchor)
+    return unique
+
+
+def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str, personal_anchor: dict | None = None) -> dict:
     bindings = rule["attribute_bindings"]
     inputs = {
         kind: [_input_ref(selected[kind], attribute) for attribute in sorted(bindings[kind])]
@@ -110,7 +168,11 @@ def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str) -> dict:
         slot_name: {
             "signal_id": selected[slot["signal_kind"]]["signal_id"],
             "signal_kind": slot["signal_kind"],
-            "attribute": slot["attribute"],
+            "attribute": (
+                personal_anchor["attribute"]
+                if slot_name == "personal_tension" and personal_anchor is not None
+                else slot["attribute"]
+            ),
         }
         for slot_name, slot in sorted(rule["composition"]["slots"].items())
     }
@@ -119,6 +181,8 @@ def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str) -> dict:
         "snapshot_id": snapshot_id,
         "signal_ids": {kind: selected[kind]["signal_id"] for kind in SIGNAL_KINDS},
     }
+    if personal_anchor is not None:
+        identity["personal_anchor_id"] = personal_anchor["anchor_id"]
     return {
         "candidate_id": f"candidate:{sha256_hex(identity)[:16]}",
         "rule_id": rule["rule_id"],
@@ -157,10 +221,37 @@ def build_candidate_space(signals: list[dict], registry: dict, source: str = "ca
                     "provide a validated signal for every required kind or reject the snapshot",
                 )
             )
-        ordered_groups = [sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS]
+        uses_personal_anchors = any(
+            slot.get("signal_kind") == "self"
+            and slot.get("attribute") in PERSONAL_ANCHOR_ATTRIBUTES
+            for slot in rule["composition"]["slots"].values()
+        )
+        eligible_anchor_total = sum(len(_personal_anchor_options(signal)) for signal in by_kind["self"])
+        uses_personal_anchors = uses_personal_anchors and eligible_anchor_total >= 1
+        if uses_personal_anchors:
+            self_options: list[tuple[dict, dict | None]] = []
+            for signal in sorted(by_kind["self"], key=lambda item: item["signal_id"]):
+                options = _personal_anchor_options(signal)
+                self_options.extend((option["signal"], option) for option in options)
+                if not options:
+                    self_options.append((signal, None))
+            ordered_groups = [
+                self_options,
+                *[sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS[1:]],
+            ]
+        else:
+            ordered_groups = [sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS]
         for combination in itertools.product(*ordered_groups):
-            selected = {signal["signal_kind"]: signal for signal in combination}
-            candidates.append(_candidate(rule, selected, snapshot_id))
+            if uses_personal_anchors:
+                self_signal, personal_anchor = combination[0]
+                selected = {
+                    "self": self_signal,
+                    **{signal["signal_kind"]: signal for signal in combination[1:]},
+                }
+            else:
+                personal_anchor = None
+                selected = {signal["signal_kind"]: signal for signal in combination}
+            candidates.append(_candidate(rule, selected, snapshot_id, personal_anchor))
 
     candidates.sort(key=lambda item: item["candidate_id"])
     result = {

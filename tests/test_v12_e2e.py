@@ -17,13 +17,14 @@ ROOT = Path(__file__).resolve().parents[1]
 class V12E2ETests(unittest.TestCase):
     def test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary(self):
         result = run_v12_e2e("V12-E2E-001:test-clean")
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
         self.assertEqual("v12-e2e/v1", result["contract_version"])
         self.assertEqual("disabled", result["network"])
         self.assertEqual(3, result["pipeline"]["signal_count"])
-        self.assertEqual(1, result["pipeline"]["candidate_count"])
+        self.assertEqual(2, result["pipeline"]["candidate_count"])
         self.assertEqual(1, result["pipeline"]["selection"]["selected_count"])
         self.assertEqual("research-provenance/v1", result["pipeline"]["provenance"]["contract_version"])
-        self.assertEqual(5, result["child_quality_gates"]["repository_count"])
+        self.assertEqual(len(manifest["repositories"]), result["child_quality_gates"]["repository_count"])
         self.assertEqual("interaction-e2e/v1", result["v11_regression"]["interaction_contract"])
         self.assertTrue(all(result["acceptance"].values()))
         self.assertEqual([], result["remote_operations"])
@@ -69,11 +70,12 @@ class V12E2ETests(unittest.TestCase):
         self.assertEqual(_deterministic_view(first), _deterministic_view(second))
 
     def test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates(self):
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
         child = {
             "contract_version": "child-quality-gates/v1",
             "run_id": "fixture-child-gates",
             "manifest_hash": sha256_hex(load_yaml(ROOT / "config/repositories.yaml")),
-            "repository_count": 5,
+            "repository_count": len(manifest["repositories"]),
             "results": [
                 {
                     "repository": repository["id"],
@@ -96,7 +98,7 @@ class V12E2ETests(unittest.TestCase):
                         for command in repository["quality_gates"]
                     ],
                 }
-                for repository in load_yaml(ROOT / "config/repositories.yaml")["repositories"]
+                for repository in manifest["repositories"]
             ],
         }
         with patch("tools.v12_e2e.run_child_quality_gates", side_effect=AssertionError("gate rerun")):

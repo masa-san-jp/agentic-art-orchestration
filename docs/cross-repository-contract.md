@@ -10,6 +10,16 @@ art-history-notes ----------> normalized research signals -> agentic-art-researc
 marketing-trends-notes -----/
 ~~~
 
+## Viewer response boundary
+
+`viewer-response-notes`は、既存の4repo core setを置き換えない独立した入力repoである。viewer repoが`viewer-response-record/v1`、`viewer-response-assessment/v1`、`research-signal-export/v1`のdomain SSOTを持ち、Productionは明示的なaggregate DTOだけを`production-result/v1`へ運び、ResearchはそのDTOをviewer repoへappend-onlyで変換する。親repoはassessment boundaryとroutingだけを検証し、viewerの内部record schemaを正本化しない。
+
+viewer response recordは`work_id`、`requirement_id`、表示モード、要件タグ、`pass`/`fail`/`unknown`の集計、opaqueな証拠参照、source commit、`aggregate-only`の同意scopeに限定する。名前、連絡先、自由文、心理・医療推測、RAW、asset body、credentialは全repoで拒否する。`sample_size`とoutcome合計が一致しない入力、external evidenceに測定標本を付けた入力、重複dedup keyの内容差はfail closedとする。
+
+assessmentは完全一致のwork/requirement/presentation modeとタグ交差だけを対象にし、測定標本5未満は`UNKNOWN`、Wilson 95% lower boundが0.60以上だけを`SUPPORTED`、upper boundが0.60未満だけを`CONTRADICTED`とする。測定なしで独立external参照が2件以上の場合は`EXTERNALLY_SUPPORTED`だが`SUPPORTED`とは同一視しない。測定とexternalの衝突は測定を判定に優先し、衝突状態を保持する。`UNKNOWN`、`CONTRADICTED`、`EXTERNALLY_SUPPORTED`はblind/frame reviewなしに要件受入へ昇格させない。
+
+viewer responseはgenericな`tools/ingest_signals.py`のnormalized signal列には混ぜない。子repo固有のrecord/export schemaを`tools/viewer_response_gate.py`で検証し、Production/Researchのviewer boundaryでaggregate DTOとして扱う。viewerをself、art-history、marketingのいずれかへ変換して多様性・候補選択へ流すことは禁止する。
+
 ## Required signal fields
 
 - contract_version
@@ -51,6 +61,25 @@ marketing-trends-notes -----/
 - adapterはsource commitとadapter versionを必ず出す。
 - consumer成果物は利用signal IDとsource commit組を保存する。
 
+## Observation provenance
+
+リポジトリの状態を根拠にする決定・レビュー・検証記録は、実測対象ごとに次の4項目を必須で保持する。`observed_ref` は40桁のcommit SHAであり、manifestのpinと子repoの現在を同一視しない。
+
+| 項目 | 記録する内容 |
+|---|---|
+| `repository` | `config/repositories.yaml` の安定したrepo ID |
+| `observed_ref` | 実際に観測した40桁のcommit SHA |
+| `observed_via` | `manifest_pin` / `remote_head` / `local_worktree` のいずれか |
+| `observed_at` | RFC3339形式の観測時刻 |
+
+qualification reportのfindingは、上記に加えて `source_repository`、`source_commit`、`evidence_locator` またはopaqueな `evidence_ref`、`unknowns` を保持する。証拠が取得できない場合は `null` や `NOT_OBSERVED` として残し、false・空の正常値・推測したcommitへ変換しない。
+
+`observed_via: manifest_pin` は「最後にqualifiedとなった入力pin」を表し、remoteの先端ではない。`observed_via: remote_head` は宣言されたdefault branchのread-only観測、`observed_via: local_worktree` は手元checkoutの観測である。local worktreeを使う場合は、そのHEAD SHAとremote headとの一致を `true` / `false` / `unknown` のいずれかで併記し、比較を実施していないときは `unknown` と `unknowns` に明記する。
+
+qualificationはpinを専用workspaceへmaterializeして実行し、source checkoutのstate（MATCHED / STALE / DIRTY / DETACHED / UNAVAILABLE）と、materialize後のcommitを別々に記録する。sourceが新しい、dirty、detachedであっても、pinを黙って追従させない。取得不能なpinやremote観測不能はblocking findingまたは明示的unknownとして残す。
+
+`execution/state.yaml` に記録する `command` は、別環境から再実行できるrepo相対のinterpreter、workspace、output pathだけを使う。一時workspaceやinterpreterで過去に実行した事実は `historical_provenance` として残せるが、その絶対パスを再実行commandへ混ぜてはならない。
+
 ## Forbidden transformations
 
 - unknownを0、false、low confidenceへ暗黙変換する。
@@ -60,29 +89,41 @@ marketing-trends-notes -----/
 - 原典未読のURLを読了済みとして扱う。
 - source repositoryまたはcommitを落とす。
 
+## Self-model export E2E pin
+
+`tests/fixtures/signal/self_export_bundle.json` は、self-model-notes Issue #40 の完了記録を含む固定commit `04095bfa4115ef4fde8a8f475bf31743ecdff962` から `tools/export_signals.py --purpose artistic-research --limit 0` で生成した `research-signal-export/v1` envelopeである。これは親manifestのqualification pinを浮動参照へ置換するものではなく、E2E fixtureが参照するchild source pinを固定する。
+
+E2Eでは、envelopeの`signal_count`・一意な`signal_id`・全recordの`commit`一致を確認した後、全recordを`adapt_self_model_signal()`へ個別に渡し、`validate_signal()`を通してから1回の`import_signals()`へ渡す。入力・normalized・imported・provenanceの件数、ID順、source commit、entity/evidence locator、certainty、unknowns、constraints、freshness、self-model domain fieldsは一致しなければならない。
+
+raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換結果に含めない。`raw_voice_locator`とsource/evidence locatorは`self-model://`のopaque locatorだけを許可する。Issue #90の材料数や多様性の判断、child schema、adapter、consumerの変更はこのE2Eの範囲外である。
+
+## Self-model diversity report
+
+`self-diversity-report/v1` は、利用許可済みnormalized signalの`domain.self_model.tensions`と`recurring_patterns`のunionだけを対象にする。各値は`signal_id`、属性名、canonical valueを改行で連結したSHA-256のopaque anchor IDへ変換し、reportには生のstatement、voice本文、属性値、直接識別情報を保存しない。同一signal内の重複値はanchor IDで一つにまとめる。適格アンカーが1個以上あれば候補の`personal_tension`へその属性を結線し、0個の場合は候補を個人アンカー付きとして生成しない。
+
+`eligible_anchor_count`が0の場合は`INSUFFICIENT_SELF_DIVERSITY`として停止し、候補を複製したり選択数を水増ししたりしない。1〜2個の場合は`PASS_LIMITED_DIVERSITY`として実行を許可するが、3個未満であることを証跡に残す。3個以上の場合は`PASS`とし、明示的な多様性要求でselection limitが10以上の場合は、少なくとも3つのdistinct anchorを含み、各anchorのshareを40%以下にする。1〜2個の場合はこの完全多様性条件を適用せず、限定的な多様性として扱う。passing candidateがselection limitに満たない場合も、limitを下げずに拒否する。候補の選択順はanchor単位の決定的round-robinとし、各anchor内では既存のseeded SHA-256 score順を保持する。
+
+reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`PASS_LIMITED_DIVERSITY`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。
+
 ## 器の名前
 
-境界を渡る成果物は、**中身の形だけでなく、それを束ねる器の名前も契約で定める**。中身だけ定めて器を定めずにいると、独立に実装した両側が別の名前を選び、片側の出力をもう片側が読めなくなる。実際に2度起きた。
+境界を渡る成果物は、**中身の形だけでなく、それを束ねる器の名前も契約で定める**。中身だけ定めて器を定めずにいると、独立に実装した両側が別の名前を選び、片側の出力をもう片側が読めなくなる。
 
-規則は1つ。**器の名前は消費側の契約が定める。定めが無いときは中身の名詞の複数形にする。**
-
-生産側は複数の相手に出しうるが、消費側は自分が読む形を1つしか持てない。曖昧さのコストは消費側に集中するので、決定権も消費側に置く。
+規則は1つ。**器の名前は消費側の契約が定める。定めが無いときは中身の名詞の複数形にする。** 生産側は複数の相手に出しうるが、消費側は自分が読む形を1つしか持てないためである。
 
 | 成果物 | 器のキー | 定めた場所 |
 |---|---|---|
 | `source-ref-index.yaml` | `references`（レコードのハッシュは `record_hash`） | production の実装契約 |
 | 知識ベースの signal 書き出し | `signals`（契約は `contract_version`、時刻は `generated_at`、件数は `signal_count`） | `schemas/research-signal-export.schema.json` |
 
-signal の書き出しは、封筒だけを検証して**レコードの中身は検証しない**。種別ごとに形が違い、それを吸収するのが `tools/adapters.py` の役目だからである（README の「子の内部形式を共通化せず、境界で翻訳する」）。封筒が保証するのは、誰がいつどの版から出したか、と件数の整合だけ。
+signal の書き出しは、封筒だけを検証して**レコードの中身は検証しない**。種別ごとに形が違い、それを吸収するのが adapter の役目である。封筒が保証するのは、誰がいつどの版から出したかと件数の整合だけである。
 
 ## 境界を渡る enum
 
-器の名前と同じ問題が、**中身の語**でも起きる。research が許す語を production が知らないと、受理は通るのに次の工程で落ちる。器の規則をそのまま適用する——**語彙は消費側の契約が定め、生産側がそれに揃える。**
+器の名前と同じ問題が、**中身の語**でも起きる。語彙は消費側の契約が定め、生産側がそれに揃える。
 
 | 値 | 語彙 | 定めた場所 | 生産側 |
 |---|---|---|---|
 | 受入試験の `result` | `NOT_RUN` / `PASS` / `FAIL` / `EXTERNAL_VALIDATION_REQUIRED` / `BLOCKED` | production `schemas/planning.schema.json` の `$defs.acceptanceTest.result` | research `config/vocabularies.yaml` の `test_results` |
 
-**この表に載る語を増やすときは、消費側の schema を先に変える。**
-
-語彙を揃えるだけでは足りない。**受理は、後の工程が要求する語彙をその場で検査する**（production `tools/new_production.py::_assert_planning_vocabulary`）。受理は「この bundle で仕事ができる」という宣言なので、計画生成が拒む値を含んだまま ACCEPTED にすると、宣言が事実でなくなる。検査は消費側 schema の enum を直接読むので、schema を変えれば検査も同時に動く。
+**この表に載る語を増やすときは、消費側の schema を先に変える。** 受理は後の工程が要求する語彙をその場で検査し、計画生成が拒む値を含む bundle を ACCEPTED にしない。

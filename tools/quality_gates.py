@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -38,7 +39,7 @@ _RUNTIME_PATH_PATTERN = re.compile(r"(?:/private)?/var/folders/\S+|/tmp/\S+")
 _TEST_DURATION_PATTERN = re.compile(r"(Ran \d+ tests? in )\d+(?:\.\d+)?s")
 
 
-def _runtime_bin_dirs() -> list[str]:
+def _runtime_bin_dirs(python_executable: str | Path | None = None) -> list[str]:
     """Prefer the active virtualenv's scripts over the resolved Python binary.
 
     On macOS, ``sys.executable`` can resolve a virtualenv symlink to the
@@ -47,11 +48,15 @@ def _runtime_bin_dirs() -> list[str]:
     installed in the virtualenv are silently skipped.
     """
     candidates: list[Path] = []
-    prefix = Path(sys.prefix)
-    base_prefix = Path(getattr(sys, "base_prefix", sys.prefix))
-    if prefix != base_prefix:
-        candidates.extend([prefix / "bin", prefix / "Scripts"])
-    candidates.append(Path(sys.executable).resolve().parent)
+    if python_executable is not None:
+        # Keep the virtualenv bin directory even when its python is a symlink.
+        candidates.append(Path(python_executable).absolute().parent)
+    else:
+        prefix = Path(sys.prefix)
+        base_prefix = Path(getattr(sys, "base_prefix", sys.prefix))
+        if prefix != base_prefix:
+            candidates.extend([prefix / "bin", prefix / "Scripts"])
+        candidates.append(Path(sys.executable).resolve().parent)
     result: list[str] = []
     for candidate in candidates:
         if candidate.is_dir() and str(candidate) not in result:
@@ -107,7 +112,12 @@ def _gate_result(
     return result
 
 
-def _run_gate(command: str, repository_path: Path, timeout_seconds: int) -> dict:
+def _run_gate(
+    command: str,
+    repository_path: Path,
+    timeout_seconds: int,
+    python_executable: str | Path | None = None,
+) -> dict:
     if not isinstance(command, str) or not command.strip():
         return _gate_result(
             command if isinstance(command, str) else repr(command),
@@ -145,28 +155,45 @@ def _run_gate(command: str, repository_path: Path, timeout_seconds: int) -> dict
     started = time.monotonic()
     environment = os.environ.copy()
     environment["PATH"] = os.pathsep.join(
-        _runtime_bin_dirs() + [environment.get("PATH", "")]
+        _runtime_bin_dirs(python_executable) + [environment.get("PATH", "")]
     )
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             argv,
             cwd=repository_path,
             env=environment,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout_seconds,
-            check=False,
+            start_new_session=True,
         )
+        try:
+            stdout, stderr = process.communicate(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired as exc:
+            # Child test runners may leave descendants holding the captured
+            # pipes open.  Kill the whole disposable gate process group so a
+            # timeout becomes a terminal, auditable result instead of a hung
+            # parent runner.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except OSError:
+                process.kill()
+            stdout, stderr = process.communicate()
+            if exc.stdout:
+                stdout = (stdout or "") + (exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else exc.stdout)
+            if exc.stderr:
+                stderr = (stderr or "") + (exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else exc.stderr)
+            raise subprocess.TimeoutExpired(argv, timeout_seconds, output=stdout, stderr=stderr)
         duration_ms = int((time.monotonic() - started) * 1000)
-        status = "PASSED" if completed.returncode == 0 else "FAILED"
+        status = "PASSED" if process.returncode == 0 else "FAILED"
         return _gate_result(
             command,
             status,
-            completed.returncode,
+            process.returncode,
             duration_ms,
-            completed.stdout,
-            completed.stderr,
-            None if completed.returncode == 0 else "quality gate returned non-zero; remediation: inspect redacted output and repair the owner repository",
+            stdout,
+            stderr,
+            None if process.returncode == 0 else "quality gate returned non-zero; remediation: inspect redacted output and repair the owner repository",
         )
     except subprocess.TimeoutExpired as exc:
         duration_ms = int((time.monotonic() - started) * 1000)

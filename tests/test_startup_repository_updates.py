@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.validate import load_yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 STARTUP_TOOL = ROOT / "tools/startup.py"
@@ -59,7 +61,8 @@ class StartupRepositoryUpdateTests(unittest.TestCase):
             self.assertEqual(0, materialize.returncode, materialize.stderr)
             report = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual("READY_WITH_FINDINGS", report["status"])
-            self.assertEqual(5, len(report["repositories"]))
+            manifest = load_yaml(ROOT / "config/repositories.yaml")
+            self.assertEqual(len(manifest["repositories"]), len(report["repositories"]))
             self.assertTrue(all(record["pinned_for_use"] for record in report["repositories"]))
             self.assertEqual("PASSED", report["workspace_guard"]["status"])
             self.assertEqual([], report["remote_operations"])

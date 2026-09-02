@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/batch-report-event.schema.json",
+  "title": "Batch report event v1",
+  "description": "Metadata-only append-only event emitted by a batch driver.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "event_id",
+    "run_id",
+    "event_type",
+    "project_id",
+    "repository",
+    "source_commit",
+    "observed_at",
+    "attempt",
+    "duration_seconds",
+    "token_count"
+  ],
+  "properties": {
+    "contract_version": {"const": "batch-report-event/v1"},
+    "event_id": {"$ref": "#/$defs/id"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "event_type": {"enum": ["STARTED", "COMPLETED", "FAILED", "RETRY", "DURATION", "TOKENS"]},
+    "project_id": {"$ref": "#/$defs/id"},
+    "repository": {"$ref": "#/$defs/id"},
+    "source_commit": {"$ref": "#/$defs/sha40"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "attempt": {"type": "integer", "minimum": 1},
+    "duration_seconds": {
+      "oneOf": [
+        {"type": "number", "minimum": 0},
+        {"type": "null"}
+      ]
+    },
+    "token_count": {
+      "oneOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "null"}
+      ]
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+  }
+}

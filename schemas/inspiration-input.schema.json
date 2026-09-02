@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/inspiration-input.schema.json",
+  "title": "Structured inspiration input v1",
+  "description": "A privacy-minimal user inspiration that is captured as codes and settled against immutable evidence and a candidate pipeline.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "inspiration_id", "phase", "captured_at", "capture", "provenance", "consent", "privacy"],
+  "properties": {
+    "contract_version": {"const": "inspiration-input/v1"},
+    "inspiration_id": {"$ref": "#/$defs/stable_id"},
+    "phase": {"enum": ["CAPTURED", "SETTLED"]},
+    "captured_at": {"$ref": "#/$defs/timestamp"},
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["interaction_id", "event_id", "session_ref", "request_ref", "intent"],
+      "properties": {
+        "interaction_id": {"$ref": "#/$defs/stable_id"},
+        "event_id": {"$ref": "#/$defs/stable_id"},
+        "session_ref": {"$ref": "#/$defs/stable_id"},
+        "request_ref": {"$ref": "#/$defs/stable_id"},
+        "intent": {"$ref": "#/$defs/intent"}
+      }
+    },
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "settlement": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/settlement"}
+      ]
+    },
+    "consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "settlement_confirmed", "profile_update_permitted"],
+      "properties": {
+        "scope": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9._:-]+$"},
+        "settlement_confirmed": {"type": "boolean"},
+        "profile_update_permitted": {"const": false}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_inspiration_stored", "raw_conversation_stored", "direct_identifiers_stored"],
+      "properties": {
+        "raw_inspiration_stored": {"const": false},
+        "raw_conversation_stored": {"const": false},
+        "direct_identifiers_stored": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._:-][a-z0-9]+)*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$"
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent_code", "capability_codes", "goal_code"],
+      "properties": {
+        "intent_code": {"enum": ["research", "create", "revise", "compare", "plan", "reflect", "continue", "other"]},
+        "capability_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/code"}},
+        "goal_code": {"$ref": "#/$defs/code"}
+      }
+    },
+    "source_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/code"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retrieval_source_snapshots", "retrieval_evidence_refs", "pipeline_source_snapshots"],
+      "properties": {
+        "retrieval_source_snapshots": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/source_snapshot"}},
+        "retrieval_evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/code"}},
+        "pipeline_source_snapshots": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/source_snapshot"}},
+        "candidate_input_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/input_ref"}}
+      }
+    },
+    "input_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "signal_kind", "attribute", "source_repository", "source_commit", "source_entity_ids", "source_locators", "evidence_locators"],
+      "properties": {
+        "signal_id": {"$ref": "#/$defs/code"},
+        "signal_kind": {"enum": ["self", "art-history", "marketing"]},
+        "attribute": {"$ref": "#/$defs/code"},
+        "source_repository": {"$ref": "#/$defs/code"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_entity_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:-]+$"}},
+        "source_locators": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:/-]+$"}},
+        "evidence_locators": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:/-]+$"}}
+      }
+    },
+    "settlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "settled_at", "method", "candidate_pipeline", "candidate_space_hash", "gate_report_hash", "selection_hash", "selected_candidate_ids"],
+      "properties": {
+        "status": {"const": "SETTLED"},
+        "settled_at": {"$ref": "#/$defs/timestamp"},
+        "method": {"const": "structured-intent"},
+        "candidate_pipeline": {"const": "research-candidate/v1"},
+        "candidate_space_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "gate_report_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "selection_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "selected_candidate_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"}}
+      }
+    }
+  }
+}

@@ -3,9 +3,11 @@ from __future__ import annotations
 import copy
 import importlib.util
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,13 +22,22 @@ def git(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def make_repo(root: Path, gate_body: str, second_commit: bool = False) -> tuple[dict, str, str | None]:
+def make_repo(
+    root: Path,
+    gate_body: str,
+    second_commit: bool = False,
+    requirements: str | None = None,
+) -> tuple[dict, str, str | None]:
     root.mkdir()
     git(root, "init", "-q", "-b", "main")
     git(root, "config", "user.email", "fixture@example.invalid")
     git(root, "config", "user.name", "Fixture")
     (root / "gate.py").write_text(gate_body, encoding="utf-8")
-    git(root, "add", "gate.py")
+    paths = ["gate.py"]
+    if requirements is not None:
+        (root / "requirements.txt").write_text(requirements, encoding="utf-8")
+        paths.append("requirements.txt")
+    git(root, "add", *paths)
     git(root, "commit", "-q", "-m", "initial")
     observed = git(root, "rev-parse", "HEAD")
     current = None
@@ -36,6 +47,15 @@ def make_repo(root: Path, gate_body: str, second_commit: bool = False) -> tuple[
         git(root, "commit", "-q", "-m", "later")
         current = git(root, "rev-parse", "HEAD")
     return {"id": "child-one", "path": "child-one", "observed_commit": observed, "quality_gates": ["python3 gate.py"]}, observed, current
+
+
+def make_python_root(root: Path) -> tuple[Path, Path]:
+    python_root = root / "child-environments"
+    python_bin = python_root / "child-one" / "bin"
+    python_bin.mkdir(parents=True)
+    executable = python_bin / "python"
+    executable.symlink_to(sys.executable)
+    return python_root, executable
 
 
 class ChildQualityGateTests(unittest.TestCase):
@@ -95,6 +115,132 @@ class ChildQualityGateTests(unittest.TestCase):
             self.assertEqual("FAILED", record["gates"][0]["status"])
             self.assertNotIn("secret-value", record["gates"][0]["output_redacted"])
             self.assertIn("<REDACTED>", record["gates"][0]["output_redacted"])
+
+    def test_missing_requirement_is_recorded_without_running_gate(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "raise SystemExit(9)\n",
+                requirements="fixture-missing-package>=1.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value=None):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("ENV_UNSATISFIED", record["status"])
+            self.assertEqual("NOT_RUN", record["execution_mode"])
+            self.assertEqual("NOT_RUN", record["gates"][0]["status"])
+            self.assertIn("fixture-missing-package", record["gates"][0]["error"])
+            self.assertIn("pip install --user -r child-one/requirements.txt", record["remediation"])
+            self.assertNotIn("SystemExit", record["gates"][0]["output_redacted"])
+
+    def test_satisfied_requirement_preserves_gate_execution(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-satisfied-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "print('satisfied')\n",
+                requirements="fixture-installed-package>=1.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value="1.2"):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("PASSED", record["status"])
+            self.assertEqual("immutable-archive", record["execution_mode"])
+            self.assertEqual("PASSED", record["gates"][0]["status"])
+            self.assertIn("satisfied", record["gates"][0]["output_redacted"])
+
+    def test_requirement_below_lower_bound_is_environment_unsatisfied(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-old-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "raise SystemExit(9)\n",
+                requirements="fixture-old-package>=2.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value="1.9"):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("ENV_UNSATISFIED", record["status"])
+            self.assertIn("below required >= 2.0", record["gates"][0]["error"])
+            self.assertEqual("NOT_RUN", record["gates"][0]["status"])
+
+    def test_satisfied_exact_requirement_preserves_gate_execution(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-exact-satisfied-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "print('exact satisfied')\n",
+                requirements="fixture-exact-package==1.2.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value="1.2"):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("PASSED", record["status"])
+            self.assertEqual("immutable-archive", record["execution_mode"])
+            self.assertEqual("PASSED", record["gates"][0]["status"])
+            self.assertIn("exact satisfied", record["gates"][0]["output_redacted"])
+
+    def test_exact_requirement_mismatch_is_environment_unsatisfied_without_running_gate(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-env-exact-mismatch-") as temporary:
+            workspace = Path(temporary)
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "raise SystemExit(9)\n",
+                requirements="fixture-exact-package==2.0.0\n",
+            )
+            with patch.object(MODULE, "_installed_version", return_value="1.9"):
+                result = MODULE.run_child_quality_gates({"version": 1, "repositories": [repository]}, workspace)
+            record = result["results"][0]
+            self.assertEqual("ENV_UNSATISFIED", record["status"])
+            self.assertEqual("NOT_RUN", record["execution_mode"])
+            self.assertEqual("NOT_RUN", record["gates"][0]["status"])
+            self.assertIn("does not equal required == 2.0.0", record["gates"][0]["error"])
+            self.assertNotIn("SystemExit", record["gates"][0]["output_redacted"])
+
+    def test_per_child_environment_is_used_for_preflight_and_gate(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-per-child-") as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "print('per-child')\n",
+                requirements="fixture-exact-package==1.2.0\n",
+            )
+            python_root, python_executable = make_python_root(root)
+            with patch.object(MODULE, "_installed_version_in_python", return_value="1.2") as installed:
+                result = MODULE.run_child_quality_gates(
+                    {"version": 1, "repositories": [repository]},
+                    workspace,
+                    python_root=python_root,
+                )
+            record = result["results"][0]
+            self.assertEqual("per-child", record["environment_mode"])
+            self.assertEqual("PASSED", record["status"])
+            self.assertEqual("PASSED", record["gates"][0]["status"])
+            installed.assert_called_once_with("fixture-exact-package", str(python_executable))
+
+    def test_missing_per_child_environment_blocks_without_running_gate(self):
+        with tempfile.TemporaryDirectory(prefix="child-gates-per-child-missing-") as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            repository, _observed, _current = make_repo(
+                workspace / "child-one",
+                "raise SystemExit(9)\n",
+            )
+            result = MODULE.run_child_quality_gates(
+                {"version": 1, "repositories": [repository]},
+                workspace,
+                python_root=root / "missing-environments",
+            )
+            record = result["results"][0]
+            self.assertEqual("per-child", record["environment_mode"])
+            self.assertEqual("ENV_UNSATISFIED", record["status"])
+            self.assertEqual("NOT_RUN", record["execution_mode"])
+            self.assertEqual("NOT_RUN", record["gates"][0]["status"])
+            self.assertIn("per-child Python environment is unavailable", record["gates"][0]["error"])
 
     def test_validator_rejects_unexpected_status_and_preserves_schema_remediation(self):
         with tempfile.TemporaryDirectory(prefix="child-gates-validator-") as temporary:

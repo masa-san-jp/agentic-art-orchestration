@@ -17,6 +17,9 @@ v1.0の再現可能な4repo core control planeを基盤に、安全に追加可�
 
 - 依存がすべてDONEである最小IDのREADYタスクを1件選ぶ。
 - READYがなく、依存完了済みBACKLOGがある場合は、最小IDをREADYにする。
+- READYも依存完了済みBACKLOGもない場合は、`.venv/bin/python tools/issue_intake.py`で未登録のopen Issueをread-only観測し、SSOT最低要件を満たすIssueだけを依存関係付きで`task-queue.yaml`へBACKLOG/READY登録するcommitを1つ作る。登録だけを行い、実装は次のtaskで行う。
+
+Issue SSOTの最低要件は、(1)観測可能な受入条件、(2)対象repository、(3)検証コマンド、(4)human gateの有無、の4点である。欠落Issueはqueueへ登録せず、intake reportで`UNQUEUED_NEEDS_SSOT`と不足項目を残す。Issueコメントによる要求はtaskで明示された場合だけ行い、Issue本文全文は親へコピーしない。
 - 原則1タスク1commit。子repo変更が必要なら親と子を別commit・別PRにする。
 - 完了判定はファイルの存在ではなく、acceptanceとchecksの観察可能な結果で行う。
 - セッション記憶を前提にせず、repo内のstateとhandoffだけで再開可能にする。
@@ -34,7 +37,8 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 5. 親checkと変更した各子repoの品質ゲートを実行する。
 6. repoごとのGit状態と差分を個別確認する。
 7. task、判断、発見、commit、テスト、次の開始点を更新する。
-8. leaseを解放する。
+8. `state.yaml`、`handoff.md`、`task-queue.yaml`を含む実行SSOTのcommitを、lease解放前に作業branchからoriginへ通常のfast-forward pushで公開する。force pushと既定branchへの直接pushは禁止し、pushまたはremote確認ができない場合は`UNKNOWN`／未pushを記録してleaseを解放せず停止する。
+9. leaseを解放する。
 
 ## Ownership and authority
 
@@ -77,9 +81,11 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 
 ## Required checks
 
+Fresh cloneでは、まず[README.mdの正準bootstrap](README.md#ブートストラップ検証)を上から実行する。READMEにはrepo内`.venv`の作成と依存関係準備を含める。full suiteまで行う場合は、同じ節のoffline fixture生成を先に完了する。GitHub認証がない場合の子repo確認はREADME記載の`--offline-fixture`経路を使い、システムPythonへ依存関係をインストールしない。
+
 ~~~bash
-python3 tools/validate.py --check
-python3 -m unittest discover -s tests -v
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest discover -s tests -v
 ~~~
 
 workspace実装後は workspace status、audit、変更子repoのmanifest記載commandも実行する。

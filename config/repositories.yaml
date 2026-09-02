@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: 2bb28dc23f45e497e0b36925b314d77e21558dbf
+    observed_commit: 1864fa92dde2bc8f25756bd5e5885268fa4b38fc
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:
@@ -45,7 +45,7 @@ repositories:
     role: input-kb
     authority: art-history entities, relations, evidence, and graph
     default_branch: main
-    observed_commit: 1c0c1734e97f3c56c58a90ba93bc02638a62b947
+    observed_commit: b831f4c57d842f44ad45134a5abd434dc367482f
     instructions: README.md
     requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
     quality_gates:
@@ -83,7 +83,7 @@ repositories:
     role: input-kb
     authority: marketing trends, practices, freshness, evidence, and graph
     default_branch: main
-    observed_commit: d776a2fd1212c6a6c7b99f2fa72dd3b670b89533
+    observed_commit: ff3adca6e52c18095a00c23d39ef2a961ae1d13b
     instructions: README.md
     requirement_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/1
     quality_gates:
@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: 9fca76c47811d80d8a68dd11daba696837616c93
+    observed_commit: 496a2e20b21be6fef4ae415529dba4a863e09680
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
@@ -159,7 +159,7 @@ repositories:
     role: control-plane-extension
     authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
     default_branch: main
-    observed_commit: 030e5d8ead5dae97e4c2fb144fa2118768fcab79
+    observed_commit: 63a1ddf4ed303e01c92023baa4737c68dcd10846
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
     quality_gates:
@@ -191,3 +191,40 @@ repositories:
     exchange_contracts:
       imports: [production-handoff/v1]
       exports: [production-result/v1]
+
+  - id: viewer-response-notes
+    full_name: masa-san-jp/viewer-response-notes
+    url: https://github.com/masa-san-jp/viewer-response-notes.git
+    path: viewer-response-notes
+    role: input-kb
+    authority: aggregate viewer response records, privacy boundary, and conservative requirement assessments
+    default_branch: feat/viewer-response-contracts
+    observed_commit: cf411086b0693bfcde8d034fe27bb7a8d4110222
+    instructions: AGENTS.md
+    requirement_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/2
+    quality_gates:
+      - python3 tools/validate.py --check
+      - python3 -m unittest discover -s tests -v
+    knowledge_profile:
+      answerable_questions:
+        - "What aggregate viewer response evidence exists for a work and requirement?"
+        - "What conservative assessment and required blind/frame review follow from that evidence?"
+      canonical_entities: [viewer-response-record, viewer-response-assessment, research-signal-export]
+      retrieval_entry_points:
+        - {kind: file, locator: README.md, purpose: source scope and privacy boundary}
+        - {kind: directory, locator: records, purpose: append-only aggregate response records}
+        - {kind: file, locator: schemas/viewer-response-assessment.schema.json, purpose: conservative assessment contract}
+      evidence_rules:
+        allowed_kinds: [measured, external, derived]
+        requires_locator: true
+        minimum_quality: derived
+      freshness_rules:
+        policy: explicit
+        allowed_statuses: [current, stale, unknown]
+        revalidation_required: true
+      feedback_owner: viewer-response-notes
+      write_scope:
+        mode: issue-or-draft-pr
+        allowed_paths: [records, assessments, exports, schemas, README.md, AGENTS.md]
+      forbidden_data: [PRIVATE_RAW, RESTRICTED, credential, direct_identifier, free_text, psychological_inference, medical_inference]
+    export_contract: normalized-research-signal/v1

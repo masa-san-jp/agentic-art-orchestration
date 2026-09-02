@@ -143,16 +143,17 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     personal_slot, personal_signal = selected("personal_tension")
     personal_domain = personal_signal.get("domain", {}).get("self_model", {}) if personal_signal else {}
-    personal_evidence = _matching_evidence(candidate, "self", "tensions")
+    personal_attribute = personal_slot.get("attribute") if isinstance(personal_slot, dict) else None
+    personal_evidence = _matching_evidence(candidate, "self", personal_attribute)
     personal_pass = bool(
         personal_signal
         and personal_slot.get("signal_kind") == "self"
-        and personal_slot.get("attribute") == "tensions"
+        and personal_attribute in {"tensions", "recurring_patterns"}
         and personal_signal.get("signal_kind") == "self"
         and personal_signal.get("validity", {}).get("status") == "valid"
         and personal_domain.get("export_permitted") is True
         and personal_domain.get("consent_scope")
-        and personal_domain.get("tensions")
+        and personal_domain.get(personal_attribute)
     )
 
     historical_slot, historical_signal = selected("historical_operation")

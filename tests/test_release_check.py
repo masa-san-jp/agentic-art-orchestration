@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -15,14 +16,121 @@ from tools.release_check import (
     _initial_operations_e2e_check,
     _interaction_e2e_check,
     _production_exchange_check,
+    qualify,
     _sandbox_live_evidence_check,
     _v12_child_quality_gate_check,
     _v12_e2e_check,
+    _pinned_workspace_failure,
+    _observation_provenance,
     validate_request,
 )
+from tools.pinned_workspace import PinnedWorkspaceError
+from tools.validate import load_yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def git(root: Path, *args: str) -> str:
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
+
+def make_pinned_fixture(root: Path) -> tuple[dict, str, str]:
+    root.mkdir(parents=True)
+    git(root, "init", "-q", "-b", "main")
+    git(root, "config", "user.email", "fixture@example.invalid")
+    git(root, "config", "user.name", "Fixture")
+    (root / "marker.txt").write_text("observed\n", encoding="utf-8")
+    git(root, "add", "marker.txt")
+    git(root, "commit", "-q", "-m", "observed")
+    observed = git(root, "rev-parse", "HEAD")
+    (root / "marker.txt").write_text("current\n", encoding="utf-8")
+    git(root, "add", "marker.txt")
+    git(root, "commit", "-q", "-m", "current")
+    current = git(root, "rev-parse", "HEAD")
+    return {"id": "child-one", "path": "child-one", "observed_commit": observed, "quality_gates": ["python3 -c 'print(1)' "]}, observed, current
 
 
 class ReleaseCheckTests(unittest.TestCase):
+    def test_qualification_observation_provenance_preserves_pin_and_unknown_remote(self):
+        result = _observation_provenance(
+            {
+                "repository": "child-one",
+                "observed_commit": "a" * 40,
+                "source_head": "b" * 40,
+                "source_state": "STALE",
+            },
+            "release-check://pinned-workspace/child-one",
+        )
+        self.assertEqual("child-one", result["source_repository"])
+        self.assertEqual("a" * 40, result["source_commit"])
+        self.assertEqual("manifest_pin", result["observed_via"])
+        self.assertEqual("release-check://pinned-workspace/child-one", result["evidence_locator"])
+        self.assertIn("remote_head_not_observed", result["unknowns"])
+        self.assertIn("local_worktree_differs_from_manifest_pin", result["unknowns"])
+        self.assertIsNone(result["local_worktree"]["matches_remote_head"])
+
+    def test_pin_failure_finding_retains_provenance_without_normalizing_missing_evidence(self):
+        report = _pinned_workspace_failure(
+            "1.2.0",
+            1,
+            PinnedWorkspaceError(
+                "pin unavailable",
+                [
+                    {
+                        "repository": "child-one",
+                        "observed_commit": "a" * 40,
+                        "source_head": None,
+                        "source_state": "UNAVAILABLE",
+                        "materialized_state": "NOT_RUN",
+                        "reason": "observed commit is unavailable",
+                    }
+                ],
+            ),
+        )
+        finding = report["pinned_workspace"]["findings"][0]
+        self.assertEqual("child-one", finding["source_repository"])
+        self.assertEqual("a" * 40, finding["source_commit"])
+        self.assertTrue(finding["evidence_locator"].startswith("release-check://"))
+        self.assertIn("local_worktree_head_unavailable", finding["unknowns"])
+        self.assertIsNone(finding["local_worktree"]["head"])
+
+    def test_qualification_uses_materialized_pin_instead_of_source_head(self):
+        with tempfile.TemporaryDirectory(prefix="release-pinned-source-") as temporary_name:
+            source_root = Path(temporary_name) / "sources"
+            repository, observed, current = make_pinned_fixture(source_root / "child-one")
+            captured: dict[str, object] = {}
+
+            def fake_qualify(
+                version,
+                runs,
+                workspace_root,
+                github_sandbox_evidence,
+                pinned_observations=None,
+                python_root=None,
+                child_timeout_seconds=60,
+            ):
+                captured["head"] = git(Path(workspace_root) / "child-one", "rev-parse", "HEAD")
+                captured["marker"] = (Path(workspace_root) / "child-one" / "marker.txt").read_text(encoding="utf-8")
+                captured["observations"] = pinned_observations
+                captured["python_root"] = python_root
+                captured["child_timeout_seconds"] = child_timeout_seconds
+                return {"status": "PASSED"}
+
+            with patch("tools.release_check.V12_MANIFEST", Path(temporary_name) / "manifest.yaml"), patch(
+                "tools.release_check.load_yaml", return_value={"repositories": [repository]}
+            ), patch("tools.release_check._qualify", side_effect=fake_qualify):
+                result = qualify("1.2.0", 1, source_root)
+
+            self.assertEqual({"status": "PASSED"}, result)
+            self.assertEqual(observed, captured["head"])
+            self.assertEqual("observed\n", captured["marker"])
+            self.assertEqual(current, git(source_root / "child-one", "rev-parse", "HEAD"))
+            self.assertEqual("STALE", captured["observations"][0]["source_state"])
+            self.assertIsNone(captured["python_root"])
+            self.assertEqual(60, captured["child_timeout_seconds"])
+
     def test_active_python_uses_virtualenv_interpreter_when_available(self):
         active = Path(_active_python())
         self.assertTrue(active.is_file())
@@ -120,7 +228,8 @@ class ReleaseCheckTests(unittest.TestCase):
             "child_mutations": [],
         }
         child_results = []
-        for index in range(5):
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
+        for index, repository in enumerate(manifest["repositories"]):
             commit = f"{index + 1:040x}"
             child_results.append(
                 {
@@ -129,7 +238,7 @@ class ReleaseCheckTests(unittest.TestCase):
                     "workspace_commit": commit,
                     "observed_commit": commit,
                     "execution_mode": "immutable-archive",
-                    "gates": [{"status": "PASSED"}] * (2 if index == 4 else 3),
+                    "gates": [{"status": "PASSED"}] * len(repository["quality_gates"]),
                 }
             )
         with patch("tools.release_check.run_exchange_e2e", return_value=exchange), patch(

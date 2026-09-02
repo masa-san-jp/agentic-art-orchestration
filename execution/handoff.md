@@ -1,13 +1,100 @@
 # Handoff
 
+## HARNESS-BOOTSTRAP-001 completed
+
+- Issue SSOT: [agentic-art-orchestration#113](https://github.com/masa-san-jp/agentic-art-orchestration/issues/113)。fresh cloneの最初の検証経路をrepo内`.venv`へ統一し、READMEを正準bootstrapの単一入口にした。
+- 変更: [README.md](../README.md)にGit/python3だけの前提、`gh auth login`と`--offline-fixture`の分岐、逐語4行、fresh-clone用の一時fixture materialization列を追加。`AGENTS.md`と[operator runbook](../docs/operator-runbook.md)はREADMEを参照し、検証コマンドを`.venv/bin/python`へ統一した。`tests/test_docs.py`に文書回帰テストを追加した。
+- Acceptanceは3/3。fresh cloneでvenv作成、依存関係導入、validator PASS、unique fixture rootによるnetworkless生成、materialized full suite `379/379 PASS`を確認した。親repoではvalidator PASS、文書focused `7/7 PASS`、full suite `380/380 PASS`、snapshot check、diff checkがPASSした。
+- 子repo、Issue/Drive、CI、merge、release、push、生成物の正本は変更していない。raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。explicit/inferred feedbackはnone。
+- README生成ステータスは最終state反映後に`project_status.py --update-readme`と`--check-readme`で同期する。親実装・初回record commitは`887d043`。
+
+### Next exact action
+
+1. `HARNESS-INTAKE-001` / Issue #114をclaimし、最初に`.venv/bin/python tools/validate.py --check`を実行する。
+
+## HARNESS-INTAKE-001 completed
+
+- Issue SSOT: [agentic-art-orchestration#114](https://github.com/masa-san-jp/agentic-art-orchestration/issues/114)。空queueで合法的に停止しないための第三のtask-selection ruleと、Issue SSOT最低要件（観測可能な受入条件・対象repository・検証コマンド・human gate）を追加した。
+- 変更: [issue_intake.py](../tools/issue_intake.py)と[issue-intake-report.schema.json](../schemas/issue-intake-report.schema.json)が、open Issueの番号・タイトル・URL、queue登録状態、4項目の品質判定、推奨アクションだけを決定論的に出力する。Issue本文全文、Git、Issue、queueへのread-only report処理による書き込みは行わない。
+- 初回適用: 2026-09-01観測の38件をfixtureで再現し、登録前にSSOT品質を満たした#117を`HARNESS-PR-TRIAGE-001`として1回だけBACKLOG登録した。登録後は22件queued、16件`UNQUEUED_NEEDS_SSOT`、qualified unqueued 0件となった。登録前report SHA-256は`ffa1f27d`、最終queue反映後reportは`cbbd7142`、queue SHA-256は`869a6d36`。
+- Acceptanceは4/4。Issue intake `6/6 PASS`、docs+intake `13/13 PASS`、親validator PASS、親full suite `386/386 PASS`、diff check PASS。live `gh issue list`はネットワーク unavailableだったためfixture経路を採用し、Issueコメントや外部artifactは作成していない。
+- 子repo、Drive、CI、merge、release、push、credential、raw conversation、PRIVATE_RAW、RESTRICTED、direct identifierは変更していない。explicit/inferred feedbackはnone。
+- 親実装・初回record commitは`a631040`。最終state record commitはこの後に行う。
+
+### Next exact action
+
+1. `HARNESS-SSOT-PUSH-001` / Issue #115をclaimし、最初に`.venv/bin/python tools/validate.py --check`を実行する。pushはIssue #115の許可範囲（対象branchのfast-forwardのみ）に限定する。
+
+## ISSUE-39-KB-PIPE-001 completed
+
+- Parent-owned `normalized-research-signal-bundle/v1` contract and validator are present in `schemas/normalized-research-signal-bundle.schema.json` and `tools/signal_bundle.py`.
+- `tools/input_pipeline.py` connects the bundle to consumer import, candidate generation, candidate gates, seeded selection, and proposition provenance. It does not copy child schemas or write child repositories.
+- Focused tests currently pass: bundle determinism/provenance, mixed-commit rejection, tamper rejection, and full pipeline determinism.
+- Evidence: `.venv/bin/python tools/validate.py --check` passed; final full parent suite passed 303/303; focused bundle/pipeline tests passed; bundle and input-pipeline CLI outputs were byte-identical across repeated runs.
+- No child repository, Issue, Google Drive, or user artifact was changed. Next operation is the separate `ISSUE-41-RESEARCH-REQUEST-001` validation task.
+
+## ISSUE-41-RESEARCH-REQUEST-001 in progress
+
+- `tools/research_request.py` derives the child-owned request shape from the selected candidate and canonical bundle, retaining opaque references and source commit metadata only.
+- `tools/research_start.py` composes the parent pipeline and invokes the pinned Research acceptor in `--dry-run` mode; it has no apply path.
+- Next operation: run the focused request tests and child dry-run, then inspect the child Git status for zero mutation.
+
+## ISSUE-41-RESEARCH-REQUEST-001 completed
+
+- `.venv/bin/python -m unittest tests.test_research_request -v`: 2/2 passed.
+- `tools/research_start.py` produced `research_acceptance.status=DRY_RUN` through the sibling Research acceptor after resolving `research_root/.venv/bin/python`; no Research project was created.
+- Research child status before/after: `main...origin/main`, clean. Next operation is the read-only pin adoption qualification task.
+
+## ISSUE-40-PIN-ADOPTION-001 implementation notes
+
+- `tools/qualify_pin_update.py` observes workspace HEADs, builds a copied candidate manifest, runs child quality gates and Production exchange, and writes only an external report during qualification.
+- `apply_qualified_pins` re-reads the candidate and refuses to apply if the workspace changed after qualification. The separate adoption was applied only to the parent branch and recorded in `3813145`; no child repository was changed.
+- Next operation: record the verified-workspace PASS and offline-fixture BLOCK/FAIL evidence, then release the lease.
+
+## ISSUE-40-PIN-ADOPTION-001 completed
+
+- `tests.test_pin_update`: 3/3 passed.
+- Verified temporary GitHub main workspace: child quality gates `5/5 PASSED`, Production exchange `PASSED`, candidate changes `5`; the qualification was repeated with `--apply` and changed only the five parent `observed_commit` lines.
+- Adopted pins: self-model `fda3e29c76ba8fbd40ee6946589d6789029d92d6`, art-history `b831f4c57d842f44ad45134a5abd434dc367482f`, marketing-trends `ff3adca6e52c18095a00c23d39ef2a961ae1d13b`, Research `d947fdd14abeb700af9a62abcf27c21f3f12e134`, Production `51a817c8fcfe292069b85717f5e973b1e860bd4b`.
+- Offline fixture was rejected because its synthetic child archives do not contain the real child dependencies/tools; this remains a failed candidate, not a normalized success.
+- Next operation: inspect and qualify the real-chain CI workflow for Issue #38. Child PR #41 and #19 are already merged; the remaining external gate is private-repository Actions access.
+
+## ISSUE-38-REAL-CHAIN-CI-001 in progress
+
+- `.github/workflows/validate.yml` adds a read-only `real-chain` job for all five child repositories and invokes `tools/qualify_pin_update.py` without `--apply`.
+- `tests/test_real_chain_ci.py` asserts all child refs, full history, read-only permissions, qualification command, and absence of pin adoption.
+- The real-chain job is expected to remain red until the external read-only Actions credential is configured; no merge or release is being performed by this task.
+- Remote CI evidence found an additional external blocker: all five child repos are PRIVATE and the parent Actions `GITHUB_TOKEN` cannot read them (`Repository not found` on the first checkout). The workflow now fails explicitly unless `AAP_CHILD_REPOS_TOKEN` is configured as an external read-only Actions secret; no credential was committed or created.
+
 ## Current state
 
 - 完了: M0からM11、`MANIFEST-PRODUCTION-002`、`OPS-DESIGN-001`、`V121-RECONCILE-001`。v1.2.0はrelease済み、Production onboarding PR #15はmainへmerge済み。
 - 完了: v1.2.1基線化実装。release checker、親runnerのactive virtualenv解決、5repo表記、runbook、state/handoffを更新済み。
-- 次: `V121-QUALIFY-001`（READY、依存完了済み、3回qualification）。
-- blocker: なし
-- active lease: なし
+- 次: `ISSUE-38-REAL-CHAIN-CI-001`（外部Actions secret設定後の再実行）。
+- blocker: PRIVATE child repoを読む`AAP_CHILD_REPOS_TOKEN`が未設定。
+- active lease: `ISSUE-38-REAL-CHAIN-CI-001`
 - 親repo: `design/initial-operations-roadmap` / `ea18918`開始点 / working treeは意図したtask差分のみ
+
+## ISSUE-38 latest qualification evidence
+
+- Parent branch head is `6024028bb4654f9d7c04172c9bcc93d053c7a54`; checkout steps use the external token and `persist-credentials: false` for all five private child repositories.
+- GitHub Actions run [31794633013](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/31794633013) detected the stale art-history reference fixture in `bootstrap` and stopped `real-chain` at the explicit preflight because `AAP_CHILD_REPOS_TOKEN` is unset. Both failures are fail-closed; no checkout or child mutation occurred.
+- The stale fixture references were synchronized to the qualified art-history commit; the parent full suite `303/303` and validator now pass locally.
+- No credential was created, retrieved, or committed. The next operation remains external secret configuration by a repository administrator, followed by a PR check rerun.
+
+## Child repository PR review
+
+- `art-history-notes` PR #349 was reviewed and corrected at `c4a81f05304cc9483d1a3378e03df2f25fbd27f2`; its child GitHub quality gate was PASS and it merged as `b831f4c57d842f44ad45134a5abd434dc367482f`.
+- The parent pin was requalified against all five current child mains: child gates `5/5 PASSED`, Production exchange `PASSED`, and only the art-history `observed_commit` changed from `b914b6989b025e2caa9d7fc49149d787da99f798` to `b831f4c57d842f44ad45134a5abd434dc367482f`.
+- The parent PR remains blocked only by the external private-repository Actions credential; no other child repository was changed.
+
+## 2026-08-14 issue/PR recheck
+
+- Parent Issues #43〜#51 are new follow-up decisions/tasks and are not represented in the current parent `execution/task-queue.yaml`; they must not be silently mixed into the Issue #38 PR.
+- `agentic-art-research` PR #42 is `CONFLICTING` with current `main` (`d947fdd`) and its `records`/`record_sha256` contract conflicts with parent Issue #43's declared `references`/`record_hash` decision. Its isolated branch validator and 120 tests pass, but it is not merge-ready.
+- `agentic-art-production` PR #21 is `CONFLICTING` with current `main` (`51a817c`) and depends on the same source-reference naming. Its isolated branch validator, tests, and diff check pass, but it is not merge-ready until the Research contract is settled and current main is incorporated.
+- `art-history-notes` PR #349 is merged as `b831f4c`; the parent pin and reference fixtures were requalified and synchronized.
+- Reviews and exact unblock conditions were recorded on parent PR #42, Research PR #42, and Production PR #21. No other child merge, parent merge, release, Issue close, Drive mutation, or credential operation was performed.
 
 ## MANIFEST-001 evidence
 
@@ -543,6 +630,13 @@
 - 変更子repo: なし。子repo品質ゲート: 対象なし。子repoのIssue、schema、canonical data、Google Drive、GitHub remote operationは変更していない。機微情報findingなし。
 - acceptance: 1/1達成。leaseを解放し、最低IDの依存完了済み`V12-CHILD-GATES-001`をREADYへ進めた。
 
+## 2026-09-01 continuation observation
+
+- queue/state確認後、Issue本文を取得せず、GitHubの番号・タイトル・URL相当のmetadata-only件数を7repoでread-only観測した。open Issueは親38、Production 1、viewer 1、self-model/art-history/marketing-trends/Research 0だった。
+- Production #10とviewer #2はmanifestに記録済みの要件SSOTであり、新しい実装taskではない。新規qualified implementation Issueは0件。Issue bodyは読まず、Issue create/update/comment/close/labelは行っていない。
+- したがってqueue登録・実装は行わず、16件の`UNQUEUED_NEEDS_SSOT`は観測事実のまま保持する。既存のhuman gate（#116 secret/green run、PR merge判断）も変更しない。
+- 記録commitは`fcc0a3dc4bbc426a1bba8c8267e659e57a6582ee`で、作業branchへ通常push済み。`validate.py`、project-status、audit check、workspace status、diff checkはPASS（auditは既知のmarketing freshness warning 1件）、6つのfixture child checkoutは全件clean・main・ahead/behind 0。PR #42はdraftのままで、merge/releaseは未実行。
+
 ## Next exact action
 
 1. `V12-PROVENANCE-001`をclaimし、Research Propositionからselection decision、candidate、rule、normalized signal、source commit、evidence locatorまでの逆引きtraceを実装する。最初の操作は`.venv/bin/python tools/validate.py --check`。
@@ -927,3 +1021,625 @@
 - `config/github-sandbox-live-policy.yaml`に`post_create_search`の有限リトライ設定を追加。既定は最大5回、2秒開始、倍率2、最大16秒。CREATE直後の検索だけを対象にし、既存Issueの初回検索は変更しない。
 - 各再試行はmetadata-onlyのREAD証跡（attempt番号付き）として保持し、単一Issueが見つかったときだけ`REUSE`を記録する。上限まで見つからなければ`BLOCKED`のままにして、作成成功を資格成功へ誤変換しない。
 - fixtureではsleepを注入して実時間待ちなしに遅延・上限到達を検証した。release判定は固定4操作列ではなく、`READ → CREATE → READ* → REUSE`かつCREATE一回を受け入れる。
+
+## GAP-DAG-001 execution
+
+- 2026-08-25 15:08 JST、期限切れの `ISSUE-38-REAL-CHAIN-CI-001` leaseを履歴として保持したまま解放扱いにし、GAP-DAG-001をclaimした。ローカルは `agent/issues-38-41-pipeline` のclean tree、開始点は `a9d1656`。remote mainのreal-chain成功run `32797739061`をread-onlyで確認し、旧AAP_CHILD_REPOS_TOKEN blockerを再実装しない。
+- 対象は `tools/validate.py`、`tests/test_validate.py`、`execution/task-queue.yaml`、`execution/state.yaml`、`execution/handoff.md`、`PLANS.md`。子repo、GitHub Issue/PR、Drive、credential、external artifactは変更しない。
+- 親Issue #107のDAGに従い、Issue SSOT URL、target repository、agent terminalの3 fieldを新規24 taskへ付け、`INITIAL-OPS-QUALIFY-001`をPROJECT-STATUS-001依存のBACKLOG、`INITIAL-OPS-RELEASE-001`をhuman-gate BLOCKEDへ遷移させる。
+- queue validatorはcanonical Issue URL、manifest target、許可terminal、重複target、authority不一致、欠落metadata、DAG cycleを拒否する。旧taskへmetadataをbackfillしない。
+- 旧 `ISSUE-38-REAL-CHAIN-CI-001` は、remote main run `32797739061` がbootstrap/production-exchangeのみ成功し、旧real-chain jobを観測できなかったため、DONEへ推測せずBLOCKEDへ隔離した。再ベースラインは別Issueで扱う。
+- `.venv/bin/python tools/validate.py --check`、`tests.test_validate` 11/11、親全体 305/305、`git diff --check` は通過。24件のIssue SSOT taskを登録し、queue上のREADYは `V14-SANDBOX-ATTEMPT-001` 1件だけであることを確認した。
+- GAP-DAG-001 は lease released、`last_completed_task` に記録済み。次の再開点は `V14-SANDBOX-ATTEMPT-001`、最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v`。live CREATEは別Issueの明示スコープと外部権限が揃うまで実行しない。
+- 実装commitは `7486320`。この完了記録を含むrecord commitは最終HEADとして引き渡し、SHAは `git rev-parse HEAD` で取得できる。子repo、GitHub Issue/PR、Drive、credential、external artifactに変更なし。
+
+## V14-SANDBOX-ATTEMPT-001 in progress
+
+- 2026-08-25 15:28 JST、`V14-SANDBOX-ATTEMPT-001` をclaimした。開始点は `789b728`、対象はIssue #101が指定する5ファイルと親state/queue/handoff。GAP-DAG完了後のactive leaseは存在せず、子repo・Issue・Drive・credentialは未変更。
+- Issue #101の固定条件は、live `--attempt-id`必須、許容形式 `^[a-z0-9][a-z0-9._-]{0,63}$`、dedup key `initial-operations-github-sandbox-v1:<attempt-id>`、approved repository `masa-san-jp/agentic-art-sandbox-2`、CREATE最大1件である。
+- 最初の操作は `.venv/bin/python -m unittest tests.test_github_sandbox_live_check -v`。networklessの現状を確認後、同一attempt-idのREUSEと別attempt-idのCREATEをfixtureで検証し、外部liveは確認済みの専用sandboxに限定する。
+
+## V14-SANDBOX-ATTEMPT-001 completed
+
+- attempt-scoped contractを `config/github-sandbox-live-policy.yaml`、`tools/github_sandbox_live_check.py`、`tests/test_github_sandbox_live_check.py`、`docs/operator-runbook.md`へ実装した。live `--attempt-id`は `^[a-z0-9][a-z0-9._-]{0,63}$` を要求し、dedup keyは `initial-operations-github-sandbox-v1:<attempt-id>`、evidence hashは完全なdedup keyのSHA-256になった。schema versionは変更していない。
+- fixtureで別attempt 2件は各CREATE一件、同一attempt再実行はREUSE・追加CREATE 0件。attempt-idなしliveは外部READ前にexit 2、不正attempt-idもprovider READ前に拒否、production repositoryはCREATE前に拒否した。
+- approved sandbox `masa-san-jp/agentic-art-sandbox-2` のread-only preflightはPASS。外部資格証跡はkeyringのGitHub CLIからのみ利用し、tokenを表示・環境変数へexport・Git保存していない。
+- dedicated sandboxの実測は Issue #2、attempt `v14-20260825-ghcli-1`、検索結果1件。外部操作は `READ → CREATE → READ → REUSE`、CREATE件数1。同じattemptの再検索は `REUSE`、追加CREATE 0件。証跡は `/tmp/github-sandbox-live-v14-20260825-ghcli-1.json`、schemaとrelease evidence validatorはPASS。evidenceにはrepository full name、Issue本文、credential、tokenを保存していない。
+- 直接のPython CLIはkeyring tokenを `GH_TOKEN` へ安全に受け渡せない環境だったため、外部CREATE/READ自体は認証済み `gh api` providerで行い、実装済み `run_check` を観測済みIssue refで検証した。追加の外部CREATEは行っていない。
+- checks: `tools/validate.py --check` PASS、focused 13/13 PASS、回帰 30/30 PASS、親全体 308/308 PASS、`git diff --check` PASS。子repo変更はなく、child quality gateは対象なし。
+- implementation commit: `e5158e5`。merge、release、PR作成は行わず、terminal `EVIDENCE_READY` の状態で停止した。
+- V14 sandbox leaseをreleasedし、次のREADYは `V14-CHILD-PREFLIGHT-001`。次の最初の操作は `.venv/bin/python tools/validate.py --check`。
+
+## V14-CHILD-PREFLIGHT-001 in progress
+
+- 2026-08-25 15:40 JST、`V14-CHILD-PREFLIGHT-001`をclaimした。開始点は`79e3a15`、対象は親のchild quality-gate runner、schema、validator、focused tests、runbook、および実行状態記録。子repo、GitHub Issue/PR、Drive、credentialは変更しない。
+- Issue #68の完了条件は、子repo archiveの`requirements.txt`をゲート実行前に検査し、依存欠落・下限未達を`ENV_UNSATISFIED`として記録してゲートを実行せず、remediationを残すこと。依存がないrepoは従来どおり実行し、依存充足時の挙動を変えない。
+- 最初の検証は`.venv/bin/python -m unittest tests.test_child_quality_gates -v`。実装後はvalidator、親全体テスト、workspace status/audit、diffを実行し、子repo変更がないことを確認する。
+
+## V14-CHILD-PREFLIGHT-001 completed
+
+- `tools/child_quality_gates.py`がimmutable archive展開後・gate実行前に`requirements.txt`を検査する。distribution name、任意の`>=`下限、コメント・環境marker無視だけを扱い、依存解決や自動installはしない。未導入・下限未達・未対応形式は`ENV_UNSATISFIED`、`execution_mode=NOT_RUN`、全gate`NOT_RUN`、`pip install --user -r <child-path>/requirements.txt` remediationとして記録する。
+- `schemas/child-quality-gates.schema.json`、research execution boundary、validator、pin qualification summaryを新statusに接続した。runbookには判定、再実行手順、子repo requirements SSOTの扱いを追記した。
+- fixture結果: missing dependency `ENV_UNSATISFIED`、lower-bound不足 `ENV_UNSATISFIED`、充足依存 `PASSED`かつimmutable archive gate実行。focused child/boundary 13/13、親全体311/311、validator PASS、diff check PASS。
+- workspace statusは5 repositoriesすべて`main`・clean・ahead/behind 0、security PASS。auditは既知のmarketing freshness warning 1件のみ。既存のqualified evidence 5/5 repositories・14/14 gates PASSを保持した。
+- 親の生成offline fixtureでの実manifest gate再実行は、observed commit object不在のため5件`BLOCKED`。これはpinを更新せず記録した。子repo、GitHub Issue/PR、Drive、credential、merge、releaseは変更していない。
+- acceptance: 1/1。leaseをreleaseし、次のREADYを`V14-PIN-RELEASE-CHECK-001`へ進めた。
+- implementation commit: `426a8b3`。完了記録は後続の親repo record commitへ反映した。
+
+## Next exact action
+
+1. `V14-PIN-RELEASE-CHECK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## V14-PIN-RELEASE-CHECK-001 in progress
+
+- 2026-08-25 15:58 JST、`V14-PIN-RELEASE-CHECK-001`をclaimした。開始点は`143c69b`、Issue #85の対象は親repoのrelease qualificationとpinned workspace経路。子repo、GitHub Issue/PR、Drive、credentialは変更しない。
+- Issue #85の完了条件は、`production-exchange`と`v1.2-e2e`を実クローンのHEAD/dirty/detached状態ではなくmanifest pinから実体化したworkspaceで実行し、遠隔pin遅延はfindingとして保持すること。
+- 最初の検証は`.venv/bin/python -m unittest tests.test_release_check tests.test_pinned_workspace -v`。実装後はvalidator、親全体テスト、release qualification関連テスト、workspace/audit、diffを実行する。
+
+## V14-PIN-RELEASE-CHECK-001 completed
+
+- `tools/pinned_workspace.py`を追加し、manifest各entryをsource checkoutから`git clone --no-local`した後、exact `observed_commit`へdetachするGit外一時workspaceを実装した。sourceのHEAD先行、dirty、detached状態を観測するが、source checkoutは変更しない。
+- `tools/release_check.py`のv1.2.0以降をpin workspace経路へ切り替えた。pin unavailable時はqualificationをFAILEDにし、repository、exact observed commit、source state、reasonを`pinned_workspace`とcheckへ記録する。成功時もsource driftをfindingとして保持し、新HEADへ追随しない。
+- v1.2 child gate checkとproduction child gate summaryに、repository、observed/workspace commit、workspace state、execution mode、gate statusesを追加した。
+- fixtureでadvanced・dirty・detachedの3状態が同じobserved commitへ実体化されること、source mutation=false、unavailable pinがfail-closedになることを確認した。focused 16/16、親全体315/315、validator PASS、diff check PASS。
+- workspace statusは5 repositoriesすべて`main`・clean・ahead/behind 0、security PASS。auditは既知のmarketing freshness warning 1件。生成offline fixtureの実manifest qualificationはpin object不足でBLOCKED_EXPECTEDとして記録し、pin更新やchild mutationは行っていない。
+- acceptance: 1/1。leaseをreleaseし、次のREADYを`V14-OBSERVATION-PROVENANCE-001`へ進めた。
+- implementation commit: `37883f3`。完了記録は後続の親repo record commitへ反映する。
+
+## Next exact action
+
+1. `V14-OBSERVATION-PROVENANCE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## V14-OBSERVATION-PROVENANCE-001 in progress
+
+- 2026-08-25 18:48 JST、`V14-OBSERVATION-PROVENANCE-001`（Issue #56）をclaimした。開始点は`22404ad`、対象は親repoのみ。子repo、GitHub Issue/PR、Drive、credential、pin、external artifactは変更しない。
+- Issue #56の決定を、qualification reportのfinding、execution stateの再実行command、横断契約、decision Issue templateへ反映する。pin、remote HEAD、local worktreeを同一視せず、欠落証拠をunknownとして保持する。
+- 実装後のfocused testsは34/34、親全体は320/320、validatorと`git diff --check`はPASS。workspaceは5 repositoriesすべて`main`・clean・ahead/behind 0、securityはPASS。auditは既知のmarketing freshness warning 1件のみで、audit再生成後の`--check`はPASS。
+
+## V14-OBSERVATION-PROVENANCE-001 completed
+
+- `tools/release_check.py`のpinned workspace observations、child gate observations、pin materialization failure findingsへ、`repository` / `observed_ref` / `observed_via` / `observed_at` / `source_repository` / `source_commit` / `evidence_locator` / `unknowns`を追加した。manifest pinをsource checkoutやremote HEADへ置換せず、local worktreeとremote HEADの未観測を明示する。
+- `tools/validate.py`が`execution/state.yaml`内の全`command`を再帰的に検査し、interpreter・workspace・outputの絶対パスを拒否する。過去の一時環境利用は`historical_provenance`として`NOT_REPLAYABLE`で残し、再実行commandは`.venv`、`repos`、`data`のrepo相対表記へ修正した。
+- `docs/cross-repository-contract.md`に4必須項目と3値の`observed_via`、missing evidenceの扱い、pin/remote/local区別を追加し、`.github/ISSUE_TEMPLATE/decision.yml`に同じprovenance表と入力欄を追加した。
+- acceptance: 1/1。親validator、focused 34/34、親全体320/320、audit check、security、workspace status、diff checkを確認した。子repo品質ゲートは対象なし。
+- 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、Drive artifactは保存・送信していない。GitHub Issue/PR、child repository、pin、merge、releaseは変更していない。
+- implementation commit: `1707190`。完了記録は次の親repo record commitへ反映する。
+
+## Next exact action
+
+1. `PROJECT-STATUS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## PROJECT-STATUS-001 in progress
+
+- 2026-08-25 19:11 JST、`PROJECT-STATUS-001`（Issue #100）をclaimした。開始点は`bb886f8`。queue/stateを正本として、project-status schema/tool、専用tests、README marker、PLANS/実行計画の参照、validator、CI checkを対象にする。
+- Issue #100の外部GitHub API・子repo・merge/releaseは対象外。会話全文、推定feedback、Drive artifact、credentialは扱わない。
+
+## PROJECT-STATUS-001 completed
+
+- `schemas/project-status.schema.json`と`tools/project_status.py`を追加し、queue/stateのSHA-256、status件数、current、依存解決済みREADY、BLOCKED理由、next task、state更新日時を`project-status/v1`として決定的に出力する。
+- READMEのmarker内だけを生成・checkし、marker外の本文を保持する。PLANS/実行計画はqueue/stateと生成コマンドを参照し、CIに`python3 tools/project_status.py --check-readme`を追加した。
+- unknown task reference、DONE current、READY未完了dependency、duplicate ID、counts mismatchをexit 2または検証エラーとして拒否する。`INITIAL-OPS-QUALIFY-001`をREADYへ進めた。
+- acceptance: 8/8。focused 7/7、親validator PASS、親全体327/327、README check PASS、diff check PASS。子repo・pin・GitHub Issue・Drive・credential・merge・releaseは変更していない。
+- implementation commit: `e70eef9`。完了記録はこのrecord commitへ反映する。
+- 次のtaskは`INITIAL-OPS-QUALIFY-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
+
+## INITIAL-OPS-QUALIFY-001 in progress
+
+- 2026-08-25 19:23 JST、`INITIAL-OPS-QUALIFY-001`をclaimした。開始点は`d84f465`。対象はread-only v1.4.0 qualification、既存sandbox evidence、qualification report、state/handoff/queue/READMEのみ。子repo、pin、GitHub Issue、Drive、credential、merge、releaseは変更しない。
+- acceptanceはverified manifest-pinned workspaceからの3-run総合qualificationを要求する。生成offline workspaceのpin object不足をPASSへ昇格せず、観測結果と解除条件を記録する。
+
+## INITIAL-OPS-QUALIFY-001 blocked
+
+- `.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root repos --github-sandbox-evidence /tmp/github-sandbox-live-v14-20260825-ghcli-1.json --output data/release-check-v14.json`をread-onlyで実行した。`runs=3`、`status=FAILED`、`blocking_check=pinned-workspace-materialize`、5/5 repositoryのobserved commit unavailable、child gate/historyは`NOT_RUN`だった。
+- report SHA-256は`72c6da4e12b43b35c209f3bb9c8b4f1f84d0f2e72a64e12f436aabdbeaad1ee6`。source mutation=false、network disabled、remote_operations=[]、merge/tag/releaseは未実行。sandbox evidenceは既存のattempt-scoped証拠として保持した。
+- verified manifest-pinned workspaceがないためacceptanceは未達。pin update、remote fetch、child checkout変更、GitHub Issue/Drive/credential、merge/releaseは行わず、queue taskを`BLOCKED`へ遷移した。
+- 観測事実: generated offline source checkoutのHEADはcleanだが、manifest observed commitが5repoすべてsource objectとして存在しない。解除条件: 全manifest observed_commitを含むread-only verified workspaceを用意し、同じ3-run qualificationを再実行する。
+- 親validator PASS、親全体327/327、workspace 5repo clean、security PASS、audit check PASSを確認した。acceptance: 0/1（qualification入力がblockedのため）。
+
+## V14-RECONCILE-001 in progress
+
+- 2026-08-25 19:04 JST、`V14-RECONCILE-001`（Issue #67）をclaimした。開始点は`4ba02c6`、対象は親repoのREADME、PLANS、実行計画、queue、state、handoff。子repo、pin、GitHub Issue本文、Epic、Drive、credentialは変更しない。
+- Issue #67の作成時点のv1.4総合PASSを未観測のまま採用せず、現行stateの事実（v1.2.1/v1.3.0 release済み、v1.4 offline aggregate済み、sandbox live evidence済み、総合qualification再実行待ち、release human gate）を各local SSOTへ反映する。
+
+## V14-RECONCILE-001 completed
+
+- READMEをv1.2.1 baseline/v1.3.0 Production exchange release済み、v1.4実装・offline aggregate・sandbox evidence済み、総合qualificationとreleaseは未完了という現在地へ更新した。
+- 実行計画のM12/M13を完了、M14を実装済み・qualification/release未完了、M15を目的ギャップ実装継続として更新した。PLANSも同じ現在地と次taskへ揃えた。
+- queueでは`V14-RECONCILE-001=DONE`、`PROJECT-STATUS-001=READY`へ遷移した。stateにはv1.4のoffline aggregate、sandbox evidence、qualification再実行待ち、human gate、外部Issue更新未実施を明示した。
+- Issue #67が要求するEpic/Issue外部書込みはowner approvalが明示されていないため行わなかった。子repo、child pin、Drive artifact、credential、merge、releaseも変更していない。
+- acceptance: 1/1。親validator、親全体320/320、workspace status、security、audit check、diff checkを確認した。次のtaskは`PROJECT-STATUS-001`、最初の操作は`.venv/bin/python tools/validate.py --check`。
+- implementation commit: `14d6daa`。完了記録はこのrecord commitへ反映する。
+
+## INITIAL-OPS-QUALIFY-001 reattempt blocked
+
+- 2026-08-25 19:59 JST、read-only GitHub CLI認証を使って一時の検証workspaceを構築し、manifestの5つのexact observed_commitをすべて実体化した。5/5 repositoriesはclean・detached・exact pin MATCHEDで、source mutationはfalseだった。
+- `.venv/bin/python tools/release_check.py --version 1.4.0 --runs 3 --workspace-root <verified-child-workspace> --github-sandbox-evidence /tmp/github-sandbox-live-v14-20260825-ghcli-1.json --output data/release-check-v14.json`相当を実行した。report SHA-256は`2b553dc35ccffe622adcb1759de00f5bf8ab58f66a7ab441fb66294f6d13bade`。
+- child quality gateはresearch、art-history、self-modelの3/5 repositoriesがPASSした。一方、agentic-art-productionの`PyYAML==6.0.2`/`jsonschema==4.23.0`とmarketing-trendsの`PyYAML==6.0.3`は現行preflightの未対応形式で、両repoは`ENV_UNSATISFIED`、gateはNOT_RUNとなった。これによりv1.2 E2EとProduction exchangeはFAILED、総合qualificationのacceptanceは0/1。
+- initial-operations E2Eは3/3 PASS、既存のopt-in GitHub sandbox evidenceもPASSだった。remote_operationsは空で、今回のDrive/GitHub Issue/child repo/pin/merge/tag/releaseのwriteは行っていない。
+- remediationは、exact requirementを扱う親preflight contract変更または子repo SSOT変更についてownerが決定・承認した後、同じ検証workspaceから再qualificationすること。依存の自動install、子reporequirementsの無断編集、pin更新は行わない。
+- 親validator・親tests・workspace status・audit・securityを再確認してからこの記録をcommitする。次の最初の操作は、承認済み契約変更後に`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## V14-CHILD-PREFLIGHT-EXACT-001 completed
+
+- Issue #68の親runner契約を補完し、requirementsのbounded syntaxとしてdistribution name、numeric `>=`、numeric `==`を認識するよう`tools/child_quality_gates.py`を更新した。exact version mismatchも`ENV_UNSATISFIED`・`NOT_RUN`・remediationとして保持し、自動installは行わない。
+- `tests/test_child_quality_gates.py`にexact versionの充足実行と不一致停止を追加し、runbookを更新した。focused child tests 10/10、親全体329/329、validator PASS、diff check PASS。implementation commitは`df46ce7`。
+- 固定commit workspaceのchild gate再実行ではresearch、art-history、marketing-trends、self-modelの4/5 repositoriesがPASSした。agentic-art-productionだけはインストール済みPyYAML 6.0.3がchild SSOTの`PyYAML==6.0.2`と不一致のためENV_UNSATISFIED、3 gateはNOT_RUNとなった。
+
+## INITIAL-OPS-QUALIFY-001 reattempt blocked after exact preflight
+
+- v1.4.0 qualificationを3 runsで再実行した。report SHA-256は`f77c2a2ce82297347f59628b376985fabde1b2fdfa1df150233dea10a16f0dab`。pin materializationは5/5 MATCHED、source mutation=false、remote_operations=[]、merge/tag/releaseは未実行。
+- v1.2 E2EとProduction exchangeはchild gate blockerによりFAILED、initial-operations E2Eは3/3 PASS、既存sandbox live evidenceもPASS。総合acceptanceは0/1のまま。
+- productionのrequirementsは未対応構文ではなく、exact version mismatchとして観測できる状態になった。解除条件は、明示承認された実行環境で`PyYAML==6.0.2`を満たしてから、同じverified workspaceで再qualificationすること。自動install、子repo変更、pin更新、外部writeは行っていない。
+
+## INITIAL-OPS-QUALIFY-001 shared-environment conflict observed
+
+- qualification用一時venvで`PyYAML==6.0.2`と`jsonschema==4.23.0`を満たし、`VIRTUAL_ENV`を除外してv1.4.0 qualificationを3 runsで再実行した。report SHA-256は`f1aeb8586e1fc7ddfa314f9f2ae1efe732f7b6b4f8cbe7e82ee4949545a83f28`。
+- agentic-art-productionは3 gateすべてPASSしたが、marketing-trendsはchild SSOTの`PyYAML==6.0.3`に対して実行環境が6.0.2のためENV_UNSATISFIED、2 gate NOT_RUNとなった。v1.2 E2EとProduction exchangeはFAILED、initial-operations E2Eは3/3 PASS、総合acceptanceは0/1。
+- 観測されたblockerは、子repoごとのexact PyYAML要件が`6.0.2`と`6.0.3`で衝突し、単一shared environmentでは両方を満たせないこと。per-child isolated environmentを親契約として導入するか、子repo ownersが要件を統一するまで、qualificationはBLOCKEDのままとする。子repo変更、pin更新、外部writeは行っていない。
+
+## INITIAL-OPS-QUALIFY-001 reattempt blocked after explicit qualification command
+
+- 2026-08-26 01:01 JST、`<verified-child-workspace>`を前回のverified workspaceへ解決し、validator PASS後にv1.4.0 qualificationを3 runsで再実行した。report SHA-256は`ab2a533127ad7430dac40e2a0db6eb9f5faab4db19ca5d2da3974d7924a58ab4`。
+- 結果は前回と同じく、pin 5/5 MATCHED、child gate 4/5 PASS、agentic-art-productionは`PyYAML 6.0.3`対`PyYAML==6.0.2`のexact mismatchでENV_UNSATISFIED・3 gate NOT_RUN。v1.2 E2EとProduction exchangeはFAILED、initial-operations E2Eは3/3 PASSだった。
+- `remote_operations=[]`、merge/tag/releaseは未実行。子repo、pin、Drive/GitHub Issue、credential、外部artifactは変更していない。次は、明示承認された実行環境でexact版を満たしてから同じqualificationを再実行する。
+
+## INITIAL-OPS-QUALIFY-001 completed with per-child environments
+
+- 親runnerに、事前準備済みrepo別Python環境を`--python-root`で選択する契約を追加した。依存version probeと宣言gateは同じrepo環境で実行し、環境がない場合は`ENV_UNSATISFIED`・`NOT_RUN`で停止する。runnerによる自動install、子repo変更、pin更新はない。
+- production `PyYAML==6.0.2`とmarketing-trends `PyYAML==6.0.3`を別環境で満たし、child gateは5/5 repositories・14/14 gates PASS、`environment_mode=per-child`となった。長時間gateのため`--child-timeout 180`をqualification commandへ明示した。
+- v1.4.0 qualificationは3/3 deterministic runs、親checks、v1.2 E2E、Production exchange、initial-operations E2E、sandbox evidence、security、historyをすべてPASSした。report SHA-256は`d6e65dfdffd241ad18b11593dd7b4fd77f66fb3b10dfb66d103d18610e6f9afb`。
+- `remote_operations=[]`、merge/tag/releaseは未実行。verified workspaceは5/5 exact pin・clean・detached、子repo、Drive、GitHub Issue、credential、外部artifactは変更していない。acceptanceは1/1、leaseをreleaseし、次のREADYを`PURPOSE-NAMING-001`へ進めた。
+
+## PURPOSE-NAMING-001 completed
+
+- 親の`docs/cross-repository-contract.md`にあるIssue #43のローカル正本を基準に、cross-repository `source-ref-index.yaml` の正規形をtop-level `references`と各recordの`record_hash`へ統一した。親owned `normalized-research-signal-bundle/v1`の`records`は別契約として維持した。
+- `agentic-art-research`はexporter、handoff contract test、schema reference、実行計画を更新し、branch `agent/issue-43-contract-naming` の独立commit `acc751a47f53471fd4bc7b69fded1af568ba5ccd`へ固定した。validator、全120 tests、focused handoff tests 21件、diff checkがPASSした。
+- `agentic-art-production`はplan builder、canonical fixture、manifest hash、旧形式拒否test、仕様・schema reference、実行計画を更新し、branch `agent/issue-43-contract-naming` の独立commit `ffc4df0e4a0871ac3086a474c6b350de976080ec`へ固定した。validator、全52 tests、focused bootstrap tests 37件、diff checkがPASSした。
+- Productionは旧top-level `records`と旧hash key `record_sha256`を補正せずfail closedで拒否する。Researchは旧キーを生成しない。manifest fixtureのraw hashとfile-set hashは再計算済みである。
+- 親manifestのchild pin、qualified workspace、`repos/`生成物、GitHub Issue、Drive artifact、credential、merge、tag、releaseは変更していない。変更はGit外の独立作業コピーで行い、機微情報・会話全文・PRIVATE_RAW・RESTRICTEDは追加していない。remote Issue参照は利用不能だったため外部writeは行わず、親repo内の記録済み決定を使った。
+- acceptance: 1/1。親の命名決定、Research生成、Production受理、旧形式拒否、独立commit、各品質ゲートを確認した。
+
+## Next exact action
+
+1. `PURPOSE-INSPIRATION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行する。
+
+## PURPOSE-INSPIRATION-001 completed
+
+- `schemas/inspiration-input.schema.json`と`tools/inspiration.py`を追加し、自由文を保存せず、`intent_code`・`capability_codes`・`goal_code`、interaction/request参照、retrieval evidence、immutable source commitだけを持つ`inspiration-input/v1`を定義した。CAPTUREDとSETTLEDを分け、profile updateは常にfalseとした。
+- `tools/agent_ui.py`にstructured inspiration入力とnormalized signal bundle入力を追加し、`tools/input_pipeline.py`の既存consumer→candidate→gates→selection→provenance経路へ接続した。settlementはcandidate space/gate report/selection hash、selected candidate ID、全pipeline source snapshot、候補input referenceを保持する。
+- capture/retrievalのsource commit不一致、raw/unsupported field、改ざんされたpipeline hash、unknown/non-passing candidate、pipeline snapshot外のinput reference、候補なしはfail closedする。Agent UI出力には構造化settlement summaryだけを含め、raw inspiration、会話本文、direct identifier、credentialは含めない。
+- `tests/test_inspiration.py`: 6/6、interaction関連focused tests: 31/31、親全体: 337/337。`.venv/bin/python tools/validate.py --check`、`tools/agent_ui.py --offline-fixture --check`、`tools/interaction_e2e.py --check`、Fake Drive/feedback/interaction focused gates、`git diff --check`がPASSした。
+- workspace statusは5 repositories clean on main/ahead_behind_zero。auditは既知のmarketing freshness warning 1件のみのFINDINGS、securityはPASS。child repository、GitHub Issue、Google Drive、PR、merge、release、pin、credentialは変更していない。
+- acceptance: 1/1。親repoの変更はこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-SELF-EXPORT-SOURCE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、self-model childのIssue SSOT、AGENTS、export schema、quality gateを読む。
+
+## PURPOSE-SELF-EXPORT-SOURCE-001 completed
+
+- Issue #40 / child task `SM-018`の既存実装を、親pin `fda3e29…`へ無理に継ぎ足さず、実装完了記録commit `04095bfa4115ef4fde8a8f475bf31743ecdff962`で観測した。SM-018の実装commitは`85eecee4864df997870a1f9137fdcd6a3ce6eb46`である。
+- child exportは`research-signal-export/v1`、1 Claim/Pattern=1 record、固定26 fields、決定論的sort、source commit/evidence/consentを保持し、raw voice本文・外部locator・直接識別情報を含めない。rejected/superseded、consent denial、dirty worktreeはfail closedする。
+- `04095bfa…`をcheckoutした隔離detached workspaceでfocused 17/17、全90/90、`tools/build_graph.py --check`、生成、`tools/audit.py --dry-run`、export CLI、`git diff --check`、generated diff checkをPASSした。auditの3件は既知のsoft review findings。
+- 実際の`/Users/masa/マイドライブ/Dev/self-model-notes` checkoutはcleanなmainのまま、親manifest pin、外部Issue、Drive、PR、merge、releaseは変更していない。親pin更新は後続`SELF-EXPORT-E2E-001`の責務とする。
+- acceptance: 1/1。機微情報、会話全文、credentialの追加はなく、外部artifactの作成・更新もない。inferred feedbackは扱っていない。
+
+## Next exact action
+
+1. `SELF-EXPORT-E2E-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、self-model exportをadapterとconsumerへ渡すE2E契約を読む。
+
+## SELF-EXPORT-E2E-001 completed
+
+- Issue #105の許可pathだけを変更し、child Issue #40の完了記録commit `04095bfa4115ef4fde8a8f475bf31743ecdff962`から生成した`tests/fixtures/signal/self_export_bundle.json`を追加した。fixtureは`research-signal-export/v1`、3 records、全recordのcommit一致、ID一意・sort済みである。
+- 新規E2Eは3件すべてを`adapt_self_model_signal()`→`validate_signal()`→`import_signals()`へ通し、件数、ID順、source repository/commit、entity/evidence locator、certainty、unknowns、constraints、validity、freshness、self-model domainを入力からimport後まで一致検証する。
+- raw voice本文、直接識別情報、Drive/Telegram locatorを拒否し、`self-model://...#raw-voice-not-exported`だけを許可した。入力recordの不変性も検証した。Issue #90の閾値・多様性・新規self dataには触れていない。
+- focused 5/5、親全体342/342、親validator、diff checkがPASSした。親manifest pin、child checkout、adapter、schema、consumer、外部Issue、Drive、PR、merge、releaseは変更していない。README/PLANSはIssue #105の許可外のため変更していない。
+- acceptance: 10/10。機微情報、会話全文、credentialの追加はなく、外部artifactの作成・更新もない。explicit/inferred feedbackは扱っていない。
+
+## Next exact action
+
+1. `PURPOSE-SELF-DIVERSITY-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #99とcandidate selectionの多様性契約を読む。
+
+## PURPOSE-SELF-DIVERSITY-001 completed
+
+- `self-diversity-report/v1` schemaとvalidatorを追加し、`domain.self_model.tensions`と`recurring_patterns`のunionから、`signal_id`・属性名・canonical valueのSHA-256だけでopaque anchor IDを計算する。reportにはselfの生値、statement、voice本文、直接識別情報を保存しない。
+- 3未満のeligible anchorは`INSUFFICIENT_SELF_DIVERSITY`で停止し、既存のv1候補フローでは候補数を水増ししない。3以上では全anchorを候補へ展開し、personal_tensionのattributeとして`tensions`または`recurring_patterns`を保持する。candidate gatesも両属性を受理する。
+- `--require-self-diversity`を追加し、normalized signalを明示的に渡した場合だけ、selection limit不足、passing candidate不足、distinct anchor 3未満、anchor share 40%超を拒否する。selection limit 10以上はanchor単位の決定的round-robinで、各anchor内の順序はseeded SHA-256 score順を保持する。`--diversity-report`で独立reportを生成できる。
+- `tests.test_candidate_space`、`tests.test_candidate_selection`、`tests.test_candidate_gates`、`tests.test_adapter_self_model`: 26/26。4 anchors×25 historical candidatesの100件fixtureでselection limit 10/100を検証し、同一入力・seedのbyte一致、2 anchorsの停止、recurring_patterns除去の回帰、source commit保持、raw data非出力を確認した。
+- 親全体: 345/345。`.venv/bin/python tools/validate.py --check`、`git diff --check`、candidate-space CLI、diversity-report CLIが成功した。auditは既知の非blocking marketing freshness warning 1件、workspace statusは5 repositories clean on main/ahead_behind_zero。子repo、manifest pin、Issue/PR、Drive artifact、credential、merge、releaseは変更していない。
+- acceptance: 1/1。inferred feedbackは扱っていない。外部artifactは作成していない。
+
+## Next exact action
+
+1. `PURPOSE-INTENT-RANK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #102と既存candidate selection契約を読む。
+
+## PURPOSE-INTENT-RANK-001 completed
+
+- `intent-rank/v1`を親の`tools/candidate_selection.py`へ追加した。intentはUnicode NFKC、casefold、連続空白圧縮後に境界付き文字bigram multisetへ変換し、signal statementとcompositionのdomain attribute値をkind別に決定的結合してweighted Jaccardを計算する。self/art-history/marketingの重みは`0.50/0.30/0.20`、ROUND_HALF_UPの6桁である。
+- intentなしは既存処理を分岐させず`research-selection/v1`の出力形を維持し、intentありだけ`research-selection/v2`と`schemas/research-selection-v2.schema.json`を使う。順位はintent score、seeded selection score降順、candidate ID昇順で、gate PASS候補だけを対象にする。
+- v2成果物には`intent_sha256`、`intent_algorithm`、候補ごとのkind別scoreとtotal scoreだけを保存し、生intentを成果物・CLI log・provenance・Gitへコピーしない。`tools/run.py --intent`は同じintent digestをselectionへ渡し、CLI summaryとselectionのdigest一致を検証する。
+- `tests.test_candidate_selection tests.test_run`: 15/15、親全体: 351/351。`.venv/bin/python tools/validate.py --check`、`git diff --check`もPASSした。テストには日本語2文字、1文字boundary、結合文字、全角英数、連続空白、intent別候補順位、gate fail閉鎖、v1互換、CLI/E2Eを含む。
+- 子repo変更、子品質ゲート、manifest pin、GitHub Issue/PR、Google Drive、credential、merge、release、外部artifactは変更していない。audit/workspaceの再実行は不要な親専用変更で、既存の非blocking marketing freshness warning以外の未解決はない。explicit/inferred feedbackは扱っていない。
+- acceptance: 7/7。実装コミットはこのtaskの完了コミットにまとめる。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-KNOWLEDGE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #47とResearch childのknowledge schema/quality gateを読む。
+
+## PURPOSE-RESEARCH-KNOWLEDGE-001 completed
+
+- Research childのIssue #47はCLOSEDで、typed knowledge record 4種（observation、relationship、contradiction、external-reference）、aesthetic-signal protocol/template、reference resolution、deterministic graph/impact接続が既にchild mainへ実装済みだった。実装導入commitは`ee214b6d836283e9baad25f9dc2598fe22355c94`、検証対象のclean source HEADは`07f8cf57e416e5166ac80019ba2d015ff1821e9c`である。
+- 実checkout `/Users/masa/マイドライブ/Dev/agentic-art-research` は`main...origin/main`・cleanのまま保持した。隔離cloneで`python3 -m compileall -q tools tests`、`python3 tools/validate.py --check`、`python3 -m unittest discover -s tests -v`（251/251）、`python3 tools/build_graph.py --check`を実行し、すべてPASSした。knowledge focused testはschema、最小valid record、参照解決、重複ID、自己relationship、未知語彙、contradiction resolution、profile期間/参照、graph node/edge、impact到達性、決定性を含む。
+- 親manifestのResearch pinは`d947fdd14abeb700af9a62abcf27c21f3f12e134`で、child実装より古い。pin adoptionはこのtaskのtarget/path外であり、親pin、`repos/`、子repo、Issue/PR、Drive、credential、merge、releaseは変更していない。pin mismatchは未解決としてstateへ記録し、child SSOTを親へ複製しない。
+- 親validatorはPASS。子repo品質gateは4/4 PASS、親の追加変更はqueue/state/handoffの記録のみ。機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credentialは追加していない。explicit/inferred feedback、外部artifactは扱っていない。
+- acceptance: 8/8。実装は既存child commitの観測・検証で満たし、親側の完了記録をこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-DECISIONS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #48とResearch childのdecision/uncertainty schema・quality gateを読む。
+
+## PURPOSE-RESEARCH-DECISIONS-001 completed
+
+- Research childのIssue #48はCLOSEDで、typed rejected-option/uncertainty registry、decisionとの双方向参照、evidence参照、決定論的なhuman向けexecutive briefが既にchild mainへ実装済みだった。実装導入commitは`ee214b6d836283e9baad25f9dc2598fe22355c94`、検証対象のclean source HEADは`07f8cf57e416e5166ac80019ba2d015ff1821e9c`である。
+- Issue #48の受入条件8項目を、RO/U schemaのrequired/unknown検証、decision↔registry逆参照、状態・resolution整合性、completion guard、executive briefの8固定section、byte determinism、canonical tree境界、宣言コマンドの全PASSとして確認した。
+- hardlinkなしの隔離cloneで`python3 -m compileall -q tools tests`、`python3 tools/validate.py --check`、`python3 tools/build_graph.py --check`、`python3 tools/security_check.py --check`、`python3 tools/docs_check.py --check`、Issue #48 focused 39 tests、全251 testsを実行し、すべてPASSした。全251 testsは`Ran 251 tests in 652.660s`である。
+- Research child本体は`main...origin/main`・cleanのまま保持した。親manifestのResearch pinは`d947fdd14abeb700af9a62abcf27c21f3f12e134`でchild実装より古いが、pin adoptionはこのtaskのtarget/path外のため変更していない。親validatorはPASSし、親の最終全体testsは完了記録後に再実行する。
+- 子repo、manifest pin、`repos/`生成物、GitHub Issue/PR、Google Drive、credential、merge、tag、release、外部artifactは変更していない。機微情報、会話全文、PRIVATE_RAW、RESTRICTEDは追加していない。explicit/inferred feedbackは扱っていない。外部artifactのcreate-only操作もない。
+- acceptance: 8/8。親側の変更はqueue/state/handoffの完了記録だけをこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-VISUAL-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #49とResearch childのvisual-language schema・quality gateを読む。
+
+## PURPOSE-RESEARCH-VISUAL-001 completed
+
+- Research childのIssue #49はCLOSEDで、typed `visual-language.yaml` schema/template、媒体decisionの明示的な一意性検証、lifecycle/reference gate、production-translatorのwrite target/context/acceptance、handoff/export artifact・hash・schema snapshot接続が既にchild mainへ実装済みだった。実装導入commitは`ee214b6d836283e9baad25f9dc2598fe22355c94`、検証対象のclean source HEADは`07f8cf57e416e5166ac80019ba2d015ff1821e9c`である。
+- Issue #49の完了条件9項目を、schemaのrequired/unknown/enum、0件/複数件/非ADOPTED媒体decision、未解決参照・重複・禁止表現不足、DRAFT/READY lifecycle、production-translator contract、handoff/export改ざん・未知version、research側consumer fixture、canonical tree境界、宣言コマンドのPASSとして確認した。
+- hardlinkなしの隔離cloneで`python3 -m compileall -q tools tests`、`python3 tools/validate.py --check`、`python3 tools/build_graph.py --check`、`python3 tools/security_check.py --check`、`python3 tools/docs_check.py --check`、visual/handoff/context focused 48 testsを実行し、すべてPASSした。同じclean HEADに対する全251 testsは直前taskで`Ran 251 tests in 652.660s`・全件PASSを確認済みである。
+- Research child本体は`main...origin/main`・cleanのまま保持した。親manifestのResearch pinは`d947fdd14abeb700af9a62abcf27c21f3f12e134`でchild実装より古いが、pin adoptionはこのtaskのtarget/path外のため変更していない。親validatorはclaim後と完了記録後にPASSした。
+- 子repo、manifest pin、`repos/`生成物、GitHub Issue/PR、Google Drive、credential、merge、tag、release、外部artifactは変更していない。機微情報、会話全文、PRIVATE_RAW、RESTRICTEDは追加していない。explicit/inferred feedbackは扱っていない。外部artifactのcreate-only操作もない。
+- acceptance: 9/9。親側の変更はqueue/state/handoffの完了記録だけをこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-PRODUCTION-OBSERVATION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #34とProduction childのobservation/result contractを読む。
+
+## PURPOSE-PRODUCTION-OBSERVATION-001 completed
+
+- Production childのIssue #34はOPENのままだが、childの`execution/task-queue.yaml`では`OBSERVATION-001=DONE`であり、観測のappend-only record、zero-observation result、lossless ACTIVE revision、RETRACTED履歴、replay/hash integrity、reference解決、privacy boundaryが実装済みだった。実装commitは`313e36827f15d06caa1ce0942553d9f32541da33`、検証対象HEADは`d07ed695a961c9ce3d4e12dc9c9dabbaf3a263b0`である。
+- Issue #34の完了条件12項目を、観測なし、合成観測のlog/projection/result反映、idempotency、identity衝突、revision/RETRACTED、dangling reference、partial/hash/projection tamper、PRIVATE_RAW/credential/signed URL/asset body拒否、Research consumer互換、正常・失敗・再実行test、schema/reference/runbook/plan/queue更新として確認した。
+- hardlinkなしの隔離cloneでchild指定の`.venv/bin/python tools/validate.py --check --format json`（`[]`）、`tests.test_observation tests.test_result` 7/7、全62 tests、`tools/run_evaluation.py --format json`（6 checks PASS）、`git diff --check`、`git status --short`を実行し、すべてPASSした。評価出力の失敗系diagnosticはテストfixtureの期待出力である。
+- Production本体は`agent/runtime-guards-002...origin/agent/runtime-guards-002`でcleanだった。mainではないbranchをcheckout変更せず、branch作成・commit・PR・merge・releaseも行っていない。親manifestのProduction pinは`51a817c8fcfe292069b85717f5e973b1e860bd4b`のままであり、pin adoption/integrationは未解決の別作業として保持する。
+- 親validatorはclaim後と完了記録後にPASSした。親の最終全体testsは完了記録後に再実行する。子repo、`repos/`生成物、GitHub Issue/PR、Google Drive、credential、外部artifactは変更していない。機微情報、会話全文、PRIVATE_RAW、RESTRICTEDは追加していない。explicit/inferred feedbackは扱っていない。
+- acceptance: 12/12。親側の変更はqueue/state/handoffの完了記録だけをこのtaskの1 commitへまとめる。
+
+## Next exact action
+
+1. `PURPOSE-PRODUCTION-REVISION-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #36とProduction childのsuperseding-handoff contractを読む。
+
+## PURPOSE-PRODUCTION-REVISION-001 completed
+
+- Production childのIssue #36向けに、`--accept-revision`、明示的なoccurred-at/actor/idempotency、supersedes lineage検証、初回履歴移行、hash-chain receipt projection、immutable source bundle/old plan history、artifact impact report、STALE_BASELINEとblocking readiness、candidate plan再生成、同一candidate no-op、同一identity異hash/fork/sequence拒否、staging検証後のatomic directory swapを実装した。runtime、execution、evidence、observation、resultの旧記録はstagingへ引き継ぎ、terminal result/reportは履歴参照を保持する設計とした。
+- 変更されたchild treeはschema 3件、`tools/lib/handoff_revision.py`、`tools/new_production.py`、`tools/validate.py`、revision contract tests、project layout、schema registry、runbook、schema reference、ExecPlan、child task queueである。正常・失敗・再試行を`tests/test_handoff_revision.py` 3/3で確認した。
+- 隔離child branch `agent/handoff-revision-001`のcommitは`b6a6d52ea9f6f0b2eac04069ff5b154fd20ba50f`。child validatorは`[]`、全65 tests、evaluation 6 checks PASS、release gate 3/3 PASS（verified commit同SHA、repository_clean=true）である。release publicationはHUMAN_APPROVAL_REQUIREDのまま実行していない。
+- 親task acceptanceは1/1。親validatorはclaim前・完了記録後ともにPASSし、親全体testsは351/351 PASS。parentの次taskは`PURPOSE-RESEARCH-FEEDBACK-001`でREADYにした。
+- Production本体のcheckoutは`agent/runtime-guards-002`でcleanだがmainではない。親manifestのProduction pinは`51a817c8fcfe292069b85717f5e973b1e860bd4b`のまま、isolated child commitのmerge・push・PR・pin更新・remote Issue #36更新は行っていない。これはbranch不一致と人間承認境界による未解決であり、次回はownerが統合先branch/PRを明示した後に、commitの存在とpin整合を再確認する。
+- 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、asset bodyは追加していない。Google Drive等の外部artifactは作成・更新していない。explicit/inferred feedbackは扱っていない。外部effect、購入、契約、公開、物理作業、merge、releaseは実行していない。
+
+## Next exact action
+
+1. `PURPOSE-RESEARCH-FEEDBACK-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Research Issue #45とfeedback export schema・quality gateを読む。
+
+## PURPOSE-RESEARCH-FEEDBACK-001 completed
+
+- Research childのIssue #45（CLOSED）で定義された`tools/export_feedback_signals.py`、`schemas/research-signal-export.schema.json`、専用テストを、child `main` HEAD `07f8cf57e416e5166ac80019ba2d015ff1821e9c`で確認した。出力は明示outputの`manifest.json`と`signals.jsonl`だけで、production resultのimport監査・hash・acceptance test・requirement・observationを再検証し、決定的・原子的・冪等なresearch signalへ変換する。既存bytesの再実行は再利用し、異なるbytesはconflictとして非破壊に拒否する。
+- Issue #45の受入条件を、privacy-safe/fail-closed（PII、secret、private URL、path、`PRIVATE_RAW`/`RESTRICTED`、unknown field）、source provenance、schema validation、read-only project/data境界、canonical tree非出力、外部配送なしとして検証した。提示条件はproduction-result v1に存在しないため`null`固定であり、自由文から補っていない。
+- 子品質ゲートは4/4 PASS。`/private/tmp/aap-research-venv/bin/python -m unittest discover -s tests -v` は251/251、`tools/validate.py --check`、`tools/security_check.py --check`、`tools/docs_check.py --check` はすべてPASS。Issue専用`tests.test_export_feedback_signals`も7/7 PASSを確認した。子repoは`main...origin/main`・cleanのまま保持した。
+- 親validatorはclaim後・完了記録後ともにPASS。親task acceptanceは1/1。親manifestのResearch pin `d947fdd14abeb700af9a62abcf27c21f3f12e134`はchild HEADより古いため更新せず、child SSOTのpin adoptionは別作業として未解決に保持する。`repos/`、parent data、Issue/PR、Drive、credential、merge、releaseは変更していない。
+- 機微情報、会話全文、PRIVATE_RAW、RESTRICTED、credential、raw assetは追加していない。外部artifactは作成しておらず、create-only/opaque参照の対象もない。explicit/inferred feedbackは扱っていない。
+
+## Next exact action
+
+1. `PURPOSE-VIEWER-RESPONSE-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、viewer responseのappend-only記録とUNKNOWN/SUPPORTED/CONTRADICTED評価を実装・検証する。
+
+## PURPOSE-VIEWER-RESPONSE-001 in progress
+
+- 2026-08-26 21:02 JST、`PURPOSE-VIEWER-RESPONSE-001`（Issue #98）をclaimした。親manifestへ既存coreを置換せず`viewer-response-notes`をappendし、parent assessment gateとResearch/Production child連携を対象にした。
+- viewer childの独立commit `cf411086b0693bfcde8d034fe27bb7a8d4110222`を確認した。record/export/assessment schema、privacy boundary、append-only契約、deterministic validator/testsを含み、draft PR #1（`https://github.com/masa-san-jp/viewer-response-notes/pull/1`）が存在する。childの宣言gateは12/12 PASS、validator PASS、diff check PASSである。
+- 親に`schemas/viewer-response-assessment.schema.json`と`tools/viewer_response_gate.py`を追加した。childの実際の`signals` record形式（`record_id`から`dedup_key`までの厳密field set）を受け取り、完全一致のwork/requirement/modeとtag交差だけを評価する。measured sample 5未満は`UNKNOWN`、Wilson 95% lower bound 0.60以上だけを`SUPPORTED`、upper bound 0.60未満だけを`CONTRADICTED`、measuredなし・独立external ref 2件以上を`EXTERNALLY_SUPPORTED`とし、measured/external conflictとblind/frame review要求を保持する。
+- 親gateはPII、自由文、心理・医療推測、PRIVATE_RAW、RESTRICTED、絶対path、externalの架空sample、count不一致、unknown field、dedup不一致、timezoneなし時刻を拒否する。Production planのviewer-facing requirementは保守的statusのままblind/frame acceptance testなしでは通さない。
+- viewer追加後に旧5repo前提だったoffline workspace/snapshot/v1.2/release testsをmanifest件数から導出するよう修正した。offline fixtureを6repoへ再生成し、workspace status/guard、snapshot check、audit checkを確認した。auditは既知のmarketing freshness warning 1件だけでblockingではない。
+- 親検証は`.venv/bin/python tools/validate.py --check` PASS、親全体`358/358` PASS、viewer focused `7/7` PASS、release-check focused `22/22` PASS、`git diff --check` PASS。v1.4.0 qualificationはrepo別事前準備venvで`blocking=false`、3/3 deterministic、6/6 repositories MATCHED、16/16 child gates PASS、v1.2 E2E/Production exchange/initial operations/live evidence/history PASS、`remote_operations=[]`、merge/tag/release未実行となった。
+- Production childの隔離commit `db3ad6541c13440e36ada4ab1ce84d550f2293c9`はfocused 40/40、full 64/64、evaluation 6/6、validator/diff check PASS。ただしGitHub branch push/draft PRは外部可視mutationの許可が必要で、pushしていない。Research childはclean branchに変更なしで、`import_production_result.py`からviewer repoへappendする実装はcross-repository writeの安全ゲートにより未適用である。
+- Issue #98の完了条件は未達のまま保持する。未解決は (1) Research→viewer append-only実装と同一production-result 2回の1件性、(2) Production commitのGitHub push/draft PR、(3) viewer repoのIssue #1作成である。これらは外部repoへの書込み権限・明示承認が必要であり、親側で推測して実行しない。
+- 機微情報、会話全文、raw response、direct identifier、credential、PRIVATE_RAW、RESTRICTED、外部artifactは追加していない。親repoの変更は未commitで、child commitは親履歴へvendorしていない。
+
+## Next exact action
+
+1. Research→viewer append-only write、Production branch push/draft PR、viewer Issue #1の外部操作について明示承認を得た後、各childのclean状態を再確認してから実装・push・draft PRを別々に行う。
+
+## PURPOSE-VIEWER-RESPONSE-001 authorized continuation
+
+- 2026-08-27、ユーザーからResearchのappend-only実装、Productionのpush/draft PR、viewer要件Issue作成の明示承認を受領した。
+- Research isolated branch `feat/viewer-response-import`へ `fe2d9a9`（`feat: append aggregate viewer responses`）をcommitし、GitHub draft PR #78（`https://github.com/masa-san-jp/agentic-art-research/pull/78`）を作成した。Production resultの明示`test_results[*].viewer_response`だけをclosed aggregate recordへ変換し、明示`--viewer-root`、atomic append、同一result再実行、privacy/count/evidence/provenance/dedup拒否を実装した。
+- Research品質ゲートはfocused feedback-import 9/9、全255/255、validator、security、docs、graph、diffがPASSした。実測データを捏造しないため、実viewer ledgerへ合成fixtureを追記せず、append動作はtemporary viewer rootのE2E testで1件性と再実行を確認した。
+- Productionの隔離commit `db3ad6541c13440e36ada4ab1ce84d550f2293c9`を `feat/viewer-response-production` としてpushし、GitHub draft PR #50（`https://github.com/masa-san-jp/agentic-art-production/pull/50`）を作成した。全64/64、evaluation 6/6、validator、diffがPASSした。
+- viewer-response-notesのdraft PR #1（`https://github.com/masa-san-jp/viewer-response-notes/pull/1`）がGitHub番号#1を占有していたため、要件Issueは#2（`https://github.com/masa-san-jp/viewer-response-notes/issues/2`）として作成し、親manifestの`requirement_ssot`をIssue #2へ修正した。Issue #1はPR #1として存在し、削除・変更していない。
+- viewer childは12/12、validator、diff PASS。親側のviewer gateは7/7、親全体は直前の358/358、v1.4 qualificationは3/3 deterministic・6repo・16 gate PASS済み。外部操作のmerge、tag、release、Drive artifact作成は実行していない。
+- 機微情報、会話全文、raw response、個人識別子、credential、PRIVATE_RAW、RESTRICTEDは追加していない。Research/Production/viewerの作業ツリーはcleanである。
+
+## Next exact action
+
+1. 親の`config/repositories.yaml` Issue #2参照とstate/handoffを含む全parent gateを再実行し、`PURPOSE-VIEWER-RESPONSE-001`を完了記録へ遷移する。続いて親所有変更だけを1 commitにまとめる。merge/releaseは人間承認待ち。
+
+## PURPOSE-VIEWER-RESPONSE-001 completed
+
+- 親のviewer-response gate、Research append-only importer、Production aggregate DTO、viewer child contractを接続した。viewer recordsは明示rootへのappend-only、privacy-safe、aggregate-only、provenance/count/dedup検証付きで、同一production resultの再実行は重複効果を作らない。
+- Researchの実装commitは`fe2d9a9`、draft PRは`https://github.com/masa-san-jp/agentic-art-research/pull/78`。Productionの実装commitは`db3ad6541c13440e36ada4ab1ce84d550f2293c9`、draft PRは`https://github.com/masa-san-jp/agentic-art-production/pull/50`。viewer childのcommitは`cf411086b0693bfcde8d034fe27bb7a8d4110222`、draft PRは`https://github.com/masa-san-jp/viewer-response-notes/pull/1`。
+- Research側の完了記録commitは`b315717`で、既存draft PR #78へ通常push済み。実装commitと完了記録を分け、force pushは行っていない。
+- viewer要件Issueは、PR #1がGitHub番号#1を占有しているためIssue #2（`https://github.com/masa-san-jp/viewer-response-notes/issues/2`）として作成し、親manifestのSSOTも#2へ修正した。Issue #1/PR #1は変更・削除していない。
+- 親focused 7/7、親全体358/358、Research全255/255、Production全64/64、viewer child 12/12、Production evaluation 6/6、親qualification 3/3 deterministic・6repo・16/16 child gates、validator/security/docs/graph/diffはPASS。auditは既知のmarketing freshness warning 1件のみで、blockingではない。
+- 最終v1.4 qualificationは`blocking=false`、`status=PASSED`、`remote_operations=[]`、merge/tag/releaseは`NOT_PERFORMED`。snapshot hashは`8143f0ece10c5e6012528819c705ab7322f3258d96ea296f7bafe34b74712439`。
+- 実測viewer responseが提供されていないため、実viewer ledgerへ合成データは追記していない。機微情報、会話全文、raw response、個人識別子、credential、PRIVATE_RAW、RESTRICTED、Drive artifactは追加していない。merge、tag、release、Drive外部送信は未実行。
+- acceptance: 1/1。viewer leaseを解放し、次の`PURPOSE-AUTONOMOUS-RUNNER-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `PURPOSE-AUTONOMOUS-RUNNER-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #103とrun/autonomous-runner/runtime-recoveryの現行契約・テストを読む。
+
+## PURPOSE-AUTONOMOUS-RUNNER-001 completed
+
+- Issue #103のSSOTに従い、`config/human-gates.yaml`、`agent-action/v1`、`agent-result/v1`、`autonomous-run/v1`を追加した。`tools/run.py`は`RESEARCH_PENDING`とmetadata-only structured next actionを返し、`tools/autonomous_runner.py`はabsolute argv workerを外部state-rootの`<run-id>/supervisor.json`へatomic checkpointする。
+- COMPLETEDかつ全check PASSのworker結果だけを`PLAN_READY`へ進め、同じrun-idの再実行はaccepted resultを再呼出ししない。worker responseを受理前にprocessが停止しても、残存responseを同じrun-idで一度だけ受理する。
+- 同一stage・error fingerprintの失敗は3回まで再試行し、4回目を`FAILED_RETRY_EXHAUSTED`にする。7種のhuman operation要求は実行せず`BLOCKED_HUMAN`、変更path逸脱は`BLOCKED_EXTERNAL`へ分類する。
+- focused `tests.test_run tests.test_autonomous_runner tests.test_runtime_recovery`は14/14、親全体は364/364、validator/security/diffはPASSした。fake workerでPLAN_READY、resume idempotency、lease競合、retry、human gate、privacy rejectionを確認した。
+- 実装commitは`25eec59`、完了記録commitは`e032ad2`、公開記録commitは`895c28f`。parent branch `agent/issues-38-41-pipeline`を既存draft PR #42（`https://github.com/masa-san-jp/agentic-art-orchestration/pull/42`）へpush済みである。merge/releaseは実行しない。
+- stateはGit外state-rootを要求し、会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderr、Drive artifactを保存しない。child repository変更、外部artifact作成、merge、releaseはない。
+- acceptance: 6/6。runner leaseを解放し、次の`PURPOSE-BATCH-STATUS-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `PURPOSE-BATCH-STATUS-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #70とbatch status/reportの現行契約・テストを読む。
+
+## PURPOSE-BATCH-STATUS-001 completed
+
+- Task ID: `PURPOSE-BATCH-STATUS-001`; target repository: `agentic-art-orchestration`。
+- Observable changes: `tools/batch_status.py`がresearch state、Production handoff/plan、workspace
+  repoのbranch/HEAD/dirty/`HEAD..origin/main`をread-onlyで集計する。`batch-report-event/v1`の
+  closed schemaとvalidator接続、JSONLの重複・event-specific値検証、起動/完了/失敗/再試行/所要/token
+  集計、未計測表示を追加した。
+- Acceptance: 6/6。五段階fixture、決定性、provenance hash、Git remote差分、未知状態の保持、
+  report集計、未計測、closed/duplicate rejection、tree hash不変を観測した。
+- Parent validation: `.venv/bin/python tools/validate.py --check` PASS。
+- Focused test: `.venv/bin/python -m unittest tests.test_batch_status -v` 5/5 PASS。
+- Parent full test: `.venv/bin/python -m unittest discover -s tests -v` 369/369 PASS。
+- Other gates: `git diff --check` PASS、`tools/batch_status.py --workspace-root repos --format json`
+  のstage vocabulary assertion PASS、README status check PASS。
+- Child repositories: なし。子repo品質ゲートは対象外。親branchは
+  `agent/issues-38-41-pipeline`、実装commitは`aee287f`、完了記録commitは`268e248`、実装時点のworking treeは意図した
+  state/queue/handoff記録を除きclean。
+- Sensitive data: 新規にraw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifier、
+  report本文を保存していない。出力は相対locator、hash、状態、件数のみ。
+- External artifacts: none. Drive/GitHub Issueの変更なし。既存parent draft PR #42へのpushは
+  記録commit後に行い、merge、tag、releaseは実行しない。
+- Feedback: このtaskでexplicit/inferred feedbackは扱っていない。
+- Unresolved: 実workspaceの各projectが持つchild-owned stateの配置・status語彙が異なる場合は、
+  `state_quality=UNKNOWN`とsource locatorを確認してからchild schemaに合わせる。batch driverによる
+  JSONL append自体は本taskのread-only集計器の責務外である。
+- Next task: `PURPOSE-BATCH-100-001`。最初の1操作:
+  `.venv/bin/python tools/validate.py --check`。
+
+## PURPOSE-BATCH-100-001 blocked
+
+- Task ID: `PURPOSE-BATCH-100-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#71](https://github.com/masa-san-jp/agentic-art-orchestration/issues/71)。2026-08-27にclaimし、実行前提を読み取り専用で確認した。
+- Exact manifest-pinned workspaceは6repoすべてclean・pin一致だった。child quality gateは16/16 PASS。外部preflight reportは親Gitへ取り込まず、SHA-256 `0d87519d9a59f5175311425279e436f120d2ac0bbe26dea8cc7f85dfee1aee2e`をstateへ記録した。
+- 入力の観測はart-history 96 normalized records（`b831f4c57d842f44ad45134a5abd434dc367482f`）、marketing-trends 60 normalized records・stale 0（`ff3adca6e52c18095a00c23d39ef2a961ae1d13b`）、self-modelのmanifest pin `fda3e29c76ba8fbd40ee6946589d6789029d92d6`である。self-model pinのexportはlegacy aggregateでseek 1、tension 1、recurring-pattern 0であり、親adapterが要求する3件のapproved child DTOではない。3 recordのexportは`04095bfa4115ef4fde8a8f475bf31743ecdff962`で観測済みだが、manifestへは採用していない。
+- 親`tools/run.py`は単一project引数のみで`--batch`を受け付けない。Researchの`accept_research_request.py`は一つのrequestを一つのprojectへ受理し、Productionの`new_production.py`は一つのhandoffを一つのslugへmaterializeする。`tools/batch_status.py`はread-only集計器であり、batch driverではない。
+- したがってG1–G6は全て`NOT_RUN`である。production output、100件のplan、10件のrandom decision log、`batch-report.jsonl`はいずれも生成していない。Acceptanceは0/6で、preflight 16/16 PASSとは分離した。未実行のterminal evidenceを完了扱いにしなかった。
+- Blockerの観測事実、選択肢、推奨、影響、解除条件は`execution/state.yaml:purpose_batch_100`に記録した。推奨は、batch driver・child completion/export contract・qualified self-model pin adoptionを明示する別の実装taskを作成し、fresh exact-pin preflight後に再実行することである。
+- 親コード、子repo、`repos/`生成物、GitHub Issue/PR、Google Drive、production output、batch report、credential、raw conversation、PRIVATE_RAW、RESTRICTEDは変更していない。merge、release、pin更新、外部artifact作成も行っていない。explicit/inferred feedbackは扱っていない。
+- Leaseは`available/unassigned`へ解放した。次の実装taskは未登録のため、再開時の最初の1操作は、Issue/queueを現行toolingへ再baselineした後の`.venv/bin/python tools/validate.py --check`である。
+
+## Next exact action
+
+1. batch driver、child completion/export contract、self-model qualified pinを扱う別Issueとqueue taskを登録・reviewし、その後に`.venv/bin/python tools/validate.py --check`から再開する。`PURPOSE-E2E-001`はbatch実測完了まで開始しない。
+
+## PURPOSE-BATCH-100-001 unblock and completed
+
+- Task ID: `PURPOSE-BATCH-100-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#71](https://github.com/masa-san-jp/agentic-art-orchestration/issues/71)。前回のBLOCKED記録を削除せず、原因を単独runで再現してから同じ失敗runを上書きせずに再開した。
+- 親に`schemas/batch-run.schema.json`、`tools/batch_run.py`、batch projection testを追加した。入力はself-model 3件（`research-signal-export/v1`）、art-history 96件、marketing-trends 60件で、各source repository/commitをmanifest pinと照合する。selectionは159 records、candidate space 17280、gate PASS 120、selected 100、unique signal tuple 100である。
+- self-modelはeligible anchor不足を`INSUFFICIENT_SELF_DIVERSITY`として保持した。3 anchorを合成せず、candidate selectionを水増ししていない。explicit/inferred feedbackは扱っていない。
+- exact-pin qualificationは`PASSED`、6/6 repositories、16/16 child gates、Production exchange `PASSED`。candidate manifest hashは`c0f35de0290502967df17b6386fd6b60582d7e8b84ff4d0b1b73904e64238a2f`で、self-model `1864fa92dde2bc8f25756bd5e5885268fa4b38fc`、Research `07f8cf57e416e5166ac80019ba2d015ff1821e9c`、Production `63a1ddf4ed303e01c92023baa4737c68dcd10846`の3 pinをcandidate hash一致で親manifestへ採用した。
+- final exchange E2Eも`PASSED`。clean exchange、tamper/stale/incompatible/dirty-sourceのterminal failure、replay idempotency、Research result dry-run、remote/child mutation 0を確認した。E2E report SHA-256は`7ea931ab849ae2056babbb25df8bf30109cceb6f6530c917a2a413933c037b6b`。
+- 初回batchの阻害要因は、複製したResearch fixtureのevidence ledgerが旧canonical ID `project/harmony-study`を参照していたことだった。`research-handoff-build/CHILD_COMMAND_FAILED`を観測し、fixtureのproject-reference IDだけをbatch slugへ置換した。子repoのcanonical tree、親`repos/`、remoteは変更していない。
+- Research/Production exchangeは独立Git-external staging cloneで実行し、Researchのfull projectとchild Production stageを一時rootへ保持した。最終outputにはchild canonical planを変更せず、structured brief付きのplan projectionだけをcreate-onlyで生成した。Production側のprototype/reviewにある`HUMAN` authorityはprojectionへ持ち込まず、外部効果は実行していない。
+- batch run `PURPOSE-BATCH-100-001-run-2`は`PASSED`。100/100 projects completed、Production plan 100件、Research decision log 100件、report 300 events、起動100/完了100/失敗0/再試行0、duration 359.823秒。G1–G6、no child mutation、no remote operation、no raw dataは全てPASSした。summary SHA-256は`62361b07e00a646db6bc176b128ec399297fe8e58d6910d2da1da3d3b4fef414`。
+- 親検証: `.venv/bin/python tools/validate.py --check`はPASS済み。子品質ゲートはqualification report SHA-256 `504336548f6d8576a9a68f864629ce356bafa25786942722a1c0d425b1b9569b`の6/6・16/16 PASSを再利用した。最終record後に親全体tests、workspace status、audit、diff checkを実行する。
+- Sensitive data: 会話全文、推定属性、PRIVATE_RAW、RESTRICTED、credential、direct identifier、raw asset bodyは追加していない。External artifact: Drive/GitHub Issue/PR、merge、tag、releaseは変更していない。batch output/stateはGit外部のopaque `run://` locatorでのみ参照する。
+- Acceptance: 6/6。親stateは`status: complete`、leaseは`available/unassigned`へ解放し、queueの次task `PURPOSE-E2E-001`をREADYへ進めた。
+
+## Next exact action
+
+1. `PURPOSE-E2E-001`をclaimし、`.venv/bin/python tools/validate.py --check`を実行した後、Issue #104とnew-theme E2Eの現行contract/testを読む。merge、release、外部artifact作成は人間承認なしに行わない。
+
+## PURPOSE-E2E-001 blocked
+
+- Task ID: `PURPOSE-E2E-001`; target repositories: parent、self-model、art-history、marketing-trends、agentic-art-research、agentic-art-production、viewer-response-notes。Issue SSOTは[#104](https://github.com/masa-san-jp/agentic-art-orchestration/issues/104)。親の実装ファイルは`tools/purpose_e2e.py`、`schemas/purpose-e2e-evidence.schema.json`、`tests/test_purpose_e2e.py`、`docs/purpose-e2e-runbook.md`である。`tools/production_exchange.py`とvalidatorにも境界結線を追加した。
+- Networkless acceptance: 3/3 canonical run hash一致、`PLAN_READY`、intent score、fixture-only self diversity、Research completion/gaps trace、Production plan derived fields、viewer conservative `UNKNOWN` + blind/frame、same-run resume worker invocation 1、forbidden external operation 0を確認した。canonical evidence SHA-256は`f1b16d2d1e67ec9aa7bc27ce2ab83118a9df7a8b2c253c607110c38c7099b257`。
+- Parent checks: validator PASS、focused `purpose_e2e`/runner tests 13/13 PASS、全体tests 376/376 PASS、`git diff --check` PASS。workspace statusは6 childがcleanでmanifest pin一致。offline auditは既知のmarketing freshness finding 1件を返すが、exit 0の非blocking findingである。
+- Live blocker: verified external workspaceのself-model pin `1864fa92dde2bc8f25756bd5e5885268fa4b38fc`はexport 3件、eligible personal anchor 1件で、要求3件に届かず`INSUFFICIENT_SELF_DIVERSITY`。最初のstage/source commitを保持し、Research/Production live handoff/planを未達のまま止めた。解除条件は、新たにqualifiedなmanifest-pinned self-model commitで承認済み`tensions`または`recurring_patterns` anchorを3件以上exportできること。fixture anchorの追加、個人事実の合成、推定feedbackからの昇格は不可。
+- Child gate blocker: 旧pinのquality report SHA-256 `62c40f95d3b824c8ab4cc20584528c7cf4b1828ba1603cd599f1e46d50ca2d3e`は15/16 PASSで、Research pin `07f8cf57e416e5166ac80019ba2d015ff1821e9c`のunittestがtimeout 300秒だった。Research新mainの直接gateは後述の通り解消したが、parent manifestへ採用するには6repo fresh reportが必要である。gateのskip/deleteはしない。
+- Follow-up observation: Research mainの`496a2e20b21be6fef4ae415529dba4a863e09680`を一時cloneでread-only検証し、compile、`tools/validate.py --check`、全255 unittestがPASSした。timeoutはこのcommitでは再現しなかったが、Issue #79はOPENのままで、parent manifestのpin更新と6repo全体のfresh quality reportはまだ実施していない。self-model main `eb2b65738acf65eb01d8431bbd9dc5c978781697`もexport 3件・eligible anchor 1件で、#71の解除条件は未達だった。
+- 最新再確認（2026-08-27 19:42 JST）でもself-model #71はOPEN。ownerコメントが`signal_count=3`、`tensions=1`、`recurring_patterns=0`、eligible `1/3`を確認しており、self-model main commitも前回のままである。したがって「各Issue解決済み」とは判定せず、live-privateの再実行とmanifest更新は行っていない。
+- 2026-08-28の再確認ではself-model #71はCLOSEDだが、理由は「子repo実装Issueではなく親のlive-private実行時ゲートへ責務移管」であり、anchor不足の解消ではない。self-model main `eb2b65738acf65eb01d8431bbd9dc5c978781697`は変わらず、exportは3件、eligible `1/3`である。Research #79はCLOSEDで、修正commit `496a2e2`時点のowner記録はcompile/validate/255 unittest/cold archive PASS。ただし最新main `d6293ca`で同じ全テストを再実行すると、`test_require_schema_snapshot_passes_after_clean_snapshot_capture`が300秒超停止した。従ってResearch最新tipは未qualified、parent manifestとlive E2Eは未変更である。
+- Blocker issue SSOT: self-modelのanchor不足は[self-model-notes#71](https://github.com/masa-san-jp/self-model-notes/issues/71)、Research child gate timeoutは[agentic-art-research#79](https://github.com/masa-san-jp/agentic-art-research/issues/79)へ、ユーザー明示依頼によりcreateした。各Issueには観測commit、影響、受入条件、禁止事項、親Issue #104との関係を記録した。Issue作成以外のGitHub操作、Drive、PR、merge、release、physical productionは実施していない。
+- Repo SHA: 子repoのcommit・branch・canonical treeは変更していない。親commit `6f23dc0`はE2E実装commitであり、本Issue記録は後続の親record commitに含める。機微情報は追加していない。GitHub Issue #71/#79のcreate以外のGitHub操作、Drive、PR、merge、tag、release、physical productionなどの外部artifact・不可逆操作は実施していない。explicit feedback / inferred feedbackともにnone。
+- 終端: queue/stateは`BLOCKED`、leaseは`available`へ解放。失敗証跡はlive outputを成功evidenceとして作らず、最初のstage、source commit、観測条件、影響、解除条件をこのhandoff/stateへ記録した。
+
+## Next exact action
+
+1. 単一作家の1 anchor受理ポリシー反映後、Research qualified pin候補で`.venv/bin/python tools/validate.py --check`を実行し、fresh child gatesとlive-private E2Eを再実行する。
+
+## PURPOSE-E2E-001 single-author policy correction
+
+- ユーザー明示要件として、作家は基本一人であり、self-modelの適格アンカーは1個でも実行可能、3個以上なら通常の多様性制御を適用することを確定した。これはself-modelの出力欠陥ではなく、親repoの受入条件が単一作家の運用に対して過剰だったための仕様修正である。
+- 親のself-diversity reportは、適格アンカー0個を`INSUFFICIENT_SELF_DIVERSITY`、1〜2個を`PASS_LIMITED_DIVERSITY`、3個以上を`PASS`として表現する。1〜2個では完全な多様性（selection limit 10以上の3 distinct anchor・share 40%以下）を主張せず、3個以上の場合のみ適用する。合成anchor、候補水増し、raw self dataの保存は行わない。
+- `tools/candidate_space.py`、`tools/candidate_selection.py`、`tools/validate.py`、`tools/purpose_e2e.py`、self-diversity/purpose-E2E/batch schema、cross-repository contract、runbook、queue/state/plan記録、focused testsを更新した。self-modelの既存exportは3 records・eligible anchor 1のまま、`PASS_LIMITED_DIVERSITY`として扱う。親全体testsは379/379、関連focused testsは39/39でPASSした。
+- 実装commitは親repo `772c9dc8abbed7ef03c1c4a31fc4572ee5d955e5`。子repoのcommit、manifest pin、remote、Drive、Issue、PR、merge、releaseは変更していない。
+- この修正後もResearchの最新main `d6293ca`で全unittestがtimeoutした観測と、fresh six-repository exact-pin gate未実施は残る。次はResearchを`496a2e2`でpin候補としてfresh gateし、親validator・child gate・live-private E2Eを実行する。Research未qualifiedのままlive成功扱いにしない。
+
+## PURPOSE-E2E-001 completed live-private run
+
+- Task ID: `PURPOSE-E2E-001`; target repositories: parent、self-model、art-history、marketing-trends、agentic-art-research、agentic-art-production、viewer-response-notes。Issue SSOT: [#104](https://github.com/masa-san-jp/agentic-art-orchestration/issues/104)。2026-08-29に単一作家ポリシー修正後の再開点から完了した。
+- Manifest: Research `07f8cf5`から`496a2e20b21be6fef4ae415529dba4a863e09680`へ更新。candidate manifest hash `472eeb0a8826bc23d46ea624655dcea78672ccccbbc1f519b43ae77fcaf49abd`をqualificationで検証し、親manifest commit `f591bff`で採用した。子repoのcanonical tree・branch・remoteは変更していない。
+- Child quality gate: 6/6 repositories、16/16 commands PASSED。詳細report SHA-256 `dc0ac341b9e6663318edcc29ad6cc8327061475ff148ed051ac1b8c697047632`、qualification report SHA-256 `d787d9ce7d2cd64c8788c64aaf9e4ad37ac1ff9d8d03200d26d92a941e8f604f`。Research `python3 -m unittest discover -s tests -v`は255 tests、630.194秒でPASSした。
+- Live evidence: attempt `PURPOSE-E2E-001-live-private-496`、terminal `PLAN_READY`、acceptance 12/12、canonical evidence SHA-256 `537c917f83b2c4f33d9709eca14b4ff4b7f54b519b698d21671e90a4cc07f895`、file SHA-256 `83db0f55db357186182444d7bca6d1ccf5b1410b7078f8f5f504fd5a9ad48f2a`。出力はGit外部staging `run://PURPOSE-E2E:PURPOSE-E2E-001-live-private-496/`に保持し、親Gitへ本文を保存していない。
+- Acceptance details: zero human prompts、intent reached selection、self-diversity `PASS_LIMITED_DIVERSITY`（eligible anchor 1）、Research `COMPLETE_WITH_GAPS` trace、Production plan builder PASS、viewer `UNKNOWN` + blind/frame、resume reuse、worker invocation 1、forbidden external operation 0、child mutation 0、privacy boundary all falseを確認した。
+- Source observations: 6repoすべてclean・exact-pin MATCHED。self-model `1864fa92`（export 3、eligible 1）、art-history `b831f4c5`、marketing-trends `ff3adca6`、Research `496a2e20`、Production `63a1ddf4`、viewer `cf411086`。Research/Production outputはchild canonical treeを変更せず、physical production・Drive artifact・GitHub Issue/PR・merge・tag・releaseは実行していない。
+- Feedback: explicitは「作家は基本一人、1または3 anchorを許容」。inferredはnone。会話全文、credential、PRIVATE_RAW、RESTRICTED、direct identifier、artifact bodyは追加保存していない。
+- Parent checks after record: validator PASS、focused regression 62/62 PASS、full parent tests 379/379 PASS、project status PASS、snapshot `--check` PASS、workspace 6/6 clean/main/ahead0/behind0、auditは既知の非blocking finding 1件、security PASS、diff check PASS。残る未解決はM16を阻害しない`INITIAL-OPS-RELEASE-001`のhuman gateと、現行workflowへ再baselineが必要な`ISSUE-38-REAL-CHAIN-CI-001`である。
+
+## Next exact action
+
+1. `PURPOSE-E2E-001`は完了。READY taskはないため、merge/releaseを開始せず、次回は`.venv/bin/python tools/validate.py --check`からqueue/stateを再確認する。
+
+## REPO-USABILITY-001 — repository usability review
+
+- 利用者向け監査の結果、親READMEに目的別の入口と6repoの境界を追加し、viewer-response-notesを統合対象へ明記した。`viewer-response-notes`のGitHub default branchは`feat/viewer-response-contracts`で、`main`は空の歴史branchだったため、親manifestのdefault_branchを観測値へ合わせた。mainへのmergeは行っていない。
+- 子READMEはfresh cloneで個別に改善した。self-modelは利用者入口・診断利用禁止・privacy/export境界を追加し、staleだった生成snapshotを正本から再生成した。art-history、marketing、Research、Productionは利用目的別の入口、保存/非保存境界、検証導線を追加した。viewerはmeasured/external、UNKNOWN、aggregate-only、append-only、外部送信なしを明記した。
+- 子repoの分離commit/PR: self-model `71c63e2` / [PR #76](https://github.com/masa-san-jp/self-model-notes/pull/76)、art-history `7768464` / [PR #385](https://github.com/masa-san-jp/art-history-notes/pull/385)、marketing `a053c6c` / [PR #85](https://github.com/masa-san-jp/marketing-trends-notes/pull/85)、Research `3d893f4` / [PR #82](https://github.com/masa-san-jp/agentic-art-research/pull/82)、Production `74afd12` / [PR #51](https://github.com/masa-san-jp/agentic-art-production/pull/51)、viewer `85f2020` / [PR #3](https://github.com/masa-san-jp/viewer-response-notes/pull/3)。viewer PR #3だけはfeature branchへmerge済みで、他5件はdraft/openのまま保留。
+- 子品質確認: self-model 136/136、Research 278/278、Production 71/71 + evaluation PASS、viewer 12/12、marketing graph/audit PASS。art-historyのgraph/contextはPASSし、129 tests中126 testsがPASS、3件は実行環境Python 3.14がrepo要件Python 3.12に合わないため失敗した。art-history/ProductionのGitHub Actionsはuseful step logs前にfailureとなり、PRをPASS扱いにはしていない。
+- GitHub Descriptionは空欄だったself-model、Research、Productionへ正確な説明を設定し、viewerの説明もREADMEと一致させた。art-historyとmarketingの既存Descriptionは変更不要だった。Drive、Issue、merge、release、親pushは実行していない。
+- 機微情報: 新たな会話全文、PRIVATE_RAW、RESTRICTED、credential、直接識別子、artifact本文は保存していない。既存のdirtyなローカルchild checkoutは変更していない。
+- 親の変更はREADME、manifest、manifestのdefault branchに追随するoffline fixture処理、workspace test、handoff/state記録。親の必須検証はvalidator PASS、focused 31/31 PASS、full 379/379 PASS、workspace 6/6 clean、snapshot check PASS、project-status README check PASS、security PASS、diff check PASS。auditは既存の`marketing:trend-001` stale warning 1件のみで、再検証制約として保持した。外部PRを有効化するには人間が各PRをreviewしてmergeする必要がある。
+- 親commitは`21be012`（`docs: improve repository usability and branch fixtures`）。このcommitは未pushで、次回は`.venv/bin/python tools/validate.py --check`から再開する。
+- ユーザー指示によりviewer-response-notes PR #3をReady化してsquash mergeした。merge commitは`205eeeb8dd03e29e2b4628e00bcf69738b77f973`で、`feat/viewer-response-contracts`へ入り、PR branchは削除していない。self-model、art-history、marketing、Researchはmain側の新しいREADME更新との競合、ProductionはGitHub test (3.11/3.12) failureがあるため未merge。強制merge・checks bypass・競合の自動解消は行っていない。
+- 再監査では各repoの現在のdefault branch READMEとGitHub Descriptionを確認し、6repoとも目的・最短入口・正本/非保存境界が利用者に読める状態だった。新しい重複変更は行っていない。validator、project-status、snapshot、offline workspace 6/6 clean、親working tree cleanを再確認した。
+
+## 2026-09-01 harness autonomy audit
+
+- ユーザー依頼で「外部エージェントが自律的に探索・作業できるハーネスか」を実地検証した。fresh視点で文書記載のブートストラップを実行し、`python3 tools/validate.py --check` は `ModuleNotFoundError: No module named 'yaml'` で失敗、`.venv/bin/python` 経由では validator PASS・full suite 379/379 OK を確認した。
+- 構造的ブロッカー4件をIssue化した: venv作成手順の欠落（#113）、READY/BACKLOG 0件でIssue→queue常設経路が無い（#114）、実行SSOT 5コミット未push（#115）、ISSUE-38-REAL-CHAIN-CI-001の再ベースラインSSOT（#116、AAP_CHILD_REPOS_TOKEN未設定を含む）。
+- 子repo・Issue以外の外部mutationなし。merge・release・push・Drive操作なし。次の推奨操作は #113/#114 のqueue登録（gap-DAG方式）と、人間による branch push・secret設定の判断。
+
+## 2026-09-01 harness SSOT issues and M17 queue registration
+
+- ユーザー指示により、監査で起票した #113〜#116 を「エージェント単独で完遂可能な実装SSOT」へ書き直した。各Issueは目的（Mission接続）、観測事実、スコープ（allowed paths）、実装要件、禁止事項、観測可能な受入条件、検証コマンド、human gate、完了報告要件を持つ。
+- task-queue.yaml v18 に M17 として4タスクを直列DAGで登録した: `HARNESS-BOOTSTRAP-001`（READY, #113）→ `HARNESS-INTAKE-001`（#114）→ `HARNESS-SSOT-PUSH-001`（#115）→ `HARNESS-REALCHAIN-REBASE-001`（#116）。直列化は AGENTS.md / README / operator-runbook の path 競合回避のため。
+- `ISSUE-38-REAL-CHAIN-CI-001` は BLOCKED のまま。#116 が要求されていた再ベースラインSSOTであり、issue_ssot の付替えは `HARNESS-REALCHAIN-REBASE-001` の作業に含まれる。secret 設定（AAP_CHILD_REPOS_TOKEN）と remote green 証拠は human gate として受入条件から分離した。
+- push は #115 が「`agent/issues-38-41-pipeline` の fast-forward push のみ」を task 明示として許可する。merge・ready化・main push・force push は引き続き人間承認。
+- 次の1操作: `HARNESS-BOOTSTRAP-001` を claim し、`.venv/bin/python tools/validate.py --check` から開始する。
+
+## 2026-09-01 UX gap issues
+
+- ユーザーとのUX議論から未起票の修正点2件をSSOT起票した。(1) self-model-notes#79: 会話・音声メモ→entities/ の取り込み導線（素材供給停止の恒久対策、子repoドメイン）。(2) 親#117: PR triageレポート（merge判断の圧縮支援。オープンPR 18件滞留の観測に基づく。自動mergeは導入せず、将来の緩和判断の材料化まで）。
+- 既存Issue #88（自律ループ）と#90（素材3件）は重複起票していない。#117のqueue登録はHARNESS-INTAKE-001の初回適用に委ねる。#79はself-model-notes側harnessの管轄。
+
+## HARNESS-SSOT-PUSH-001 completed
+
+- Task ID: `HARNESS-SSOT-PUSH-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#115](https://github.com/masa-san-jp/agentic-art-orchestration/issues/115)。
+- AGENTS.mdのWork protocolとoperator runbookに、`state.yaml`・`handoff.md`・`task-queue.yaml`を含む実行SSOTをlease解放前に作業branchへfast-forward pushする規則を追加した。force push、既定branchへの直接push、merge、ready化は許可しない。pushまたはremote/PR確認が不能な場合は`UNKNOWN`／未pushを記録してleaseを解放しない。
+- `tools/audit.py`にread-onlyの`observe_parent_git()`を追加し、local tracking refのahead/behindを観測する。remote headはfetchせず`network_status=UNKNOWN`と`unknowns`を保持するため、未pushをcleanへ正規化しない。aheadまたはdivergedはnon-blocking finding `PARENT_SSOT_UNPUSHED`、比較不能は同じfindingの`status=UNKNOWN`として出力する。
+- Acceptance: 3/3。実監査は`PARENT_SSOT_UNPUSHED`（branch `agent/issues-38-41-pipeline`、ahead 4、behind 0、`network_status=UNKNOWN`）と既知のmarketing freshness warningの2 findingを返し、監査自体はnon-blocking。focused testsは`tests.test_audit`/`tests.test_docs` 15/15、親full suiteは389/389、validator・audit check・diff checkはPASSした。
+- Parent commits: implementation `9fbbedf38a7d6a976c0e888891c6c4a8bd2c59b8`、SSOT checkpoint `5d8bf565dc9f7d21a344a852c9afd32fcaca803a`。child repository、Drive artifact、Issue/PRの編集・merge・release・tagは行っていない。Issue #115で明示された`agent/issues-38-41-pipeline`だけをfast-forward pushした。
+- Push verification: `HEAD == origin/agent/issues-38-41-pipeline == 5d8bf565dc9f7d21a344a852c9afd32fcaca803a`。`gh pr view 42`は`headRefOid=5d8bf565dc9f7d21a344a852c9afd32fcaca803a`、`isDraft=true`、base `main`、head `agent/issues-38-41-pipeline`を返した。merge、ready-for-review、default branch push、force pushは行っていない。
+- Final post-push auditは既知のmarketing freshness warning 1件のみで、`PARENT_SSOT_UNPUSHED`は解消された。事前のahead 4とremote未観測`UNKNOWN`は監査・state/handoffへ記録済みである。
+- 機微情報: raw conversation、credential、PRIVATE_RAW、RESTRICTED、direct identifierは追加していない。external artifactは作成していない。explicit/inferred feedbackはnone。
+- pushとPR確認後、stateのleaseを`available/unassigned`へ解放し、依存完了済みの`HARNESS-REALCHAIN-REBASE-001`（Issue #116）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## HARNESS-REALCHAIN-REBASE-001 completed
+
+- Task ID: `HARNESS-REALCHAIN-REBASE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#116](https://github.com/masa-san-jp/agentic-art-orchestration/issues/116)。claim時点のparent HEADは`f5f4c4c8834c2e1cc789e07f4d571c0cc16f6295`で、leaseは`codex-harness-realchain`が保持している。
+- 現行`.github/workflows/validate.yml`はreal-chain jobを持つが、private child checkoutが5件でviewer-response-notesを欠き、secret未設定時のfinding名が`MISSING_EXTERNAL_SECRET`として明示されていない。現行manifestは6件で、viewerの宣言済みdefault branchは`feat/viewer-response-contracts`であり、空の`main`へは切り替えない。
+- 今回の実装範囲はworkflowと`tests/test_real_chain_ci.py`の現行化、旧`ISSUE-38-REAL-CHAIN-CI-001`の`issue_ssot`を#116へ付替え、target/terminalを補完し、secret設定とremote green証拠はhuman gateとしてBLOCKEDに保持することである。
+- 実装要件: checkout前に`MISSING_EXTERNAL_SECRET`でfail-closed、6 child checkoutは`fetch-depth: 0`・`persist-credentials: false`・token secret、qualificationは`tools/qualify_pin_update.py`を`--apply`なしで実行し、secret値をログへ出さない。
+- 実装commitは`b2a896d53afb6e1fd791920d08465ec49feb57b7`、manual dispatchを有効化した追加commitは`d5a819a8d6735cb5a9230ca3eb799b5eca23b71`。real-chain run `33481638691`（head `d5a819a8d6735cb5a9230ca3eb799b5eca23b71`）は`MISSING_EXTERNAL_SECRET`で停止し、parent checkout、6 child checkout、依存インストール、qualificationはすべてskipされた。ログにsecret値はなく、checkout前停止を確認した。
+- Acceptance: 3/3。focused `tests.test_real_chain_ci` 3/3、parent full suite 390/390、validator、diff checkはPASS。workflowはcontents read、6 child（viewerはmanifest宣言branch `feat/viewer-response-contracts`）、`fetch-depth: 0`、`persist-credentials: false`、`--apply`なしを満たす。bootstrap jobはclaim中stateにREADMEが未追随だったためproject-status checkで失敗したが、最終queue/state反映後にREADMEを再生成して整合させた。これはreal-chain fail-closed証拠とは分離して記録する。
+- Human gate: 管理者によるread-only `AAP_CHILD_REPOS_TOKEN` Actions secret設定と、設定後のremote green run URL/head SHA記録。secret作成・取得・出力、child mutation、pin採用、merge、releaseは行っていない。旧`ISSUE-38-REAL-CHAIN-CI-001`はIssue #116を`issue_ssot`として参照し、BLOCKED理由をsecret設定＋green run証拠へ更新した。
+- leaseは`available/unassigned`へ解放し、依存完了済みの`HARNESS-PR-TRIAGE-001`（Issue #117）をREADYへ進めた。次の1操作は、同taskをclaimして`.venv/bin/python tools/validate.py --check`を実行すること。
+
+## HARNESS-PR-TRIAGE-001 completed
+
+- Task ID: `HARNESS-PR-TRIAGE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#117](https://github.com/masa-san-jp/agentic-art-orchestration/issues/117)。claim時点のparent HEADは`2ca466acd2a2907b03c434439d16e09f0af47ae0`、実装commitは`ccd05f2e8c35850b3ac388d10fa948e57d4e0625`。
+- `tools/pr_triage.py`と`schemas/pr-triage-report.schema.json`を追加し、fixtureまたは`gh pr list`のmetadata-only入力から、checks、conflict、path-based change class、task/Issue SSOT、age、recommendationを決定論的に出力する。PR本文、diff、comment、credentialは出力へ取り込まない。
+- `config/human-gates.yaml`へ`CLASS_RECORD`、`CLASS_DOCS`、`CLASS_CODE`、`CLASS_CONTRACT`を追加した。全クラスは`auto_merge: false`かつ`human_approval_required: true`であり、merge、close、rebase、force push、ready-for-reviewは実行しない。operator runbookには`MERGE_CANDIDATE`から人間が読む手順と各recommendationの扱いを追加した。
+- Fixture acceptanceは2/2。6件のsynthetic PRで5種類のrecommendationと4種類のchange classを再現し、schema valid、2回生成byte一致、input/queue read-only、metadata/privacy、human merge gateをfocused `6/6 PASS`で確認した。
+- live read-only観測は`2026-09-01T12:02:09Z`に7repo・17 open PRへ実行した。classは`CLASS_RECORD 0 / CLASS_DOCS 4 / CLASS_CODE 8 / CLASS_CONTRACT 5`、recommendationは`MERGE_CANDIDATE 6 / NEEDS_REBASE 8 / NEEDS_CI_FIX 2 / SUPERSEDED_CANDIDATE 0 / HUMAN_JUDGMENT 1`。remote operationは`READ`のみで、reportはGit外`/tmp/pr-triage-live-20260901-ccd05f2.json`、SHA-256は`b77e80381c30bfaa455e906747a2e91658e912c9f09d2359299fa92f3886b301`。
+- Issue #117 acceptanceは3/3（fixture、実環境live、human gate保持）。親validator PASS、focused 6/6 PASS、parent full suite `396/396 PASS`、`git diff --check` PASS。既存`tests/test_issue_intake.py`はclaim中の`IN_PROGRESS`を正しく許容するようライフサイクル検証を補正した。
+- 子repo変更はなし。機微情報は追加していない。Drive artifact、Issue/PRのcreate/update/close/comment/label、merge、release、child mutationは行っていない。explicit/inferred feedbackはnone。
+- 未解決: triage結果の実マージ判断は人間gate。#116の`AAP_CHILD_REPOS_TOKEN`設定とremote green runも引き続きhuman gate。`.local/state/gh/device-id`はGitHub CLIが作成した未追跡ローカルファイルで、機微値を読み取らず、commit対象から除外した。
+- leaseは`available/unassigned`へ解放した。現在READYまたは依存完了済みBACKLOGはなく、次はread-only Issue intakeで新規SSOT候補を確認する。
+
+## 2026-09-02 continuation observation
+
+- 2026-09-02 JSTにIssue本文・PR本文・diffを取得せず、7repoのIssue番号・タイトル・URLだけをread-only再確認した。前回観測から変化はなく、open Issueは親38、Production 1（#10）、viewer 1（#2）、self-model/art-history/marketing-trends/Research 0だった。
+- Production #10とviewer #2はmanifestに記録済みの要件SSOTで、新規qualified implementation Issueは0件。fixture intakeも`queued 22 / qualified_unqueued 0 / UNQUEUED_NEEDS_SSOT 16`で変化なし。queue登録、Issue create/update/comment/close/label、子repo変更は行っていない。
+- 観測はmetadata-onlyで、機微情報・Issue本文・会話全文・Drive artifactは保存していない。既存の#116 secret/green runとPR #42 merge判断のhuman gateも変更していない。
+
+## 2026-09-02 semantic integration of PR #42
+
+- 対象: `agentic-art-orchestration` feature branch `agent/issues-38-41-pipeline`; base `origin/main` は `e7d123c73f29015c8e54b39a4c1f97eb882f632d`、統合前のfeature HEADは `65f03ab9a7ad539d74fa1479f060a80d344e27a2`。PR #42の競合を `merge --no-commit --no-ff` で解消し、merge commit `50880258b64f08eab3fa53c99f9985a376466dd9` を作成した。default branchには触れていない。
+- 統合方針: PR側の6repo harness、viewer boundary、AAP_CHILD_REPOS_TOKEN real-chain、intent/run API、安全境界を保持し、main側の pin-adoption、research-signal-export、後続 transformation-rule schema、Production exchange workflowを追加した。main側の5repo旧pinは現在のqualified `data/snapshot.json`と一致しなかったため、feature側の6repo qualified pin（self `1864fa92`、art `b831f4c5`、marketing `ff3adca6`、Research `496a2e20`、Production `63a1ddf4`、viewer `cf411086`）を採用した。
+- viewer exporterはchild-owned `viewer-response-record/v1` envelopeで、親の3種 normalized signalへ偽装しない。generic `tools/ingest_signals.py`からは分離し、`SEPARATE_BOUNDARY`として `tools/viewer_response_gate.py`へ送る構成にした。親signal export schemaはself/art-history/marketingのまま維持した。
+- 追加・統合した観測可能な変更: `tools/pinned_workspace.py`のlocal exact-pin materialize、runのlegacy orchestrationとbundle/intent入口の両立、`tools/validate.py`のv1.2 validatorsとpin/export validators、child gate timeout 300秒、pin adoption/signal ingest、workflowのreal-chain/production-exchange、cross-repository contract/runbookの器名・enum・pin採用手順。production exchangeはResearch/Productionだけを明示materializeする`--repository`選択を追加し、viewer権限への不要な依存を除いた。
+- Acceptance: 親 `tools/validate.py --check` PASS、`tools/project_status.py --check-readme` PASS、親full suite **456/456 PASS**、`git diff --check` PASS。focused pinned-workspace/real-chain 16/16、viewer専用境界テスト、initial operations/startup/release testsもPASS。PR #42 run `33528830980`はbootstrap PASS、production-exchange PASS、real-chainは`AAP_CHILD_REPOS_TOKEN`未設定でfail-closed。
+- 運用確認: workspace statusは6/6 child fixture clean。auditは既知のnonblocking marketing freshness warning 1件のみ。securityはPASS。子repo、Issue/PR本文、Drive artifact、default branch、release、tag、force pushは変更していない。親feature branchへの通常pushとPR check観測だけを実行した。外部artifactは作成していない。
+- 機微情報: raw conversation、PRIVATE_RAW、RESTRICTED、credential、direct identifierは追加していない。explicit feedback / inferred feedbackはいずれもnone。
+- 未解決: #116のhuman gateであるread-only `AAP_CHILD_REPOS_TOKEN`設定と、それを使ったreal-chain green runの確認。production-exchangeとbootstrapはgreen。default branchへのmerge、ready化、releaseは人間承認を要する。
+- 次の1操作: repository administratorが`AAP_CHILD_REPOS_TOKEN`を設定し、PR #42のworkflowを再実行してreal-chain greenを確認する。secretの取得・保存・出力は行わない。
+
+## 2026-09-02 PR merge gate observation (superseded by semantic integration)
+
+- PR #42はhead `1e71e7e`、base `origin/main` `e7d123c`、OPEN/DRAFT、`CONFLICTING`/`DIRTY`、CI未報告だった。workflow、manifestのchild数・pin、cross-repository docs、fixtures、run/validation/pinned-workspaceのtools/testsが両側で変更されている。
+- `git merge --no-commit --no-ff origin/main`で競合をread-only相当で確認したが、片側優先や自動解消は行わず、mergeはabortして作業branchを元のclean状態へ戻した。commit、push、既定branchへのmerge、CI bypassは行っていない。
+- この初回観測時点の推奨は、その後のユーザー承認（semantic integration）で実施済み。現時点の結果と次操作は上記 `semantic integration of PR #42` を正本とする。
+
+## 2026-09-02 real-chain qualification reattempt
+
+- 管理者による`AAP_CHILD_REPOS_TOKEN`設定後、PR #42のrun [`33529218639`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33529218639)（head `d80d6b7dd91e35af10561583f006dac465b8edc4`）をread-onlyで再確認した。bootstrapとproduction-exchangeはPASSし、real-chainは6子repoすべてのcredential検証・checkout・依存導入を通過した後、`changed_pins: 6`を検出してqualification `FAILED`となった。pinの自動採用は行われていない。
+- 失敗ログには集約サマリだけが残り、子repo別の品質ゲート理由は外部report `/tmp/pin-update-qualification.json`に出力される設計のため、子repo別理由を推測していない。観測可能な次の構造要因は、CLIの既定timeout 60秒とchild gate標準300秒の不一致、およびmarketingの`PyYAML==6.0.3`とProductionの`PyYAML==6.0.2`を共有runnerへ順番に導入する依存衝突である。
+- 親workflowのreal-chainを、manifestに登録された6つのrepo IDごとの一時venvへ依存を導入し、`--python-root "$RUNNER_TEMP/child-python" --timeout 300`で資格判定する構成へ変更した。Production exchangeは親runner環境を使い、child gateの依存隔離と交換実行の依存を分離した。checkoutは引き続き`fetch-depth: 0`・`persist-credentials: false`、qualificationは`--apply`なしである。
+- focused `tests.test_real_chain_ci` 4/4、`tools/validate.py --check`、`git diff --check`はPASS。変更は親repoのworkflow/test/SSOTのみで、子repo、Issue、Drive、pin、default branch、merge、releaseは変更していない。secret値、PRIVATE_RAW、RESTRICTED、raw conversationは保存していない。explicit feedback / inferred feedbackはいずれもnone。
+- 未解決: 修正後のremote real-chain green run。green確認後もPR #42のmerge・ready化・releaseは人間gateとして残る。
+
+## 2026-09-02 qualification status observability follow-up
+
+- 修正後run [`33531743915`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33531743915)は、credential確認、6 child checkout、6つのper-child dependency environment provisioning、bootstrap、production-exchangeをPASSした。real-chain qualificationは約8分後にexit 2でFAILEDとなった。
+- その後のrun [`33533135712`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33533135712)で子repo別statusを確認した。agentic-art-production、agentic-art-research、marketing-trends、viewer-response-notesはPASS、art-historyとself-modelはFAILED、Production exchangeはNOT_RUNだった。失敗gateの名称はまだ標準出力に出ていないため、子repo側の原因は断定していない。
+- `tools/qualify_pin_update.py`を、repo ID・status・execution mode・environment modeに加えて、宣言gateのcommand・status・exit code・安全なerror metadataだけをreport/標準出力へ出すよう変更した。gate stdout/stderr、secret、pin値、raw dataは出さない。
+- CLIの既定timeoutを`child_quality_gates.DEFAULT_GATE_TIMEOUT_SECONDS`（300秒）へ統一した。focused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkはPASS。次のremote runで失敗repoまたはexchange失敗を確定する。
+
+## 2026-09-02 child gate root-cause follow-up
+
+- run `33534392847`のgate-level結果で、Researchのunit testsは300秒timeout、art-historyはgraph/context-vectors/testsの全3 gateがexit 1、self-modelはgraph/testsの全2 gateがexit 1だった。Production、Researchの他3 gate、marketing、viewerはPASSし、exchangeはNOT_RUNだった。
+- art-historyの`pyproject.toml`はPython `>=3.12,<3.13`と`PyYAML>=6.0.2,<7`を宣言し、self-modelもpyprojectでPyYAMLを宣言している。前runのper-child provisioningはrequirementsファイルしか導入していなかったため、art-history/self-modelの専用venvが依存不足だった。親workflowをPython 3.12へ合わせ、pyproject依存を各venvへ導入する。
+- Researchの実測timeoutは300秒で不合格だったため、real-chainだけqualification timeoutを有限の900秒へ拡張する。汎用child gate既定値300秒は変更せず、real-chain固有の実repo負荷をworkflowに明示する。
+- gate-level出力はrepo ID、宣言command、status、exit code、安全なerror metadataだけであり、stdout/stderr、secret、pin値、raw dataは出さない。次のremote runで3repoの再検証結果とProduction exchange実行可否を確認する。
+
+## 2026-09-02 pyproject provisioning correction
+
+- run `33535508799`はcredential確認と6 child checkoutをPASSしたが、provisioningでart-historyのpyprojectをpip packageとして導入しようとした際、setuptoolsが`data/config/contexts/entities/overviews`の複数top-level packageを検出してexit 1となった。品質gateは実行されていない。bootstrapとproduction-exchangeはPASSした。
+- 子repo本体をインストールする必要はなく、品質gateが必要とする依存だけが必要である。親workflowはpyprojectの`project.dependencies`をPython 3.12標準の`tomllib`で一時requirementsへ抽出し、そのrequirementsだけを各venvへ導入する。子repoのpyproject、データ、package layoutは変更しない。
+- 最新workflow修正はfocused `tests.test_pin_update tests.test_real_chain_ci` 8/8、validator、diff checkがPASS。次のremote runでart-history/self-modelのgate実行とResearch timeout 900秒の効果を確認する。
+
+## 2026-09-02 parent runner dependency follow-up
+
+- run [`33535915349`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33535915349)はcredential、6 child checkout、6つのper-child dependency provisioning、bootstrap、production-exchangeをPASSした。agentic-art-production、agentic-art-research、marketing-trends、self-model、viewer-response-notesは全gate PASS、art-historyはgraph/context-vectors PASS後にunit testだけがexit 1となり、exchangeはNOT_RUNだった。
+- 失敗ログは安全な集約情報のみを出力するため、子repoの正確な理由は親側で直接推測せず、同じcommit `de5a3c3` のart-history自身のvalidate run [`33523697488`](https://github.com/masa-san-jp/art-history-notes/actions/runs/33523697488)を照合した。子repoの正準検証はsetup-uv後に129 tests PASSであり、親runnerとの差分は`uv`コマンドの未導入だった。ローカル3.14での再現失敗は子repoが3.12を要求するため証拠には採用していない。
+- 親workflowへ`astral-sh/setup-uv@v6`を追加し、`tests/test_real_chain_ci.py`でPython 3.12とuvの両方を要求するようにした。manifestのart-historyゲートは、現在のpin `b831...`に`tools/verify.py`が存在しないため旧3ゲートへ戻し、pinとゲート定義の整合性を保持した。pyprojectはpackageとしてインストールせず、project.dependenciesだけを一時requirementsへ抽出する。
+- 親変更のfocused testは8/8、validator、diff checkがPASS。子repo、Issue、Drive、pin、default branch、merge、releaseは変更していない。secret値、PRIVATE_RAW、RESTRICTED、raw conversationは保存していない。explicit feedback / inferred feedbackはいずれもnone。
+- leaseはattempt-2の期限切れを確認後、同じtaskのattempt-3として2026-09-02 02:30 JSTに再取得した。未解決はsetup-uv反映後のremote real-chain green evidenceのみである。
+
+## ISSUE-38-REAL-CHAIN-CI-001 completed
+
+- Task ID: `ISSUE-38-REAL-CHAIN-CI-001`。対象repoは`agentic-art-orchestration`のみで、親workflow/test/SSOTを変更した。実装commitは`c9c9e1ce5c08b61554f2b88f654a1474656362fc`。子repoは全てread-only checkoutで、子側commit・Issue・branch・データは変更していない。
+- 観測可能な変更: real-chainをPython 3.12へ固定し、`astral-sh/setup-uv@v6`を追加、manifestのpyproject依存だけを子repo別venvへ導入、Research用timeoutを有限900秒に固定、qualificationのstatusをrepo/gate単位で安全に出力する構成を完成させた。
+- Acceptance: `1/1`。run [`33538995358`](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33538995358)で外部read-only credential、6 checkout、6 dependency provisioning、6/6 immutable child repository、15/15 declared child gates、bootstrap、Production exchangeがPASS。qualificationは`changed_pins=6`でも`applied=false`で、pin自動採用なし。
+- 親検証: `tools/validate.py --check` PASS、`tests.test_real_chain_ci tests.test_pin_update` 8/8 PASS、親full suite 457/457 PASS、project-status/readme PASS、workspace 6/6 clean、security PASS、auditは既知のnonblocking finding 1件、`git diff --check` PASS。remote PR #42はhead `c9c9e1c`、OPEN/DRAFT、MERGEABLE/CLEAN。
+- repoごとの変更commit: 親`c9c9e1c`、self-model/art-history/marketing-trends/agentic-art-research/agentic-art-production/viewer-response-notesは`no mutation`。外部資格runは各childの実体を一時immutable archiveへ複製して実行し、親へchild schema/dataをvendor copyしていない。
+- 機微情報: secret値、PRIVATE_RAW、RESTRICTED、direct identifier、raw conversationは保存していない。外部artifactは作成しておらず、Driveのcreate-only操作もない。explicit feedback / inferred feedbackはいずれもnone。
+- 未解決: PR #42のdefault branch merge、ready化、tag、releaseは人間承認が必要。qualificationで検出した6件のpin差分は、別途明示的なpin adoptionを行うまで未採用。auditの既知nonblocking finding 1件は残る。
+
+## Next exact action
+
+1. 人間がPR #42をreviewし、default branchへのmerge可否を判断する。merge後に必要ならread-onlyのpost-merge確認を行う。release、force-push、pin adoptionは別の人間gateのまま。

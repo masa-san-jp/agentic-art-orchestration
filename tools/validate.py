@@ -4,7 +4,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import sys
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 import yaml
@@ -29,6 +31,7 @@ IMPROVEMENT_LOOP_SCHEMA_PATH = ROOT / "schemas/improvement-loop.schema.json"
 INTERACTION_E2E_SCHEMA_PATH = ROOT / "schemas/interaction-e2e.schema.json"
 AGENT_UI_SCHEMA_PATH = ROOT / "schemas/agent-ui-result.schema.json"
 INITIAL_OPERATIONS_E2E_SCHEMA_PATH = ROOT / "schemas/initial-operations-e2e.schema.json"
+INSPIRATION_SCHEMA_PATH = ROOT / "schemas/inspiration-input.schema.json"
 V12_BOUNDARY_SCHEMA_PATH = ROOT / "schemas/research-execution-boundary.schema.json"
 V12_BOUNDARY_CONFIG_PATH = ROOT / "config/research-execution-boundary.yaml"
 TRANSFORMATION_RULE_SCHEMA_PATH = ROOT / "schemas/transformation-rule.schema.json"
@@ -36,10 +39,13 @@ TRANSFORMATION_RULE_CONFIG_PATH = ROOT / "config/transformation-rules.yaml"
 CANDIDATE_SCHEMA_PATH = ROOT / "schemas/research-candidate.schema.json"
 CANDIDATE_GATES_SCHEMA_PATH = ROOT / "schemas/research-candidate-gates.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "schemas/research-selection.schema.json"
+SELECTION_V2_SCHEMA_PATH = ROOT / "schemas/research-selection-v2.schema.json"
+SELF_DIVERSITY_SCHEMA_PATH = ROOT / "schemas/self-diversity-report.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 PIN_ADOPTION_SCHEMA_PATH = ROOT / "schemas/pin-adoption-report.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
+PROJECT_STATUS_SCHEMA_PATH = ROOT / "schemas/project-status.schema.json"
 PRODUCTION_EXCHANGE_SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
 PRODUCTION_EXCHANGE_E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
 STARTUP_POLICY_PATH = ROOT / "config/startup-policy.yaml"
@@ -48,6 +54,11 @@ DRIVE_LIVE_SCHEMA_PATH = ROOT / "schemas/drive-live-evidence.schema.json"
 GITHUB_SANDBOX_LIVE_SCHEMA_PATH = ROOT / "schemas/github-sandbox-live-evidence.schema.json"
 GITHUB_SANDBOX_LIVE_POLICY_PATH = ROOT / "config/github-sandbox-live-policy.yaml"
 DRIVE_LIVE_POLICY_PATH = ROOT / "config/drive-live-policy.yaml"
+HUMAN_GATES_PATH = ROOT / "config/human-gates.yaml"
+AGENT_ACTION_SCHEMA_PATH = ROOT / "schemas/agent-action.schema.json"
+AGENT_RESULT_SCHEMA_PATH = ROOT / "schemas/agent-result.schema.json"
+AUTONOMOUS_RUN_SCHEMA_PATH = ROOT / "schemas/autonomous-run.schema.json"
+BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -61,6 +72,7 @@ REQUIRED_FILES = [
     "config/orchestration.yaml",
     "schemas/repository-manifest.schema.json",
     "schemas/normalized-research-signal.schema.json",
+    "schemas/normalized-research-signal-bundle.schema.json",
     "schemas/research-signal-export.schema.json",
     "schemas/work-item.schema.json",
     "schemas/external-artifact.schema.json",
@@ -78,28 +90,57 @@ REQUIRED_FILES = [
     "schemas/interaction-e2e.schema.json",
     "schemas/agent-ui-result.schema.json",
     "schemas/initial-operations-e2e.schema.json",
+    "schemas/inspiration-input.schema.json",
     "schemas/research-execution-boundary.schema.json",
     "config/research-execution-boundary.yaml",
     "tools/v12_boundary.py",
     "schemas/transformation-rule.schema.json",
     "config/transformation-rules.yaml",
     "tools/transformation_rules.py",
+    "tools/export_signal.py",
     "schemas/research-candidate.schema.json",
     "tools/candidate_space.py",
+    "tools/signal_bundle.py",
+    "tools/input_pipeline.py",
+    "tools/run.py",
+    "config/human-gates.yaml",
+    "schemas/pr-triage-report.schema.json",
+    "tools/pr_triage.py",
+    "schemas/agent-action.schema.json",
+    "schemas/agent-result.schema.json",
+    "schemas/autonomous-run.schema.json",
+    "tools/autonomous_runner.py",
+    "schemas/batch-report-event.schema.json",
+    "schemas/batch-run.schema.json",
+    "tools/batch_status.py",
+    "tools/batch_run.py",
+    "tools/inspiration.py",
+    "tools/research_request.py",
+    "tools/research_start.py",
+    "tools/qualify_pin_update.py",
+    "tools/qualify_pin_update.py",
     "schemas/research-candidate-gates.schema.json",
     "tools/candidate_gates.py",
     "schemas/research-selection.schema.json",
+    "schemas/research-selection-v2.schema.json",
     "tools/candidate_selection.py",
+    "schemas/self-diversity-report.schema.json",
     "schemas/child-quality-gates.schema.json",
     "tools/child_quality_gates.py",
+    "tools/pinned_workspace.py",
     "schemas/pin-adoption-report.schema.json",
     "tools/pin_adopt.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
     "schemas/v12-e2e.schema.json",
+    "schemas/project-status.schema.json",
+    "tools/project_status.py",
     "schemas/production-exchange-evidence.schema.json",
     "schemas/production-exchange-e2e.schema.json",
+    "schemas/purpose-e2e-evidence.schema.json",
+    "schemas/viewer-response-assessment.schema.json",
     "tools/production_exchange.py",
+    "tools/purpose_e2e.py",
     "tools/v12_e2e.py",
     "tools/startup.py",
     "config/startup-policy.yaml",
@@ -111,6 +152,7 @@ REQUIRED_FILES = [
     "config/github-sandbox-live-policy.yaml",
     "schemas/github-sandbox-live-evidence.schema.json",
     "tools/github_sandbox_live_check.py",
+    "tools/viewer_response_gate.py",
     "tools/agent_ui.py",
     "tools/initial_operations_e2e.py",
     "execution/task-queue.yaml",
@@ -118,8 +160,12 @@ REQUIRED_FILES = [
     "execution/handoff.md",
     "docs/20260811-agentic-art-orchestration-system-design-specification.md",
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
+    "docs/cross-repository-contract.md",
     "docs/interaction-improvement-runbook.md",
+    "docs/purpose-e2e-runbook.md",
     "docs/agent-ui-runbook.md",
+    "docs/input-pipeline-runbook.md",
+    ".github/ISSUE_TEMPLATE/decision.yml",
 ]
 STATUSES = {"BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "DONE"}
 ROLES = {"input-kb", "consumer-runtime", "control-plane-extension"}
@@ -138,6 +184,36 @@ REQUIRED_PROFILE_FORBIDDEN_DATA = {
     "direct_identifier",
 }
 COMMAND_FORBIDDEN_TOKENS = ("\x00", "\r", "\n", ";", "&&", "||", "|", ">", "<", "`")
+GITHUB_ISSUE_URL = re.compile(
+    r"^https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/[1-9][0-9]*$"
+)
+AGENT_TERMINALS = {"COMMIT_READY", "DRAFT_PR_READY", "EVIDENCE_READY"}
+ISSUE_SSO_TASK_IDS = {
+    "GAP-DAG-001",
+    "V14-SANDBOX-ATTEMPT-001",
+    "V14-CHILD-PREFLIGHT-001",
+    "V14-PIN-RELEASE-CHECK-001",
+    "V14-OBSERVATION-PROVENANCE-001",
+    "V14-RECONCILE-001",
+    "PROJECT-STATUS-001",
+    "PURPOSE-NAMING-001",
+    "PURPOSE-INSPIRATION-001",
+    "PURPOSE-SELF-EXPORT-SOURCE-001",
+    "SELF-EXPORT-E2E-001",
+    "PURPOSE-SELF-DIVERSITY-001",
+    "PURPOSE-INTENT-RANK-001",
+    "PURPOSE-RESEARCH-KNOWLEDGE-001",
+    "PURPOSE-RESEARCH-DECISIONS-001",
+    "PURPOSE-RESEARCH-VISUAL-001",
+    "PURPOSE-PRODUCTION-OBSERVATION-001",
+    "PURPOSE-PRODUCTION-REVISION-001",
+    "PURPOSE-RESEARCH-FEEDBACK-001",
+    "PURPOSE-VIEWER-RESPONSE-001",
+    "PURPOSE-AUTONOMOUS-RUNNER-001",
+    "PURPOSE-BATCH-STATUS-001",
+    "PURPOSE-BATCH-100-001",
+    "PURPOSE-E2E-001",
+}
 STARTUP_STEPS = [
     "validate_parent_configuration",
     "observe_remote_heads",
@@ -304,6 +380,79 @@ def _schema_errors(value, schema: dict, path: str = "$", root_schema: dict | Non
     return errors
 
 
+def validate_autonomous_contract(
+    human_gates: dict,
+    action_schema: dict | None = None,
+    result_schema: dict | None = None,
+    run_schema: dict | None = None,
+    source: str = "autonomous-runner",
+) -> list[str]:
+    """Keep the worker boundary versioned, closed, and human-gated."""
+    errors: list[str] = []
+    expected_operations = [
+        "merge",
+        "release",
+        "public_share",
+        "consent_expansion",
+        "destructive_git",
+        "external_cost_over_declared_budget",
+        "physical_action",
+    ]
+    if not isinstance(human_gates, dict):
+        return [f"{source}: human gate policy must be an object; remediation: restore config/human-gates.yaml"]
+    if human_gates.get("contract_version") != "human-gates/v1":
+        errors.append(f"{source}: unsupported human gate policy version; remediation: use human-gates/v1")
+    if human_gates.get("human_operations") != expected_operations:
+        errors.append(f"{source}: human operation vocabulary is incomplete or reordered; remediation: preserve the seven fixed human gates")
+    if human_gates.get("default_status") != "BLOCKED_HUMAN":
+        errors.append(f"{source}: default human gate status is unsafe; remediation: use BLOCKED_HUMAN")
+    if human_gates.get("worker_may_request") is not True or human_gates.get("execution_policy") != "never_execute_requested_human_operation":
+        errors.append(f"{source}: worker human-operation policy is unsafe; remediation: never execute requested human operations")
+    schemas = (
+        ("agent-action/v1", action_schema, "agent action"),
+        ("agent-result/v1", result_schema, "agent result"),
+        ("autonomous-run/v1", run_schema, "autonomous run"),
+    )
+    for version, schema, label in schemas:
+        if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+            errors.append(f"{source}: {label} schema must be Draft 2020-12; remediation: restore the closed versioned schema")
+        if isinstance(schema, dict):
+            if schema.get("additionalProperties") is not False:
+                errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
+            if not any(property_schema.get("const") == version for property_schema in [schema.get("properties", {}).get("contract_version", {})] if isinstance(property_schema, dict)):
+                errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
+    return errors
+
+
+def validate_batch_report_contract(
+    event_schema: dict | None = None,
+    source: str = "schemas/batch-report-event.schema.json",
+) -> list[str]:
+    """Keep batch events closed, metadata-only, and append-only compatible."""
+    event_schema = event_schema if event_schema is not None else load_json(BATCH_REPORT_EVENT_SCHEMA_PATH)
+    errors: list[str] = []
+    if not isinstance(event_schema, dict):
+        return [f"{source}: batch report event schema must be an object; remediation: restore the v1 schema"]
+    if event_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        errors.append(f"{source}: batch report event schema must be Draft 2020-12; remediation: preserve the closed v1 contract")
+    if event_schema.get("additionalProperties") is not False:
+        errors.append(f"{source}: batch report event schema must reject unknown fields; remediation: set additionalProperties to false")
+    version = event_schema.get("properties", {}).get("contract_version", {})
+    if not isinstance(version, dict) or version.get("const") != "batch-report-event/v1":
+        errors.append(f"{source}: batch report event schema has the wrong contract version; remediation: preserve batch-report-event/v1")
+    expected_required = {
+        "contract_version", "event_id", "run_id", "event_type", "project_id",
+        "repository", "source_commit", "observed_at", "attempt",
+        "duration_seconds", "token_count",
+    }
+    if set(event_schema.get("required", [])) != expected_required:
+        errors.append(f"{source}: batch report event required fields are incomplete or expanded; remediation: keep the metadata envelope minimal")
+    event_types = event_schema.get("properties", {}).get("event_type", {}).get("enum")
+    if event_types != ["STARTED", "COMPLETED", "FAILED", "RETRY", "DURATION", "TOKENS"]:
+        errors.append(f"{source}: event type vocabulary is unsafe; remediation: preserve the fixed append-only event types")
+    return errors
+
+
 def _source_label(path: Path) -> str:
     try:
         return str(path.relative_to(ROOT))
@@ -316,6 +465,52 @@ def _is_safe_relative_path(value) -> bool:
         return False
     parts = value.replace("\\", "/").split("/")
     return all(part not in {"", ".", ".."} for part in parts)
+
+
+def _absolute_command_token(command: str) -> str | None:
+    """Return an absolute filesystem token from a recorded command, if any."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return "<unparseable command>"
+    for token in tokens:
+        candidates = [token]
+        if "=" in token:
+            candidates.append(token.split("=", 1)[1])
+        if any(candidate.startswith(("/", "\\")) for candidate in candidates):
+            return token
+    return None
+
+
+def validate_execution_state(data: dict, source: str = "execution/state.yaml") -> list[str]:
+    """Reject non-replayable absolute paths in every recorded command field."""
+    errors: list[str] = []
+
+    def visit(value, path: str) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = f"{path}.{key}"
+                if key == "command":
+                    if not isinstance(child, str):
+                        errors.append(
+                            f"{source}: {child_path} must be a string; "
+                            "remediation: record a repo-relative replay command"
+                        )
+                    else:
+                        token = _absolute_command_token(child)
+                        if token is not None:
+                            errors.append(
+                                f"{source}: {child_path} contains absolute path token {token!r}; "
+                                "remediation: record the command with repo-relative interpreter, workspace, and output paths"
+                            )
+                else:
+                    visit(child, child_path)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                visit(child, f"{path}[{index}]")
+
+    visit(data, source)
+    return errors
 
 
 def validate_manifest(data: dict, source: str = "config/repositories.yaml") -> list[str]:
@@ -642,7 +837,7 @@ def validate_research_execution_boundary(data: dict, source: str = "research-exe
         require_exact_set(
             "child_authority.quality_gate_statuses",
             child_authority.get("quality_gate_statuses"),
-            {"NOT_RUN", "PASSED", "FAILED", "BLOCKED"},
+            {"NOT_RUN", "PASSED", "FAILED", "BLOCKED", "ENV_UNSATISFIED"},
             "child quality gate statuses",
         )
 
@@ -739,7 +934,8 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                     for slot in slots.values()
                     if isinstance(slot, dict)
                 }
-                # A rule may add slots beyond the three, so require coverage rather than equality.
+                # A rule may add slots beyond the three required kinds, so require
+                # coverage rather than rejecting useful additional slots.
                 if not expected_kinds <= slot_kinds:
                     errors.append(
                         _signal_error(
@@ -749,9 +945,6 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                         )
                     )
             template = composition.get("template")
-            # The template is no longer a fixed sentence, so the registry checks that
-            # every slot it declares is actually spent. An unused slot means the rule
-            # binds a signal it never says anything with.
             if isinstance(slots, dict) and isinstance(template, str):
                 unused = sorted(name for name in slots if "{" + str(name) + "}" not in template)
                 if unused:
@@ -1112,6 +1305,11 @@ def validate_github_sandbox_live_contract(
             error(policy_source, "approved_repository.id_env_var is invalid", "use an uppercase environment variable name")
         if not isinstance(fixture_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", fixture_id) is None:
             error(policy_source, "approved_repository.fixture_id is invalid", "use a stable offline fixture ID")
+    if policy.get("idempotency_key_prefix") != "initial-operations-github-sandbox-v1":
+        error(policy_source, "idempotency_key_prefix is not the approved v1 prefix", "use the fixed prefix and append a validated attempt ID")
+    fixture_attempt_id = policy.get("fixture_attempt_id")
+    if not isinstance(fixture_attempt_id, str) or re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", fixture_attempt_id) is None:
+        error(policy_source, "fixture_attempt_id is invalid", "use a lowercase fixture attempt ID such as fixture-attempt-1")
     token_env_vars = policy.get("token_env_vars")
     if token_env_vars != ["GITHUB_TOKEN", "GH_TOKEN"]:
         error(policy_source, "token_env_vars must be GITHUB_TOKEN then GH_TOKEN", "accept credentials only from repo-external GitHub token variables")
@@ -1364,7 +1562,8 @@ def validate_candidate_gates(data: dict, source: str = "candidate-gates") -> lis
 def validate_selection(data: dict, source: str = "selection") -> list[str]:
     """Validate seeded selection ranks and ensure selected references retain provenance."""
     errors: list[str] = []
-    schema = load_json(SELECTION_SCHEMA_PATH)
+    is_v2 = isinstance(data, dict) and data.get("contract_version") == "research-selection/v2"
+    schema = load_json(SELECTION_V2_SCHEMA_PATH if is_v2 else SELECTION_SCHEMA_PATH)
     errors.extend(
         _signal_error(source, schema_error, "correct the research-selection field")
         for schema_error in _schema_errors(data, schema)
@@ -1410,6 +1609,55 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
             if score in scores:
                 errors.append(_signal_error(source, f"selected_candidates[{index}] duplicates selection_score", "use the deterministic candidate score for each ranked candidate"))
             scores.add(score)
+        if is_v2:
+            kind_scores = candidate.get("intent_kind_scores")
+            total_score = candidate.get("intent_score")
+            if isinstance(kind_scores, dict) and isinstance(total_score, (int, float)) and not isinstance(total_score, bool):
+                try:
+                    quantum = Decimal("0.000001")
+                    for kind in ("self", "art-history", "marketing"):
+                        score_value = Decimal(str(kind_scores[kind]))
+                        if score_value != score_value.quantize(quantum, rounding=ROUND_HALF_UP):
+                            errors.append(
+                                _signal_error(
+                                    source,
+                                    f"selected_candidates[{index}].intent_kind_scores.{kind} is not rounded to six decimals",
+                                    "round every kind score with ROUND_HALF_UP to six decimal places",
+                                )
+                            )
+                    expected = sum(
+                        (
+                            Decimal(weight) * Decimal(str(kind_scores[kind]))
+                            for kind, weight in (
+                                ("self", "0.50"),
+                                ("art-history", "0.30"),
+                                ("marketing", "0.20"),
+                            )
+                        ),
+                        Decimal("0"),
+                    ).quantize(quantum, rounding=ROUND_HALF_UP)
+                    observed_unrounded = Decimal(str(total_score))
+                    observed = observed_unrounded.quantize(quantum, rounding=ROUND_HALF_UP)
+                    if observed_unrounded != observed:
+                        errors.append(
+                            _signal_error(
+                                source,
+                                f"selected_candidates[{index}].intent_score is not rounded to six decimals",
+                                "round total intent_score with ROUND_HALF_UP to six decimal places",
+                            )
+                        )
+                    if observed != expected:
+                        errors.append(
+                            _signal_error(
+                                source,
+                                f"selected_candidates[{index}].intent_score does not match weighted kind scores",
+                                "derive total intent_score from the declared self, art-history, and marketing scores",
+                            )
+                        )
+                except (InvalidOperation, KeyError, TypeError, ValueError):
+                    # The JSON schema error above is the actionable report for
+                    # malformed score values; avoid masking it with arithmetic.
+                    pass
         inputs = candidate.get("inputs")
         input_refs: dict[tuple[str, str, str], dict] = {}
         if isinstance(inputs, dict):
@@ -1436,6 +1684,115 @@ def validate_selection(data: dict, source: str = "selection") -> list[str]:
                     )
     if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
         errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
+    return errors
+
+
+def validate_self_diversity_report(data: dict, source: str = "self-diversity") -> list[str]:
+    """Validate opaque self-model anchor counts, distribution, and provenance."""
+    errors: list[str] = []
+    schema = load_json(SELF_DIVERSITY_SCHEMA_PATH)
+    errors.extend(
+        _signal_error(source, schema_error, "correct the self-diversity-report field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+
+    anchor_ids = data.get("anchor_ids")
+    attribute_counts = data.get("attribute_counts")
+    selected_anchor_ids = data.get("selected_anchor_ids")
+    if isinstance(anchor_ids, list) and isinstance(data.get("eligible_anchor_count"), int):
+        if data["eligible_anchor_count"] != len(anchor_ids):
+            errors.append(
+                _signal_error(
+                    source,
+                    "eligible_anchor_count does not equal anchor_ids length",
+                    "derive the count from the complete eligible anchor set",
+                )
+            )
+        if len(anchor_ids) != len(set(anchor_ids)):
+            errors.append(_signal_error(source, "anchor_ids contains duplicates", "deduplicate anchors by their stable hash ID"))
+    if isinstance(attribute_counts, dict) and isinstance(data.get("eligible_anchor_count"), int):
+        if sum(value for value in attribute_counts.values() if isinstance(value, int) and not isinstance(value, bool)) != data["eligible_anchor_count"]:
+            errors.append(
+                _signal_error(
+                    source,
+                    "attribute_counts does not sum to eligible_anchor_count",
+                    "count each tensions or recurring_patterns anchor exactly once",
+                )
+            )
+    if isinstance(selected_anchor_ids, list):
+        selected_count = data.get("selected_count")
+        if selected_count != len(selected_anchor_ids):
+            errors.append(
+                _signal_error(
+                    source,
+                    "selected_count does not equal selected_anchor_ids length",
+                    "derive selected_count from the selected candidate anchors",
+                )
+            )
+        distinct_count = len(set(selected_anchor_ids))
+        if data.get("distinct_selected_count") != distinct_count:
+            errors.append(
+                _signal_error(
+                    source,
+                    "distinct_selected_count does not equal unique selected anchor IDs",
+                    "derive distinct_selected_count from selected_anchor_ids",
+                )
+            )
+        if isinstance(anchor_ids, list) and not set(selected_anchor_ids).issubset(set(anchor_ids)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "selected_anchor_ids contains an ineligible anchor",
+                    "select only anchors present in the same immutable eligibility report",
+                )
+            )
+        frequencies: dict[str, int] = {}
+        for anchor_id in selected_anchor_ids:
+            frequencies[anchor_id] = frequencies.get(anchor_id, 0) + 1
+        selected_count = len(selected_anchor_ids)
+        expected_share = max((count / selected_count for count in frequencies.values()), default=0.0)
+        observed_share = data.get("max_anchor_share")
+        if isinstance(observed_share, (int, float)) and not isinstance(observed_share, bool) and abs(observed_share - expected_share) > 1e-12:
+            errors.append(
+                _signal_error(
+                    source,
+                    "max_anchor_share does not match selected anchor frequencies",
+                    "derive the maximum selected anchor frequency divided by selected_count",
+                )
+            )
+
+    eligible_count = data.get("eligible_anchor_count")
+    selected_count = data.get("selected_count")
+    selection_limit = data.get("selection_limit")
+    distinct_count = data.get("distinct_selected_count")
+    max_share = data.get("max_anchor_share")
+    status = data.get("status")
+    expected_status = "PASS"
+    if isinstance(eligible_count, int) and eligible_count == 0:
+        expected_status = "INSUFFICIENT_SELF_DIVERSITY"
+    elif isinstance(selected_count, int) and isinstance(selection_limit, int):
+        if selected_count > selection_limit or (selected_count > 0 and selected_count < selection_limit):
+            expected_status = "REJECT"
+        elif selection_limit >= 10 and isinstance(eligible_count, int) and eligible_count >= 3 and (
+            not isinstance(distinct_count, int)
+            or distinct_count < 3
+            or not isinstance(max_share, (int, float))
+            or isinstance(max_share, bool)
+            or max_share > 0.4
+        ):
+            expected_status = "REJECT"
+        elif isinstance(eligible_count, int) and eligible_count < 3:
+            expected_status = "PASS_LIMITED_DIVERSITY"
+    if status != expected_status:
+        errors.append(
+            _signal_error(
+                source,
+                f"status {status!r} does not match observed diversity conditions; expected {expected_status!r}",
+                "preserve INSUFFICIENT_SELF_DIVERSITY, PASS_LIMITED_DIVERSITY, REJECT, or PASS without fallback or waterfilling",
+            )
+        )
     return errors
 
 
@@ -1497,6 +1854,11 @@ def validate_child_quality_gates(data: dict, source: str = "child-quality-gates"
             errors.append(_signal_error(source, f"results[{index}] FAILED without a failed gate", "preserve the failing command status and redacted evidence"))
         if status == "BLOCKED" and execution_mode != "NOT_RUN":
             errors.append(_signal_error(source, f"results[{index}] BLOCKED with an execution mode", "do not report blocked work as executed"))
+        if status == "ENV_UNSATISFIED":
+            if execution_mode != "NOT_RUN" or not gate_statuses or any(value != "NOT_RUN" for value in gate_statuses):
+                errors.append(_signal_error(source, f"results[{index}] ENV_UNSATISFIED after executing a gate", "record dependency insufficiency before running any immutable gate"))
+            if not isinstance(result.get("remediation"), str) or not result["remediation"].strip():
+                errors.append(_signal_error(source, f"results[{index}] ENV_UNSATISFIED without remediation", "record the external dependency installation command and rerun path"))
         if result.get("workspace_state") in {"MISSING", "UNKNOWN"} and status != "BLOCKED":
             errors.append(_signal_error(source, f"results[{index}] has unavailable workspace state but is not BLOCKED", "preserve missing or unknown child checkout state"))
         for gate_index, gate in enumerate(gates if isinstance(gates, list) else []):
@@ -1674,14 +2036,8 @@ def validate_v12_e2e(data: dict, manifest: dict | None = None, source: str = "v1
     return errors
 
 
-
 def validate_signal_export(data: dict, source: str = "signal-export") -> list[str]:
-    """Validate the payload a knowledge base writes, without judging its records.
-
-    The envelope answers who produced the export, from which commit, and how many
-    records it carries. Each kind's records have their own shape, and the adapters
-    translate them, so this deliberately stops at the count.
-    """
+    """Validate the metadata envelope emitted by a knowledge-base export."""
     errors: list[str] = []
     schema = load_json(SIGNAL_EXPORT_SCHEMA_PATH)
     errors.extend(
@@ -1701,7 +2057,6 @@ def validate_signal_export(data: dict, source: str = "signal-export") -> list[st
                 "report the number of records the payload actually contains",
             )
         )
-
     if isinstance(signals, list):
         seen: set[str] = set()
         for index, record in enumerate(signals):
@@ -2964,6 +3319,51 @@ def validate_agent_ui_result(data: dict, source: str = "agent-ui") -> list[str]:
     return errors
 
 
+def validate_inspiration(data: dict, source: str = "inspiration-input") -> list[str]:
+    """Validate the code-only inspiration capture and its optional settlement."""
+    errors: list[str] = []
+    schema = load_json(INSPIRATION_SCHEMA_PATH)
+    errors.extend(
+        _interaction_error(source, schema_error, "correct the inspiration input field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    errors.extend(_scan_forbidden_retrieval_fields(data, source))
+    if not isinstance(data, dict):
+        return errors
+
+    provenance = data.get("provenance")
+    if isinstance(provenance, dict):
+        snapshots = provenance.get("retrieval_source_snapshots")
+        if isinstance(snapshots, list):
+            repositories = [item.get("repository") for item in snapshots if isinstance(item, dict)]
+            if len(repositories) != len(set(repositories)):
+                errors.append(_interaction_error(source, "retrieval source snapshots must be unique", "retain one immutable commit per repository"))
+        pipeline_snapshots = provenance.get("pipeline_source_snapshots")
+        if data.get("phase") == "SETTLED" and isinstance(pipeline_snapshots, list) and not pipeline_snapshots:
+            errors.append(_interaction_error(source, "settled inspiration lacks pipeline source snapshots", "settle only after the candidate pipeline has run"))
+        if data.get("phase") == "SETTLED" and not provenance.get("candidate_input_refs"):
+            errors.append(_interaction_error(source, "settled inspiration lacks candidate input references", "retain the selected candidate provenance without copying signal content"))
+
+    phase = data.get("phase")
+    settlement = data.get("settlement")
+    consent = data.get("consent")
+    if phase == "CAPTURED" and settlement is not None:
+        errors.append(_interaction_error(source, "CAPTURED inspiration must not contain settlement", "run the explicit settlement step after candidate generation"))
+    if phase == "SETTLED":
+        if not isinstance(settlement, dict) or settlement.get("status") != "SETTLED":
+            errors.append(_interaction_error(source, "SETTLED inspiration lacks a settled result", "retain candidate pipeline hashes and selected candidate IDs"))
+        if not isinstance(consent, dict) or consent.get("settlement_confirmed") is not True:
+            errors.append(_interaction_error(source, "settlement consent is not confirmed", "settle only within the captured consent scope"))
+    if isinstance(consent, dict) and consent.get("profile_update_permitted") is not False:
+        errors.append(_interaction_error(source, "profile_update_permitted must be false", "do not promote an inspiration into a user profile fact"))
+    privacy = data.get("privacy")
+    if isinstance(privacy, dict):
+        for field in ("raw_inspiration_stored", "raw_conversation_stored", "direct_identifiers_stored"):
+            if privacy.get(field) is not False:
+                errors.append(_interaction_error(source, f"privacy.{field} must be false", "retain only codes, hashes, and opaque provenance references"))
+    return errors
+
+
 def validate_initial_operations_e2e(data: dict, source: str = "initial-operations-e2e") -> list[str]:
     """Validate the closed networkless initial operations evidence envelope."""
     errors: list[str] = []
@@ -3191,35 +3591,97 @@ def validate_repositories(errors: list[str], manifest_path: Path = MANIFEST_PATH
     errors.extend(validate_manifest(data, _source_label(manifest_path)))
 
 
-def validate_tasks(errors: list[str]) -> None:
-    data = load_yaml(ROOT / "execution/task-queue.yaml")
+def validate_tasks(errors: list[str], queue_path: Path | None = None) -> None:
+    queue_path = queue_path or ROOT / "execution/task-queue.yaml"
+    data = load_yaml(queue_path)
     tasks = data.get("tasks", []) if isinstance(data, dict) else []
     ids = [task.get("id") for task in tasks]
     if len(ids) != len(set(ids)):
-        errors.append("execution/task-queue.yaml: task IDs must be unique")
+        errors.append(f"{queue_path}: task IDs must be unique")
     by_id = {task.get("id"): task for task in tasks}
+    manifest = load_yaml(MANIFEST_PATH)
+    known_repositories = {
+        repo.get("id"): repo.get("full_name")
+        for repo in manifest.get("repositories", [])
+        if isinstance(repo, dict)
+    }
+    known_repositories["agentic-art-orchestration"] = "masa-san-jp/agentic-art-orchestration"
     for task in tasks:
         task_id = task.get("id", "<missing>")
         for field in ("milestone", "title", "status", "depends_on", "acceptance", "checks"):
             if field not in task:
-                errors.append(f"execution/task-queue.yaml: {task_id}.{field} is required")
+                errors.append(f"{queue_path}: {task_id}.{field} is required")
         if task.get("status") not in STATUSES:
-            errors.append(f"execution/task-queue.yaml: {task_id}.status is unknown")
+            errors.append(f"{queue_path}: {task_id}.status is unknown")
+        issue_fields = ("issue_ssot", "target_repositories", "agent_terminal")
+        has_issue_fields = [field in task for field in issue_fields]
+        if task_id in ISSUE_SSO_TASK_IDS and not all(has_issue_fields):
+            missing = [field for field in issue_fields if field not in task]
+            errors.append(
+                f"{queue_path}: {task_id} missing issue SSOT field(s) {missing}; "
+                "add issue_ssot, target_repositories, and agent_terminal"
+            )
+        elif any(has_issue_fields) and not all(has_issue_fields):
+            missing = [field for field in issue_fields if field not in task]
+            errors.append(
+                f"{queue_path}: {task_id} has incomplete issue SSOT contract; "
+                f"missing {missing}"
+            )
+        if all(has_issue_fields):
+            issue_url = task.get("issue_ssot")
+            match = GITHUB_ISSUE_URL.fullmatch(issue_url) if isinstance(issue_url, str) else None
+            if match is None:
+                errors.append(
+                    f"{queue_path}: {task_id}.issue_ssot is not a canonical GitHub Issue URL; "
+                    "use https://github.com/<owner>/<repo>/issues/<number>"
+                )
+            targets = task.get("target_repositories")
+            if not isinstance(targets, list) or not targets:
+                errors.append(
+                    f"{queue_path}: {task_id}.target_repositories must be a non-empty list; "
+                    "declare the owning manifest repository"
+                )
+            else:
+                if len(targets) != len(set(targets)):
+                    errors.append(
+                        f"{queue_path}: {task_id}.target_repositories must be unique; "
+                        "remove duplicate repository IDs"
+                    )
+                unknown = [repo for repo in targets if repo not in known_repositories]
+                if unknown:
+                    errors.append(
+                        f"{queue_path}: {task_id}.target_repositories has unknown repository IDs {unknown}; "
+                        "use repositories.yaml IDs"
+                    )
+                if match is not None:
+                    target_full_names = {
+                        known_repositories[repo] for repo in targets if repo in known_repositories
+                    }
+                    if match.group(1) not in target_full_names:
+                        errors.append(
+                            f"{queue_path}: {task_id}.issue_ssot authority {match.group(1)!r} "
+                            "is outside target_repositories; point to the authoritative repository Issue"
+                        )
+            if task.get("agent_terminal") not in AGENT_TERMINALS:
+                errors.append(
+                    f"{queue_path}: {task_id}.agent_terminal is unknown; "
+                    f"use one of {sorted(AGENT_TERMINALS)}"
+                )
         deps = task.get("depends_on", [])
         for dep in deps:
             if dep not in by_id:
-                errors.append(f"execution/task-queue.yaml: {task_id} depends on missing {dep}")
+                errors.append(f"{queue_path}: {task_id} depends on missing {dep}")
         if task.get("status") == "READY":
             incomplete = [dep for dep in deps if by_id.get(dep, {}).get("status") != "DONE"]
             if incomplete:
-                errors.append(f"execution/task-queue.yaml: {task_id} READY with incomplete {incomplete}")
+                errors.append(f"{queue_path}: {task_id} READY with incomplete {incomplete}")
 
     visiting: set[str] = set()
     visited: set[str] = set()
 
     def visit(task_id: str, chain: list[str]) -> None:
         if task_id in visiting:
-            errors.append(f"execution/task-queue.yaml: cycle {' -> '.join(chain + [task_id])}")
+            errors.append(f"{queue_path}: cycle {' -> '.join(chain + [task_id])}")
             return
         if task_id in visited or task_id not in by_id:
             return
@@ -3289,7 +3751,22 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 _source_label(GITHUB_SANDBOX_LIVE_SCHEMA_PATH),
             )
         )
+        errors.extend(
+            validate_autonomous_contract(
+                load_yaml(HUMAN_GATES_PATH),
+                load_json(AGENT_ACTION_SCHEMA_PATH),
+                load_json(AGENT_RESULT_SCHEMA_PATH),
+                load_json(AUTONOMOUS_RUN_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_batch_report_contract(
+                load_json(BATCH_REPORT_EVENT_SCHEMA_PATH),
+                _source_label(BATCH_REPORT_EVENT_SCHEMA_PATH),
+            )
+        )
         state = load_yaml(ROOT / "execution/state.yaml")
+        errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
         if state.get("last_completed_task") is None:
             errors.append("execution/state.yaml: last_completed_task is required")
     except ValueError as exc:

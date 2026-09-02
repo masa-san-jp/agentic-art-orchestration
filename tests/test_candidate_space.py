@@ -28,7 +28,7 @@ class CandidateSpaceTests(unittest.TestCase):
     def test_generation_preserves_ids_commits_and_locators(self):
         signals, registry = self.load_inputs()
         result = MODULE.build_candidate_space(signals, registry)
-        self.assertEqual(1, result["candidate_count"])
+        self.assertEqual(2, result["candidate_count"])
         candidate = result["candidates"][0]
         self.assertEqual({"R17"}, {candidate["rule_id"]})
         refs = [ref for refs in candidate["inputs"].values() for ref in refs]
@@ -66,7 +66,7 @@ class CandidateSpaceTests(unittest.TestCase):
         extra["evidence_refs"][0]["entity_id"] = "self-entity-002"
         signals.append(extra)
         result = MODULE.build_candidate_space(signals, registry)
-        self.assertEqual(2, result["candidate_count"])
+        self.assertEqual(4, result["candidate_count"])
         self.assertEqual(sorted(item["candidate_id"] for item in result["candidates"]), [item["candidate_id"] for item in result["candidates"]])
 
     def test_duplicate_signal_id_and_missing_kind_fail_closed(self):
@@ -79,7 +79,7 @@ class CandidateSpaceTests(unittest.TestCase):
     def test_candidate_semantics_reject_lost_provenance_or_count(self):
         signals, registry = self.load_inputs()
         result = MODULE.build_candidate_space(signals, registry)
-        result["candidate_count"] = 2
+        result["candidate_count"] = 3
         errors = MODULE.validate_candidate_space(result, "fixture:count")
         self.assertTrue(any("candidate_count" in error for error in errors))
         result = MODULE.build_candidate_space(signals, registry)
