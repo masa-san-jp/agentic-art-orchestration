@@ -621,7 +621,7 @@ actionのnext_actionとして明示され、制作planを捏造していない�
 1. 引数なしfull orchestrationとproject identity/theme proposalを実装する。
 2. verified child workspace preflightを追加し、invalid workspaceはchild export前にBLOCKEDへする。
 3. docs/tests/READMEを同期し、validator、focused/full suite、workspace/auditを実行する。
-4. task/state/handoffを結果で更新し、branch PRのrequired checksを通してmerge後に再検証する。
+4. task/state/handoffを結果で更新し、branch PRのrequired checksを通してmerge後に再検証する。PR #122はrequired checks 3/3 PASSで`fb94a77aee296fd7fc208a4af8ebe2c49f85ddc1`へmerge済み。
 
 ### Concrete Steps
 
