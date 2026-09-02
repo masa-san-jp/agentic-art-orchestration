@@ -64,6 +64,8 @@ FIXTURE_ROOT="$(mktemp -d /tmp/agentic-art-orchestration-offline.XXXXXX)"
 
 fresh cloneからfull suiteまで行う場合は、READMEのbootstrap節にあるoffline fixture生成列を先に実行し、その後にREADME記載のvalidatorとfull suiteを実行する。`FIXTURE_ROOT`は毎回新しい一時ディレクトリにし、別のmanifestや古いbranchのremoteを再利用しない。
 
+通常のauditは実行履歴の`data/runs/<run-id>/signals/portfolio.json`を対象にし、引数なしではrun IDの決定的な辞書順で最新runを選ぶ。対象runを固定する場合は`.venv/bin/python tools/audit.py --portfolio-root <signals-directory>`を指定する。`tests/fixtures`は`--offline-fixture`を明示したnetworkless検証だけで使い、ingest直後のrequirementsが空のportfolioにはorphan検査を適用しない。
+
 期待値は、manifest記載repo数（coreは4、現在はProductionとviewer-response-notesを含む6）、`main`、clean、ahead/behind 0、`blocked_count: 0`、status `CLEAN`、security `PASSED`、E2E clean `COMPLETE`である。auditは既知の非blocking findingを保持し、失敗を正常値へ変換しない。legacy failure fixtureが4repoであることはmanifestの6repo運用を意味しない。E2Eのfailure injectionは失敗を隠さず、各ケースに終端状態と復旧経路を持つ。
 
 ### 実repo workspace

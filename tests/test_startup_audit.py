@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -116,6 +117,49 @@ class StartupAuditTests(unittest.TestCase):
         self.assertEqual(["dirty"], report["workspace_guard"]["finding_codes"])
         self.assertNotIn('"raw_conversation":', json.dumps(report))
         self.assertEqual(self.snapshot_before, self.snapshot_path.read_bytes())
+
+    def test_startup_uses_selected_run_portfolio_without_test_fixture_freshness(self):
+        with tempfile.TemporaryDirectory(prefix="startup-portfolio-test-") as temporary:
+            portfolio_root = Path(temporary) / "RUN-REAL-001" / "signals"
+            portfolio_root.mkdir(parents=True)
+            signal = json.loads(
+                (ROOT / "tests/fixtures/signal/valid_self.json").read_text(encoding="utf-8")
+            )
+            signal["signal_id"] = "self:run-real-001"
+            signal["freshness"]["revalidate_at"] = "2020-01-01T00:00:00+00:00"
+            (portfolio_root / "self.json").write_text(json.dumps(signal), encoding="utf-8")
+            (portfolio_root / "portfolio.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "signal_files": ["self.json"],
+                        "requirements": [{"id": "requirement-001", "signal_ids": [signal["signal_id"]]}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            patches = [
+                patch.object(MODULE, "observe_repository", side_effect=self.clean_observation),
+                patch.object(MODULE, "guard_workspace", return_value=self.clean_guard),
+                patch.object(MODULE.status_tool, "build_status", return_value=self.clean_status),
+                patch.object(MODULE.security_tool, "audit_boundary", return_value=self.clean_security),
+            ]
+            with patches[0], patches[1], patches[2], patches[3]:
+                report = MODULE.build_startup_report(
+                    self.manifest,
+                    self.snapshot_path,
+                    run_id="startup-real-portfolio",
+                    portfolio_root=portfolio_root,
+                )
+                loaded, loaded_requirements = MODULE.audit_tool._load_signals_and_requirements(portfolio_root)
+                loaded_ids = [item["signal_id"] for item in loaded]
+                loaded_requirement_ids = [item["id"] for item in loaded_requirements]
+
+        self.assertEqual("READY_WITH_FINDINGS", report["status"])
+        self.assertIn("freshness", {finding["code"] for finding in report["findings"]})
+        self.assertEqual(["self:run-real-001"], loaded_ids)
+        self.assertEqual(["requirement-001"], loaded_requirement_ids)
 
 
 if __name__ == "__main__":

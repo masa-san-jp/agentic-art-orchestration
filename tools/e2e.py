@@ -64,8 +64,12 @@ def _scenario(
     return result
 
 
-def _load_valid_inputs() -> tuple[list[dict], dict, dict]:
-    fixture_root = ROOT / "tests/fixtures/portfolio"
+def _default_portfolio_root() -> Path:
+    return ROOT / "tests/fixtures/portfolio"
+
+
+def _load_valid_inputs(portfolio_root: Path | None = None) -> tuple[list[dict], dict, dict]:
+    fixture_root = portfolio_root or _default_portfolio_root()
     portfolio, signals_by_id, errors = load_portfolio(fixture_root)
     if errors:
         raise E2EEvaluationError("; ".join(errors))
@@ -75,10 +79,11 @@ def _load_valid_inputs() -> tuple[list[dict], dict, dict]:
     return signals, portfolio, signals_by_id
 
 
-def _clean_scenario() -> dict:
-    signals, portfolio, signals_by_id = _load_valid_inputs()
+def _clean_scenario(portfolio_root: Path | None = None) -> dict:
+    selected_root = portfolio_root or _default_portfolio_root()
+    signals, portfolio, signals_by_id = _load_valid_inputs(selected_root)
     imported = import_signals(signals)
-    trace, errors = build_trace(ROOT / "tests/fixtures/portfolio")
+    trace, errors = build_trace(selected_root)
     if errors or trace is None:
         raise E2EEvaluationError("clean trace failed: " + "; ".join(errors))
     if trace["traced_signal_count"] != len(signals):
@@ -247,7 +252,7 @@ def _runtime_scenarios() -> tuple[dict, dict]:
     return lease_expiry, process_kill
 
 
-def run_e2e() -> dict:
+def run_e2e(portfolio_root: Path | None = None) -> dict:
     """Run the clean Golden Scenario and all deterministic failure injections."""
     fixture = build_fixture()
     if fixture["network"] != "disabled" or len(fixture["repositories"]) != 4:
@@ -289,7 +294,7 @@ def run_e2e() -> dict:
         "version": 1,
         "network": "disabled",
         "repository_count": len(fixture["repositories"]),
-        "clean": _clean_scenario(),
+        "clean": _clean_scenario(portfolio_root),
         "failure_injections": failures,
         "acceptance": {
             "clean_traceable_output": True,
@@ -317,14 +322,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the offline end-to-end orchestration evaluation")
     parser.add_argument("--check", action="store_true", help="require deterministic repeated output")
     parser.add_argument("--offline-fixture", action="store_true", help="explicitly select the networkless fixture")
+    parser.add_argument("--portfolio-root", type=Path, help="directory containing the selected run portfolio.json")
     parser.add_argument("--output", type=Path, default=ROOT / "data/e2e.json")
     args = parser.parse_args()
     if not args.offline_fixture:
         print("ERROR: --offline-fixture is required; remediation: run only the networkless evaluation", file=sys.stderr)
         return 2
     try:
-        result = run_e2e()
-        if args.check and result != run_e2e():
+        portfolio_root = args.portfolio_root.resolve() if args.portfolio_root else None
+        result = run_e2e(portfolio_root)
+        if args.check and result != run_e2e(portfolio_root):
             raise E2EEvaluationError("e2e result is not deterministic")
         output = args.output if args.output.is_absolute() else Path.cwd() / args.output
         _write_atomic(output.resolve(), json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")

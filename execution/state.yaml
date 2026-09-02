@@ -1,29 +1,29 @@
-version: 156
-updated_at: "2026-09-03T05:48:06+09:00"
-active_task: null
-active_repository: null
+version: 157
+updated_at: "2026-09-03T06:04:00+09:00"
+active_task: HARNESS-AUDIT-PORTFOLIO-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
+  status: held
+  owner: codex
   acquired_at: "2026-09-03T05:20:09+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-HANDOFF-ID-001:20260903-052009
-  released_at: "2026-09-03T05:48:06+09:00"
+  execution_id: HARNESS-AUDIT-PORTFOLIO-001:20260903-060400
+  released_at: null
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
     child_repositories: []
 checkpoint:
-  task: HARNESS-HANDOFF-ID-001
+  task: HARNESS-AUDIT-PORTFOLIO-001
   repository: agentic-art-orchestration
-  start_point: a08de1fa8ce93cb66fbe8de776d930f3b04335e9
-  expected_changes: Read existing child-owned handoff metadata, allocate a new handoff ID/revision with supersedes only when the source changed, and preserve existing handoff identity and generated_at for idempotent reruns.
-  result: completed; parent PR #134 merged as 44c004f53455fd6fbe3849630eb5aef367a667da after all required CI gates passed; Issue #91 is closed with acceptance evidence.
+  start_point: 561b68ca557be232713bae766b8522318be33d9d
+  expected_changes: Select explicit or latest deterministic run signal portfolios for audit/startup, preserve explicit offline fixture behavior, and defer orphan checks until requirements exist.
+  result: in_progress; Issue #110 is the smallest remaining parent implementation issue after the Issue #91 completion audit.
 last_completed_task: HARNESS-HANDOFF-ID-001
 resume_from:
-  task: null
-  action: "Re-run repository-scoped live Issue intake and select the smallest remaining implementation issue."
+  task: HARNESS-AUDIT-PORTFOLIO-001
+  action: "Implement real portfolio selection and orphan-audit timing, run focused/full checks, then record evidence and release the lease."
   command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:

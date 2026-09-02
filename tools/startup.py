@@ -270,6 +270,7 @@ def build_startup_report(
     run_id: str | None = None,
     agent_client: str = "Codex",
     workspace_root: Path | None = None,
+    portfolio_root: Path | None = None,
 ) -> dict:
     """Build a metadata-only report; only offline fixture remotes may be created."""
     if agent_client not in {"Codex", "Claude Code"}:
@@ -338,7 +339,10 @@ def build_startup_report(
     if isinstance(compatibility, dict) and compatibility.get("status") == "INCOMPATIBLE":
         add_finding("schema_major_mismatch", "CRITICAL", "audit")
 
-    signals, requirements = audit_tool._load_signals_and_requirements()
+    signals, requirements = audit_tool._load_signals_and_requirements(
+        portfolio_root,
+        offline_fixture=offline_fixture,
+    )
     tested_boundaries = {
         boundary: (ROOT / path).is_file()
         for boundary, path in audit_tool.EXPECTED_BOUNDARIES.items()
@@ -494,6 +498,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id")
     parser.add_argument("--agent-client", default="Codex")
     parser.add_argument("--workspace-root", type=Path)
+    parser.add_argument("--portfolio-root", type=Path, help="directory containing the selected run portfolio.json")
     return parser.parse_args()
 
 
@@ -512,6 +517,7 @@ def main() -> int:
             args.run_id,
             args.agent_client,
             resolve_path(args.workspace_root) if args.workspace_root else None,
+            resolve_path(args.portfolio_root) if args.portfolio_root else None,
         )
         result = _write_or_check(report, resolve_path(args.output), args.check)
     except (OSError, StartupError, ValueError, KeyError, json.JSONDecodeError) as exc:

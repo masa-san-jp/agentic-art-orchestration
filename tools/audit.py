@@ -54,6 +54,7 @@ EXPECTED_BOUNDARIES = {
     "interaction-e2e": "tests/test_interaction_e2e.py",
 }
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+DEFAULT_RUNS_ROOT = ROOT / "data" / "runs"
 
 
 def _error(detail: str, remediation: str) -> AuditError:
@@ -224,11 +225,15 @@ def _audit_signals(
         present = sorted(key for key in forbidden_keys if key in signal)
         if present:
             findings.append(_finding("forbidden-data", subject, present, "remove forbidden data before crossing the parent boundary", "error"))
-    signal_ids = {signal.get("signal_id") for signal in signals if isinstance(signal, dict)}
-    for orphan in sorted(signal_ids - linked, key=str):
-        findings.append(_finding("orphan", str(orphan), "signal is not linked from a portfolio requirement", "link it to a requirement or remove the generated record"))
-    for missing in sorted(linked - signal_ids, key=str):
-        findings.append(_finding("orphan", str(missing), "requirement references an unknown signal", "repair the portfolio reference or export the missing signal"))
+    # ingest_signals intentionally emits an empty requirements collection. Until
+    # the research stage links requirements, every signal would be reported as
+    # an orphan even though it is a valid, not-yet-linked input.
+    if requirements:
+        signal_ids = {signal.get("signal_id") for signal in signals if isinstance(signal, dict)}
+        for orphan in sorted(signal_ids - linked, key=str):
+            findings.append(_finding("orphan", str(orphan), "signal is not linked from a portfolio requirement", "link it to a requirement or remove the generated record"))
+        for missing in sorted(linked - signal_ids, key=str):
+            findings.append(_finding("orphan", str(missing), "requirement references an unknown signal", "repair the portfolio reference or export the missing record"))
 
 
 def _audit_queue(tasks: list[dict], findings: list[dict]) -> None:
@@ -326,6 +331,15 @@ def build_audit(
 ) -> dict:
     """Return findings without changing any input and without blocking execution."""
     findings: list[dict] = []
+    if not signals and not requirements:
+        findings.append(
+            _finding(
+                "portfolio-unavailable",
+                "production-signal-portfolio",
+                "no selected run portfolio was available",
+                "provide an explicit portfolio root or materialize a completed run before enabling create-only capabilities",
+            )
+        )
     _audit_pins(manifest, snapshot, findings)
     reference_time = _parse_timestamp(_generated_at(snapshot.get("captured_at"), queue.get("updated_at"), state.get("updated_at")))
     _audit_signals(signals, requirements, manifest, reference_time, findings)
@@ -378,24 +392,55 @@ def _write_atomic(path: Path, content: str) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def _load_signals_and_requirements() -> tuple[list[dict], list[dict]]:
-    fixture_root = ROOT / "tests/fixtures/portfolio"
-    fixture_base = ROOT / "tests/fixtures"
-    with (fixture_root / "portfolio.json").open(encoding="utf-8") as handle:
+def _latest_run_portfolio_root(runs_root: Path = DEFAULT_RUNS_ROOT) -> Path | None:
+    """Select the lexicographically latest run without using filesystem mtime."""
+    if not runs_root.is_dir():
+        return None
+    candidates = sorted(
+        path.parent
+        for path in runs_root.glob("*/signals/portfolio.json")
+        if path.is_file()
+    )
+    return candidates[-1] if candidates else None
+
+
+def _load_signals_and_requirements(
+    portfolio_root: Path | None = None,
+    *,
+    offline_fixture: bool = False,
+) -> tuple[list[dict], list[dict]]:
+    """Load the selected run portfolio; test fixtures require explicit offline mode."""
+    selected_root = portfolio_root.resolve() if portfolio_root is not None else None
+    fixture_selected = selected_root is None and offline_fixture
+    if selected_root is None and offline_fixture:
+        selected_root = (ROOT / "tests/fixtures/portfolio").resolve()
+    if selected_root is None:
+        selected_root = _latest_run_portfolio_root()
+    if selected_root is None:
+        # A fresh checkout has no production run yet. Do not silently inspect
+        # tests/fixtures as though they were production input.
+        return [], []
+
+    with (selected_root / "portfolio.json").open(encoding="utf-8") as handle:
         portfolio = json.load(handle)
+    allowed_root = (ROOT / "tests/fixtures").resolve() if fixture_selected else selected_root
     signals: list[dict] = []
     for relative in portfolio.get("signal_files", []):
-        path = (fixture_root / relative).resolve()
+        path = (selected_root / relative).resolve()
         try:
-            path.relative_to(fixture_base.resolve())
+            path.relative_to(allowed_root)
         except ValueError as exc:
-            raise _error(f"signal fixture escapes fixture root: {relative!r}", "use a fixture below tests/fixtures") from exc
+            raise _error(f"signal path escapes portfolio root: {relative!r}", "use a signal path below the selected run portfolio") from exc
         with path.open(encoding="utf-8") as handle:
             signals.append(json.load(handle))
     return signals, portfolio.get("requirements", [])
 
 
-def _inputs() -> tuple[dict, dict, dict, dict, list[dict], list[dict], dict[str, bool]]:
+def _inputs(
+    portfolio_root: Path | None = None,
+    *,
+    offline_fixture: bool = False,
+) -> tuple[dict, dict, dict, dict, list[dict], list[dict], dict[str, bool]]:
     manifest = load_manifest()
     with (ROOT / "data/snapshot.json").open(encoding="utf-8") as handle:
         snapshot = json.load(handle)
@@ -403,20 +448,28 @@ def _inputs() -> tuple[dict, dict, dict, dict, list[dict], list[dict], dict[str,
         queue = yaml.safe_load(handle)
     with (ROOT / "execution/state.yaml").open(encoding="utf-8") as handle:
         state = yaml.safe_load(handle)
-    signals, requirements = _load_signals_and_requirements()
+    signals, requirements = _load_signals_and_requirements(portfolio_root, offline_fixture=offline_fixture)
     tested = {boundary: (ROOT / path).is_file() for boundary, path in EXPECTED_BOUNDARIES.items()}
     return manifest, snapshot, queue, state, signals, requirements, tested
 
 
-def run_audit(output_dir: Path, check: bool) -> dict:
-    manifest, snapshot, queue, state, signals, requirements, tested = _inputs()
+def run_audit(
+    output_dir: Path,
+    check: bool,
+    *,
+    portfolio_root: Path | None = None,
+    offline_fixture: bool = False,
+) -> dict:
+    manifest, snapshot, queue, state, signals, requirements, tested = _inputs(
+        portfolio_root, offline_fixture=offline_fixture
+    )
     audit = build_audit(manifest, snapshot, queue, state, signals, requirements, tested, observe_parent_git())
     markdown = render_markdown(audit)
     json_content = json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     json_path = output_dir / "audit.json"
     markdown_path = output_dir / "audit.md"
     if check:
-        second = build_audit(*_inputs(), observe_parent_git())
+        second = build_audit(*_inputs(portfolio_root, offline_fixture=offline_fixture), observe_parent_git())
         if audit != second or markdown != render_markdown(second):
             raise _error("audit generation is not deterministic", "sort findings and remove wall-clock values")
         if not json_path.is_file() or not markdown_path.is_file():
@@ -433,10 +486,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run a non-blocking cross-repository audit")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--offline-fixture", action="store_true", help="audit the local synthetic fixture inputs")
+    parser.add_argument("--portfolio-root", type=Path, help="directory containing the selected run portfolio.json")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "data")
     args = parser.parse_args()
     try:
-        result = run_audit(args.output_dir.resolve(), args.check)
+        result = run_audit(
+            args.output_dir.resolve(),
+            args.check,
+            portfolio_root=args.portfolio_root.resolve() if args.portfolio_root else None,
+            offline_fixture=args.offline_fixture,
+        )
     except (OSError, AuditError, ValueError, KeyError, json.JSONDecodeError, yaml.YAMLError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
