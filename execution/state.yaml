@@ -1,15 +1,15 @@
-version: 159
-updated_at: "2026-09-03T06:49:29+09:00"
-active_task: HARNESS-PRODUCTION-HISTORY-001
-active_repository: agentic-art-orchestration
+version: 160
+updated_at: "2026-09-03T07:08:01+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-03T06:49:29+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
   execution_id: HARNESS-PRODUCTION-HISTORY-001:20260903-064929
-  released_at: null
+  released_at: "2026-09-03T07:08:01+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
@@ -19,12 +19,12 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 109f2945a3aed8423d699d750299379d5cbe9246
   expected_changes: Persist one Production project output root across run IDs, append metadata-only run-to-project history, and route changed handoffs through the child revision acceptance path without resetting failed prior state.
-  result: in_progress; Issue #109 is the smallest dependency-complete remaining parent implementation issue.
-last_completed_task: HARNESS-AUDIT-PORTFOLIO-001
+  result: completed; parent PR #138 merged as c07b221eb1bb85cf09d97b95ddd00667b01f4887 after all required CI gates passed; Issue #109 is closed with acceptance evidence.
+last_completed_task: HARNESS-PRODUCTION-HISTORY-001
 resume_from:
-  task: HARNESS-PRODUCTION-HISTORY-001
-  action: "Add regression tests for stable Production output/history and revision recovery, then run focused and full gates."
-  command: .venv/bin/python -m unittest tests.test_run -v
+  task: null
+  action: "Re-run repository-scoped live Issue intake, inspect the remaining parent #58 and child open PRs, then select the next qualified task."
+  command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:
   status: complete
