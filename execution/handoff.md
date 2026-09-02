@@ -1657,3 +1657,16 @@
 ## Next exact action
 
 1. Commit and push the pin adoption plus provenance fixture update, open the parent PR, wait for all required checks, and merge it. Then rerun release qualification on the reviewed merge commit before creating `v1.4.0` tag and GitHub Release.
+
+## 2026-09-02 v1.4.0 released
+
+- `agentic-art-orchestration` PR #118 was squash-merged after bootstrap, Production exchange, and real-chain all passed. Reviewed main merge commit: `37074db2824e61c9bd47326ceb05d2a6698d514f`.
+- Final release qualification against that reviewed merge commit passed `29/29` checks across 3 deterministic runs with `blocking=false`; child quality gates were `6/6 repositories` and `16/16 gates`, Production exchange, initial operations, history, and security all PASS. Report locator: `run://release-qualification-v1.4.0-20260902-merge/release-check-v14-merge.json`; SHA-256: `1f711c5e76042c7a6b205c7f77842f6c9e48ed1b92491a34883e198e03b3632d`.
+- `v1.4.0` annotated tag was created and pushed, and the GitHub Release was created and verified. The dereferenced tag target is exactly `37074db2824e61c9bd47326ceb05d2a6698d514f`.
+- Acceptance: pin adoption `1/1`, parent validation/full suite `PASS / 457/457`, required PR checks `3/3 PASS`, release qualification `29/29`, tag/release verification `2/2 PASS`.
+- Child repositories were read-only throughout; no child commit, branch, Issue, Drive artifact, credential, PRIVATE_RAW, RESTRICTED value, or raw conversation was added. External operations were limited to the authorized parent PR merge, tag creation, and release creation. Audit retains the known nonblocking marketing freshness warning.
+- Feedback distinction: explicit user request was pin adoption and v1.4.0 release; inferred feedback is none.
+
+## Next exact action
+
+1. Resume from the smallest dependency-complete READY task after confirming the queue/state; the v1.4.0 release has no remaining release gate.
