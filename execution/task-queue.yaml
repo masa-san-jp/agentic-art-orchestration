@@ -1,5 +1,5 @@
-version: 24
-updated_at: "2026-09-03T00:31:06+09:00"
+version: 25
+updated_at: "2026-09-03T01:26:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1076,3 +1076,18 @@ tasks:
     acceptance: The parent accepts Production visual package metadata without copying asset bodies, preserves opaque references/source commit/version/hash/media type/rights/safety and relative links in the final plan, verifies board and mockup presence/link/hash/provenance/privacy fail-closed, and extends purpose E2E evidence while retaining create-only external artifact and human gates.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/purpose_e2e.py --offline-fixture --attempt-id visual-package-fixture-1 --check, git diff --check]
     completion: "Parent visual package boundary and purpose E2E are implemented in 8fa60c843c221834729476269c5f23d6825e271a. Normal networkless output includes production plan, board, mockup, and metadata; three repeated runs share canonical evidence hash a4895ea873162dcfd8eefba390f9f31e39d4eb9edd8331f5613476e71bb2c0ae; missing/tampered/broken-link/provenance/rights cases fail closed; parent full suite 467/467 PASS."
+
+  - id: PURPOSE-PRODUCTION-PALETTE-COMPAT-001
+    milestone: M19
+    title: Requalify the parent visual package against the corrected Production main pin
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/54
+    target_repositories: [agentic-art-orchestration, agentic-art-production]
+    agent_terminal: EVIDENCE_READY
+    lane: PARENT_CONTROL_PLANE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PURPOSE-VISUAL-PACKAGE-001]
+    acceptance: The parent adopts the reviewed Production main commit that handles a valid single preferred palette, and the immutable networkless production exchange completes through result export and Research dry-run without child mutation or forbidden data.
+    checks: [.venv/bin/python tools/production_exchange.py --e2e --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --output-root <git-external-output>, .venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
+    completion: "Production Issue #54 was fixed in PR #55 and merged to main as 206f259413147c6d360048e27d4b9c3267ee0580; parent config/repositories.yaml now pins that exact commit. The previously failing single-palette real chain completed as REAL-VP-004/PASSED; no child schema, asset body, credential, or external artifact entered the parent."
