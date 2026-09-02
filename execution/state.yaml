@@ -1,5 +1,5 @@
-version: 151
-updated_at: "2026-09-03T04:00:00+09:00"
+version: 152
+updated_at: "2026-09-03T03:54:51+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 279aca3ea95552c47ab1da9a20eb50ececac12d0
   expected_changes: Adopt the reviewed Research main commit for Issue #83, preserve child authority, and record the parent pin and verification evidence.
-  result: completed; Research PR #84 passed all CI gates and merged as 56402d708a6ead011819d2fed8598ffca9722aeb, Issue #83 was closed after acceptance verification, and the parent manifest pin was updated without child or generated-output mutation.
+  result: completed; Research PR #84 passed all CI gates and merged as 56402d708a6ead011819d2fed8598ffca9722aeb, Issue #83 was closed after acceptance verification, the parent manifest pin was updated without child or generated-output mutation, parent PR #130 merged as bef74a6d5239f27e0c2ea076e0296603d3d74e03, and main run 33668321720 passed all three gates.
 last_completed_task: PURPOSE-RESEARCH-SELF-REPETITION-001
 resume_from:
   task: null
-  action: "Run the repository-scoped live Issue intake to re-audit all manifest repositories after Research Issue #83 closure."
+  action: "Review the 39 currently open Issues: preserve the 17 UNQUEUED_NEEDS_SSOT Issues, and close only queued Issues whose acceptance evidence is complete."
   command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:
@@ -1199,5 +1199,4 @@ research_self_repetition:
   feedback:
     explicit: user requested Issue confirmation and continuation toward harness completion
     inferred: none
-  unresolved:
-    - parent pin-record PR, merge, and post-merge main verification remain to be executed for this record
+  unresolved: []

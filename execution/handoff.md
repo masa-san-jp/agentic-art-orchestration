@@ -1785,3 +1785,10 @@
 - After Research PR #84 merged and Issue #83 closed, the repository-scoped live Issue intake was rerun across all 7 manifest repositories with read-only GitHub access. The report is external at `/private/tmp/issue-intake-live-20260903-after83-final3.json`, SHA-256 `3a2cb9286833fb2c9012aa6976b323430b5bd2ab81c425f5f7819ca45ebc5af3`; repeated generation passed `--check`.
 - Current observed state: 39 open Issues, 22 already queued, 17 `UNQUEUED_NEEDS_SSOT`, and 0 qualified-but-unqueued. Research #83 is absent from the open set; the two already-closed visual-package Issues remain only as historical queue references. No new task was registered.
 - The live audit read metadata and body only; no Issue, PR, child repository, Drive, or external artifact was mutated. Issue bodies were not copied into Git or the report.
+
+## Post-merge verification and current Issue state
+
+- Parent PR [#130](https://github.com/masa-san-jp/agentic-art-orchestration/pull/130) merged as `bef74a6d5239f27e0c2ea076e0296603d3d74e03`. Main push run [33668321720](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33668321720) completed successfully: `bootstrap`, `production-exchange`, and `real-chain` all PASS.
+- Research main remains pinned to exact merge commit `56402d708a6ead011819d2fed8598ffca9722aeb`; Research Issue #83 is CLOSED. The parent manifest pin and retrieval fixture match that SHA.
+- The latest read-only 7-repository Issue audit remains authoritative for this checkpoint: 39 open Issues, 22 already represented in the queue, 17 `UNQUEUED_NEEDS_SSOT`, and 0 qualified-but-unqueued. This is not an all-Issues-closed state.
+- Next exact action: review the 22 queued open Issues against their completed task acceptance evidence and close only those demonstrably complete; leave the 17 SSOT-incomplete Issues open until their required schema is supplied. Do not close umbrella Issues #1/#2 without separate epic-level evidence.
