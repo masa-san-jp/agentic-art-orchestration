@@ -102,5 +102,49 @@ class BoundaryTests(unittest.TestCase):
         self.assertEqual("https://github.com/masa-san-jp/self-model-notes/blob/" + "a" * 40 + "/entities/x.md", uri)
 
 
+class RequestIdentityTests(unittest.TestCase):
+    def _accepted_project(self, research_root: Path, slug: str, request_id: str) -> None:
+        intake = research_root / "projects" / slug / "00_intake"
+        intake.mkdir(parents=True, exist_ok=True)
+        (intake / "research-request.yaml").write_text(
+            f"request_id: {request_id}\nproject:\n  slug: {slug}\n", encoding="utf-8"
+        )
+
+    def test_next_id_skips_requests_already_accepted_by_research(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "requests"
+            output.mkdir()
+            research_root = root / "research"
+            self._accepted_project(research_root, "harmony-proof", "RR001")
+            self._accepted_project(research_root, "probe-unattended", "RR002")
+
+            self.assertEqual("RR003", MODULE._next_request_id(output, research_root=research_root))
+
+    def test_next_id_counts_this_run_and_research_together(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "requests"
+            output.mkdir()
+            (output / "RR004.yaml").write_text("request_id: RR004\n", encoding="utf-8")
+            research_root = root / "research"
+            self._accepted_project(research_root, "harmony-proof", "RR001")
+
+            self.assertEqual("RR005", MODULE._next_request_id(output, research_root=research_root))
+
+    def test_without_research_root_preserves_legacy_run_local_allocation(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "requests"
+            output.mkdir()
+
+            self.assertEqual("RR001", MODULE._next_request_id(output))
+
+
 if __name__ == "__main__":
     unittest.main()

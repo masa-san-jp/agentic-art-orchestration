@@ -35,14 +35,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T03:54:51+09:00`.
+Source updated at: `2026-09-03T04:51:21+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 109 | 109 |
+| 0 | 0 | 1 | 0 | 109 | 110 |
 
-Current task: `null`; repository: `null`; checkpoint: `PURPOSE-RESEARCH-SELF-REPETITION-001`.
-Next action: Review the 39 currently open Issues: preserve the 17 UNQUEUED_NEEDS_SSOT Issues, and close only queued Issues whose acceptance evidence is complete.
+Current task: `HARNESS-REQUEST-ID-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-REQUEST-ID-001`.
+Next action: Run the focused and full parent checks, record acceptance evidence, then release the lease.
 Ready: none.
 Next task: `null`.
 Blocked:

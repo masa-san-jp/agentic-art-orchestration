@@ -327,6 +327,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         "--signals", str(signals), "--title", project_title,
         "--requested-at", requested_at, "--output", str(work / "requests"),
     ]
+    if research_root is not None:
+        request_args.extend(["--research-root", str(research_root)])
     request_args += ["--all", "--slug", project_slug] if limit > 1 else ["--slug", project_slug]
     record("research-request", _run_tool(request_args, python))
 

@@ -1,29 +1,29 @@
-version: 152
-updated_at: "2026-09-03T03:54:51+09:00"
-active_task: null
-active_repository: null
+version: 153
+updated_at: "2026-09-03T04:51:21+09:00"
+active_task: HARNESS-REQUEST-ID-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-03T00:31:06+09:00"
+  status: held
+  owner: codex
+  acquired_at: "2026-09-03T04:51:21+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: PURPOSE-VISUAL-PACKAGE-001:20260903-003106
-  released_at: "2026-09-03T00:55:44+09:00"
+  execution_id: HARNESS-REQUEST-ID-001:20260903-045121
+  released_at: null
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
     child_repositories: []
 checkpoint:
-  task: PURPOSE-RESEARCH-SELF-REPETITION-001
+  task: HARNESS-REQUEST-ID-001
   repository: agentic-art-orchestration
-  start_point: 279aca3ea95552c47ab1da9a20eb50ececac12d0
-  expected_changes: Adopt the reviewed Research main commit for Issue #83, preserve child authority, and record the parent pin and verification evidence.
-  result: completed; Research PR #84 passed all CI gates and merged as 56402d708a6ead011819d2fed8598ffca9722aeb, Issue #83 was closed after acceptance verification, the parent manifest pin was updated without child or generated-output mutation, parent PR #130 merged as bef74a6d5239f27e0c2ea076e0296603d3d74e03, and main run 33668321720 passed all three gates.
+  start_point: a7ffe89648af4161d19549a92caba74c848751de
+  expected_changes: Allocate Research request IDs from accepted child requests plus current-run output, pass research-root through the orchestration entry, and add regression evidence for the second-intent collision.
+  result: in_progress; Issue #84 is the smallest open implementation issue with a reproducible parent-owned defect, and the implementation is being verified before commit.
 last_completed_task: PURPOSE-RESEARCH-SELF-REPETITION-001
 resume_from:
-  task: null
-  action: "Review the 39 currently open Issues: preserve the 17 UNQUEUED_NEEDS_SSOT Issues, and close only queued Issues whose acceptance evidence is complete."
+  task: HARNESS-REQUEST-ID-001
+  action: "Run the focused and full parent checks, record acceptance evidence, then release the lease."
   command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:
