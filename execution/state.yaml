@@ -1,30 +1,30 @@
-version: 160
-updated_at: "2026-09-03T07:08:01+09:00"
-active_task: null
-active_repository: null
+version: 161
+updated_at: "2026-09-03T07:53:50+09:00"
+active_task: HARNESS-VIEWER-RESEARCH-PIN-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
+  status: held
+  owner: codex
   acquired_at: "2026-09-03T06:49:29+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-PRODUCTION-HISTORY-001:20260903-064929
-  released_at: "2026-09-03T07:08:01+09:00"
+  execution_id: HARNESS-VIEWER-RESEARCH-PIN-001:20260903-075350
+  released_at: null
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
     child_repositories: []
 checkpoint:
-  task: HARNESS-PRODUCTION-HISTORY-001
+  task: HARNESS-VIEWER-RESEARCH-PIN-001
   repository: agentic-art-orchestration
-  start_point: 109f2945a3aed8423d699d750299379d5cbe9246
-  expected_changes: Persist one Production project output root across run IDs, append metadata-only run-to-project history, and route changed handoffs through the child revision acceptance path without resetting failed prior state.
-  result: completed; parent PR #138 merged as c07b221eb1bb85cf09d97b95ddd00667b01f4887 after all required CI gates passed; Issue #109 is closed with acceptance evidence.
+  start_point: 39821eb8bf5debe0e7cd6f7579fb640cfaf20f49
+  expected_changes: Adopt Research main 05351e74236e52bbe09755c9554c63b1c1003fca in the parent manifest and retrieval fixture, then validate parent provenance without copying child internals.
+  result: in_progress; Research PR #78 has merged after all child gates passed, while parent pin adoption remains to be implemented and verified.
 last_completed_task: HARNESS-PRODUCTION-HISTORY-001
 resume_from:
-  task: null
-  action: "Re-run repository-scoped live Issue intake, inspect the remaining parent #58 and child open PRs, then select the next qualified task."
-  command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
+  task: HARNESS-VIEWER-RESEARCH-PIN-001
+  action: "Update the Research pin and retrieval fixture, run parent focused/full gates, then record and release."
+  command: .venv/bin/python -m unittest tests.test_retrieval tests.test_knowledge_profiles tests.test_child_quality_gates -v
 
 issue_intake:
   status: complete
