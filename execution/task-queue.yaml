@@ -1031,3 +1031,48 @@ tasks:
     acceptance: A repository-aware agent can invoke the documented planning entry with no intent, theme, slug, or title; the entry selects a gate-passing candidate from the pinned signal snapshot, derives a privacy-safe theme proposal and stable project identity, writes the child-owned research request outside Git, and exposes the next action needed to reach PLAN_READY without asking the user to supply a theme. Explicit intent remains an optional ranking override, and no raw conversation, credential, PRIVATE_RAW, RESTRICTED value, or external write is introduced.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_run tests.test_auto_plan tests.test_docs -v, .venv/bin/python tools/project_status.py --check-readme, git diff --check]
     completion: Theme-free planning entry implemented; offline run AUTO-PLAN-OFFLINE-001 reached AT_EDGE with a candidate-derived REPOSITORY_DERIVED proposal and Git-external RR001 request, stale workspace returned BLOCKED before export, focused 33/33 and parent full suite 464/464 passed; PR #122 required checks 3/3 PASS and merged as fb94a77aee296fd7fc208a4af8ebe2c49f85ddc1.
+
+  - id: HARNESS-ISSUE-INTAKE-LIVE-001
+    milestone: M19
+    title: Make live Issue intake reliable across all manifest repositories
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: AUTONOMOUS_PLANNING
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-AUTO-PLAN-001]
+    acceptance: Live Issue intake reads open Issue metadata and bodies from every manifest repository through an explicit repository-scoped read-only command, produces a deterministic qualified/unqueued report, and does not fail because the GitHub CLI body field or current repository context differs across repositories. No remote write, Issue close, raw conversation, credential, or child repository mutation is introduced.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_issue_intake -v, .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>, git diff --check]
+    completion: Live intake now uses repository-scoped metadata and body reads; all seven manifest repositories were observed read-only at 2026-09-02T14:36:12Z with 43 open Issues, 23 queued, 2 qualified unqueued (#124 and agentic-art-production#52), and 18 UNQUEUED_NEEDS_SSOT. Focused tests 7/7 PASS and live `--check` report hash af32e8c9c13ba922cb52ec3f80f7c7a8fd06ea6f36cd2afeedabb7d007671688.
+
+  - id: PURPOSE-PRODUCTION-VISUAL-PACKAGE-001
+    milestone: M19
+    title: Generate validated visual reference board and concept mockup package in Production
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/52
+    target_repositories: [agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    lane: PRODUCTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PURPOSE-RESEARCH-VISUAL-001]
+    acceptance: Production plan generation emits a validated visual package with one viewable board and one conceptual or simulated mockup, explicit metadata/provenance/rights/safety, relative links from production-plan.md, deterministic fixture hashes, fail-closed missing/tamper/unknown-rights checks, and no tracked project or asset body in the repository. Existing handoff, plan, runtime, and external-effect human gates remain compatible.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/run_evaluation.py --format json]
+    completion: pending
+
+  - id: PURPOSE-VISUAL-PACKAGE-001
+    milestone: M19
+    title: Connect Production visual package to the parent final plan and purpose E2E
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/124
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: PARENT_CONTROL_PLANE
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PURPOSE-PRODUCTION-VISUAL-PACKAGE-001, PURPOSE-E2E-001]
+    acceptance: The parent accepts Production visual package metadata without copying asset bodies, preserves opaque references/source commit/version/hash/media type/rights/safety and relative links in the final plan, verifies board and mockup presence/link/hash/provenance/privacy fail-closed, and extends purpose E2E evidence while retaining create-only external artifact and human gates.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/purpose_e2e.py --offline-fixture --attempt-id visual-package-fixture-1 --check, git diff --check]
+    completion: pending

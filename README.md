@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-02T16:54:52+09:00`.
+Source updated at: `2026-09-02T23:41:29+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 104 | 104 |
+| 1 | 1 | 0 | 0 | 105 | 107 |
 
-Current task: `null`; repository: `null`; checkpoint: `HARNESS-AUTO-PLAN-001`.
-Next action: No dependency-complete READY or BACKLOG task remains; resume with issue intake after a new qualified task is registered.
-Ready: none.
-Next task: `null`.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-ISSUE-INTAKE-LIVE-001`.
+Next action: Claim the smallest dependency-complete READY task and inspect Production Issue #52 before editing.
+Ready: `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`.
+Next task: `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`.
 Blocked:
 - none
 

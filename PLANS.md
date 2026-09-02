@@ -658,3 +658,28 @@ selection → `build_research_request.py` → Research acceptance → Production
 ### Next exact action
 
 1. 新しいqualified Issue SSOTが登録されるまで、queue/state/handoffから再開する作業はない。
+
+## HARNESS-ISSUE-INTAKE-LIVE-001 ExecPlan — completed
+
+### Purpose
+
+Issue #114のlive intakeを、GitHub CLI/APIのbody field差異や親repoの作業ディレクトリに依存せず、全manifest repositoryから再現可能に観測できるようにする。
+
+### Progress and Decision Log
+
+- [x] `gh issue list`は番号・タイトル・URLだけをrepository scope付きで取得する。
+- [x] 本文は各Issueについてrepository scope付き`gh issue view`で取得し、Issue番号の誤repo解決を拒否する。
+- [x] fixture回帰テストに加えて、metadata/body command scopeのfocused testを追加した。
+- [x] 全7 manifest repositoryのlive reportをread-onlyで生成し、同一観測の`--check`でbyte一致を確認した。
+
+### Outcome
+
+2026-09-02T14:36:12Zのlive観測は43 open Issues、23 queued、2 qualified unqueued（親#124、Production#52）、18 `UNQUEUED_NEEDS_SSOT`。focused test 7/7 PASS、validator PASS、live check PASS、report SHA-256は`af32e8c9c13ba922cb52ec3f80f7c7a8fd06ea6f36cd2afeedabb7d007671688`。
+
+### Safety and Recovery
+
+intakeはIssue、Git、queueをremoteから変更しない。本文はreportへ保存せず、レポートはGit外に置いた。sandbox内Python subprocessの外部通信拒否は、read-only権限付き実行で切り分けた。次はqualified unqueuedのProduction#52を先に実装する。
+
+### Next exact action
+
+1. `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`をclaimし、Production Issue #52の正本と実repoのREADME/AGENTSを読んでからchild branchで実装する。

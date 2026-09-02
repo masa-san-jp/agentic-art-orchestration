@@ -199,53 +199,40 @@ def _live_input(repositories: list[str], observed_at: str) -> tuple[dict, list[d
     for repository in sorted(set(repositories)):
         if not FULL_NAME_PATTERN.fullmatch(repository):
             raise _error(f"repository {repository!r} is invalid", "use owner/name")
-        completed = subprocess.run(
-            ["gh", "issue", "list", "--repo", repository, "--state", "open", "--limit", "1000", "--json", "number,title,url,body"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        # Fetch metadata and bodies separately.  The body field is not available
+        # consistently across gh versions/API modes, and every view must retain
+        # the repository scope so an Issue number is never resolved in cwd.
+        metadata_command = [
+            "gh", "issue", "list", "--repo", repository, "--state", "open", "--limit", "1000", "--json", "number,title,url"
+        ]
+        completed = subprocess.run(metadata_command, capture_output=True, text=True, check=False)
         if completed.returncode != 0:
-            # Some gh versions or cached responses cannot expand body in list output.
-            # Keep the fallback read-only and fetch each body through issue view.
-            metadata_command = [
-                "gh", "issue", "list", "--repo", repository, "--state", "open", "--limit", "1000", "--json", "number,title,url"
-            ]
-            completed = subprocess.run(metadata_command, capture_output=True, text=True, check=False)
-            if completed.returncode != 0:
-                raise _error(f"gh issue list failed for {repository}", "authenticate gh or use a networkless fixture")
-            try:
-                metadata_records = json.loads(completed.stdout)
-            except json.JSONDecodeError as exc:
-                raise _error(f"gh returned invalid JSON for {repository}", "inspect gh issue list output") from exc
-            if not isinstance(metadata_records, list):
-                raise _error(f"gh returned a non-list for {repository}", "use gh issue list JSON output")
-            records: list[dict] = []
-            for metadata in metadata_records:
-                if not isinstance(metadata, Mapping) or not isinstance(metadata.get("number"), int):
-                    raise _error(f"gh returned an invalid Issue for {repository}", "retain Issue metadata only")
-                viewed = subprocess.run(
-                    ["gh", "issue", "view", str(metadata["number"]), "--repo", repository, "--json", "body"],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if viewed.returncode != 0:
-                    raise _error(f"gh issue view failed for {repository}#{metadata['number']}", "use a networkless fixture")
-                try:
-                    body_record = json.loads(viewed.stdout)
-                except json.JSONDecodeError as exc:
-                    raise _error(f"gh returned invalid body JSON for {repository}#{metadata['number']}", "inspect gh issue view output") from exc
-                record = dict(metadata)
-                record["body"] = body_record.get("body") if isinstance(body_record, Mapping) else None
-                records.append(record)
-        else:
-            try:
-                records = json.loads(completed.stdout)
-            except json.JSONDecodeError as exc:
-                raise _error(f"gh returned invalid JSON for {repository}", "inspect gh issue list output") from exc
-        if not isinstance(records, list):
+            raise _error(f"gh issue list failed for {repository}", "authenticate gh or use a networkless fixture")
+        try:
+            metadata_records = json.loads(completed.stdout)
+        except json.JSONDecodeError as exc:
+            raise _error(f"gh returned invalid JSON for {repository}", "inspect gh issue list output") from exc
+        if not isinstance(metadata_records, list):
             raise _error(f"gh returned a non-list for {repository}", "use gh issue list JSON output")
+        records: list[dict] = []
+        for metadata in metadata_records:
+            if not isinstance(metadata, Mapping) or not isinstance(metadata.get("number"), int):
+                raise _error(f"gh returned an invalid Issue for {repository}", "retain Issue metadata only")
+            viewed = subprocess.run(
+                ["gh", "issue", "view", str(metadata["number"]), "--repo", repository, "--json", "body"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if viewed.returncode != 0:
+                raise _error(f"gh issue view failed for {repository}#{metadata['number']}", "use a networkless fixture")
+            try:
+                body_record = json.loads(viewed.stdout)
+            except json.JSONDecodeError as exc:
+                raise _error(f"gh returned invalid body JSON for {repository}#{metadata['number']}", "inspect gh issue view output") from exc
+            record = dict(metadata)
+            record["body"] = body_record.get("body") if isinstance(body_record, Mapping) else None
+            records.append(record)
         for issue in records:
             if not isinstance(issue, Mapping):
                 raise _error(f"gh returned a non-object Issue for {repository}", "retain Issue metadata only")

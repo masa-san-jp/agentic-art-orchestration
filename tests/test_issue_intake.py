@@ -6,8 +6,9 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
-from tools.issue_intake import build_report
+from tools.issue_intake import _live_input, build_report
 from tools.validate import _schema_errors, load_json, load_yaml
 
 
@@ -87,6 +88,29 @@ class IssueIntakeTests(unittest.TestCase):
         self.assertEqual("HARNESS-PR-TRIAGE-001", matches[0]["id"])
         self.assertIn(matches[0]["status"], {"BACKLOG", "READY", "IN_PROGRESS", "DONE"})
         self.assertEqual(["HARNESS-REALCHAIN-REBASE-001"], matches[0]["depends_on"])
+
+    def test_live_input_scopes_metadata_and_body_to_each_repository(self):
+        calls: list[list[str]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(command)
+            if command[2] == "list":
+                return subprocess.CompletedProcess(command, 0, '[{"number": 7, "title": "T", "url": "https://github.com/o/r/issues/7"}]', "")
+            return subprocess.CompletedProcess(command, 0, '{"body": "## Acceptance criteria\\n- [ ] do\\n## Checks\\n```bash\\ntrue\\n```\\n## Human gate\\nnone"}', "")
+
+        with patch("tools.issue_intake.subprocess.run", side_effect=fake_run):
+            source, issues = _live_input(["o/r"], "2026-09-02T00:00:00Z")
+
+        self.assertEqual("live", source["kind"])
+        self.assertEqual("T", issues[0]["title"])
+        self.assertEqual("## Acceptance criteria\n- [ ] do\n## Checks\n```bash\ntrue\n```\n## Human gate\nnone", issues[0]["body"])
+        self.assertEqual(2, len(calls))
+        self.assertEqual(["gh", "issue", "list"], calls[0][:3])
+        self.assertIn("--repo", calls[0])
+        self.assertNotIn("body", calls[0])
+        self.assertEqual(["gh", "issue", "view"], calls[1][:3])
+        self.assertIn("--repo", calls[1])
+        self.assertEqual("o/r", calls[1][calls[1].index("--repo") + 1])
 
 
 if __name__ == "__main__":
