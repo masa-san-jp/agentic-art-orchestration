@@ -1792,3 +1792,17 @@
 - Research main remains pinned to exact merge commit `56402d708a6ead011819d2fed8598ffca9722aeb`; Research Issue #83 is CLOSED. The parent manifest pin and retrieval fixture match that SHA.
 - The latest read-only 7-repository Issue audit remains authoritative for this checkpoint: 39 open Issues, 22 already represented in the queue, 17 `UNQUEUED_NEEDS_SSOT`, and 0 qualified-but-unqueued. This is not an all-Issues-closed state.
 - Next exact action: review the 22 queued open Issues against their completed task acceptance evidence and close only those demonstrably complete; leave the 17 SSOT-incomplete Issues open until their required schema is supplied. Do not close umbrella Issues #1/#2 without separate epic-level evidence.
+
+## HARNESS-REQUEST-ID-001 completed
+
+- Task ID: `HARNESS-REQUEST-ID-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#84](https://github.com/masa-san-jp/agentic-art-orchestration/issues/84)。親PR [#133](https://github.com/masa-san-jp/agentic-art-orchestration/pull/133)はrequired checks通過後にmergeされ、mainは`a08de1fa8ce93cb66fbe8de776d930f3b04335e9`。
+- Observable changes: `tools/build_research_request.py`が、Researchの`projects/*/00_intake/research-request.yaml`にある受理済み`request_id`と同一実行内の出力を合わせて次の`RR###`を採番する。`tools/run.py`はResearch rootをrequest builderへ渡す。Research rootなしの従来のrun-local採番は維持する。
+- Acceptance: `1/1`。受理済みIDを避ける、同一実行内IDを数える、Research rootなしで`RR001`を返す、full orchestrationが`--research-root`を転送する4ケースを確認した。focused tests `29/29 PASS`。
+- Parent verification: PR #133 run `33676747517`で`bootstrap=PASS`（full suite `471/471`、validator、README check）、`production-exchange=PASS`、`real-chain=PASS`。差分検査もPASS。
+- Child gates and safety: 子repoは変更せず、Researchの受理済みrequest YAMLを読み取り専用で参照した。credential、PRIVATE_RAW、RESTRICTED、直接識別子、会話全文、Drive artifact、外部artifactは保存していない。Issue/PRのclose・merge以外の外部副作用はない。
+- Feedback: explicitはユーザーの「Issueを確認し、エージェントハーネスを完成させる」要求。inferredはnone。
+- Unresolved: stale parent PR #83は同一Issueの旧実装としてsuperseded close待ち。次は#91のhandoff ID/revision再開経路をqueue登録して実装する。
+
+### Next exact action
+
+1. `gh pr close 83` にsuperseded理由を記録し、#91を`HARNESS-HANDOFF-ID-001`としてqueueへ登録してclaimする。

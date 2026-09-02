@@ -1,15 +1,15 @@
-version: 153
-updated_at: "2026-09-03T04:51:21+09:00"
-active_task: HARNESS-REQUEST-ID-001
-active_repository: agentic-art-orchestration
+version: 154
+updated_at: "2026-09-03T05:19:03+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-03T04:51:21+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
   execution_id: HARNESS-REQUEST-ID-001:20260903-045121
-  released_at: null
+  released_at: "2026-09-03T05:19:03+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: a7ffe89648af4161d19549a92caba74c848751de
   expected_changes: Allocate Research request IDs from accepted child requests plus current-run output, pass research-root through the orchestration entry, and add regression evidence for the second-intent collision.
-  result: in_progress; Issue #84 is the smallest open implementation issue with a reproducible parent-owned defect, and the implementation is being verified before commit.
-last_completed_task: PURPOSE-RESEARCH-SELF-REPETITION-001
+  result: completed; parent PR #133 merged as a08de1fa8ce93cb66fbe8de776d930f3b04335e9 after all three required CI gates passed in run 33676747517; Issue #84 is ready to close after this record is pushed.
+last_completed_task: HARNESS-REQUEST-ID-001
 resume_from:
-  task: HARNESS-REQUEST-ID-001
-  action: "Run the focused and full parent checks, record acceptance evidence, then release the lease."
+  task: null
+  action: "Re-run repository-scoped live Issue intake and select the next unresolved implementation issue."
   command: .venv/bin/python tools/issue_intake.py --live --observed-at <fixed> --repository <manifest-repos>
 
 issue_intake:

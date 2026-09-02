@@ -1110,7 +1110,7 @@ tasks:
   - id: HARNESS-REQUEST-ID-001
     milestone: M21
     title: Allocate unique research request IDs across runs
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/84
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -1120,3 +1120,4 @@ tasks:
     depends_on: [PURPOSE-RESEARCH-SELF-REPETITION-001]
     acceptance: The research-request builder reads already accepted request_id values from the child Research repository when a research root is supplied, combines them with IDs written during the current run, preserves the legacy run-local allocation when no research root is supplied, and the full orchestration entry passes research-root through so a second intent cannot collide with RR001. No child repository, external artifact, raw conversation, or credential is written.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_build_research_request tests.test_run -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #133 merged to main as a08de1fa8ce93cb66fbe8de776d930f3b04335e9 after bootstrap, production-exchange, and real-chain all PASS in run 33676747517. Focused request/run tests passed 29/29; bootstrap full suite passed 471/471; validator and diff check passed. Accepted Research request IDs are read from projects/*/00_intake/research-request.yaml, same-run files remain included, and no-root behavior is preserved. No child repository, external artifact, raw conversation, or credential was written."
