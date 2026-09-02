@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-02T23:46:29+09:00`.
+Source updated at: `2026-09-03T01:26:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 1 | 0 | 0 | 105 | 107 |
+| 0 | 0 | 0 | 0 | 108 | 108 |
 
-Current task: `null`; repository: `null`; checkpoint: `HARNESS-ISSUE-INTAKE-LIVE-001`.
-Next action: Claim the smallest dependency-complete READY task and inspect Production Issue #52 before editing.
-Ready: `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`.
-Next task: `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`.
+Current task: `null`; repository: `null`; checkpoint: `PURPOSE-PRODUCTION-PALETTE-COMPAT-001`.
+Next action: Run the repository-scoped live Issue intake to re-audit all manifest repositories and register only SSOT-qualified open Issues.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 
