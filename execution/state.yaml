@@ -1,30 +1,49 @@
-version: 140
-updated_at: "2026-09-02T16:54:52+09:00"
+version: 143
+updated_at: "2026-09-02T23:46:29+09:00"
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: null
-  acquired_at: "2026-09-02T16:14:55+09:00"
+  acquired_at: "2026-09-02T23:37:34+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-AUTO-PLAN-001:20260902-161455
-  released_at: "2026-09-02T16:34:00+09:00"
+  execution_id: HARNESS-ISSUE-INTAKE-LIVE-001:20260902-233734
+  released_at: "2026-09-02T23:41:29+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/run.py, tools/build_research_request.py, tests/test_run.py, tests/test_auto_plan.py, docs/agent-runtime-guide.md, docs/agent-ui-runbook.md, README.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
+    paths: [tools/issue_intake.py, tests/test_issue_intake.py, docs/operator-runbook.md, README.md, execution/task-queue.yaml, execution/state.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: HARNESS-AUTO-PLAN-001
+  task: HARNESS-ISSUE-INTAKE-LIVE-001
   repository: agentic-art-orchestration
-  start_point: f625302
-  expected_changes: Allow a repository-aware agent to derive a production theme proposal and stable project identity from the pinned candidate snapshot without requiring user-supplied intent, theme, slug, or title.
-  result: completed; theme-free entry, exact-pin preflight, offline fixture, docs, focused/full verification, PR #122 checks 3/3 PASS, and merge commit fb94a77aee296fd7fc208a4af8ebe2c49f85ddc1 are recorded.
-last_completed_task: HARNESS-AUTO-PLAN-001
+  start_point: 1f8c78e0358551ff99c411291769c532af0585a8
+  expected_changes: Make live Issue intake reliably read open Issue bodies from every manifest repository and produce a deterministic qualified/unqueued report without remote writes.
+  result: completed; live intake was corrected to use explicit repository-scoped metadata/body reads, focused tests and all-manifest live deterministic report passed, and no remote or child mutation occurred.
+last_completed_task: HARNESS-ISSUE-INTAKE-LIVE-001
 resume_from:
-  task: null
-  action: "No dependency-complete READY or BACKLOG task remains; resume with issue intake after a new qualified task is registered."
+  task: PURPOSE-PRODUCTION-VISUAL-PACKAGE-001
+  action: "Claim the smallest dependency-complete READY task and inspect Production Issue #52 before editing."
   command: git diff --check
+
+issue_intake:
+  status: complete
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
+  implementation_commit: ce3026b7bfffc93bb6b0932bf2c80d5d936fc1c4
+  implementation: repository-scoped gh issue list metadata plus repository-scoped gh issue view body retrieval
+  live_observed_at: "2026-09-02T14:36:12Z"
+  manifest_repositories: 7
+  open_issues: 43
+  queued: 23
+  qualified_unqueued: 2
+  qualified_candidates: [agentic-art-orchestration#124, agentic-art-production#52]
+  unqueued_needs_ssot: 18
+  report_sha256: af32e8c9c13ba922cb52ec3f80f7c7a8fd06ea6f36cd2afeedabb7d007671688
+  focused_tests: "7/7 PASS"
+  live_check: PASS
+  remote_operations: [READ]
+  child_repositories: none
+  sensitive_data: none
 
 auto_plan:
   status: complete

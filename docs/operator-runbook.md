@@ -211,10 +211,11 @@ READYも依存完了済みBACKLOGも無い場合は、open Issueを自動昇格�
 
 ~~~bash
 .venv/bin/python tools/issue_intake.py --fixture tests/fixtures/issue-intake/current-open-issues.json --check
-.venv/bin/python tools/issue_intake.py --live --repository <owner/name> --observed-at <fixed-ISO-8601-time> --check
+.venv/bin/python tools/issue_intake.py --live --repository <manifest-repo-1> --repository <manifest-repo-2> --observed-at <fixed-ISO-8601-time> --check
 ~~~
 
 `REGISTER_BACKLOG`だけがqueue登録候補であり、登録は依存関係、対象repo、Issue SSOT URLを確認してから1つのcommitで行う。`ALREADY_QUEUED`は重複登録せず、`UNQUEUED_NEEDS_SSOT`は実装せずにレポートへ残す。intake tool自体はGit、Issue、queueを書き換えない。
+live intakeはIssue metadataと本文を別々に取得し、各`gh issue view`にも対象repositoryを明示する。GitHub CLI/APIのbody field差異や、親repoの作業ディレクトリによるIssue番号の誤解決で全体を誤停止させない。
 
 ## 4. signalから成果物まで
 

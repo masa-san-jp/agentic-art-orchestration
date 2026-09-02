@@ -1696,3 +1696,16 @@
 ### Next exact action
 
 1. No further action remains for this task: PR #122 is merged as `fb94a77aee296fd7fc208a4af8ebe2c49f85ddc1`; required checks `bootstrap`, `production-exchange`, and `real-chain` are all PASS. On a future resume, inspect the queue and begin the smallest dependency-complete READY task.
+
+## HARNESS-ISSUE-INTAKE-LIVE-001 completion
+
+- Task ID: `HARNESS-ISSUE-INTAKE-LIVE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#114](https://github.com/masa-san-jp/agentic-art-orchestration/issues/114)。
+- Observable change: live intake now reads Issue metadata with repository-scoped `gh issue list` and each body with repository-scoped `gh issue view`; it no longer depends on the optional list-body field or cwd Issue resolution.
+- Parent implementation commit: `ce3026b7bfffc93bb6b0932bf2c80d5d936fc1c4`.
+- Evidence: all 7 manifest repositories were observed read-only at `2026-09-02T14:36:12Z`; 43 open Issues, 23 queued, 2 qualified unqueued (`agentic-art-orchestration#124`, `agentic-art-production#52`), 18 `UNQUEUED_NEEDS_SSOT`; live `--check` PASS, report SHA-256 `af32e8c9c13ba922cb52ec3f80f7c7a8fd06ea6f36cd2afeedabb7d007671688`.
+- Parent verification: `tools/validate.py --check` PASS, `tests.test_issue_intake` 7/7 PASS, project status/readme and `git diff --check` PASS. No child quality gate was required because no child repository changed.
+- Sensitive data/external effects: no Issue/Git/Drive write, credential, raw conversation, PRIVATE_RAW, RESTRICTED, or child mutation. The live report is Git-external.
+
+### Next exact action
+
+1. `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001` is the smallest dependency-complete READY task; read Production Issue #52 and the real child repository instructions before editing.
