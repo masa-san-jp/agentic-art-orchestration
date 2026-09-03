@@ -677,7 +677,7 @@ tasks:
     user_artifact_policy: READ_ONLY
     depends_on: [ISSUE-39-KB-PIPE-001, ISSUE-40-PIN-ADOPTION-001, PRODUCTION-E2E-001]
     acceptance: Pull-request CI checks out all six current manifest children at their declared default branch using an explicitly configured read-only private-repository credential, runs the declared child gates and the parent Production exchange qualification, fails closed on a missing credential before checkout, and never adopts pins or mutates child repositories.
-    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain --timeout 900 --python-root <child-environment-root>]
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_real_chain_ci tests.test_pin_update -v, CI real-chain job using python3 tools/qualify_pin_update.py --workspace-root repos --output <external-report> --run-id ci-real-chain --timeout 1800 --python-root <child-environment-root>]
     progress: Complete. Run 33538995358 passed credential, six checkouts, all six dependency provisions, bootstrap, production-exchange, and all six immutable child repositories with 15/15 declared gates PASS. Qualification reported changed_pins=6 and applied=false; no pin or child repository was changed.
     blocker: Human review remains required before default-branch merge, ready-for-review, tag, or release.
 

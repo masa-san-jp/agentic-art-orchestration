@@ -1891,3 +1891,9 @@
 - Safety: no child schema/data, raw viewer response, direct identifier, credential, PRIVATE_RAW, RESTRICTED value, Drive artifact body, or external artifact body entered parent Git. External project evidence remains Git-external and metadata-only at the parent boundary.
 - Feedback: explicit is the user's request to confirm and resolve Issues and complete the agent harness; inferred is none.
 - Lease is released as `available/unassigned`. The next exact action is a repository-scoped live Issue intake across all 7 manifest repositories; no READY task remains in the current queue.
+
+## HARNESS-VIEWER-E2E-001 completion-record CI timeout remediation
+
+- The completion-record PR [#143](https://github.com/masa-san-jp/agentic-art-orchestration/pull/143) run [33737599464](https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/33737599464) passed bootstrap and production-exchange, while real-chain failed only because `agentic-art-production`'s declared `python3 -m unittest discover -s tests -v` gate exceeded the real-chain-specific 900-second limit. The other five child repositories and the Production validator/evaluation gates passed; the qualification report recorded `changed_pins: 0` and `production_exchange: NOT_RUN`.
+- The exact Production commit `e1bb0deb4c28489a881ef663a3d2a8d974c5b295` was run locally in a Python 3.12 environment: 98/98 tests passed in 394.7 seconds. The workflow's real-chain child-gate timeout is therefore increased to a finite 1800 seconds; no gate is skipped and the generic child-gate default remains unchanged. The related workflow contract test passed 4/4, parent validator passed, and `git diff --check` passed.
+- No child repository, pin, Issue, Drive artifact, raw viewer response, credential, PRIVATE_RAW, or RESTRICTED value was changed by the timeout remediation. The next exact action is to rerun PR #143's required checks and merge only after real-chain passes.

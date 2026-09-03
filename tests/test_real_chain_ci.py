@@ -66,7 +66,7 @@ class RealChainCITests(unittest.TestCase):
         self.assertIn("tools/qualify_pin_update.py", command)
         self.assertIn("--workspace-root repos", command)
         self.assertIn("--run-id ci-real-chain", command)
-        self.assertIn("--timeout 900", command)
+        self.assertIn("--timeout 1800", command)
         self.assertIn('--python-root "$RUNNER_TEMP/child-python"', command)
         self.assertNotIn("--apply", command)
 

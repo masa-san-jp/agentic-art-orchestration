@@ -137,7 +137,7 @@ jobs:
             --workspace-root repos \
             --output /tmp/pin-update-qualification.json \
             --run-id ci-real-chain \
-            --timeout 900 \
+            --timeout 1800 \
             --python-root "$RUNNER_TEMP/child-python"
 
   # The bootstrap job validates against the offline fixture mirror. This job also
