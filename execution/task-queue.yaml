@@ -1,5 +1,5 @@
-version: 33
-updated_at: "2026-09-03T07:08:01+09:00"
+version: 34
+updated_at: "2026-09-03T07:53:50+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1166,3 +1166,17 @@ tasks:
     acceptance: The orchestration entry uses a project-stable Git-external Production output root instead of a run-id-specific root, records an append-only metadata-only run-id-to-project relation, keeps repeated run IDs idempotent, accepts a changed handoff through the child revision path, and protects a failed prior project from silent reset or overwrite on the next run. Tests cover the first run, a second run that sees prior production records, and recovery after a failed prior run. No child schema/data, raw conversation, credential, or external artifact is written.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_run -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
     completion: "Parent PR #138 merged to main as c07b221eb1bb85cf09d97b95ddd00667b01f4887 after bootstrap, production-exchange, and real-chain all PASS in run 33687985797. Focused run tests passed 25/25; the parent full suite passed 482/482 with one expected Research checkout skip; validator, README status, py_compile, and diff check passed. Production output is stable at the external state-root production path, run-to-project history is append-only metadata and idempotent, and changed handoffs use the child revision acceptance flags. No child repository, external artifact, raw conversation, or credential was written."
+
+  - id: HARNESS-VIEWER-RESEARCH-PIN-001
+    milestone: M25
+    title: Adopt the merged Research viewer-response importer pin
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/58
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    agent_terminal: EVIDENCE_READY
+    lane: RESEARCH_FEEDBACK
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-PRODUCTION-HISTORY-001]
+    acceptance: The parent manifest and retrieval fixture adopt the exact Research main merge commit that contains the viewer-response importer, the parent verifies the pin and retrieval provenance without copying child schema/data, and the child merge is backed by its focused and full quality gates. No real viewer response, raw conversation, credential, or external artifact is written.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_retrieval tests.test_knowledge_profiles tests.test_child_quality_gates -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
