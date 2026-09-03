@@ -154,7 +154,7 @@ jobs:
       - run: python3 -m pip install -r requirements-dev.txt
       - name: Materialize the manifest-pinned children
         env:
-          CHILD_REPOS_TOKEN: ${{ secrets.CHILD_REPOS_TOKEN }}
+          CHILD_REPOS_TOKEN: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
         run: >-
           python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
           --repository agentic-art-research

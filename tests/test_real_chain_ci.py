@@ -108,6 +108,7 @@ class RealChainCITests(unittest.TestCase):
     def test_production_exchange_materializes_all_exchange_children(self):
         production = self.workflow()["jobs"]["production-exchange"]
         materialize = next(step for step in production["steps"] if step.get("name") == "Materialize the manifest-pinned children")
+        self.assertEqual("${{ secrets.AAP_CHILD_REPOS_TOKEN }}", materialize["env"]["CHILD_REPOS_TOKEN"])
         command = materialize["run"]
         self.assertIn("--repository agentic-art-research", command)
         self.assertIn("--repository agentic-art-production", command)
