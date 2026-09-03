@@ -1,5 +1,5 @@
-version: 36
-updated_at: "2026-09-03T15:14:42+09:00"
+version: 39
+updated_at: "2026-09-03T16:51:53+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1200,7 +1200,7 @@ tasks:
   - id: HARNESS-VIEWER-E2E-001
     milestone: M25
     title: Complete the four-repository viewer-response acceptance path
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/58
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, viewer-response-notes]
     agent_terminal: EVIDENCE_READY

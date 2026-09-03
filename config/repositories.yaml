@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: 05351e74236e52bbe09755c9554c63b1c1003fca
+    observed_commit: 988daec93a851f732a2483c7feeb29ccc895905e
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
@@ -159,7 +159,7 @@ repositories:
     role: control-plane-extension
     authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
     default_branch: main
-    observed_commit: e12e20d8fb5e5024b371c30c843ecd9c1a82cbba
+    observed_commit: e1bb0deb4c28489a881ef663a3d2a8d974c5b295
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
     quality_gates:

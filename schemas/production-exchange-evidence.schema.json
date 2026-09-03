@@ -33,7 +33,7 @@
         "contract_version": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9._/-]+$"},
         "semantic_hash": {"$ref": "#/$defs/hash"},
         "status": {"enum": ["PASSED", "FAILED", "BLOCKED", "NOT_RUN"]},
-        "terminal_status": {"enum": ["PREPARED", "HANDOFF_EXPORTED", "HANDOFF_ACCEPTED", "RESULT_EXPORTED", "RESULT_DRY_RUN", "NOT_RUN"]},
+        "terminal_status": {"enum": ["PREPARED", "HANDOFF_EXPORTED", "HANDOFF_ACCEPTED", "RESULT_EXPORTED", "RESULT_DRY_RUN", "FEEDBACK_APPLIED", "REPLAYED", "VALIDATED", "SIGNALS_EXPORTED", "NOT_RUN"]},
         "output_locator": {"$ref": "#/$defs/locator"},
         "reason_code": {"type": "string", "pattern": "^[A-Z0-9_:-]+$"}
       }
@@ -41,12 +41,18 @@
     "acceptance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["research_handoff_exported", "production_handoff_accepted", "production_result_exported", "research_result_dry_run", "child_schema_not_copied", "adjacent_worktree_not_read", "external_effects_not_run"],
+      "required": ["research_handoff_exported", "production_handoff_accepted", "production_result_exported", "research_result_dry_run", "research_feedback_applied", "viewer_record_appended", "viewer_replay_idempotent", "viewer_contract_validated", "viewer_signal_exported", "research_signal_exported", "child_schema_not_copied", "adjacent_worktree_not_read", "external_effects_not_run"],
       "properties": {
         "research_handoff_exported": {"const": true},
         "production_handoff_accepted": {"const": true},
         "production_result_exported": {"const": true},
         "research_result_dry_run": {"const": true},
+        "research_feedback_applied": {"const": true},
+        "viewer_record_appended": {"const": true},
+        "viewer_replay_idempotent": {"const": true},
+        "viewer_contract_validated": {"const": true},
+        "viewer_signal_exported": {"const": true},
+        "research_signal_exported": {"const": true},
         "child_schema_not_copied": {"const": true},
         "adjacent_worktree_not_read": {"const": true},
         "external_effects_not_run": {"const": true}
