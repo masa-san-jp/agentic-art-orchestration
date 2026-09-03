@@ -183,12 +183,15 @@ def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str, personal
     }
     if personal_anchor is not None:
         identity["personal_anchor_id"] = personal_anchor["anchor_id"]
-    return {
+    candidate = {
         "candidate_id": f"candidate:{sha256_hex(identity)[:16]}",
         "rule_id": rule["rule_id"],
         "inputs": inputs,
         "composition": composition,
     }
+    if rule["composition"].get("composition_mode") is not None:
+        candidate["composition_mode"] = rule["composition"]["composition_mode"]
+    return candidate
 
 
 def build_candidate_space(signals: list[dict], registry: dict, source: str = "candidate-space") -> dict:

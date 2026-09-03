@@ -912,6 +912,15 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
 
         composition = rule.get("composition")
         if isinstance(composition, dict):
+            composition_mode = composition.get("composition_mode")
+            if composition_mode is not None and composition_mode != "intersection":
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"{prefix}.composition.composition_mode must be intersection when declared",
+                        "use intersection for a declared three-way composition mode",
+                    )
+                )
             slots = composition.get("slots")
             if isinstance(slots, dict) and isinstance(bindings, dict):
                 for slot_name, slot in slots.items():
@@ -946,6 +955,14 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
                     )
             template = composition.get("template")
             if isinstance(slots, dict) and isinstance(template, str):
+                if composition_mode == "intersection" and " ∩ " not in template:
+                    errors.append(
+                        _signal_error(
+                            source,
+                            f"{prefix}.composition.template must expose the declared intersection operator",
+                            "use the intersection template so changing the art-history or marketing input changes the mechanism",
+                        )
+                    )
                 unused = sorted(name for name in slots if "{" + str(name) + "}" not in template)
                 if unused:
                     errors.append(
@@ -1430,6 +1447,14 @@ def validate_candidate_space(data: dict, source: str = "candidate-space") -> lis
 
         composition = candidate.get("composition")
         if isinstance(composition, dict):
+            if candidate.get("composition_mode") not in {None, "intersection"}:
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"candidates[{index}].composition_mode must be intersection when declared",
+                        "carry the declared intersection mode into the candidate",
+                    )
+                )
             for slot_name, slot in composition.items():
                 if not isinstance(slot, dict):
                     continue
@@ -1943,6 +1968,10 @@ def validate_research_provenance(data: dict, source: str = "provenance") -> list
             errors.append(_signal_error(source, f"propositions[{index}] rule identity is inconsistent", "preserve the active rule and registry hash"))
         if structured.get("output_type") != rule.get("output_type") or structured.get("template") != rule.get("template"):
             errors.append(_signal_error(source, f"propositions[{index}] structured output differs from rule", "use the finite rule template without free-form rewriting"))
+        composition_mode = candidate.get("composition_mode")
+        if composition_mode is not None:
+            if rule.get("composition_mode") != composition_mode or structured.get("composition_mode") != composition_mode:
+                errors.append(_signal_error(source, f"propositions[{index}] composition mode is not preserved", "carry the declared intersection mode through candidate, rule, and structured output"))
         trace_by_id: dict[str, dict] = {}
         for signal_index, trace in enumerate(signals):
             if not isinstance(trace, dict):

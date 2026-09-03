@@ -35,6 +35,11 @@
         "composition": {
           "additionalProperties": false,
           "properties": {
+            "composition_mode": {
+              "enum": [
+                "intersection"
+              ]
+            },
             "output_type": {
               "enum": [
                 "research_proposition"

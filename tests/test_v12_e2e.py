@@ -40,7 +40,42 @@ class V12E2ETests(unittest.TestCase):
         self.assertNotIn('"content":', payload)
 
     def test_child_gate_blocked_state_is_preserved(self):
-        result = run_v12_e2e("V12-E2E-001:test-child-gates")
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
+        blocked_child_gates = {
+            "contract_version": "child-quality-gates/v1",
+            "run_id": "V12-E2E-001:test-child-gates:child-gates",
+            "manifest_hash": sha256_hex(manifest),
+            "repository_count": len(manifest["repositories"]),
+            "results": [
+                {
+                    "repository": repository["id"],
+                    "observed_commit": repository["observed_commit"],
+                    "workspace_commit": "0" * 40,
+                    "workspace_state": "STALE",
+                    "execution_mode": "NOT_RUN",
+                    "quality_gate_hash": sha256_hex(repository["quality_gates"]),
+                    "status": "BLOCKED",
+                    "gates": [
+                        {
+                            "command": command,
+                            "status": "NOT_RUN",
+                            "exit_code": None,
+                            "duration_ms": 0,
+                            "output_redacted": "",
+                            "output_truncated": False,
+                            "output_sha256": "0" * 64,
+                            "error": "child workspace is stale; gate intentionally not run",
+                        }
+                        for command in repository["quality_gates"]
+                    ],
+                }
+                for repository in manifest["repositories"]
+            ],
+        }
+        result = run_v12_e2e(
+            "V12-E2E-001:test-child-gates",
+            child_quality_gates=blocked_child_gates,
+        )
         self.assertIn("BLOCKED", result["child_quality_gates"]["statuses"])
         self.assertIn("NOT_RUN", result["child_quality_gates"]["execution_modes"])
         self.assertIn("STALE", result["child_quality_gates"]["workspace_states"])

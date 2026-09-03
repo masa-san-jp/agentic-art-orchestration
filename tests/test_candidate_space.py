@@ -31,6 +31,7 @@ class CandidateSpaceTests(unittest.TestCase):
         self.assertEqual(2, result["candidate_count"])
         candidate = result["candidates"][0]
         self.assertEqual({"R17"}, {candidate["rule_id"]})
+        self.assertEqual({"intersection"}, {item["composition_mode"] for item in result["candidates"]})
         refs = [ref for refs in candidate["inputs"].values() for ref in refs]
         self.assertEqual(
             {signal["signal_id"] for signal in signals},
@@ -49,6 +50,30 @@ class CandidateSpaceTests(unittest.TestCase):
             {"self:derived-001", "art-history:entity-001", "marketing:trend-001"},
             {slot["signal_id"] for slot in candidate["composition"].values()},
         )
+
+    def test_art_history_and_marketing_changes_remain_distinct_intersection_mechanisms(self):
+        signals, registry = self.load_inputs()
+        art_history = copy.deepcopy(signals[1])
+        art_history["signal_id"] = "art-history:entity-002"
+        art_history["source"]["entity_ids"] = ["art-entity-002"]
+        art_history["source"]["locators"] = ["relations/art-entity-002"]
+        art_history["evidence_refs"][0]["entity_id"] = "art-entity-002"
+        marketing = copy.deepcopy(signals[2])
+        marketing["signal_id"] = "marketing:trend-002"
+        marketing["source"]["entity_ids"] = ["trend-002"]
+        marketing["source"]["locators"] = ["trends/trend-002"]
+        marketing["evidence_refs"][0]["entity_id"] = "trend-002"
+        marketing["domain"]["marketing"]["stage"] = "emerging"
+        result = MODULE.build_candidate_space(signals + [art_history, marketing], registry)
+        intersections = {
+            (
+                item["composition_mode"],
+                tuple(sorted((name, slot["signal_id"], slot["attribute"]) for name, slot in item["composition"].items())),
+            )
+            for item in result["candidates"]
+        }
+        self.assertEqual(result["candidate_count"], len(intersections))
+        self.assertTrue(all(mode == "intersection" for mode, _signals in intersections))
 
     def test_same_snapshot_and_rules_are_byte_identical(self):
         signals, registry = self.load_inputs()

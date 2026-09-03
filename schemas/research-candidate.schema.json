@@ -44,6 +44,9 @@
           "type": "string",
           "pattern": "^R[0-9]+$"
         },
+        "composition_mode": {
+          "enum": ["intersection"]
+        },
         "inputs": {
           "type": "object",
           "additionalProperties": false,

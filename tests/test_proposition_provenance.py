@@ -47,6 +47,8 @@ class PropositionProvenanceTests(unittest.TestCase):
         self.assertEqual(MODULE.canonical_json(first), MODULE.canonical_json(second))
         proposition = first["propositions"][0]
         self.assertEqual("R17", proposition["rule_id"])
+        self.assertEqual("intersection", proposition["candidate"]["composition_mode"])
+        self.assertEqual("intersection", proposition["structured_output"]["composition_mode"])
         self.assertEqual(selection["selected_candidates"][0]["candidate_id"], proposition["candidate_id"])
         self.assertEqual({"self", "art-history", "marketing"}, {item["signal_kind"] for item in proposition["normalized_signals"]})
         for slot in proposition["structured_output"]["slots"].values():

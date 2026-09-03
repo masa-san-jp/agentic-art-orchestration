@@ -221,6 +221,8 @@ def _copy_candidate(candidate: dict, rank: int, score: str, intent_scores: dict 
         "inputs": copy.deepcopy(candidate["inputs"]),
         "composition": copy.deepcopy(candidate["composition"]),
     }
+    if candidate.get("composition_mode") is not None:
+        result["composition_mode"] = candidate["composition_mode"]
     if intent_scores is not None:
         result.update(
             {

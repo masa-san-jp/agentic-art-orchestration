@@ -47,7 +47,7 @@ DEFAULT_GATE_PATH = ROOT / "data/candidate-gates.json"
 DEFAULT_SELECTION_PATH = ROOT / "data/selection.json"
 DEFAULT_OUTPUT_PATH = ROOT / "data/provenance.json"
 SIGNAL_KINDS = ("self", "art-history", "marketing")
-TEMPLATE = "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"
+TEMPLATE = "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
 
 
 def sha256_hex(value: object) -> str:
@@ -210,6 +210,21 @@ def build_provenance(
             for slot_name in sorted(candidate["composition"])
         }
         proposition_id = f"proposition:{sha256_hex({'project_id': selection['project_id'], 'snapshot_id': selection['snapshot_id'], 'candidate_id': candidate['candidate_id'], 'seed': selection['seed']})[:16]}"
+        rule_trace = {
+            "rule_id": rule["rule_id"],
+            "rule_set_hash": candidate_space["rule_set_hash"],
+            "output_type": rule["composition"]["output_type"],
+            "template": rule["composition"]["template"],
+            "constraints": list(rule["constraints"]),
+        }
+        structured_output = {
+            "output_type": rule["composition"]["output_type"],
+            "template": rule["composition"]["template"],
+            "slots": slots,
+        }
+        if rule["composition"].get("composition_mode") is not None:
+            rule_trace["composition_mode"] = rule["composition"]["composition_mode"]
+            structured_output["composition_mode"] = rule["composition"]["composition_mode"]
         propositions.append(
             {
                 "proposition_id": proposition_id,
@@ -221,18 +236,8 @@ def build_provenance(
                     "selection_score": selected["selection_score"],
                 },
                 "candidate": copy.deepcopy(candidate),
-                "rule": {
-                    "rule_id": rule["rule_id"],
-                    "rule_set_hash": candidate_space["rule_set_hash"],
-                    "output_type": rule["composition"]["output_type"],
-                    "template": rule["composition"]["template"],
-                    "constraints": list(rule["constraints"]),
-                },
-                "structured_output": {
-                    "output_type": rule["composition"]["output_type"],
-                    "template": rule["composition"]["template"],
-                    "slots": slots,
-                },
+                "rule": rule_trace,
+                "structured_output": structured_output,
                 "normalized_signals": normalized_signals,
             }
         )
