@@ -84,6 +84,7 @@
       "properties": {
         "candidate_id": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"},
         "rule_id": {"type": "string", "pattern": "^R[0-9]+$"},
+        "composition_mode": {"enum": ["intersection"]},
         "inputs": {"$ref": "#/$defs/inputs"},
         "composition": {"$ref": "#/$defs/composition"}
       }
@@ -141,7 +142,8 @@
         "rule_id": {"type": "string", "pattern": "^R[0-9]+$"},
         "rule_set_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "output_type": {"const": "research_proposition"},
-        "template": {"const": "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"},
+        "composition_mode": {"enum": ["intersection"]},
+        "template": {"enum": ["{personal_tension} is externalized through {historical_operation} against {contemporary_condition}", "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"]},
         "constraints": {
           "type": "array",
           "minItems": 3,
@@ -156,7 +158,8 @@
       "required": ["output_type", "template", "slots"],
       "properties": {
         "output_type": {"const": "research_proposition"},
-        "template": {"const": "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"},
+        "composition_mode": {"enum": ["intersection"]},
+        "template": {"enum": ["{personal_tension} is externalized through {historical_operation} against {contemporary_condition}", "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"]},
         "slots": {
           "type": "object",
           "additionalProperties": false,

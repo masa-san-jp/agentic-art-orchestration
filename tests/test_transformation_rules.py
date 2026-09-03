@@ -26,6 +26,7 @@ class TransformationRuleTests(unittest.TestCase):
         self.assertEqual("https://json-schema.org/draft/2020-12/schema", schema["$schema"])
         self.assertEqual("transformation-rule/v2", schema["properties"]["contract_version"]["const"])
         self.assertIn("composition", schema["$defs"]["rule"]["required"])
+        self.assertEqual(["intersection"], schema["$defs"]["rule"]["properties"]["composition"]["properties"]["composition_mode"]["enum"])
 
     def test_checked_in_registry_passes(self):
         errors = MODULE.validate_transformation_rule_registry(self.load_registry(), "fixture:rules")
@@ -100,9 +101,10 @@ class TransformationRuleTests(unittest.TestCase):
         template = registry["rules"][0]["composition"]["template"]
 
         self.assertEqual(
-            "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}",
+            "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}",
             template,
         )
+        self.assertEqual("intersection", registry["rules"][0]["composition"]["composition_mode"])
 
     def test_rule_registry_does_not_authorize_free_form_operations(self):
         registry = self.load_registry()

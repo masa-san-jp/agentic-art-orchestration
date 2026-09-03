@@ -11,6 +11,7 @@ rules:
       marketing: [stage, freshness, counterevidence]
     composition:
       output_type: research_proposition
+      composition_mode: intersection
       slots:
         personal_tension:
           signal_kind: self
@@ -21,6 +22,6 @@ rules:
         contemporary_condition:
           signal_kind: marketing
           attribute: stage
-      template: "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}"
+      template: "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
     constraints: [require_all_inputs, require_source_provenance, no_unproven_concepts]
     rejection_reasons: [missing-required-signal, unknown-attribute, missing-provenance, constraint-failure]
