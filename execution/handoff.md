@@ -1924,3 +1924,30 @@
 - Parent focused retrieval/profile/child-gate tests `27/27`, validator, snapshot, audit, startup, README status, and parent full suite `483/483` (one expected Research checkout skip) passed. Audit has one known nonblocking freshness finding; offline startup remains explicitly `BLOCKED` for fixture workspace conditions.
 - No child schema/data, raw/private content, credential, external artifact, or personal fact was copied into the parent. The child gate was run read-only from an immutable archive and the source workspace remained `MATCHED` and clean.
 - Next exact action: commit and push the pin adoption change, wait for the remote check result, then record the merge commit and close the task without treating billing-blocked CI as a test pass.
+
+## HARNESS-RESEARCH-PIN-85-001 completed
+
+- Task ID: `HARNESS-RESEARCH-PIN-85-001`; target repositories: `agentic-art-orchestration` and `agentic-art-research`; Issue SSOT: [Research #85](https://github.com/masa-san-jp/agentic-art-research/issues/85) is CLOSED.
+- Observable changes: parent manifest and retrieval fixture now adopt the exact Research main merge commit `9a35dd74d53c756e5b509e1b0d8d217c53a71e37`; queue/state now record the task as complete and release the lease. No child schema or canonical data was copied.
+- Acceptance: `1/1`. Parent PR [#145](https://github.com/masa-san-jp/agentic-art-orchestration/pull/145) merged to main as `29221de2fbf95604329aade4b6cfe6562185c18a`; parent validator passed; retrieval/profile/child-gate focused tests passed `27/27`; parent full suite passed `483/483` with one expected Research checkout skip after canonical offline data generation. The exact pinned Research checkout passed compileall, validator, `289/289` tests, and graph check.
+- Parent and child commits: parent `29221de2fbf95604329aade4b6cfe6562185c18a`; Research `9a35dd74d53c756e5b509e1b0d8d217c53a71e37`.
+- Remote CI: PR #145 required jobs were not started because the GitHub account billing limit blocked job startup. This is retained as an environment observation and is not counted as a test pass; local acceptance evidence is complete.
+- Safety: no child schema/data, raw/private content, credential, direct identifier, raw conversation, personal fact, Drive artifact body, or external artifact entered the parent. External artifacts remain create-only and none were created by this task.
+- Feedback: explicit is the user request to adopt the pin, verify Issues, and complete the agent harness; inferred is none.
+- Unresolved at this checkpoint: parent Issues #1/#2 and Viewer #2 required live status reconciliation; Production Issue #10 remains intentionally open as its permanent requirement SSOT.
+
+### Next exact action
+
+1. Record the current repository-scoped Issue audit after the completed task, then close only parent Issues whose acceptance evidence is complete; retain Production #10 as the requirement SSOT.
+
+## Final repository-scoped Issue audit (2026-09-03)
+
+- Live intake covered all 7 manifest repositories without remote writes. Fixed observation time: `2026-09-03T12:24:00Z`; report SHA-256: `34aa7150d1572060e9590986ca429052e5d037a4ed60b28841bf4fdfb4fa227a`.
+- Result: `1` OPEN Issue, `1` queued, `0` qualified-unqueued, `0` unqueued-needs-SSOT. The sole OPEN Issue is Production [#10](https://github.com/masa-san-jp/agentic-art-production/issues/10), intentionally retained as the permanent requirements SSOT; its implementation tasks are complete and it is not an execution blocker.
+- Parent #1 and #2 were closed after evidence comments; Viewer #2 was closed after fixed-pin validator and `12/12` child tests. Research #85 and parent #141 were already closed with their completion evidence.
+- The parent queue has `118/118 DONE`, no READY/IN_PROGRESS/BLOCKED task, and the state lease is `available`. No new implementation task is selected until a new actionable Issue or explicit feedback arrives.
+- Sensitive-data review: no Issue body, conversation, PRIVATE_RAW, RESTRICTED value, credential, direct identifier, or external artifact body was saved in the parent. The intake report is metadata-only and remains outside Git.
+
+### Next exact action
+
+1. On a new actionable Issue or explicit user feedback, run `python3 tools/validate.py --check`, then register the smallest dependency-complete task; otherwise use the current pinned main as the reproducible harness baseline.

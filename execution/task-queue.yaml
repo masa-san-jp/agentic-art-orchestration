@@ -329,6 +329,9 @@ tasks:
   - id: V12-ISSUE2-001
     milestone: M10
     title: Scope remote Issue #2 for v1.2 semi-deterministic research execution
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/2
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    agent_terminal: EVIDENCE_READY
     status: DONE
     depends_on: [RELEASE-002]
     acceptance: Parent Issue #2 and agentic-art-research Issue #2 are decomposed into the ordered authority-preserving v1.2 tasks below for explicit transformation rules, candidate generation, seeded selection, specificity/genericness gates, provenance, and child quality gates without changing v1.1 release acceptance or copying child canonical data.
@@ -409,6 +412,9 @@ tasks:
   - id: MANIFEST-PRODUCTION-001
     milestone: M11
     title: Onboard Agentic Art Production and its requirement SSOT
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
+    target_repositories: [agentic-art-orchestration, agentic-art-production]
+    agent_terminal: EVIDENCE_READY
     status: DONE
     depends_on: [V12-RELEASE-001]
     acceptance: The parent manifest references agentic-art-production Issue 10 in the same repository, represents production-handoff v1 and production-result v1 without misclassifying the runtime as a normalized-signal producer or consumer, and passes parent validation and tests without mutating the child repository.
@@ -1215,10 +1221,10 @@ tasks:
   - id: HARNESS-ISSUE-141-INTERSECTION-001
     milestone: M26
     title: Make the three declared proposition frames an explicit intersection
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/141
     target_repositories: [agentic-art-orchestration]
-    agent_terminal: DRAFT_PR_READY
+    agent_terminal: EVIDENCE_READY
     lane: RESEARCH_PROPOSITION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
@@ -1230,10 +1236,11 @@ tasks:
   - id: HARNESS-RESEARCH-PIN-85-001
     milestone: M27
     title: Adopt the merged Research main pin for Issue #85 grounding
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/85
     target_repositories: [agentic-art-orchestration, agentic-art-research]
-    agent_terminal: DRAFT_PR_READY
+    agent_terminal: EVIDENCE_READY
+    completion: "Parent PR #145 was merged to main as 29221de2fbf95604329aade4b6cfe6562185c18a. The manifest and retrieval fixture adopt Research main 9a35dd74d53c756e5b509e1b0d8d217c53a71e37; parent validator passed, focused pin/profile/child-gate tests passed 27/27, parent full suite passed 483/483 with one expected Research checkout skip after canonical offline data generation, and the exact pinned Research child gate passed compileall, validator, 289/289 tests, and graph check. GitHub jobs were not started because of the account billing limit and are recorded as an environment note only. No child schema/data, raw/private content, credential, or external artifact was copied."
     lane: RESEARCH_PROPOSITION
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
