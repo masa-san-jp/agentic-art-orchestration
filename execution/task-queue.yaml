@@ -1,5 +1,5 @@
-version: 39
-updated_at: "2026-09-03T16:51:53+09:00"
+version: 40
+updated_at: "2026-09-03T18:07:29+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1200,7 +1200,7 @@ tasks:
   - id: HARNESS-VIEWER-E2E-001
     milestone: M25
     title: Complete the four-repository viewer-response acceptance path
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/58
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, viewer-response-notes]
     agent_terminal: EVIDENCE_READY
@@ -1210,3 +1210,4 @@ tasks:
     depends_on: [HARNESS-VIEWER-PRODUCTION-PIN-001]
     acceptance: A networkless acceptance result is appended to both the Git-external Production project record and the viewer-response-notes canonical append-only record; replay is idempotent; Research exports a research-signal-export/v1 envelope; the parent snapshot, audit, and startup observe the fourth input without copying child internals. No raw viewer response, direct identifier, credential, or external artifact body enters the parent.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/workspace.py snapshot --check, .venv/bin/python tools/audit.py --offline-fixture --check, .venv/bin/python tools/startup.py --offline-fixture --check, git diff --check]
+    completion: "Parent PR #142 was squash-merged as 2115d2ccd213faf07c28514fd8bc189e81116736 after CI run 33730825436 passed bootstrap, production-exchange, and real-chain. ISSUE-58-E2E-FINAL-20260903 passed 14 stages with 16/16 acceptance flags; append-only/idempotent viewer response exchange, research-signal-export/v1, snapshot, audit, and startup were verified. Issue #58 was closed with the evidence comment. No child internals, raw viewer response, direct identifier, credential, or external artifact body entered the parent."
