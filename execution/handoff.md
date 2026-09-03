@@ -1909,3 +1909,18 @@
 ### Next exact action
 
 1. Run the full parent suite and diff audit, then commit/push the parent Issue #141 branch and wait for all required checks before merging.
+
+## HARNESS-ISSUE-141-INTERSECTION-001 completed
+
+- Parent PR [#144](https://github.com/masa-san-jp/agentic-art-orchestration/pull/144) was merged to `main` as `3ca61c511937131886c32c2b20b6393208aef0dc`; Issue [#141](https://github.com/masa-san-jp/agentic-art-orchestration/issues/141) was closed after evidence was recorded.
+- The active R17 transformation is an explicit three-way intersection; candidate, selection, and provenance preserve `composition_mode`, and the fixed blocked-gate fixture keeps `STALE` evidence observable without treating a missing workspace as stale.
+- Focused #141 tests passed `50/50`; parent full suite passed `483` tests with one expected skip; validator and diff check passed. GitHub required jobs were not started because of the account billing limit and are recorded as an environment note only.
+- Next exact task: `HARNESS-RESEARCH-PIN-85-001`, adopting Research `main` merge commit `9a35dd74d53c756e5b509e1b0d8d217c53a71e37` in the parent manifest and retrieval fixture.
+
+## HARNESS-RESEARCH-PIN-85-001 in progress
+
+- Task ID: `HARNESS-RESEARCH-PIN-85-001`; target repositories: `agentic-art-orchestration`, `agentic-art-research`; start point: parent `main` `3ca61c511937131886c32c2b20b6393208aef0dc`.
+- The parent manifest and retrieval fixture now point to Research `main` merge commit `9a35dd74d53c756e5b509e1b0d8d217c53a71e37`. A fresh clean Research checkout at that exact commit passed compileall, validator, all 289 child tests, and graph gate.
+- Parent focused retrieval/profile/child-gate tests `27/27`, validator, snapshot, audit, startup, README status, and parent full suite `483/483` (one expected Research checkout skip) passed. Audit has one known nonblocking freshness finding; offline startup remains explicitly `BLOCKED` for fixture workspace conditions.
+- No child schema/data, raw/private content, credential, external artifact, or personal fact was copied into the parent. The child gate was run read-only from an immutable archive and the source workspace remained `MATCHED` and clean.
+- Next exact action: commit and push the pin adoption change, wait for the remote check result, then record the merge commit and close the task without treating billing-blocked CI as a test pass.

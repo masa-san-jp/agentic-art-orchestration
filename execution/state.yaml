@@ -1,29 +1,29 @@
-version: 167
-updated_at: "2026-09-03T20:17:09+09:00"
-active_task: HARNESS-ISSUE-141-INTERSECTION-001
+version: 168
+updated_at: "2026-09-03T20:48:39+09:00"
+active_task: HARNESS-RESEARCH-PIN-85-001
 active_repository: agentic-art-orchestration
 lease:
   status: held
   owner: codex
-  acquired_at: "2026-09-03T20:17:09+09:00"
-  expires_at: "2026-09-03T22:17:09+09:00"
+  acquired_at: "2026-09-03T20:48:39+09:00"
+  expires_at: "2026-09-03T22:48:39+09:00"
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-ISSUE-141-INTERSECTION-001:20260903-201709
+  execution_id: HARNESS-RESEARCH-PIN-85-001:20260903-204839
   released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas, tools, tests, docs, execution]
-    child_repositories: []
+    paths: [config/repositories.yaml, tests/fixtures/retrieval/index.json, execution]
+    child_repositories: [agentic-art-research]
 checkpoint:
-  task: HARNESS-ISSUE-141-INTERSECTION-001
+  task: HARNESS-RESEARCH-PIN-85-001
   repository: agentic-art-orchestration
-  start_point: ae902e09039e7bbda13caea07f6aafed6b9a7435
-  expected_changes: Make the active proposition transformation an explicit three-way intersection while preserving legacy optional-field readability and source provenance.
-  result: in_progress; parent implementation branch contains the intersection contract, generated pipeline code, semantic validation, tests, and regenerated local outputs.
-last_completed_task: HARNESS-VIEWER-E2E-001
+  start_point: 3ca61c511937131886c32c2b20b6393208aef0dc
+  expected_changes: Adopt the exact merged Research main pin in the parent manifest and retrieval provenance fixture, then qualify the pinned child without copying child internals.
+  result: in_progress; parent pin and retrieval fixture updated locally, child gate qualification pending.
+last_completed_task: HARNESS-ISSUE-141-INTERSECTION-001
 resume_from:
-  task: HARNESS-ISSUE-141-INTERSECTION-001
-  action: "Run the parent focused gates, inspect the diff, then commit and push the Issue #141 branch for required CI checks."
+  task: HARNESS-RESEARCH-PIN-85-001
+  action: "Run parent validation, retrieval/child-gate focused tests, and pinned Research quality gates; then commit and push the pin adoption PR."
   command: python3 tools/validate.py --check
 
 issue_intake:
