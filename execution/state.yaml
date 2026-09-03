@@ -1,30 +1,30 @@
-version: 161
-updated_at: "2026-09-03T07:53:50+09:00"
-active_task: HARNESS-VIEWER-RESEARCH-PIN-001
-active_repository: agentic-art-orchestration
+version: 163
+updated_at: "2026-09-03T15:14:42+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
-  acquired_at: "2026-09-03T06:49:29+09:00"
+  status: available
+  owner: null
+  acquired_at: "2026-09-03T14:56:25+09:00"
   expires_at: null
   lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-VIEWER-RESEARCH-PIN-001:20260903-075350
-  released_at: null
+  execution_id: HARNESS-VIEWER-PRODUCTION-PIN-001:20260903-145625
+  released_at: "2026-09-03T15:14:42+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, tools, tests, docs, execution]
     child_repositories: []
 checkpoint:
-  task: HARNESS-VIEWER-RESEARCH-PIN-001
+  task: HARNESS-VIEWER-PRODUCTION-PIN-001
   repository: agentic-art-orchestration
-  start_point: 39821eb8bf5debe0e7cd6f7579fb640cfaf20f49
-  expected_changes: Adopt Research main 05351e74236e52bbe09755c9554c63b1c1003fca in the parent manifest and retrieval fixture, then validate parent provenance without copying child internals.
-  result: in_progress; Research PR #78 has merged after all child gates passed, while parent pin adoption remains to be implemented and verified.
-last_completed_task: HARNESS-PRODUCTION-HISTORY-001
+  start_point: bc80a2a0b7367441918ec628d9870bd9dc4570f2
+  expected_changes: Adopt Production main e12e20d8fb5e5024b371c30c843ecd9c1a82cbba in the parent manifest, run exact-pin parent and child gates, and record the Issue integration evidence without copying child internals.
+  result: completed; Production PR #50 merged to main and the parent pin, child gates, and post-merge main CI are verified; the lease is released.
+last_completed_task: HARNESS-VIEWER-PRODUCTION-PIN-001
 resume_from:
-  task: HARNESS-VIEWER-RESEARCH-PIN-001
-  action: "Update the Research pin and retrieval fixture, run parent focused/full gates, then record and release."
-  command: .venv/bin/python -m unittest tests.test_retrieval tests.test_knowledge_profiles tests.test_child_quality_gates -v
+  task: HARNESS-VIEWER-E2E-001
+  action: "Read parent Issue #58 and the pinned Research/Production/Viewer contracts, then run the four-repository networkless acceptance path."
+  command: .venv/bin/python tools/validate.py --check
 
 issue_intake:
   status: complete

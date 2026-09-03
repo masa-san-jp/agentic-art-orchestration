@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T07:53:50+09:00`.
+Source updated at: `2026-09-03T15:14:42+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 1 | 0 | 113 | 114 |
+| 0 | 1 | 0 | 0 | 115 | 116 |
 
-Current task: `HARNESS-VIEWER-RESEARCH-PIN-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-VIEWER-RESEARCH-PIN-001`.
-Next action: Update the Research pin and retrieval fixture, run parent focused/full gates, then record and release.
-Ready: none.
-Next task: `null`.
+Current task: `null`; repository: `null`; checkpoint: `HARNESS-VIEWER-PRODUCTION-PIN-001`.
+Next action: Read parent Issue #58 and the pinned Research/Production/Viewer contracts, then run the four-repository networkless acceptance path.
+Ready: `HARNESS-VIEWER-E2E-001`.
+Next task: `HARNESS-VIEWER-E2E-001`.
 Blocked:
 - none
 

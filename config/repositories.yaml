@@ -159,7 +159,7 @@ repositories:
     role: control-plane-extension
     authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
     default_branch: main
-    observed_commit: 206f259413147c6d360048e27d4b9c3267ee0580
+    observed_commit: e12e20d8fb5e5024b371c30c843ecd9c1a82cbba
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
     quality_gates:
