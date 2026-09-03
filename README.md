@@ -35,14 +35,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T20:17:09+09:00`.
+Source updated at: `2026-09-03T20:48:39+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 1 | 0 | 116 | 117 |
+| 0 | 0 | 2 | 0 | 116 | 118 |
 
-Current task: `HARNESS-ISSUE-141-INTERSECTION-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-ISSUE-141-INTERSECTION-001`.
-Next action: Run the parent focused gates, inspect the diff, then commit and push the Issue #141 branch for required CI checks.
+Current task: `HARNESS-RESEARCH-PIN-85-001`; repository: `agentic-art-orchestration`; checkpoint: `HARNESS-RESEARCH-PIN-85-001`.
+Next action: Run parent validation, retrieval/child-gate focused tests, and pinned Research quality gates; then commit and push the pin adoption PR.
 Ready: none.
 Next task: `null`.
 Blocked:

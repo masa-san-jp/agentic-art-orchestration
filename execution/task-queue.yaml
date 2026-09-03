@@ -1225,3 +1225,18 @@ tasks:
     depends_on: [HARNESS-VIEWER-E2E-001]
     acceptance: The active transformation rule exposes an explicit intersection mode and template containing personal tension, historical operation, and contemporary condition; candidate, selection, and provenance outputs preserve that mode and changing art-history or marketing inputs yields distinct candidate mechanisms. Legacy rule/candidate inputs without the optional mode remain readable. No child repository, external artifact, raw conversation, credential, or personal fact is written.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_transformation_rules tests.test_candidate_space tests.test_candidate_gates tests.test_candidate_selection tests.test_proposition_provenance tests.test_v12_e2e -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #144 was merged to main as 3ca61c511937131886c32c2b20b6393208aef0dc. Focused #141 tests 50/50, parent full suite 483/483 (1 expected skip), validator, and diff check passed. GitHub required jobs were not started because of the account billing limit; the environment failure is retained as a note and was not represented as a test pass."
+
+  - id: HARNESS-RESEARCH-PIN-85-001
+    milestone: M27
+    title: Adopt the merged Research main pin for Issue #85 grounding
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/85
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    lane: RESEARCH_PROPOSITION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-ISSUE-141-INTERSECTION-001]
+    acceptance: The parent manifest and retrieval fixture adopt the exact Research main merge commit 9a35dd74d53c756e5b509e1b0d8d217c53a71e37, parent validation confirms the pin and retrieval provenance, and the pinned child quality gates pass without copying child schema/data or writing raw/private content.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_retrieval tests.test_knowledge_profiles tests.test_child_quality_gates -v, python3 -m unittest discover -s tests -v, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id research-pin-85 --check, git diff --check]
