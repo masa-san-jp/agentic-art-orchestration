@@ -105,13 +105,14 @@ class RealChainCITests(unittest.TestCase):
         qualification = next(step for step in real_chain["steps"] if step.get("name") == "Qualify the real immutable exchange chain")
         self.assertNotIn("--apply", qualification["run"])
 
-    def test_production_exchange_materializes_only_its_required_children(self):
+    def test_production_exchange_materializes_all_exchange_children(self):
         production = self.workflow()["jobs"]["production-exchange"]
         materialize = next(step for step in production["steps"] if step.get("name") == "Materialize the manifest-pinned children")
+        self.assertEqual("${{ secrets.AAP_CHILD_REPOS_TOKEN }}", materialize["env"]["CHILD_REPOS_TOKEN"])
         command = materialize["run"]
         self.assertIn("--repository agentic-art-research", command)
         self.assertIn("--repository agentic-art-production", command)
-        self.assertNotIn("--repository viewer-response-notes", command)
+        self.assertIn("--repository viewer-response-notes", command)
 
 
 if __name__ == "__main__":

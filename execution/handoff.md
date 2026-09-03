@@ -1780,6 +1780,25 @@
 
 1. Run the parent validator and full suite, then create the parent pin-record PR against current `main`; after its required checks pass, merge it and rerun the live seven-repository Issue audit.
 
+## HARNESS-VIEWER-RESEARCH-PIN-001 completed
+
+- Research PR [#78](https://github.com/masa-san-jp/agentic-art-research/pull/78) was repaired and squash-merged to Research `main` as `05351e74236e52bbe09755c9554c63b1c1003fca`. Parent PR [#140](https://github.com/masa-san-jp/agentic-art-orchestration/pull/140) adopted that exact pin and retrieval provenance.
+- Research focused/full quality evidence passed, including the full child suite `285/285`; parent `bootstrap`, `production-exchange`, and `real-chain` passed in run `33691451777`. The parent contains only repository ID, source commit, contract/provenance metadata, and retrieval fixture metadata; child schema/data were not copied.
+
+## HARNESS-VIEWER-PRODUCTION-PIN-001 completed
+
+- Production PR [#50](https://github.com/masa-san-jp/agentic-art-production/pull/50) was merged to Production `main` as `e12e20d8fb5e5024b371c30c843ecd9c1a82cbba`. It preserves aggregate viewer-response DTOs in `production-result/v1`, carries validated assessments into plan output, and keeps conservative `UNKNOWN`, `CONTRADICTED`, and `EXTERNALLY_SUPPORTED` statuses behind blind/frame review planning.
+- PR checks passed for Python 3.11/3.12 in runs `33719607285` and `33719610476`; post-merge main CI run `33720878003` passed for both Python versions. The exact main checkout was clean and matched `e12e20d8…`; local child gates were validator PASS, full unittest `95/95 PASS`, evaluation `6/6 PASS`, and diff check PASS.
+- Parent `config/repositories.yaml` now pins Production to the exact merge commit. Parent validator passed, the parent full suite passed `482/482` with one expected sibling-Research checkout skip, and the 35 focused startup/Issue/release tests passed after regenerating the ignored local snapshot from the new manifest pin. The initial local full-suite failure was only a stale ignored `data/snapshot.json`; it was regenerated and the failure disappeared.
+- No child schema/data, real viewer response, raw conversation, credential, PRIVATE_RAW, RESTRICTED value, direct identifier, Drive artifact body, or external artifact was added. Explicit feedback is the user's request to confirm and resolve Issues; inferred feedback is none.
+
+## 2026-09-03 Issue audit after Production merge
+
+- Repository-scoped live intake observed 7 open Issues across the 7 manifest repositories. The deterministic report is external at `/private/tmp/issue-intake-live-20260903-final.json` with SHA-256 `c92a666c53512ec9d5f0488be35e5ca57c291eae6ec9ac66967d704769dcc875`; repeated generation passed `--check`.
+- Current open Issues are parent `#1`, `#2`, `#58`, `#141`; Research `#85`; Production `#10`; Viewer `#2`. Self-model, art-history, and marketing have no open Issues.
+- Intake classification: parent `#58` is already queued and is the next dependency-complete work item; parent `#1` is already queued. Parent `#141`, Research `#85`, Production `#10`, and Viewer `#2` are `UNQUEUED_NEEDS_SSOT` under the machine parser. #141 and #85 contain detailed Japanese acceptance sections, but their heading vocabulary is not recognized by the current intake parser; they were not silently promoted or closed. Production #10 and Viewer #2 remain open as child requirement SSOTs by design.
+- The next queue task is `HARNESS-VIEWER-E2E-001`, which completes the remaining parent #58 four-repository acceptance conditions. No Issue body, raw response, personal data, credential, or external artifact was copied into the report or parent Git.
+
 ## 2026-09-03 Research Issue #83 closure audit
 
 - After Research PR #84 merged and Issue #83 closed, the repository-scoped live Issue intake was rerun across all 7 manifest repositories with read-only GitHub access. The report is external at `/private/tmp/issue-intake-live-20260903-after83-final3.json`, SHA-256 `3a2cb9286833fb2c9012aa6976b323430b5bd2ab81c425f5f7819ca45ebc5af3`; repeated generation passed `--check`.
@@ -1849,3 +1868,15 @@
 ### Next exact action
 
 1. Run repository-scoped live Issue intake again, inspect the remaining #58 dependency chain and open child PRs, then register and claim the next qualified task.
+
+## HARNESS-VIEWER-E2E-001 local implementation checkpoint
+
+- Production PR [#57](https://github.com/masa-san-jp/agentic-art-production/pull/57) merged to Production `main` as `e1bb0deb4c28489a881ef663a3d2a8d974c5b295`; Research PR [#86](https://github.com/masa-san-jp/agentic-art-research/pull/86) merged to Research `main` as `988daec93a851f732a2483c7feeb29ccc895905e`. The parent branch for PR [#142](https://github.com/masa-san-jp/agentic-art-orchestration/pull/142) now pins both exact merge commits and viewer `205eeeb8...`.
+- Exact networkless E2E run `ISSUE-58-E2E-FINAL-20260903` passed with 14 stages and 16/16 acceptance flags. The Git-external e2e evidence SHA-256 is `a79cf7dd53dbe78c5f799ea9adf550eb333d24a33f7fc7bf0b53066be264497c`; child mutations and remote operations were both empty.
+- Parent validator passed; the full suite passed `482/482` with one expected Research checkout skip. Workspace snapshot, status, audit, startup, and diff checks passed after synchronizing the retrieval fixture with the adopted Research pin. The exact output root remains Git-external and contains metadata/provenance only at the parent boundary.
+- Safety: no child schema/data, raw viewer response, direct identifier, credential, PRIVATE_RAW, RESTRICTED value, Drive artifact body, or external artifact entered parent Git. Explicit feedback is the user's request to confirm Issues and complete the agent harness; inferred feedback is none.
+- Remote completion is pending: PR #142 must receive green required checks before the queue task can be marked `DONE`, and parent Issue #58 must remain open until that evidence is recorded.
+
+### Next exact action
+
+1. Commit and push the locally complete parent change, wait for PR #142 required checks, then merge it before closing parent Issue #58.

@@ -46,11 +46,17 @@
     "acceptance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["clean_exchange", "external_validation_unperformed", "research_result_dry_run", "tamper_terminal", "stale_terminal", "incompatible_terminal", "dirty_source_terminal", "replay_idempotent", "no_child_mutation", "no_remote_mutation"],
+      "required": ["clean_exchange", "external_validation_unperformed", "research_result_dry_run", "research_feedback_applied", "viewer_record_appended", "viewer_replay_idempotent", "viewer_contract_validated", "viewer_signal_exported", "research_signal_exported", "tamper_terminal", "stale_terminal", "incompatible_terminal", "dirty_source_terminal", "replay_idempotent", "no_child_mutation", "no_remote_mutation"],
       "properties": {
         "clean_exchange": {"const": true},
         "external_validation_unperformed": {"const": true},
         "research_result_dry_run": {"const": true},
+        "research_feedback_applied": {"const": true},
+        "viewer_record_appended": {"const": true},
+        "viewer_replay_idempotent": {"const": true},
+        "viewer_contract_validated": {"const": true},
+        "viewer_signal_exported": {"const": true},
+        "research_signal_exported": {"const": true},
         "tamper_terminal": {"const": true},
         "stale_terminal": {"const": true},
         "incompatible_terminal": {"const": true},

@@ -1,5 +1,5 @@
-version: 34
-updated_at: "2026-09-03T07:53:50+09:00"
+version: 39
+updated_at: "2026-09-03T16:51:53+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1170,7 +1170,7 @@ tasks:
   - id: HARNESS-VIEWER-RESEARCH-PIN-001
     milestone: M25
     title: Adopt the merged Research viewer-response importer pin
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/58
     target_repositories: [agentic-art-orchestration, agentic-art-research]
     agent_terminal: EVIDENCE_READY
@@ -1180,3 +1180,33 @@ tasks:
     depends_on: [HARNESS-PRODUCTION-HISTORY-001]
     acceptance: The parent manifest and retrieval fixture adopt the exact Research main merge commit that contains the viewer-response importer, the parent verifies the pin and retrieval provenance without copying child schema/data, and the child merge is backed by its focused and full quality gates. No real viewer response, raw conversation, credential, or external artifact is written.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_retrieval tests.test_knowledge_profiles tests.test_child_quality_gates -v, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
+    completion: "Research PR #78 was repaired and squash-merged to Research main as 05351e74236e52bbe09755c9554c63b1c1003fca. Parent PR #140 adopted that exact pin and retrieval provenance; bootstrap, production-exchange, and real-chain all passed in run 33691451777, and the child full suite passed 285/285. No child schema/data, real viewer response, raw conversation, credential, or external artifact was copied or written."
+
+  - id: HARNESS-VIEWER-PRODUCTION-PIN-001
+    milestone: M25
+    title: Adopt the merged Production viewer-response integration pin
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/58
+    target_repositories: [agentic-art-orchestration, agentic-art-production, viewer-response-notes]
+    agent_terminal: EVIDENCE_READY
+    lane: RESEARCH_FEEDBACK
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-VIEWER-RESEARCH-PIN-001]
+    acceptance: The parent manifest adopts the exact Production main merge commit containing aggregate viewer-response DTO preservation and conservative assessment gates, parent provenance validates the pin without copying child schema/data, and the merged child PR is backed by its required CI and main CI. No real viewer response, raw conversation, credential, or external artifact is written.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id viewer-production-pin --check, git diff --check]
+    completion: "Production PR #50 merged to main as e12e20d8fb5e5024b371c30c843ecd9c1a82cbba after both Python 3.11/3.12 PR workflows passed (runs 33719607285 and 33719610476); post-merge main CI run 33720878003 also passed on Python 3.11/3.12. Parent manifest now pins that exact main commit. Production local validator, full tests 95/95, evaluation 6/6, and diff checks passed. No child schema/data, real viewer response, raw conversation, credential, or external artifact was copied or written."
+
+  - id: HARNESS-VIEWER-E2E-001
+    milestone: M25
+    title: Complete the four-repository viewer-response acceptance path
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/58
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, viewer-response-notes]
+    agent_terminal: EVIDENCE_READY
+    lane: RESEARCH_FEEDBACK
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-VIEWER-PRODUCTION-PIN-001]
+    acceptance: A networkless acceptance result is appended to both the Git-external Production project record and the viewer-response-notes canonical append-only record; replay is idempotent; Research exports a research-signal-export/v1 envelope; the parent snapshot, audit, and startup observe the fourth input without copying child internals. No raw viewer response, direct identifier, credential, or external artifact body enters the parent.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/workspace.py snapshot --check, .venv/bin/python tools/audit.py --offline-fixture --check, .venv/bin/python tools/startup.py --offline-fixture --check, git diff --check]

@@ -26,7 +26,7 @@ HASH_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]*$")
 SAFE_COMMAND_PATTERN = re.compile(r"^[^;|&`\r\n]+$")
 FORBIDDEN_TEXT = re.compile(r"(?i)(PRIVATE_RAW|RESTRICTED|credential|signed[_ -]?url|raw[_ -]?asset)")
-STAGE_CONTRACTS = {None, "production-handoff/v1", "production-result/v1"}
+STAGE_CONTRACTS = {None, "production-handoff/v1", "production-result/v1", "research-signal-export/v1"}
 
 
 class ExchangeError(RuntimeError):
@@ -84,6 +84,12 @@ def validate_exchange_evidence(data: dict[str, Any], source: str = "production-e
         "production_handoff_accepted",
         "production_result_exported",
         "research_result_dry_run",
+        "research_feedback_applied",
+        "viewer_record_appended",
+        "viewer_replay_idempotent",
+        "viewer_contract_validated",
+        "viewer_signal_exported",
+        "research_signal_exported",
         "child_schema_not_copied",
         "adjacent_worktree_not_read",
         "external_effects_not_run",
@@ -205,6 +211,12 @@ def validate_exchange_e2e(data: dict[str, Any], source: str = "production-exchan
         "clean_exchange",
         "external_validation_unperformed",
         "research_result_dry_run",
+        "research_feedback_applied",
+        "viewer_record_appended",
+        "viewer_replay_idempotent",
+        "viewer_contract_validated",
+        "viewer_signal_exported",
+        "research_signal_exported",
         "tamper_terminal",
         "stale_terminal",
         "incompatible_terminal",
@@ -357,6 +369,12 @@ def _json_output(value: str) -> dict[str, Any]:
     return parsed
 
 
+def _text_output(value: str) -> str:
+    if not value:
+        raise ValueError("child output is empty")
+    return value
+
+
 def _stage(stage_id: str, repository: str, commit: str, command: str, contract: str | None, semantic_hash: str | None, status: str, terminal: str, locator: str, reason: str | None = None) -> dict[str, Any]:
     value: dict[str, Any] = {
         "stage_id": stage_id,
@@ -376,6 +394,10 @@ def _stage(stage_id: str, repository: str, commit: str, command: str, contract: 
 
 def _write_evidence(path: Path, evidence: dict[str, Any]) -> None:
     path.write_text(json.dumps(evidence, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _file_hash(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _run_directory(output_root: Path, run_id: str) -> Path:
@@ -557,6 +579,12 @@ def run_exchange_e2e(
             "clean_exchange": True,
             "external_validation_unperformed": True,
             "research_result_dry_run": True,
+            "research_feedback_applied": clean["acceptance"]["research_feedback_applied"],
+            "viewer_record_appended": clean["acceptance"]["viewer_record_appended"],
+            "viewer_replay_idempotent": clean["acceptance"]["viewer_replay_idempotent"],
+            "viewer_contract_validated": clean["acceptance"]["viewer_contract_validated"],
+            "viewer_signal_exported": clean["acceptance"]["viewer_signal_exported"],
+            "research_signal_exported": clean["acceptance"]["research_signal_exported"],
             "tamper_terminal": True,
             "stale_terminal": True,
             "incompatible_terminal": True,
@@ -580,6 +608,7 @@ def _prepare_research_fixture(
     slug: str,
     generated_at: str,
     *,
+    result_id: str,
     theme: Mapping[str, Any] | None = None,
     project_title: str | None = None,
 ) -> None:
@@ -620,6 +649,9 @@ def _prepare_research_fixture(
     prototype_path = protocol_root / "tests" / "fixtures" / "schema-valid" / "prototype-plan.json"
     hypothesis = json.loads(hypothesis_path.read_text(encoding="utf-8"))
     hypothesis["single_hypothesis_rationale"] = "Only one fixture candidate preserves the adopted perceptual decision without weakening the intended experience."
+    for uncertainty in hypothesis.get("uncertainties", []):
+        if isinstance(uncertainty, dict):
+            uncertainty["external_validation_reason"] = "Record the required synthetic validation evidence before production completion."
     prototype = json.loads(prototype_path.read_text(encoding="utf-8"))
     for task in prototype.get("tasks", []):
         if isinstance(task, dict):
@@ -631,6 +663,27 @@ def _prepare_research_fixture(
     (project / "04_decisions" / "production-hypotheses.yaml").write_text(yaml.safe_dump({"hypotheses": [hypothesis]}, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "04_decisions" / "hypothesis-comparison.yaml").write_text(yaml.safe_dump({"comparisons": []}, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "05_production" / "prototype-plans.yaml").write_text(yaml.safe_dump({"prototype_plans": [prototype]}, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    acceptance_path = project / "05_production" / "acceptance-tests.yaml"
+    acceptance = _load_yaml(acceptance_path)
+    acceptance_tests = acceptance.get("acceptance_tests")
+    if not isinstance(acceptance_tests, list):
+        raise ExchangeError("research fixture acceptance-tests.yaml has no acceptance_tests list")
+    viewer_response = {
+        "source_kind": "measured",
+        "requirement_id": "RQ001",
+        "presentation_mode": "gallery",
+        "requirement_tags": ["clarity", "spatial"],
+        "sample_size": 3,
+        "outcome_counts": {"pass": 2, "fail": 1, "unknown": 0},
+        "evidence_refs": [f"production-result:{result_id}#AT001"],
+        "certainty": "medium",
+        "consent_scope": "aggregate-only",
+    }
+    target_test = next((item for item in acceptance_tests if isinstance(item, dict) and item.get("id") == "AT001"), None)
+    if target_test is None:
+        raise ExchangeError("research fixture does not declare acceptance test AT001")
+    target_test["viewer_response"] = viewer_response
+    acceptance_path.write_text(yaml.safe_dump(acceptance, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "05_production" / "reference-categories.yaml").write_text(
         yaml.safe_dump(
             {
@@ -689,10 +742,13 @@ def run_exchange(
         raise ExchangeError("exchange output root must be Git-external")
     research = _repo(manifest, "agentic-art-research")
     production = _repo(manifest, "agentic-art-production")
+    viewer = _repo(manifest, "viewer-response-notes")
     research_source = (workspace_root / str(research["path"])).resolve()
     production_source = (workspace_root / str(production["path"])).resolve()
+    viewer_source = (workspace_root / str(viewer["path"])).resolve()
     _verify_source(research_source, str(research["observed_commit"]))
     _verify_source(production_source, str(production["observed_commit"]))
+    _verify_source(viewer_source, str(viewer["observed_commit"]))
     output_root.mkdir(parents=True, exist_ok=True)
     run_dir = output_root / re.sub(r"[^A-Za-z0-9._-]+", "-", run_id)
     existing_evidence = run_dir / "exchange-evidence.json"
@@ -710,6 +766,7 @@ def run_exchange(
     stages: list[dict[str, Any]] = []
     research_commit = str(research["observed_commit"])
     production_commit = str(production["observed_commit"])
+    viewer_commit = str(viewer["observed_commit"])
     child_python = child_python or sys.executable
     evidence_path = run_dir / "exchange-evidence.json"
     base = {
@@ -725,6 +782,12 @@ def run_exchange(
             "production_handoff_accepted": False,
             "production_result_exported": False,
             "research_result_dry_run": False,
+            "research_feedback_applied": False,
+            "viewer_record_appended": False,
+            "viewer_replay_idempotent": False,
+            "viewer_contract_validated": False,
+            "viewer_signal_exported": False,
+            "research_signal_exported": False,
             "child_schema_not_copied": True,
             "adjacent_worktree_not_read": True,
             "external_effects_not_run": True,
@@ -737,8 +800,10 @@ def run_exchange(
             research_protocol = temp_root / "research-protocol"
             research_work = temp_root / "research-work"
             production_root = temp_root / "production"
+            viewer_root = temp_root / "viewer"
             _extract_commit(research_source, research_commit, research_protocol)
             _extract_commit(production_source, production_commit, production_root)
+            _extract_commit(viewer_source, viewer_commit, viewer_root)
             research_work.mkdir()
             # Research's isolated work-root contract still needs the
             # protocol-owned config/schema snapshots for validation and the
@@ -765,7 +830,7 @@ def run_exchange(
                 destination = research_project_path / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, destination)
-            _prepare_research_fixture(research_work, research_protocol, research_project_slug, generated_at, theme=theme, project_title=research_project_title)
+            _prepare_research_fixture(research_work, research_protocol, research_project_slug, generated_at, result_id=result_id, theme=theme, project_title=research_project_title)
             _run_command(
                 [child_python, "tools/build_handoff.py", research_project, "--work-root", str(research_work), "--protocol-root", str(research_protocol), "--generated-at", generated_at, "--research-commit", research_commit, "--handoff-id", handoff_id, "--revision", "1"],
                 cwd=research_protocol,
@@ -798,13 +863,13 @@ def run_exchange(
                 _run_command([child_python, *args], cwd=production_root, stage_id=stage_id, display=display)
                 stages.append(_stage(stage_id, "agentic-art-production", production_commit, display, None, None, "PASSED", "PREPARED", _locator(run_id, "production/project")))
             result_id_value = _run_command(
-                [child_python, "tools/build_result.py", "--project-root", str(production_project), "--result-id", result_id, "--generated-at", generated_at, "--production-commit", production_commit, "--format", "json"],
+                [child_python, "tools/build_result.py", "--project-root", str(production_project), "--result-id", result_id, "--generated-at", generated_at, "--target-state", "BLOCKED", "--production-commit", production_commit, "--format", "json"],
                 cwd=production_root,
                 stage_id="production-result-build",
-                display="python3 tools/build_result.py --project-root PRODUCTION_PROJECT --result-id RESULT_ID --generated-at FIXED_TIME --production-commit PRODUCTION_COMMIT --format json",
+                display="python3 tools/build_result.py --project-root PRODUCTION_PROJECT --result-id RESULT_ID --generated-at FIXED_TIME --target-state BLOCKED --production-commit PRODUCTION_COMMIT --format json",
                 parser=_json_output,
             )
-            stages.append(_stage("production-result-build", "agentic-art-production", production_commit, "python3 tools/build_result.py --project-root PRODUCTION_PROJECT --result-id RESULT_ID --generated-at FIXED_TIME --production-commit PRODUCTION_COMMIT --format json", "production-result/v1", f"sha256:{result_id_value.get('content_sha256', '').split(':')[-1]}" if isinstance(result_id_value.get("content_sha256"), str) and HASH_PATTERN.fullmatch(result_id_value["content_sha256"]) else None, "PASSED", "PREPARED", _locator(run_id, "production/project/result")))
+            stages.append(_stage("production-result-build", "agentic-art-production", production_commit, "python3 tools/build_result.py --project-root PRODUCTION_PROJECT --result-id RESULT_ID --generated-at FIXED_TIME --target-state BLOCKED --production-commit PRODUCTION_COMMIT --format json", "production-result/v1", f"sha256:{result_id_value.get('content_sha256', '').split(':')[-1]}" if isinstance(result_id_value.get("content_sha256"), str) and HASH_PATTERN.fullmatch(result_id_value["content_sha256"]) else None, "PASSED", "PREPARED", _locator(run_id, "production/project/result")))
             result_summary = _run_command(
                 [child_python, "tools/export_result.py", "--project-root", str(production_project), "--output", str(production_bundle), "--format", "json"],
                 cwd=production_root,
@@ -816,16 +881,83 @@ def run_exchange(
             stages.append(_stage("production-result", "agentic-art-production", production_commit, "python3 tools/export_result.py --project-root PRODUCTION_PROJECT --output RESULT_OUTPUT --format json", "production-result/v1", result_file_set_hash, "PASSED", "RESULT_EXPORTED", _locator(run_id, "result")))
             base["acceptance"]["production_result_exported"] = True
             dry_run = _run_command(
-                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--dry-run", "--root", str(research_work)],
+                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--dry-run", "--root", str(research_work), "--viewer-root", str(viewer_root)],
                 cwd=research_protocol,
                 stage_id="research-result-dry-run",
-                display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_WORK",
+                display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_WORK --viewer-root VIEWER_ROOT",
                 parser=_json_output,
             )
             if dry_run.get("status") != "DRY_RUN":
                 raise StageFailure("research-result-dry-run", "RESEARCH_DRY_RUN_NOT_TERMINAL")
-            stages.append(_stage("research-result-dry-run", "agentic-art-research", research_commit, "python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_ROOT", "production-result/v1", result_entry_hash, "PASSED", "RESULT_DRY_RUN", _locator(run_id, "research/result-dry-run")))
+            stages.append(_stage("research-result-dry-run", "agentic-art-research", research_commit, "python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --dry-run --root RESEARCH_ROOT --viewer-root VIEWER_ROOT", "production-result/v1", result_entry_hash, "PASSED", "RESULT_DRY_RUN", _locator(run_id, "research/result-dry-run")))
             base["acceptance"]["research_result_dry_run"] = True
+            applied = _run_command(
+                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--apply", "--root", str(research_work), "--viewer-root", str(viewer_root)],
+                cwd=research_protocol,
+                stage_id="research-feedback-apply",
+                display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --apply --root RESEARCH_WORK --viewer-root VIEWER_ROOT",
+                parser=_json_output,
+            )
+            if applied.get("status") != "APPLIED" or applied.get("viewer_records_added") != 1:
+                raise StageFailure("research-feedback-apply", "VIEWER_RECORD_NOT_APPENDED")
+            stages.append(_stage("research-feedback-apply", "agentic-art-research", research_commit, "python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --apply --root RESEARCH_ROOT --viewer-root VIEWER_ROOT", "production-result/v1", result_entry_hash, "PASSED", "FEEDBACK_APPLIED", _locator(run_id, "research/feedback-apply")))
+            base["acceptance"]["research_feedback_applied"] = True
+            base["acceptance"]["viewer_record_appended"] = True
+            replay_apply = _run_command(
+                [child_python, "tools/import_production_result.py", str(production_bundle / "production-result.yaml"), "--apply", "--root", str(research_work), "--viewer-root", str(viewer_root)],
+                cwd=research_protocol,
+                stage_id="research-feedback-replay",
+                display="python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --apply --root RESEARCH_WORK --viewer-root VIEWER_ROOT",
+                parser=_json_output,
+            )
+            if replay_apply.get("status") != "ALREADY_APPLIED" or replay_apply.get("viewer_records_added") != 0:
+                raise StageFailure("research-feedback-replay", "VIEWER_REPLAY_NOT_IDEMPOTENT")
+            stages.append(_stage("research-feedback-replay", "agentic-art-research", research_commit, "python3 tools/import_production_result.py RESULT_OUTPUT/production-result.yaml --apply --root RESEARCH_ROOT --viewer-root VIEWER_ROOT", "production-result/v1", result_entry_hash, "PASSED", "REPLAYED", _locator(run_id, "research/feedback-replay")))
+            base["acceptance"]["viewer_replay_idempotent"] = True
+            viewer_records_path = viewer_root / "records" / "viewer-response-records.jsonl"
+            _run_command(
+                [child_python, "tools/validate.py", "--check"],
+                cwd=viewer_root,
+                stage_id="viewer-validation",
+                display="python3 tools/validate.py --check --root VIEWER_ROOT",
+            )
+            stages.append(_stage("viewer-validation", "viewer-response-notes", viewer_commit, "python3 tools/validate.py --check --root VIEWER_ROOT", None, _file_hash(viewer_records_path), "PASSED", "VALIDATED", _locator(run_id, "viewer/records")))
+            base["acceptance"]["viewer_contract_validated"] = True
+            viewer_export = run_dir / "viewer-signal-export.json"
+            viewer_export_id = f"VRSE-{re.sub(r'[^A-Za-z0-9._-]+', '-', run_id)}"
+            viewer_export_status = _run_command(
+                [child_python, "tools/export_signals.py", str(viewer_records_path), "--export-id", viewer_export_id, "--source-commit", production_commit, "--output", str(viewer_export)],
+                cwd=viewer_root,
+                stage_id="viewer-signal-export",
+                display="python3 tools/export_signals.py VIEWER_RECORDS --export-id VIEWER_EXPORT_ID --source-commit PRODUCTION_COMMIT --output VIEWER_EXPORT",
+                parser=_text_output,
+            )
+            if viewer_export_status != "EXPORTED":
+                raise StageFailure("viewer-signal-export", "VIEWER_SIGNAL_EXPORT_NOT_CREATED")
+            stages.append(_stage("viewer-signal-export", "viewer-response-notes", viewer_commit, "python3 tools/export_signals.py VIEWER_RECORDS --export-id VIEWER_EXPORT_ID --source-commit PRODUCTION_COMMIT --output VIEWER_EXPORT", "research-signal-export/v1", _file_hash(viewer_export), "PASSED", "SIGNALS_EXPORTED", _locator(run_id, "viewer/export")))
+            viewer_export_replay = _run_command(
+                [child_python, "tools/export_signals.py", str(viewer_records_path), "--export-id", viewer_export_id, "--source-commit", production_commit, "--output", str(viewer_export)],
+                cwd=viewer_root,
+                stage_id="viewer-signal-export-replay",
+                display="python3 tools/export_signals.py VIEWER_RECORDS --export-id VIEWER_EXPORT_ID --source-commit PRODUCTION_COMMIT --output VIEWER_EXPORT",
+                parser=_text_output,
+            )
+            if viewer_export_replay != "ALREADY_EXPORTED":
+                raise StageFailure("viewer-signal-export-replay", "VIEWER_EXPORT_NOT_IDEMPOTENT")
+            stages.append(_stage("viewer-signal-export-replay", "viewer-response-notes", viewer_commit, "python3 tools/export_signals.py VIEWER_RECORDS --export-id VIEWER_EXPORT_ID --source-commit PRODUCTION_COMMIT --output VIEWER_EXPORT", "research-signal-export/v1", _file_hash(viewer_export), "PASSED", "REPLAYED", _locator(run_id, "viewer/export-replay")))
+            base["acceptance"]["viewer_signal_exported"] = True
+            research_signal_export = run_dir / "research-signal-export"
+            research_export = _run_command(
+                [child_python, "tools/export_feedback_signals.py", research_project, "--result-id", result_id, "--output", str(research_signal_export), "--root", str(research_work)],
+                cwd=research_protocol,
+                stage_id="research-signal-export",
+                display="python3 tools/export_feedback_signals.py RESEARCH_PROJECT --result-id RESULT_ID --output RESEARCH_SIGNAL_EXPORT --root RESEARCH_WORK",
+                parser=_json_output,
+            )
+            if research_export.get("status") != "EXPORTED":
+                raise StageFailure("research-signal-export", "RESEARCH_SIGNAL_EXPORT_NOT_CREATED")
+            stages.append(_stage("research-signal-export", "agentic-art-research", research_commit, "python3 tools/export_feedback_signals.py RESEARCH_PROJECT --result-id RESULT_ID --output RESEARCH_SIGNAL_EXPORT --root RESEARCH_WORK", "research-signal-export/v1", _file_hash(research_signal_export / "manifest.json"), "PASSED", "SIGNALS_EXPORTED", _locator(run_id, "research/export")))
+            base["acceptance"]["research_signal_exported"] = True
             if research_output_root is not None:
                 destination = research_output_root.resolve() / "projects" / research_project_slug
                 if destination.exists():

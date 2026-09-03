@@ -141,7 +141,7 @@ jobs:
             --python-root "$RUNNER_TEMP/child-python"
 
   # The bootstrap job validates against the offline fixture mirror. This job also
-  # exercises the Research/Production exchange against the exact manifest pins.
+  # exercises the Research/Production/Viewer exchange against the exact manifest pins.
   production-exchange:
     runs-on: ubuntu-latest
     permissions:
@@ -154,12 +154,13 @@ jobs:
       - run: python3 -m pip install -r requirements-dev.txt
       - name: Materialize the manifest-pinned children
         env:
-          CHILD_REPOS_TOKEN: ${{ secrets.CHILD_REPOS_TOKEN }}
+          CHILD_REPOS_TOKEN: ${{ secrets.AAP_CHILD_REPOS_TOKEN }}
         run: >-
           python3 tools/pinned_workspace.py --output "$RUNNER_TEMP/pinned"
           --repository agentic-art-research
           --repository agentic-art-production
-      - name: Run the Research/Production exchange against the real children
+          --repository viewer-response-notes
+      - name: Run the Research/Production/Viewer exchange against the real children
         run: |
           python3 tools/production_exchange.py \
             --workspace-root "$RUNNER_TEMP/pinned" \
