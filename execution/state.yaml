@@ -1,5 +1,5 @@
-version: 169
-updated_at: "2026-09-03T21:21:15+09:00"
+version: 170
+updated_at: "2026-09-03T21:26:57+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -9,7 +9,7 @@ lease:
   expires_at: null
   lane: PARENT_CONTROL_PLANE
   execution_id: HARNESS-RESEARCH-PIN-85-001:20260903-204839
-  released_at: "2026-09-03T21:21:15+09:00"
+  released_at: "2026-09-03T21:26:57+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [config/repositories.yaml, tests/fixtures/retrieval/index.json, execution]
@@ -19,7 +19,7 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 3ca61c511937131886c32c2b20b6393208aef0dc
   expected_changes: Adopt the exact merged Research main pin in the parent manifest and retrieval provenance fixture, then qualify the pinned child without copying child internals.
-  result: completed; parent PR #145 merged as 29221de2fbf95604329aade4b6cfe6562185c18a, exact Research pin adopted, and all declared local checks passed.
+  result: completed; parent PR #145 merged as 29221de2fbf95604329aade4b6cfe6562185c18a, final completion record PR #146 merged as c8eff8c468493e9aeb119495db9a1f21f986d7c2, exact Research pin adopted, and all declared local checks passed.
 last_completed_task: HARNESS-RESEARCH-PIN-85-001
 resume_from:
   task: null
