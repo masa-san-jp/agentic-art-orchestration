@@ -157,6 +157,12 @@ evidenceへ入れない。
 record・任意requestを扱う人間承認laneに分かれる。エージェントは会話履歴に頼らず、source
 report/summary、request、target layout、result evidenceを読み直して再開する。
 
+公式deploymentでは、最初に`config/repository-relationships.yaml`の
+`canonical-public-project`を読み、`public_projection_root`を
+`masa-san-jp/agentic-art-project`のlocal worktreeへ設定する。同repoはexport-onlyの
+`public-output-catalog`であり、入力manifest、snapshot、retrieval、pinには追加しない。現在は
+完成前の`private-staging`で、agentはGit commit/push/merge/releaseやvisibility変更を実行しない。
+
 ### 正規run/batchの自動plan投影
 
 `tools/run.py`の最終状態が`PLAN_READY`、または`tools/batch_run.py`のbatch状態が`PASSED`で、選択

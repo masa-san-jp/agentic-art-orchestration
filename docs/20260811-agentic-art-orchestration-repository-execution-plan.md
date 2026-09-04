@@ -211,6 +211,17 @@ replay、途中rollbackをsynthetic temporary Git targetで検証する。自動
 未設定は内部成果物を保持した`BLOCKED_CONFIGURATION`とし、work record・任意requestの投影は既存の
 human gateへ戻す。
 
+### M16 — Canonical public repository relationship
+
+`PUBLIC-PROJECT-RELATIONSHIP-001`はIssue #190をSSOTとして、
+`masa-san-jp/agentic-art-project`を正規のexport-only public output catalogへ位置付ける。
+`repository-relationships/v1`は両repoのidentity、authority、layout/result contract、plan/workの
+projection policy、input isolation、private-stagingからpublic-catalogへのlifecycleを閉じた形式で持つ。
+
+ランタイムの`public_projection_root`は引き続き汎用のlocal path設定とし、remote repo名へ依存しない。
+公式mappingだけをregistryで固定し、出力repoをinput manifest、qualified snapshot、knowledge retrieval、
+source pinへ追加しない。実装と検証ではchild repo、実public target、visibilityを変更しない。
+
 ## Concrete Steps
 
 ### Every session

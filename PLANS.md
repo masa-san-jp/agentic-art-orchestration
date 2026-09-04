@@ -952,3 +952,77 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. 人間がdraft PR #188のautomatic authorityとlocal snapshot prerequisiteをレビューし、確認後にmerge可否を判断する。merge・公開確定は本タスクでは実行しない。
+
+## PUBLIC-PROJECT-RELATIONSHIP-001 ExecPlan
+
+### Purpose / Big Picture
+
+Issue #190に従い、`agentic-art-project`を親repo側でも正規の公開成果物repoとして定義する。
+入力manifestと公開出力先を混同せず、汎用runtimeを保ったまま公式deploymentの関係を一意にする。
+
+### Progress
+
+- [x] 両repoと既存public projection contractをread-onlyで確認した。
+- [x] Issue #190を作成し、taskをqueue/stateへclaimした。
+- [ ] closed relationship registry、validator、testsを実装する。
+- [ ] README、設計、operator/agent guideを同期する。
+- [ ] 全検証、record、commit、push、Draft PRを完了する。
+
+### Surprises & Discoveries
+
+- #187は`agentic-art-project`を利用者ごとの設定例として扱い、runtimeへのrepo名固定を禁止していた。
+- 実際の適切な境界は、runtime profileをpath-onlyのまま保ち、公式mappingを別registryで定義することである。
+
+### Decision Log
+
+- `agentic-art-project`は知識入力repoではないため`config/repositories.yaml`へ追加しない。
+- `repository-relationships/v1`を追加し、canonical identity、export-only role、authority、lifecycle、human gate、input isolationを閉じた契約にする。
+- 現在のprivate visibilityは完成前の`private-staging`であり、このtaskでは変更しない。
+
+### Outcomes & Retrospective
+
+実装・検証完了時にacceptance、commit、PR、機微情報、外部artifact、未解決を記録する。
+
+### Context and Orientation
+
+- Issue SSOT: https://github.com/masa-san-jp/agentic-art-orchestration/issues/190
+- input manifest: `config/repositories.yaml`
+- canonical relationship: `config/repository-relationships.yaml`
+- runtime destination: `public_projection_root`
+- target-owned layout: `public-project-layout/v1`
+
+### Plan of Work
+
+1. schema/configと親validatorで関係を機械検証する。
+2. relationship、input isolation、private-staging、human gateの回帰testを追加する。
+3. README、system design、execution plan、operator/agent guideを同期する。
+4. focused/full checks後、queue/state/handoffを更新し、branchをpushしてDraft PRを作る。
+
+### Concrete Steps
+
+~~~bash
+.venv/bin/python tools/validate.py --check
+.venv/bin/python -m unittest tests.test_validate tests.test_docs -v
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python tools/project_status.py --check-readme
+git diff --check
+~~~
+
+### Validation and Acceptance
+
+- registryはschema-validかつcanonical mappingを一件だけ持つ。
+- output repoはmanifest、snapshot、retrieval、pinから除外される。
+- plan自動local投影、work/manual/Git/visibilityのhuman gateが維持される。
+- 文書だけを読むagentが両repoの責務と現在のprivate-stagingを一意に説明できる。
+- 親validator、focused/full tests、project status、diff checkがPASSする。
+
+### Idempotence and Recovery
+
+registryと文書は決定的なtracked filesである。中断時は`execution/state.yaml`のactive leaseとcheckpointから
+再開し、実target、child repo、GitHub visibilityを変更しない。
+
+### Interfaces and Dependencies
+
+`repository-relationships/v1`は公式repo identityを持つが、`output-destinations/v1`とruntimeは
+local absolute pathだけを受け取る。`public-project-layout/v1`はtarget側layout、
+`public-projection-result/v1`はlocal projection結果の境界である。

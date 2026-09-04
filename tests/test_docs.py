@@ -162,6 +162,34 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("docs/incident-runbook.md", text)
         self.assertIn("docs/interaction-improvement-runbook.md", text)
 
+    def test_canonical_public_repository_relationship_is_documented(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        design = (ROOT / "docs/20260811-agentic-art-orchestration-system-design-specification.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        guide = (ROOT / "docs/agent-runtime-guide.md").read_text(encoding="utf-8")
+        relationships = (ROOT / "config/repository-relationships.yaml").read_text(encoding="utf-8")
+        manifest = (ROOT / "config/repositories.yaml").read_text(encoding="utf-8")
+        combined = "\n".join((readme, design, runbook, guide, relationships))
+        for required in (
+            "masa-san-jp/agentic-art-project",
+            "canonical-public-project",
+            "public-output-catalog",
+            "export-only",
+            "public_projection_root",
+            "private-staging",
+            "public-catalog",
+            "visibility変更",
+            "config/repository-relationships.yaml",
+            "config/repositories.yaml",
+            "qualified snapshot",
+            "knowledge retrieval",
+            "source pin",
+        ):
+            self.assertIn(required, combined)
+        self.assertNotIn("agentic-art-project", manifest)
+        self.assertIn("Git commit/push/merge/release", readme)
+        self.assertIn("内部ログ、会話、prompt、handoff、credential", design)
+
     def test_public_projection_is_operable_without_conversation_history(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")

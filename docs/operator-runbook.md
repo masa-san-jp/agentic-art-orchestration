@@ -112,6 +112,11 @@ M14完了前はこのcommandが存在しないため、従来のnetworkless smok
 
 ### 出力先プロファイル（output-destinations/v1）
 
+公式deploymentの正規出力先は、`config/repository-relationships.yaml`で
+`masa-san-jp/agentic-art-project`として登録されている。これはexport-onlyの
+`public-output-catalog`であり、入力repoの`config/repositories.yaml`へ追加しない。現在はrepo群の
+完成前なので`private-staging`で、visibility変更は運用者の別承認まで行わない。
+
 stateと内部成果物を会話やGitへ依存させないため、fresh cloneではprofileをGit外に作る。
 `config/output-destinations.example.yaml`を外部一時ディレクトリへコピーし、3つのroleを
 絶対パスへ置き換える。`state_root`と`internal_output_root`は必須で、各rootはfilesystem root、
@@ -156,6 +161,12 @@ profile、evidence、ログへcredential、会話本文、PRIVATE_RAW、RESTRICT
 
 公開projectionは、内部出力をそのままコピーする処理ではない。正規の`PLAN_READY` runまたは
 全件`PASSED` batchを起点にする自動plan投影と、利用者が明示的に開始する手動projectionを分ける。
+
+公式運用では`public_projection_root`を`agentic-art-project`のlocal worktreeへ設定する。親が
+正規run/batchと公開境界を所有し、出力repoが`plans/`、`works/`、index、catalog layoutを所有する。
+ランタイムはremote名をハードコードせず、relationship registryは公式mapping、profileは実行時pathを
+それぞれ受け持つ。内部ログ、会話、prompt、handoff、credential、private/restricted data、local pathは
+出力repoへ渡さない。
 
 #### 正規run/batchの自動plan投影
 

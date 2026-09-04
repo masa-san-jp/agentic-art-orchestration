@@ -1,0 +1,43 @@
+contract_version: repository-relationships/v1
+control_plane:
+  id: agentic-art-orchestration
+  full_name: masa-san-jp/agentic-art-orchestration
+relationships:
+  - id: canonical-public-project
+    source_repository: agentic-art-orchestration
+    repository:
+      id: agentic-art-project
+      full_name: masa-san-jp/agentic-art-project
+      url: https://github.com/masa-san-jp/agentic-art-project.git
+      default_branch: main
+    role: public-output-catalog
+    direction: export-only
+    destination_role: public_projection_root
+    authority:
+      source: orchestration-run-and-publication-boundary
+      destination: public-catalog-layout-and-records
+    contracts:
+      layout: public-project-layout/v1
+      result: public-projection-result/v1
+    projection_policy:
+      automatic_records: [plan]
+      human_approved_records: [work, manual-projection]
+      git_remote_operations: human-gated
+    lifecycle:
+      current: private-staging
+      intended: public-catalog
+      visibility_change: human-gated
+    input_isolation:
+      repository_manifest: excluded
+      qualified_snapshot: excluded
+      knowledge_retrieval: excluded
+      source_pin: excluded
+    forbidden_data:
+      - internal-log
+      - raw-conversation
+      - prompt
+      - handoff
+      - credential
+      - private-data
+      - restricted-data
+      - local-path

@@ -59,14 +59,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T18:34:08+09:00`.
+Source updated at: `2026-09-05T06:35:55+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 137 | 137 |
+| 0 | 0 | 1 | 0 | 138 | 139 |
 
-Current task: `null`; repository: `null`; checkpoint: `PARENT-ENTRYPOINT-HARDENING-001`.
-Next action: Verify the final parent main and issue/PR state before handoff.
+Current task: `PUBLIC-PROJECT-RELATIONSHIP-001`; repository: `agentic-art-orchestration`; checkpoint: `PUBLIC-PROJECT-RELATIONSHIP-001`.
+Next action: Implement and validate the canonical public project relationship registry and synchronized documentation.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -100,6 +100,25 @@ Startup update check + audit -> findings / Issue candidate
 - [agentic-art-production](https://github.com/masa-san-jp/agentic-art-production) — 制作引き渡し受領、制作実行、結果還流repo（要件SSOT: Issue #10）
 - [viewer-response-notes](https://github.com/masa-san-jp/viewer-response-notes) — 集計viewer反応と保守的な制作要件評価の正本
 
+## 正規の公開成果物repo
+
+[agentic-art-project](https://github.com/masa-san-jp/agentic-art-project)は、オーケストレーションが
+生成した公開可能な制作プラン、作品、制作記録を整理する正規の公開カタログrepoである。関係の
+機械可読な正本は`config/repository-relationships.yaml`、カタログ配置の正本は出力先repoの
+`public-project.yaml`である。
+
+| repository | owns | does not own |
+|---|---|---|
+| `agentic-art-orchestration` | 制作フロー、正規run/batch、内部成果物、公開境界検査、local projection | 公開カタログの既存recordとremote visibility |
+| `agentic-art-project` | 公開向け`plans/`、`works/`、index、catalog表現 | 入力知識、実行状態、内部ログ、会話、handoff |
+
+この関係は`export-only`で、local output profileの`public_projection_root`を
+`agentic-art-project`のworktreeへ設定して使用する。出力repoは入力KBではないため、
+`config/repositories.yaml`、qualified snapshot、knowledge retrieval、source pinへ追加しない。
+正規の`PLAN_READY` / `PASSED` planだけが自動local投影対象で、work・手動projectionと
+Git commit/push/merge/releaseは人間gateを保つ。現在のlifecycleは、repo群の完成前なので
+`private-staging`である。完成後の公開カタログ化を意図するが、visibility変更は人間が別途承認する。
+
 ## 重要な境界
 
 - 子repoのデータ・schema・Issueを親へ複製しない。
@@ -112,6 +131,7 @@ Startup update check + audit -> findings / Issue candidate
 - 推定された不満や欲求はfeedback仮説であり、明示要求やユーザー属性として扱わない。
 - 改善・監査は会話応答と非同期に進め、merge・release・公開・同意拡張は人間gateを維持する。
 - 起動時は全manifest repoのremote headをread-only確認し、最後のqualified pinと差分を区別する。自動checkout、pin更新、子repo変更は行わない。
+- `agentic-art-project`はexport-onlyの公開成果物repoであり、入力manifestやsnapshot pinへ混在させない。
 - 初期UIは既定でoffline planを実行し、外部CREATEはstartupがREADYで明示確認された単一laneに限定する。DriveとIssueのlive CREATEを同時に実行しない。
 
 ## エージェントの開始手順
@@ -255,6 +275,11 @@ Gitやpublic projectionへコピーせず、state rootのrun単位にだけ保�
 移動・削除してrollbackしないでください。
 
 ### 公開projection（自動plan投影 / 手動projection）
+
+公式deploymentでは`config/repository-relationships.yaml`の`canonical-public-project`に従い、
+`public_projection_root`を`masa-san-jp/agentic-art-project`のlocal worktreeへ解決する。ランタイムの
+profile自体は絶対pathだけを受け取るため、別deploymentの互換性を失わず、remote repository名にも
+依存しない。公式repoの現在状態は`private-staging`であり、この処理はvisibilityを変更しない。
 
 `run.py`と`batch_run.py`は、選択したprofileに`public_projection_root`がある場合だけ、正規の
 完了結果から制作プランをlocal public-project worktreeへ投影します。単一runは`PLAN_READY`、

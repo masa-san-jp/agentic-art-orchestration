@@ -133,6 +133,7 @@ interaction laneはユーザー応答を担い、improvement laneとaudit/refact
 | Child repository | domain要件、データ、schema、quality gate | 親run stateの所有 |
 | Auditor | 初期運用では起動時にdrift、privacy、鮮度、孤立、構造品質を監査しIssue候補を作る | 自動で事実を補完、user artifact変更、初期運用でのrefactoring実装 |
 | Google Drive artifact store | immutable user output、revision lineage、feedback reference | domain KBやtask queueの正本化 |
+| `agentic-art-project` | 公開向けplan/work record、index、catalog layout | 入力知識、親run state、内部ログ、会話、handoffの所有 |
 
 ## 5. 全体アーキテクチャ
 
@@ -145,20 +146,24 @@ User <-> Codex / Claude Code
  repository   artifact       feedback
  retrieval    adapter        router
      |            |             |
-five child   Google Drive   create-only
+six child    Google Drive   create-only
 repositories  append-only   GitHub Issue
      \            |             /
       provenance + startup audit
+                   |
+          public projection
+                   v
+      agentic-art-project catalog
 ~~~
 
-親repoはcontrol plane、子repoはdomain knowledge/data/implementation plane、Google Driveはuser artifact planeである。CodexまたはClaude Codeが初期frontstage、Issue deliveryとauditorがbackstageである。workspaceはローカル生成物で、親Gitの管理対象外とする。専用UIへの置換はこの境界を保つ限り後方互換なadapter追加として扱う。
+親repoはcontrol plane、子repoはdomain knowledge/data/implementation plane、Google Driveはuser artifact plane、`agentic-art-project`はpublic output catalog planeである。CodexまたはClaude Codeが初期frontstage、Issue deliveryとauditorがbackstageである。workspaceはローカル生成物で、親Gitの管理対象外とする。専用UIへの置換はこの境界を保つ限り後方互換なadapter追加として扱う。
 
 ## 6. 正本と優先順位
 
 ### 6.1 親repo
 
 1. 本設計仕様書
-2. repositories.yamlとschemas
+2. repositories.yaml、repository-relationships.yamlとschemas
 3. 実行計画
 4. task-queue.yaml
 5. AGENTSとrunbook
@@ -172,7 +177,22 @@ repositories  append-only   GitHub Issue
 
 Google Driveはユーザー成果物と、その成果物に対するfeedbackの外部正本である。domain fact、子repo schema、task実行状態の正本ではない。親はartifact本文を保持せず、opaque file ID、content hash、provenance、access/consent scope、lineageだけを管理する。
 
+### 6.4 Public output catalog
+
+`config/repository-relationships.yaml`は、`masa-san-jp/agentic-art-project`を正規の
+`public-output-catalog`として宣言する。関係は`agentic-art-orchestration`からの`export-only`で、
+local profileの`public_projection_root`がそのworktreeを指す。親は正規run/batch、公開境界検査、
+local projectionを所有し、出力repoは`public-project.yaml`に従う公開向けrecord、index、catalog表現を
+所有する。内部ログ、会話、prompt、handoff、credential、private/restricted data、local pathは渡さない。
+
+出力repoは入力知識でもruntimeでもないため、`config/repositories.yaml`、qualified snapshot、
+knowledge retrieval、source pinの対象にしない。現在はrepo群完成前の`private-staging`で、完成後の
+`public-catalog`を意図する。Git commit/push/merge/releaseとrepository visibility変更は人間gateである。
+
 ## 7. Repository manifest
+
+Repository manifestは入力・実行planeだけを扱う。public output catalogのidentityと関係は
+`repository-relationships/v1`へ分離し、manifest entryとしてonboardしない。
 
 各entryは安定ID、full name、clone URL、workspace path、role、domain authority、default branch、観測commit、instructions、requirement SSOT、quality gates、export/import contractを持つ。v1.1ではknowledge profileとしてanswerable questions、canonical entities、retrieval entry points、evidence/freshness rules、feedback owner、write scope、forbidden dataも持つ。
 

@@ -152,6 +152,62 @@ class BootstrapValidationTests(unittest.TestCase):
         self.assertIn("import_contract", repository["properties"])
         self.assertIn("exchange_contracts", repository["properties"])
 
+    def test_public_project_relationship_is_canonical_and_input_isolated(self):
+        registry = MODULE.load_yaml(ROOT / "config/repository-relationships.yaml")
+        schema = MODULE.load_json(ROOT / "schemas/repository-relationships.schema.json")
+        manifest = MODULE.load_yaml(ROOT / "config/repositories.yaml")
+        self.assertEqual(
+            [],
+            MODULE.validate_repository_relationships_contract(
+                registry,
+                schema,
+                manifest,
+                "fixture:repository-relationships",
+            ),
+        )
+
+        relationship = registry["relationships"][0]
+        self.assertEqual("masa-san-jp/agentic-art-project", relationship["repository"]["full_name"])
+        self.assertEqual("public-output-catalog", relationship["role"])
+        self.assertEqual("export-only", relationship["direction"])
+        self.assertEqual("public_projection_root", relationship["destination_role"])
+        self.assertEqual("private-staging", relationship["lifecycle"]["current"])
+        self.assertEqual(["plan"], relationship["projection_policy"]["automatic_records"])
+        self.assertEqual("human-gated", relationship["projection_policy"]["git_remote_operations"])
+        manifest_ids = {repository["id"] for repository in manifest["repositories"]}
+        self.assertNotIn("agentic-art-project", manifest_ids)
+
+    def test_public_project_relationship_rejects_input_or_visibility_expansion(self):
+        registry = MODULE.load_yaml(ROOT / "config/repository-relationships.yaml")
+        schema = MODULE.load_json(ROOT / "schemas/repository-relationships.schema.json")
+        manifest = copy.deepcopy(MODULE.load_yaml(ROOT / "config/repositories.yaml"))
+
+        registry["relationships"][0]["lifecycle"]["current"] = "public-catalog"
+        rendered = "\n".join(
+            MODULE.validate_repository_relationships_contract(
+                registry,
+                schema,
+                manifest,
+                "fixture:visibility-expansion",
+            )
+        )
+        self.assertIn("private-staging", rendered)
+
+        registry = MODULE.load_yaml(ROOT / "config/repository-relationships.yaml")
+        added = copy.deepcopy(manifest["repositories"][0])
+        added["id"] = "agentic-art-project"
+        added["full_name"] = "masa-san-jp/agentic-art-project"
+        manifest["repositories"].append(added)
+        rendered = "\n".join(
+            MODULE.validate_repository_relationships_contract(
+                registry,
+                schema,
+                manifest,
+                "fixture:input-expansion",
+            )
+        )
+        self.assertIn("must not be an input manifest repository", rendered)
+
     def test_production_exchange_contract_is_fail_closed(self):
         manifest = copy.deepcopy(MODULE.load_yaml(ROOT / "config/repositories.yaml"))
         production = next(repo for repo in manifest["repositories"] if repo["id"] == "agentic-art-production")
