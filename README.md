@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T16:53:19+09:00`.
+Source updated at: `2026-09-04T17:11:01+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 2 | 0 | 0 | 131 | 135 |
+| 1 | 2 | 0 | 0 | 132 | 135 |
 
 Current task: `null`; repository: `null`; checkpoint: `AUTONOMY-READINESS-MANIFEST-001`.
-Next action: Claim the lowest dependency-complete child task, read agentic-art-research Issue #89 and authoritative AGENTS.md/tests, add only portable fresh-clone setup and external-output guidance, then run the child gates.
-Ready: `RESEARCH-AUTONOMY-001`, `SELF-MODEL-AUTONOMY-001`.
-Next task: `RESEARCH-AUTONOMY-001`.
+Next action: Claim the lowest dependency-complete child task, read agentic-art-production Issue #58 and authoritative AGENTS.md/tests, add only explicit fresh-clone setup and external-output guidance, then run the child gates.
+Ready: `PRODUCTION-AUTONOMY-001`, `SELF-MODEL-AUTONOMY-001`.
+Next task: `PRODUCTION-AUTONOMY-001`.
 Blocked:
 - none
 

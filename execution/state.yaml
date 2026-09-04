@@ -1,5 +1,5 @@
-version: 198
-updated_at: "2026-09-04T16:53:19+09:00"
+version: 199
+updated_at: "2026-09-04T17:11:01+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -20,11 +20,11 @@ checkpoint:
   start_point: e7258d0b4e816bd915a7a8ab41c01404f3567d1a
   expected_changes: Point every manifest child at its authoritative AGENTS.md instruction entrypoint, add a regression check, preserve all URLs/pins/quality gates, and update only parent execution evidence.
   result: completed; parent PR #177 merged as 6bc99df7ed6e66f95ae91aad9a86a08e57781d6a; child follow-up Issues recorded; lease released.
-last_completed_task: SELF-MODEL-AUTONOMY-001
+last_completed_task: RESEARCH-AUTONOMY-001
 resume_from:
-  task: RESEARCH-AUTONOMY-001
-  action: "Claim the lowest dependency-complete child task, read agentic-art-research Issue #89 and authoritative AGENTS.md/tests, add only portable fresh-clone setup and external-output guidance, then run the child gates."
-  command: python3 -m compileall -q tools tests
+  task: PRODUCTION-AUTONOMY-001
+  action: "Claim the lowest dependency-complete child task, read agentic-art-production Issue #58 and authoritative AGENTS.md/tests, add only explicit fresh-clone setup and external-output guidance, then run the child gates."
+  command: python3 tools/validate.py --check
 
 workspace_bootstrap_apply:
   status: complete
@@ -1434,7 +1434,7 @@ autonomy_readiness_evaluation:
     explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
     inferred: none
   unresolved:
-    - "The three remaining child follow-up Issues require their own child-repository PRs and quality gates."
+    - "The two remaining child follow-up Issues require their own child-repository PRs and quality gates."
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
 
 self_model_autonomy:
@@ -1480,4 +1480,48 @@ self_model_autonomy:
     explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
     inferred: none
   unresolved:
+    - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
+
+research_autonomy:
+  status: complete
+  observed_at: "2026-09-04T17:11:01+09:00"
+  task: RESEARCH-AUTONOMY-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/89
+  target_repository: agentic-art-research
+  implementation_commit: 9be5e2cd0ced539c679d7acd8868f2b75d874f44
+  pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/90
+  merge_commit: f1731e6cc7e63154bffdafc33af31c1462b6ab8b
+  issue_state: CLOSED
+  acceptance: 1/1
+  changes:
+    - "AGENTS.md conditionally prepares a repository-local .venv from requirements.txt only when the declared imports are unavailable, then uses .venv/bin/python for checks and next_action/task_runtime entrypoints."
+    - "The output boundary is portable and explicit as <external-output-root>/<project-id>/; machine-specific user paths are prohibited."
+    - "Completion evidence records task, project, changed paths, acceptance results, commit provenance, unresolved work, and sensitive/external-artifact status without changing project/data/schema."
+    - "tests/test_docs_check.py locks the fresh-clone, runtime, budget/lease, completion, output, and safety contract."
+  verification:
+    focused_docs_tests: "3/3 PASS"
+    child_full_suite: "290/290 PASS"
+    compileall: PASS
+    validator: PASS
+    graph_check: PASS
+    security_check: PASS
+    docs_check: PASS
+    chaos_check: PASS
+    release_check: PASS
+    handoff_release_check: PASS
+    generated_data_diff: PASS
+    diff_check: PASS
+  remote_ci:
+    run_id: 33852114074
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit; job steps were empty
+    counted_as_quality_gate: false
+  child_project_data_schema_changed: false
+  sensitive_data: "none; no credential, token, PRIVATE_RAW, RESTRICTED value, direct identifier, raw conversation, or user path was stored"
+  external_artifact: none
+  feedback:
+    explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
+    inferred: none
+  unresolved:
+    - "The README's direct evaluate.py --offline-fixture convenience command fails closed when it materializes into canonical projects/; this was outside Issue #89's AGENTS.md/tests-only scope and did not affect the child acceptance checks."
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."

@@ -873,6 +873,17 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 
 1. `RESEARCH-AUTONOMY-001`をclaimし、agentic-art-research Issue #89とAGENTS/testsを読み、fresh-clone setupとportable external output guidanceだけを補完する。
 
+## RESEARCH-AUTONOMY-001 — completed
+
+- Task ID: `RESEARCH-AUTONOMY-001`; target repository: `agentic-art-research`; Issue SSOTは[#89](https://github.com/masa-san-jp/agentic-art-research/issues/89)。implementation commit `9be5e2cd0ced539c679d7acd8868f2b75d874f44`、PR [#90](https://github.com/masa-san-jp/agentic-art-research/pull/90)、main merge `f1731e6cc7e63154bffdafc33af31c1462b6ab8b`。Issue #89はCLOSED。
+- fresh cloneで依存が無い場合だけ`python3 -m venv .venv`と`.venv/bin/python -m pip install -r requirements.txt`を行い、以後のchecks・`next_action`・`task_runtime`を`.venv/bin/python`で実行する契約をAGENTS.mdへ追加した。machine-specificな`/Users/masa/...`出力先を廃し、`<external-output-root>/<project-id>/`を実行時指定の境界として明記した。task/runtime、write_targets、budget、lease、completion、安全境界は維持した。
+- 文書回帰testを追加し、focused docs tests `3/3 PASS`、child full suite `290/290 PASS`、compileall、validator、graph、security、docs、chaos、release、handoff release、generated-data diff、git diff checkがPASSした。child project/data/schema、credential、外部output、外部artifactは変更していない。Issue #89で対象外のREADME直接`evaluate.py --offline-fixture`はcanonical output boundaryによりfail closedするため、別課題として記録した。
+- GitHub Actions run `33852114074`は`steps=[]`の開始前失敗でaccount billing limitによるもの。品質gateのPASSへ算入していない。explicit feedbackは自律実装要件の評価・補完依頼、inferredはnone。leaseは`available/unassigned`。
+
+### Next exact action
+
+1. `PRODUCTION-AUTONOMY-001`をclaimし、agentic-art-production Issue #58とAGENTS/testsを読み、fresh-clone setupとportable external-output guidanceだけを補完する。
+
 ## 2026-09-04 — WORKSPACE-BOOTSTRAP-DOCS-001 completed
 
 - Task ID: `WORKSPACE-BOOTSTRAP-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`b9e01f132670f6322297a463600055c8d3aef163`、PR [#174](https://github.com/masa-san-jp/agentic-art-orchestration/pull/174)はmainへ`267a51c31f110c9fc431a332af1eb4199ec77e20`としてmergeされた。
