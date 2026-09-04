@@ -1,29 +1,29 @@
-version: 189
-updated_at: "2026-09-04T13:57:27+09:00"
-active_task: null
-active_repository: null
+version: 190
+updated_at: "2026-09-04T14:03:44+09:00"
+active_task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: null
-  lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-DOCS-001:20260904-134646
-  released_at: "2026-09-04T13:57:27+09:00"
+  status: held
+  owner: codex-workspace-preflight
+  acquired_at: "2026-09-04T14:03:44+09:00"
+  expires_at: "2026-09-04T16:30:00+09:00"
+  lane: WORKSPACE_BOOTSTRAP
+  execution_id: WORKSPACE-BOOTSTRAP-PREFLIGHT-001:20260904-140344
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, config/human-gates.yaml, PLANS.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, tests/test_docs.py, tests/test_public_projection.py]
+    paths: [tools/workspace.py, tools/validate.py, tests/test_workspace_bootstrap.py, tests/test_workspace_guards.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-DOCS-001
+  task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
   repository: agentic-art-orchestration
-  start_point: 75c0b2d5930b340d804d930c06af95e2e48c6f0b
-  expected_changes: Synchronize README, operator runbook, agent runtime guide, human-gates config, PLANS, state, and handoff with public projection prepare/dry-run/apply, synthetic proof, approval boundaries, target restrictions, no-public-share behavior, recovery, and autonomous repository completion guidance.
-  result: completed; implementation commit bb11d38f6a2df80b7c9750aae93454024ebb607c; PR #168 merged as d840912; local checks passed.
+  start_point: 66863b68012431396f0e8f98df9e77ce54217b46
+  expected_changes: Inspect every manifest entry and missing remote before any clone, return sanitized workspace-bootstrap findings, and acquire/release a bootstrap lock without mutating existing checkouts or placing new clones.
+  result: in_progress; claimed 2026-09-04T14:03:44+09:00 by codex-workspace-preflight; implementation and checks pending.
 last_completed_task: PUBLIC-PROJECTION-DOCS-001
 resume_from:
   task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
-  action: "Promote the dependency-complete workspace bootstrap preflight task, then inspect Issue #150, the bootstrap contract, and existing workspace guards before implementing read-only manifest/worktree preflight."
+  action: "Inspect Issue #150, the workspace-bootstrap/v1 contract, existing workspace guards, and the bootstrap parser, then implement sanitized read-only preflight and lock handling before any future clone stage."
   command: .venv/bin/python tools/validate.py --check
 
 issue_intake:

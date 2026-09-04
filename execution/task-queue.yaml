@@ -1,5 +1,5 @@
-version: 51
-updated_at: "2026-09-04T13:57:27+09:00"
+version: 52
+updated_at: "2026-09-04T14:03:44+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1315,7 +1315,7 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
     milestone: M28
     title: Add non-destructive workspace and remote preflight
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

@@ -39,6 +39,27 @@ BOOTSTRAP_STATUS_EXIT_CODES = {
     "BLOCKED_RACE": 2,
     "FAILED": 1,
 }
+BOOTSTRAP_LOCK_NAME = ".agentic-art-bootstrap.lock"
+BOOTSTRAP_FINDING_CODES = {
+    "missing": "MISSING",
+    "non-directory": "NON_DIRECTORY",
+    "invalid-checkout": "INVALID_CHECKOUT",
+    "repository-mismatch": "REPOSITORY_MISMATCH",
+    "remote-mismatch": "REMOTE_MISMATCH",
+    "dirty": "DIRTY",
+    "untracked": "UNTRACKED",
+    "detached": "DETACHED",
+    "upstream-missing": "UPSTREAM_MISSING",
+    "upstream-invalid": "UPSTREAM_INVALID",
+    "unpushed": "AHEAD",
+    "behind": "BEHIND",
+    "diverged": "DIVERGED",
+    "remote-access": "REMOTE_ACCESS",
+    "race": "RACE",
+    "not-run": "NOT_RUN",
+    "pin-drift": "PIN_DRIFT",
+}
+BOOTSTRAP_FINDING_ORDER = tuple(dict.fromkeys(BOOTSTRAP_FINDING_CODES.values()))
 
 
 class WorkspaceError(RuntimeError):
@@ -61,10 +82,13 @@ def run_git(args: list[str], cwd: Path | None = None, env: dict[str, str] | None
     return result.stdout.strip()
 
 
-def run_git_optional(args: list[str], cwd: Path) -> tuple[int, str, str]:
+def run_git_optional(
+    args: list[str], cwd: Path | None, env: dict[str, str] | None = None
+) -> tuple[int, str, str]:
     result = subprocess.run(
         ["git", *args],
         cwd=cwd,
+        env=env,
         check=False,
         capture_output=True,
         text=True,
@@ -258,6 +282,13 @@ def guard_repository(repository: dict, path: Path, expected: str) -> dict:
                     f"working tree has {len(status_entries)} change(s)",
                     "commit, stash, or explicitly resolve the changes before orchestration",
                 )
+                untracked_count = sum(entry.startswith("?? ") for entry in status_entries)
+                if untracked_count:
+                    add_reason(
+                        "untracked",
+                        f"working tree has {untracked_count} untracked change(s)",
+                        "preserve and resolve untracked files manually before orchestration",
+                    )
 
             branch_code, branch, _ = run_git_optional(["symbolic-ref", "--short", "-q", "HEAD"], cwd=path)
             if branch_code:
@@ -727,6 +758,183 @@ def guard_workspace(manifest: dict, workspace_root: Path, offline: bool, fixture
     }
 
 
+def _absolute_lexical_path(path: Path) -> Path:
+    """Make a path absolute without resolving symlink components."""
+    return Path(os.path.abspath(os.fspath(path.expanduser())))
+
+
+def bootstrap_lock_path(workspace_root: Path) -> Path:
+    """Return the tool-owned lock path without reading or creating it."""
+    return _absolute_lexical_path(workspace_root) / BOOTSTRAP_LOCK_NAME
+
+
+def acquire_bootstrap_lock(workspace_root: Path, manifest: dict) -> bool:
+    """Acquire an exclusive, metadata-only lock for a future bootstrap apply."""
+    workspace_root = _absolute_lexical_path(workspace_root)
+    if workspace_root.is_symlink():
+        raise WorkspaceError(
+            "workspace root is a symlink; remediation: use a dedicated real directory for bootstrap"
+        )
+    workspace_root.mkdir(parents=True, exist_ok=True)
+    lock_path = bootstrap_lock_path(workspace_root)
+    payload = {
+        "contract_version": "workspace-bootstrap-lock/v1",
+        "manifest_hash": sha256_text(canonical_json(manifest)),
+        "owner": "agentic-art-orchestration",
+        "acquired_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+    }
+    try:
+        descriptor = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        return False
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(canonical_json(payload) + "\n")
+    except Exception:
+        lock_path.unlink(missing_ok=True)
+        raise
+    return True
+
+
+def release_bootstrap_lock(workspace_root: Path) -> None:
+    """Release only the lock acquired by this process; never remove a stale lock."""
+    workspace_root = _absolute_lexical_path(workspace_root)
+    if workspace_root.is_symlink():
+        return
+    bootstrap_lock_path(workspace_root).unlink(missing_ok=True)
+
+
+def _bootstrap_reason_codes(reason_codes: list[str] | tuple[str, ...]) -> list[str]:
+    mapped = {BOOTSTRAP_FINDING_CODES.get(code, code.upper().replace("-", "_")) for code in reason_codes}
+    return [code for code in BOOTSTRAP_FINDING_ORDER if code in mapped] + sorted(
+        mapped.difference(BOOTSTRAP_FINDING_ORDER)
+    )
+
+
+def _bootstrap_record(
+    repository: dict,
+    *,
+    action: str,
+    head: str | None,
+    guard_status: str,
+    reason_codes: list[str] | tuple[str, ...] = (),
+) -> dict:
+    """Build one closed, sanitized bootstrap repository record."""
+    safe_head = head if isinstance(head, str) and len(head) == 40 and all(character in "0123456789abcdef" for character in head) else None
+    codes = _bootstrap_reason_codes(list(reason_codes))
+    if safe_head is None:
+        pin_status = "NOT_RUN"
+    elif safe_head == repository["observed_commit"]:
+        pin_status = "MATCHED"
+    else:
+        pin_status = "DRIFTED"
+        if "PIN_DRIFT" not in codes:
+            codes.append("PIN_DRIFT")
+            codes = _bootstrap_reason_codes(codes)
+    if not codes and action == "not-run":
+        codes = ["NOT_RUN"]
+    return {
+        "id": repository["id"],
+        "full_name": repository["full_name"],
+        "path": repository["path"],
+        "action": action,
+        "head": safe_head,
+        "observed_commit": repository["observed_commit"],
+        "pin_status": pin_status,
+        "guard_status": guard_status,
+        "finding_codes": codes,
+    }
+
+
+def _workspace_destination_issues(manifest: dict, workspace_root: Path) -> dict[str, list[str]]:
+    """Find unsafe root, symlink, and overlapping destinations before Git reads."""
+    issues: dict[str, list[str]] = {repository["id"]: [] for repository in manifest["repositories"]}
+    lexical_root = _absolute_lexical_path(workspace_root)
+    root = lexical_root.resolve(strict=False)
+    if lexical_root.is_symlink() or root == ROOT or ROOT.is_relative_to(root):
+        for repository in manifest["repositories"]:
+            issues[repository["id"]].append("invalid-checkout")
+        return issues
+    if root.exists() and not root.is_dir():
+        for repository in manifest["repositories"]:
+            issues[repository["id"]].append("non-directory")
+        return issues
+
+    destinations: list[tuple[str, Path]] = []
+    for repository in manifest["repositories"]:
+        repository_id = repository["id"]
+        lexical = lexical_root / repository["path"]
+        destination = lexical.resolve(strict=False)
+        try:
+            destination.relative_to(root)
+        except ValueError:
+            issues[repository_id].append("invalid-checkout")
+            continue
+        current = root
+        symlinked = False
+        for part in Path(repository["path"]).parts:
+            current = current / part
+            if current.is_symlink():
+                symlinked = True
+                break
+        if symlinked:
+            issues[repository_id].append("invalid-checkout")
+            continue
+        destinations.append((repository_id, destination))
+
+    for index, (repository_id, destination) in enumerate(destinations):
+        for other_id, other in destinations[index + 1:]:
+            if destination == other or destination in other.parents or other in destination.parents:
+                issues[repository_id].append("invalid-checkout")
+                issues[other_id].append("invalid-checkout")
+    return issues
+
+
+def _remote_access_preflight(remote: str) -> bool:
+    """Probe remote read access without allowing prompts or retaining output."""
+    environment = os.environ.copy()
+    environment.update({"GIT_TERMINAL_PROMPT": "0", "GIT_OPTIONAL_LOCKS": "0"})
+    try:
+        result = subprocess.run(
+            ["git", "ls-remote", "--heads", "--quiet", remote],
+            cwd=None,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
+
+
+def _bootstrap_preflight_remediation(status: str) -> list[str]:
+    remediations = {
+        "BLOCKED_EXISTING_WORKSPACE": [
+            "preserve existing checkout changes and resolve the reported workspace guard findings manually",
+            "rerun bootstrap after every manifest destination is a clean, non-detached, pin-reviewable checkout",
+        ],
+        "BLOCKED_REMOTE_ACCESS": [
+            "resolve Git remote access or credential configuration manually without placing credentials in the report",
+            "rerun bootstrap with the same manifest and workspace after every missing remote is readable",
+        ],
+        "BLOCKED_PIN_DRIFT": [
+            "review pin drift with startup and pin_adopt --dry-run; do not auto-checkout or update the manifest",
+            "rerun bootstrap after the qualified pin decision is completed through its human-gated workflow",
+        ],
+        "BLOCKED_RACE": [
+            "inspect the existing bootstrap lock owner and staging state manually; do not delete the lock automatically",
+            "rerun bootstrap after the concurrent bootstrap has completed or the operator has recovered it",
+        ],
+        "FAILED": [
+            "read-only preflight passed for the available entries; the staged bootstrap apply task must place missing checkouts",
+            "use a fresh temporary workspace or wait for the bootstrap apply implementation before assigning child work",
+        ],
+    }
+    return remediations.get(status, ["inspect the sanitized bootstrap findings and resolve the precondition manually"])
+
+
 def validate_bootstrap_result(result: dict, source: str = "workspace-bootstrap") -> list[str]:
     """Validate the closed result and the status/exit-code relationship."""
     errors = _schema_errors(result, load_json(WORKSPACE_BOOTSTRAP_SCHEMA), source)
@@ -822,41 +1030,199 @@ def build_bootstrap_result(
 
 
 def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fixture_root: Path) -> dict:
-    """Expose the contract boundary before the staged preflight/apply tasks land.
+    """Preflight every destination and missing remote before a future apply stage."""
+    workspace_root = _absolute_lexical_path(workspace_root)
+    destination_issues = _workspace_destination_issues(manifest, workspace_root)
+    resolved_root = workspace_root.resolve(strict=False)
+    root_is_unsafe = (
+        workspace_root.is_symlink()
+        or resolved_root == ROOT
+        or ROOT.is_relative_to(resolved_root)
+        or (workspace_root.exists() and not workspace_root.is_dir())
+    )
+    if any(destination_issues.values()) and root_is_unsafe:
+        records = [
+            _bootstrap_record(
+                repository,
+                action="not-run",
+                head=None,
+                guard_status="NOT_RUN",
+                reason_codes=destination_issues[repository["id"]] or ["invalid-checkout"],
+            )
+            for repository in manifest["repositories"]
+        ]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="FAILED",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=[
+                "use a dedicated external workspace directory that is not the orchestration repository or its ancestor",
+                "preserve the unsafe path and resolve it manually before bootstrap",
+            ],
+            lock_status="NOT_ACQUIRED",
+        )
 
-    The contract task intentionally performs no clone.  Returning a structured
-    terminal result keeps the opt-in command honest and gives later tasks one
-    stable result shape to implement; existing ``init`` remains the legacy
-    operation until the non-destructive preflight and staged apply tasks are
-    complete.
-    """
-    del fixture_root
-    repositories = [
-        {
-            "id": repository["id"],
-            "full_name": repository["full_name"],
-            "path": repository["path"],
-            "action": "not-run",
-            "head": None,
-            "observed_commit": repository["observed_commit"],
-            "pin_status": "NOT_RUN",
-            "guard_status": "NOT_RUN",
-            "finding_codes": ["BOOTSTRAP_NOT_READY"],
-        }
-        for repository in manifest["repositories"]
-    ]
+    if workspace_root.exists() and bootstrap_lock_path(workspace_root).exists():
+        records = [
+            _bootstrap_record(
+                repository,
+                action="not-run",
+                head=None,
+                guard_status="NOT_RUN",
+                reason_codes=["race"],
+            )
+            for repository in manifest["repositories"]
+        ]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="BLOCKED_RACE",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=_bootstrap_preflight_remediation("BLOCKED_RACE"),
+            lock_status="BLOCKED_EXISTING",
+        )
+
+    offline_remotes = None
+    if offline:
+        offline_remotes, _ = ensure_offline_remotes(manifest, fixture_root)
+
+    records_by_id: dict[str, dict] = {}
+    existing_blocked = False
+    missing: list[tuple[dict, str]] = []
+    pin_drift = False
+    for repository in manifest["repositories"]:
+        repository_id = repository["id"]
+        issues = destination_issues[repository_id]
+        destination = repo_path(workspace_root, repository)
+        if issues:
+            records_by_id[repository_id] = _bootstrap_record(
+                repository,
+                action="not-run",
+                head=None,
+                guard_status="BLOCKED",
+                reason_codes=issues,
+            )
+            existing_blocked = True
+            continue
+        if not destination.exists():
+            missing.append((repository, expected_remote(repository, offline_remotes)))
+            records_by_id[repository_id] = _bootstrap_record(
+                repository,
+                action="not-run",
+                head=None,
+                guard_status="NOT_RUN",
+                reason_codes=["not-run"],
+            )
+            continue
+        try:
+            guard = guard_repository(repository, destination, expected_remote(repository, offline_remotes))
+        except (OSError, WorkspaceError):
+            guard = {"blocked": True, "reason_codes": ["invalid-checkout"], "observed": {"head": None}}
+        record = _bootstrap_record(
+            repository,
+            action="reused" if not guard.get("blocked") else "not-run",
+            head=guard.get("observed", {}).get("head") if isinstance(guard.get("observed"), dict) else None,
+            guard_status="PASS" if not guard.get("blocked") else "BLOCKED",
+            reason_codes=guard.get("reason_codes", []),
+        )
+        records_by_id[repository_id] = record
+        if record["guard_status"] != "PASS":
+            existing_blocked = True
+        if "PIN_DRIFT" in record["finding_codes"]:
+            pin_drift = True
+
+    if existing_blocked:
+        records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="BLOCKED_EXISTING_WORKSPACE",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=_bootstrap_preflight_remediation("BLOCKED_EXISTING_WORKSPACE"),
+            lock_status="NOT_ACQUIRED",
+        )
+
+    remote_blocked = False
+    for repository, remote in missing:
+        if not _remote_access_preflight(remote):
+            remote_blocked = True
+            record = records_by_id[repository["id"]]
+            record["finding_codes"] = _bootstrap_reason_codes(["remote-access"])
+    if remote_blocked:
+        records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="BLOCKED_REMOTE_ACCESS",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=_bootstrap_preflight_remediation("BLOCKED_REMOTE_ACCESS"),
+            lock_status="NOT_ACQUIRED",
+        )
+
+    if pin_drift:
+        records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="BLOCKED_PIN_DRIFT",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=_bootstrap_preflight_remediation("BLOCKED_PIN_DRIFT"),
+            lock_status="NOT_ACQUIRED",
+        )
+
+    if missing:
+        if not acquire_bootstrap_lock(workspace_root, manifest):
+            for repository, _ in missing:
+                record = records_by_id[repository["id"]]
+                record["finding_codes"] = _bootstrap_reason_codes(["race"])
+            records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
+            return build_bootstrap_result(
+                manifest,
+                workspace_root,
+                status="BLOCKED_RACE",
+                repositories=records,
+                changed_count=0,
+                offline_fixture=offline,
+                remediations=_bootstrap_preflight_remediation("BLOCKED_RACE"),
+                lock_status="BLOCKED_EXISTING",
+            )
+        try:
+            lock_status = "RELEASED"
+        finally:
+            release_bootstrap_lock(workspace_root)
+        records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="FAILED",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=_bootstrap_preflight_remediation("FAILED"),
+            lock_status=lock_status,
+        )
+
+    records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
     return build_bootstrap_result(
         manifest,
         workspace_root,
-        status="FAILED",
-        repositories=repositories,
+        status="READY",
+        repositories=records,
         changed_count=0,
         offline_fixture=offline,
-        remediations=[
-            "bootstrap apply is staged behind the non-destructive preflight and atomic placement tasks",
-            "use workspace.py init only for the legacy workflow until bootstrap implementation is complete",
-        ],
-        lock_status="NOT_ACQUIRED",
+        remediations=[],
+        lock_status="RELEASED",
     )
 
 
