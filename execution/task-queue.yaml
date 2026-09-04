@@ -1,5 +1,5 @@
-version: 65
-updated_at: "2026-09-04T21:07:32+09:00"
+version: 66
+updated_at: "2026-09-04T23:21:43+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1444,7 +1444,7 @@ tasks:
   - id: PUBLIC-PROJECTION-AUTO-PLAN-001
     milestone: M29
     title: Automatically project PLAN_READY production plans to the configured public project
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/187
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1454,6 +1454,7 @@ tasks:
     depends_on: [PUBLIC-PROJECTION-DOCS-001]
     acceptance: PLAN_READY run and PASSED batch outputs are automatically projected to the configured public_projection_root plans collection through a closed plan-only authority; 100+ records are atomic and idempotent; internal data never crosses the boundary; work and Git/remote operations remain human-gated.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_run tests.test_batch_run tests.test_output_destinations tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Implementation commit c3f62e6 on branch agent/issue-187-auto-plan-projection-20260904; draft PR #188. Added producer-bound AUTOMATIC_PLAN projection for canonical PLAN_READY runs and PASSED batches, deterministic plans/Pxxxx-slug records/index/catalog updates, configuration/policy/conflict/rollback/idempotency handling, and 100-plan atomic synthetic coverage. Internal output remains separate; work/manual projection and Git/remote publication remain human-gated. Focused docs/public/run/batch/output/security tests 70/70 PASS; validator, py_compile, JSON schema parse, and diff check PASS. Full discovery attempt ran 542 tests with 4 failures and 14 errors; the status-vocabulary failure was fixed afterward, and the remaining startup-chain failures are caused by the pre-existing ignored data/snapshot.json mismatch for the current agentic-art-research and agentic-art-production manifest pins. No child repository, real public target, user path, credential, private/restricted data, raw conversation, or external artifact body was written; synthetic temporary Git targets only. Acceptance 1/1."
     stop_if: [The automatic authority accepts a work or arbitrary request, public target content is not mechanically safe, an unrelated dirty target would be overwritten, Git or remote publication is automated, a user path or credential enters tracked evidence]
 
   - id: AUTONOMY-READINESS-MANIFEST-001

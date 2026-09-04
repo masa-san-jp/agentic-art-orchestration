@@ -2161,3 +2161,15 @@
 ### Next exact action
 
 1. 親mainの最終SHAと全repoのIssue/PR、queue残件数をread-onlyで確認して引き渡す。
+
+## 2026-09-04 — PUBLIC-PROJECTION-AUTO-PLAN-001 completed
+
+- Task ID: `PUBLIC-PROJECTION-AUTO-PLAN-001`; target repository: `agentic-art-orchestration`; Issue SSOTは[#187](https://github.com/masa-san-jp/agentic-art-orchestration/issues/187)。branchは`agent/issue-187-auto-plan-projection-20260904`、implementation commitは`c3f62e6`、draft PRは[#188](https://github.com/masa-san-jp/agentic-art-orchestration/pull/188)。
+- `PLAN_READY` run / `PASSED` batchだけを許可する閉じた`automatic-plan-projection-authority/v1`と`AUTOMATIC_PLAN`経路を実装した。設定済みpublic rootの`plans/Pxxxx-<slug>/`へ公開安全なREADME、plan、metadata、必要なlayout準拠素材、index、catalog markerだけを、全件preflight後のatomic transactionで出力する。100件batch、決定的採番、再実行、policy/configuration/conflict、rollback、Git HEAD不変をsynthetic temporary targetで確認した。
+- work record・手動/任意requestは従来どおりhuman approvalを要求する。自動経路はinternal output、会話、handoff、debug、credential、local path、private/restricted dataをpublic targetへコピーせず、`git add`、commit、push、PR、merge、release、deploy、visibility変更、remote公開を行わない。
+- Acceptance `1/1`。focused public/run/batch/output/security tests `70/70 PASS`、docs regression `12/12 PASS`、validator、py_compile、JSON schema parse、diff checkがPASS。full discoveryは542 testsを実行し、status語彙検査を修正した後も、既存ignored `data/snapshot.json`のresearch/production manifest pin不一致に起因するstartup chain `3 failures/14 errors`が残る。tracked data・child repo・利用者targetは変更していない。
+- Leaseは`available/unassigned`へ解放済み。queue version `66`でtaskをDONE、state version `206`で`last_completed_task`を更新した。次は人間によるPR #188レビューであり、本handoffではmerge・公開確定を行わない。
+
+### Next exact action
+
+1. 人間がdraft PR #188のauthority境界、公開target transaction、local snapshot prerequisiteを確認し、merge可否を判断する。
