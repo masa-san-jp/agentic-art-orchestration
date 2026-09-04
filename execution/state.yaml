@@ -1,29 +1,29 @@
-version: 191
-updated_at: "2026-09-04T14:26:18+09:00"
-active_task: null
-active_repository: null
+version: 192
+updated_at: "2026-09-04T14:29:44+09:00"
+active_task: WORKSPACE-BOOTSTRAP-APPLY-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
+  status: held
+  owner: codex-workspace-apply
   acquired_at: "2026-09-04T14:03:44+09:00"
-  expires_at: null
+  expires_at: "2026-09-04T17:00:00+09:00"
   lane: WORKSPACE_BOOTSTRAP
-  execution_id: WORKSPACE-BOOTSTRAP-PREFLIGHT-001:20260904-140344
-  released_at: "2026-09-04T14:26:18+09:00"
+  execution_id: WORKSPACE-BOOTSTRAP-APPLY-001:20260904-142944
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/workspace.py, tools/validate.py, tests/test_workspace_bootstrap.py, tests/test_workspace_guards.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
+    paths: [tools/workspace.py, tools/validate.py, tests/test_workspace_bootstrap.py, tests/test_workspace.py, tests/test_workspace_guards.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
     child_repositories: []
 checkpoint:
-  task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
+  task: WORKSPACE-BOOTSTRAP-APPLY-001
   repository: agentic-art-orchestration
-  start_point: 66863b68012431396f0e8f98df9e77ce54217b46
-  expected_changes: Inspect every manifest entry and missing remote before any clone, return sanitized workspace-bootstrap findings, and acquire/release a bootstrap lock without mutating existing checkouts or placing new clones.
-  result: "completed; implementation commit a1bb7ad7e24dd9b20a42fe0ec9e24f6bbe1e1f77; PR #170 merged as 3d786bb3bee18ae868bf1aeb5f0d18d85cd3a8b4; local checks passed."
+  start_point: 66ca349dfe86665d147f305ca0f10481a8b396ab
+  expected_changes: Clone every missing manifest entry into tool-owned staging, validate origin/branch/identity/clean state and pin readiness, atomically place all staged checkouts, recover only this run's staging on failure, and preserve clean existing checkouts.
+  result: in_progress; claimed 2026-09-04T14:29:44+09:00 by codex-workspace-apply; implementation and checks pending.
 last_completed_task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
 resume_from:
-  task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
-  action: "Claim WORKSPACE-BOOTSTRAP-APPLY-001, inspect Issue #150 and the preflight implementation, then implement tool-owned staging, validated atomic placement, race recovery, idempotent reuse, and pin readiness in temporary fixtures."
+  task: WORKSPACE-BOOTSTRAP-APPLY-001
+  action: "Inspect Issue #150, the workspace-bootstrap/v1 contract, the completed preflight, and legacy clone helpers, then implement tool-owned staging, validated atomic placement, race recovery, idempotent reuse, and pin readiness in temporary fixtures."
   command: .venv/bin/python tools/validate.py --check
 
 issue_intake:

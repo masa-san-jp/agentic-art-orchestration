@@ -1,5 +1,5 @@
-version: 53
-updated_at: "2026-09-04T14:26:18+09:00"
+version: 54
+updated_at: "2026-09-04T14:29:44+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1331,7 +1331,7 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-APPLY-001
     milestone: M28
     title: Implement staged bootstrap, idempotent reuse, and pin readiness
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

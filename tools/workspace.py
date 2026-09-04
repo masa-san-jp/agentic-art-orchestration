@@ -40,6 +40,8 @@ BOOTSTRAP_STATUS_EXIT_CODES = {
     "FAILED": 1,
 }
 BOOTSTRAP_LOCK_NAME = ".agentic-art-bootstrap.lock"
+BOOTSTRAP_STAGING_PREFIX = ".agentic-art-bootstrap-"
+BOOTSTRAP_STAGING_MARKER = ".agentic-art-bootstrap.json"
 BOOTSTRAP_FINDING_CODES = {
     "missing": "MISSING",
     "non-directory": "NON_DIRECTORY",
@@ -55,6 +57,7 @@ BOOTSTRAP_FINDING_CODES = {
     "behind": "BEHIND",
     "diverged": "DIVERGED",
     "remote-access": "REMOTE_ACCESS",
+    "clone-failed": "CLONE_FAILED",
     "race": "RACE",
     "not-run": "NOT_RUN",
     "pin-drift": "PIN_DRIFT",
@@ -928,11 +931,201 @@ def _bootstrap_preflight_remediation(status: str) -> list[str]:
             "rerun bootstrap after the concurrent bootstrap has completed or the operator has recovered it",
         ],
         "FAILED": [
-            "read-only preflight passed for the available entries; the staged bootstrap apply task must place missing checkouts",
-            "use a fresh temporary workspace or wait for the bootstrap apply implementation before assigning child work",
+            "bootstrap stopped before all missing checkouts were placed; inspect the sanitized findings and retry",
+            "preserve existing paths and recover only the tool-owned staging reported by the bootstrap run",
         ],
     }
     return remediations.get(status, ["inspect the sanitized bootstrap findings and resolve the precondition manually"])
+
+
+def _bootstrap_git_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    environment.update({"GIT_TERMINAL_PROMPT": "0", "GIT_OPTIONAL_LOCKS": "0"})
+    return environment
+
+
+def _bootstrap_clone_repository(repository: dict, destination: Path, remote: str) -> None:
+    """Clone into tool-owned staging without retaining Git output or allowing prompts."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        clone = subprocess.run(
+            ["git", "clone", "--branch", repository["default_branch"], remote, str(destination)],
+            cwd=None,
+            env=_bootstrap_git_environment(),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise WorkspaceError("bootstrap clone failed; remediation: inspect remote access and retry") from exc
+    if clone.returncode:
+        raise WorkspaceError("bootstrap clone failed; remediation: inspect remote access and retry")
+    try:
+        configured = subprocess.run(
+            ["git", "config", "--local", "orchestration.repo-id", repository["id"]],
+            cwd=destination,
+            env=_bootstrap_git_environment(),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise WorkspaceError("bootstrap checkout identity failed; remediation: discard only tool-owned staging and retry") from exc
+    if configured.returncode:
+        raise WorkspaceError("bootstrap checkout identity failed; remediation: discard only tool-owned staging and retry")
+
+
+def _bootstrap_stage_guard(repository: dict, path: Path, expected: str) -> dict:
+    """Validate a staged clone without changing its refs, branch, or worktree."""
+    if path.is_symlink() or not path.is_dir():
+        return {"blocked": True, "reason_codes": ["invalid-checkout"], "observed": {"head": None}}
+    guard = guard_repository(repository, path, expected)
+    observed = guard.get("observed", {})
+    if not guard.get("blocked"):
+        configured_code, configured_id, _ = run_git_optional(
+            ["config", "--local", "--get", "orchestration.repo-id"], cwd=path
+        )
+        if configured_code or configured_id != repository["id"]:
+            guard = dict(guard)
+            guard["blocked"] = True
+            guard["reason_codes"] = list(guard.get("reason_codes", [])) + ["repository-mismatch"]
+    if not guard.get("blocked") and observed.get("branch") != repository["default_branch"]:
+        guard = dict(guard)
+        guard["blocked"] = True
+        guard["reason_codes"] = list(guard.get("reason_codes", [])) + ["invalid-checkout"]
+    expected_upstream = f"origin/{repository['default_branch']}"
+    if not guard.get("blocked") and observed.get("upstream") != expected_upstream:
+        guard = dict(guard)
+        guard["blocked"] = True
+        guard["reason_codes"] = list(guard.get("reason_codes", [])) + ["upstream-invalid"]
+    return guard
+
+
+def _bootstrap_guard_fingerprint(guard: dict) -> tuple[object, ...]:
+    observed = guard.get("observed", {}) if isinstance(guard, dict) else {}
+    return (
+        observed.get("head"),
+        observed.get("branch"),
+        observed.get("upstream"),
+        observed.get("remote"),
+        observed.get("dirty"),
+        tuple(observed.get("status_entries", [])),
+        observed.get("ahead"),
+        observed.get("behind"),
+    )
+
+
+def _bootstrap_staging_candidates(workspace_root: Path) -> list[Path]:
+    """List only marked tool-owned staging directories; never recover or delete them here."""
+    parent = _absolute_lexical_path(workspace_root).parent
+    if not parent.is_dir():
+        return []
+    candidates = []
+    try:
+        entries = sorted(parent.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return []
+    for entry in entries:
+        if not entry.name.startswith(BOOTSTRAP_STAGING_PREFIX) or entry.is_symlink() or not entry.is_dir():
+            continue
+        marker = entry / BOOTSTRAP_STAGING_MARKER
+        if not marker.is_file() or marker.is_symlink():
+            continue
+        try:
+            metadata = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if (
+            isinstance(metadata, dict)
+            and metadata.get("contract_version") == "workspace-bootstrap-staging/v1"
+            and isinstance(metadata.get("manifest_hash"), str)
+            and len(metadata["manifest_hash"]) == 64
+        ):
+            candidates.append(entry)
+    return candidates
+
+
+def _create_bootstrap_staging(workspace_root: Path, manifest: dict) -> Path:
+    """Create a marker-bearing staging directory owned by this bootstrap run."""
+    staging = Path(tempfile.mkdtemp(prefix=BOOTSTRAP_STAGING_PREFIX, dir=_absolute_lexical_path(workspace_root).parent))
+    marker = staging / BOOTSTRAP_STAGING_MARKER
+    metadata = {
+        "contract_version": "workspace-bootstrap-staging/v1",
+        "manifest_hash": sha256_text(canonical_json(manifest)),
+        "owner": "agentic-art-orchestration",
+    }
+    try:
+        marker.write_text(canonical_json(metadata) + "\n", encoding="utf-8")
+    except Exception:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return staging
+
+
+def _cleanup_bootstrap_staging(staging: Path) -> None:
+    """Remove only the exact staging directory created by this run."""
+    if staging.name.startswith(BOOTSTRAP_STAGING_PREFIX) and not staging.is_symlink():
+        shutil.rmtree(staging, ignore_errors=False)
+
+
+def _place_bootstrap_checkout(staged: Path, destination: Path) -> list[Path]:
+    """Place one staged checkout with same-filesystem rename after all checks pass."""
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError(destination)
+    missing_parents: list[Path] = []
+    parent = destination.parent
+    while not parent.exists():
+        missing_parents.append(parent)
+        if parent == parent.parent:
+            break
+        parent = parent.parent
+    for directory in reversed(missing_parents):
+        directory.mkdir()
+    os.replace(staged, destination)
+    return missing_parents
+
+
+def _bootstrap_race_result(
+    manifest: dict,
+    workspace_root: Path,
+    records_by_id: dict[str, dict],
+    *,
+    offline: bool,
+    missing_ids: set[str],
+    lock_status: str = "RELEASED",
+) -> dict:
+    records = []
+    for repository in manifest["repositories"]:
+        record = records_by_id[repository["id"]]
+        if repository["id"] in missing_ids or record.get("guard_status") != "PASS":
+            record = _bootstrap_record(
+                repository,
+                action="not-run",
+                head=None,
+                guard_status="NOT_RUN",
+                reason_codes=["race"],
+            )
+        else:
+            record = _bootstrap_record(
+                repository,
+                action="reused",
+                head=record.get("head"),
+                guard_status="PASS",
+                reason_codes=["race"],
+            )
+        records.append(record)
+    return build_bootstrap_result(
+        manifest,
+        workspace_root,
+        status="BLOCKED_RACE",
+        repositories=records,
+        changed_count=0,
+        offline_fixture=offline,
+        remediations=_bootstrap_preflight_remediation("BLOCKED_RACE"),
+        lock_status=lock_status,
+    )
 
 
 def validate_bootstrap_result(result: dict, source: str = "workspace-bootstrap") -> list[str]:
@@ -1030,7 +1223,7 @@ def build_bootstrap_result(
 
 
 def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fixture_root: Path) -> dict:
-    """Preflight every destination and missing remote before a future apply stage."""
+    """Preflight, stage, validate, and safely place every missing manifest checkout."""
     workspace_root = _absolute_lexical_path(workspace_root)
     destination_issues = _workspace_destination_issues(manifest, workspace_root)
     resolved_root = workspace_root.resolve(strict=False)
@@ -1087,11 +1280,34 @@ def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fix
             lock_status="BLOCKED_EXISTING",
         )
 
+    if _bootstrap_staging_candidates(workspace_root):
+        records = [
+            _bootstrap_record(
+                repository,
+                action="not-run",
+                head=None,
+                guard_status="NOT_RUN",
+                reason_codes=["race"],
+            )
+            for repository in manifest["repositories"]
+        ]
+        return build_bootstrap_result(
+            manifest,
+            workspace_root,
+            status="BLOCKED_RACE",
+            repositories=records,
+            changed_count=0,
+            offline_fixture=offline,
+            remediations=_bootstrap_preflight_remediation("BLOCKED_RACE"),
+            lock_status="BLOCKED_EXISTING",
+        )
+
     offline_remotes = None
     if offline:
         offline_remotes, _ = ensure_offline_remotes(manifest, fixture_root)
 
     records_by_id: dict[str, dict] = {}
+    existing_fingerprints: dict[str, tuple[object, ...]] = {}
     existing_blocked = False
     missing: list[tuple[dict, str]] = []
     pin_drift = False
@@ -1120,7 +1336,7 @@ def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fix
             )
             continue
         try:
-            guard = guard_repository(repository, destination, expected_remote(repository, offline_remotes))
+            guard = _bootstrap_stage_guard(repository, destination, expected_remote(repository, offline_remotes))
         except (OSError, WorkspaceError):
             guard = {"blocked": True, "reason_codes": ["invalid-checkout"], "observed": {"head": None}}
         record = _bootstrap_record(
@@ -1131,6 +1347,8 @@ def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fix
             reason_codes=guard.get("reason_codes", []),
         )
         records_by_id[repository_id] = record
+        if not guard.get("blocked"):
+            existing_fingerprints[repository_id] = _bootstrap_guard_fingerprint(guard)
         if record["guard_status"] != "PASS":
             existing_blocked = True
         if "PIN_DRIFT" in record["finding_codes"]:
@@ -1182,34 +1400,221 @@ def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fix
         )
 
     if missing:
-        if not acquire_bootstrap_lock(workspace_root, manifest):
-            for repository, _ in missing:
-                record = records_by_id[repository["id"]]
-                record["finding_codes"] = _bootstrap_reason_codes(["race"])
-            records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
+        try:
+            lock_acquired = acquire_bootstrap_lock(workspace_root, manifest)
+        except (OSError, WorkspaceError):
+            records = [
+                _bootstrap_record(
+                    repository,
+                    action="not-run",
+                    head=None,
+                    guard_status="NOT_RUN",
+                    reason_codes=["clone-failed"],
+                )
+                if repository["id"] in {item["id"] for item, _ in missing}
+                else records_by_id[repository["id"]]
+                for repository in manifest["repositories"]
+            ]
             return build_bootstrap_result(
                 manifest,
                 workspace_root,
-                status="BLOCKED_RACE",
+                status="FAILED",
                 repositories=records,
                 changed_count=0,
                 offline_fixture=offline,
-                remediations=_bootstrap_preflight_remediation("BLOCKED_RACE"),
+                remediations=_bootstrap_preflight_remediation("FAILED"),
+                lock_status="NOT_ACQUIRED",
+            )
+        if not lock_acquired:
+            return _bootstrap_race_result(
+                manifest,
+                workspace_root,
+                records_by_id,
+                offline=offline,
+                missing_ids={repository["id"] for repository, _ in missing},
                 lock_status="BLOCKED_EXISTING",
             )
+
+        missing_ids = {repository["id"] for repository, _ in missing}
+        staging_root: Path | None = None
+        placed: list[tuple[Path, Path]] = []
+        created_parent_directories: list[Path] = []
+        status = "FAILED"
+        failure_id: str | None = None
+        failure_code = "clone-failed"
+        changed_count = 0
+        keep_placed = False
+        lock_status = "HELD"
+        rollback_failed = False
         try:
-            lock_status = "RELEASED"
+            try:
+                staging_root = _create_bootstrap_staging(workspace_root, manifest)
+            except (OSError, WorkspaceError):
+                failure_id = next(iter(missing_ids), None)
+            if staging_root is not None:
+                for repository, remote in missing:
+                    staged = staging_root / repository["path"]
+                    try:
+                        _bootstrap_clone_repository(repository, staged, remote)
+                        guard = _bootstrap_stage_guard(repository, staged, remote)
+                    except (OSError, WorkspaceError):
+                        failure_id = repository["id"]
+                        break
+                    if guard.get("blocked"):
+                        failure_id = repository["id"]
+                        break
+
+                if failure_id is None:
+                    race_detected = False
+                    for repository in manifest["repositories"]:
+                        repository_id = repository["id"]
+                        if repository_id not in existing_fingerprints:
+                            continue
+                        destination = repo_path(workspace_root, repository)
+                        try:
+                            guard = guard_repository(
+                                repository,
+                                destination,
+                                expected_remote(repository, offline_remotes),
+                            )
+                        except (OSError, WorkspaceError):
+                            race_detected = True
+                            break
+                        if guard.get("blocked") or _bootstrap_guard_fingerprint(guard) != existing_fingerprints[repository_id]:
+                            race_detected = True
+                            break
+                    for repository, _ in missing:
+                        destination = repo_path(workspace_root, repository)
+                        if destination.exists() or destination.is_symlink():
+                            race_detected = True
+                            break
+                    if race_detected:
+                        status = "BLOCKED_RACE"
+                    else:
+                        placement_failed = False
+                        placement_race = False
+                        for repository, _ in missing:
+                            staged = staging_root / repository["path"]
+                            destination = repo_path(workspace_root, repository)
+                            try:
+                                created = _place_bootstrap_checkout(staged, destination)
+                                created_parent_directories.extend(created)
+                                placed.append((staged, destination))
+                            except FileExistsError:
+                                placement_race = True
+                                break
+                            except (OSError, WorkspaceError):
+                                failure_id = repository["id"]
+                                placement_failed = True
+                                break
+                        if placement_race:
+                            status = "BLOCKED_RACE"
+                        elif placement_failed or len(placed) != len(missing):
+                            status = "FAILED"
+                        else:
+                            final_records: dict[str, dict] = {}
+                            final_race = False
+                            final_failure = False
+                            final_pin_drift = False
+                            for repository in manifest["repositories"]:
+                                repository_id = repository["id"]
+                                destination = repo_path(workspace_root, repository)
+                                expected = expected_remote(repository, offline_remotes)
+                                try:
+                                    guard = _bootstrap_stage_guard(repository, destination, expected)
+                                except (OSError, WorkspaceError):
+                                    guard = {"blocked": True, "reason_codes": ["invalid-checkout"], "observed": {"head": None}}
+                                if repository_id in existing_fingerprints:
+                                    if guard.get("blocked") or _bootstrap_guard_fingerprint(guard) != existing_fingerprints[repository_id]:
+                                        final_race = True
+                                        break
+                                    final_records[repository_id] = _bootstrap_record(
+                                        repository,
+                                        action="reused",
+                                        head=guard.get("observed", {}).get("head"),
+                                        guard_status="PASS",
+                                        reason_codes=guard.get("reason_codes", []),
+                                    )
+                                else:
+                                    if guard.get("blocked") or guard.get("observed", {}).get("branch") != repository["default_branch"]:
+                                        final_failure = True
+                                        failure_id = repository_id
+                                        break
+                                    final_records[repository_id] = _bootstrap_record(
+                                        repository,
+                                        action="cloned",
+                                        head=guard.get("observed", {}).get("head"),
+                                        guard_status="PASS",
+                                        reason_codes=guard.get("reason_codes", []),
+                                    )
+                                    if "PIN_DRIFT" in final_records[repository_id]["finding_codes"]:
+                                        final_pin_drift = True
+                            if final_race:
+                                status = "BLOCKED_RACE"
+                            elif final_failure:
+                                status = "FAILED"
+                            else:
+                                records_by_id.update(final_records)
+                                status = "BLOCKED_PIN_DRIFT" if final_pin_drift else "READY"
+                                changed_count = len(missing)
+                                keep_placed = True
+            if failure_id is not None and status == "FAILED":
+                for repository, _ in missing:
+                    code = failure_code if repository["id"] == failure_id else "not-run"
+                    records_by_id[repository["id"]] = _bootstrap_record(
+                        repository,
+                        action="not-run",
+                        head=None,
+                        guard_status="NOT_RUN",
+                        reason_codes=[code],
+                    )
         finally:
-            release_bootstrap_lock(workspace_root)
+            if not keep_placed and placed:
+                try:
+                    for staged, destination in reversed(placed):
+                        if destination.exists() and not staged.exists():
+                            staged.parent.mkdir(parents=True, exist_ok=True)
+                            os.replace(destination, staged)
+                except OSError:
+                    status = "BLOCKED_RACE"
+                    failure_code = "race"
+                    rollback_failed = True
+                else:
+                    for directory in sorted(created_parent_directories, key=lambda item: len(item.parts), reverse=True):
+                        try:
+                            directory.rmdir()
+                        except OSError:
+                            pass
+            if staging_root is not None and not rollback_failed:
+                try:
+                    _cleanup_bootstrap_staging(staging_root)
+                except OSError:
+                    status = "FAILED"
+            try:
+                release_bootstrap_lock(workspace_root)
+                lock_status = "RELEASED"
+            except OSError:
+                status = "FAILED"
+                lock_status = "HELD"
+
+        if status == "BLOCKED_RACE":
+            return _bootstrap_race_result(
+                manifest,
+                workspace_root,
+                records_by_id,
+                offline=offline,
+                missing_ids=missing_ids,
+                lock_status=lock_status,
+            )
         records = [records_by_id[repository["id"]] for repository in manifest["repositories"]]
         return build_bootstrap_result(
             manifest,
             workspace_root,
-            status="FAILED",
+            status=status,
             repositories=records,
-            changed_count=0,
+            changed_count=changed_count,
             offline_fixture=offline,
-            remediations=_bootstrap_preflight_remediation("FAILED"),
+            remediations=[] if status == "READY" else _bootstrap_preflight_remediation(status),
             lock_status=lock_status,
         )
 
