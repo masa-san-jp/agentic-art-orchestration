@@ -59,6 +59,9 @@ AGENT_ACTION_SCHEMA_PATH = ROOT / "schemas/agent-action.schema.json"
 AGENT_RESULT_SCHEMA_PATH = ROOT / "schemas/agent-result.schema.json"
 AUTONOMOUS_RUN_SCHEMA_PATH = ROOT / "schemas/autonomous-run.schema.json"
 BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
+OUTPUT_DESTINATIONS_SCHEMA_PATH = ROOT / "schemas/output-destinations.schema.json"
+DESTINATION_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/destination-resolution.schema.json"
+OUTPUT_DESTINATIONS_EXAMPLE_PATH = ROOT / "config/output-destinations.example.yaml"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -112,8 +115,11 @@ REQUIRED_FILES = [
     "tools/autonomous_runner.py",
     "schemas/batch-report-event.schema.json",
     "schemas/batch-run.schema.json",
+    "schemas/output-destinations.schema.json",
+    "schemas/destination-resolution.schema.json",
     "tools/batch_status.py",
     "tools/batch_run.py",
+    "tools/output_destinations.py",
     "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
@@ -450,6 +456,69 @@ def validate_batch_report_contract(
     event_types = event_schema.get("properties", {}).get("event_type", {}).get("enum")
     if event_types != ["STARTED", "COMPLETED", "FAILED", "RETRY", "DURATION", "TOKENS"]:
         errors.append(f"{source}: event type vocabulary is unsafe; remediation: preserve the fixed append-only event types")
+    return errors
+
+
+def validate_output_destinations_contract(
+    config_schema: dict | None = None,
+    resolution_schema: dict | None = None,
+    example: dict | None = None,
+    source: str = "output-destinations",
+) -> list[str]:
+    """Keep destination profiles and resolution evidence closed and versioned."""
+    config_schema = config_schema if config_schema is not None else load_json(OUTPUT_DESTINATIONS_SCHEMA_PATH)
+    resolution_schema = resolution_schema if resolution_schema is not None else load_json(DESTINATION_RESOLUTION_SCHEMA_PATH)
+    errors: list[str] = []
+    draft = "https://json-schema.org/draft/2020-12/schema"
+    for schema, label, version in (
+        (config_schema, "output destination", "output-destinations/v1"),
+        (resolution_schema, "destination resolution", "destination-resolution/v1"),
+    ):
+        if not isinstance(schema, dict) or schema.get("$schema") != draft:
+            errors.append(f"{source}: {label} schema must be Draft 2020-12; remediation: restore the closed versioned schema")
+            continue
+        if schema.get("additionalProperties") is not False:
+            errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
+        contract = schema.get("properties", {}).get("contract_version", {})
+        if not isinstance(contract, dict) or contract.get("const") != version:
+            errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
+
+    if isinstance(config_schema, dict):
+        if set(config_schema.get("required", [])) != {"contract_version", "profile", "destinations"}:
+            errors.append(f"{source}: output destination required fields are incomplete or expanded; remediation: keep the v1 profile minimal")
+        destinations = config_schema.get("properties", {}).get("destinations", {})
+        if not isinstance(destinations, dict) or destinations.get("additionalProperties") is not False:
+            errors.append(f"{source}: destination roles must be closed; remediation: reject unknown destination roles")
+        elif set(destinations.get("required", [])) != {"state_root", "internal_output_root"}:
+            errors.append(f"{source}: required destination roles are unsafe; remediation: require state_root and internal_output_root only")
+
+    if isinstance(resolution_schema, dict):
+        expected_required = {
+            "contract_version", "profile", "config_source", "config_sha256",
+            "run_id", "project_id", "destinations", "classification",
+        }
+        if set(resolution_schema.get("required", [])) != expected_required:
+            errors.append(f"{source}: resolution evidence required fields are incomplete or expanded; remediation: preserve the metadata-only envelope")
+        destinations = resolution_schema.get("properties", {}).get("destinations", {})
+        if not isinstance(destinations, dict) or destinations.get("additionalProperties") is not False:
+            errors.append(f"{source}: resolved destination roles must be closed; remediation: reject unknown roles")
+        resolved = {}
+        if isinstance(destinations, dict):
+            resolved = destinations.get("properties", {}).get("state_root", {})
+            if isinstance(resolved, dict) and "$ref" in resolved:
+                resolved = resolution_schema.get("$defs", {}).get("resolved_destination", {})
+        role_sources = resolved.get("properties", {}).get("source", {}).get("enum") if isinstance(resolved, dict) else None
+        if role_sources != ["direct-cli", "profile", "legacy-default"]:
+            errors.append(f"{source}: destination source vocabulary is unsafe; remediation: preserve direct/profile/legacy precedence")
+
+    if example is None:
+        try:
+            example = load_yaml(OUTPUT_DESTINATIONS_EXAMPLE_PATH)
+        except ValueError as exc:
+            errors.append(str(exc))
+    if example is not None and isinstance(config_schema, dict):
+        for schema_error in _schema_errors(example, config_schema, _source_label(OUTPUT_DESTINATIONS_EXAMPLE_PATH)):
+            errors.append(f"{schema_error}; remediation: keep the tracked example placeholder-only and schema-valid")
     return errors
 
 
@@ -3792,6 +3861,14 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
             validate_batch_report_contract(
                 load_json(BATCH_REPORT_EVENT_SCHEMA_PATH),
                 _source_label(BATCH_REPORT_EVENT_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_output_destinations_contract(
+                load_json(OUTPUT_DESTINATIONS_SCHEMA_PATH),
+                load_json(DESTINATION_RESOLUTION_SCHEMA_PATH),
+                load_yaml(OUTPUT_DESTINATIONS_EXAMPLE_PATH),
+                _source_label(OUTPUT_DESTINATIONS_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

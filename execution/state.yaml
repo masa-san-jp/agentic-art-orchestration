@@ -1,25 +1,25 @@
-version: 171
-updated_at: "2026-09-04T11:04:46+09:00"
-active_task: null
-active_repository: null
+version: 172
+updated_at: "2026-09-04T11:09:24+09:00"
+active_task: OUTPUT-DESTINATIONS-CONTRACT-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-03T20:48:39+09:00"
-  expires_at: null
-  lane: PARENT_CONTROL_PLANE
-  execution_id: HARNESS-RESEARCH-PIN-85-001:20260903-204839
-  released_at: "2026-09-03T21:26:57+09:00"
+  status: held
+  owner: codex-output-destinations-contract
+  acquired_at: "2026-09-04T11:09:24+09:00"
+  expires_at: "2026-09-04T12:30:00+09:00"
+  lane: OUTPUT_DESTINATIONS
+  execution_id: OUTPUT-DESTINATIONS-CONTRACT-001:20260904-110924
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [config/repositories.yaml, tests/fixtures/retrieval/index.json, execution]
-    child_repositories: [agentic-art-research]
+    paths: [schemas, config/output-destinations.example.yaml, tools/output_destinations.py, tools/validate.py, tests]
+    child_repositories: []
 checkpoint:
-  task: HARNESS-RESEARCH-PIN-85-001
+  task: OUTPUT-DESTINATIONS-CONTRACT-001
   repository: agentic-art-orchestration
-  start_point: 3ca61c511937131886c32c2b20b6393208aef0dc
-  expected_changes: Adopt the exact merged Research main pin in the parent manifest and retrieval provenance fixture, then qualify the pinned child without copying child internals.
-  result: completed; parent PR #145 merged as 29221de2fbf95604329aade4b6cfe6562185c18a, final completion record PR #146 merged as c8eff8c468493e9aeb119495db9a1f21f986d7c2, exact Research pin adopted, and all declared local checks passed.
+  start_point: 9511a343c6fae0552b112f86cab4c44d42b07391
+  expected_changes: Define output-destinations/v1 and destination-resolution/v1, implement the sole deterministic resolver with precedence and fail-closed path guards, and add synthetic contract tests without runtime wiring or user data.
+  result: in_progress; claim and lease recorded before implementation.
 last_completed_task: HARNESS-RESEARCH-PIN-85-001
 resume_from:
   task: OUTPUT-DESTINATIONS-CONTRACT-001

@@ -1251,7 +1251,7 @@ tasks:
   - id: OUTPUT-DESTINATIONS-CONTRACT-001
     milestone: M28
     title: Define the versioned output destination contract and shared resolver
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

@@ -1,0 +1,6 @@
+contract_version: output-destinations/v1
+profile: local
+destinations:
+  state_root: /absolute/path/to/orchestration-state
+  internal_output_root: /absolute/path/to/internal-output
+  public_projection_root: /absolute/path/to/public-project

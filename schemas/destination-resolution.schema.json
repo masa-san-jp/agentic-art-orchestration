@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/destination-resolution.schema.json",
+  "title": "Resolved output destinations v1",
+  "description": "Internal metadata-only evidence for deterministic destination selection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "profile",
+    "config_source",
+    "config_sha256",
+    "run_id",
+    "project_id",
+    "destinations",
+    "classification"
+  ],
+  "properties": {
+    "contract_version": {"const": "destination-resolution/v1"},
+    "profile": {"$ref": "#/$defs/profile"},
+    "config_source": {
+      "enum": ["cli-file", "environment-file", "legacy-defaults"]
+    },
+    "config_sha256": {"$ref": "#/$defs/hash64"},
+    "run_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+    "project_id": {"oneOf": [{"$ref": "#/$defs/project_id"}, {"type": "null"}]},
+    "destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_root", "internal_output_root"],
+      "properties": {
+        "state_root": {"$ref": "#/$defs/resolved_destination"},
+        "internal_output_root": {"$ref": "#/$defs/resolved_destination"},
+        "public_projection_root": {"$ref": "#/$defs/resolved_destination"}
+      }
+    },
+    "classification": {"const": "PROJECT_INTERNAL"}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "profile": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]{0,63}$"
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}){0,3}$"
+    },
+    "hash64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^/(?:[^\\u0000]*)$"
+    },
+    "resolved_destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "source"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute_path"},
+        "source": {"enum": ["direct-cli", "profile", "legacy-default"]}
+      }
+    }
+  }
+}
