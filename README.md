@@ -269,7 +269,7 @@ Drive、remote visibilityには接続しません。
 自動経路はレコード単位の`public_share`承認を要求しません。オーケストレーターが検証した
 production planだけを、公開境界・source hash・path safety・target layout/index/markerの
 preflight後に`plans/Pxxxx-<slug>/`へ反映します。各recordには`README.md`、`plan.md`、
-`metadata.yaml`を作り、`plans/index.yaml`とcollection READMEの管理対象markerを更新します。
+`metadata.yaml`を作り、`plans/index.yaml`とcollection READMEの管理対象markerを更新します。公開targetのルート`README.md`にも同じ`catalog_markers`のペアがある場合は、そこにルートからの`plans/.../README.md`リンク一覧を同じtransactionで更新します。ルートmarkerがない旧targetでは従来どおりcollection READMEだけを更新します。
 plan固有の素材が正規のrequestに含まれる場合だけ、既存のlayout contractで定める`media/`
 配下のallowlist pathを使います（Issueでいう`assets`相当の領域です）。
 
@@ -346,7 +346,7 @@ requestを対象とする既存のhuman-gated laneです。
 ~~~
 
 applyが変更できるのは新規record directory、対応する`plans/index.yaml`または`works/index.yaml`、
-collection READMEのcatalog marker内だけです。root README、既存record、marker外、Git ref、remote、
+collection READMEのcatalog marker内、および自動plan投影で明示的にmarkerを置いたroot READMEのcatalog marker内だけです。既存record、marker外、Git ref、remote、
 branch、commit、push、merge、release、repository visibilityは変更しません。同じsource/contentの
 再実行は`ALREADY_PROJECTED`、既存内容・dirty target・layout/index競合は`BLOCKED_CONFLICT`、
 policy違反は`BLOCKED_POLICY`、途中I/Oまたはrollback不全は`FAILED`です。失敗時はtransactionが

@@ -362,6 +362,34 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual([], replay["changed_paths"])
             self.assertEqual("NOT_REQUIRED", replay["human_gate"])
 
+    def test_automatic_plan_projection_updates_opt_in_root_catalog(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-plan-root-catalog-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            (target / "README.md").write_text(
+                "# Public project\n\n## Published plans\n\n"
+                "<!-- agentic-art:catalog:start -->\n"
+                "<!-- agentic-art:catalog:end -->\n",
+                encoding="utf-8",
+            )
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold root catalog")
+            report = self._automatic_report(root, "RUN-AUTO-ROOT-001")
+
+            result = projection.project_plan_automatic(
+                report,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+
+            self.assertEqual("APPLIED", result["status"])
+            self.assertIn("README.md", result["changed_paths"])
+            root_readme = (target / "README.md").read_text(encoding="utf-8")
+            self.assertIn("plans/P0001-automatic-plan/README.md", root_readme)
+            self.assertNotIn("<!-- agentic-art:catalog:start -->\n<!-- agentic-art:catalog:end -->", root_readme)
+
     def test_automatic_plan_projection_requires_configured_public_root(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-plan-config-") as temporary:
             root = Path(temporary)
