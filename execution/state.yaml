@@ -1,15 +1,15 @@
-version: 178
-updated_at: "2026-09-04T12:00:23+09:00"
-active_task: OUTPUT-DESTINATIONS-DOCS-001
-active_repository: agentic-art-orchestration
+version: 179
+updated_at: "2026-09-04T12:10:20+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-output-destinations-docs
+  status: available
+  owner: null
   acquired_at: "2026-09-04T12:00:23+09:00"
-  expires_at: "2026-09-04T14:00:23+09:00"
+  expires_at: null
   lane: OUTPUT_DESTINATIONS
   execution_id: OUTPUT-DESTINATIONS-DOCS-001:20260904-120023
-  released_at: null
+  released_at: "2026-09-04T12:10:20+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, PLANS.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 0884c58e2fea34d32561873a50d2097f86e90847
   expected_changes: Document the implemented output-destinations/v1 profile, four runtime CLI adapters, fresh-clone setup, deterministic recovery/errors, legacy rollback, and privacy boundary without recording user paths.
-  result: in_progress
-last_completed_task: OUTPUT-DESTINATIONS-RUNTIME-001
+  result: completed; parent PR #158 merged to main as c874a60bff6357cf25d94c3a8d4107e6e1517580 after validator, focused docs/output/project-status tests 24/24, profile offline dry run, parent full suite 501 tests with 1 expected skip, README check, and diff check passed; remote CI run 33832170207 failed before steps due to billing limit and was not counted.
+last_completed_task: OUTPUT-DESTINATIONS-DOCS-001
 resume_from:
-  task: OUTPUT-DESTINATIONS-DOCS-001
-  action: "Synchronize the destination profile documentation and verify all documented commands against the implementation."
+  task: PUBLIC-PROJECTION-CONTRACT-001
+  action: "Claim the smallest dependency-complete public projection contract task, then inspect Issue #149 and the nearest schemas/tests before implementing closed synthetic contracts."
   command: python3 tools/validate.py --check
 
 issue_intake:

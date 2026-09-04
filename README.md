@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T12:00:23+09:00`.
+Source updated at: `2026-09-04T12:10:20+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 8 | 0 | 1 | 0 | 121 | 130 |
+| 7 | 1 | 0 | 0 | 122 | 130 |
 
-Current task: `OUTPUT-DESTINATIONS-DOCS-001`; repository: `agentic-art-orchestration`; checkpoint: `OUTPUT-DESTINATIONS-DOCS-001`.
-Next action: Synchronize the destination profile documentation and verify all documented commands against the implementation.
-Ready: none.
-Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
+Current task: `null`; repository: `null`; checkpoint: `OUTPUT-DESTINATIONS-DOCS-001`.
+Next action: Claim the smallest dependency-complete public projection contract task, then inspect Issue #149 and the nearest schemas/tests before implementing closed synthetic contracts.
+Ready: `PUBLIC-PROJECTION-CONTRACT-001`.
+Next task: `PUBLIC-PROJECTION-CONTRACT-001`.
 Blocked:
 - none
 

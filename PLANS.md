@@ -738,3 +738,18 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `OUTPUT-DESTINATIONS-DOCS-001` and synchronize README, operator runbook, agent runtime guide, PLANS, state, and handoff with the now-implemented profile configuration and recovery behavior.
+
+## OUTPUT-DESTINATIONS-DOCS-001 — completed
+
+- Task ID: `OUTPUT-DESTINATIONS-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#148](https://github.com/masa-san-jp/agentic-art-orchestration/issues/148).
+- Parent PR [#158](https://github.com/masa-san-jp/agentic-art-orchestration/pull/158) merged to `main` as `c874a60bff6357cf25d94c3a8d4107e6e1517580`; implementation commit `1363991d101b6b34e19aac91cad265ce9290197e` documents the closed `output-destinations/v1` setup in README, operator runbook, and agent runtime guide.
+- Observable guidance now covers fresh-clone external profile creation, required/optional roles, the four runtime CLI mappings, direct/profile/environment/legacy precedence, deterministic remediation for unsafe paths and conflicts, create-only recovery, legacy rollback, and the rule that public projection is not written by the current runtime.
+- Acceptance evidence: validator PASS; focused output/docs/project-status tests `24/24 PASS`; `project_status.py --check-readme` PASS; profile-based `tools/run.py --offline-fixture --run-id DEST-DOCS-001` PASS with external `destination-resolution.json`; parent full suite `501` tests with `1` expected skip; `git diff --check` PASS.
+- Remote validate run `33832170207` failed before all job steps because the GitHub account billing limit prevented startup. It is retained as an environment observation and is not counted as a quality-gate pass.
+- Safety: no child repository, manifest pin, user absolute path, credential, private/restricted data, raw conversation, public target, or external artifact body entered Git. The tracked example remains placeholder-only; profile and generated evidence stayed Git-external. External artifacts are create-only and none were created.
+- Feedback: explicit = the user's request to evaluate whether each repository can be completed autonomously and fill missing requirements; inferred = none.
+- Lease is released as `available/unassigned`. The next dependency-complete task is `PUBLIC-PROJECTION-CONTRACT-001`, promoted to `READY`; workspace preflight remains independently eligible after the contract lane is selected.
+
+### Next exact action
+
+1. Claim `PUBLIC-PROJECTION-CONTRACT-001`, inspect Issue #149 plus the nearest public-projection schemas/tests, then implement the closed synthetic contracts without public target mutation.

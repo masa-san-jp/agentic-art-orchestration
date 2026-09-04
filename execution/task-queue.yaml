@@ -1283,7 +1283,7 @@ tasks:
   - id: OUTPUT-DESTINATIONS-DOCS-001
     milestone: M28
     title: Document configured destinations and recovery behavior
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -1293,6 +1293,7 @@ tasks:
     depends_on: [OUTPUT-DESTINATIONS-RUNTIME-001]
     acceptance: Synchronize README, operator runbook, agent runtime guide, PLANS, state, and handoff with the destination contract, fresh-clone setup, deterministic errors, legacy rollback, and privacy boundary. A new agent can configure a temporary profile and run the offline checks without conversation history.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_output_destinations tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #158 merged to main as c874a60bff6357cf25d94c3a8d4107e6e1517580; implementation commit 1363991d101b6b34e19aac91cad265ce9290197e synchronized README, docs/operator-runbook.md, and docs/agent-runtime-guide.md with output-destinations/v1, the four runtime adapters, fresh-clone profile setup, precedence, deterministic recovery, create-only rollback, and privacy/public boundaries. Validator, focused docs/output/project-status tests 24/24, README check, profile offline dry run DEST-DOCS-001, parent full suite 501 tests with 1 skipped, and diff check passed. Remote validate run 33832170207 failed before all job steps because of the account billing limit and is not counted as a quality-gate pass. No child repository, pin, user path, credential, private data, raw conversation, public target, or external artifact body was written. Explicit feedback was the request to evaluate and complete autonomous implementation requirements; inferred feedback none."
     stop_if: [Documentation would promise an unimplemented command, A personal absolute path or credential would be tracked, README status cannot be generated from queue/state, A public projection behavior is required]
 
   - id: WORKSPACE-BOOTSTRAP-CONTRACT-001
@@ -1359,7 +1360,7 @@ tasks:
   - id: PUBLIC-PROJECTION-CONTRACT-001
     milestone: M29
     title: Define public project, request, approval, and result contracts
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
