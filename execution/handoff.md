@@ -2139,3 +2139,14 @@
 ### Next exact action
 
 1. 親repoのvalidator、full suite、project-status README、py_compile、diff checkを実行し、全autonomy-readiness証跡とremote mainを最終確認する。
+
+## 2026-09-04 — RESEARCH-EVALUATION-DOCS-001 completed
+
+- research READMEの直接`evaluate.py --offline-fixture`例がcanonical `projects/`へ書こうとしてfail closedすることを追加監査で確認し、Issue #91として子repoへ起票した。
+- `README.md`は一時`EVAL_ROOT`を`mktemp`で作成し、`evaluate.py --offline-fixture ... --root "$EVAL_ROOT"`を実行する例へ修正した。`tests/test_docs_check.py`はそのCLIを実行して6/6評価成功とcanonical `projects/harmony-study`不存在を検証する。
+- Issue #91はPR #92（implementation `bc3bf4f77614cc1718fa9e875207d4c073bb1403`）でmainへ`71bfec77ea0d189186b8248565d340c124b81eab`としてmerge済み・CLOSED。focused 4/4、full 291/291、compileall、validator、security、docs、graph、chaos、release、handoff release、diff checkがPASSした。
+- remote run `33857111971`は`steps=[]`のaccount billing開始前失敗であり、local quality evidenceと分離した。project/data/schema/runtime、credential、private data、raw conversation、external artifactは変更・保存していない。
+
+### Next exact action
+
+1. 親repoの最終validator、full suite、README status、py_compile、diff checkを実行し、親mainと全child Issueの状態を確認する。

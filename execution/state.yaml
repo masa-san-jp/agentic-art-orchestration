@@ -1,5 +1,5 @@
-version: 201
-updated_at: "2026-09-04T17:49:45+09:00"
+version: 202
+updated_at: "2026-09-04T18:12:24+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -15,12 +15,12 @@ lease:
     paths: [config/repositories.yaml, tests/test_validate.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
     child_repositories: []
 checkpoint:
-  task: VIEWER-RESPONSE-AUTONOMY-001
-  repository: viewer-response-notes
-  start_point: 205eeeb8dd03e29e2b4628e00bcf69738b77f973
-  expected_changes: Complete the viewer child autonomous task/work/completion contract through AGENTS.md and documentation regression tests only, preserve aggregate-only append-only privacy boundaries, and record child proof in parent state.
-  result: completed; child PR #5 merged as 78b6e9a87831eca5a5c20993374b61b8cc61bd0d; Issue #4 closed; lease released.
-last_completed_task: VIEWER-RESPONSE-AUTONOMY-001
+  task: RESEARCH-EVALUATION-DOCS-001
+  repository: agentic-art-research
+  start_point: f1731e6cc7e63154bffdafc33af31c1462b6ab8b
+  expected_changes: Correct the direct research README offline evaluation example to use an explicit temporary root, add executable documentation regression evidence, and preserve canonical project/data/schema/runtime boundaries.
+  result: completed; child PR #92 merged as 71bfec77ea0d189186b8248565d340c124b81eab; Issue #91 closed; lease released.
+last_completed_task: RESEARCH-EVALUATION-DOCS-001
 resume_from:
   task: null
   action: "The autonomy-readiness child tasks are complete; run the final parent validation and remote-state audit before handoff."
@@ -1434,8 +1434,7 @@ autonomy_readiness_evaluation:
     explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
     inferred: none
   unresolved:
-    - "All four child follow-up Issues (#83, #89, #58, and #4) have merged changes and are CLOSED; art-history and marketing-trends required no child follow-up."
-    - "The README's direct evaluate.py --offline-fixture convenience command in agentic-art-research fails closed when it materializes into canonical projects/; it remains outside Issue #89's AGENTS.md/tests-only scope."
+    - "All five child follow-up Issues (#83, #89, #58, #4, and #91) have merged changes and are CLOSED; art-history and marketing-trends required no child follow-up."
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
 
 self_model_autonomy:
@@ -1524,7 +1523,6 @@ research_autonomy:
     explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
     inferred: none
   unresolved:
-    - "The README's direct evaluate.py --offline-fixture convenience command fails closed when it materializes into canonical projects/; this was outside Issue #89's AGENTS.md/tests-only scope and did not affect the child acceptance checks."
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
 
 production_autonomy:
@@ -1598,3 +1596,44 @@ viewer_response_autonomy:
     inferred: none
   unresolved:
     - "GitHub Actions checks were not reported for child PR #5; local checks are the observed quality evidence."
+
+research_evaluation_docs:
+  status: complete
+  observed_at: "2026-09-04T18:12:24+09:00"
+  task: RESEARCH-EVALUATION-DOCS-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/91
+  target_repository: agentic-art-research
+  start_point: f1731e6cc7e63154bffdafc33af31c1462b6ab8b
+  implementation_commit: bc3bf4f77614cc1718fa9e875207d4c073bb1403
+  pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/92
+  merge_commit: 71bfec77ea0d189186b8248565d340c124b81eab
+  issue_state: CLOSED
+  acceptance: 1/1
+  changes:
+    - "README.md now creates an explicit temporary EVAL_ROOT and passes --root to the direct evaluate.py offline example, keeping materialized projects outside the canonical repository."
+    - "tests/test_docs_check.py executes the portable command and asserts the canonical projects/harmony-study path remains absent."
+  verification:
+    focused_docs_tests: "4/4 PASS"
+    child_full_suite: "291/291 PASS"
+    compileall: PASS
+    validator: PASS
+    security_check: PASS
+    docs_check: PASS
+    graph_check: PASS
+    chaos_check: PASS
+    release_check: PASS
+    handoff_release_check: PASS
+    diff_check: PASS
+  remote_ci:
+    run_id: 33857111971
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit; job steps were empty
+    counted_as_quality_gate: false
+  child_project_data_schema_runtime_changed: false
+  sensitive_data: "none; no credential, token, PRIVATE_RAW, RESTRICTED value, direct identifier, private data, raw conversation, or user path was stored"
+  external_artifact: none
+  feedback:
+    explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
+    inferred: none
+  unresolved:
+    - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."

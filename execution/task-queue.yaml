@@ -1,5 +1,5 @@
-version: 61
-updated_at: "2026-09-04T17:49:45+09:00"
+version: 62
+updated_at: "2026-09-04T18:12:24+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1520,3 +1520,19 @@ tasks:
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
     completion: "Viewer implementation commit 7e38c305c3b2b82c3ab04f640aa69370d50ded67 was merged to the child default branch by PR #5 as 78b6e9a87831eca5a5c20993374b61b8cc61bd0d; Issue #4 is CLOSED. AGENTS.md now defines Issue/schema/README/tests authority order, one-task inspect -> decide -> edit -> test -> diff -> report workflow, allowed and generated paths, append-only/create-only rules, privacy/external stop conditions, and metadata-only completion evidence. tests/test_contract.py adds documentation regression coverage. Child checks: 13/13 unittest PASS, validator PASS, README export example EXPORTED, and git diff --check PASS. PR #5 reported no remote checks; local checks are the observable quality evidence. No record, assessment, export, schema, credential, private data, raw response, or external artifact body changed. Acceptance 1/1."
     stop_if: [Raw response/PII/free text is needed, An existing record must be rewritten, An external write or schema change is required]
+
+  - id: RESEARCH-EVALUATION-DOCS-001
+    milestone: M30
+    title: Keep direct research evaluation outside the canonical workspace
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/91
+    target_repositories: [agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [RESEARCH-AUTONOMY-001]
+    acceptance: The direct README offline evaluation command uses an explicit temporary root, never materializes under canonical projects/data, and has executable documentation regression coverage without project/data/schema/runtime changes.
+    checks: [python3 -m unittest tests.test_docs_check -v, python3 -m unittest discover -s tests -v, python3 -m compileall -q tools tests, python3 tools/validate.py --check, python3 tools/security_check.py --check, python3 tools/docs_check.py --check, python3 tools/build_graph.py --check, python3 tools/chaos_check.py, python3 tools/release_check.py --offline-fixture tests/fixtures/harmony --ci-evidence execution/ci-evidence.json, python3 tools/handoff_release_check.py --require-schema-snapshot, git diff --check]
+    completion: "Research implementation commit bc3bf4f77614cc1718fa9e875207d4c073bb1403 was merged to child main by PR #92 as 71bfec77ea0d189186b8248565d340c124b81eab; Issue #91 is CLOSED. README now creates EVAL_ROOT with mktemp and passes --root to evaluate.py, and tests/test_docs_check.py executes the portable command while asserting canonical projects/harmony-study remains absent. Acceptance 1/1. Child focused docs tests 4/4 PASS, full unittest 291/291 PASS, compileall, validator, security, docs, graph, chaos, release, handoff release, and git diff checks PASS. Remote CI run 33857111971 failed before steps with steps=[] because of the account billing limit and is not counted as a quality-gate pass. No project/data/schema/runtime/credential/private data/raw conversation or external artifact body changed."
+    stop_if: [The canonical project/data tree must be used as an evaluation output, A project/data/schema/runtime change is required, A credential or external write is required]
