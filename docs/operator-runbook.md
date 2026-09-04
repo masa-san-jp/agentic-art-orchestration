@@ -45,6 +45,45 @@ startupは全manifest repoのremote headをread-onlyで確認し、qualified pin
 
 M14完了前はこのcommandが存在しないため、従来のnetworkless smokeと実repo workspace検査を用いる。存在しないstartup commandを実装済みとして扱わない。
 
+### 出力先プロファイル（output-destinations/v1）
+
+stateと内部成果物を会話やGitへ依存させないため、fresh cloneではprofileをGit外に作る。
+`config/output-destinations.example.yaml`を外部一時ディレクトリへコピーし、3つのroleを
+絶対パスへ置き換える。`state_root`と`internal_output_root`は必須で、各rootはfilesystem root、
+親repo、child checkout、他roleの配下に置かない。`public_projection_root`は予約領域であり、
+現在の実装はここへ書き込まない。
+
+~~~bash
+DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
+DESTINATIONS_FILE="$DESTINATIONS_DIR/profile.yaml"
+cp config/output-destinations.example.yaml "$DESTINATIONS_FILE"
+$EDITOR "$DESTINATIONS_FILE"
+.venv/bin/python tools/validate.py --check
+~~~
+
+新しいagentの最小dry runは次である。
+
+~~~bash
+.venv/bin/python tools/run.py --offline-fixture \
+  --run-id DEST-RUNBOOK-001 --destinations-file "$DESTINATIONS_FILE"
+~~~
+
+入口ごとの解決先は、`run.py`が`state_root`と`internal_output_root/run/<project-id>/`、
+`batch_run.py`が`state_root`と`internal_output_root/batch/<run-id>/`、
+`production_exchange.py`が`internal_output_root/production-exchange/`、
+`autonomous_runner.py`が`state_root`である。後三者はprofileだけで入力workspace、export、
+worker等まで生成されるわけではなく、各入口の既存必須引数を引き続き渡す。
+
+優先順位はrole単位で直接CLI値、`--destinations-file`、`AGENTIC_ART_DESTINATIONS_FILE`、
+legacy既定値の順で、profileの暗黙検索はしない。`destination-resolution.json`はrun単位の
+state rootへcreate-onlyで保存する。既存のresolution evidenceや派生出力が異なる場合は、同じ
+profile・run-idで再開するか新しいrun-id／空rootを使い、既存データを削除・上書きしない。
+
+復旧はエラーのremediationに従う。`must be absolute`は絶対パスへ、`overlap`は分離したrootへ、
+`inside ... repository/child checkout`はGit外へ、`not empty`は新しい空rootへ直す。profileを外す
+rollbackでは`--destinations-file`を外し、環境変数を`unset`し、legacy入口の明示引数へ戻す。
+profile、evidence、ログへcredential、会話本文、PRIVATE_RAW、RESTRICTED、個人識別情報を入れない。
+
 ### networkless smoke
 
 ネットワークを使わない再現確認は次の順で行う。

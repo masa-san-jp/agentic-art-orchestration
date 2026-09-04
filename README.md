@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T11:56:52+09:00`.
+Source updated at: `2026-09-04T12:00:23+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 9 | 0 | 0 | 0 | 121 | 130 |
+| 8 | 0 | 1 | 0 | 121 | 130 |
 
-Current task: `null`; repository: `null`; checkpoint: `OUTPUT-DESTINATIONS-RUNTIME-001`.
-Next action: Claim the smallest dependency-complete BACKLOG task, then document configured destinations and recovery behavior from Issue #148.
+Current task: `OUTPUT-DESTINATIONS-DOCS-001`; repository: `agentic-art-orchestration`; checkpoint: `OUTPUT-DESTINATIONS-DOCS-001`.
+Next action: Synchronize the destination profile documentation and verify all documented commands against the implementation.
 Ready: none.
-Next task: `OUTPUT-DESTINATIONS-DOCS-001`.
+Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
 Blocked:
 - none
 
@@ -111,6 +111,60 @@ python3 -m venv .venv
 ~~~
 
 この4行が親repoの正準bootstrapです。AGENTS.mdと[operator runbook](docs/operator-runbook.md)からもこの手順を参照します。
+
+## Git外の出力先を設定する
+
+新しいagentが会話履歴なしで実行を再開できるよう、実行stateと内部成果物はGit外の
+`output-destinations/v1`プロファイルへ分離します。プロファイルはrepoへ追加せず、
+`config/output-destinations.example.yaml`を外部ディレクトリへコピーして、3つの絶対パスを
+置き換えます。`state_root`と`internal_output_root`は必須、`public_projection_root`は将来の
+公開projection用であり、現在のruntimeはここへ書き込みません。
+
+~~~bash
+DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
+DESTINATIONS_FILE="$DESTINATIONS_DIR/profile.yaml"
+cp config/output-destinations.example.yaml "$DESTINATIONS_FILE"
+$EDITOR "$DESTINATIONS_FILE"
+~~~
+
+次の値はrepo外で、互いに重ならない専用ディレクトリにします。
+
+~~~yaml
+destinations:
+  state_root: /tmp/agentic-art-destinations.XXXXXX/state
+  internal_output_root: /tmp/agentic-art-destinations.XXXXXX/internal
+  public_projection_root: /tmp/agentic-art-destinations.XXXXXX/public
+~~~
+
+プロファイルを選択した実行では、直接指定したCLI値がそのroleについて最優先され、
+次に`--destinations-file`、`AGENTIC_ART_DESTINATIONS_FILE`、legacy既定値の順になります。
+環境変数を使う場合は次のようにし、CLIと環境変数を混在させません。
+
+~~~bash
+export AGENTIC_ART_DESTINATIONS_FILE="$DESTINATIONS_FILE"
+~~~
+
+テーマ・slug・titleを指定しないnetworkless dry runは、profileだけで再現できます。
+run-scopedな出力と`$DESTINATIONS_DIR/state/DEST-DOCS-001/destination-resolution.json`が
+外部へcreate-onlyで作られます。
+
+~~~bash
+.venv/bin/python tools/run.py \
+  --offline-fixture --run-id DEST-DOCS-001 \
+  --destinations-file "$DESTINATIONS_FILE"
+~~~
+
+同じrun-idを再実行する場合は同じprofileの同じ内容を使います。resolution evidenceや既存の
+run outputと内容が衝突した場合は、既存ファイルを削除・上書きせず、同じprofileで再開するか
+新しいrun-idを使います。`absolute`、`overlap`、`inside the orchestration repository`、
+`inside a child checkout`、`not empty`などのエラーは入力または出力先の安全境界を示すため、
+エラーメッセージのremediationに従って外部の新しいディレクトリを指定します。
+
+profileを一時的に外すときは`--destinations-file`を外し、環境変数をunsetします。legacy互換
+では`run.py`は従来の`--state-root`、`batch_run.py`は`--output-root`と`--state-root`、
+`autonomous_runner.py`は`--state-root`を明示します。profile由来のresolution evidenceは
+Gitやpublic projectionへコピーせず、state rootのrun単位にだけ保持します。既存の成果物を
+移動・削除してrollbackしないでください。
 
 full suiteは、実行時に参照する`data/snapshot.json`や`data/audit.json`などのnetworkless生成物を必要とします。fresh cloneからfull suiteまで確認する場合は、共有tempに残った古いoffline remoteを再利用しないよう、一時fixture rootを作り、次を上から実行してください。実repo・GitHub・Driveへの操作は発生しません。
 
