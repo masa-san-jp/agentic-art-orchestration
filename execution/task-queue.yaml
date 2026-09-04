@@ -1,5 +1,5 @@
-version: 64
-updated_at: "2026-09-04T18:34:08+09:00"
+version: 65
+updated_at: "2026-09-04T21:07:32+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1440,6 +1440,21 @@ tasks:
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
     completion: "Implementation commit bb11d38f6a2df80b7c9750aae93454024ebb607c; parent PR #168 merged to main as d840912. README, operator runbook, and agent runtime guide now document prepare, init-target, project --dry-run, and project --apply without conversation history; human-gates.yaml explicitly scopes public_share to the separate public-projection-approval/v1 envelope and excludes layout-only init, Git mutation, repository visibility, and remote publication. Synthetic temporary-target proof and documentation regression coverage were added. Focused public/docs/status tests 37/37 PASS; parent full suite 523 tests / 1 skipped PASS; validator, project-status README check, py_compile, and diff check PASS. GitHub Actions run 33838751364 failed before all steps because of the account billing limit and is not counted as a quality-gate pass. No child repository, manifest pin, user path, credential, private/restricted data, raw conversation, public target, or external artifact body was written. Acceptance 1/1."
     stop_if: [Docs imply automatic public sharing, A private path or internal ID is exposed, Human approval is weakened, README status cannot be regenerated]
+
+  - id: PUBLIC-PROJECTION-AUTO-PLAN-001
+    milestone: M29
+    title: Automatically project PLAN_READY production plans to the configured public project
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/187
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: PUBLIC_PROJECTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PUBLIC-PROJECTION-DOCS-001]
+    acceptance: PLAN_READY run and PASSED batch outputs are automatically projected to the configured public_projection_root plans collection through a closed plan-only authority; 100+ records are atomic and idempotent; internal data never crosses the boundary; work and Git/remote operations remain human-gated.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_run tests.test_batch_run tests.test_output_destinations tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [The automatic authority accepts a work or arbitrary request, public target content is not mechanically safe, an unrelated dirty target would be overwritten, Git or remote publication is automated, a user path or credential enters tracked evidence]
 
   - id: AUTONOMY-READINESS-MANIFEST-001
     milestone: M30

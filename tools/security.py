@@ -46,6 +46,8 @@ SECRET_PATTERN = re.compile(
 TOKEN_PATTERN = re.compile(r"\b(?:ghp|github_pat|sk)-[A-Za-z0-9_-]{8,}\b")
 ALLOWED_SELF_CONSENT = {"approved-derived-only"}
 PUBLIC_PROJECTION_FINDING_CODES = {
+    "AUTHORITY_INVALID",
+    "CONFIGURATION_MISSING",
     "UNKNOWN_CLEARANCE",
     "MISSING_APPROVAL",
     "APPROVAL_MISMATCH",

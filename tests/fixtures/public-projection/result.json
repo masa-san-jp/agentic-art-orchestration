@@ -3,6 +3,7 @@
   "projection_id": "PUBLIC-20260904-001",
   "generated_at": "2026-09-04T00:00:00Z",
   "status": "DRY_RUN_READY",
+  "projection_mode": "HUMAN_APPROVED",
   "request_sha256": "b9d1916752cbd8f4a1e831c82be9be587ad5b000fa3aecfe126eab9f80e68d1d",
   "approval_sha256": null,
   "source_refs": [

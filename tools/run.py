@@ -610,16 +610,30 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             report["destination_resolution"] = dict(destination_resolution)
             if internal_output_root is None:
                 raise StepFailure("destination resolution has no internal output root for public projection preparation")
-            from tools.public_projection import prepare_run_report
+            from tools.public_projection import build_automatic_plan_authority, project_plan_automatic
+
+            if isinstance(report.get("production_plan_sha256"), str):
+                report["automatic_plan_authority"] = build_automatic_plan_authority(
+                    producer="tools/run.py",
+                    source_status="PLAN_READY",
+                    source_id=run_id,
+                    source_sha256=report["production_plan_sha256"],
+                    destination_resolution=destination_resolution,
+                )
 
             try:
-                report["public_projection"] = prepare_run_report(
+                destination_items = destination_resolution.get("destinations", {})
+                public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
+                public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
+                report["public_projection"] = project_plan_automatic(
                     report,
                     internal_output_root=internal_output_root,
+                    public_projection_root=Path(public_root) if isinstance(public_root, str) else None,
+                    state_root=state_root,
                     projection_id=run_id,
                 )
             except (OSError, TypeError, ValueError, KeyError) as exc:
-                raise StepFailure("public projection candidate preparation failed") from exc
+                raise StepFailure("automatic public plan projection failed") from exc
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return report
 
@@ -869,6 +883,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    projection = report.get("public_projection") if isinstance(report, Mapping) else None
+    projection_status = projection.get("status") if isinstance(projection, Mapping) else None
+    if projection_status in {"BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}:
+        return 2
     return 0
 
 

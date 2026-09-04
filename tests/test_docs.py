@@ -172,6 +172,13 @@ class DocumentationTests(unittest.TestCase):
             "tools/public_projection.py prepare",
             "tools/public_projection.py init-target",
             "tools/public_projection.py project",
+            "project_plan_automatic",
+            "project_batch_automatic",
+            "AUTOMATIC_PLAN",
+            "NOT_REQUIRED",
+            "PLAN_READY",
+            "PASSED",
+            "BLOCKED_CONFIGURATION",
             "--target-root",
             "--dry-run",
             "--apply",
@@ -189,7 +196,6 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, combined)
         self.assertNotIn("approvalなしでapply", combined)
-        self.assertNotIn("自動公開する", combined)
 
     def test_public_share_gate_scope_is_closed_and_layout_only_init_is_distinct(self):
         gates = (ROOT / "config/human-gates.yaml").read_text(encoding="utf-8")

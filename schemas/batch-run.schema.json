@@ -101,6 +101,7 @@
     },
     "report": {"$ref": "#/$defs/report"},
     "destination_resolution": {"type": "object"},
+    "automatic_plan_authority": {"$ref": "#/$defs/automatic_plan_authority"},
     "remote_operations": {"type": "array", "maxItems": 0},
     "child_mutations": {"type": "array", "maxItems": 0}
   },
@@ -143,6 +144,19 @@
         "production_plan_markdown_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
         "brief_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
         "decision_log_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]}
+      }
+    },
+    "automatic_plan_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "producer", "source_status", "source_id", "source_sha256", "destination_resolution_sha256"],
+      "properties": {
+        "contract_version": {"const": "automatic-plan-projection-authority/v1"},
+        "producer": {"enum": ["tools/run.py", "tools/batch_run.py"]},
+        "source_status": {"enum": ["PLAN_READY", "PASSED"]},
+        "source_id": {"$ref": "#/$defs/id"},
+        "source_sha256": {"$ref": "#/$defs/hash64"},
+        "destination_resolution_sha256": {"$ref": "#/$defs/hash64"}
       }
     },
     "locator": {"type": "string", "pattern": "^run://[A-Za-z0-9._:-]{1,128}/[^\\s]+$"},

@@ -39,7 +39,7 @@ try:
         validate_destination_resolution,
         write_resolution_evidence,
     )
-    from tools.public_projection import prepare_batch_summary
+    from tools.public_projection import build_automatic_plan_authority, project_batch_automatic
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
     from tools.signal_bundle import build_signal_bundle
@@ -60,7 +60,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         validate_destination_resolution,
         write_resolution_evidence,
     )
-    from tools.public_projection import prepare_batch_summary
+    from tools.public_projection import build_automatic_plan_authority, project_batch_automatic
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
     from tools.signal_bundle import build_signal_bundle
@@ -564,13 +564,18 @@ def run_batch(
             write_resolution_evidence(state_root, run_id, destination_resolution)
             if existing.get("status") == "PASSED" and existing.get("output_root_locator"):
                 try:
-                    public_projection = prepare_batch_summary(
+                    destination_items = destination_resolution.get("destinations", {})
+                    public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
+                    public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
+                    public_projection = project_batch_automatic(
                         existing,
                         internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
+                        public_projection_root=Path(public_root) if isinstance(public_root, str) else None,
+                        state_root=state_root,
                         projection_id=run_id,
                     )
                 except (OSError, TypeError, ValueError, KeyError) as exc:
-                    raise BatchRunError("public projection candidate preparation failed while resuming") from exc
+                    raise BatchRunError("automatic public plan projection failed while resuming") from exc
         return {"status": "ALREADY_COMPLETED", "summary": existing, "summary_path": summary_path, "public_projection": public_projection}
     state_dir = state_root / run_id
     if state_dir.exists() and any(path.name != "destination-resolution.json" for path in state_dir.iterdir()):
@@ -708,6 +713,28 @@ def run_batch(
         except ValueError as exc:
             raise BatchRunError("output_root is outside the resolved internal_output_root") from exc
         summary["output_root_locator"] = output_relative.as_posix() or "."
+        if status == "PASSED":
+            authority_plans = [
+                {
+                    "project_id": str(project["project_id"]),
+                    "production_plan_markdown_sha256": project.get("production_plan_markdown_sha256"),
+                }
+                for project in project_summaries
+                if project.get("status") == "PASSED"
+            ]
+            if len(authority_plans) == completed and all(
+                isinstance(item["production_plan_markdown_sha256"], str)
+                and HASH64.fullmatch(item["production_plan_markdown_sha256"]) is not None
+                for item in authority_plans
+            ):
+                authority_plans.sort(key=lambda item: item["project_id"])
+                summary["automatic_plan_authority"] = build_automatic_plan_authority(
+                    producer="tools/batch_run.py",
+                    source_status="PASSED",
+                    source_id=run_id,
+                    source_sha256=sha256_hex({"projects": authority_plans}),
+                    destination_resolution=destination_resolution,
+                )
     errors = validate_batch_run(summary)
     if errors:
         raise BatchRunError("generated batch summary is invalid")
@@ -715,13 +742,18 @@ def run_batch(
     public_projection = None
     if destination_resolution is not None and status == "PASSED":
         try:
-            public_projection = prepare_batch_summary(
+            destination_items = destination_resolution.get("destinations", {})
+            public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
+            public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
+            public_projection = project_batch_automatic(
                 summary,
                 internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
+                public_projection_root=Path(public_root) if isinstance(public_root, str) else None,
+                state_root=state_root,
                 projection_id=run_id,
             )
         except (OSError, TypeError, ValueError, KeyError) as exc:
-            raise BatchRunError("public projection candidate preparation failed") from exc
+            raise BatchRunError("automatic public plan projection failed") from exc
     return {"status": status, "summary": summary, "summary_path": summary_path, "acceptance_detail": acceptance_detail, "public_projection": public_projection}
 
 
@@ -794,7 +826,14 @@ def main(argv: Iterable[str] | None = None) -> int:
     except (BatchRunError, OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps({"command": "batch-run", "status": result["status"], "summary": str(result["summary_path"])}, ensure_ascii=False, sort_keys=True))
+    output = {"command": "batch-run", "status": result["status"], "summary": str(result["summary_path"])}
+    projection = result.get("public_projection")
+    projection_status = projection.get("status") if isinstance(projection, Mapping) else None
+    if projection_status is not None:
+        output["public_projection_status"] = projection_status
+    print(json.dumps(output, ensure_ascii=False, sort_keys=True))
+    if projection_status in {"BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}:
+        return 2
     return 0 if result["status"] in {"PASSED", "ALREADY_COMPLETED"} else 1
 
 

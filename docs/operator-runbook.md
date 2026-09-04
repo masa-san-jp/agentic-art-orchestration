@@ -115,9 +115,11 @@ M14完了前はこのcommandが存在しないため、従来のnetworkless smok
 stateと内部成果物を会話やGitへ依存させないため、fresh cloneではprofileをGit外に作る。
 `config/output-destinations.example.yaml`を外部一時ディレクトリへコピーし、3つのroleを
 絶対パスへ置き換える。`state_root`と`internal_output_root`は必須で、各rootはfilesystem root、
-親repo、child checkout、他roleの配下に置かない。`public_projection_root`は明示的な公開projection
-のlocal targetであり、通常のruntimeは暗黙にここへ書き込まない。`project --apply`もremote公開や
-Git操作までは行わず、`public_share` human gateを必要とする。
+親repo、child checkout、他roleの配下に置かない。`public_projection_root`を設定した場合は、
+正規runの`PLAN_READY`とbatchの`PASSED`で完成制作プランがそのlocal public-project worktreeへ
+自動投影される。未設定なら内部成果物を保持して`BLOCKED_CONFIGURATION`で停止する。work recordと
+手動requestの`project --apply`は引き続き`public_share` human gateを必要とし、remote公開や
+Git操作までは行わない。
 
 ~~~bash
 DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
@@ -150,14 +152,48 @@ profile・run-idで再開するか新しいrun-id／空rootを使い、既存デ
 rollbackでは`--destinations-file`を外し、環境変数を`unset`し、legacy入口の明示引数へ戻す。
 profile、evidence、ログへcredential、会話本文、PRIVATE_RAW、RESTRICTED、個人識別情報を入れない。
 
-### 公開projection（Issue #149）
+### 公開projection（自動plan投影と手動projection）
 
-公開projectionは、内部出力をそのままコピーする処理ではない。`PLAN_READY` runまたは`PASSED`
-batchを`tools/public_projection.py prepare`へ渡し、内部の
-`public-projection-candidates/<projection-id>/`にpublic-ready fileとrequestをcreate-onlyで作る。
-draftのvisibility、rights、consentは、同じsource hashに結び付いた明示evidenceがない限り
-`unknown`のままである。agentはこれを`cleared`へ変更せず、元のcanonical internal outputも
-変更しない。更新後のcandidateは`prepare --refresh`でhashを再計算する。
+公開projectionは、内部出力をそのままコピーする処理ではない。正規の`PLAN_READY` runまたは
+全件`PASSED` batchを起点にする自動plan投影と、利用者が明示的に開始する手動projectionを分ける。
+
+#### 正規run/batchの自動plan投影
+
+`tools/run.py`は`PLAN_READY`、`tools/batch_run.py`は`PASSED`に到達したとき、profileの
+`public_projection_root`が設定されていれば専用の`AUTOMATIC_PLAN`経路を呼ぶ。自動経路が受け付ける
+のは、その正規report/summaryから構築された`record_kind: plan`だけで、任意request、手書きrequest、
+work recordを受け付けない。report/summaryにある`automatic_plan_authority`（producer、source
+status/id/hash、destination resolution hash）も完全一致させ、source hash、公開境界、path safety、
+targetのGit/layout/index/markerをpreflightし、合格後に`plans/Pxxxx-<slug>/README.md`、`plan.md`、`metadata.yaml`、
+必要なplan素材（既存layout contractでは`media/`配下）、`plans/index.yaml`、collection READMEの管理対象markerを
+一つのtransactionで更新する。
+
+batchは全件を先にstagingしてから反映するため、100件以上でもID・順序・bytesが決定的である。
+一件でもpolicy違反、未許諾素材、target conflict、無関係なdirty変更、契約不適合があれば
+`BLOCKED_POLICY`または`BLOCKED_CONFLICT`としてtargetを変更しない。途中I/O失敗もtransactionが
+作ったpathだけをrollbackし、無関係な変更は削除しない。結果はstate rootの
+`<projection-id>/public-projection-result.json`に`projection_mode: AUTOMATIC_PLAN`、hash、target
+fingerprint、finding codeだけを残し、human approvalは`NOT_REQUIRED`とする。公開root未設定は
+`BLOCKED_CONFIGURATION`であり、成功したかのように扱わない。
+
+自動経路はlocal worktreeへのファイル投影までで、`git add`、commit、branch操作、push、PR、merge、
+release、repository visibility変更、実際のremote公開は行わない。local投影後のGit操作とremoteでの
+公開確定は人間の別ゲートで行う。内部ログ、会話、handoff、credential、private/restricted data、
+local absolute pathはpublic recordへコピーしない。
+
+合成temporary Git targetで自動経路を再現するには次を実行する。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_public_projection tests.test_run tests.test_batch_run -v
+~~~
+
+#### 手動projectionの実行順
+
+手動projectionでは、`PLAN_READY` runまたは`PASSED` batchを`tools/public_projection.py prepare`へ渡し、
+内部の`public-projection-candidates/<projection-id>/`にpublic-ready fileとrequestをcreate-onlyで作る。
+draftのvisibility、rights、consentは、同じsource hashに結び付いた明示evidenceがない限り`unknown`
+のままである。agentはこれを`cleared`へ変更せず、元のcanonical internal outputも変更しない。
+更新後のcandidateは`prepare --refresh`でhashを再計算する。
 
 ~~~bash
 .venv/bin/python tools/public_projection.py prepare \

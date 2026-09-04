@@ -615,7 +615,7 @@ def validate_public_projection_contract(
     result = loaded.get("public projection result")
     expected_statuses = [
         "DRY_RUN_READY", "BLOCKED_HUMAN", "APPLIED", "ALREADY_PROJECTED",
-        "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED",
+        "BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED",
     ]
     if isinstance(result, dict):
         statuses = result.get("properties", {}).get("status", {}).get("enum")
