@@ -1,5 +1,5 @@
-version: 197
-updated_at: "2026-09-04T16:27:44+09:00"
+version: 198
+updated_at: "2026-09-04T16:53:19+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -20,11 +20,11 @@ checkpoint:
   start_point: e7258d0b4e816bd915a7a8ab41c01404f3567d1a
   expected_changes: Point every manifest child at its authoritative AGENTS.md instruction entrypoint, add a regression check, preserve all URLs/pins/quality gates, and update only parent execution evidence.
   result: completed; parent PR #177 merged as 6bc99df7ed6e66f95ae91aad9a86a08e57781d6a; child follow-up Issues recorded; lease released.
-last_completed_task: AUTONOMY-READINESS-MANIFEST-001
+last_completed_task: SELF-MODEL-AUTONOMY-001
 resume_from:
-  task: SELF-MODEL-AUTONOMY-001
-  action: "Claim the lowest dependency-complete child task, read self-model's authoritative AGENTS.md/Issue #83/tests, add only fresh-clone setup and contract documentation, then run the child gates."
-  command: python3 tools/agent_runtime.py tools/task_harness.py validate
+  task: RESEARCH-AUTONOMY-001
+  action: "Claim the lowest dependency-complete child task, read agentic-art-research Issue #89 and authoritative AGENTS.md/tests, add only portable fresh-clone setup and external-output guidance, then run the child gates."
+  command: python3 -m compileall -q tools tests
 
 workspace_bootstrap_apply:
   status: complete
@@ -1434,5 +1434,50 @@ autonomy_readiness_evaluation:
     explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
     inferred: none
   unresolved:
-    - "The four child follow-up Issues require their own child-repository PRs and quality gates."
+    - "The three remaining child follow-up Issues require their own child-repository PRs and quality gates."
+    - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
+
+self_model_autonomy:
+  status: complete
+  observed_at: "2026-09-04T16:53:19+09:00"
+  task: SELF-MODEL-AUTONOMY-001
+  issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/83
+  target_repository: self-model-notes
+  task_registration_pr: https://github.com/masa-san-jp/self-model-notes/pull/84
+  task_registration_merge_commit: 6d035574cb01322402ba8221f14a912439358a6b
+  implementation_commit: da703abf4faf61b4080dba77495a98163cbe1c44
+  pull_request: https://github.com/masa-san-jp/self-model-notes/pull/85
+  merge_commit: 717255465449648066d8b5c89d34ec60b0f1cbda
+  issue_state: CLOSED
+  acceptance: 1/1
+  changes:
+    - "AGENTS.md now gives a conditional python3 -m venv .venv and .venv/bin/python -m pip install -e . setup for a fresh clone."
+    - "Normal task execution remains install-free, network-free, and secret-free, and the canonical runtime/task lifecycle remains the only execution path."
+    - "tests/test_agent_runtime.py asserts the setup and no-secret contract; generated data and all canonical entities remain unchanged."
+  verification:
+    registration_queue_tests: "46/46 PASS"
+    focused_child_tests: "52/52 PASS"
+    child_full_suite: "142/142 PASS"
+    child_task_harness_verify: PASS
+    trusted_base_pr_policy_verify: PASS
+    graph_check: PASS
+    audit_check: PASS
+    bundle_check: PASS
+    diff_check: PASS
+    generated_data_diff: PASS
+  remote_ci:
+    run_id: 33850419342
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit prevented validate and harness-policy jobs from starting
+    counted_as_quality_gate: false
+  lock_release:
+    ref: refs/heads/harness-lock/sm-031
+    status: released
+  child_schema_data_consent_changed: false
+  sensitive_data: "none; no credential, token, PRIVATE_RAW, RESTRICTED value, direct identifier, raw voice, or conversation text was stored"
+  external_artifact: none
+  feedback:
+    explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
+    inferred: none
+  unresolved:
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
