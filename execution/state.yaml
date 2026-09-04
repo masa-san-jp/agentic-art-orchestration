@@ -1,25 +1,25 @@
-version: 183
-updated_at: "2026-09-04T12:58:20+09:00"
-active_task: null
-active_repository: null
+version: 184
+updated_at: "2026-09-04T13:00:00+09:00"
+active_task: PUBLIC-PROJECTION-PLAN-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
+  status: held
+  owner: codex-public-projection-plan
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: null
+  expires_at: "2026-09-04T15:00:00+09:00"
   lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-PREPARE-001:20260904-123632
-  released_at: "2026-09-04T12:58:20+09:00"
+  execution_id: PUBLIC-PROJECTION-PLAN-001:20260904-130000
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/public_projection.py, tools/run.py, tools/batch_run.py, tools/output_destinations.py, schemas/public-projection-request.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/fixtures/public-projection, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+    paths: [tools/public_projection.py, tools/output_destinations.py, schemas/public-project-layout.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_security_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-PREPARE-001
+  task: PUBLIC-PROJECTION-PLAN-001
   repository: agentic-art-orchestration
   start_point: bd4074a7eb81d779bd6c1bac7912ff3d7f40438a
-  expected_changes: Add the single prepare/refresh producer, connect PLAN_READY run and PASSED batch outputs, preserve source hashes/provenance, emit internal candidates only, and return NOT_AVAILABLE for unavailable work without public target access.
-  result: completed; implementation commit 6c78836; parent PR #162 merged to main as 85149023b0f0d85714674853e95337941118aa88; focused 41/41 PASS; parent full 512 tests with 1 expected skip PASS; validator, project-status, py_compile, and diff check PASS; remote run 33834871827 billing-blocked before steps and not counted.
+  expected_changes: Implement init-target and project dry-run planning for a local public-project worktree, with layout/source/hash/security/conflict checks, deterministic metadata-only result evidence, and zero target mutation until a later human-gated apply task.
+  result: in_progress; claimed 2026-09-04T13:00:00+09:00 by codex-public-projection-plan; implementation and checks pending.
 last_completed_task: PUBLIC-PROJECTION-PREPARE-001
 resume_from:
   task: PUBLIC-PROJECTION-PLAN-001

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Validate the closed, metadata-only public projection contracts.
+"""Validate, prepare, and plan closed public projection contracts.
 
-This contract-stage tool does not read or mutate a public target.  The later
-prepare, plan, and apply tasks own filesystem projection; keeping this module
-validation-only makes an accidental public write impossible at this stage.
+The plan stage reads a caller-selected local target but does not mutate it.
+Only ``init-target --apply`` may scaffold missing layout files; public record
+application remains a separate human-approval-gated task.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ import json
 import os
 import re
 import stat
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -30,6 +31,7 @@ from tools.security import PUBLIC_PROJECTION_FINDING_CODES, scan_public_projecti
 from tools.output_destinations import (  # noqa: E402
     manifest_child_roots,
     resolve_destinations,
+    resolve_run_destination,
     validate_destination_resolution,
 )
 from tools.validate import _schema_errors, load_json  # noqa: E402
@@ -49,6 +51,37 @@ WORK_TARGETS = {"README.md", "record.md"}
 PREPARE_ROOT = "public-projection-candidates"
 PRODUCTION_REPOSITORY = "agentic-art-production"
 PREPARE_STATUSES = {"PASSED", "ALREADY_PREPARED", "REFRESHED", "NOT_AVAILABLE"}
+PROJECT_STATUSES = {"DRY_RUN_READY", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}
+INIT_STATUSES = {"DRY_RUN_READY", "APPLIED", "BLOCKED_CONFLICT", "FAILED"}
+DEFAULT_LAYOUT = {
+    "contract_version": "public-project-layout/v1",
+    "collections": {"plans": "plans", "works": "works"},
+    "catalog_markers": {
+        "start": "<!-- agentic-art:catalog:start -->",
+        "end": "<!-- agentic-art:catalog:end -->",
+    },
+    "media_policy": {
+        "max_file_bytes": 50000000,
+        "allowed_extensions": [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".mp4", ".webm", ".mp3", ".wav", ".pdf", ".txt", ".md", ".py"],
+    },
+}
+INDEX_VERSION = 1
+INDEX_FILES = ("plans/index.yaml", "works/index.yaml")
+MIME_BY_EXTENSION = {
+    ".gif": "image/gif",
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".mp3": "audio/mpeg",
+    ".mp4": "video/mp4",
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".py": "text/x-python",
+    ".svg": "image/svg+xml",
+    ".txt": "text/plain",
+    ".wav": "audio/wav",
+    ".webm": "video/webm",
+    ".webp": "image/webp",
+}
 
 
 class PublicProjectionError(ValueError):
@@ -171,9 +204,12 @@ def validate_request(value: object, source: str = "public-projection-request") -
             calculated = record_file_sha256(files)
             if source_data["sha256"] != calculated:
                 errors.append(_record_error(index, "source.sha256 does not match canonical file descriptors", "recalculate the record hash from role/source_locator/target_locator/file sha256"))
-        source_key = (str(kind), str(source_data.get("sha256")))
+        # The source key identifies the immutable canonical artifact.  The
+        # record-level source.sha256 may change when a public-ready candidate
+        # is refreshed and therefore is used only as the content hash.
+        source_key = (str(kind), str(source_data.get("canonical_sha256")))
         if source_key in source_keys:
-            errors.append(_record_error(index, "duplicates a record source key", "include each kind and source hash once per request"))
+            errors.append(_record_error(index, "duplicates a record source key", "include each kind and canonical source hash once per request"))
         source_keys.add(source_key)
     return errors
 
@@ -528,6 +564,39 @@ def _prepare_resolution(destinations_file: str | Path, run_id: str) -> tuple[dic
     except (OSError, TypeError, ValueError, KeyError) as exc:
         raise _prepare_error("DESTINATION_INVALID", "destinations-file", "repair the external output-destinations profile") from exc
     return resolution, _resolution_root(resolution, run_id, "destination-resolution")
+
+
+def _projection_resolution(
+    destinations_file: str | Path,
+    context_id: str,
+    *,
+    target_root: Path | None = None,
+) -> dict[str, object]:
+    """Resolve profile roles, allowing only the declared target-root override."""
+    try:
+        from tools.workspace import load_manifest
+
+        manifest = load_manifest()
+        direct = {"public_projection_root": str(target_root)} if target_root is not None else None
+        return resolve_destinations(
+            destinations_file,
+            direct=direct,
+            repository_root=ROOT,
+            child_roots=manifest_child_roots(manifest, ROOT / "repos"),
+            run_id=context_id,
+            project_id=context_id,
+        )
+    except (OSError, TypeError, ValueError, KeyError) as exc:
+        raise _prepare_error("DESTINATION_INVALID", "destinations-file", "repair the selected external output-destinations profile") from exc
+
+
+def _resolution_role(resolution: Mapping[str, object], role: str) -> Path:
+    destinations = resolution.get("destinations")
+    item = destinations.get(role) if isinstance(destinations, Mapping) else None
+    path = item.get("path") if isinstance(item, Mapping) else None
+    if not isinstance(path, str) or not Path(path).is_absolute():
+        raise _prepare_error("DESTINATION_INVALID", role, "the selected profile must resolve this destination role")
+    return Path(path).expanduser().resolve(strict=False)
 
 
 def _assert_report_resolution(report: Mapping[str, object], root: Path, run_id: str) -> None:
@@ -933,6 +1002,983 @@ def refresh_request(request_path: Path, *, internal_output_root: Path) -> dict[s
     }
 
 
+def _projection_finding(code: str, location: str, remediation: str) -> dict[str, str]:
+    """Build a result finding without copying source values into evidence."""
+    if code not in PUBLIC_PROJECTION_FINDING_CODES:
+        code = "LAYOUT_INVALID"
+    return {"code": code, "location": location, "remediation": remediation}
+
+
+def _dedupe_projection_findings(findings: list[Mapping[str, object]]) -> list[dict[str, str]]:
+    unique: dict[str, dict[str, str]] = {}
+    for finding in findings:
+        if not isinstance(finding, Mapping):
+            continue
+        code = str(finding.get("code", "LAYOUT_INVALID"))
+        location = str(finding.get("location", "projection"))
+        remediation = str(finding.get("remediation", "repair the public projection input"))
+        safe = _projection_finding(code, location, remediation)
+        unique[json.dumps(safe, ensure_ascii=False, sort_keys=True)] = safe
+    return [unique[key] for key in sorted(unique)]
+
+
+def _target_locator(root: Path, raw: object, location: str) -> tuple[str, Path]:
+    """Resolve one target-relative path without following aliases."""
+    if not isinstance(raw, str) or not raw or Path(raw).is_absolute() or "\\" in raw:
+        raise _prepare_error("SOURCE_PATH_UNSAFE", location, "use a normalized relative target locator")
+    parts = Path(raw).parts
+    if any(part in {"", ".", ".."} for part in parts) or RELATIVE_PATH.fullmatch(raw) is None:
+        raise _prepare_error("SOURCE_PATH_UNSAFE", location, "use a normalized relative target locator without traversal")
+    relative = Path(raw)
+    target_root = root.expanduser().resolve(strict=False)
+    candidate = target_root / relative
+    try:
+        candidate.resolve(strict=False).relative_to(target_root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise _prepare_error("SOURCE_PATH_UNSAFE", location, "keep the target locator below public_projection_root") from exc
+    probe = target_root
+    for part in relative.parts:
+        probe = probe / part
+        try:
+            if stat.S_ISLNK(probe.lstat().st_mode):
+                raise _prepare_error("SOURCE_PATH_UNSAFE", location, "target paths may not contain symlinks")
+        except FileNotFoundError:
+            break
+        except OSError as exc:
+            raise _prepare_error("SOURCE_PATH_UNSAFE", location, "the target path cannot be inspected safely") from exc
+    return relative.as_posix(), candidate
+
+
+def _target_regular(path: Path, location: str) -> tuple[bytes, str]:
+    """Read one existing target file while rejecting aliases and special files."""
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise _prepare_error("LAYOUT_INVALID", location, "the target file is unavailable") from exc
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+        raise _prepare_error("LAYOUT_INVALID", location, "target files must be regular, non-symlink, non-hardlinked files")
+    try:
+        content = path.read_bytes()
+    except (OSError, UnicodeError) as exc:
+        raise _prepare_error("LAYOUT_INVALID", location, "the target file cannot be read safely") from exc
+    return content, _sha256_bytes(content)
+
+
+def _git_target_findings(target: Path) -> list[dict[str, str]]:
+    """Inspect a target worktree without fetch, checkout, or other Git mutation."""
+    findings: list[dict[str, str]] = []
+    target = target.expanduser().resolve(strict=False)
+    if not target.exists() or not target.is_dir() or target.is_symlink():
+        return [_projection_finding("LAYOUT_INVALID", "target.root", "provide an existing local Git worktree")]
+
+    def run_git(*arguments: str) -> subprocess.CompletedProcess[str] | None:
+        try:
+            return subprocess.run(
+                ["git", *arguments],
+                cwd=target,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+    root_result = run_git("rev-parse", "--show-toplevel")
+    if root_result is None or root_result.returncode != 0:
+        findings.append(_projection_finding("LAYOUT_INVALID", "target.git", "initialize or select a local Git worktree before projection"))
+    else:
+        try:
+            observed_root = Path(root_result.stdout.strip()).expanduser().resolve(strict=False)
+        except (OSError, RuntimeError):
+            observed_root = None
+        if observed_root != target:
+            findings.append(_projection_finding("LAYOUT_INVALID", "target.git", "the public projection root must be the worktree root"))
+
+    branch_result = run_git("symbolic-ref", "--quiet", "--short", "HEAD")
+    if branch_result is None or branch_result.returncode != 0 or not branch_result.stdout.strip():
+        findings.append(_projection_finding("LAYOUT_INVALID", "target.git", "use a non-detached local worktree branch"))
+
+    status_result = run_git("status", "--porcelain=v1", "--untracked-files=all")
+    if status_result is None or status_result.returncode != 0:
+        findings.append(_projection_finding("LAYOUT_INVALID", "target.git", "the target Git status must be inspectable without remote access"))
+    elif status_result.stdout:
+        findings.append(_projection_finding("TARGET_DIRTY", "target.git", "commit or otherwise manually resolve existing target changes before planning"))
+    return _dedupe_projection_findings(findings)
+
+
+def _tree_fingerprint(root: Path) -> str:
+    """Hash target file identities and bytes while excluding Git internals."""
+    root = root.expanduser().resolve(strict=False)
+    descriptors: list[dict[str, object]] = []
+    if not root.exists():
+        return sha256_hex(descriptors)
+    if root.is_symlink() or not root.is_dir():
+        raise _prepare_error("LAYOUT_INVALID", "target.root", "the target root must be a directory")
+    try:
+        paths = sorted(root.rglob("*"), key=lambda path: path.relative_to(root).as_posix())
+        for path in paths:
+            relative = path.relative_to(root)
+            if ".git" in relative.parts:
+                continue
+            metadata = path.lstat()
+            if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode) and not stat.S_ISDIR(metadata.st_mode):
+                raise _prepare_error("LAYOUT_INVALID", "target.tree", "the target contains an unsupported alias or special file")
+            if stat.S_ISDIR(metadata.st_mode):
+                continue
+            if metadata.st_nlink != 1:
+                raise _prepare_error("LAYOUT_INVALID", "target.tree", "target files may not be hardlinked")
+            content = path.read_bytes()
+            descriptors.append({"path": relative.as_posix(), "sha256": _sha256_bytes(content), "size": len(content)})
+    except (OSError, UnicodeError) as exc:
+        raise _prepare_error("LAYOUT_INVALID", "target.tree", "the target fingerprint cannot be computed safely") from exc
+    return sha256_hex(descriptors)
+
+
+def _layout_collections(layout: Mapping[str, object], location: str = "layout.collections") -> tuple[str, str]:
+    collections = layout.get("collections")
+    if not isinstance(collections, Mapping):
+        raise _prepare_error("LAYOUT_INVALID", location, "declare plans and works collection paths")
+    values: list[str] = []
+    for name in ("plans", "works"):
+        value = collections.get(name)
+        if not isinstance(value, str) or any(part in {".", ".."} for part in Path(value).parts) or RELATIVE_PATH.fullmatch(value) is None:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.{name}", "use a distinct normalized relative collection path")
+        values.append(value)
+    if values[0] == values[1] or values[0].startswith(values[1] + "/") or values[1].startswith(values[0] + "/"):
+        raise _prepare_error("LAYOUT_INVALID", location, "plans and works collections may not overlap")
+    markers = layout.get("catalog_markers")
+    if not isinstance(markers, Mapping) or not isinstance(markers.get("start"), str) or not isinstance(markers.get("end"), str):
+        raise _prepare_error("LAYOUT_INVALID", "layout.catalog_markers", "declare one non-empty catalog marker pair")
+    if markers["start"] == markers["end"]:
+        raise _prepare_error("LAYOUT_INVALID", "layout.catalog_markers", "catalog start and end markers must differ")
+    return values[0], values[1]
+
+
+def _load_target_document(target: Path, relative: str, location: str) -> object:
+    _, path = _target_locator(target, relative, location)
+    content, _ = _target_regular(path, location)
+    try:
+        return yaml.safe_load(content.decode("utf-8"))
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise _prepare_error("LAYOUT_INVALID", location, "repair the target UTF-8 YAML document") from exc
+
+
+def _marker_block(text: str, layout: Mapping[str, object], location: str) -> tuple[int, int]:
+    markers = layout.get("catalog_markers")
+    if not isinstance(markers, Mapping):
+        raise _prepare_error("LAYOUT_INVALID", location, "declare catalog markers in public-project.yaml")
+    start = markers.get("start")
+    end = markers.get("end")
+    if not isinstance(start, str) or not isinstance(end, str):
+        raise _prepare_error("LAYOUT_INVALID", location, "declare string catalog markers")
+    start_count = text.count(start)
+    end_count = text.count(end)
+    start_at = text.find(start)
+    end_at = text.find(end)
+    if start_count != 1 or end_count != 1 or start_at < 0 or end_at < 0 or start_at >= end_at:
+        raise _prepare_error("LAYOUT_INVALID", location, "each collection README must contain exactly one ordered marker pair")
+    return start_at, end_at
+
+
+def _append_marker_block(text: str, layout: Mapping[str, object]) -> str:
+    markers = layout["catalog_markers"]
+    start = str(markers["start"])
+    end = str(markers["end"])
+    prefix = "" if not text or text.endswith("\n") else "\n"
+    return f"{text}{prefix}{start}\n{end}\n"
+
+
+def _replace_marker_block(text: str, layout: Mapping[str, object], body: str, location: str) -> str:
+    start_at, end_at = _marker_block(text, layout, location)
+    markers = layout["catalog_markers"]
+    start = str(markers["start"])
+    end = str(markers["end"])
+    before = text[:start_at]
+    after = text[end_at + len(end):]
+    if after and not after.startswith("\n"):
+        body_suffix = "\n"
+    else:
+        body_suffix = ""
+    inner = f"{body}\n" if body else ""
+    return f"{before}{start}\n{inner}{end}{body_suffix}{after}"
+
+
+def _index_scaffold_bytes() -> bytes:
+    return b"version: 1\nrecords: []\nretired_ids: []\n"
+
+
+def _layout_bytes(layout: Mapping[str, object]) -> bytes:
+    return _request_yaml_bytes(layout)
+
+
+def _validate_index_path(collection: str, raw: object, location: str) -> str:
+    if raw is None:
+        raise _prepare_error("LAYOUT_INVALID", location, "each index record must declare its public directory path")
+    if not isinstance(raw, str) or not raw or Path(raw).is_absolute() or "\\" in raw or any(part in {".", ".."} for part in Path(raw).parts) or RELATIVE_PATH.fullmatch(raw) is None:
+        raise _prepare_error("LAYOUT_INVALID", location, "index paths must be normalized relative paths")
+    relative = Path(raw).as_posix()
+    if relative.startswith(collection + "/"):
+        normalized = relative
+    elif "/" not in relative:
+        normalized = f"{collection}/{relative}"
+    else:
+        raise _prepare_error("LAYOUT_INVALID", location, "index record paths must remain directly below their collection")
+    directory = Path(normalized)
+    if directory.parent.as_posix() != collection:
+        raise _prepare_error("LAYOUT_INVALID", location, "index record paths must name one collection child directory")
+    return normalized
+
+
+INDEX_ALLOWED_KEYS = {"id", "slug", "title", "path", "source_key", "source_ref", "content_sha256", "status", "visibility", "rights_status"}
+
+
+def _load_target_index(target: Path, collection: str, prefix: str, location: str) -> dict[str, object]:
+    relative = f"{collection}/index.yaml"
+    document = _load_target_document(target, relative, location)
+    if not isinstance(document, Mapping) or document.get("version") != INDEX_VERSION:
+        raise _prepare_error("LAYOUT_INVALID", location, "use the public projection index version 1")
+    records = document.get("records")
+    retired = document.get("retired_ids", [])
+    if not isinstance(records, list) or not isinstance(retired, list):
+        raise _prepare_error("LAYOUT_INVALID", location, "index records and retired_ids must be lists")
+    security = scan_public_projection(document, location)
+    if security:
+        raise _prepare_error("FORBIDDEN_CONTENT", location, "remove internal references or credentials from the public index")
+    normalized: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
+    seen_sources: set[str] = set()
+    seen_paths: set[str] = set()
+    retired_ids: set[str] = set()
+    for index, value in enumerate(retired):
+        if not isinstance(value, str) or re.fullmatch(rf"{prefix}[0-9]{{4}}", value) is None or value in retired_ids:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.retired_ids[{index}]", "retired IDs must be unique four-digit public IDs")
+        retired_ids.add(value)
+    for index, value in enumerate(records):
+        if not isinstance(value, Mapping) or set(value) - INDEX_ALLOWED_KEYS:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}]", "index records may contain only public metadata fields")
+        public_id = value.get("id")
+        if not isinstance(public_id, str) or re.fullmatch(rf"{prefix}[0-9]{{4}}", public_id) is None or public_id in seen_ids or public_id in retired_ids:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}].id", "active public IDs must be unique and not retired")
+        source_key = value.get("source_key")
+        if source_key is None and isinstance(value.get("source_ref"), str) and value["source_ref"].startswith("sha256:"):
+            source_key = f"{'plan' if prefix == 'P' else 'work'}:{value['source_ref'][len('sha256:'):]}"
+        if not isinstance(source_key, str) or not re.fullmatch(rf"{'plan' if prefix == 'P' else 'work'}:[0-9a-f]{{64}}", source_key) or source_key in seen_sources:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}].source_key", "source keys must be unique opaque kind/hash values")
+        content_sha256 = value.get("content_sha256")
+        if not isinstance(content_sha256, str) or HASH64.fullmatch(content_sha256) is None:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}].content_sha256", "record content_sha256 must be a lowercase SHA-256")
+        slug = value.get("slug")
+        if slug is not None and (not isinstance(slug, str) or re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) is None):
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}].slug", "index slugs must be lowercase hyphenated values")
+        path = value.get("path")
+        if path is None and isinstance(slug, str):
+            path = f"{public_id}-{slug}"
+        normalized_path = _validate_index_path(collection, path, f"{location}.records[{index}].path")
+        if normalized_path in seen_paths:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}].path", "index record paths must be unique")
+        if not Path(normalized_path).name.startswith(public_id + "-") or len(Path(normalized_path).name) <= len(public_id) + 1:
+            raise _prepare_error("LAYOUT_INVALID", f"{location}.records[{index}].path", "record directories must begin with their public ID")
+        entry = dict(value)
+        entry.update({"id": public_id, "source_key": source_key, "content_sha256": content_sha256, "path": normalized_path})
+        normalized.append(entry)
+        seen_ids.add(public_id)
+        seen_sources.add(source_key)
+        seen_paths.add(normalized_path)
+    normalized.sort(key=lambda item: str(item["id"]))
+    return {"version": INDEX_VERSION, "records": normalized, "retired_ids": sorted(retired_ids)}
+
+
+def _target_layout_preflight(target: Path) -> tuple[Mapping[str, object] | None, dict[str, dict[str, object]], str, list[dict[str, str]]]:
+    findings = _git_target_findings(target)
+    try:
+        before = _tree_fingerprint(target)
+    except PreparationError as exc:
+        findings.append(_projection_finding(exc.code, "target.tree", exc.remediation))
+        before = sha256_hex([])
+    layout: Mapping[str, object] | None = None
+    indexes: dict[str, dict[str, object]] = {}
+    try:
+        document = _load_target_document(target, "public-project.yaml", "target.layout")
+        errors = validate_layout(document, "target.layout")
+        if errors or not isinstance(document, Mapping):
+            raise _prepare_error("LAYOUT_INVALID", "target.layout", "repair public-project.yaml to public-project-layout/v1")
+        _layout_collections(document)
+        layout = document
+    except PreparationError as exc:
+        findings.append(_projection_finding(exc.code, "target.layout", exc.remediation))
+    if layout is not None:
+        plans, works = _layout_collections(layout)
+        for collection, prefix, location in ((plans, "P", "target.plans"), (works, "W", "target.works")):
+            try:
+                _, collection_path = _target_locator(target, collection, location)
+                if not collection_path.exists() or not collection_path.is_dir() or collection_path.is_symlink():
+                    raise _prepare_error("LAYOUT_INVALID", location, "create the declared public collection directory")
+                readme_relative = f"{collection}/README.md"
+                readme, _ = _target_regular(_target_locator(target, readme_relative, location)[1], location)
+                _marker_block(readme.decode("utf-8"), layout, location)
+                indexes[collection] = _load_target_index(target, collection, prefix, location + ".index")
+            except (PreparationError, UnicodeDecodeError) as exc:
+                code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
+                remediation = exc.remediation if isinstance(exc, PreparationError) else "collection README must remain UTF-8"
+                findings.append(_projection_finding(code, location, remediation))
+    return layout, indexes, before, _dedupe_projection_findings(findings)
+
+
+def _target_plan_directory(target: Path, collection: str, public_id: str, slug: str, location: str) -> tuple[str, Path]:
+    relative = f"{collection}/{public_id}-{slug}"
+    return _target_locator(target, relative, location)
+
+
+def _catalog_line(entry: Mapping[str, object], collection: str) -> str:
+    public_id = str(entry["id"])
+    title = str(entry.get("title", public_id)).replace("\r", " ").replace("\n", " ").replace("]", "\\]")
+    path = Path(str(entry["path"]))
+    child = path.name
+    body_name = "plan.md" if collection == "plans" else "record.md"
+    return f"- [{title}]({child}/README.md)"
+
+
+def _catalog_text(index: Mapping[str, object], collection: str) -> str:
+    records = index.get("records", [])
+    if not isinstance(records, list):
+        return ""
+    return "\n".join(_catalog_line(record, collection) for record in records if isinstance(record, Mapping))
+
+
+def _metadata_bytes(record: Mapping[str, object], public_id: str) -> bytes:
+    source = record.get("source")
+    publication = record.get("publication")
+    if not isinstance(source, Mapping) or not isinstance(publication, Mapping):
+        raise _prepare_error("LAYOUT_INVALID", "record", "request records must include source and publication metadata")
+    metadata = {
+        "id": public_id,
+        "title": str(record["title"]),
+        "slug": str(record["slug"]),
+        "status": "ready-for-publication",
+        "visibility": "public",
+        "rights_status": "cleared",
+        "provenance": {
+            "source_system": "agentic-art-orchestration",
+            "source_ref": f"sha256:{source['canonical_sha256']}",
+            "content_sha256": str(source["sha256"]),
+        },
+    }
+    return _request_yaml_bytes(metadata)
+
+
+def _generated_readme(record: Mapping[str, object], kind: str) -> bytes:
+    body_name = "plan.md" if kind == "plan" else "record.md"
+    return f"# {str(record['title']).replace(chr(10), ' ').replace(chr(13), ' ')}\n\n[{body_name}]({body_name})\n".encode("utf-8")
+
+
+def _source_record_plan(
+    record: Mapping[str, object],
+    *,
+    record_index: int,
+    internal_root: Path,
+    target: Path,
+    layout: Mapping[str, object],
+    collection: str,
+) -> tuple[dict[str, object], list[dict[str, str]]]:
+    findings: list[dict[str, str]] = []
+    kind = record.get("record_kind")
+    if kind not in {"plan", "work"}:
+        return {}, [_projection_finding("LAYOUT_INVALID", f"records[{record_index}].record_kind", "use plan or work")]
+    source_data = record.get("source")
+    files = record.get("files")
+    publication = record.get("publication")
+    if not isinstance(source_data, Mapping) or not isinstance(files, list) or not isinstance(publication, Mapping):
+        return {}, [_projection_finding("LAYOUT_INVALID", f"records[{record_index}]", "repair the closed request record")]
+    for field in ("visibility", "rights_status", "consent_status"):
+        if publication.get(field) != ("public" if field == "visibility" else "cleared"):
+            findings.append(_projection_finding("UNKNOWN_CLEARANCE", f"records[{record_index}].publication.{field}", "obtain explicit human clearance before projection"))
+    if not isinstance(record.get("slug"), str) or re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", str(record.get("slug"))) is None:
+        findings.append(_projection_finding("LAYOUT_INVALID", f"records[{record_index}].slug", "use a lowercase hyphenated public slug"))
+    try:
+        _, source_path = _internal_locator(internal_root, source_data.get("locator"), f"records[{record_index}].source.locator")
+        _, source_hash = _read_regular(source_path, f"records[{record_index}].source.locator")
+        if source_hash != source_data.get("canonical_sha256"):
+            findings.append(_projection_finding("SOURCE_HASH_MISMATCH", f"records[{record_index}].source.locator", "refresh the request from the unchanged canonical artifact"))
+    except PreparationError as exc:
+        findings.append(_projection_finding(exc.code, f"records[{record_index}].source.locator", exc.remediation))
+
+    body_role = "plan.md" if kind == "plan" else "record.md"
+    prepared_files: list[dict[str, object]] = []
+    file_bytes: dict[str, bytes] = {}
+    media_policy = layout.get("media_policy")
+    max_bytes = media_policy.get("max_file_bytes") if isinstance(media_policy, Mapping) else None
+    allowed_extensions = set(media_policy.get("allowed_extensions", [])) if isinstance(media_policy, Mapping) and isinstance(media_policy.get("allowed_extensions"), list) else set()
+    for file_index, file in enumerate(files):
+        if not isinstance(file, Mapping):
+            continue
+        location = f"records[{record_index}].files[{file_index}]"
+        role = file.get("role")
+        try:
+            source_locator, source_path = _internal_locator(internal_root, file.get("source_locator"), location + ".source_locator")
+            content, actual_hash = _read_regular(source_path, location)
+            if actual_hash != file.get("sha256"):
+                findings.append(_projection_finding("SOURCE_HASH_MISMATCH", location + ".sha256", "refresh the candidate file hash before projection"))
+            target_locator, target_path = _target_locator(target, file.get("target_locator"), location + ".target_locator")
+            if role == "body" and target_locator != body_role:
+                findings.append(_projection_finding("LAYOUT_INVALID", location + ".target_locator", f"use {body_role} for this record kind"))
+            if role == "readme" and target_locator != "README.md":
+                findings.append(_projection_finding("LAYOUT_INVALID", location + ".target_locator", "use README.md for a public record README"))
+            if role == "process" and (kind != "work" or not target_locator.startswith("process/")):
+                findings.append(_projection_finding("LAYOUT_INVALID", location + ".target_locator", "use process/<name> only for work records"))
+            if role == "media":
+                if not target_locator.startswith("media/"):
+                    findings.append(_projection_finding("UNAPPROVED_MEDIA", location + ".target_locator", "put media below media/"))
+                extension = Path(target_locator).suffix.lower()
+                expected_mime = MIME_BY_EXTENSION.get(extension)
+                if extension not in allowed_extensions or expected_mime is None or file.get("mime_type") != expected_mime:
+                    findings.append(_projection_finding("UNAPPROVED_MEDIA", location, "use an allowed extension and matching declared MIME type"))
+                if not isinstance(max_bytes, int) or len(content) > max_bytes:
+                    findings.append(_projection_finding("UNAPPROVED_MEDIA", location, "keep media at or below the declared layout size limit"))
+                if file.get("rights_status") != "cleared":
+                    findings.append(_projection_finding("UNAPPROVED_MEDIA", location + ".rights_status", "obtain explicit media rights clearance"))
+            elif file.get("rights_status") != "cleared":
+                findings.append(_projection_finding("UNKNOWN_CLEARANCE", location + ".rights_status", "obtain explicit file rights clearance before projection"))
+            if role in {"body", "readme", "process"}:
+                try:
+                    text_content = content.decode("utf-8")
+                except UnicodeDecodeError:
+                    findings.append(_projection_finding("FORBIDDEN_CONTENT", location, "public text files must be UTF-8"))
+                else:
+                    for security_finding in scan_public_projection(text_content, location):
+                        findings.append(_projection_finding(str(security_finding.get("code")), str(security_finding.get("location", location)), str(security_finding.get("remediation", "remove unsafe public content"))))
+            prepared_files.append({"role": str(role), "source_locator": source_locator, "target_locator": target_locator, "sha256": str(file.get("sha256")), "path": target_path})
+            file_bytes[target_locator] = content
+        except PreparationError as exc:
+            findings.append(_projection_finding(exc.code, location, exc.remediation))
+    source_hash = source_data.get("sha256")
+    if isinstance(source_hash, str) and HASH64.fullmatch(source_hash) is not None:
+        source_key = f"{kind}:{source_data.get('canonical_sha256')}"
+    else:
+        source_key = f"{kind}:{'0' * 64}"
+    public_id: str | None = None
+    slug = str(record.get("slug", "record"))
+    result: dict[str, object] = {
+        "record": record,
+        "kind": str(kind),
+        "collection": collection,
+        "slug": slug,
+        "source_key": source_key,
+        "content_sha256": str(source_hash),
+        "files": prepared_files,
+        "file_bytes": file_bytes,
+    }
+    return result, _dedupe_projection_findings(findings)
+
+
+def _allocate_public_ids(
+    plans: list[dict[str, object]],
+    indexes: Mapping[str, Mapping[str, object]],
+    target: Path,
+    collection_prefixes: Mapping[str, str] | None = None,
+) -> tuple[list[dict[str, object]], list[dict[str, str]]]:
+    findings: list[dict[str, str]] = []
+    by_source: dict[str, dict[str, object]] = {}
+    prefixes = dict(collection_prefixes or {})
+    for plan in plans:
+        collection = str(plan["collection"])
+        prefixes.setdefault(collection, "P" if plan.get("kind") == "plan" else "W")
+    for collection, index in indexes.items():
+        prefixes.setdefault(collection, "P" if collection == "plans" else "W")
+    maximum = {collection: 0 for collection in indexes}
+    for collection, index in indexes.items():
+        prefix = prefixes[collection]
+        for retired in index.get("retired_ids", []):
+            maximum[collection] = max(maximum[collection], int(str(retired)[1:]))
+        for entry in index.get("records", []):
+            if isinstance(entry, Mapping):
+                public_id = str(entry["id"])
+                maximum[collection] = max(maximum[collection], int(public_id[1:]))
+                by_source[f"{collection}:{entry['source_key']}"] = dict(entry)
+    new_by_kind: dict[str, int] = dict(maximum)
+    for plan in sorted(plans, key=lambda item: (str(item["kind"]), str(item["source_key"]), str(item["slug"]))):
+        collection = str(plan["collection"])
+        existing = by_source.get(f"{collection}:{plan['source_key']}")
+        if existing is not None:
+            if existing.get("content_sha256") != plan.get("content_sha256"):
+                findings.append(_projection_finding("TARGET_CONFLICT", f"{collection}.index.{plan['source_key']}", "the existing source key has different content; preserve it and use a new source or target decision"))
+            public_id = str(existing["id"])
+            plan["public_id"] = public_id
+            plan["existing_entry"] = existing
+            plan["path"] = str(existing["path"])
+            continue
+        new_by_kind[collection] += 1
+        if new_by_kind[collection] > 9999:
+            findings.append(_projection_finding("TARGET_CONFLICT", f"{collection}.index", "the four-digit public ID space is exhausted; choose a new target policy"))
+            continue
+        public_id = f"{prefixes[collection]}{new_by_kind[collection]:04d}"
+        plan["public_id"] = public_id
+        plan["existing_entry"] = None
+        path, _ = _target_plan_directory(target, collection, public_id, str(plan["slug"]), f"{collection}.record")
+        plan["path"] = path
+    return plans, _dedupe_projection_findings(findings)
+
+
+def _projection_index_entry(plan: Mapping[str, object]) -> dict[str, object]:
+    record = plan["record"]
+    return {
+        "id": str(plan["public_id"]),
+        "slug": str(plan["slug"]),
+        "title": str(record["title"]),
+        "path": str(plan["path"]),
+        "source_key": str(plan["source_key"]),
+        "content_sha256": str(plan["content_sha256"]),
+        "status": "ready-for-publication",
+        "visibility": "public",
+        "rights_status": "cleared",
+    }
+
+
+def _index_bytes(index: Mapping[str, object]) -> bytes:
+    records = sorted((dict(item) for item in index.get("records", []) if isinstance(item, Mapping)), key=lambda item: str(item.get("id", "")))
+    value = {"version": INDEX_VERSION, "records": records, "retired_ids": sorted(str(item) for item in index.get("retired_ids", []))}
+    return _request_yaml_bytes(value)
+
+
+def _write_target_create_only(target: Path, relative: str, content: bytes) -> bool:
+    _, path = _target_locator(target, relative, relative)
+    if path.exists() or path.is_symlink():
+        current, _ = _target_regular(path, relative)
+        if current != content:
+            raise _prepare_error("TARGET_CONFLICT", relative, "never overwrite existing target bytes")
+        return False
+    parent = path.parent
+    current = target.expanduser().resolve(strict=False)
+    for part in Path(relative).parent.parts:
+        current = current / part
+        try:
+            if current.exists() and current.is_symlink():
+                raise _prepare_error("SOURCE_PATH_UNSAFE", relative, "target parent paths may not contain symlinks")
+            if current.exists() and not current.is_dir():
+                raise _prepare_error("TARGET_CONFLICT", relative, "target parent is occupied by a file")
+            current.mkdir(exist_ok=True)
+        except OSError as exc:
+            raise _prepare_error("FAILED", relative, "create the target staging parent manually and retry") from exc
+    try:
+        with path.open("xb") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except FileExistsError:
+        current, _ = _target_regular(path, relative)
+        if current != content:
+            raise _prepare_error("TARGET_CONFLICT", relative, "never overwrite a concurrently created target file")
+        return False
+    except OSError as exc:
+        raise _prepare_error("FAILED", relative, "repair target write access and retry") from exc
+    return True
+
+
+def _append_target_file(target: Path, relative: str, expected: bytes, replacement: bytes) -> bool:
+    _, path = _target_locator(target, relative, relative)
+    current, _ = _target_regular(path, relative)
+    if current != expected:
+        raise _prepare_error("TARGET_CONFLICT", relative, "the target changed after planning; re-run the dry-run")
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(replacement)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if _target_regular(path, relative)[0] != expected:
+            raise _prepare_error("TARGET_CONFLICT", relative, "the target changed during the scaffold operation")
+        os.replace(temporary, path)
+        return True
+    except PreparationError:
+        raise
+    except OSError as exc:
+        raise _prepare_error("FAILED", relative, "append the target marker atomically after repairing access") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _init_target_plan(target: Path) -> tuple[dict[str, bytes], list[dict[str, str]], str]:
+    target = target.expanduser().resolve(strict=False)
+    findings = _git_target_findings(target)
+    try:
+        before = _tree_fingerprint(target)
+    except PreparationError as exc:
+        findings.append(_projection_finding(exc.code, "target.tree", exc.remediation))
+        before = sha256_hex([])
+    planned: dict[str, bytes] = {}
+    layout: Mapping[str, object] = DEFAULT_LAYOUT
+    layout_path = target / "public-project.yaml"
+    if layout_path.exists() or layout_path.is_symlink():
+        try:
+            document = _load_target_document(target, "public-project.yaml", "target.layout")
+            errors = validate_layout(document, "target.layout")
+            if errors or not isinstance(document, Mapping):
+                raise _prepare_error("LAYOUT_INVALID", "target.layout", "repair public-project.yaml to public-project-layout/v1")
+            _layout_collections(document)
+            layout = document
+        except PreparationError as exc:
+            findings.append(_projection_finding(exc.code, "target.layout", exc.remediation))
+    else:
+        planned["public-project.yaml"] = _layout_bytes(DEFAULT_LAYOUT)
+    try:
+        plans, works = _layout_collections(layout)
+    except PreparationError as exc:
+        findings.append(_projection_finding(exc.code, exc.location, exc.remediation))
+        return planned, _dedupe_projection_findings(findings), before
+    if not (target / "README.md").exists() and not (target / "README.md").is_symlink():
+        planned["README.md"] = b"# Public project\n"
+    for collection, heading in ((plans, "# Plans\n\n"), (works, "# Works\n\n")):
+        try:
+            _, collection_path = _target_locator(target, collection, collection)
+        except PreparationError as exc:
+            findings.append(_projection_finding(exc.code, collection, exc.remediation))
+            continue
+        if collection_path.exists() and (collection_path.is_symlink() or not collection_path.is_dir()):
+            findings.append(_projection_finding("LAYOUT_INVALID", collection, "the declared collection must be a directory"))
+            continue
+        readme_relative = f"{collection}/README.md"
+        index_relative = f"{collection}/index.yaml"
+        readme_path = _target_locator(target, readme_relative, f"target.{collection}.README")[1]
+        if not readme_path.exists() and not readme_path.is_symlink():
+            planned[readme_relative] = f"{heading}{layout['catalog_markers']['start']}\n{layout['catalog_markers']['end']}\n".encode("utf-8")
+        elif readme_path.is_symlink():
+            findings.append(_projection_finding("LAYOUT_INVALID", f"target.{collection}.README", "collection README may not be a symlink"))
+        else:
+            try:
+                readme_bytes, _ = _target_regular(readme_path, f"target.{collection}.README")
+                readme_text = readme_bytes.decode("utf-8")
+                starts = readme_text.count(str(layout["catalog_markers"]["start"]))
+                ends = readme_text.count(str(layout["catalog_markers"]["end"]))
+                if starts > 1 or ends > 1 or (starts == 1 and ends == 1 and readme_text.find(str(layout["catalog_markers"]["start"])) >= readme_text.find(str(layout["catalog_markers"]["end"]))):
+                    raise _prepare_error("LAYOUT_INVALID", f"target.{collection}.README", "collection README must contain at most one ordered marker pair")
+                if starts == 0 and ends == 0:
+                    planned[readme_relative] = _append_marker_block(readme_text, layout).encode("utf-8")
+                elif starts != 1 or ends != 1:
+                    raise _prepare_error("LAYOUT_INVALID", f"target.{collection}.README", "catalog markers must be supplied as one complete pair")
+            except (PreparationError, UnicodeDecodeError) as exc:
+                code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
+                remediation = exc.remediation if isinstance(exc, PreparationError) else "collection README must remain UTF-8"
+                findings.append(_projection_finding(code, f"target.{collection}.README", remediation))
+        index_path = _target_locator(target, index_relative, f"target.{collection}.index")[1]
+        if not index_path.exists() and not index_path.is_symlink():
+            planned[index_relative] = _index_scaffold_bytes()
+        elif index_path.is_symlink():
+            findings.append(_projection_finding("LAYOUT_INVALID", f"target.{collection}.index", "collection index may not be a symlink"))
+        else:
+            try:
+                _load_target_index(target, collection, "P" if collection == plans else "W", f"target.{collection}.index")
+            except PreparationError as exc:
+                findings.append(_projection_finding(exc.code, f"target.{collection}.index", exc.remediation))
+    return planned, _dedupe_projection_findings(findings), before
+
+
+def init_target(target_root: Path, *, apply: bool) -> dict[str, object]:
+    """Onboard only the empty/layout-compatible local target scaffold."""
+    planned, findings, before = _init_target_plan(target_root)
+    result: dict[str, object] = {
+        "command": "init-target",
+        "status": "BLOCKED_CONFLICT" if findings else ("DRY_RUN_READY" if not apply else "APPLIED"),
+        "projection_id": None,
+        "record_count": 0,
+        "public_ids": [],
+        "planned_paths": sorted(planned),
+        "changed_paths": [],
+        "finding_codes": sorted({finding["code"] for finding in findings}),
+        "mutation_count": 0,
+    }
+    if findings or not apply:
+        return result
+    try:
+        if _tree_fingerprint(target_root) != before:
+            raise _prepare_error("TARGET_CONFLICT", "target.tree", "re-run init-target after the clean target fingerprint is stable")
+        changed: list[str] = []
+        for relative in sorted(planned):
+            if (target_root / relative).exists() and (target_root / relative).is_file() and relative.endswith("README.md") and relative in planned and not (target_root / relative).is_symlink():
+                # Existing README entries are marker appends; newly planned README
+                # files are handled by the create-only path below.
+                existing = (target_root / relative).read_bytes()
+                if existing != planned[relative]:
+                    if _append_target_file(target_root, relative, existing, planned[relative]):
+                        changed.append(relative)
+                continue
+            if _write_target_create_only(target_root, relative, planned[relative]):
+                changed.append(relative)
+        result["changed_paths"] = changed
+        result["mutation_count"] = len(changed)
+        return result
+    except PreparationError as exc:
+        result["status"] = "BLOCKED_CONFLICT" if exc.code in {"TARGET_CONFLICT", "SOURCE_PATH_UNSAFE", "LAYOUT_INVALID"} else "FAILED"
+        result["finding_codes"] = [exc.code]
+        result["changed_paths"] = []
+        result["mutation_count"] = 0
+        return result
+
+
+def _result_bytes(result: Mapping[str, object]) -> bytes:
+    return json.dumps(dict(result), ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
+
+
+def _write_projection_result(state_root: Path, projection_id: str, result: Mapping[str, object]) -> None:
+    errors = validate_result(result)
+    if errors:
+        raise _prepare_error("LAYOUT_INVALID", "result", "repair the generated public-projection-result/v1 evidence")
+    state_root = state_root.expanduser().resolve(strict=False)
+    run_directory = state_root / projection_id
+    if run_directory.exists() and run_directory.is_symlink():
+        raise _prepare_error("SOURCE_PATH_UNSAFE", "result", "run evidence directories may not be symlinks")
+    try:
+        run_directory.mkdir(parents=True, exist_ok=True)
+        if run_directory.resolve(strict=False) != run_directory:
+            raise _prepare_error("SOURCE_PATH_UNSAFE", "result", "run evidence must remain below state_root")
+    except PreparationError:
+        raise
+    except OSError as exc:
+        raise _prepare_error("FAILED", "result", "create the external run evidence directory and retry") from exc
+    target = resolve_run_destination(state_root, projection_id) / "public-projection-result.json"
+    rendered = _result_bytes(result)
+    if target.is_symlink():
+        raise _prepare_error("SOURCE_PATH_UNSAFE", "result", "result evidence may not be a symlink")
+    if target.exists():
+        try:
+            current = target.read_bytes()
+        except OSError as exc:
+            raise _prepare_error("TARGET_CONFLICT", "result", "inspect the existing run evidence without overwriting it") from exc
+        if current == rendered:
+            return
+        raise _prepare_error("TARGET_CONFLICT", "result", "use a new projection ID; result evidence is create-only")
+    temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(rendered)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.link(temporary, target)
+        except FileExistsError:
+            if target.read_bytes() != rendered:
+                raise _prepare_error("TARGET_CONFLICT", "result", "do not replace concurrently-created result evidence")
+    except PreparationError:
+        raise
+    except OSError as exc:
+        raise _prepare_error("FAILED", "result", "repair the external state root and retry create-only evidence write") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _sanitized_request_findings(request: Mapping[str, object]) -> list[dict[str, str]]:
+    findings: list[dict[str, str]] = []
+    for finding in request_policy_findings(request):
+        findings.append(_projection_finding(
+            str(finding.get("code", "FORBIDDEN_CONTENT")),
+            str(finding.get("location", "request")),
+            str(finding.get("remediation", "repair the public projection request")),
+        ))
+    return _dedupe_projection_findings(findings)
+
+
+def _plan_target_files(plan: Mapping[str, object], layout: Mapping[str, object]) -> dict[str, bytes]:
+    record = plan["record"]
+    directory = str(plan["path"])
+    files: dict[str, bytes] = {}
+    file_bytes = plan.get("file_bytes", {})
+    if isinstance(file_bytes, Mapping):
+        for target_locator, content in file_bytes.items():
+            if isinstance(target_locator, str) and isinstance(content, bytes):
+                files[f"{directory}/{target_locator}"] = content
+    if not any(str(item.get("role")) == "readme" for item in plan.get("files", []) if isinstance(item, Mapping)):
+        files[f"{directory}/README.md"] = _generated_readme(record, str(plan["kind"]))
+    files[f"{directory}/metadata.yaml"] = _metadata_bytes(record, str(plan["public_id"]))
+    return files
+
+
+def _existing_record_matches(target: Path, plan: Mapping[str, object], expected_files: Mapping[str, bytes]) -> list[dict[str, str]]:
+    findings: list[dict[str, str]] = []
+    directory = str(plan["path"])
+    try:
+        _, directory_path = _target_locator(target, directory, f"{plan['collection']}.record")
+        if not directory_path.exists() or directory_path.is_symlink() or not directory_path.is_dir():
+            raise _prepare_error("TARGET_CONFLICT", directory, "the indexed public record directory is missing or incompatible")
+        for relative, expected in sorted(expected_files.items()):
+            _, path = _target_locator(target, relative, relative)
+            if not path.exists() or path.is_symlink():
+                raise _prepare_error("TARGET_CONFLICT", relative, "the indexed public record is missing a managed file")
+            actual, _ = _target_regular(path, relative)
+            if actual != expected:
+                raise _prepare_error("TARGET_CONFLICT", relative, "the indexed public record bytes differ; preserve existing content")
+    except PreparationError as exc:
+        findings.append(_projection_finding(exc.code, str(exc.location), exc.remediation))
+    return findings
+
+
+def _project_dry_run_result(
+    request: Mapping[str, object],
+    *,
+    request_path: Path,
+    internal_output_root: Path,
+    public_projection_root: Path,
+) -> dict[str, object]:
+    projection_id = request.get("projection_id")
+    if not isinstance(projection_id, str) or STABLE_ID.fullmatch(projection_id) is None:
+        raise _prepare_error("PROJECTION_ID_INVALID", "request.projection_id", "use the stable projection identifier from the request")
+    structural = validate_request(request, "request")
+    if structural:
+        raise _prepare_error("LAYOUT_INVALID", "request", "repair the public-projection-request/v1 contract before planning")
+    request_hash = request_sha256(request)
+    layout, indexes, before, findings = _target_layout_preflight(public_projection_root)
+    findings.extend(_sanitized_request_findings(request))
+    source_refs = [
+        {"record_kind": str(record["record_kind"]), "source_sha256": str(record["source"]["sha256"])}
+        for record in request.get("records", [])
+        if isinstance(record, Mapping) and isinstance(record.get("source"), Mapping)
+    ]
+    source_refs = sorted(source_refs, key=lambda item: (item["record_kind"], item["source_sha256"]))
+    plans: list[dict[str, object]] = []
+    if layout is not None:
+        collection_map = {"plan": _layout_collections(layout)[0], "work": _layout_collections(layout)[1]}
+        for record_index, record in enumerate(request.get("records", [])):
+            if not isinstance(record, Mapping):
+                continue
+            collection = collection_map.get(str(record.get("record_kind")))
+            if collection is None:
+                findings.append(_projection_finding("LAYOUT_INVALID", f"records[{record_index}].record_kind", "use plan or work"))
+                continue
+            plan, record_findings = _source_record_plan(
+                record,
+                record_index=record_index,
+                internal_root=internal_output_root,
+                target=public_projection_root,
+                layout=layout,
+                collection=collection,
+            )
+            findings.extend(record_findings)
+            if plan:
+                plans.append(plan)
+    policy_codes = {
+        "UNKNOWN_CLEARANCE", "UNAPPROVED_MEDIA", "SOURCE_PATH_UNSAFE", "SOURCE_HASH_MISMATCH",
+        "FORBIDDEN_CONTENT", "CREDENTIAL", "PRIVATE_URL", "ABSOLUTE_PATH", "FORBIDDEN_ARTIFACT",
+        "INTERNAL_REFERENCE", "REMOTE_OPERATION",
+    }
+    has_policy = any(finding.get("code") in policy_codes for finding in findings)
+    public_ids: list[str] = []
+    planned_paths: set[str] = set()
+    if layout is not None and indexes and not has_policy:
+        plans, allocation_findings = _allocate_public_ids(
+            plans,
+            indexes,
+            public_projection_root,
+            {collection_map["plan"]: "P", collection_map["work"]: "W"},
+        )
+        findings.extend(allocation_findings)
+        if not allocation_findings:
+            for plan in plans:
+                public_ids.append(str(plan["public_id"]))
+                expected_files = _plan_target_files(plan, layout)
+                if plan.get("existing_entry") is not None:
+                    findings.extend(_existing_record_matches(public_projection_root, plan, expected_files))
+                else:
+                    directory = str(plan["path"])
+                    _, directory_path = _target_locator(public_projection_root, directory, f"{plan['collection']}.record")
+                    if directory_path.exists() or directory_path.is_symlink():
+                        findings.append(_projection_finding("TARGET_CONFLICT", directory, "the proposed public record directory already exists"))
+                    else:
+                        planned_paths.update(expected_files)
+                collection = str(plan["collection"])
+                if plan.get("existing_entry") is None:
+                    planned_paths.add(f"{collection}/index.yaml")
+            candidate_indexes: dict[str, dict[str, object]] = {collection: {"version": INDEX_VERSION, "records": [dict(item) for item in index.get("records", []) if isinstance(item, Mapping)], "retired_ids": list(index.get("retired_ids", []))} for collection, index in indexes.items()}
+            for plan in plans:
+                if plan.get("existing_entry") is None:
+                    candidate_indexes[str(plan["collection"])]["records"].append(_projection_index_entry(plan))
+            for collection, candidate_index in candidate_indexes.items():
+                current_index = indexes[collection]
+                if any(plan.get("existing_entry") is None and plan.get("collection") == collection for plan in plans):
+                    planned_paths.add(f"{collection}/index.yaml")
+                    readme_relative = f"{collection}/README.md"
+                    try:
+                        readme_bytes, _ = _target_regular(_target_locator(public_projection_root, readme_relative, readme_relative)[1], readme_relative)
+                        current_text = readme_bytes.decode("utf-8")
+                        desired_text = _replace_marker_block(current_text, layout, _catalog_text(candidate_index, collection), readme_relative)
+                        if desired_text != current_text:
+                            planned_paths.add(readme_relative)
+                    except (PreparationError, UnicodeDecodeError) as exc:
+                        code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
+                        remediation = exc.remediation if isinstance(exc, PreparationError) else "collection README must remain UTF-8"
+                        findings.append(_projection_finding(code, readme_relative, remediation))
+    findings = _dedupe_projection_findings(findings)
+    if any(finding.get("code") in policy_codes for finding in findings):
+        status = "BLOCKED_POLICY"
+        public_ids = []
+        planned_paths = set()
+    elif any(finding.get("code") in {"TARGET_CONFLICT", "TARGET_DIRTY", "LAYOUT_INVALID"} for finding in findings):
+        status = "BLOCKED_CONFLICT"
+        planned_paths = set()
+    else:
+        status = "DRY_RUN_READY"
+    remediations = sorted({str(finding["remediation"]) for finding in findings})
+    result: dict[str, object] = {
+        "contract_version": "public-projection-result/v1",
+        "projection_id": projection_id,
+        "generated_at": str(request["generated_at"]),
+        "status": status,
+        "request_sha256": request_hash,
+        "approval_sha256": None,
+        "source_refs": source_refs,
+        "public_ids": sorted(set(public_ids)),
+        "changed_paths": [],
+        "planned_paths": sorted(planned_paths),
+        "target": {
+            "root_role": "public_projection_root",
+            "mutation_count": 0,
+            "before_fingerprint": before,
+            "after_fingerprint": before,
+        },
+        "findings": findings,
+        "remediations": remediations,
+        "human_gate": {"status": "BLOCKED_HUMAN", "operation": "public_share"},
+        "remote_operations": [],
+        "child_mutations": [],
+        "privacy": {
+            "internal_content_stored": False,
+            "credential_stored": False,
+            "raw_conversation_stored": False,
+            "media_bytes_stored": False,
+            "direct_identifier_stored": False,
+        },
+    }
+    result_errors = validate_result(result)
+    if result_errors:
+        raise _prepare_error("LAYOUT_INVALID", "result", "repair the generated metadata-only result evidence")
+    return result
+
+
+def project_dry_run(
+    request_path: Path,
+    *,
+    internal_output_root: Path,
+    public_projection_root: Path,
+    state_root: Path,
+) -> dict[str, object]:
+    """Plan a public projection and write only create-only result evidence."""
+    locator, resolved_request = _source_locator(internal_output_root, request_path, "request")
+    request = _load_document(resolved_request)
+    if not isinstance(request, Mapping):
+        raise _prepare_error("LAYOUT_INVALID", "request", "provide a public-projection-request/v1 mapping")
+    result = _project_dry_run_result(
+        request,
+        request_path=resolved_request,
+        internal_output_root=internal_output_root.expanduser().resolve(strict=False),
+        public_projection_root=public_projection_root.expanduser().resolve(strict=False),
+    )
+    _write_projection_result(state_root.expanduser().resolve(strict=False), str(request["projection_id"]), result)
+    return result
+
+
 def _load_document(path: Path) -> object:
     try:
         with path.open(encoding="utf-8") as handle:
@@ -954,9 +2000,22 @@ def _prepare_stdout(result: Mapping[str, object]) -> dict[str, object]:
     }
 
 
+def _projection_stdout(result: Mapping[str, object]) -> dict[str, object]:
+    """Render only stable, non-sensitive plan/init metadata to stdout."""
+    return {
+        "command": result.get("command"),
+        "status": result.get("status"),
+        "projection_id": result.get("projection_id"),
+        "record_count": result.get("record_count", len(result.get("source_refs", [])) if isinstance(result.get("source_refs"), list) else 0),
+        "public_ids": sorted({str(value) for value in result.get("public_ids", [])}),
+        "planned_paths": sorted({str(value) for value in result.get("planned_paths", [])}),
+        "finding_codes": sorted({str(value) for value in result.get("finding_codes", [])}),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Prepare or validate public projection contracts without touching a public target")
-    parser.add_argument("command", choices=["validate", "prepare"])
+    parser = argparse.ArgumentParser(description="Validate, prepare, or safely plan a public projection")
+    parser.add_argument("command", choices=["validate", "prepare", "init-target", "project"])
     parser.add_argument("--layout", type=Path)
     parser.add_argument("--request", type=Path)
     parser.add_argument("--approval", type=Path)
@@ -966,6 +2025,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--refresh", type=Path)
     parser.add_argument("--projection-id")
     parser.add_argument("--destinations-file", type=Path)
+    parser.add_argument("--target-root", type=Path)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--apply", action="store_true")
     args = parser.parse_args(argv)
     if args.command == "validate" and not any((args.layout, args.request, args.approval, args.result)):
         parser.error("validate requires at least one contract input")
@@ -977,6 +2039,22 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("prepare requires --destinations-file")
         if (args.run_report is not None or args.batch_summary is not None) and not args.projection_id:
             parser.error("prepare requires --projection-id for --run-report and --batch-summary")
+    if args.command in {"init-target", "project"}:
+        if args.destinations_file is None:
+            parser.error(f"{args.command} requires --destinations-file")
+        if args.dry_run == args.apply:
+            parser.error(f"{args.command} requires exactly one of --dry-run or --apply")
+    if args.command == "init-target" and args.request is not None:
+        parser.error("init-target does not accept --request")
+    if args.command == "init-target" and args.projection_id is not None:
+        parser.error("init-target does not accept --projection-id")
+    if args.command == "project":
+        if args.request is None:
+            parser.error("project requires --request")
+        if args.apply:
+            parser.error("project --apply is reserved for the human-approval-gated apply task")
+        if args.approval is not None:
+            parser.error("project --dry-run does not consume an approval file")
     try:
         if args.command == "prepare":
             if args.run_report is not None:
@@ -1000,6 +2078,26 @@ def main(argv: list[str] | None = None) -> int:
                 result = refresh_request(request_path, internal_output_root=root)
             print(json.dumps(_prepare_stdout(result), ensure_ascii=False, sort_keys=True))
             return 0 if result.get("status") in PREPARE_STATUSES else 2
+        if args.command == "init-target":
+            resolution = _projection_resolution(args.destinations_file, "INIT-TARGET", target_root=args.target_root)
+            result = init_target(_resolution_role(resolution, "public_projection_root"), apply=args.apply)
+            print(json.dumps(_projection_stdout(result), ensure_ascii=False, sort_keys=True))
+            return 0 if result.get("status") in INIT_STATUSES else 2
+        if args.command == "project":
+            request_path = args.request.expanduser().resolve(strict=False)
+            request_document = _load_document(request_path)
+            if not isinstance(request_document, Mapping) or not isinstance(request_document.get("projection_id"), str):
+                raise _prepare_error("SOURCE_INVALID", "request", "provide a request with a stable projection_id")
+            projection_id = str(request_document["projection_id"])
+            resolution = _projection_resolution(args.destinations_file, projection_id, target_root=args.target_root)
+            result = project_dry_run(
+                request_path,
+                internal_output_root=_resolution_role(resolution, "internal_output_root"),
+                public_projection_root=_resolution_role(resolution, "public_projection_root"),
+                state_root=_resolution_role(resolution, "state_root"),
+            )
+            print(json.dumps(_projection_stdout(result), ensure_ascii=False, sort_keys=True))
+            return 0 if result.get("status") in PROJECT_STATUSES and result.get("status") == "DRY_RUN_READY" else 2
         values = {
             "layout": _load_document(args.layout) if args.layout else None,
             "request": _load_document(args.request) if args.request else None,
@@ -1008,6 +2106,18 @@ def main(argv: list[str] | None = None) -> int:
         }
         errors = validate_contracts(**values)
     except PreparationError as exc:
+        if args.command in {"init-target", "project"}:
+            output = {
+                "command": args.command,
+                "status": "FAILED",
+                "projection_id": args.projection_id,
+                "record_count": 0,
+                "public_ids": [],
+                "planned_paths": [],
+                "finding_codes": [exc.code],
+            }
+            print(json.dumps(output, ensure_ascii=False, sort_keys=True))
+            return 2
         output = {
             "command": "prepare",
             "status": "FAILED",

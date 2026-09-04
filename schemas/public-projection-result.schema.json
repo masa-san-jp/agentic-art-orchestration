@@ -28,6 +28,11 @@
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/relative_path"}
     },
+    "planned_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/relative_path"}
+    },
     "target": {"$ref": "#/$defs/target"},
     "findings": {
       "type": "array",
@@ -103,7 +108,7 @@
             "ROLLBACK_FAILED"
           ]
         },
-        "location": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:/\\[\\]$-]+$"},
+        "location": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:/\\[\\]_$-]+$"},
         "remediation": {"type": "string", "minLength": 1}
       }
     },
