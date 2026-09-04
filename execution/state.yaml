@@ -1,30 +1,30 @@
-version: 208
-updated_at: "2026-09-05T06:51:34+09:00"
-active_task: null
-active_repository: null
+version: 209
+updated_at: "2026-09-05T07:09:14+09:00"
+active_task: PUBLIC-PLAN-CANONICAL-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-05T06:35:55+09:00"
-  expires_at: null
+  status: held
+  owner: codex
+  acquired_at: "2026-09-05T07:09:14+09:00"
+  expires_at: "2026-09-05T09:09:14+09:00"
   lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECT-RELATIONSHIP-001:20260905-063555
-  released_at: "2026-09-05T06:51:34+09:00"
+  execution_id: PUBLIC-PLAN-CANONICAL-001:20260905-070914
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [config/repository-relationships.yaml, schemas/repository-relationships.schema.json, tools/validate.py, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_validate.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
-    child_repositories: []
+    paths: [tools/public_projection.py, config/repository-relationships.yaml, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/test_validate.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
+    child_repositories: [agentic-art-project]
 checkpoint:
-  task: PUBLIC-PROJECT-RELATIONSHIP-001
+  task: PUBLIC-PLAN-CANONICAL-001
   repository: agentic-art-orchestration
-  start_point: 477ae8ee6e67d33bb53bcedeb7a2f990ee9b1bcf
-  expected_changes: Define agentic-art-project as the canonical export-only public output catalog in a separate closed registry; keep generic runtime configuration and input manifest boundaries intact; document private-staging and human-gated remote publication.
-  result: completed; implementation commit 2f016f6; pushed checkpoint ef7b57e; Draft PR #191; acceptance 6/6; local full suite 545/545 PASS.
+  start_point: 8fe2efb7976878d6874d230100fbf236f3db0b17
+  expected_changes: Reject summary-shaped automatic plan bodies, emit no-transform canonical Production provenance, align parent output with the receiver validator, and quarantine or replace legacy summarized records in agentic-art-project through a separate child commit and PR.
+  result: in_progress; Issues parent #193 and agentic-art-project #6 created; P0006 hash mismatch reproduced.
 last_completed_task: PUBLIC-PROJECT-RELATIONSHIP-001
 resume_from:
-  task: null
-  action: "Human-review Draft PR #191; merge only after reviewing the canonical relationship, input isolation, and private-staging boundary."
-  command: gh pr view 191 --repo masa-san-jp/agentic-art-orchestration
+  task: PUBLIC-PLAN-CANONICAL-001
+  action: "Implement the parent canonical-plan guard and receiver-verifiable projection metadata, then apply the child validator/migration on a separate branch."
+  command: .venv/bin/python -m unittest tests.test_public_projection -v
 
 workspace_bootstrap_apply:
   status: complete

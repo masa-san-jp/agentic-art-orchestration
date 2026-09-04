@@ -2188,3 +2188,14 @@
 ### Next exact action
 
 1. `gh pr view 191 --repo masa-san-jp/agentic-art-orchestration`でDraft PRをreviewし、canonical relationship、input isolation、private-staging境界を確認してmerge可否を人間が判断する。
+
+## 2026-09-05 — PUBLIC-PLAN-CANONICAL-001 claimed
+
+- P0006の公開`plan.md` SHA-256 `67735d1c...`と同一runのProduction正本 SHA-256 `846bf1a3...`の不一致を観測した。公開本文は`sanitized-public-plan`で、Production正本のWBS・資源・予算・日程・リスク・承認・証跡を欠く。
+- 親Issue [#193](https://github.com/masa-san-jp/agentic-art-orchestration/issues/193)と公開先Issue [#6](https://github.com/masa-san-jp/agentic-art-project/issues/6)を作成した。
+- task `PUBLIC-PLAN-CANONICAL-001`を開始点`8fe2efb7976878d6874d230100fbf236f3db0b17`でclaimした。親でcanonical structure/no-transform provenanceを実装し、公開先でvalidator/CIと既存summary分類を別commit/PRとして実装する。
+- 機微情報・外部artifact本文は保存していない。GitHub外部操作はIssue CREATEとread-only監査のみ。default branch merge、release、visibility変更は行わない。
+
+### Next exact action
+
+1. `tests/test_public_projection.py`へsummary拒否とcanonical byte/provenanceの負例・正例を追加し、`tools/public_projection.py`を実装する。

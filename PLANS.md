@@ -1030,3 +1030,59 @@ registryと文書は決定的なtracked filesである。中断時は`execution/
 `repository-relationships/v1`は公式repo identityを持つが、`output-destinations/v1`とruntimeは
 local absolute pathだけを受け取る。`public-project-layout/v1`はtarget側layout、
 `public-projection-result/v1`はlocal projection結果の境界である。
+
+## PUBLIC-PLAN-CANONICAL-001 ExecPlan
+
+### Purpose / Big Picture
+
+Issue #193と公開先Issue #6に従い、制作に使う`plan.md`がProduction正本から要約・再構成される経路を閉じる。
+親は正本の構造とbyte identityを検証してno-transform provenanceを出し、公開先はその契約をCIで再検証する。
+
+### Progress
+
+- [x] P0006で公開summaryとProduction正本のSHA-256不一致を再現した。
+- [x] 親Issue #193と公開先Issue #6を作成し、taskとleaseをclaimした。
+- [ ] 親のcanonical plan guard、metadata/index契約、負例E2Eを実装する。
+- [ ] 公開先のAGENTS、validator、CI、既存record migrationを別commit/PRで実装する。
+- [ ] 両repoの全check、記録、push、Draft PR更新を完了する。
+
+### Surprises & Discoveries
+
+- 現行の自動経路は本文bytesを正しくコピーするが、`PLAN_READY`形の手書きMarkdownをProduction生成物と区別する構造guardがない。
+- 公開先READMEの「人間向けに要約」が`plan.md`にも適用され、P0001〜P0007が`sanitized-public-plan`として登録された。
+- P0006ではsummary hash `67735d...`とProduction正本hash `846bf1...`が不一致で、正本のWBS・資源・予算・日程・リスク・承認・証跡が公開本文から失われた。
+
+### Decision Log
+
+- `README.md`は紹介文を許すが、`plan.md`はProduction `03_plan/production-plan.md`の無変換bytesだけを許す。
+- 正本が公開安全検査に失敗した場合は要約へfallbackせず`BLOCKED_POLICY`にする。
+- 既存summaryは正本があるものだけ是正し、正本を確認できないものは`blocked-missing-canonical`として制作可能一覧から隔離する。
+- Git commit/push/Draft PRまではtask範囲、default branch mergeとvisibility変更は人間gateに残す。
+
+### Plan of Work
+
+1. Production生成Markdownの必須構造guardとnegative fixturesを親へ追加する。
+2. target metadata/indexへautomatic/no-transform/canonical source provenanceを出力し、byte identityをテストする。
+3. relationshipと利用文書を`README summary`対`plan canonical`の境界へ同期する。
+4. 公開先へdependency-free validator、CI、AGENTS、catalog分類を追加し、既存recordを移行する。
+5. 両repoでfocused/full checksを実行し、別commit/PRとして記録する。
+
+### Validation and Acceptance
+
+- summary、section欠落、tamper、provenance欠落はtarget無変更で拒否される。
+- 正規fixtureの公開`plan.md`はsourceとbyte-for-byte一致し、全hash fieldが一致する。
+- 公開先CIはcanonical planだけを実行可能一覧へ入れ、blocked summaryを制作可能と表示しない。
+- 親required checksと公開先validator/full unittestがPASSする。
+
+### Idempotence and Recovery
+
+親projectionは既存create-only/atomic transactionを維持する。公開先の既存summaryはGit履歴を保持した通常PRで移行し、
+自動削除・force push・default branch mergeを行わない。中断時はstateのleaseと両Issueから再開する。
+
+### Interfaces and Dependencies
+
+親Issue: https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
+
+公開先Issue: https://github.com/masa-san-jp/agentic-art-project/issues/6
+
+Production schemaは子repoが正本であり、親は公開境界として生成Markdownの固定sectionとcanonical hashだけを検証する。
