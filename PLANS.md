@@ -964,9 +964,9 @@ Issue #190に従い、`agentic-art-project`を親repo側でも正規の公開成
 
 - [x] 両repoと既存public projection contractをread-onlyで確認した。
 - [x] Issue #190を作成し、taskをqueue/stateへclaimした。
-- [ ] closed relationship registry、validator、testsを実装する。
-- [ ] README、設計、operator/agent guideを同期する。
-- [ ] 全検証、record、commit、push、Draft PRを完了する。
+- [x] closed relationship registry、validator、testsを実装した。
+- [x] README、設計、operator/agent guideを同期した。
+- [ ] 全検証とimplementation commitは完了。実行SSOTのpush、Draft PR、lease releaseを完了する。
 
 ### Surprises & Discoveries
 
@@ -981,7 +981,9 @@ Issue #190に従い、`agentic-art-project`を親repo側でも正規の公開成
 
 ### Outcomes & Retrospective
 
-実装・検証完了時にacceptance、commit、PR、機微情報、外部artifact、未解決を記録する。
+relationship registryと文書同期をimplementation commit `2f016f6`へ記録した。初回full suiteで既存の
+Git管理外snapshot不一致を観測し、正準networkless bootstrapで再生成後、focused `41/41`とfull
+`545/545`がPASSした。外部repo、実target、visibility、artifact本文は変更していない。
 
 ### Context and Orientation
 

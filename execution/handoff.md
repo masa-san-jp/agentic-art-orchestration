@@ -2173,3 +2173,17 @@
 ### Next exact action
 
 1. 人間がdraft PR #188のauthority境界、公開target transaction、local snapshot prerequisiteを確認し、merge可否を判断する。
+
+## 2026-09-05 — PUBLIC-PROJECT-RELATIONSHIP-001 implementation verified
+
+- Task ID: `PUBLIC-PROJECT-RELATIONSHIP-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#190](https://github.com/masa-san-jp/agentic-art-orchestration/issues/190)。開始点は`477ae8ee6e67d33bb53bcedeb7a2f990ee9b1bcf`、task registration commitは`7fa1b46`、implementation commitは`2f016f6`。
+- `config/repository-relationships.yaml`とclosed schemaを追加し、`masa-san-jp/agentic-art-project`をcanonical `public-output-catalog`、方向を`export-only`、runtime destinationを`public_projection_root`として定義した。親は正規run/batchと公開境界、出力repoは公開向けplan/work/index/catalog layoutを所有する。
+- 出力repoは`config/repositories.yaml`、qualified snapshot、knowledge retrieval、source pinから除外した。正規planの自動local projection、work/manual/Git/remoteのhuman gate、完成前の`private-staging`と完成後の`public-catalog`意図をvalidator、tests、README、system design、execution plan、operator/agent guideで同期した。
+- Acceptanceは実装上`6/6`。validator PASS、docs/contract focused `29/29 PASS`、既存snapshot依存の回復focused `41/41 PASS`、networkless生成物再作成後のparent full suite `545/545 PASS`、project-status README check、py_compile、JSON/YAML load、diff checkがPASSした。初回full suiteの`3 failures/14 errors`は既知のGit管理外`data/snapshot.json` pin不一致で、正準bootstrapにより解消し、tracked pinやchild repoは変更していない。
+- 機微情報・外部artifact: credential/token、PRIVATE_RAW、RESTRICTED、direct identifier、raw conversation、prompt、handoff body、local path、external artifact bodyを出力repoへ送信・保存していない。Google Drive artifactなし、opaque参照なし。Issue #190以外の外部CREATEなし。
+- Explicit feedbackは、`agentic-art-project`との関係・役割・受け渡し境界を親repo側にも作る依頼と、Privateはrepo群完成前の意図した状態であるという説明。inferred feedbackはnone。
+- 現在のleaseはactive。次はこの実行SSOTをbranchへfast-forward pushし、remote HEADを確認してDraft PRを作成する。merge、release、visibility変更は行わない。
+
+### Next exact action
+
+1. `git push -u origin agent/public-project-relationship-20260905`を実行し、remote HEADがlocal `HEAD`と一致することを確認する。
