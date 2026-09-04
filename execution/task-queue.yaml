@@ -1267,7 +1267,7 @@ tasks:
   - id: OUTPUT-DESTINATIONS-RUNTIME-001
     milestone: M28
     title: Connect the shared destination resolver to all runtime commands
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1277,6 +1277,7 @@ tasks:
     depends_on: [OUTPUT-DESTINATIONS-CONTRACT-001]
     acceptance: Connect run, batch_run, production_exchange, and autonomous_runner to the shared resolver, preserve all legacy defaults and required-argument failures when no profile is used, write internal resolution evidence atomically, and prove profile output separation without mutating parent Git or child checkouts.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_output_destinations tests.test_run tests.test_batch_run -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #156 merged to main as b3bfbdb4aa2b1f305f5decfdea635485ecb6c947; implementation commit 3fe8b6a79311dfe725211a388247d692d2c089a connected the single output-destinations/v1 resolver to run.py, batch_run.py, production_exchange.py, and autonomous_runner.py. Profile-selected runs now derive state/internal paths, preserve direct CLI precedence, embed destination-resolution/v1 in existing reports/state, and atomically create external run evidence without replacing conflicts. Legacy profile-free defaults and required-argument behavior remain covered. Focused runtime tests 51/51 PASS; parent full suite 501/501 PASS with 1 expected skip; validator, py_compile, and diff check PASS. GitHub validate jobs for run 33831327488 failed before any steps because of the account billing limit and are recorded as an environment failure, not a skipped or passing gate. No child repository, manifest pin, user path, credential, private data, raw conversation, public projection, or external artifact body was changed."
     stop_if: [A runtime command needs a second destination resolver, Existing output must be moved or deleted, A live user path or external artifact is required, A child repository must change]
 
   - id: OUTPUT-DESTINATIONS-DOCS-001

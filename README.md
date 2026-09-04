@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T11:40:00+09:00`.
+Source updated at: `2026-09-04T11:56:52+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 9 | 0 | 1 | 0 | 120 | 130 |
+| 9 | 0 | 0 | 0 | 121 | 130 |
 
-Current task: `OUTPUT-DESTINATIONS-RUNTIME-001`; repository: `agentic-art-orchestration`; checkpoint: `OUTPUT-DESTINATIONS-RUNTIME-001`.
-Next action: Implement and test the shared resolver adapters, then record the completion evidence and release the lease.
+Current task: `null`; repository: `null`; checkpoint: `OUTPUT-DESTINATIONS-RUNTIME-001`.
+Next action: Claim the smallest dependency-complete BACKLOG task, then document configured destinations and recovery behavior from Issue #148.
 Ready: none.
-Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
+Next task: `OUTPUT-DESTINATIONS-DOCS-001`.
 Blocked:
 - none
 
