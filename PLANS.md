@@ -820,3 +820,17 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`をclaimし、Issue #150、`workspace-bootstrap/v1`、既存workspace guardを読み、manifest pin・remote・checkout状態のread-only preflightを実装する。
+
+## 2026-09-04 — WORKSPACE-BOOTSTRAP-PREFLIGHT-001 completed
+
+- Task ID: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`a1bb7ad7e24dd9b20a42fe0ec9e24f6bbe1e1f77`、PR [#170](https://github.com/masa-san-jp/agentic-art-orchestration/pull/170)はmainへ`3d786bb3bee18ae868bf1aeb5f0d18d85cd3a8b4`としてmergeされた。
+- `tools/workspace.py bootstrap`はmanifest全entryをclone前にread-only検査し、既存checkoutのdirty/untracked/detached/remote/upstream/ahead/behind/diverged、pin drift、path traversal・重複・symlink rootをsanitized findingへ変換する。missing remoteは`GIT_TERMINAL_PROMPT=0`でread-only probeし、credentialやremote応答本文を保持しない。
+- metadata-onlyの排他的bootstrap lockを追加し、既存workspace不安全、remote access不全、pin drift、競合時は新規clone 0件で停止する。preflight段階ではclone/fetch/checkout/reset/pin adoptionを行わず、既存checkoutのfingerprintは不変である。
+- Acceptanceは`1/1`。focused workspace bootstrap/guard tests `17/17 PASS`、parent full suite `528 tests / 1 skipped PASS`、validator、py_compile、diff check、offline synthetic preflight、symlink root fail-closedを確認した。child repository変更はなく、child quality gateは対象なし。
+- GitHub Actions run `33840432797`はbootstrap/production-exchange/real-chainの全jobが`steps=[]`でaccount billing limitにより開始前失敗した。これは品質gateのPASSへ算入していない。ローカル検証を失敗の成功・skipへ変換していない。
+- 機微情報・外部artifact: credential、token、private/restricted data、raw conversation、direct identifier、user workspace、remote response、外部artifact本文は保存・送信していない。synthetic temporary fixtureのみを使用し、create-only外部artifactは作成していない。explicit feedbackは「各repoのエージェント自律実装要件を評価し不足を補完」、inferredはnone。
+- 未解決はIssue #150のstaged apply、atomic placement、race recovery、idempotent reuse、pin readiness判定とdocsであり、次taskへ分離している。leaseは`available/unassigned`へ解放済みで、`WORKSPACE-BOOTSTRAP-APPLY-001`をREADYへ昇格した。
+
+### Next exact action
+
+1. `WORKSPACE-BOOTSTRAP-APPLY-001`をclaimし、Issue #150と完了済みpreflightを読み、tool-owned stagingからの検証済みatomic placementとfailure recoveryをtemporary fixtureで実装する。

@@ -2088,3 +2088,16 @@
 ### Next exact action
 
 1. `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`をclaimし、Issue #150、bootstrap contract、workspace guardを読み、manifest pin・remote・checkout状態をread-onlyで検査する。
+
+## WORKSPACE-BOOTSTRAP-PREFLIGHT-001 — completed
+
+- Task ID: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`; repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。実装commit `a1bb7ad7e24dd9b20a42fe0ec9e24f6bbe1e1f77`、PR [#170](https://github.com/masa-san-jp/agentic-art-orchestration/pull/170)、main merge `3d786bb3bee18ae868bf1aeb5f0d18d85cd3a8b4`。
+- `bootstrap`はmanifest全entryをclone前に検査し、既存checkoutのguard finding、missing remote access、pin drift、unsafe path、既存lockをclosed/sanitized resultへ出力する。remote probeはprompt無効で応答本文を捨て、lockはmanifest hashだけのmetadataである。
+- unsafe existing workspace、remote access failure、pin drift、raceでは新規clone 0件。workspace root symlinkも解決先へ追従せず`FAILED`にする。既存checkoutへfetch/pull/checkout/reset/clean等は行わない。
+- Acceptance `1/1`。focused `17/17 PASS`、parent full suite `528 tests / 1 skipped PASS`、validator、py_compile、diff check PASS。child repo gateは対象なし。GitHub run `33840432797`は全job `steps=[]`のbilling開始前失敗であり、品質gateのpassではない。
+- 機微情報・外部artifact: credential/token、remote response、PRIVATE_RAW、RESTRICTED、raw conversation、direct identifier、user path、child変更なし。synthetic temporary fixtureのみで、Drive等のcreate-only artifactは作成していない。explicit feedbackはユーザーの自律実装要件評価・補完依頼、inferred feedbackはnone。
+- 未解決: staged apply、atomic rename、staging recovery、idempotent reuse、READY/pin readiness、bootstrap docs。leaseは`available/unassigned`、次taskは`WORKSPACE-BOOTSTRAP-APPLY-001`。
+
+### Next exact action
+
+1. `WORKSPACE-BOOTSTRAP-APPLY-001`をclaimし、最初にIssue #150と`tools/workspace.py`のpreflight/legacy helperを読み、temporary fixtureでall-missing stagingの実装境界を確定する。
