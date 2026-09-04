@@ -93,7 +93,7 @@
         "projection_policy": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["automatic_records", "human_approved_records", "git_remote_operations"],
+          "required": ["automatic_records", "human_approved_records", "git_remote_operations", "canonical_plan"],
           "properties": {
             "automatic_records": {
               "type": "array",
@@ -106,7 +106,22 @@
               "uniqueItems": true,
               "items": {"enum": ["work", "manual-projection"]}
             },
-            "git_remote_operations": {"const": "human-gated"}
+            "git_remote_operations": {"const": "human-gated"},
+            "canonical_plan": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source_repository", "source_artifact", "target_artifact", "body_transform", "transfer", "receiver_validation", "unsafe_source", "summary_target"],
+              "properties": {
+                "source_repository": {"const": "agentic-art-production"},
+                "source_artifact": {"const": "03_plan/production-plan.md"},
+                "target_artifact": {"const": "plan.md"},
+                "body_transform": {"const": "none"},
+                "transfer": {"const": "byte-for-byte"},
+                "receiver_validation": {"const": "required"},
+                "unsafe_source": {"const": "blocked-policy"},
+                "summary_target": {"const": "README.md"}
+              }
+            }
           }
         },
         "lifecycle": {

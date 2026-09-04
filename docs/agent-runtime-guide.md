@@ -179,6 +179,12 @@ preflightは公開境界、機密情報、権利・同意、path safety、target
 を一つのtransactionで反映する。planのこの自動経路ではレコード単位の`public_share` approvalは
 要求せず、result evidenceの`projection_mode`は`AUTOMATIC_PLAN`、`human_gate`は`NOT_REQUIRED`とする。
 
+エージェントは`plan.md`を執筆・要約しない。Productionの`03_plan/production-plan.md`を
+byte-for-byteで投影し、別の説明が必要なときだけ`README.md`を使う。request/metadataには
+`canonical-plan-projection/v1`、`body_transform: none`、Production repository/commit、run ID、
+canonical SHA-256を保持する。必須sectionを欠くsummaryは`CANONICAL_PLAN_INVALID`、公開安全でない
+正本は`BLOCKED_POLICY`として止め、内容を省略した公開版へ置換しない。
+
 `public_projection_root`の不足は`BLOCKED_CONFIGURATION`、公開境界違反は`BLOCKED_POLICY`、targetの
 dirty/conflict/layout不適合は`BLOCKED_CONFLICT`、途中I/Oまたはrollback不全は`FAILED`である。いずれも
 公開targetに部分結果を残さず、内部のcanonical planとstate rootのmetadata-only resultを保持する。

@@ -179,6 +179,12 @@ targetのGit/layout/index/markerをpreflightし、合格後に`plans/Pxxxx-<slug
 必要なplan素材（既存layout contractでは`media/`配下）、`plans/index.yaml`、collection READMEの管理対象markerを
 一つのtransactionで更新する。
 
+`plan.md`にはProductionの`03_plan/production-plan.md`をbyte-for-byteで置き、要約・翻訳・再構成・
+抜粋を行わない。紹介文が必要なら公開先の`README.md`にだけ置く。自動request/metadataの
+`canonical-plan-projection/v1`、`body_transform: none`、Production repository/commit、run ID、
+canonical SHA-256と本文実hashを照合する。Production統合計画書の必須sectionがない本文は
+`CANONICAL_PLAN_INVALID`、公開安全検査に失敗する正本は`BLOCKED_POLICY`であり、要約版を代替公開しない。
+
 batchは全件を先にstagingしてから反映するため、100件以上でもID・順序・bytesが決定的である。
 一件でもpolicy違反、未許諾素材、target conflict、無関係なdirty変更、契約不適合があれば
 `BLOCKED_POLICY`または`BLOCKED_CONFLICT`としてtargetを変更しない。途中I/O失敗もtransactionが

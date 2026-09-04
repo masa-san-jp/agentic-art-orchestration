@@ -610,6 +610,16 @@ def validate_repository_relationships_contract(
         "automatic_records": ["plan"],
         "human_approved_records": ["work", "manual-projection"],
         "git_remote_operations": "human-gated",
+        "canonical_plan": {
+            "source_repository": "agentic-art-production",
+            "source_artifact": "03_plan/production-plan.md",
+            "target_artifact": "plan.md",
+            "body_transform": "none",
+            "transfer": "byte-for-byte",
+            "receiver_validation": "required",
+            "unsafe_source": "blocked-policy",
+            "summary_target": "README.md",
+        },
     }:
         errors.append(
             f"{source}: projection policy weakens the plan/work/Git boundary; "

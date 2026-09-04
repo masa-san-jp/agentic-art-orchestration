@@ -59,14 +59,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-05T06:51:34+09:00`.
+Source updated at: `2026-09-05T07:28:54+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 139 | 139 |
+| 0 | 0 | 1 | 0 | 139 | 140 |
 
-Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECT-RELATIONSHIP-001`.
-Next action: Human-review Draft PR #191; merge only after reviewing the canonical relationship, input isolation, and private-staging boundary.
+Current task: `PUBLIC-PLAN-CANONICAL-001`; repository: `agentic-art-orchestration`; checkpoint: `PUBLIC-PLAN-CANONICAL-001`.
+Next action: Retry creation of the child Draft PR when GitHub API connectivity returns; then leave merge and visibility changes to human approval.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -118,6 +118,11 @@ Startup update check + audit -> findings / Issue candidate
 正規の`PLAN_READY` / `PASSED` planだけが自動local投影対象で、work・手動projectionと
 Git commit/push/merge/releaseは人間gateを保つ。現在のlifecycleは、repo群の完成前なので
 `private-staging`である。完成後の公開カタログ化を意図するが、visibility変更は人間が別途承認する。
+
+公開先の`plan.md`は`agentic-art-production`が生成した`03_plan/production-plan.md`の
+byte-for-byte複製であり、要約・翻訳・再構成・抜粋を禁止する。人間向けの紹介や要約を置けるのは
+`README.md`だけである。`plan.md`がProduction生成計画の必須sectionを欠く、canonical SHA-256と
+一致しない、または公開安全検査に失敗する場合は、要約へfallbackせず`BLOCKED_POLICY`にする。
 
 ## 重要な境界
 
@@ -295,6 +300,11 @@ Drive、remote visibilityには接続しません。
 production planだけを、公開境界・source hash・path safety・target layout/index/markerの
 preflight後に`plans/Pxxxx-<slug>/`へ反映します。各recordには`README.md`、`plan.md`、
 `metadata.yaml`を作り、`plans/index.yaml`とcollection READMEの管理対象markerを更新します。
+`plan.md`はProductionの`03_plan/production-plan.md`とbyte-for-byte一致させ、requestとmetadataには
+`canonical-plan-projection/v1`、`AUTOMATIC_PLAN`、`body_transform: none`、Production repository/commit、
+run ID、canonical SHA-256を記録します。Production固有の計画メタデータ、完成像、成果物、
+技術仕様・材料・資源、工程、受入評価、日程・予算、リスク、承認・安全境界、証跡のsectionを欠く
+手書き要約は`CANONICAL_PLAN_INVALID`として拒否します。
 plan固有の素材が正規のrequestに含まれる場合だけ、既存のlayout contractで定める`media/`
 配下のallowlist pathを使います（Issueでいう`assets`相当の領域です）。
 

@@ -50,6 +50,7 @@
         "slug": {"$ref": "#/$defs/slug"},
         "title": {"type": "string", "minLength": 1},
         "source": {"$ref": "#/$defs/source"},
+        "projection": {"$ref": "#/$defs/canonical_plan_projection"},
         "publication": {"$ref": "#/$defs/publication"},
         "files": {
           "type": "array",
@@ -57,6 +58,18 @@
           "uniqueItems": true,
           "items": {"$ref": "#/$defs/file"}
         }
+      }
+    },
+    "canonical_plan_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "mode", "producer", "canonical_artifact", "body_transform"],
+      "properties": {
+        "contract_version": {"const": "canonical-plan-projection/v1"},
+        "mode": {"const": "AUTOMATIC_PLAN"},
+        "producer": {"enum": ["tools/run.py", "tools/batch_run.py"]},
+        "canonical_artifact": {"const": "production-plan.md"},
+        "body_transform": {"const": "none"}
       }
     },
     "source": {

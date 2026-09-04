@@ -174,6 +174,15 @@ class BootstrapValidationTests(unittest.TestCase):
         self.assertEqual("private-staging", relationship["lifecycle"]["current"])
         self.assertEqual(["plan"], relationship["projection_policy"]["automatic_records"])
         self.assertEqual("human-gated", relationship["projection_policy"]["git_remote_operations"])
+        canonical_plan = relationship["projection_policy"]["canonical_plan"]
+        self.assertEqual("agentic-art-production", canonical_plan["source_repository"])
+        self.assertEqual("03_plan/production-plan.md", canonical_plan["source_artifact"])
+        self.assertEqual("plan.md", canonical_plan["target_artifact"])
+        self.assertEqual("none", canonical_plan["body_transform"])
+        self.assertEqual("byte-for-byte", canonical_plan["transfer"])
+        self.assertEqual("required", canonical_plan["receiver_validation"])
+        self.assertEqual("blocked-policy", canonical_plan["unsafe_source"])
+        self.assertEqual("README.md", canonical_plan["summary_target"])
         manifest_ids = {repository["id"] for repository in manifest["repositories"]}
         self.assertNotIn("agentic-art-project", manifest_ids)
 

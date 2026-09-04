@@ -185,6 +185,12 @@ local profileの`public_projection_root`がそのworktreeを指す。親は正�
 local projectionを所有し、出力repoは`public-project.yaml`に従う公開向けrecord、index、catalog表現を
 所有する。内部ログ、会話、prompt、handoff、credential、private/restricted data、local pathは渡さない。
 
+公開planの意味はlayoutではなくsource identityで閉じる。`agentic-art-project`の`plan.md`は
+`agentic-art-production`の`03_plan/production-plan.md`をbyte-for-byteで受け取る正本で、本文の
+要約・翻訳・再構成・抜粋は許可しない。紹介用`README.md`だけが別表現を持てる。sourceが公開安全で
+ない場合は正本を編集して公開せず`BLOCKED_POLICY`とし、receiver側validatorもcanonical hash、
+no-transform provenance、Production生成Markdownの必須構造を再検証する。
+
 出力repoは入力知識でもruntimeでもないため、`config/repositories.yaml`、qualified snapshot、
 knowledge retrieval、source pinの対象にしない。現在はrepo群完成前の`private-staging`で、完成後の
 `public-catalog`を意図する。Git commit/push/merge/releaseとrepository visibility変更は人間gateである。
@@ -397,6 +403,12 @@ debug evidence、credential、private/restricted dataを再帰的にコピーし
 を`plan`に限定する。`work`、手書きrequest、任意ファイル、別runのsource、hash不一致はauthority
 またはpolicy failureとして拒否する。自動経路で構築されたrequestだけがplanのpublication、rights、
 consentを機械的に`public`/`cleared`として扱い、手動requestのclearanceを昇格させることはない。
+
+さらに`plan.md`候補は、Production generatorの統合計画書headerと、計画メタデータから証跡までの
+固定section順を満たさなければならない。自動requestは`canonical-plan-projection/v1`としてproducer、
+canonical artifact、`body_transform: none`を持ち、body hashをcanonical SHA-256へ一致させる。
+公開metadataはProduction repository/commit、run ID、canonical SHA-256を保持し、receiverが本文bytesを
+独立に照合できるようにする。手書きsummaryにそのsummary自身のhashを付けてもこのgateは通らない。
 
 targetへの反映は全recordのpreflight後に一つのlocal transactionで行う。生成範囲は各planの
 `plans/Pxxxx-<slug>/README.md`、`plan.md`、`metadata.yaml`、必要な公開許諾済み素材（既存の

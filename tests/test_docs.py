@@ -184,6 +184,10 @@ class DocumentationTests(unittest.TestCase):
             "qualified snapshot",
             "knowledge retrieval",
             "source pin",
+            "byte-for-byte",
+            "production-plan.md",
+            "plan.md",
+            "要約",
         ):
             self.assertIn(required, combined)
         self.assertNotIn("agentic-art-project", manifest)
@@ -218,6 +222,10 @@ class DocumentationTests(unittest.TestCase):
             "BLOCKED_CONFLICT",
             "ALREADY_PROJECTED",
             "public-projection-result.json",
+            "canonical-plan-projection/v1",
+            "body_transform: none",
+            "CANONICAL_PLAN_INVALID",
+            "byte-for-byte",
             "catalog marker",
             "commit、push、merge、release",
             "tests.test_public_projection",

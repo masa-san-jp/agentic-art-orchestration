@@ -98,6 +98,7 @@
             "TARGET_CONFLICT",
             "TARGET_DIRTY",
             "LAYOUT_INVALID",
+            "CANONICAL_PLAN_INVALID",
             "SOURCE_PATH_UNSAFE",
             "SOURCE_HASH_MISMATCH",
             "FORBIDDEN_CONTENT",

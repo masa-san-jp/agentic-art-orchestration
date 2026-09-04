@@ -26,6 +26,20 @@
         "end": {"$ref": "#/$defs/marker"}
       }
     },
+    "canonical_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_repository", "source_artifact", "target_artifact", "projection_contract", "body_transform", "receiver_validator", "blocked_summary_artifact"],
+      "properties": {
+        "source_repository": {"const": "agentic-art-production"},
+        "source_artifact": {"const": "03_plan/production-plan.md"},
+        "target_artifact": {"const": "plan.md"},
+        "projection_contract": {"const": "canonical-plan-projection/v1"},
+        "body_transform": {"const": "none"},
+        "receiver_validator": {"const": "python3 tools/validate.py --check"},
+        "blocked_summary_artifact": {"const": "summary.md"}
+      }
+    },
     "media_policy": {
       "type": "object",
       "additionalProperties": false,

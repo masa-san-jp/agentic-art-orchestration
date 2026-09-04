@@ -1,5 +1,5 @@
-version: 69
-updated_at: "2026-09-05T07:09:14+09:00"
+version: 70
+updated_at: "2026-09-05T07:28:54+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1599,3 +1599,4 @@ tasks:
     acceptance: Automatic public plan projection accepts only a structurally complete Production production-plan.md, copies it byte-for-byte, emits receiver-verifiable no-transform provenance, fails closed instead of summarizing unsafe content, and passes the agentic-art-project canonical-plan validator contract while legacy summaries are not represented as executable plans.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_public_projection tests.test_run tests.test_batch_run tests.test_docs tests.test_validate -v, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/project_status.py --check-readme, python3 tools/validate.py --check in agentic-art-project, python3 -m unittest discover -s tests -v in agentic-art-project, git diff --check per repository]
     stop_if: [A summary or rewritten body must be accepted as canonical plan.md, Public safety failure must be hidden by editing the canonical body, Private or restricted source text is required, A default-branch merge or visibility change is required]
+    progress: "Parent and child implementation, checks, canonical P0006 projection, and branch pushes are complete locally. Child Draft PR creation is pending because GitHub API/DNS is unavailable; no PR number is claimed."

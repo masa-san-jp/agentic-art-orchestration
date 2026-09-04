@@ -32,6 +32,19 @@ def fixture_signals() -> list[dict]:
     ]
 
 
+def canonical_plan_markdown() -> str:
+    lines = [
+        "# 統合制作計画書", "", "> Production build_plan.py fixture.", "",
+        "### 計画メタデータ", "", "| 項目 | 内容 |", "| --- | --- |",
+        "| 計画 | PL001 revision 1 |", "| 計画状態 | PLANNING |",
+        "| 制作着手可否 | 着手可 |", "| handoff | HO001 revision 1 |",
+        "| 要件カバレッジ | 100% |", "| クリティカルパス | `TK001` |", "",
+    ]
+    for heading in public_projection.CANONICAL_PLAN_HEADINGS[2:]:
+        lines.extend([heading, "", "Fixture content.", ""])
+    return "\n".join(lines).rstrip() + "\n"
+
+
 class RunTests(unittest.TestCase):
     def bundle(self) -> dict:
         return build_signal_bundle(fixture_signals(), "2026-08-26T00:00:00+09:00")
@@ -536,7 +549,7 @@ class ProductionHistoryTests(unittest.TestCase):
                 if args[0] == "tools/build_plan.py":
                     project = Path(args[args.index("--project-root") + 1])
                     (project / "03_plan").mkdir(parents=True, exist_ok=True)
-                    (project / "03_plan" / "production-plan.md").write_text("# plan\n", encoding="utf-8")
+                    (project / "03_plan" / "production-plan.md").write_text(canonical_plan_markdown(), encoding="utf-8")
                 return {"status": "PASSED"}
 
             with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \

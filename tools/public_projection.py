@@ -56,6 +56,39 @@ PREPARE_STATUSES = {"PASSED", "ALREADY_PREPARED", "REFRESHED", "NOT_AVAILABLE"}
 AUTOMATIC_PLAN_MODE = "AUTOMATIC_PLAN"
 HUMAN_APPROVED_MODE = "HUMAN_APPROVED"
 AUTOMATIC_AUTHORITY_VERSION = "automatic-plan-projection-authority/v1"
+CANONICAL_PLAN_PROJECTION_VERSION = "canonical-plan-projection/v1"
+CANONICAL_PLAN_ARTIFACT = "production-plan.md"
+CANONICAL_PLAN_HEADINGS = (
+    "# 統合制作計画書",
+    "### 計画メタデータ",
+    "## 1. 完成像",
+    "## 2. テーマ",
+    "## 3. メッセージ",
+    "## 4. コンセプト",
+    "## 5. 調査の要約",
+    "### 採択内容と根拠",
+    "### 制作リファレンス",
+    "### 要件と受入の目的",
+    "## 6. できている物",
+    "## 7. 制作範囲と成果物",
+    "## 8. 技術仕様・材料・資源",
+    "## 9. 工程と作業手順",
+    "## 10. 試作・受入評価",
+    "## 11. 日程と予算",
+    "## 12. リスクと未解決事項",
+    "## 13. 承認・安全境界",
+    "## 14. 人間向け実行前チェックリスト",
+    "## 15. 証跡と再現性",
+    "### 受け渡し時の注意",
+)
+CANONICAL_PLAN_METADATA_ROWS = (
+    "| 計画 |",
+    "| 計画状態 |",
+    "| 制作着手可否 |",
+    "| handoff |",
+    "| 要件カバレッジ |",
+    "| クリティカルパス |",
+)
 AUTOMATIC_PLAN_STATUSES = {
     "APPLIED",
     "ALREADY_PROJECTED",
@@ -122,6 +155,48 @@ class PreparationError(PublicProjectionError):
 
 def _error(detail: str, remediation: str) -> str:
     return f"public projection: {detail}; remediation: {remediation}"
+
+
+def canonical_production_plan_findings(content: bytes, location: str = "plan.md") -> list[dict[str, str]]:
+    """Validate the stable public shape emitted by Production build_plan.py.
+
+    The child repository owns the rich YAML schema.  This boundary only
+    distinguishes its integrated Markdown artifact from a hand-written
+    summary before the no-transform public projection is allowed.
+    """
+    try:
+        text_content = content.decode("utf-8")
+    except UnicodeDecodeError:
+        return [_projection_finding(
+            "CANONICAL_PLAN_INVALID",
+            location,
+            "use the UTF-8 production-plan.md emitted by agentic-art-production without rewriting it",
+        )]
+    lines = text_content.splitlines()
+    invalid = not lines or lines[0] != CANONICAL_PLAN_HEADINGS[0]
+    positions: list[int] = []
+    if not invalid:
+        for heading in CANONICAL_PLAN_HEADINGS:
+            matches = [index for index, line in enumerate(lines) if line == heading]
+            if len(matches) != 1:
+                invalid = True
+                break
+            positions.append(matches[0])
+        if positions != sorted(positions) or len(set(positions)) != len(positions):
+            invalid = True
+    metadata_end = positions[2] if len(positions) > 2 else 0
+    metadata_lines = lines[:metadata_end]
+    if any(not any(line.startswith(prefix) for line in metadata_lines) for prefix in CANONICAL_PLAN_METADATA_ROWS):
+        invalid = True
+    if "sanitized-public-plan" in text_content or "限定して整理した公開版" in text_content:
+        invalid = True
+    if not invalid:
+        return []
+    return [_projection_finding(
+        "CANONICAL_PLAN_INVALID",
+        location,
+        "regenerate the complete production-plan.md with agentic-art-production and project its exact bytes; do not summarize or reconstruct it",
+    )]
 
 
 def _schema_errors_for(value: object, schema_path: Path, source: str) -> list[str]:
@@ -223,6 +298,7 @@ def validate_request(value: object, source: str = "public-projection-request") -
         kind = record.get("record_kind")
         files = record.get("files")
         source_data = record.get("source")
+        projection_data = record.get("projection")
         if not isinstance(files, list) or not isinstance(source_data, Mapping):
             continue
         body_files = [file for file in files if isinstance(file, Mapping) and file.get("role") == "body"]
@@ -231,6 +307,12 @@ def validate_request(value: object, source: str = "public-projection-request") -
         expected_body = "plan.md" if kind == "plan" else "record.md"
         if body_files and body_files[0].get("target_locator") != expected_body:
             errors.append(_record_error(index, f"body target must be {expected_body!r}", "use the kind-specific body target"))
+        if projection_data is not None:
+            if kind != "plan":
+                errors.append(_record_error(index, "canonical plan projection metadata is plan-only", "remove it from work records"))
+            if isinstance(projection_data, Mapping) and projection_data.get("mode") == AUTOMATIC_PLAN_MODE:
+                if not body_files or body_files[0].get("sha256") != source_data.get("canonical_sha256"):
+                    errors.append(_record_error(index, "automatic plan body hash differs from canonical_sha256", "copy the canonical production-plan.md bytes without transformation"))
         seen_targets: set[str] = set()
         for file_index, file in enumerate(files):
             if not isinstance(file, Mapping):
@@ -752,11 +834,14 @@ def _record_spec(
     run_id: str,
     index: int,
     automatic_plan: bool = False,
+    automatic_producer: str | None = None,
 ) -> tuple[dict[str, object], str, bytes]:
     if record_kind not in {"plan", "work"}:
         raise _prepare_error("SOURCE_UNAVAILABLE", f"records[{index}]", "prepare only a declared plan or an available work manifest")
     if automatic_plan and record_kind != "plan":
         raise _prepare_error("AUTHORITY_INVALID", f"records[{index}].record_kind", "the automatic projection authority is restricted to production plans")
+    if automatic_plan and automatic_producer not in {"tools/run.py", "tools/batch_run.py"}:
+        raise _prepare_error("AUTHORITY_INVALID", f"records[{index}].projection.producer", "use the canonical run or batch producer")
     if not isinstance(slug, str) or re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) is None:
         raise _prepare_error("PROVENANCE_MISSING", f"records[{index}].slug", "retain a lowercase hyphenated source slug")
     if not isinstance(title, str) or not title.strip():
@@ -775,6 +860,11 @@ def _record_spec(
     if security_findings:
         first = sorted(security_findings, key=lambda finding: (finding.get("code", ""), finding.get("location", "")))[0]
         raise _prepare_error(str(first["code"]), f"records[{index}].body", "edit the internal candidate through an approved public-ready workflow before projection")
+    if automatic_plan:
+        canonical_findings = canonical_production_plan_findings(content, f"records[{index}].body")
+        if canonical_findings:
+            first = canonical_findings[0]
+            raise _prepare_error(str(first["code"]), str(first["location"]), str(first["remediation"]))
     body_name = "plan.md" if record_kind == "plan" else "record.md"
     source_key = f"{record_kind}-{canonical_sha256}"
     candidate_locator = f"{candidate_relative_root}/records/{source_key}/{body_name}"
@@ -806,6 +896,14 @@ def _record_spec(
         },
         "files": [file_entry],
     }
+    if automatic_plan:
+        record["projection"] = {
+            "contract_version": CANONICAL_PLAN_PROJECTION_VERSION,
+            "mode": AUTOMATIC_PLAN_MODE,
+            "producer": automatic_producer,
+            "canonical_artifact": CANONICAL_PLAN_ARTIFACT,
+            "body_transform": "none",
+        }
     return record, candidate_locator, content
 
 
@@ -900,6 +998,7 @@ def _build_request(
     generated_at: str,
     source_specs: list[tuple[str, str, str, object, object, str, str, str]],
     automatic_plan: bool = False,
+    automatic_producer: str | None = None,
 ) -> tuple[dict[str, object], list[tuple[str, bytes]]]:
     if not _valid_timestamp(generated_at):
         raise _prepare_error("PROVENANCE_MISSING", "generated_at", "retain an RFC3339 timestamp from the completed source run")
@@ -921,6 +1020,7 @@ def _build_request(
             run_id=run_id,
             index=index,
             automatic_plan=automatic_plan,
+            automatic_producer=automatic_producer,
         )
         source_key = f"{kind}-{record['source']['canonical_sha256']}"
         if source_key in seen_keys:
@@ -995,6 +1095,7 @@ def prepare_run_report(
         generated_at=str(generated_at) if generated_at is not None else "",
         source_specs=[("plan", str(slug), str(title), source_path, report.get("production_plan_sha256"), repository, commit, source_run_id)],
         automatic_plan=automatic_plan,
+        automatic_producer="tools/run.py" if automatic_plan else None,
     )
     return _write_candidate_request(internal_output_root, projection_id, request, payloads)
 
@@ -1066,6 +1167,7 @@ def prepare_batch_summary(
         generated_at=str(summary.get("generated_at", "")),
         source_specs=specs,
         automatic_plan=automatic_plan,
+        automatic_producer="tools/batch_run.py" if automatic_plan else None,
     )
     return _write_candidate_request(internal_output_root, projection_id, request, payloads)
 
@@ -1495,27 +1597,37 @@ def _target_plan_directory(target: Path, collection: str, public_id: str, slug: 
     return _target_locator(target, relative, location)
 
 
-def _catalog_line(entry: Mapping[str, object], collection: str) -> str:
+def _catalog_line(entry: Mapping[str, object], collection: str, *, root: bool = False) -> str:
     public_id = str(entry["id"])
     title = str(entry.get("title", public_id)).replace("\r", " ").replace("\n", " ").replace("]", "\\]")
+    if entry.get("status") == "blocked-missing-canonical":
+        title = f"{title} — 正本待ち（制作不可）"
     path = Path(str(entry["path"]))
     child = path.name
-    body_name = "plan.md" if collection == "plans" else "record.md"
-    return f"- [{title}]({child}/README.md)"
+    link = f"{path.as_posix()}/README.md" if root else f"{child}/README.md"
+    return f"- [{title}]({link})"
 
 
-def _catalog_text(index: Mapping[str, object], collection: str) -> str:
+def _catalog_text(index: Mapping[str, object], collection: str, *, root: bool = False) -> str:
     records = index.get("records", [])
     if not isinstance(records, list):
         return ""
-    return "\n".join(_catalog_line(record, collection) for record in records if isinstance(record, Mapping))
+    return "\n".join(_catalog_line(record, collection, root=root) for record in records if isinstance(record, Mapping))
 
 
 def _metadata_bytes(record: Mapping[str, object], public_id: str) -> bytes:
     source = record.get("source")
     publication = record.get("publication")
+    projection = record.get("projection")
     if not isinstance(source, Mapping) or not isinstance(publication, Mapping):
         raise _prepare_error("LAYOUT_INVALID", "record", "request records must include source and publication metadata")
+    body_files = [
+        item for item in record.get("files", [])
+        if isinstance(item, Mapping) and item.get("role") == "body"
+    ]
+    if len(body_files) != 1 or not isinstance(body_files[0].get("sha256"), str):
+        raise _prepare_error("LAYOUT_INVALID", "record.files", "request records must contain exactly one hash-bearing body")
+    body_sha256 = str(body_files[0]["sha256"])
     metadata = {
         "id": public_id,
         "title": str(record["title"]),
@@ -1523,12 +1635,21 @@ def _metadata_bytes(record: Mapping[str, object], public_id: str) -> bytes:
         "status": "ready-for-publication",
         "visibility": "public",
         "rights_status": "cleared",
+        "content_sha256": body_sha256,
         "provenance": {
             "source_system": "agentic-art-orchestration",
             "source_ref": f"sha256:{source['canonical_sha256']}",
-            "content_sha256": str(source["sha256"]),
         },
     }
+    if isinstance(projection, Mapping):
+        metadata["projection"] = dict(projection)
+        metadata["provenance"].update({
+            "source_repository": str(source["repository"]),
+            "source_commit": str(source["commit"]),
+            "source_run_id": str(source["run_id"]),
+            "canonical_sha256": str(source["canonical_sha256"]),
+            "record_sha256": str(source["sha256"]),
+        })
     return _request_yaml_bytes(metadata)
 
 
@@ -1612,6 +1733,9 @@ def _source_record_plan(
                 else:
                     for security_finding in scan_public_projection(text_content, location):
                         findings.append(_projection_finding(str(security_finding.get("code")), str(security_finding.get("location", location)), str(security_finding.get("remediation", "remove unsafe public content"))))
+                    projection_data = record.get("projection")
+                    if role == "body" and isinstance(projection_data, Mapping) and projection_data.get("mode") == AUTOMATIC_PLAN_MODE:
+                        findings.extend(canonical_production_plan_findings(content, location))
             prepared_files.append({"role": str(role), "source_locator": source_locator, "target_locator": target_locator, "sha256": str(file.get("sha256")), "path": target_path})
             file_bytes[target_locator] = content
         except PreparationError as exc:
@@ -1629,7 +1753,7 @@ def _source_record_plan(
         "collection": collection,
         "slug": slug,
         "source_key": source_key,
-        "content_sha256": str(source_hash),
+        "content_sha256": str(next((item["sha256"] for item in prepared_files if item.get("role") == "body"), source_hash)),
         "files": prepared_files,
         "file_bytes": file_bytes,
     }
@@ -1686,12 +1810,14 @@ def _allocate_public_ids(
 
 def _projection_index_entry(plan: Mapping[str, object]) -> dict[str, object]:
     record = plan["record"]
+    source = record.get("source") if isinstance(record, Mapping) else None
     return {
         "id": str(plan["public_id"]),
         "slug": str(plan["slug"]),
         "title": str(record["title"]),
         "path": str(plan["path"]),
         "source_key": str(plan["source_key"]),
+        "source_ref": f"sha256:{source['canonical_sha256']}" if isinstance(source, Mapping) else str(plan["source_key"]),
         "content_sha256": str(plan["content_sha256"]),
         "status": "ready-for-publication",
         "visibility": "public",
@@ -2217,7 +2343,7 @@ def _existing_record_matches(target: Path, plan: Mapping[str, object], expected_
 
 PROJECTION_POLICY_CODES = {
     "UNKNOWN_CLEARANCE", "UNAPPROVED_MEDIA", "SOURCE_PATH_UNSAFE", "SOURCE_HASH_MISMATCH",
-    "FORBIDDEN_CONTENT", "CREDENTIAL", "PRIVATE_URL", "ABSOLUTE_PATH", "FORBIDDEN_ARTIFACT",
+    "FORBIDDEN_CONTENT", "CANONICAL_PLAN_INVALID", "CREDENTIAL", "PRIVATE_URL", "ABSOLUTE_PATH", "FORBIDDEN_ARTIFACT",
     "INTERNAL_REFERENCE", "REMOTE_OPERATION",
 }
 
@@ -2344,6 +2470,34 @@ def _projection_plan_data(
                     if current_readme != desired_readme:
                         target_updates[readme_relative] = (current_readme, desired_readme)
                         planned_paths.add(readme_relative)
+
+            plan_collection = collection_map.get("plan")
+            plan_index = candidate_indexes.get(plan_collection) if isinstance(plan_collection, str) else None
+            has_plan = any(plan.get("collection") == plan_collection for plan in plans)
+            if has_plan and isinstance(plan_index, Mapping):
+                root_relative = "README.md"
+                root_path = _target_locator(public_projection_root, root_relative, root_relative)[1]
+                try:
+                    current_root, _ = _target_regular(root_path, root_relative)
+                    root_text = current_root.decode("utf-8")
+                    markers = layout.get("catalog_markers")
+                    marker_start = str(markers.get("start")) if isinstance(markers, Mapping) else ""
+                    marker_end = str(markers.get("end")) if isinstance(markers, Mapping) else ""
+                    if marker_start in root_text or marker_end in root_text:
+                        desired_root_text = _replace_marker_block(
+                            root_text,
+                            layout,
+                            _catalog_text(plan_index, plan_collection, root=True),
+                            root_relative,
+                        )
+                        desired_root = desired_root_text.encode("utf-8")
+                        if current_root != desired_root:
+                            target_updates[root_relative] = (current_root, desired_root)
+                            planned_paths.add(root_relative)
+                except (PreparationError, UnicodeDecodeError) as exc:
+                    code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
+                    remediation = exc.remediation if isinstance(exc, PreparationError) else "root README must remain UTF-8"
+                    findings.append(_projection_finding(code, root_relative, remediation))
 
     return {
         "projection_id": projection_id,
@@ -2629,6 +2783,17 @@ def _replay_dirty_target_allowed(target: Path, plan_data: Mapping[str, object]) 
         if collection:
             managed.add(f"{collection}/index.yaml")
             managed.add(f"{collection}/README.md")
+    layout = plan_data.get("layout")
+    if isinstance(layout, Mapping):
+        markers = layout.get("catalog_markers")
+        root_readme = target / "README.md"
+        if isinstance(markers, Mapping) and root_readme.is_file() and not root_readme.is_symlink():
+            try:
+                root_text = root_readme.read_text(encoding="utf-8")
+            except (OSError, UnicodeError):
+                return False
+            if str(markers.get("start", "")) in root_text and str(markers.get("end", "")) in root_text:
+                managed.add("README.md")
     return set(observed).issubset(managed)
 
 
@@ -2994,6 +3159,7 @@ def _automatic_request_guard(
     *,
     projection_id: str,
     expected_record_count: int | None = None,
+    expected_producer: str | None = None,
 ) -> list[dict[str, str]]:
     """Keep the automatic authority restricted to the source plan set."""
     findings: list[dict[str, str]] = []
@@ -3011,6 +3177,20 @@ def _automatic_request_guard(
         source = record.get("source")
         if not isinstance(source, Mapping) or source.get("run_id") != projection_id:
             findings.append(_projection_finding("AUTHORITY_INVALID", f"request.records[{index}].source.run_id", "bind every record to the originating PLAN_READY or PASSED run"))
+        projection_data = record.get("projection")
+        expected_projection = {
+            "contract_version": CANONICAL_PLAN_PROJECTION_VERSION,
+            "mode": AUTOMATIC_PLAN_MODE,
+            "producer": expected_producer,
+            "canonical_artifact": CANONICAL_PLAN_ARTIFACT,
+            "body_transform": "none",
+        }
+        if not isinstance(projection_data, Mapping) or dict(projection_data) != expected_projection:
+            findings.append(_projection_finding("AUTHORITY_INVALID", f"request.records[{index}].projection", "use the unmodified no-transform projection metadata emitted by the canonical producer"))
+        files = record.get("files")
+        body_files = [item for item in files if isinstance(item, Mapping) and item.get("role") == "body"] if isinstance(files, list) else []
+        if not isinstance(source, Mapping) or len(body_files) != 1 or body_files[0].get("sha256") != source.get("canonical_sha256"):
+            findings.append(_projection_finding("AUTHORITY_INVALID", f"request.records[{index}].files", "project one exact canonical production-plan.md body without transformation"))
     return _dedupe_projection_findings(findings)
 
 
@@ -3183,7 +3363,12 @@ def project_plan_automatic(
     request = _load_document(request_path)
     if not isinstance(request, Mapping):
         raise _prepare_error("AUTHORITY_INVALID", "request", "the automatic plan request must be a mapping")
-    authority_findings = _automatic_request_guard(request, projection_id=projection_id, expected_record_count=1)
+    authority_findings = _automatic_request_guard(
+        request,
+        projection_id=projection_id,
+        expected_record_count=1,
+        expected_producer="tools/run.py",
+    )
     target = configured_public
     if target is None:
         result = _automatic_terminal_result(
@@ -3259,7 +3444,12 @@ def project_batch_automatic(
     request = _load_document(request_path)
     if not isinstance(request, Mapping):
         raise _prepare_error("AUTHORITY_INVALID", "request", "the automatic batch request must be a mapping")
-    authority_findings = _automatic_request_guard(request, projection_id=projection_id, expected_record_count=expected_count)
+    authority_findings = _automatic_request_guard(
+        request,
+        projection_id=projection_id,
+        expected_record_count=expected_count,
+        expected_producer="tools/batch_run.py",
+    )
     target = configured_public
     if target is None:
         result = _automatic_terminal_result(

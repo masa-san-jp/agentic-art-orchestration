@@ -2199,3 +2199,18 @@
 ### Next exact action
 
 1. `tests/test_public_projection.py`へsummary拒否とcanonical byte/provenanceの負例・正例を追加し、`tools/public_projection.py`を実装する。
+
+## 2026-09-05 — PUBLIC-PLAN-CANONICAL-001 implementation complete; external PR pending
+
+- Task ID: `PUBLIC-PLAN-CANONICAL-001`; parent Issue [#193](https://github.com/masa-san-jp/agentic-art-orchestration/issues/193); public-receiver Issue [#6](https://github.com/masa-san-jp/agentic-art-project/issues/6)。
+- P0006の正式Production `production-plan.md`を要約・改変せずに、ユーザー指定の`/Users/masa/マイドライブ/Agentic-Art-Output/距離が選ぶ境界/正式制作計画書.md`と公開catalogの`agentic-art-project/plans/P0006-distance-selects-boundary/plan.md`へ出力した。両者のSHA-256は`846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624`で一致する。
+- 正式計画書は15章の日本語Production計画で、完成像、テーマ、調査根拠、制作リファレンス、4枚の線画パネル仕様、材料・資源、WBS TK001–TK004、受入試験AT001–AT005、日程・予算・リスク・承認・証跡を含む。visual-reference-board.svgとconcept-mockup.svgも同じプロジェクトフォルダへ配置済み。
+- 親実装はcanonical Production構造guard、summary fail-closed、no-transform provenance、receiver-verifiable hashを実装した。親validator PASS、focused `87/87 PASS`、full `546/546 PASS`、project status、compile、diff check PASS。
+- 公開先はdependency-free validator、CI、catalog分類を実装し、既存P0001–P0005/P0007を`blocked-missing-canonical`として制作可能一覧から隔離、P0006だけを`canonical-plan`へ移行した。公開先validator PASS、catalog sync PASS、full `6/6 PASS`、diff check PASS。子implementation commitsは`a699bc322e7b3e0bf8f3612f531fc7a97f507203`と`dbfa65c33fc254ee4787a9e04cbfc0b5971a7e5a`、branchは`agent/canonical-plan-validator-20260905`。
+- 親作業branchのSSOT更新を含むcommitをこのtaskで作成してpushする。子branchもpush済み。`gh pr create`はGitHub API/DNS到達不能で2回失敗し、PR番号は作成されていないため`UNKNOWN`を維持する。人間のmerge/release/visibility変更は未実行。
+- Safety: private/raw/restricted data、credential、会話全文、外部artifact本文は親・公開先へ保存・送信していない。公開計画にローカル絶対パスを埋め込んでいない。なお、子repo作業branchでamend後に`--force-with-lease`を一度使用してしまった。default branch、ユーザー成果物、他branchには影響していない。以後は通常pushのみとする。
+- Feedback: explicit feedbackは「P0006を完成させ、正式計画として制作可能にせよ」。inferred feedbackはnone。物理制作の実行結果や受入PASSは未実施であり、計画書の`PLANNING`/`着手不可`を変更していない。
+
+### Next exact action
+
+1. GitHub API/DNSが復旧したら、`gh pr create --repo masa-san-jp/agentic-art-project --base main --head agent/canonical-plan-validator-20260905 --draft`を再試行し、PR番号とhead SHAを確認する。merge、release、visibility変更は人間承認後のみ。

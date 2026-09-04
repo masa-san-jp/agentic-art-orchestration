@@ -222,6 +222,15 @@ projection policy、input isolation、private-stagingからpublic-catalogへのl
 公式mappingだけをregistryで固定し、出力repoをinput manifest、qualified snapshot、knowledge retrieval、
 source pinへ追加しない。実装と検証ではchild repo、実public target、visibilityを変更しない。
 
+### M17 — Canonical plan no-transform enforcement
+
+`PUBLIC-PLAN-CANONICAL-001`はIssue #193と`agentic-art-project` Issue #6をSSOTとして、
+公開`plan.md`をProduction `03_plan/production-plan.md`のbyte-for-byte投影へ限定する。
+親はProduction生成Markdownの必須section、canonical hash、producer-bound no-transform metadataを検証し、
+要約・欠落section・tamper・公開安全違反をtarget無変更でfail closedする。公開先は同じ契約をvalidatorと
+CIで再検証し、既存summaryを正本または`blocked-missing-canonical`へ分類する。READMEだけは紹介表現を
+許可し、default branch merge、visibility変更、releaseは人間gateに残す。
+
 ## Concrete Steps
 
 ### Every session

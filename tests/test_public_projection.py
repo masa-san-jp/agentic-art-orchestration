@@ -125,6 +125,28 @@ class PublicProjectionContractTests(unittest.TestCase):
         self.assertEqual("PASSED", report["status"])
         self.assertEqual("READY_FOR_DRY_RUN", report["policy_status"])
 
+    def _canonical_plan_bytes(self, title: str) -> bytes:
+        sections = [
+            "# 統合制作計画書",
+            "",
+            "> Production build_plan.py fixture.",
+            "",
+            "### 計画メタデータ",
+            "",
+            "| 項目 | 内容 |",
+            "| --- | --- |",
+            f"| 計画 | {title} revision 1 |",
+            "| 計画状態 | PLANNING |",
+            "| 制作着手可否 | 着手可 |",
+            "| handoff | HO001 revision 1 |",
+            "| 要件カバレッジ | 100% |",
+            "| クリティカルパス | `TK001` |",
+            "",
+        ]
+        for heading in projection.CANONICAL_PLAN_HEADINGS[2:]:
+            sections.extend([heading, "", f"{heading} fixture content.", ""])
+        return ("\n".join(sections).rstrip() + "\n").encode("utf-8")
+
     def _profile_resolution(self, root: Path, run_id: str, *, public: bool = False) -> dict:
         destinations = {
             "state_root": str(root / "state"),
@@ -199,7 +221,7 @@ class PublicProjectionContractTests(unittest.TestCase):
         resolution = self._profile_resolution(root, run_id, public=True)
         source = root / "internal" / "production" / "automatic-plan" / "03_plan" / "production-plan.md"
         source.parent.mkdir(parents=True, exist_ok=True)
-        content = b"# Automatically public plan\n\nThis plan is emitted by the completed orchestration flow.\n"
+        content = self._canonical_plan_bytes("Automatically public plan")
         source.write_bytes(content)
         report = {
             "run_id": run_id,
@@ -231,7 +253,7 @@ class PublicProjectionContractTests(unittest.TestCase):
             project_id = f"batch-plan-{index:03d}"
             source = output_root / "production" / project_id / "03_plan" / "production-plan.md"
             source.parent.mkdir(parents=True, exist_ok=True)
-            content = f"# Batch plan {index:03d}\n\nPlan emitted by the completed batch.\n".encode("utf-8")
+            content = self._canonical_plan_bytes(f"Batch plan {index:03d}")
             source.write_bytes(content)
             digest = hashlib.sha256(content).hexdigest()
             plans.append({
@@ -318,6 +340,10 @@ class PublicProjectionContractTests(unittest.TestCase):
             root = Path(temporary)
             target = self._new_target(root)
             projection.init_target(target, apply=True)
+            (target / "README.md").write_text(
+                "# Public project\n\n<!-- agentic-art:catalog:start -->\n<!-- agentic-art:catalog:end -->\n",
+                encoding="utf-8",
+            )
             self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
             self._git(target, "commit", "-m", "scaffold public project")
             report = self._automatic_report(root)
@@ -338,10 +364,31 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertTrue((target / "plans/P0001-automatic-plan/README.md").is_file())
             self.assertTrue((target / "plans/P0001-automatic-plan/plan.md").is_file())
             self.assertTrue((target / "plans/P0001-automatic-plan/metadata.yaml").is_file())
+            self.assertIn(
+                "[Automatically public plan](plans/P0001-automatic-plan/README.md)",
+                (target / "README.md").read_text(encoding="utf-8"),
+            )
+            source_bytes = Path(report["plan"]).read_bytes()
+            self.assertEqual(source_bytes, (target / "plans/P0001-automatic-plan/plan.md").read_bytes())
             metadata = yaml.safe_load((target / "plans/P0001-automatic-plan/metadata.yaml").read_text(encoding="utf-8"))
             self.assertEqual("public", metadata["visibility"])
-            self.assertNotIn("RUN-AUTO-001", json.dumps(metadata, ensure_ascii=False))
+            self.assertEqual(report["production_plan_sha256"], metadata["content_sha256"])
+            self.assertEqual(report["production_plan_sha256"], metadata["provenance"]["canonical_sha256"])
+            self.assertEqual(report["production_source_commit"], metadata["provenance"]["source_commit"])
+            self.assertEqual(report["run_id"], metadata["provenance"]["source_run_id"])
+            self.assertEqual("agentic-art-production", metadata["provenance"]["source_repository"])
+            self.assertEqual({
+                "contract_version": "canonical-plan-projection/v1",
+                "mode": "AUTOMATIC_PLAN",
+                "producer": "tools/run.py",
+                "canonical_artifact": "production-plan.md",
+                "body_transform": "none",
+            }, metadata["projection"])
             self.assertNotIn(str(root), json.dumps(metadata, ensure_ascii=False))
+
+            index = yaml.safe_load((target / "plans/index.yaml").read_text(encoding="utf-8"))
+            self.assertEqual(report["production_plan_sha256"], index["records"][0]["content_sha256"])
+            self.assertEqual(f"sha256:{report['production_plan_sha256']}", index["records"][0]["source_ref"])
 
             request = yaml.safe_load((root / "internal" / applied["request_locator"]).read_text(encoding="utf-8"))
             self.assertEqual("plan", request["records"][0]["record_kind"])
@@ -393,11 +440,63 @@ class PublicProjectionContractTests(unittest.TestCase):
         request = copy.deepcopy(self.request)
         request["projection_id"] = "RUN-AUTO-AUTHORITY-001"
         request["records"][0]["source"]["run_id"] = request["projection_id"]
-        findings = projection._automatic_request_guard(request, projection_id=request["projection_id"], expected_record_count=1)
+        body = next(item for item in request["records"][0]["files"] if item["role"] == "body")
+        request["records"][0]["source"]["canonical_sha256"] = body["sha256"]
+        request["records"][0]["projection"] = {
+            "contract_version": "canonical-plan-projection/v1",
+            "mode": "AUTOMATIC_PLAN",
+            "producer": "tools/run.py",
+            "canonical_artifact": "production-plan.md",
+            "body_transform": "none",
+        }
+        findings = projection._automatic_request_guard(
+            request,
+            projection_id=request["projection_id"],
+            expected_record_count=1,
+            expected_producer="tools/run.py",
+        )
         self.assertEqual([], findings)
         request["records"][0]["record_kind"] = "work"
-        findings = projection._automatic_request_guard(request, projection_id=request["projection_id"], expected_record_count=1)
+        findings = projection._automatic_request_guard(
+            request,
+            projection_id=request["projection_id"],
+            expected_record_count=1,
+            expected_producer="tools/run.py",
+        )
         self.assertIn("AUTHORITY_INVALID", {item["code"] for item in findings})
+
+    def test_automatic_projection_rejects_a_sha_attested_summary_without_mutating_target(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-plan-summary-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            report = self._automatic_report(root, "RUN-AUTO-SUMMARY-001")
+            summary = b"# Public summary\n\nA shortened plan that omits the Production work packages.\n"
+            Path(report["plan"]).write_bytes(summary)
+            report["production_plan_sha256"] = hashlib.sha256(summary).hexdigest()
+            report["automatic_plan_authority"] = projection.build_automatic_plan_authority(
+                producer="tools/run.py",
+                source_status="PLAN_READY",
+                source_id=report["run_id"],
+                source_sha256=report["production_plan_sha256"],
+                destination_resolution=report["destination_resolution"],
+            )
+            before = projection._tree_fingerprint(target)
+
+            result = projection.project_plan_automatic(
+                report,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+
+            self.assertEqual("BLOCKED_POLICY", result["status"])
+            self.assertIn("CANONICAL_PLAN_INVALID", result["finding_codes"])
+            self.assertEqual([], result["changed_paths"])
+            self.assertEqual(before, projection._tree_fingerprint(target))
+            self.assertFalse((root / "internal/public-projection-candidates/RUN-AUTO-SUMMARY-001/request.yaml").exists())
 
     def test_automatic_projection_rejects_a_handwritten_source_without_authority(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-plan-authority-") as temporary:
