@@ -31,6 +31,43 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn("python3 -m unittest discover -s tests -v", readme)
         self.assertNotIn("python3 tools/batch_status.py", runbook)
 
+    def test_manifest_workspace_bootstrap_is_operable_and_fail_closed(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        guide = (ROOT / "docs/agent-runtime-guide.md").read_text(encoding="utf-8")
+        combined = "\n".join((readme, runbook, guide))
+        for required in (
+            "tools/workspace.py bootstrap",
+            "--workspace-root",
+            "--offline-fixture",
+            "--fixture-root",
+            "--json",
+            "gh auth status --hostname github.com",
+            "gh auth setup-git",
+            "GIT_TERMINAL_PROMPT=0",
+            "config/repositories.yaml.repositories",
+            "workspace-bootstrap/v1",
+            "tool-owned",
+            "same-filesystem",
+            "BLOCKED_PIN_DRIFT",
+            "BLOCKED_EXISTING_WORKSPACE",
+            "BLOCKED_REMOTE_ACCESS",
+            "BLOCKED_RACE",
+            "CLONE_FAILED",
+            "tools/pin_adopt.py --dry-run",
+            "tools/pinned_workspace.py",
+            "tests.test_workspace_bootstrap",
+            "changed_count: 0",
+            "remote_operations",
+            "child_mutations",
+            "既存の`init`、`fetch`、`status`、`guard`、`snapshot`",
+        ):
+            self.assertIn(required, combined)
+        self.assertIn("set +e", combined)
+        self.assertIn('test "$BOOTSTRAP_EXIT" -eq 2', combined)
+        self.assertIn("credential、token、remote応答本文", combined)
+        self.assertNotIn("自動checkoutしてpinを更新", combined)
+
     def test_observation_provenance_contract_and_decision_template_are_present(self):
         contract = (ROOT / "docs/cross-repository-contract.md").read_text(encoding="utf-8")
         template = (ROOT / ".github/ISSUE_TEMPLATE/decision.yml").read_text(encoding="utf-8")

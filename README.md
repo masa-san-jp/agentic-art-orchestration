@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T15:58:31+09:00`.
+Source updated at: `2026-09-04T16:01:28+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 1 | 0 | 0 | 129 | 130 |
+| 0 | 0 | 1 | 0 | 129 | 130 |
 
-Current task: `null`; repository: `null`; checkpoint: `WORKSPACE-BOOTSTRAP-APPLY-001`.
-Next action: Claim the docs task from fresh main, inspect Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands.
-Ready: `WORKSPACE-BOOTSTRAP-DOCS-001`.
-Next task: `WORKSPACE-BOOTSTRAP-DOCS-001`.
+Current task: `WORKSPACE-BOOTSTRAP-DOCS-001`; repository: `agentic-art-orchestration`; checkpoint: `WORKSPACE-BOOTSTRAP-DOCS-001`.
+Next action: Read Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 
@@ -111,6 +111,67 @@ python3 -m venv .venv
 ~~~
 
 この4行が親repoの正準bootstrapです。AGENTS.mdと[operator runbook](docs/operator-runbook.md)からもこの手順を参照します。
+
+## 関連repositoryのworkspace bootstrap
+
+manifestに記載された全repositoryを、作業agentが一回のCLI呼出しで安全に展開する正準入口は
+`tools/workspace.py bootstrap`です。通常は親repoの外側に専用の絶対workspaceを指定します。
+manifestの`repositories`が対象集合なので、repo名や件数をコマンドへ複製しません。
+
+実repoを使う場合は、credential本文をコマンド、URL、ログ、resultへ書かず、GitHubのambient
+credential helperだけを使います。認証状態を確認してから、対話promptを許可しないbootstrapを実行します。
+
+~~~bash
+gh auth status --hostname github.com
+gh auth setup-git
+WORKSPACE_ROOT="/absolute/path/outside/agentic-art-orchestration"
+.venv/bin/python tools/workspace.py bootstrap \
+  --workspace-root "$WORKSPACE_ROOT" --json
+~~~
+
+`bootstrap`は最初にmanifest、path、既存checkout、全missing remoteをread-onlyで検査し、missing
+checkoutはmarker付きのtool-owned temporary siblingへcloneしてから、origin、default branch、
+upstream、local `orchestration.repo-id`、clean stateを検証します。全件PASS後だけ同一filesystemの
+renameで配置します。既存checkoutのfetch、pull、checkout、reset、rebase、merge、clean、pin更新は
+行いません。途中失敗・配置競合ではこのrunが作ったstagingだけを扱い、既存pathへpartial cloneを残しません。
+
+`--json`のresultはclosedな`workspace-bootstrap/v1`です。終了codeと次の扱いは次の通りです。
+
+| status | exit | agentの扱い |
+| --- | ---: | --- |
+| `READY` | 0 | 全entryが`cloned`または`reused`、guard PASS、pin MATCHED。通常の次工程へ進む |
+| `BLOCKED_PIN_DRIFT` | 2 | clean checkoutは保持するがpin不一致。自動checkoutせず、`tools/pin_adopt.py --dry-run`またはqualification用`tools/pinned_workspace.py`へ進む |
+| `BLOCKED_EXISTING_WORKSPACE` | 2 | dirty/untracked/detached/remote/upstream/ahead/behind/diverged等を人間が解消し、再実行する。新規cloneなし |
+| `BLOCKED_REMOTE_ACCESS` | 2 | credential/network/remoteを人間が解消し、再実行する。workspaceへ部分配置しない |
+| `BLOCKED_RACE` | 2 | lockまたはstagingの所有状態を確認し、同時実行完了後に再実行する。lock/stagingを盲目的に削除しない |
+| `FAILED` | 1 | `CLONE_FAILED`などのsanitized findingとremediationを読み、tool-owned stagingだけを対象に再試行する。既存pathを削除・修復しない |
+
+`workspace_root`に残った`.agentic-art-bootstrap.lock`やmarker付きstagingは、前回runの中断を示す
+可能性があります。所有者・manifest hash・pathを確認できるまで自動採用・自動削除せず、復旧不能なら
+`BLOCKED_RACE`として止めます。resultはcredential、token、remote応答本文、child repository内容を
+保持しません。pin driftの採用、既存checkoutの修復、Git commit/push/merge/release、公開は別human gateです。
+
+networklessで適用経路を証明する場合は、毎回新しいfixture rootを使います。checked-in manifestのpinと
+合成bare remoteのHEADが異なるため、CLIの初回結果は`BLOCKED_PIN_DRIFT`/exit 2になる場合があります。
+これはclone後のpin gateが働いた結果であり、pin採用を意味しません。`READY`、idempotent reuse、
+clone failure、placement race、rollbackの証拠はfocused testで確認できます。
+
+~~~bash
+BOOTSTRAP_ROOT="$(mktemp -d /tmp/agentic-art-bootstrap.XXXXXX)"
+set +e
+.venv/bin/python tools/workspace.py bootstrap \
+  --offline-fixture \
+  --workspace-root "$BOOTSTRAP_ROOT/workspace" \
+  --fixture-root "$BOOTSTRAP_ROOT/fixture" --json
+BOOTSTRAP_EXIT=$?
+set -e
+test "$BOOTSTRAP_EXIT" -eq 2
+.venv/bin/python -m unittest tests.test_workspace_bootstrap tests.test_workspace tests.test_workspace_guards -v
+~~~
+
+既存の`init`、`fetch`、`status`、`guard`、`snapshot` subcommandは後方互換のため残ります。
+全manifest entryを一括し、全件検証後に配置する必要があるときは`bootstrap`を使い、legacy commandの
+挙動を暗黙に置き換えません。
 
 ## Git外の出力先を設定する
 

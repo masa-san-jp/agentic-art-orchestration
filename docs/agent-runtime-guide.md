@@ -14,6 +14,62 @@ state、handoff、ExecPlanを更新し、次のREADYタスクへ進んでくだ�
 該当する場合だけBLOCKEDにし、観測事実、選択肢、推奨、影響、解除条件を残してください。
 ~~~
 
+## Fresh cloneから全repository workspaceを準備する
+
+会話履歴がなく、child workspaceがまだ無い場合は、repo名を質問したり個別cloneしたりせず、
+manifest駆動の`bootstrap`を一回実行する。実repoではcredential本文を扱わず、GitHubの既存
+credential helperだけを使う。認証確認の出力をstate、Issue、Gitへ貼り付けない。
+
+~~~bash
+gh auth status --hostname github.com
+gh auth setup-git
+WORKSPACE_ROOT="/absolute/path/outside/agentic-art-orchestration"
+.venv/bin/python tools/workspace.py bootstrap \
+  --workspace-root "$WORKSPACE_ROOT" --json
+~~~
+
+`bootstrap`が対象にするのは`config/repositories.yaml.repositories`の全entryである。
+`--workspace-root`は親repo・child checkout・filesystem rootと重ならない専用の絶対pathを指定する。
+未指定時はmanifestの`repos`が親repo基準で使われるが、fresh cloneのagentは外部専用rootを明示する。
+missing remoteのread accessはclone前に`GIT_TERMINAL_PROMPT=0`で検査されるため、prompt待ちにならない。
+
+agentはresultの`status`とexit codeだけで次を決める。
+
+| status / exit | 自律agentの動作 |
+| --- | --- |
+| `READY` / 0 | 全entryが`cloned`または`reused`、guard PASS、pin MATCHED。`status`/startupを再確認してtaskへ進む |
+| `BLOCKED_PIN_DRIFT` / 2 | clean checkoutを変更せず、`tools/pin_adopt.py --dry-run`の候補確認か`tools/pinned_workspace.py`のqualificationへ進む。pin採用はhuman gate後 |
+| `BLOCKED_EXISTING_WORKSPACE` / 2 | dirty/untracked/detached/remote/upstream/ahead/behind/diverged等を記録し、既存checkoutを修復せず停止する |
+| `BLOCKED_REMOTE_ACCESS` / 2 | sanitized findingだけを記録し、credential/networkを人間が解消するまでcloneもpartial配置もしない |
+| `BLOCKED_RACE` / 2 | lock ownerまたはmarker付きtool-owned stagingを確認し、同時実行完了・人間復旧後に再実行する。盲目的に削除しない |
+| `FAILED` / 1 | `CLONE_FAILED`などのsanitized findingとremediationをcheckpointへ記録する。既存pathや不明なstagingを削除・採用しない |
+
+applyは、全missing cloneをmarker付きstagingで検証してからsame-filesystem renameする。
+配置競合・途中失敗ではこのrunが作ったpathだけを逆順rollbackし、既存checkoutを変更しない。
+2回目のclean runは全entryが`reused`、`changed_count: 0`になる。`remote_operations`、
+`child_mutations`は空で、resultにcredential、token、remote応答本文、child repository本文を残さない。
+
+networklessの検証は、実repoと混ぜず毎回新しいtemporary rootで行う。checked-in manifest pinと
+synthetic bare remoteのHEADが異なる場合、CLI初回の`BLOCKED_PIN_DRIFT`/exit 2は失敗ではなく、
+pinを自動採用しなかった証拠である。`READY`、idempotent reuse、clone failure、placement race、
+rollbackの受入証拠は次で確認する。
+
+~~~bash
+BOOTSTRAP_ROOT="$(mktemp -d /tmp/agentic-art-bootstrap.XXXXXX)"
+set +e
+.venv/bin/python tools/workspace.py bootstrap \
+  --offline-fixture \
+  --workspace-root "$BOOTSTRAP_ROOT/workspace" \
+  --fixture-root "$BOOTSTRAP_ROOT/fixture" --json
+BOOTSTRAP_EXIT=$?
+set -e
+test "$BOOTSTRAP_EXIT" -eq 2
+.venv/bin/python -m unittest tests.test_workspace_bootstrap tests.test_workspace tests.test_workspace_guards -v
+~~~
+
+既存の`init`、`fetch`、`status`、`guard`、`snapshot`は後方互換で残る。全manifestを検証後に
+一括配置する場合だけ`bootstrap`を使い、legacy commandへ暗黙に切り替えない。
+
 ## テーマ未指定の制作計画
 
 利用者はテーマ、作品slug、作品titleを指定しなくてよい。制作計画を作るよう依頼されたエージェントは、`--intent`、`--slug`、`--title`を付けずに次を実行する。

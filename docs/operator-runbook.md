@@ -33,6 +33,71 @@ Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstra
 
 ## 2. 初期化と検査
 
+### manifest駆動のworkspace bootstrap（Issue #150）
+
+fresh cloneからmanifest全entryを展開する場合は、個別repoのcloneやlegacy `init`を組み合わせず、
+`bootstrap`を一回実行する。対象repoは`config/repositories.yaml`だけから読み、コマンド・README・
+Issue本文へ複製しない。実repoではGitHubのambient credential helperを使い、credential値を引数・
+remote URL・ログ・resultへ入れない。
+
+~~~bash
+gh auth status --hostname github.com
+gh auth setup-git
+WORKSPACE_ROOT="/absolute/path/outside/agentic-art-orchestration"
+.venv/bin/python tools/workspace.py bootstrap \
+  --workspace-root "$WORKSPACE_ROOT" --json
+~~~
+
+`bootstrap`は次の順序を固定する。
+
+1. manifest/schema/pathを検証し、親repo自身・祖先・非directory・symlink・重複・traversalを拒否する。
+2. 全destinationの既存checkoutをread-only guardする。dirty、untracked、detached、remote mismatch、
+   upstream missing/invalid、ahead、behind、divergedが一つでもあれば新規cloneを開始しない。
+3. missing entryがあるときだけ全remoteを`GIT_TERMINAL_PROMPT=0`でread-only preflightする。access denied、
+   not found、network failureは本文を保存せず`BLOCKED_REMOTE_ACCESS`にする。
+4. manifest hash付きの排他的lockを取得し、missing entryをmarker付きtool-owned sibling stagingへcloneする。
+   cloneごとにorigin、default branch、upstream、local `orchestration.repo-id`、clean stateを検証する。
+5. 全stagingがPASSした後、既存fingerprintとmissing destinationを再検査してからsame-filesystem renameで配置する。
+   raceやplacement failureではこのrunが置いたcheckoutだけを逆順でstagingへ戻し、既存checkoutを変更しない。
+6. 全entryを再guardし、pinとHEADを比較してclosedな`workspace-bootstrap/v1` resultをmanifest順で出す。
+
+JSON resultの終了codeは機械的に扱う。
+
+| status | exit | 復旧・次工程 |
+| --- | ---: | --- |
+| `READY` | 0 | 全entryが存在し、guard PASS、pin MATCHED。通常のtask/runtimeを開始する |
+| `BLOCKED_PIN_DRIFT` | 2 | clean checkoutは保持。`tools/pin_adopt.py --dry-run`で候補を確認し、採用はquality gateとhuman gate後に行う。qualificationだけなら`tools/pinned_workspace.py`を使う |
+| `BLOCKED_EXISTING_WORKSPACE` | 2 | 表示されたguard findingを人間が解消して再実行する。reset/pull/checkout/cleanは禁止 |
+| `BLOCKED_REMOTE_ACCESS` | 2 | 認証・remote・networkを人間が解消して再実行する。成功repoをpartial配置しない |
+| `BLOCKED_RACE` | 2 | lock owner、manifest hash、marker付きstagingを確認する。自動採用・自動削除をしない |
+| `FAILED` | 1 | `CLONE_FAILED`などのsanitized findingとremediationを記録して再試行する。既存pathや不明なstagingを削除しない |
+
+`--json`を付けない場合も、summaryには全repoのaction、pin、finding、remediationが出る。resultの
+`remote_operations`と`child_mutations`は空で、credential、token、remote応答本文、child内容を保存しない。
+lockやstagingが中断runのものなら、所有者とmanifest hashを確認できるまで次runを止める。復元不能な
+raceは`BLOCKED_RACE`のまま人間へ渡す。
+
+networklessの適用証拠は実repoと分ける。default manifestのpinは合成bare remoteのHEADと一致しないことが
+あるため、CLIの初回は`BLOCKED_PIN_DRIFT`/exit 2でも正常である。これはclone後もpinを自動採用しない
+ことの証拠であり、`READY`、reuse、clone failure、placement race、rollbackはtemporary fixtureの
+focused testsで検証する。
+
+~~~bash
+BOOTSTRAP_ROOT="$(mktemp -d /tmp/agentic-art-bootstrap.XXXXXX)"
+set +e
+.venv/bin/python tools/workspace.py bootstrap \
+  --offline-fixture \
+  --workspace-root "$BOOTSTRAP_ROOT/workspace" \
+  --fixture-root "$BOOTSTRAP_ROOT/fixture" --json
+BOOTSTRAP_EXIT=$?
+set -e
+test "$BOOTSTRAP_EXIT" -eq 2
+.venv/bin/python -m unittest tests.test_workspace_bootstrap tests.test_workspace tests.test_workspace_guards -v
+~~~
+
+通常のlegacy `init`、`fetch`、`status`、`guard`、`snapshot`は削除・改名していない。
+`bootstrap`はmanifest全件のall-or-nothing配置が必要な入口であり、既存commandの挙動を暗黙に変更しない。
+
 ### 初期運用startup（M14実装後）
 
 CodexまたはClaude Codeを利用agentとして起動したら、最初の回答または外部writeより前に次を実行する。
