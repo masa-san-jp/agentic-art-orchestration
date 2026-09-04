@@ -12,10 +12,12 @@ from tools.output_destinations import (
     assert_create_only_directory,
     canonical_resolution_bytes,
     load_destinations_file,
+    destinations_profile_selected,
     resolve_destinations,
     resolve_run_destination,
     validate_destination_resolution,
     validate_destination_profile,
+    write_resolution_evidence,
 )
 
 
@@ -122,6 +124,25 @@ class OutputDestinationsTests(unittest.TestCase):
             profile_path.write_text(profile_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
             _changed, changed_hash = load_destinations_file(profile_path)
             self.assertNotEqual(first_hash, changed_hash)
+
+    def test_profile_selection_and_resolution_evidence_are_explicit_and_atomic(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="destinations-evidence-") as temporary:
+            root = Path(temporary)
+            profile_path = root / "profile.yaml"
+            self._profile(profile_path, state=root / "state", internal=root / "internal")
+            self.assertFalse(destinations_profile_selected(None, environment={}))
+            self.assertTrue(destinations_profile_selected(profile_path, environment={}))
+            self.assertTrue(destinations_profile_selected(None, environment={"AGENTIC_ART_DESTINATIONS_FILE": ""}))
+            resolution = resolve_destinations(profile_path, repository_root=root / "repository", run_id="RUN-001")
+            evidence = write_resolution_evidence(root / "state", "RUN-001", resolution)
+            before = evidence.read_bytes()
+            self.assertEqual(evidence, write_resolution_evidence(root / "state", "RUN-001", resolution))
+            self.assertEqual(before, evidence.read_bytes())
+            self.assertEqual([], validate_destination_resolution(json.loads(before)))
+            conflicting = dict(resolution)
+            conflicting["profile"] = "other"
+            with self.assertRaisesRegex(DestinationError, "conflicts"):
+                write_resolution_evidence(root / "state", "RUN-001", conflicting)
 
     def test_profile_and_direct_inputs_are_closed(self) -> None:
         with tempfile.TemporaryDirectory(prefix="destinations-closed-") as temporary:

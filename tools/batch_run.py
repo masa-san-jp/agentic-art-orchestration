@@ -31,6 +31,14 @@ try:
     from tools.candidate_gates import build_gate_report
     from tools.candidate_selection import build_self_diversity_report, build_selection, sha256_hex
     from tools.candidate_space import build_candidate_space
+    from tools.output_destinations import (
+        destinations_profile_selected,
+        manifest_child_roots,
+        resolve_destinations,
+        resolve_run_destination,
+        validate_destination_resolution,
+        write_resolution_evidence,
+    )
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
     from tools.signal_bundle import build_signal_bundle
@@ -43,6 +51,14 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     from tools.candidate_gates import build_gate_report
     from tools.candidate_selection import build_self_diversity_report, build_selection, sha256_hex
     from tools.candidate_space import build_candidate_space
+    from tools.output_destinations import (
+        destinations_profile_selected,
+        manifest_child_roots,
+        resolve_destinations,
+        resolve_run_destination,
+        validate_destination_resolution,
+        write_resolution_evidence,
+    )
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
     from tools.signal_bundle import build_signal_bundle
@@ -478,6 +494,10 @@ def validate_batch_run(data: object, source: str = "batch-run") -> list[str]:
     errors = [f"{source}: {error.message}" for error in Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(data)]
     if not isinstance(data, Mapping):
         return errors
+    if "destination_resolution" in data:
+        errors.extend(validate_destination_resolution(data["destination_resolution"], f"{source}.destination_resolution"))
+        if isinstance(data["destination_resolution"], Mapping) and data["destination_resolution"].get("run_id") != data.get("run_id"):
+            errors.append(f"{source}.destination_resolution.run_id: must match batch run_id")
     if data.get("status") == "PASSED":
         if data.get("completed_count") != data.get("requested_count") or data.get("failed_count") != 0:
             errors.append(f"{source}: PASSED run counts are inconsistent")
@@ -509,6 +529,7 @@ def run_batch(
     python_root: Path | None = None,
     selection_limit: int = 100,
     max_workers: int = 4,
+    destination_resolution: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
     if not ID_PATTERN.fullmatch(run_id):
         raise BatchRunError("run_id is not stable")
@@ -528,14 +549,20 @@ def run_batch(
         errors = validate_batch_run(existing, str(summary_path))
         if errors:
             raise BatchRunError("existing batch summary is invalid")
+        if destination_resolution is not None and existing.get("destination_resolution") != dict(destination_resolution):
+            raise BatchRunError("existing batch summary has different destination resolution")
+        if destination_resolution is not None:
+            write_resolution_evidence(state_root, run_id, destination_resolution)
         return {"status": "ALREADY_COMPLETED", "summary": existing, "summary_path": summary_path}
     state_dir = state_root / run_id
-    if state_dir.exists() and any(state_dir.iterdir()):
+    if state_dir.exists() and any(path.name != "destination-resolution.json" for path in state_dir.iterdir()):
         raise BatchRunError("partial batch state exists without a valid summary; use a new run_id after inspection")
     if output_root.exists() and any(output_root.iterdir()):
         raise BatchRunError("output_root is not empty; batch output is create-only")
     output_root.mkdir(parents=True, exist_ok=True)
     state_dir.mkdir(parents=True, exist_ok=True)
+    if destination_resolution is not None:
+        write_resolution_evidence(state_root, run_id, destination_resolution)
     report_path = state_dir / "batch-report.jsonl"
 
     candidate_manifest, _changes = workspace_candidate(manifest, workspace_root)
@@ -655,6 +682,8 @@ def run_batch(
         "remote_operations": [],
         "child_mutations": [],
     }
+    if destination_resolution is not None:
+        summary["destination_resolution"] = dict(destination_resolution)
     errors = validate_batch_run(summary)
     if errors:
         raise BatchRunError("generated batch summary is invalid")
@@ -669,8 +698,10 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--self-export", type=Path, required=True)
     parser.add_argument("--art-history-export", type=Path, required=True)
     parser.add_argument("--marketing-export", type=Path, required=True)
-    parser.add_argument("--output-root", type=Path, required=True)
-    parser.add_argument("--state-root", type=Path, required=True)
+    parser.add_argument("--output-root", type=Path)
+    parser.add_argument("--state-root", type=Path)
+    parser.add_argument("--destinations-file", type=Path,
+                        help="explicit external output-destinations/v1 profile")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--generated-at", required=True)
     parser.add_argument("--child-python", required=True)
@@ -683,20 +714,48 @@ def main(argv: Iterable[str] | None = None) -> int:
         manifest_errors = validate_manifest(manifest, str(args.manifest))
         if manifest_errors:
             raise BatchRunError("manifest is invalid")
+        direct = {}
+        if args.output_root is not None:
+            direct["internal_output_root"] = args.output_root
+        if args.state_root is not None:
+            direct["state_root"] = args.state_root
+        profile_selected = destinations_profile_selected(args.destinations_file)
+        if not profile_selected and set(direct) != {"state_root", "internal_output_root"}:
+            parser.error("batch-run requires --output-root and --state-root unless a destination profile is selected")
+        destination_resolution = None
+        if profile_selected or direct:
+            destination_resolution = resolve_destinations(
+                args.destinations_file,
+                direct=direct or None,
+                repository_root=ROOT,
+                child_roots=manifest_child_roots(manifest, args.workspace_root),
+                run_id=args.run_id,
+            )
+            roots = destination_resolution["destinations"]
+            state_root = Path(roots["state_root"]["path"])
+            output_root = (
+                args.output_root
+                if args.output_root is not None
+                else resolve_run_destination(roots["internal_output_root"]["path"], "batch", args.run_id)
+            )
+        else:  # pragma: no cover - parser.error above is terminal
+            state_root = args.state_root
+            output_root = args.output_root
         result = run_batch(
             manifest,
             args.workspace_root,
             self_export=args.self_export,
             art_history_export=args.art_history_export,
             marketing_export=args.marketing_export,
-            output_root=args.output_root,
-            state_root=args.state_root,
+            output_root=output_root,
+            state_root=state_root,
             run_id=args.run_id,
             generated_at=args.generated_at,
             child_python=args.child_python,
             python_root=args.python_root,
             selection_limit=args.limit,
             max_workers=args.max_workers,
+            destination_resolution=destination_resolution,
         )
     except (BatchRunError, OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

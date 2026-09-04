@@ -33,6 +33,16 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+from tools.output_destinations import (
+    DestinationError,
+    destinations_profile_selected,
+    manifest_child_roots,
+    resolve_destinations,
+    resolve_run_destination,
+    write_resolution_evidence,
+)
+
 DEFAULT_STATE = ROOT / "data/runs"
 DEFAULT_RULES_PATH = ROOT / "config/transformation-rules.yaml"
 DEFAULT_OUTPUT_PATH = ROOT / "data/run.json"
@@ -367,7 +377,16 @@ def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool
 
 
 
-def _at_research(work: Path, run_id: str, intent: str | None, steps: list[dict], research_root: Path, slug: str, theme_proposal: dict[str, str] | None = None) -> dict:
+def _at_research(
+    work: Path,
+    run_id: str,
+    intent: str | None,
+    steps: list[dict],
+    research_root: Path,
+    slug: str,
+    theme_proposal: dict[str, str] | None = None,
+    destination_resolution: Mapping[str, object] | None = None,
+) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
         "run_id": run_id,
@@ -396,6 +415,8 @@ def _at_research(work: Path, run_id: str, intent: str | None, steps: list[dict],
         },
         "state": str(work),
     }
+    if destination_resolution is not None:
+        report["destination_resolution"] = dict(destination_resolution)
     (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report
 
@@ -403,7 +424,9 @@ def _at_research(work: Path, run_id: str, intent: str | None, steps: list[dict],
 def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
         slug: str | None, title: str | None, requested_at: str, python: str,
         research_root: Path | None = None, production_root: Path | None = None,
-        limit: int = 1, offline_fixture: bool = False) -> dict:
+        limit: int = 1, offline_fixture: bool = False,
+        destination_resolution: Mapping[str, object] | None = None,
+        internal_output_root: Path | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if (research_root is None) != (production_root is None):
         # Carrying on with one of the two would run a child tool in whatever directory
@@ -421,6 +444,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     )
     work = state_root / run_id
     work.mkdir(parents=True, exist_ok=True)
+    if destination_resolution is not None:
+        write_resolution_evidence(state_root, run_id, destination_resolution)
     signals = work / "signals"
     steps: list[dict] = []
     project_slug, project_title = _project_identity(run_id, slug, title)
@@ -429,6 +454,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         steps.append({"step": name, **detail})
 
     record("workspace-preflight", preflight)
+    if destination_resolution is not None:
+        record("destination-resolution", {"status": "PASSED", "resolution": dict(destination_resolution)})
     if offline_fixture:
         record("ingest", _materialize_offline_signals(signals))
     else:
@@ -509,7 +536,10 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         record("research-complete", complete)
         if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
-            return _at_research(work, run_id, intent, steps, research_root, project_slug, theme_proposal)
+            return _at_research(
+                work, run_id, intent, steps, research_root, project_slug, theme_proposal,
+                destination_resolution,
+            )
 
         handoff_args = _handoff_arguments(
             research_root, project_slug, requested_at, _head(research_root)
@@ -520,7 +550,11 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         record("export", _run_child(
             research_root, ["tools/export_handoff.py", f"projects/{project_slug}", "--root", ".",
                             "--output", str(work / "bundle")], python))
-        persistent_production_root = _production_output_root(state_root)
+        persistent_production_root = (
+            internal_output_root.resolve()
+            if internal_output_root is not None
+            else _production_output_root(state_root)
+        )
         production_outcome, acceptance_mode = _production_acceptance(
             production_root,
             persistent_production_root,
@@ -548,6 +582,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             "theme_proposal": theme_proposal,
             "state": str(work),
         }
+        if destination_resolution is not None:
+            report["destination_resolution"] = dict(destination_resolution)
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return report
 
@@ -582,6 +618,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         "next_action": next_action,
         "state": str(work),
     }
+    if destination_resolution is not None:
+        report["destination_resolution"] = dict(destination_resolution)
     (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report
 
@@ -692,8 +730,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--purpose", default="artistic-research")
     parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos",
                         help="clean, manifest-pinned child workspace; it is checked read-only")
-    parser.add_argument("--state-root", type=Path, default=DEFAULT_STATE,
+    parser.add_argument("--state-root", type=Path,
                         help="Git-external run state directory")
+    parser.add_argument("--destinations-file", type=Path,
+                        help="explicit external output-destinations/v1 profile")
     parser.add_argument("--research-root", type=Path, help="指定すると調査の受理から制作プランまで進む")
     parser.add_argument("--production-root", type=Path)
     parser.add_argument("--offline-fixture", action="store_true",
@@ -708,6 +748,25 @@ def main(argv: list[str] | None = None) -> int:
         run_now = datetime.now(timezone.utc)
         run_id = args.run_id or f"AUTO-PLAN-{run_now.strftime('%Y%m%dT%H%M%SZ')}"
         requested_at = args.requested_at or run_now.isoformat()
+        destination_resolution = None
+        internal_output_root = None
+        if destinations_profile_selected(args.destinations_file):
+            from tools.workspace import load_manifest
+
+            direct = {"state_root": args.state_root} if args.state_root is not None else None
+            destination_resolution = resolve_destinations(
+                args.destinations_file,
+                direct=direct,
+                repository_root=ROOT,
+                child_roots=manifest_child_roots(load_manifest(), args.workspace_root),
+                run_id=run_id,
+                project_id=args.project_id,
+            )
+            destination_roots = destination_resolution["destinations"]
+            state_root = Path(destination_roots["state_root"]["path"])
+            internal_output_root = Path(destination_roots["internal_output_root"]["path"])
+        else:
+            state_root = args.state_root or DEFAULT_STATE
         if args.bundle is not None:
             if not args.project_id or not args.seed_input:
                 parser.error("--bundle requires --project-id and --seed-input")
@@ -721,17 +780,32 @@ def main(argv: list[str] | None = None) -> int:
                 intent=args.intent,
                 rules=load_yaml(args.rules),
             )
+            if destination_resolution is not None:
+                result["destination_resolution"] = dict(destination_resolution)
             rendered = (canonical_json(result) + "\n").encode("utf-8")
-            output = args.output or DEFAULT_OUTPUT_PATH
+            profile_output = args.output is None and destination_resolution is not None
+            output = (
+                resolve_run_destination(internal_output_root, "run", args.project_id) / "run.json"
+                if profile_output and internal_output_root is not None
+                else args.output or DEFAULT_OUTPUT_PATH
+            )
             if args.check:
                 if output.read_bytes() != rendered:
                     raise ValueError(f"{output}: generated run bytes differ")
                 changed = False
             else:
-                output.parent.mkdir(parents=True, exist_ok=True)
+                if profile_output:
+                    existing = output.read_bytes() if output.exists() else None
+                    if existing is not None and existing != rendered:
+                        raise DestinationError("profile-derived bundle output already contains different bytes")
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                else:
+                    output.parent.mkdir(parents=True, exist_ok=True)
                 changed = output.exists() and output.read_bytes() == rendered
                 if not changed:
                     output.write_bytes(rendered)
+            if destination_resolution is not None:
+                write_resolution_evidence(state_root, run_id, destination_resolution)
             summary: dict[str, Any] = {
                 "changed": False if args.check else not changed,
                 "command": "run",
@@ -741,12 +815,16 @@ def main(argv: list[str] | None = None) -> int:
             if "intent_sha256" in result:
                 summary["intent_algorithm"] = result["intent_algorithm"]
                 summary["intent_sha256"] = result["intent_sha256"]
+            if destination_resolution is not None:
+                summary["destination_resolution"] = dict(destination_resolution)
             print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
             return 0
 
-        report = _run_orchestration(args.intent, args.workspace_root, args.state_root, run_id,
+        report = _run_orchestration(args.intent, args.workspace_root, state_root, run_id,
                                     args.purpose, args.slug, args.title, requested_at, args.child_python,
-                                    args.research_root, args.production_root, args.limit, args.offline_fixture)
+                                    args.research_root, args.production_root, args.limit, args.offline_fixture,
+                                    destination_resolution=destination_resolution,
+                                    internal_output_root=internal_output_root)
     except BlockedPrecondition as exc:
         print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

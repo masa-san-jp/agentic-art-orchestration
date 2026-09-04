@@ -5,6 +5,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+import yaml
 
 from tools.production_exchange import validate_exchange_evidence
 
@@ -129,6 +132,50 @@ class ProductionExchangeEvidenceTests(unittest.TestCase):
                     "2026-08-13T07:35:00+09:00",
                 ]),
             )
+
+    def test_profiled_exchange_derives_internal_root_and_passes_shared_resolution(self) -> None:
+        from tools.production_exchange import main
+
+        with tempfile.TemporaryDirectory(prefix="exchange-destinations-") as temporary:
+            root = Path(temporary)
+            profile = root / "profile.yaml"
+            profile.write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "test",
+                "destinations": {
+                    "state_root": str(root / "state"),
+                    "internal_output_root": str(root / "internal"),
+                },
+            }, sort_keys=False), encoding="utf-8")
+            with patch("tools.production_exchange.run_exchange", return_value={"status": "PASSED"}) as exchange_mock:
+                status = main([
+                    "--manifest", str(Path(__file__).parents[1] / "config/repositories.yaml"),
+                    "--workspace-root", str(root / "workspace"),
+                    "--destinations-file", str(profile),
+                    "--run-id", "EXCHANGE-001",
+                    "--generated-at", "2026-08-13T07:35:00+09:00",
+                ])
+            self.assertEqual(0, status)
+            self.assertEqual((root / "internal" / "production-exchange").resolve(), exchange_mock.call_args.args[2])
+            resolution = exchange_mock.call_args.kwargs["destination_resolution"]
+            self.assertEqual("destination-resolution/v1", resolution["contract_version"])
+
+    def test_legacy_exchange_accepts_its_direct_output_root_without_a_profile(self) -> None:
+        from tools.production_exchange import main
+
+        with tempfile.TemporaryDirectory(prefix="exchange-legacy-output-") as temporary:
+            output_root = Path(temporary) / "exchange"
+            with patch("tools.production_exchange.run_exchange", return_value={"status": "PASSED"}) as exchange_mock:
+                status = main([
+                    "--manifest", str(Path(__file__).parents[1] / "config/repositories.yaml"),
+                    "--workspace-root", str(Path(temporary) / "workspace"),
+                    "--output-root", str(output_root),
+                    "--run-id", "EXCHANGE-LEGACY",
+                    "--generated-at", "2026-08-13T07:35:00+09:00",
+                ])
+            self.assertEqual(0, status)
+            self.assertEqual(output_root, exchange_mock.call_args.args[2])
+            self.assertIsNone(exchange_mock.call_args.kwargs["destination_resolution"])
 
 
 if __name__ == "__main__":

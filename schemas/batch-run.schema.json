@@ -96,6 +96,7 @@
       }
     },
     "report": {"$ref": "#/$defs/report"},
+    "destination_resolution": {"type": "object"},
     "remote_operations": {"type": "array", "maxItems": 0},
     "child_mutations": {"type": "array", "maxItems": 0}
   },

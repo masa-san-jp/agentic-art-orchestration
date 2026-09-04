@@ -15,9 +15,21 @@ from typing import Any, Iterable
 
 try:
     from tools.validate import _schema_errors, load_json, load_yaml
+    from tools.output_destinations import (
+        destinations_profile_selected,
+        resolve_destinations,
+        validate_destination_resolution,
+        write_resolution_evidence,
+    )
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from tools.validate import _schema_errors, load_json, load_yaml
+    from tools.output_destinations import (
+        destinations_profile_selected,
+        resolve_destinations,
+        validate_destination_resolution,
+        write_resolution_evidence,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -171,6 +183,10 @@ def validate_autonomous_state(state: dict[str, Any], source: str = "autonomous-r
     errors = _schema_errors_for(state, STATE_SCHEMA, source)
     if not isinstance(state, dict):
         return errors
+    if "destination_resolution" in state:
+        errors.extend(validate_destination_resolution(state["destination_resolution"], f"{source}.destination_resolution"))
+        if isinstance(state["destination_resolution"], dict) and state["destination_resolution"].get("run_id") != state.get("run_id"):
+            errors.append(f"{source}.destination_resolution.run_id: must match run_id; remediation: resolve the same run")
     sensitive = _contains_sensitive(state)
     # The generated privacy booleans intentionally contain names such as
     # private_raw_stored; scan values and arbitrary fields, not that fixed map.
@@ -420,7 +436,8 @@ def run_autonomous(
     *,
     run_id: str,
     worker_command: str,
-    state_root: Path,
+    state_root: Path | None = None,
+    destinations_file: Path | None = None,
     child_repository: str = "agentic-art-research",
     source_commit: str | None = None,
     project_path: str = "project",
@@ -448,6 +465,23 @@ def run_autonomous(
     paths = _safe_relative_paths(allowed_paths)
     if not child_repository or not isinstance(child_repository, str):
         raise _error("child_repository is missing", "identify the worker child repository")
+    destination_resolution = None
+    if destinations_profile_selected(destinations_file):
+        direct = {"state_root": state_root} if state_root is not None else None
+        child_roots = ()
+        project_root = Path(project_path).expanduser()
+        if project_root.exists():
+            child_roots = (project_root.resolve(),)
+        destination_resolution = resolve_destinations(
+            destinations_file,
+            direct=direct,
+            repository_root=ROOT,
+            child_roots=child_roots,
+            run_id=run_id,
+        )
+        state_root = Path(destination_resolution["destinations"]["state_root"]["path"])
+    if state_root is None:
+        raise _error("state-root is required", "pass --state-root or select an output-destinations/v1 profile")
     resolved_root = state_root.expanduser().resolve()
     try:
         resolved_root.relative_to(ROOT)
@@ -457,6 +491,8 @@ def run_autonomous(
         raise _error("state-root must be outside the repository", "store supervisor state in an external run directory")
     run_dir = resolved_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
+    if destination_resolution is not None:
+        write_resolution_evidence(resolved_root, run_id, destination_resolution)
     state_path = run_dir / "supervisor.json"
     if state_path.exists():
         state = _load_object(state_path)
@@ -464,8 +500,12 @@ def run_autonomous(
         if state_errors:
             raise _error("existing supervisor state is invalid", state_errors[0])
         _check_initial_args(state, child_repository, source_commit, project_path, paths)
+        if destination_resolution is not None and state.get("destination_resolution") != dict(destination_resolution):
+            raise _error("existing supervisor state has different destination resolution", "resume with the same profile and run ID")
     else:
         state = _new_state(run_id, child_repository, source_commit, project_path, paths, _now())
+        if destination_resolution is not None:
+            state["destination_resolution"] = dict(destination_resolution)
         state_errors = validate_autonomous_state(state)
         if state_errors:
             raise _error("generated supervisor state is invalid", state_errors[0])
@@ -560,7 +600,9 @@ def run_autonomous(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
-    parser.add_argument("--state-root", type=Path, required=True)
+    parser.add_argument("--state-root", type=Path)
+    parser.add_argument("--destinations-file", type=Path,
+                        help="explicit external output-destinations/v1 profile")
     parser.add_argument("--worker-command", required=True)
     parser.add_argument("--child-repository", default="agentic-art-research")
     parser.add_argument("--source-commit")
@@ -576,6 +618,7 @@ def main() -> int:
             run_id=args.run_id,
             worker_command=args.worker_command,
             state_root=args.state_root,
+            destinations_file=args.destinations_file,
             child_repository=args.child_repository,
             source_commit=args.source_commit,
             project_path=args.project_path,

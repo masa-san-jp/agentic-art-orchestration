@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import re
+import threading
 from typing import Iterable, Mapping
 
 import yaml
@@ -65,6 +66,17 @@ def canonical_resolution_bytes(resolution: Mapping[str, object]) -> bytes:
 
 def resolution_sha256(resolution: Mapping[str, object]) -> str:
     return _sha256_bytes(canonical_resolution_bytes(resolution))
+
+
+def destinations_profile_selected(
+    destinations_file: str | Path | None,
+    environment: Mapping[str, str] | None = None,
+) -> bool:
+    """Return whether the caller explicitly selected the destination profile path."""
+    selected_environment = os.environ if environment is None else environment
+    # An empty environment value is still an explicit selection and must fail
+    # closed in ``resolve_destinations`` rather than silently falling back.
+    return destinations_file is not None or ENVIRONMENT_FILE in selected_environment
 
 
 def _as_text(value: object, label: str) -> str:
@@ -303,6 +315,72 @@ def resolve_run_destination(root: str | Path, *components: str) -> Path:
     if candidate == base or base not in candidate.parents:
         raise _error("derived destination escapes its root", "keep every derived component below the resolved root")
     return candidate
+
+
+def manifest_child_roots(manifest: Mapping[str, object], workspace_root: str | Path) -> tuple[Path, ...]:
+    """Derive manifest checkout roots for the resolver's repository boundary guard."""
+    repositories = manifest.get("repositories") if isinstance(manifest, Mapping) else None
+    if not isinstance(repositories, list):
+        raise _error("manifest repositories are unavailable", "load the manifest before resolving runtime destinations")
+    base = Path(workspace_root).expanduser().resolve(strict=False)
+    roots: list[Path] = []
+    for index, repository in enumerate(repositories):
+        if not isinstance(repository, Mapping) or not isinstance(repository.get("path"), str):
+            raise _error(
+                f"manifest repository {index} has no safe path",
+                "derive child checkout roots from repositories.yaml",
+            )
+        path = Path(str(repository["path"]))
+        if path.is_absolute():
+            raise _error("manifest child path is absolute", "use repository-relative manifest paths")
+        roots.append((base / path).resolve(strict=False))
+    return tuple(roots)
+
+
+def write_resolution_evidence(
+    state_root: str | Path,
+    run_id: str,
+    resolution: Mapping[str, object],
+) -> Path:
+    """Create one stable resolution file without replacing an existing result."""
+    errors = validate_destination_resolution(resolution)
+    if errors:
+        raise _error("resolution evidence is invalid: " + " | ".join(errors), "pass destination-resolution/v1 from this resolver")
+    target = resolve_run_destination(state_root, run_id) / "destination-resolution.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    rendered = json.dumps(dict(resolution), ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
+    if target.exists():
+        try:
+            if target.is_file() and target.read_bytes() == rendered:
+                return target
+        except OSError as exc:
+            raise _error("existing resolution evidence is unreadable", "inspect the run-scoped evidence before resuming") from exc
+        raise _error("existing resolution evidence conflicts", "resume with the same profile and run ID or choose a new run ID")
+
+    temporary = target.with_name(f".{target.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(rendered)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            # Linking the completed temporary file is atomic and never replaces
+            # a file created concurrently by another runtime invocation.
+            os.link(temporary, target)
+        except FileExistsError:
+            if target.is_file() and target.read_bytes() == rendered:
+                return target
+            raise _error("concurrent resolution evidence conflicts", "resume with the same profile and run ID or choose a new run ID")
+        return target
+    except FileExistsError as exc:
+        raise _error("atomic temporary evidence path already exists", "remove only the stale run-scoped temporary file") from exc
+    except OSError as exc:
+        raise _error("resolution evidence could not be written atomically", "repair the external state directory and retry") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def assert_create_only_directory(path: str | Path, *, label: str = "derived destination") -> Path:

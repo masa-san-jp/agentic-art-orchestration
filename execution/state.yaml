@@ -1,29 +1,29 @@
-version: 175
-updated_at: "2026-09-04T11:32:03+09:00"
-active_task: null
-active_repository: null
+version: 176
+updated_at: "2026-09-04T11:40:00+09:00"
+active_task: OUTPUT-DESTINATIONS-RUNTIME-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T11:22:34+09:00"
-  expires_at: null
-  lane: WORKSPACE_BOOTSTRAP
-  execution_id: WORKSPACE-BOOTSTRAP-CONTRACT-001:20260904-112234
-  released_at: "2026-09-04T11:32:03+09:00"
+  status: held
+  owner: codex-output-destinations-runtime
+  acquired_at: "2026-09-04T11:40:00+09:00"
+  expires_at: "2026-09-04T13:40:00+09:00"
+  lane: OUTPUT_DESTINATIONS
+  execution_id: OUTPUT-DESTINATIONS-RUNTIME-001:20260904-114000
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/workspace-bootstrap.schema.json, tools/workspace.py, tools/validate.py, tests/test_workspace_bootstrap.py]
+    paths: [tools/output_destinations.py, tools/run.py, tools/batch_run.py, tools/production_exchange.py, tools/autonomous_runner.py, schemas, tests]
     child_repositories: []
 checkpoint:
-  task: WORKSPACE-BOOTSTRAP-CONTRACT-001
+  task: OUTPUT-DESTINATIONS-RUNTIME-001
   repository: agentic-art-orchestration
-  start_point: 42c7d8c4c01a055fa2ad60054249b6f35c69e8f2
-  expected_changes: Define workspace-bootstrap/v1 closed result vocabulary, deterministic repository record rendering, and the opt-in bootstrap CLI parser while preserving legacy workspace commands and synthetic fixture support.
-  result: completed; parent PR #154 merged as 331f2027a35198630dab5559257cc7ea7ad65d85 after local contract and full-suite evidence.
+  start_point: 3af852180a6b3525b5d6d852d8c4c95b1288162d
+  expected_changes: Connect one shared output-destination resolver to run, batch_run, production_exchange, and autonomous_runner; preserve legacy defaults and required arguments; write atomic internal resolution evidence; prove profile output separation.
+  result: in_progress
 last_completed_task: WORKSPACE-BOOTSTRAP-CONTRACT-001
 resume_from:
   task: OUTPUT-DESTINATIONS-RUNTIME-001
-  action: "Claim the lowest-ID READY task after verifying Issue #148 SSOT, dependency OUTPUT-DESTINATIONS-CONTRACT-001, target repository, and available lease; connect the shared resolver to run, batch_run, production_exchange, and autonomous_runner while preserving legacy behavior."
+  action: "Implement and test the shared resolver adapters, then record the completion evidence and release the lease."
   command: python3 tools/validate.py --check
 
 issue_intake:
