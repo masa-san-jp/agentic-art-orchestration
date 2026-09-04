@@ -46,7 +46,7 @@ repositories:
     authority: art-history entities, relations, evidence, and graph
     default_branch: main
     observed_commit: de5a3c3ef2d1cb13f84e522ee73211d70e214f65
-    instructions: README.md
+    instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
     quality_gates:
       - python3 tools/build_graph.py --check
@@ -84,7 +84,7 @@ repositories:
     authority: marketing trends, practices, freshness, evidence, and graph
     default_branch: main
     observed_commit: de1f77730d3856e7e81d591de48da5aed79a983a
-    instructions: README.md
+    instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/1
     quality_gates:
       - python3 tools/build_graph.py --check

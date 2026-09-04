@@ -106,6 +106,22 @@ class BootstrapValidationTests(unittest.TestCase):
         manifest["repositories"].append(added)
         self.assertEqual([], MODULE.validate_manifest(manifest, "fixture:additional"))
 
+    def test_manifest_instruction_entrypoints_are_authoritative(self):
+        manifest = MODULE.load_yaml(ROOT / "config/repositories.yaml")
+        repositories = {repository["id"]: repository for repository in manifest["repositories"]}
+        expected_ids = {
+            "self-model",
+            "art-history",
+            "marketing-trends",
+            "agentic-art-research",
+            "agentic-art-production",
+            "viewer-response-notes",
+        }
+        self.assertTrue(expected_ids.issubset(repositories))
+        for repository_id in expected_ids:
+            with self.subTest(repository_id=repository_id):
+                self.assertEqual("AGENTS.md", repositories[repository_id]["instructions"])
+
     def test_manifest_rejects_replacing_core_repo_and_ambiguous_ownership(self):
         manifest = copy.deepcopy(MODULE.load_yaml(ROOT / "config/repositories.yaml"))
         manifest["repositories"][0]["id"] = "replacement-model"
