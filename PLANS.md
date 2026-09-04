@@ -794,3 +794,15 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `PUBLIC-PROJECTION-PLAN-001`, implement temporary-worktree target onboarding and metadata-only zero-mutation dry-run planning, then run the task checks.
+
+## PUBLIC-PROJECTION-APPLY-001 — completed
+
+- Task ID: `PUBLIC-PROJECTION-APPLY-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。implementation commit `7f4c4404c6edd51144a74ff1e43a660613a4a67`、PR [#166](https://github.com/masa-san-jp/agentic-art-orchestration/pull/166)、merge commit `c384e5ec70ef7b007a105abede415456e94f75bb`。
+- `project --apply`は、request hashに一致する人間approvalの`public_share`/`HUMAN`/scope/有効期間を検証した後、temporary stagingから新規record、対応index、catalog marker内だけをatomic applyする。既存record、root README、marker外、Git ref、remoteは変更しない。
+- 同一source/contentの再実行は`ALREADY_PROJECTED`、異なるbytes・dirty target・既存競合は`BLOCKED_CONFLICT`、approval欠落・不一致・期限切れは`BLOCKED_HUMAN`、policy/security違反は`BLOCKED_POLICY`とし、I/O/rollback不全は`FAILED`へ分類する。transaction作成pathのみを復元し、hard reset/delete/commit/pushは行わない。
+- Acceptanceは`1/1`。focused public/security tests `24/24 PASS`、parent full suite `521 tests / 1 skipped PASS`、validator、py_compile、diff check、CLI apply、idempotency、conflict preservation、rollback fingerprint restore PASS。GitHub run `33837745526`はaccount billing limitにより全jobがstep開始前失敗し、品質gateへ算入していない。
+- 機微情報・外部artifact: credential、user path、PRIVATE_RAW、RESTRICTED、raw conversation、direct identifier、child repo、manifest pin、Drive/Issue本文、実targetへの書込みなし。合成temporary Git fixtureだけを使用し、resultはhash/metadataのみを保存した。explicit feedbackは「各repositoryの自律実装要件を評価し不足を補完」、inferredはnone。
+
+### Next exact action
+
+1. `PUBLIC-PROJECTION-DOCS-001`をclaimし、実装済みのprepare/project apply lifecycle、human approval、target restrictions、recovery、会話履歴なしの自律実行手順をREADMEとrunbookへ同期する。

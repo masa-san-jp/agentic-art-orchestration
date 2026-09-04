@@ -1,15 +1,15 @@
-version: 186
-updated_at: "2026-09-04T13:30:00+09:00"
-active_task: PUBLIC-PROJECTION-APPLY-001
-active_repository: agentic-art-orchestration
+version: 187
+updated_at: "2026-09-04T13:43:06+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-public-projection-apply
+  status: available
+  owner: null
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: "2026-09-04T15:30:00+09:00"
+  expires_at: null
   lane: PUBLIC_PROJECTION
   execution_id: PUBLIC-PROJECTION-APPLY-001:20260904-133000
-  released_at: null
+  released_at: "2026-09-04T13:43:06+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [tools/public_projection.py, schemas/public-projection-approval.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_security_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: d71ef6774e5a4886fc605ca1f49c33e974b9e3bf
   expected_changes: Implement human approval verification, staged atomic public projection apply, allowlisted record/index/catalog mutations, rollback, and deterministic idempotency/conflict outcomes without Git ref or remote mutation.
-  result: in_progress; claimed 2026-09-04T13:30:00+09:00 by codex-public-projection-apply; implementation and checks pending.
-last_completed_task: PUBLIC-PROJECTION-PLAN-001
+  result: "completed; implementation commit 7f4c4404c6edd51144a74ff1e43a660613a4a67; parent PR #166 merged as c384e5ec70ef7b007a105abede415456e94f75bb; local checks passed."
+last_completed_task: PUBLIC-PROJECTION-APPLY-001
 resume_from:
-  task: PUBLIC-PROJECTION-APPLY-001
-  action: "Implement approval verification, staged atomic apply, rollback, and idempotency only in temporary Git fixtures."
+  task: PUBLIC-PROJECTION-DOCS-001
+  action: "Claim the smallest dependency-complete public projection docs task and synchronize the operator-facing commands, approval boundary, recovery, and autonomous repository completion guidance."
   command: python3 tools/validate.py --check
 
 issue_intake:
@@ -1243,4 +1243,43 @@ public_projection_plan:
   unresolved:
     - PUBLIC-PROJECTION-APPLY-001 must add human approval verification, atomic staged apply, rollback, and idempotency.
     - PUBLIC-PROJECTION-DOCS-001 must document the new commands and boundaries.
+    - GitHub Actions billing remains an external environment blocker; local gates are the observable evidence.
+
+public_projection_apply:
+  status: complete
+  observed_at: "2026-09-04T13:43:06+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+  target_repository: agentic-art-orchestration
+  acceptance: 1/1
+  implementation_commit: 7f4c4404c6edd51144a74ff1e43a660613a4a67
+  pull_request: 166
+  merge_commit: c384e5ec70ef7b007a105abede415456e94f75bb
+  changes:
+    - project --apply verifies a separate human approval's exact request hash, public_share operation, HUMAN authority, scope, and execution validity window.
+    - The transaction stages bytes outside the target and applies only new record files, the corresponding collection index, and the catalog marker block; existing records and root README remain untouched.
+    - Atomic index/catalog replacement and exact-path rollback classify APPLIED, ALREADY_PROJECTED, BLOCKED_HUMAN, BLOCKED_POLICY, BLOCKED_CONFLICT, and FAILED without Git ref mutation.
+  verification:
+    focused_public_security_tests: "24/24 PASS"
+    parent_full_suite: "521 tests / 1 skipped PASS"
+    parent_validator: PASS
+    py_compile: PASS
+    diff_check: PASS
+    temporary_git_worktree: PASS
+    approval_and_expiry_gate: PASS
+    rollback_fingerprint_restore: PASS
+    target_git_ref_mutation: false
+  remote_ci:
+    run_id: 33837745526
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit prevented all three jobs from starting
+    counted_as_quality_gate: false
+  sensitive_data: none; no credential, user path, private/restricted data, raw conversation, direct identifier, or internal source body entered Git or result evidence
+  external_artifact: none; approval and public content existed only in synthetic temporary fixtures, and result evidence stores hashes/metadata only
+  child_repository_mutation: false
+  parent_pin_changed: false
+  feedback:
+    explicit: user requested evaluation and supplementation of autonomous implementation requirements for every repository
+    inferred: none
+  unresolved:
+    - PUBLIC-PROJECTION-DOCS-001 must document the complete prepare/project lifecycle, approval boundary, and recovery procedure.
     - GitHub Actions billing remains an external environment blocker; local gates are the observable evidence.
