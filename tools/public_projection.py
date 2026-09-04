@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate, prepare, and plan closed public projection contracts.
+"""Validate, prepare, and apply closed public projection contracts.
 
-The plan stage reads a caller-selected local target but does not mutate it.
-Only ``init-target --apply`` may scaffold missing layout files; public record
-application remains a separate human-approval-gated task.
+The normal request-backed projection remains human-approval-gated.  A separate
+in-process ``AUTOMATIC_PLAN`` path is available only to the canonical run and
+batch producers for completed production plans; it never performs Git or
+remote publication operations.
 """
 
 from __future__ import annotations
@@ -52,11 +53,23 @@ WORK_TARGETS = {"README.md", "record.md"}
 PREPARE_ROOT = "public-projection-candidates"
 PRODUCTION_REPOSITORY = "agentic-art-production"
 PREPARE_STATUSES = {"PASSED", "ALREADY_PREPARED", "REFRESHED", "NOT_AVAILABLE"}
+AUTOMATIC_PLAN_MODE = "AUTOMATIC_PLAN"
+HUMAN_APPROVED_MODE = "HUMAN_APPROVED"
+AUTOMATIC_AUTHORITY_VERSION = "automatic-plan-projection-authority/v1"
+AUTOMATIC_PLAN_STATUSES = {
+    "APPLIED",
+    "ALREADY_PROJECTED",
+    "BLOCKED_CONFIGURATION",
+    "BLOCKED_POLICY",
+    "BLOCKED_CONFLICT",
+    "FAILED",
+}
 PROJECT_STATUSES = {
     "DRY_RUN_READY",
     "BLOCKED_HUMAN",
     "APPLIED",
     "ALREADY_PROJECTED",
+    "BLOCKED_CONFIGURATION",
     "BLOCKED_POLICY",
     "BLOCKED_CONFLICT",
     "FAILED",
@@ -126,6 +139,33 @@ def canonical_json_bytes(value: object) -> bytes:
 
 def sha256_hex(value: object) -> str:
     return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def build_automatic_plan_authority(
+    *,
+    producer: str,
+    source_status: str,
+    source_id: str,
+    source_sha256: str,
+    destination_resolution: Mapping[str, object],
+) -> dict[str, str]:
+    """Build the closed authority envelope owned by a canonical producer."""
+    if not isinstance(source_id, str) or STABLE_ID.fullmatch(source_id) is None:
+        raise ValueError("automatic plan authority requires a stable source ID")
+    if not isinstance(source_sha256, str) or HASH64.fullmatch(source_sha256) is None:
+        raise ValueError("automatic plan authority requires a source SHA-256")
+    if source_status not in {"PLAN_READY", "PASSED"}:
+        raise ValueError("automatic plan authority requires PLAN_READY or PASSED")
+    if producer not in {"tools/run.py", "tools/batch_run.py"}:
+        raise ValueError("automatic plan authority producer is not allowlisted")
+    return {
+        "contract_version": AUTOMATIC_AUTHORITY_VERSION,
+        "producer": producer,
+        "source_status": source_status,
+        "source_id": source_id,
+        "source_sha256": source_sha256,
+        "destination_resolution_sha256": sha256_hex(destination_resolution),
+    }
 
 
 def canonical_file_descriptors(files: list[Mapping[str, object]]) -> list[dict[str, str]]:
@@ -345,16 +385,22 @@ def validate_result(value: object, source: str = "public-projection-result") -> 
     target = value.get("target")
     human_gate = value.get("human_gate")
     changed_paths = value.get("changed_paths")
+    projection_mode = value.get("projection_mode")
     if not isinstance(target, Mapping) or not isinstance(human_gate, Mapping) or not isinstance(changed_paths, list):
         return errors
     mutation_count = target.get("mutation_count")
-    if status in {"DRY_RUN_READY", "BLOCKED_HUMAN", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "ALREADY_PROJECTED"}:
+    if status in {"DRY_RUN_READY", "BLOCKED_CONFIGURATION", "BLOCKED_HUMAN", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "ALREADY_PROJECTED"}:
         if mutation_count != 0 or changed_paths:
             errors.append(_error(f"{status} result reports target mutation", "record zero changed paths and mutation_count for a non-applied result"))
     if status == "DRY_RUN_READY":
         if value.get("approval_sha256") is not None or human_gate.get("status") != "BLOCKED_HUMAN":
             errors.append(_error("DRY_RUN_READY has an approval or wrong human gate", "keep approval absent and report BLOCKED_HUMAN until human approval"))
-    if status == "APPLIED":
+    if projection_mode == AUTOMATIC_PLAN_MODE:
+        if value.get("approval_sha256") is not None or human_gate.get("status") != "NOT_REQUIRED":
+            errors.append(_error("AUTOMATIC_PLAN result has approval or a human gate", "bind automatic results to the canonical PLAN_READY/PASSED plan producer and keep approval absent"))
+        if status not in AUTOMATIC_PLAN_STATUSES:
+            errors.append(_error("AUTOMATIC_PLAN has an invalid status", "use a terminal automatic plan projection status"))
+    elif status == "APPLIED":
         if not isinstance(value.get("approval_sha256"), str) or human_gate.get("status") != "APPROVED":
             errors.append(_error("APPLIED result lacks a matching human approval envelope", "require public_share approval before local projection"))
     return errors
@@ -705,9 +751,12 @@ def _record_spec(
     commit: str,
     run_id: str,
     index: int,
+    automatic_plan: bool = False,
 ) -> tuple[dict[str, object], str, bytes]:
     if record_kind not in {"plan", "work"}:
         raise _prepare_error("SOURCE_UNAVAILABLE", f"records[{index}]", "prepare only a declared plan or an available work manifest")
+    if automatic_plan and record_kind != "plan":
+        raise _prepare_error("AUTHORITY_INVALID", f"records[{index}].record_kind", "the automatic projection authority is restricted to production plans")
     if not isinstance(slug, str) or re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) is None:
         raise _prepare_error("PROVENANCE_MISSING", f"records[{index}].slug", "retain a lowercase hyphenated source slug")
     if not isinstance(title, str) or not title.strip():
@@ -735,7 +784,7 @@ def _record_spec(
         "target_locator": body_name,
         "sha256": actual_hash,
         "mime_type": "text/markdown",
-        "rights_status": "unknown",
+        "rights_status": "cleared" if automatic_plan else "unknown",
     }
     record: dict[str, object] = {
         "record_kind": record_kind,
@@ -750,9 +799,9 @@ def _record_spec(
             "sha256": record_file_sha256([file_entry]),
         },
         "publication": {
-            "visibility": "unknown",
-            "rights_status": "unknown",
-            "consent_status": "unknown",
+            "visibility": "public" if automatic_plan else "unknown",
+            "rights_status": "cleared" if automatic_plan else "unknown",
+            "consent_status": "cleared" if automatic_plan else "unknown",
             "attribution": [],
         },
         "files": [file_entry],
@@ -850,6 +899,7 @@ def _build_request(
     projection_id: str,
     generated_at: str,
     source_specs: list[tuple[str, str, str, object, object, str, str, str]],
+    automatic_plan: bool = False,
 ) -> tuple[dict[str, object], list[tuple[str, bytes]]]:
     if not _valid_timestamp(generated_at):
         raise _prepare_error("PROVENANCE_MISSING", "generated_at", "retain an RFC3339 timestamp from the completed source run")
@@ -870,6 +920,7 @@ def _build_request(
             commit=commit,
             run_id=run_id,
             index=index,
+            automatic_plan=automatic_plan,
         )
         source_key = f"{kind}-{record['source']['canonical_sha256']}"
         if source_key in seen_keys:
@@ -898,8 +949,20 @@ def _build_request(
     return request, payloads
 
 
-def prepare_run_report(report: Mapping[str, object], *, internal_output_root: Path, projection_id: str | None = None) -> dict[str, object]:
-    """Produce one internal draft request from a completed PLAN_READY run."""
+def prepare_run_report(
+    report: Mapping[str, object],
+    *,
+    internal_output_root: Path,
+    projection_id: str | None = None,
+    automatic_plan: bool = False,
+) -> dict[str, object]:
+    """Produce one internal request from a completed PLAN_READY run.
+
+    The public CLI uses the default draft mode.  ``automatic_plan`` is an
+    internal producer-only mode used by the canonical run entrypoint and
+    marks a plan as public-by-construction; it is never exposed as a free-form
+    CLI request option.
+    """
     if not isinstance(report, Mapping):
         raise _prepare_error("SOURCE_INVALID", "run-report", "provide a JSON object source report")
     projection_id = projection_id or str(report.get("run_id", ""))
@@ -931,6 +994,7 @@ def prepare_run_report(report: Mapping[str, object], *, internal_output_root: Pa
         projection_id=projection_id,
         generated_at=str(generated_at) if generated_at is not None else "",
         source_specs=[("plan", str(slug), str(title), source_path, report.get("production_plan_sha256"), repository, commit, source_run_id)],
+        automatic_plan=automatic_plan,
     )
     return _write_candidate_request(internal_output_root, projection_id, request, payloads)
 
@@ -968,8 +1032,14 @@ def _batch_source_specs(summary: Mapping[str, object], root: Path) -> list[tuple
     return specs
 
 
-def prepare_batch_summary(summary: Mapping[str, object], *, internal_output_root: Path, projection_id: str | None = None) -> dict[str, object]:
-    """Produce one deterministic internal draft request from a PASSED batch."""
+def prepare_batch_summary(
+    summary: Mapping[str, object],
+    *,
+    internal_output_root: Path,
+    projection_id: str | None = None,
+    automatic_plan: bool = False,
+) -> dict[str, object]:
+    """Produce one deterministic internal request from a PASSED batch."""
     if not isinstance(summary, Mapping):
         raise _prepare_error("SOURCE_INVALID", "batch-summary", "provide a JSON object source summary")
     projection_id = projection_id or str(summary.get("run_id", ""))
@@ -995,6 +1065,7 @@ def prepare_batch_summary(summary: Mapping[str, object], *, internal_output_root
         projection_id=projection_id,
         generated_at=str(summary.get("generated_at", "")),
         source_specs=specs,
+        automatic_plan=automatic_plan,
     )
     return _write_candidate_request(internal_output_root, projection_id, request, payloads)
 
@@ -2400,6 +2471,7 @@ def _project_dry_run_result(
         "projection_id": projection_id,
         "generated_at": str(request["generated_at"]),
         "status": status,
+        "projection_mode": HUMAN_APPROVED_MODE,
         "request_sha256": request_hash,
         "approval_sha256": None,
         "source_refs": source_refs,
@@ -2489,6 +2561,7 @@ def _projection_result(
     after: str | None = None,
     human_gate: str = "BLOCKED_HUMAN",
     extra_remediations: list[str] | None = None,
+    projection_mode: str = HUMAN_APPROVED_MODE,
 ) -> dict[str, object]:
     safe_findings = _dedupe_projection_findings(list(findings))
     changed = sorted(set(changed_paths or []))
@@ -2497,6 +2570,7 @@ def _projection_result(
         "projection_id": str(plan_data["projection_id"]),
         "generated_at": str(request["generated_at"]),
         "status": status,
+        "projection_mode": projection_mode,
         "request_sha256": str(plan_data["request_sha256"]),
         "approval_sha256": approval_digest,
         "source_refs": list(plan_data.get("source_refs", [])),
@@ -2682,6 +2756,533 @@ def project_apply(
     )
     _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
     return result
+
+
+def _optional_resolution_role(resolution: Mapping[str, object], role: str) -> Path | None:
+    """Resolve an optional destination without accepting a caller-supplied path."""
+    destinations = resolution.get("destinations")
+    item = destinations.get(role) if isinstance(destinations, Mapping) else None
+    path = item.get("path") if isinstance(item, Mapping) else None
+    if path is None:
+        return None
+    if not isinstance(path, str) or not Path(path).is_absolute():
+        raise _prepare_error("AUTHORITY_INVALID", f"destination_resolution.destinations.{role}", "use the absolute role resolved by the selected destination profile")
+    return Path(path).expanduser().resolve(strict=False)
+
+
+def _request_source_refs(request: Mapping[str, object]) -> list[dict[str, str]]:
+    refs = [
+        {"record_kind": str(record["record_kind"]), "source_sha256": str(record["source"]["sha256"])}
+        for record in request.get("records", [])
+        if isinstance(record, Mapping) and isinstance(record.get("source"), Mapping)
+    ]
+    return sorted(refs, key=lambda item: (item["record_kind"], item["source_sha256"]))
+
+
+def _automatic_terminal_result(
+    *,
+    projection_id: str,
+    generated_at: str,
+    request_hash: str,
+    source_refs: list[dict[str, str]],
+    status: str,
+    findings: list[Mapping[str, object]],
+    before: str | None = None,
+    after: str | None = None,
+    public_ids: list[str] | None = None,
+    planned_paths: list[str] | None = None,
+    changed_paths: list[str] | None = None,
+) -> dict[str, object]:
+    """Build a validated automatic result when no human approval applies."""
+    empty_request: dict[str, object] = {
+        "generated_at": generated_at,
+    }
+    plan_data: dict[str, object] = {
+        "projection_id": projection_id,
+        "request_sha256": request_hash,
+        "source_refs": source_refs,
+        "before": before or sha256_hex([]),
+        "findings": _dedupe_projection_findings(list(findings)),
+        "public_ids": public_ids or [],
+        "planned_paths": planned_paths or [],
+    }
+    result = _projection_result(
+        empty_request,
+        plan_data,
+        status=status,
+        approval_digest=None,
+        findings=list(findings),
+        public_ids=public_ids,
+        planned_paths=planned_paths,
+        changed_paths=changed_paths,
+        before=before,
+        after=after,
+        human_gate="NOT_REQUIRED",
+        projection_mode=AUTOMATIC_PLAN_MODE,
+    )
+    return result
+
+
+def _automatic_summary(result: Mapping[str, object], *, request_locator: str | None) -> dict[str, object]:
+    findings = result.get("findings", [])
+    finding_codes = sorted({str(item.get("code")) for item in findings if isinstance(item, Mapping) and item.get("code")})
+    projection_id = str(result.get("projection_id", ""))
+    return {
+        "command": "project-plan-automatic",
+        "authority": "ORCHESTRATION_PLAN_READY",
+        "projection_mode": AUTOMATIC_PLAN_MODE,
+        "status": result.get("status"),
+        "projection_id": projection_id,
+        "record_count": len(result.get("source_refs", [])) if isinstance(result.get("source_refs"), list) else 0,
+        "request_locator": request_locator,
+        "result_locator": f"{projection_id}/public-projection-result.json",
+        "request_sha256": result.get("request_sha256"),
+        "public_ids": sorted({str(value) for value in result.get("public_ids", [])}),
+        "planned_paths": sorted({str(value) for value in result.get("planned_paths", [])}),
+        "changed_paths": sorted({str(value) for value in result.get("changed_paths", [])}),
+        "finding_codes": finding_codes,
+        "human_gate": result.get("human_gate", {}).get("status") if isinstance(result.get("human_gate"), Mapping) else "NOT_REQUIRED",
+    }
+
+
+def _automatic_safe_generated_at(source: Mapping[str, object]) -> str:
+    generated_at = source.get("generated_at")
+    if isinstance(generated_at, str) and _valid_timestamp(generated_at):
+        return generated_at
+    # The source should already be canonical.  This fallback keeps a malformed
+    # source failure representable as closed result evidence without copying
+    # an unsafe value into the result.
+    return "1970-01-01T00:00:00Z"
+
+
+def _automatic_safe_target_fingerprint(target: Path | None) -> str:
+    if target is None:
+        return sha256_hex([])
+    try:
+        return _tree_fingerprint(target)
+    except PreparationError:
+        return sha256_hex([])
+
+
+def _automatic_batch_source_sha256(source: Mapping[str, object]) -> str | None:
+    projects = source.get("projects")
+    if not isinstance(projects, list) or not projects:
+        return None
+    entries: list[dict[str, str]] = []
+    for project in projects:
+        if not isinstance(project, Mapping):
+            return None
+        project_id = project.get("project_id")
+        plan_hash = project.get("production_plan_markdown_sha256")
+        if not isinstance(project_id, str) or not isinstance(plan_hash, str) or HASH64.fullmatch(plan_hash) is None:
+            return None
+        entries.append({"project_id": project_id, "production_plan_markdown_sha256": plan_hash})
+    entries.sort(key=lambda item: item["project_id"])
+    return sha256_hex({"projects": entries})
+
+
+def _automatic_preparation_failure(
+    source: Mapping[str, object],
+    *,
+    projection_id: str,
+    error: PreparationError,
+    public_projection_root: Path | None,
+) -> dict[str, object]:
+    """Persist a sanitized terminal result when source preparation is blocked.
+
+    Candidate preparation validates the canonical production bytes before it
+    can return a request.  A rejected body therefore has no request hash or
+    candidate file to use for ordinary planning.  Still, the canonical run or
+    batch must finish with an explicit policy/authority result rather than
+    looking like an unhandled runtime failure.  The fallback hash is an
+    opaque digest of stable source metadata and the closed finding code; no
+    source path, body, or exception text is copied.
+    """
+    policy_codes = PROJECTION_POLICY_CODES | {
+        "CREDENTIAL",
+        "PRIVATE_URL",
+        "ABSOLUTE_PATH",
+        "FORBIDDEN_ARTIFACT",
+        "INTERNAL_REFERENCE",
+    }
+    authority_codes = {
+        "AUTHORITY_INVALID",
+        "DESTINATION_MISMATCH",
+        "PROVENANCE_MISSING",
+        "SOURCE_INVALID",
+        "SOURCE_UNAVAILABLE",
+    }
+    if error.code in policy_codes:
+        finding_code = error.code
+        status = "BLOCKED_POLICY"
+    elif error.code in authority_codes:
+        finding_code = "AUTHORITY_INVALID"
+        status = "BLOCKED_POLICY"
+    else:
+        finding_code = "LAYOUT_INVALID"
+        status = "BLOCKED_CONFLICT"
+    finding = _projection_finding(finding_code, str(error.location), error.remediation)
+    request_hash = sha256_hex({
+        "authority": "automatic-plan-preparation-failure/v1",
+        "projection_id": projection_id,
+        "source_status": source.get("status"),
+        "source_plan_sha256": source.get("production_plan_sha256"),
+        "finding_code": finding_code,
+    })
+    before = _automatic_safe_target_fingerprint(public_projection_root)
+    result = _automatic_terminal_result(
+        projection_id=projection_id,
+        generated_at=_automatic_safe_generated_at(source),
+        request_hash=request_hash,
+        source_refs=[],
+        status=status,
+        findings=[finding],
+        before=before,
+        after=before,
+    )
+    return result
+
+
+def _automatic_report_resolution(
+    source: Mapping[str, object],
+    *,
+    internal_output_root: Path,
+    public_projection_root: Path | None,
+    state_root: Path,
+    expected_status: str,
+) -> tuple[str, Path | None]:
+    """Bind automatic projection to the source's exact resolved destinations."""
+    run_id = source.get("run_id")
+    if not isinstance(run_id, str) or STABLE_ID.fullmatch(run_id) is None:
+        raise _prepare_error("AUTHORITY_INVALID", "source.run_id", "use the stable run or batch identifier emitted by orchestration")
+    if source.get("status") != expected_status:
+        raise _prepare_error("AUTHORITY_INVALID", "source.status", f"automatic plan projection requires {expected_status}")
+    resolution = source.get("destination_resolution")
+    if not isinstance(resolution, Mapping):
+        raise _prepare_error("AUTHORITY_INVALID", "source.destination_resolution", "automatic plan projection requires the exact resolved destination profile")
+    authority = source.get("automatic_plan_authority")
+    if not isinstance(authority, Mapping):
+        raise _prepare_error("AUTHORITY_INVALID", "source.automatic_plan_authority", "use the authority envelope emitted by the canonical run or batch producer")
+    source_sha256 = source.get("production_plan_sha256") if expected_status == "PLAN_READY" else _automatic_batch_source_sha256(source)
+    if not isinstance(source_sha256, str) or HASH64.fullmatch(source_sha256) is None:
+        raise _prepare_error("AUTHORITY_INVALID", "source.automatic_plan_authority.source_sha256", "retain the canonical production plan hash set")
+    try:
+        expected_authority = build_automatic_plan_authority(
+            producer="tools/run.py" if expected_status == "PLAN_READY" else "tools/batch_run.py",
+            source_status=expected_status,
+            source_id=run_id,
+            source_sha256=source_sha256,
+            destination_resolution=resolution,
+        )
+    except ValueError as exc:
+        raise _prepare_error("AUTHORITY_INVALID", "source.automatic_plan_authority", "repair the canonical automatic plan authority envelope") from exc
+    if dict(authority) != expected_authority:
+        raise _prepare_error("AUTHORITY_INVALID", "source.automatic_plan_authority", "use the unmodified authority envelope emitted with this source result")
+    _assert_report_resolution(source, internal_output_root.expanduser().resolve(strict=False), run_id)
+    resolved_state = _optional_resolution_role(resolution, "state_root")
+    if resolved_state is None or resolved_state != state_root.expanduser().resolve(strict=False):
+        raise _prepare_error("AUTHORITY_INVALID", "source.destination_resolution.state_root", "use the state_root from the same resolved destination profile")
+    configured_public = _optional_resolution_role(resolution, "public_projection_root")
+    supplied_public = public_projection_root.expanduser().resolve(strict=False) if public_projection_root is not None else None
+    if supplied_public is not None and configured_public != supplied_public:
+        raise _prepare_error("AUTHORITY_INVALID", "source.destination_resolution.public_projection_root", "automatic projection may use only the profile's configured public_projection_root")
+    return run_id, configured_public
+
+
+def _automatic_request_guard(
+    request: Mapping[str, object],
+    *,
+    projection_id: str,
+    expected_record_count: int | None = None,
+) -> list[dict[str, str]]:
+    """Keep the automatic authority restricted to the source plan set."""
+    findings: list[dict[str, str]] = []
+    records = request.get("records")
+    if not isinstance(records, list) or not records:
+        return [_projection_finding("AUTHORITY_INVALID", "request.records", "automatic projection requires at least one canonical production plan")]
+    if expected_record_count is not None and len(records) != expected_record_count:
+        findings.append(_projection_finding("AUTHORITY_INVALID", "request.records", "the automatic request must contain every completed plan exactly once"))
+    for index, record in enumerate(records):
+        if not isinstance(record, Mapping):
+            findings.append(_projection_finding("AUTHORITY_INVALID", f"request.records[{index}]", "automatic projection accepts only plan records"))
+            continue
+        if record.get("record_kind") != "plan":
+            findings.append(_projection_finding("AUTHORITY_INVALID", f"request.records[{index}].record_kind", "automatic projection accepts only plan records"))
+        source = record.get("source")
+        if not isinstance(source, Mapping) or source.get("run_id") != projection_id:
+            findings.append(_projection_finding("AUTHORITY_INVALID", f"request.records[{index}].source.run_id", "bind every record to the originating PLAN_READY or PASSED run"))
+    return _dedupe_projection_findings(findings)
+
+
+def _project_automatic_request(
+    request: Mapping[str, object],
+    *,
+    request_locator: str,
+    internal_output_root: Path,
+    public_projection_root: Path,
+    state_root: Path,
+    authority_findings: list[Mapping[str, object]] | None = None,
+    authority_validated: bool = False,
+    fail_after: int | None = None,
+) -> dict[str, object]:
+    """Apply a producer-bound plan request without accepting a public-share approval."""
+    request_hash = request_sha256(request)
+    authority_findings = list(authority_findings or [])
+    if not authority_validated:
+        authority_findings.append(_projection_finding(
+            "AUTHORITY_INVALID",
+            "automatic_plan_authority",
+            "call automatic projection only through the canonical PLAN_READY or PASSED producer",
+        ))
+    if authority_findings:
+        result = _automatic_terminal_result(
+            projection_id=str(request.get("projection_id")),
+            generated_at=str(request.get("generated_at")),
+            request_hash=request_hash,
+            source_refs=_request_source_refs(request),
+            status="BLOCKED_POLICY",
+            findings=authority_findings,
+        )
+        _write_projection_result(state_root, str(request["projection_id"]), result, allow_transition=True)
+        return result
+
+    plan_data = _projection_plan_data(
+        request,
+        internal_output_root=internal_output_root.expanduser().resolve(strict=False),
+        public_projection_root=public_projection_root.expanduser().resolve(strict=False),
+    )
+    findings = list(plan_data["findings"])
+    if _replay_dirty_target_allowed(public_projection_root, plan_data):
+        findings = [finding for finding in findings if finding.get("code") != "TARGET_DIRTY"]
+    findings = _dedupe_projection_findings(findings)
+
+    if any(finding.get("code") in PROJECTION_POLICY_CODES for finding in findings):
+        result = _projection_result(
+            request,
+            plan_data,
+            status="BLOCKED_POLICY",
+            approval_digest=None,
+            findings=findings,
+            public_ids=[],
+            planned_paths=[],
+            human_gate="NOT_REQUIRED",
+            projection_mode=AUTOMATIC_PLAN_MODE,
+        )
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+    if any(finding.get("code") in {"TARGET_CONFLICT", "TARGET_DIRTY", "LAYOUT_INVALID"} for finding in findings):
+        result = _projection_result(
+            request,
+            plan_data,
+            status="BLOCKED_CONFLICT",
+            approval_digest=None,
+            findings=findings,
+            public_ids=[],
+            planned_paths=[],
+            human_gate="NOT_REQUIRED",
+            projection_mode=AUTOMATIC_PLAN_MODE,
+        )
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+
+    plans = [plan for plan in plan_data.get("plans", []) if isinstance(plan, Mapping)]
+    if not plans or not all(isinstance(plan.get("expected_files"), Mapping) for plan in plans):
+        result = _projection_result(
+            request,
+            plan_data,
+            status="BLOCKED_CONFLICT",
+            approval_digest=None,
+            findings=[*findings, _projection_finding("LAYOUT_INVALID", "projection.plan", "produce a complete automatic plan projection before applying")],
+            public_ids=[],
+            planned_paths=[],
+            human_gate="NOT_REQUIRED",
+            projection_mode=AUTOMATIC_PLAN_MODE,
+        )
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+
+    planned_files: dict[str, bytes] = {}
+    for plan in plans:
+        if plan.get("is_new"):
+            expected_files = plan.get("expected_files")
+            if isinstance(expected_files, Mapping):
+                planned_files.update({str(path): content for path, content in expected_files.items() if isinstance(path, str) and isinstance(content, bytes)})
+    target_updates = plan_data.get("target_updates", {}) if isinstance(plan_data.get("target_updates"), Mapping) else {}
+    if not planned_files and not target_updates:
+        transaction = {"outcome": "ALREADY_PROJECTED", "changed_paths": [], "after": str(plan_data["before"]), "findings": []}
+    else:
+        transaction = _apply_projection_transaction(
+            public_projection_root,
+            before=str(plan_data["before"]),
+            planned_files=planned_files,
+            target_updates=target_updates,
+            fail_after=fail_after,
+        )
+    status = str(transaction["outcome"])
+    result = _projection_result(
+        request,
+        plan_data,
+        status=status,
+        approval_digest=None,
+        findings=[*findings, *list(transaction.get("findings", []))],
+        public_ids=plan_data.get("public_ids", []) if status in {"APPLIED", "ALREADY_PROJECTED", "FAILED"} else [],
+        planned_paths=plan_data.get("planned_paths", []) if status in {"APPLIED", "FAILED"} else [],
+        changed_paths=transaction.get("changed_paths", []) if isinstance(transaction.get("changed_paths"), list) else [],
+        before=str(plan_data["before"]),
+        after=str(transaction.get("after", plan_data["before"])),
+        human_gate="NOT_REQUIRED",
+        projection_mode=AUTOMATIC_PLAN_MODE,
+        extra_remediations=list(transaction.get("remediations", [])) if isinstance(transaction.get("remediations"), list) else [],
+    )
+    _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+    return result
+
+
+def project_plan_automatic(
+    report: Mapping[str, object],
+    *,
+    internal_output_root: Path,
+    public_projection_root: Path | None,
+    state_root: Path,
+    projection_id: str | None = None,
+    fail_after: int | None = None,
+) -> dict[str, object]:
+    """Project one canonical PLAN_READY production plan to its configured target."""
+    if not isinstance(report, Mapping):
+        raise _prepare_error("AUTHORITY_INVALID", "run-report", "automatic projection requires the canonical run report mapping")
+    run_id, configured_public = _automatic_report_resolution(
+        report,
+        internal_output_root=internal_output_root,
+        public_projection_root=public_projection_root,
+        state_root=state_root,
+        expected_status="PLAN_READY",
+    )
+    projection_id = projection_id or run_id
+    if projection_id != run_id or STABLE_ID.fullmatch(projection_id) is None:
+        raise _prepare_error("AUTHORITY_INVALID", "projection_id", "automatic projection ID must equal the source run ID")
+    try:
+        prepared = prepare_run_report(
+            report,
+            internal_output_root=internal_output_root.expanduser().resolve(strict=False),
+            projection_id=projection_id,
+            automatic_plan=True,
+        )
+    except PreparationError as exc:
+        result = _automatic_preparation_failure(
+            report,
+            projection_id=projection_id,
+            error=exc,
+            public_projection_root=configured_public,
+        )
+        _write_projection_result(state_root, projection_id, result, allow_transition=True)
+        return _automatic_summary(result, request_locator=None)
+    request_locator = prepared.get("request_locator")
+    if not isinstance(request_locator, str):
+        raise _prepare_error("AUTHORITY_INVALID", "request_locator", "the canonical PLAN_READY producer must create an automatic plan request")
+    request_path = internal_output_root.expanduser().resolve(strict=False) / request_locator
+    request = _load_document(request_path)
+    if not isinstance(request, Mapping):
+        raise _prepare_error("AUTHORITY_INVALID", "request", "the automatic plan request must be a mapping")
+    authority_findings = _automatic_request_guard(request, projection_id=projection_id, expected_record_count=1)
+    target = configured_public
+    if target is None:
+        result = _automatic_terminal_result(
+            projection_id=projection_id,
+            generated_at=str(request.get("generated_at")),
+            request_hash=request_sha256(request),
+            source_refs=_request_source_refs(request),
+            status="BLOCKED_CONFIGURATION",
+            findings=[_projection_finding("CONFIGURATION_MISSING", "destination_resolution.public_projection_root", "set public_projection_root in the selected external destination profile")],
+        )
+        _write_projection_result(state_root, projection_id, result, allow_transition=True)
+        return _automatic_summary(result, request_locator=request_locator)
+    result = _project_automatic_request(
+        request,
+        request_locator=request_locator,
+        internal_output_root=internal_output_root,
+        public_projection_root=target,
+        state_root=state_root,
+        authority_findings=authority_findings,
+        authority_validated=True,
+        fail_after=fail_after,
+    )
+    return _automatic_summary(result, request_locator=request_locator)
+
+
+def project_batch_automatic(
+    summary: Mapping[str, object],
+    *,
+    internal_output_root: Path,
+    public_projection_root: Path | None,
+    state_root: Path,
+    projection_id: str | None = None,
+    fail_after: int | None = None,
+) -> dict[str, object]:
+    """Project every plan in one canonical PASSED batch as one transaction."""
+    if not isinstance(summary, Mapping):
+        raise _prepare_error("AUTHORITY_INVALID", "batch-summary", "automatic projection requires the canonical batch summary mapping")
+    run_id, configured_public = _automatic_report_resolution(
+        summary,
+        internal_output_root=internal_output_root,
+        public_projection_root=public_projection_root,
+        state_root=state_root,
+        expected_status="PASSED",
+    )
+    projection_id = projection_id or run_id
+    if projection_id != run_id or STABLE_ID.fullmatch(projection_id) is None:
+        raise _prepare_error("AUTHORITY_INVALID", "projection_id", "automatic projection ID must equal the source batch run ID")
+    projects = summary.get("projects")
+    completed_count = summary.get("completed_count")
+    expected_count = completed_count if isinstance(completed_count, int) else None
+    if not isinstance(projects, list) or not projects or any(not isinstance(item, Mapping) or item.get("status") != "PASSED" for item in projects):
+        raise _prepare_error("AUTHORITY_INVALID", "batch.projects", "automatic batch projection requires every project to be PASSED")
+    try:
+        prepared = prepare_batch_summary(
+            summary,
+            internal_output_root=internal_output_root.expanduser().resolve(strict=False),
+            projection_id=projection_id,
+            automatic_plan=True,
+        )
+    except PreparationError as exc:
+        result = _automatic_preparation_failure(
+            summary,
+            projection_id=projection_id,
+            error=exc,
+            public_projection_root=configured_public,
+        )
+        _write_projection_result(state_root, projection_id, result, allow_transition=True)
+        return _automatic_summary(result, request_locator=None)
+    request_locator = prepared.get("request_locator")
+    if not isinstance(request_locator, str):
+        raise _prepare_error("AUTHORITY_INVALID", "request_locator", "the canonical PASSED batch producer must create an automatic plan request")
+    request_path = internal_output_root.expanduser().resolve(strict=False) / request_locator
+    request = _load_document(request_path)
+    if not isinstance(request, Mapping):
+        raise _prepare_error("AUTHORITY_INVALID", "request", "the automatic batch request must be a mapping")
+    authority_findings = _automatic_request_guard(request, projection_id=projection_id, expected_record_count=expected_count)
+    target = configured_public
+    if target is None:
+        result = _automatic_terminal_result(
+            projection_id=projection_id,
+            generated_at=str(request.get("generated_at")),
+            request_hash=request_sha256(request),
+            source_refs=_request_source_refs(request),
+            status="BLOCKED_CONFIGURATION",
+            findings=[_projection_finding("CONFIGURATION_MISSING", "destination_resolution.public_projection_root", "set public_projection_root in the selected external destination profile")],
+        )
+        _write_projection_result(state_root, projection_id, result, allow_transition=True)
+        return _automatic_summary(result, request_locator=request_locator)
+    result = _project_automatic_request(
+        request,
+        request_locator=request_locator,
+        internal_output_root=internal_output_root,
+        public_projection_root=target,
+        state_root=state_root,
+        authority_findings=authority_findings,
+        authority_validated=True,
+        fail_after=fail_after,
+    )
+    return _automatic_summary(result, request_locator=request_locator)
 
 
 def _load_document(path: Path) -> object:

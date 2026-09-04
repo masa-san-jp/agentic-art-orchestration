@@ -109,8 +109,10 @@ startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テー�
 fresh cloneのagentは、まず`config/output-destinations.example.yaml`をGit外の一時ディレクトリへ
 コピーし、`state_root`、`internal_output_root`、任意の`public_projection_root`を、絶対かつ
 互いに重ならない外部パスへ置き換える。profile自体もrepoへ保存しない。`state_root`と
-`internal_output_root`は必須で、public rootは明示的なprojectionのlocal targetとしてだけ使う。
-通常のruntimeは暗黙にpublic rootへ書き込まず、`project --apply`もremote公開・Git操作を行わない。
+`internal_output_root`は必須で、`public_projection_root`を設定した場合は正規runの`PLAN_READY`
+またはbatchの`PASSED`で完成制作プランを書き込むlocal public-project worktreeになる。未設定なら
+内部成果物を保持したまま`BLOCKED_CONFIGURATION`で停止する。`project --apply`はwork recordや
+手動requestのhuman-gated laneとして残り、remote公開・Git操作は行わない。
 
 ~~~bash
 DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
@@ -151,12 +153,43 @@ evidenceへ入れない。
 
 ## 公開projectionを自律的に扱う
 
-公開projectionは通常のResearch/Production実行から分離された、明示依頼時だけ進むlaneである。
-エージェントは会話履歴に頼らず、request、target layout、human approval、result evidenceを
-読み直して再開する。`prepare`は`PLAN_READY` runまたは`PASSED` batchから内部候補を作る唯一の
-producerで、public targetやapprovalを読まず、canonical internal outputを変更しない。
-候補のpublication clearanceは明示evidenceがない限り`unknown`であり、エージェントが公開可へ
-昇格してはならない。
+公開projectionは、正規run/batchの完成planを設定済みpublic projectへ出す自動laneと、work
+record・任意requestを扱う人間承認laneに分かれる。エージェントは会話履歴に頼らず、source
+report/summary、request、target layout、result evidenceを読み直して再開する。
+
+### 正規run/batchの自動plan投影
+
+`tools/run.py`の最終状態が`PLAN_READY`、または`tools/batch_run.py`のbatch状態が`PASSED`で、選択
+profileに`public_projection_root`があると、入口自身が`project_plan_automatic`または
+`project_batch_automatic`を呼ぶ。自動authorityは正規sourceのrun/status、destination resolution、
+source hash、`record_kind: plan`を拘束する。source report/summaryの
+`automatic_plan_authority`（producer、source status/id/hash、destination resolution hash）も完全一致
+させる。手書きrequest、任意ファイル、work recordをこの入口へ
+渡して公開可にすることはできない。
+
+preflightは公開境界、機密情報、権利・同意、path safety、target Git/layout/index/markerを全件検査
+してから、`plans/Pxxxx-<slug>/`の`README.md`、`plan.md`、`metadata.yaml`と`plans/index.yaml`、
+管理対象catalog markerを更新する。batchは全件を先にstagingし、100件以上でも決定的なID・順序・bytes
+を一つのtransactionで反映する。planのこの自動経路ではレコード単位の`public_share` approvalは
+要求せず、result evidenceの`projection_mode`は`AUTOMATIC_PLAN`、`human_gate`は`NOT_REQUIRED`とする。
+
+`public_projection_root`の不足は`BLOCKED_CONFIGURATION`、公開境界違反は`BLOCKED_POLICY`、targetの
+dirty/conflict/layout不適合は`BLOCKED_CONFLICT`、途中I/Oまたはrollback不全は`FAILED`である。いずれも
+公開targetに部分結果を残さず、内部のcanonical planとstate rootのmetadata-only resultを保持する。
+自動laneは`git add`、commit、branch操作、push、PR、merge、release、visibility変更を行わない。
+
+自動経路の再現確認は、実targetではなくsynthetic temporary fixtureで行う。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_public_projection tests.test_run tests.test_batch_run -v
+~~~
+
+### 手動projection（prepare → dry-run → human approval → apply）
+
+手動projectionでは、`prepare`が`PLAN_READY` runまたは`PASSED` batchから内部candidateとrequestを
+create-onlyで作る。draftのvisibility、rights、consentは明示evidenceがない限り`unknown`のままで、
+agentは`cleared`へ昇格させない。元のcanonical internal outputも変更せず、更新後のcandidateは
+`prepare --refresh`でhashを再計算する。
 
 ### 実行順
 

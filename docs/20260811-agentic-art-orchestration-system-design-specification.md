@@ -364,6 +364,35 @@ Research@commit
 
 Productionの物理作業、購入、契約、公開、外部送信はE2Eで実行せず、`NOT_RUN`または`EXTERNAL_VALIDATION_REQUIRED`を保持する。Researchへのresult applyは子repoを変更するため、初期の親E2Eでは`--dry-run`までを必須とし、applyは別child task、別commit、別PRとする。
 
+## 10K. Automatic public plan projection
+
+`public_projection_root`は単なる手動projection用の任意targetではない。選択された
+`output-destinations/v1` profileにこのroleがある場合、正規runの`PLAN_READY`またはbatchの
+`PASSED`を、完成した制作プランの公開用projectへの出力開始点とする。`run.py`と`batch_run.py`は
+それぞれ専用のproducer-bound `AUTOMATIC_PLAN`経路を呼び、内部のrun log、conversation、handoff、
+debug evidence、credential、private/restricted dataを再帰的にコピーしない。
+
+自動authorityの入力は、同じdestination resolutionに拘束された正規run reportまたはbatch summary
+だけである。request生成時に各recordのsource pathとcanonical plan hashを再検証し、`record_kind`
+を`plan`に限定する。`work`、手書きrequest、任意ファイル、別runのsource、hash不一致はauthority
+またはpolicy failureとして拒否する。自動経路で構築されたrequestだけがplanのpublication、rights、
+consentを機械的に`public`/`cleared`として扱い、手動requestのclearanceを昇格させることはない。
+
+targetへの反映は全recordのpreflight後に一つのlocal transactionで行う。生成範囲は各planの
+`plans/Pxxxx-<slug>/README.md`、`plan.md`、`metadata.yaml`、必要な公開許諾済み素材（既存の
+layout contractでは`media/`配下）、
+`plans/index.yaml`、collection READMEの管理対象catalog markerに限定する。ID、slug、順序、YAML、
+改行はcanonical source keyから決定的に生成し、100件以上のbatchでも同じ結果を得る。途中失敗は
+transactionが作ったpathだけを逆順にrollbackし、既存recordや無関係なdirty pathを削除しない。
+
+自動resultは`public-projection-result/v1`の`projection_mode: AUTOMATIC_PLAN`、
+`human_gate.status: NOT_REQUIRED`、`approval_sha256: null`で記録する。公開root未設定は
+`BLOCKED_CONFIGURATION`、公開境界違反は`BLOCKED_POLICY`、target契約・dirty・content競合は
+`BLOCKED_CONFLICT`、I/Oまたはrollback残存は`FAILED`とし、block時のtarget mutationは0である。
+自動経路は`git add`、commit、branch、push、PR、merge、release、deploy、repository visibility変更、
+実際のremote公開を行わない。planのlocal projection後のGit操作とremote公開確定、work recordの
+projectionは既存の人間gateに残す。
+
 ## 11. Cross-repository work item
 
 work itemはID、owner repo、dependency、allowed paths、context、acceptance、checks、risk、attempts、lease、checkpoint、terminal state、commit/PR/test evidenceを持つ。schedulerは選択結果だけでなく、他taskが選ばれない理由も出力する。

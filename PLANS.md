@@ -939,3 +939,16 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. 親mainの最終SHA、Issue/PRの状態、queueのREADY/BACKLOG/IN_PROGRESS/BLOCKED残件数をread-onlyで確認する。
+
+## PUBLIC-PROJECTION-AUTO-PLAN-001 — completed
+
+- Task ID: `PUBLIC-PROJECTION-AUTO-PLAN-001`; target repository: `agentic-art-orchestration`; Issue SSOTは[#187](https://github.com/masa-san-jp/agentic-art-orchestration/issues/187)。implementation commitは`c3f62e6`、draft PRは[#188](https://github.com/masa-san-jp/agentic-art-orchestration/pull/188)。
+- `tools/run.py`の`PLAN_READY`と`tools/batch_run.py`の全件`PASSED`から、producer・source status/id/hash・destination resolution hashを拘束する`automatic-plan-projection-authority/v1`を発行し、`AUTOMATIC_PLAN`専用経路で設定済み`public_projection_root/plans/`へ投影するようにした。生成範囲は`Pxxxx-<slug>/README.md`、`plan.md`、`metadata.yaml`、必要な`media/`、index、catalog markerに限定し、既存のlayout contractとの命名差（Issueの`assets`相当）も文書化した。
+- 全record preflight後のstaging transaction、100件batchの決定的採番・順序・bytes、target fingerprint再検査、managed replayの`ALREADY_PROJECTED`、policy/configuration/conflict/rollbackのterminal resultを実装した。`work`、手書きrequest、任意fileはauthority外で、内部ログ・会話・handoff・credential・local path・private/restricted dataはpublic targetへコピーしない。manual `project --apply`のhuman gate、Git add/commit/push/PR/merge/release/visibility gateは維持した。
+- schema、security vocabulary、human-gates config、README、operator/agent guide、system design、execution plan、run/batch integrationを同期し、synthetic temporary Git targetで単一plan、100-plan batch、policy all-or-nothing、rollback、missing root、authority拒否、idempotency、Git HEAD不変を回帰テストへ追加した。
+- Acceptance `1/1`。focused public/run/batch/output/security tests `70/70 PASS`、docs regression `12/12 PASS`、`tools/validate.py --check`、py_compile、JSON schema parse、`git diff --check`がPASSした。full discoveryは542 testsを実行し、status語彙の検査失敗を修正した後、既存のignored `data/snapshot.json`が現行research/production manifest pinと不一致のためstartup chainに3 failures/14 errorsが残る（今回のtracked変更外）。
+- child repository、実利用者public target、user path、credential、private/restricted data、raw conversation、external artifact bodyは変更・保存していない。自動経路はlocal filesystem projectionまでで、remote公開は未実行。leaseは`available/unassigned`へ解放し、queue version `66` / state version `206`へ更新した。
+
+### Next exact action
+
+1. 人間がdraft PR #188のautomatic authorityとlocal snapshot prerequisiteをレビューし、確認後にmerge可否を判断する。merge・公開確定は本タスクでは実行しない。

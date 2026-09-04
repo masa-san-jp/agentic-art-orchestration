@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 import yaml
 
+from tools import public_projection
 from tools.input_pipeline import run_input_pipeline
 from tools.output_destinations import resolve_destinations
 from tools.run import run
@@ -499,6 +500,11 @@ class ProductionHistoryTests(unittest.TestCase):
     def test_profiled_plan_ready_run_invokes_the_single_public_candidate_producer(self):
         with tempfile.TemporaryDirectory(prefix="run-public-prepare-") as temporary:
             root = Path(temporary)
+            target = root / "public-target"
+            subprocess.run(["git", "init", "-q", "-b", "main", str(target)], check=True, capture_output=True)
+            public_projection.init_target(target, apply=True)
+            subprocess.run(["git", "-C", str(target), "add", "public-project.yaml", "README.md", "plans", "works"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(target), "-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-m", "scaffold"], check=True, capture_output=True)
             profile = root / "destinations.yaml"
             profile.write_text(yaml.safe_dump({
                 "contract_version": "output-destinations/v1",
@@ -506,6 +512,7 @@ class ProductionHistoryTests(unittest.TestCase):
                 "destinations": {
                     "state_root": str(root / "state"),
                     "internal_output_root": str(root / "internal"),
+                    "public_projection_root": str(target),
                 },
             }, sort_keys=False), encoding="utf-8")
             resolution = resolve_destinations(profile, repository_root=ROOT, run_id="RUN-PROJECTION-001")
@@ -546,11 +553,19 @@ class ProductionHistoryTests(unittest.TestCase):
                 )
 
             self.assertEqual("PLAN_READY", report["status"])
-            self.assertEqual("PASSED", report["public_projection"]["status"])
+            self.assertEqual("automatic-plan-projection-authority/v1", report["automatic_plan_authority"]["contract_version"])
+            self.assertEqual("tools/run.py", report["automatic_plan_authority"]["producer"])
+            self.assertEqual("APPLIED", report["public_projection"]["status"])
+            self.assertEqual("AUTOMATIC_PLAN", report["public_projection"]["projection_mode"])
             request_path = root / "internal" / report["public_projection"]["request_locator"]
             request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
             self.assertEqual(1, len(request["records"]))
-            self.assertEqual("unknown", request["records"][0]["publication"]["consent_status"])
+            self.assertEqual("public", request["records"][0]["publication"]["visibility"])
+            self.assertEqual("cleared", request["records"][0]["publication"]["consent_status"])
+            self.assertTrue((target / "plans/P0001-run-plan/plan.md").is_file())
+            evidence = root / "state" / "RUN-PROJECTION-001" / "public-projection-result.json"
+            self.assertTrue(evidence.is_file())
+            self.assertEqual("AUTOMATIC_PLAN", json.loads(evidence.read_text(encoding="utf-8"))["projection_mode"])
 
 
 if __name__ == "__main__":

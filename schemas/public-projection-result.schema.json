@@ -2,15 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/public-projection-result.schema.json",
   "title": "Public projection result evidence v1",
-  "description": "Closed, metadata-only result for dry-run or human-gated local public projection.",
+  "description": "Closed, metadata-only result for automatic canonical plan projection or human-gated local public projection.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "projection_id", "generated_at", "status", "request_sha256", "approval_sha256", "source_refs", "public_ids", "changed_paths", "target", "findings", "remediations", "human_gate", "remote_operations", "child_mutations", "privacy"],
+  "required": ["contract_version", "projection_id", "generated_at", "status", "projection_mode", "request_sha256", "approval_sha256", "source_refs", "public_ids", "changed_paths", "target", "findings", "remediations", "human_gate", "remote_operations", "child_mutations", "privacy"],
   "properties": {
     "contract_version": {"const": "public-projection-result/v1"},
     "projection_id": {"$ref": "#/$defs/stable_id"},
     "generated_at": {"type": "string", "format": "date-time"},
-    "status": {"enum": ["DRY_RUN_READY", "BLOCKED_HUMAN", "APPLIED", "ALREADY_PROJECTED", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"]},
+    "status": {"enum": ["DRY_RUN_READY", "BLOCKED_HUMAN", "APPLIED", "ALREADY_PROJECTED", "BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"]},
+    "projection_mode": {"enum": ["HUMAN_APPROVED", "AUTOMATIC_PLAN"]},
     "request_sha256": {"$ref": "#/$defs/hash64"},
     "approval_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
     "source_refs": {
@@ -88,6 +89,8 @@
       "properties": {
         "code": {
           "enum": [
+            "AUTHORITY_INVALID",
+            "CONFIGURATION_MISSING",
             "UNKNOWN_CLEARANCE",
             "MISSING_APPROVAL",
             "APPROVAL_MISMATCH",

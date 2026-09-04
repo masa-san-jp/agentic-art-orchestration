@@ -203,9 +203,10 @@ test "$BOOTSTRAP_EXIT" -eq 2
 `output-destinations/v1`プロファイルへ分離します。プロファイルはrepoへ追加せず、
 `config/output-destinations.example.yaml`を外部ディレクトリへコピーして、3つの絶対パスを
 置き換えます。`state_root`と`internal_output_root`は必須です。`public_projection_root`は
-明示的な公開projectionでだけ使う任意のlocal targetであり、通常のruntimeは暗黙にここへ
-書き込みません。公開projectionの`project --apply`もremote公開・Git操作までは行わず、別の
-human gateを必要とします。
+設定した場合に、正規runの`PLAN_READY`およびbatchの`PASSED`で完成制作プランを書き込む
+local public-project worktreeです。未設定のままその終端へ到達したrun/batchは、内部成果物を
+保持したまま`BLOCKED_CONFIGURATION`で終了します。work recordや手動requestの
+`project --apply`は別のhuman gateを必要とし、いずれもremote公開・Git操作までは行いません。
 
 ~~~bash
 DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
@@ -253,13 +254,42 @@ profileを一時的に外すときは`--destinations-file`を外し、環境変�
 Gitやpublic projectionへコピーせず、state rootのrun単位にだけ保持します。既存の成果物を
 移動・削除してrollbackしないでください。
 
-### 公開projection（prepare → dry-run → human approval → apply）
+### 公開projection（自動plan投影 / 手動projection）
 
-通常の`run.py`、`batch_run.py`、`production_exchange.py`、`autonomous_runner.py`は公開targetへ
-書き込みません。公開用recordが必要なときだけ、同じprofileの`internal_output_root`で
-candidateを作り、利用者が指定したlocal public-project worktreeへ明示的に投影します。
-これは内部出力のrecursive copyではなく、requestで列挙されたpublic-ready fileだけを対象にする
-別laneです。実際のGitHub repository、Drive、remote visibilityには接続しません。
+`run.py`と`batch_run.py`は、選択したprofileに`public_projection_root`がある場合だけ、正規の
+完了結果から制作プランをlocal public-project worktreeへ投影します。単一runは`PLAN_READY`、
+batchは全件`PASSED`が発火条件です。これは内部出力のrecursive copyではなく、正規report/summary
+から構築された`record_kind: plan`だけを対象にする専用laneです。report/summaryの
+`automatic_plan_authority`（producer、source status/id/hash、destination resolution hash）も完全一致
+しなければ実行しません。実際のGitHub repository、
+Drive、remote visibilityには接続しません。
+
+#### 正規run/batchの自動plan投影
+
+自動経路はレコード単位の`public_share`承認を要求しません。オーケストレーターが検証した
+production planだけを、公開境界・source hash・path safety・target layout/index/markerの
+preflight後に`plans/Pxxxx-<slug>/`へ反映します。各recordには`README.md`、`plan.md`、
+`metadata.yaml`を作り、`plans/index.yaml`とcollection READMEの管理対象markerを更新します。
+plan固有の素材が正規のrequestに含まれる場合だけ、既存のlayout contractで定める`media/`
+配下のallowlist pathを使います（Issueでいう`assets`相当の領域です）。
+
+batchは全planを先にmemory/stagingで検証し、100件以上でもsource hash順のIDとbyte列を決定的に
+した一つのtransactionとして反映します。policy違反、target conflict、dirty worktree、I/Oまたは
+rollback不全では公開targetに部分結果を残さず、state rootの
+`<projection-id>/public-projection-result.json`に`projection_mode: AUTOMATIC_PLAN`と診断を残します。
+不足する`public_projection_root`は`BLOCKED_CONFIGURATION`です。自動経路は`git add`、commit、
+branch操作、push、PR、merge、release、visibility変更を行いません。local投影後のGit操作と
+remoteでの公開確定は人間が別ゲートで行います。
+
+自動経路の再現証拠は、実targetではなく合成temporary Git worktreeで次のテストから確認します。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_public_projection tests.test_run tests.test_batch_run -v
+~~~
+
+手動projectionを行う場合は、同じprofileの`internal_output_root`でcandidateを作り、利用者が
+指定したlocal public-project worktreeへ明示的に投影します。以下はwork recordまたは任意の
+requestを対象とする既存のhuman-gated laneです。
 
 1. PLAN_READYのrunまたはPASSEDのbatchから、唯一のproducerでcandidate requestを作ります。
    `prepare`は内部candidateと`request.yaml`だけをcreate-onlyで出し、canonical source hashを

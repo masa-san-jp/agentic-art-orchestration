@@ -1,30 +1,30 @@
-version: 204
-updated_at: "2026-09-04T18:34:08+09:00"
+version: 206
+updated_at: "2026-09-04T23:21:43+09:00"
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: null
-  acquired_at: "2026-09-04T18:24:48+09:00"
-  expires_at: "2026-09-04T20:00:00+09:00"
-  lane: AUTONOMY_READINESS
-  execution_id: PARENT-ENTRYPOINT-HARDENING-001:20260904-182448
-  released_at: "2026-09-04T18:34:08+09:00"
+  acquired_at: "2026-09-04T21:07:32+09:00"
+  expires_at: null
+  lane: PUBLIC_PROJECTION
+  execution_id: PUBLIC-PROJECTION-AUTO-PLAN-001:20260904-210732
+  released_at: "2026-09-04T23:21:43+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [.gitignore, AGENTS.md, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
+    paths: [tools/public_projection.py, tools/run.py, tools/batch_run.py, tools/output_destinations.py, tools/security.py, tools/validate.py, schemas/batch-run.schema.json, schemas/public-projection-result.schema.json, config/human-gates.yaml, config/output-destinations.example.yaml, README.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/fixtures/public-projection/result.json, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: PARENT-ENTRYPOINT-HARDENING-001
+  task: PUBLIC-PROJECTION-AUTO-PLAN-001
   repository: agentic-art-orchestration
-  start_point: 07cbbe0b6ba83d7b8638d9e86b732db40198222c
-  expected_changes: State the exact agent-harness purpose and observable production-plan requirements in the parent entrypoints, and keep generated run state from dirtying a shared checkout.
-  result: completed; parent purpose, requirements, and generated run-state boundary were hardened by implementation commit ccdf897756c6a2d630e9687362071cb1d7ef94ed and merged by PR #184 as df76b2f4826c3621f2b0fccabe4a6fc249179a52; lease released.
-last_completed_task: PARENT-ENTRYPOINT-HARDENING-001
+  start_point: 5de256017df862001721729f8b2f390753c15b02
+  expected_changes: Project only a canonical PLAN_READY run or PASSED batch into the configured public project plans collection through a closed automatic plan mode; keep internal data separate, preserve work/manual and Git human gates, and prove atomic idempotent 100+ behavior.
+  result: completed; implementation commit c3f62e6; draft PR #188; automatic plan projection is implemented and locally verified.
+last_completed_task: PUBLIC-PROJECTION-AUTO-PLAN-001
 resume_from:
   task: null
-  action: "Verify the final parent main and issue/PR state before handoff."
-  command: python3 tools/validate.py --check
+  action: "Human-review draft PR #188; merge only after reviewing the automatic plan authority and the remaining local snapshot prerequisite."
+  command: gh pr view 188 --repo masa-san-jp/agentic-art-orchestration
 
 workspace_bootstrap_apply:
   status: complete
