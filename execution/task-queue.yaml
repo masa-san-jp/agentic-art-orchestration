@@ -1,5 +1,5 @@
-version: 50
-updated_at: "2026-09-04T13:46:46+09:00"
+version: 51
+updated_at: "2026-09-04T13:57:27+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1315,7 +1315,7 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
     milestone: M28
     title: Add non-destructive workspace and remote preflight
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1425,7 +1425,7 @@ tasks:
   - id: PUBLIC-PROJECTION-DOCS-001
     milestone: M29
     title: Document public projection human gates and privacy boundaries
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -1435,4 +1435,5 @@ tasks:
     depends_on: [PUBLIC-PROJECTION-APPLY-001]
     acceptance: Synchronize README, operator runbook, agent runtime guide, human-gates config, PLANS, state, and handoff with prepare/project commands, synthetic dry-run proof, approval boundaries, target restrictions, no-public-share behavior, and recovery.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Implementation commit bb11d38f6a2df80b7c9750aae93454024ebb607c; parent PR #168 merged to main as d840912. README, operator runbook, and agent runtime guide now document prepare, init-target, project --dry-run, and project --apply without conversation history; human-gates.yaml explicitly scopes public_share to the separate public-projection-approval/v1 envelope and excludes layout-only init, Git mutation, repository visibility, and remote publication. Synthetic temporary-target proof and documentation regression coverage were added. Focused public/docs/status tests 37/37 PASS; parent full suite 523 tests / 1 skipped PASS; validator, project-status README check, py_compile, and diff check PASS. GitHub Actions run 33838751364 failed before all steps because of the account billing limit and is not counted as a quality-gate pass. No child repository, manifest pin, user path, credential, private/restricted data, raw conversation, public target, or external artifact body was written. Acceptance 1/1."
     stop_if: [Docs imply automatic public sharing, A private path or internal ID is exposed, Human approval is weakened, README status cannot be regenerated]

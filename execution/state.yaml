@@ -1,15 +1,15 @@
-version: 188
-updated_at: "2026-09-04T13:46:46+09:00"
-active_task: PUBLIC-PROJECTION-DOCS-001
-active_repository: agentic-art-orchestration
+version: 189
+updated_at: "2026-09-04T13:57:27+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-public-projection-docs
+  status: available
+  owner: null
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: "2026-09-04T16:00:00+09:00"
+  expires_at: null
   lane: PUBLIC_PROJECTION
   execution_id: PUBLIC-PROJECTION-DOCS-001:20260904-134646
-  released_at: null
+  released_at: "2026-09-04T13:57:27+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, config/human-gates.yaml, PLANS.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, tests/test_docs.py, tests/test_public_projection.py]
@@ -19,12 +19,12 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 75c0b2d5930b340d804d930c06af95e2e48c6f0b
   expected_changes: Synchronize README, operator runbook, agent runtime guide, human-gates config, PLANS, state, and handoff with public projection prepare/dry-run/apply, synthetic proof, approval boundaries, target restrictions, no-public-share behavior, recovery, and autonomous repository completion guidance.
-  result: in_progress; claimed 2026-09-04T13:46:46+09:00 by codex-public-projection-docs; documentation and checks pending.
-last_completed_task: PUBLIC-PROJECTION-APPLY-001
+  result: completed; implementation commit bb11d38f6a2df80b7c9750aae93454024ebb607c; PR #168 merged as d840912; local checks passed.
+last_completed_task: PUBLIC-PROJECTION-DOCS-001
 resume_from:
-  task: PUBLIC-PROJECTION-DOCS-001
-  action: "Inspect the public projection Issue SSOT, implemented CLI, human-gates config, and nearest documentation/tests, then synchronize operator guidance without enabling automatic public share."
-  command: python3 tools/validate.py --check
+  task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
+  action: "Promote the dependency-complete workspace bootstrap preflight task, then inspect Issue #150, the bootstrap contract, and existing workspace guards before implementing read-only manifest/worktree preflight."
+  command: .venv/bin/python tools/validate.py --check
 
 issue_intake:
   status: complete
@@ -1282,4 +1282,41 @@ public_projection_apply:
     inferred: none
   unresolved:
     - PUBLIC-PROJECTION-DOCS-001 must document the complete prepare/project lifecycle, approval boundary, and recovery procedure.
+    - GitHub Actions billing remains an external environment blocker; local gates are the observable evidence.
+
+public_projection_docs:
+  status: complete
+  observed_at: "2026-09-04T13:57:27+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+  target_repository: agentic-art-orchestration
+  acceptance: 1/1
+  implementation_commit: bb11d38f6a2df80b7c9750aae93454024ebb607c
+  pull_request: 168
+  merge_commit: d840912
+  changes:
+    - README, operator runbook, and agent runtime guide document the prepare/init-target/project lifecycle as a conversation-history-independent public projection lane.
+    - Human approval, target allowlist, no-public-share behavior, terminal outcomes, metadata-only result evidence, and transaction recovery are explicit.
+    - config/human-gates.yaml scopes public_share to public-projection-approval/v1 and keeps layout-only init, Git mutation, visibility change, and remote publication outside that operation.
+    - Documentation regression tests require the commands, statuses, approval scope, and safety boundaries.
+  verification:
+    focused_public_docs_status_tests: "37/37 PASS"
+    parent_full_suite: "523 tests / 1 skipped PASS"
+    parent_validator: PASS
+    project_status_readme: PASS
+    py_compile: PASS
+    diff_check: PASS
+    synthetic_temporary_target: PASS
+  remote_ci:
+    run_id: 33838751364
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit prevented all three jobs from starting
+    counted_as_quality_gate: false
+  sensitive_data: none; no credential, user path, private/restricted data, raw conversation, direct identifier, or public target entered Git
+  external_artifact: none; synthetic result evidence only, no Drive artifact or asset body created
+  child_repository_mutation: false
+  parent_pin_changed: false
+  feedback:
+    explicit: user requested evaluation and supplementation of autonomous implementation requirements for every repository
+    inferred: none
+  unresolved:
     - GitHub Actions billing remains an external environment blocker; local gates are the observable evidence.

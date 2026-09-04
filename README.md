@@ -35,15 +35,15 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T13:46:46+09:00`.
+Source updated at: `2026-09-04T13:57:27+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 0 | 1 | 0 | 126 | 130 |
+| 2 | 1 | 0 | 0 | 127 | 130 |
 
-Current task: `PUBLIC-PROJECTION-DOCS-001`; repository: `agentic-art-orchestration`; checkpoint: `PUBLIC-PROJECTION-DOCS-001`.
-Next action: Inspect the public projection Issue SSOT, implemented CLI, human-gates config, and nearest documentation/tests, then synchronize operator guidance without enabling automatic public share.
-Ready: none.
+Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECTION-DOCS-001`.
+Next action: Promote the dependency-complete workspace bootstrap preflight task, then inspect Issue #150, the bootstrap contract, and existing workspace guards before implementing read-only manifest/worktree preflight.
+Ready: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
 Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
 Blocked:
 - none
