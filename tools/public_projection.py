@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -18,6 +18,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -51,7 +52,15 @@ WORK_TARGETS = {"README.md", "record.md"}
 PREPARE_ROOT = "public-projection-candidates"
 PRODUCTION_REPOSITORY = "agentic-art-production"
 PREPARE_STATUSES = {"PASSED", "ALREADY_PREPARED", "REFRESHED", "NOT_AVAILABLE"}
-PROJECT_STATUSES = {"DRY_RUN_READY", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}
+PROJECT_STATUSES = {
+    "DRY_RUN_READY",
+    "BLOCKED_HUMAN",
+    "APPLIED",
+    "ALREADY_PROJECTED",
+    "BLOCKED_POLICY",
+    "BLOCKED_CONFLICT",
+    "FAILED",
+}
 INIT_STATUSES = {"DRY_RUN_READY", "APPLIED", "BLOCKED_CONFLICT", "FAILED"}
 DEFAULT_LAYOUT = {
     "contract_version": "public-project-layout/v1",
@@ -274,6 +283,60 @@ def validate_approval(value: object, source: str = "public-projection-approval")
     return errors
 
 
+def _approval_findings(
+    approval: object,
+    request: Mapping[str, object],
+    *,
+    now: datetime | None = None,
+) -> tuple[list[dict[str, str]], str | None]:
+    """Verify the human approval envelope without manufacturing any fields."""
+    if not isinstance(approval, Mapping):
+        return [
+            _projection_finding(
+                "MISSING_APPROVAL",
+                "approval",
+                "provide a separate public-projection-approval/v1 file signed by a human",
+            )
+        ], None
+    structural = validate_approval(approval, "approval")
+    if structural:
+        expires = _parse_timestamp(approval.get("expires_at"), "expires_at")
+        approved = _parse_timestamp(approval.get("approved_at"), "approved_at")
+        if expires is None or approved is None:
+            code = "APPROVAL_EXPIRED"
+            location = "approval.approved_at" if approved is None else "approval.expires_at"
+            remediation = "provide an approval with valid RFC3339 approved_at and expires_at values"
+        else:
+            code = "MISSING_APPROVAL"
+            location = "approval"
+            remediation = "repair the approval contract without changing its human authority or scope"
+        return [_projection_finding(code, location, remediation)], None
+
+    digest = approval_sha256(approval)
+    if approval.get("request_sha256") != request_sha256(request):
+        return [
+            _projection_finding(
+                "APPROVAL_MISMATCH",
+                "approval.request_sha256",
+                "create a new human approval for the exact canonical request hash",
+            )
+        ], None
+    approved_at = _parse_timestamp(approval.get("approved_at"), "approved_at")
+    expires_at = _parse_timestamp(approval.get("expires_at"), "expires_at")
+    observed = now or datetime.now(timezone.utc)
+    if observed.tzinfo is None or observed.utcoffset() is None:
+        observed = observed.replace(tzinfo=timezone.utc)
+    if approved_at is None or expires_at is None or observed < approved_at or observed > expires_at:
+        return [
+            _projection_finding(
+                "APPROVAL_EXPIRED",
+                "approval.expires_at",
+                "obtain a currently valid human approval for this request",
+            )
+        ], None
+    return [], digest
+
+
 def validate_result(value: object, source: str = "public-projection-result") -> list[str]:
     errors = _schema_errors_for(value, RESULT_SCHEMA_PATH, source)
     if not isinstance(value, Mapping):
@@ -285,9 +348,9 @@ def validate_result(value: object, source: str = "public-projection-result") -> 
     if not isinstance(target, Mapping) or not isinstance(human_gate, Mapping) or not isinstance(changed_paths, list):
         return errors
     mutation_count = target.get("mutation_count")
-    if status != "APPLIED":
+    if status in {"DRY_RUN_READY", "BLOCKED_HUMAN", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "ALREADY_PROJECTED"}:
         if mutation_count != 0 or changed_paths:
-            errors.append(_error(f"{status} result reports target mutation", "record zero changed paths and mutation_count for a blocked or dry-run result"))
+            errors.append(_error(f"{status} result reports target mutation", "record zero changed paths and mutation_count for a non-applied result"))
     if status == "DRY_RUN_READY":
         if value.get("approval_sha256") is not None or human_gate.get("status") != "BLOCKED_HUMAN":
             errors.append(_error("DRY_RUN_READY has an approval or wrong human gate", "keep approval absent and report BLOCKED_HUMAN until human approval"))
@@ -1107,6 +1170,37 @@ def _git_target_findings(target: Path) -> list[dict[str, str]]:
     return _dedupe_projection_findings(findings)
 
 
+def _git_target_status_paths(target: Path) -> list[str] | None:
+    """Return porcelain paths for a replay check; never expose Git output."""
+    target = target.expanduser().resolve(strict=False)
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    paths: list[str] = []
+    for line in completed.stdout.splitlines():
+        if not line:
+            continue
+        if len(line) < 4:
+            return None
+        path = line[3:]
+        # Renames contain two paths and are never a safe replay signal.  The
+        # public layout itself only permits ASCII relative path tokens.
+        if " -> " in path or Path(path).is_absolute() or RELATIVE_PATH.fullmatch(path) is None:
+            return None
+        paths.append(Path(path).as_posix())
+    return sorted(set(paths))
+
+
 def _tree_fingerprint(root: Path) -> str:
     """Hash target file identities and bytes while excluding Git internals."""
     root = root.expanduser().resolve(strict=False)
@@ -1600,6 +1694,202 @@ def _append_target_file(target: Path, relative: str, expected: bytes, replacemen
             pass
 
 
+def _replace_target_exact(target: Path, relative: str, expected: bytes, replacement: bytes) -> bool:
+    """Atomically replace one allowlisted existing target file after recheck."""
+    _, path = _target_locator(target, relative, relative)
+    current, _ = _target_regular(path, relative)
+    if current != expected:
+        raise _prepare_error("TARGET_CONFLICT", relative, "the target changed after approval; preserve it and re-run the projection")
+    if expected == replacement:
+        return False
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.projection.tmp")
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(replacement)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if _target_regular(path, relative)[0] != expected:
+            raise _prepare_error("TARGET_CONFLICT", relative, "the target changed during the atomic projection")
+        os.replace(temporary, path)
+        return True
+    except PreparationError:
+        raise
+    except OSError as exc:
+        raise _prepare_error("FAILED", relative, "repair target write access and retry the projection") from exc
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _projection_parent_paths(target: Path, relative: str) -> list[Path]:
+    current = target.expanduser().resolve(strict=False)
+    paths: list[Path] = []
+    for part in Path(relative).parent.parts:
+        current = current / part
+        paths.append(current)
+    return paths
+
+
+def _rollback_projection_transaction(
+    target: Path,
+    *,
+    before: str,
+    created_paths: list[str],
+    replaced_originals: Mapping[str, tuple[bytes, bytes]],
+    created_directories: set[Path],
+) -> tuple[list[str], list[dict[str, str]], str]:
+    """Restore only this transaction's exact paths and return residual evidence."""
+    rollback_findings: list[dict[str, str]] = []
+    for relative, (original, replacement) in reversed(list(replaced_originals.items())):
+        try:
+            current, _ = _target_regular(_target_locator(target, relative, relative)[1], relative)
+            if current == original:
+                continue
+            if current != replacement:
+                rollback_findings.append(_projection_finding("ROLLBACK_FAILED", relative, "the target changed concurrently; preserve the residual path for human recovery"))
+                continue
+            _replace_target_exact(target, relative, replacement, original)
+        except (PreparationError, OSError):
+            rollback_findings.append(_projection_finding("ROLLBACK_FAILED", relative, "restore the original target bytes manually; no reset was performed"))
+
+    for relative in reversed(created_paths):
+        try:
+            _, path = _target_locator(target, relative, relative)
+            if not path.exists():
+                continue
+            metadata = path.lstat()
+            if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+                rollback_findings.append(_projection_finding("ROLLBACK_FAILED", relative, "remove or preserve the unexpected residual path manually"))
+                continue
+            path.unlink()
+        except (PreparationError, OSError):
+            rollback_findings.append(_projection_finding("ROLLBACK_FAILED", relative, "remove the transaction-created residual path manually"))
+
+    for directory in sorted(created_directories, key=lambda path: len(path.parts), reverse=True):
+        try:
+            if not directory.exists():
+                continue
+            if directory.is_symlink() or not directory.is_dir():
+                rollback_findings.append(_projection_finding("ROLLBACK_FAILED", str(directory.relative_to(target)), "preserve the unexpected residual directory for human recovery"))
+                continue
+            directory.rmdir()
+        except (OSError, ValueError):
+            rollback_findings.append(_projection_finding("ROLLBACK_FAILED", str(directory.relative_to(target)), "remove only the empty transaction-created directory manually"))
+
+    try:
+        after = _tree_fingerprint(target)
+    except PreparationError:
+        after = sha256_hex([])
+        rollback_findings.append(_projection_finding("ROLLBACK_FAILED", "target.tree", "restore and inspect the target fingerprint manually"))
+    if after != before and not rollback_findings:
+        rollback_findings.append(_projection_finding("ROLLBACK_FAILED", "target.tree", "restore the target fingerprint manually; no Git reset was performed"))
+    residual: list[str] = []
+    for finding in rollback_findings:
+        location = finding.get("location", "")
+        if location and location != "target.tree":
+            residual.append(location)
+    return sorted(set(residual)), _dedupe_projection_findings(rollback_findings), after
+
+
+def _apply_projection_transaction(
+    target: Path,
+    *,
+    before: str,
+    planned_files: Mapping[str, bytes],
+    target_updates: Mapping[str, tuple[bytes, bytes]],
+    fail_after: int | None = None,
+) -> dict[str, object]:
+    """Stage and apply only new record files plus index/catalog replacements."""
+    target = target.expanduser().resolve(strict=False)
+    changed_paths: list[str] = []
+    created_paths: list[str] = []
+    replaced_originals: dict[str, tuple[bytes, bytes]] = {}
+    parent_paths: set[Path] = set()
+    for relative in planned_files:
+        _target_locator(target, relative, relative)
+        parent_paths.update(_projection_parent_paths(target, relative))
+    for relative, values in target_updates.items():
+        _target_locator(target, relative, relative)
+        parent_paths.update(_projection_parent_paths(target, relative))
+        if not isinstance(values, tuple) or len(values) != 2 or not all(isinstance(item, bytes) for item in values):
+            raise _prepare_error("LAYOUT_INVALID", relative, "target updates must contain expected and replacement bytes")
+    created_directories = {path for path in parent_paths if not path.exists()}
+
+    try:
+        if _tree_fingerprint(target) != before:
+            raise _prepare_error("TARGET_CONFLICT", "target.tree", "the target changed after planning; re-run dry-run and approval")
+        for relative in planned_files:
+            _, path = _target_locator(target, relative, relative)
+            if path.exists() or path.is_symlink():
+                raise _prepare_error("TARGET_CONFLICT", relative, "the new record path appeared after planning; preserve it")
+        for relative, (expected, _replacement) in target_updates.items():
+            current, _ = _target_regular(_target_locator(target, relative, relative)[1], relative)
+            if current != expected:
+                raise _prepare_error("TARGET_CONFLICT", relative, "the target index or catalog changed after planning")
+
+        with tempfile.TemporaryDirectory(prefix="public-projection-stage-") as staging_name:
+            staging = Path(staging_name)
+            for relative, content in planned_files.items():
+                staged = staging / relative
+                staged.parent.mkdir(parents=True, exist_ok=True)
+                with staged.open("xb") as handle:
+                    handle.write(content)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                if _sha256_bytes(staged.read_bytes()) != _sha256_bytes(content):
+                    raise _prepare_error("FAILED", relative, "staged bytes did not verify; retry without applying partial output")
+
+            if fail_after == 0:
+                raise _prepare_error("FAILED", "transaction", "injected transaction failure before the first mutation")
+            for relative in sorted(planned_files):
+                staged_bytes = (staging / relative).read_bytes()
+                if not _write_target_create_only(target, relative, staged_bytes):
+                    raise _prepare_error("TARGET_CONFLICT", relative, "a new record path was created concurrently")
+                created_paths.append(relative)
+                changed_paths.append(relative)
+                if fail_after is not None and len(changed_paths) >= fail_after:
+                    raise _prepare_error("FAILED", relative, "injected transaction failure after a partial write")
+
+            for relative in sorted(target_updates):
+                expected, replacement = target_updates[relative]
+                if expected == replacement:
+                    continue
+                if _replace_target_exact(target, relative, expected, replacement):
+                    replaced_originals[relative] = (expected, replacement)
+                    changed_paths.append(relative)
+                    if fail_after is not None and len(changed_paths) >= fail_after:
+                        raise _prepare_error("FAILED", relative, "injected transaction failure after a catalog update")
+        after = _tree_fingerprint(target)
+        return {"outcome": "APPLIED", "changed_paths": sorted(changed_paths), "after": after, "findings": []}
+    except PreparationError as exc:
+        residual, rollback_findings, after = _rollback_projection_transaction(
+            target,
+            before=before,
+            created_paths=created_paths,
+            replaced_originals=replaced_originals,
+            created_directories=created_directories,
+        )
+        findings: list[dict[str, str]] = []
+        if exc.code in PUBLIC_PROJECTION_FINDING_CODES:
+            findings.append(_projection_finding(exc.code, str(exc.location), exc.remediation))
+        findings.extend(rollback_findings)
+        if residual or rollback_findings:
+            outcome = "FAILED"
+        elif exc.code == "TARGET_CONFLICT":
+            outcome = "BLOCKED_CONFLICT"
+        else:
+            outcome = "FAILED"
+        return {
+            "outcome": outcome,
+            "changed_paths": residual,
+            "after": after,
+            "findings": _dedupe_projection_findings(findings),
+            "remediations": sorted({str(item["remediation"]) for item in findings}),
+        }
+
+
 def _init_target_plan(target: Path) -> tuple[dict[str, bytes], list[dict[str, str]], str]:
     target = target.expanduser().resolve(strict=False)
     findings = _git_target_findings(target)
@@ -1721,7 +2011,13 @@ def _result_bytes(result: Mapping[str, object]) -> bytes:
     return json.dumps(dict(result), ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
 
 
-def _write_projection_result(state_root: Path, projection_id: str, result: Mapping[str, object]) -> None:
+def _write_projection_result(
+    state_root: Path,
+    projection_id: str,
+    result: Mapping[str, object],
+    *,
+    allow_transition: bool = False,
+) -> None:
     errors = validate_result(result)
     if errors:
         raise _prepare_error("LAYOUT_INVALID", "result", "repair the generated public-projection-result/v1 evidence")
@@ -1748,7 +2044,39 @@ def _write_projection_result(state_root: Path, projection_id: str, result: Mappi
             raise _prepare_error("TARGET_CONFLICT", "result", "inspect the existing run evidence without overwriting it") from exc
         if current == rendered:
             return
-        raise _prepare_error("TARGET_CONFLICT", "result", "use a new projection ID; result evidence is create-only")
+        if not allow_transition:
+            raise _prepare_error("TARGET_CONFLICT", "result", "use a new projection ID; result evidence is create-only")
+        try:
+            previous = json.loads(current.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise _prepare_error("TARGET_CONFLICT", "result", "preserve malformed result evidence and use a new projection ID") from exc
+        if not isinstance(previous, Mapping) or previous.get("projection_id") != projection_id or previous.get("request_sha256") != result.get("request_sha256"):
+            raise _prepare_error("TARGET_CONFLICT", "result", "do not replace evidence for a different projection request")
+        try:
+            metadata = target.lstat()
+        except OSError as exc:
+            raise _prepare_error("TARGET_CONFLICT", "result", "inspect the existing result evidence without overwriting it") from exc
+        if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+            raise _prepare_error("SOURCE_PATH_UNSAFE", "result", "result evidence must be a regular, non-aliased file")
+        temporary = target.with_name(f".{target.name}.{os.getpid()}.transition.tmp")
+        try:
+            with temporary.open("xb") as handle:
+                handle.write(rendered)
+                handle.flush()
+                os.fsync(handle.fileno())
+            if target.read_bytes() != current:
+                raise _prepare_error("TARGET_CONFLICT", "result", "result evidence changed during the atomic transition")
+            os.replace(temporary, target)
+            return
+        except PreparationError:
+            raise
+        except OSError as exc:
+            raise _prepare_error("FAILED", "result", "write the atomic result transition after repairing the state root") from exc
+        finally:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
     temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
     try:
         with temporary.open("xb") as handle:
@@ -1814,6 +2142,152 @@ def _existing_record_matches(target: Path, plan: Mapping[str, object], expected_
     except PreparationError as exc:
         findings.append(_projection_finding(exc.code, str(exc.location), exc.remediation))
     return findings
+
+
+PROJECTION_POLICY_CODES = {
+    "UNKNOWN_CLEARANCE", "UNAPPROVED_MEDIA", "SOURCE_PATH_UNSAFE", "SOURCE_HASH_MISMATCH",
+    "FORBIDDEN_CONTENT", "CREDENTIAL", "PRIVATE_URL", "ABSOLUTE_PATH", "FORBIDDEN_ARTIFACT",
+    "INTERNAL_REFERENCE", "REMOTE_OPERATION",
+}
+
+
+def _projection_plan_data(
+    request: Mapping[str, object],
+    *,
+    internal_output_root: Path,
+    public_projection_root: Path,
+) -> dict[str, object]:
+    """Build the same closed plan inputs used by dry-run and apply.
+
+    The returned mapping contains source bytes only in process memory.  It is
+    deliberately not suitable for result evidence; callers must project only
+    the generated public paths and metadata.
+    """
+    projection_id = request.get("projection_id")
+    if not isinstance(projection_id, str) or STABLE_ID.fullmatch(projection_id) is None:
+        raise _prepare_error("PROJECTION_ID_INVALID", "request.projection_id", "use the stable projection identifier from the request")
+    structural = validate_request(request, "request")
+    if structural:
+        raise _prepare_error("LAYOUT_INVALID", "request", "repair the public-projection-request/v1 contract before planning")
+
+    layout, indexes, before, findings = _target_layout_preflight(public_projection_root)
+    findings.extend(_sanitized_request_findings(request))
+    source_refs = [
+        {"record_kind": str(record["record_kind"]), "source_sha256": str(record["source"]["sha256"])}
+        for record in request.get("records", [])
+        if isinstance(record, Mapping) and isinstance(record.get("source"), Mapping)
+    ]
+    source_refs = sorted(source_refs, key=lambda item: (item["record_kind"], item["source_sha256"]))
+
+    plans: list[dict[str, object]] = []
+    collection_map: dict[str, str] = {}
+    if layout is not None:
+        plans_collection, works_collection = _layout_collections(layout)
+        collection_map = {"plan": plans_collection, "work": works_collection}
+        for record_index, record in enumerate(request.get("records", [])):
+            if not isinstance(record, Mapping):
+                continue
+            collection = collection_map.get(str(record.get("record_kind")))
+            if collection is None:
+                findings.append(_projection_finding("LAYOUT_INVALID", f"records[{record_index}].record_kind", "use plan or work"))
+                continue
+            plan, record_findings = _source_record_plan(
+                record,
+                record_index=record_index,
+                internal_root=internal_output_root,
+                target=public_projection_root,
+                layout=layout,
+                collection=collection,
+            )
+            findings.extend(record_findings)
+            if plan:
+                plans.append(plan)
+
+    public_ids: list[str] = []
+    planned_paths: set[str] = set()
+    target_updates: dict[str, tuple[bytes, bytes]] = {}
+    has_policy = any(finding.get("code") in PROJECTION_POLICY_CODES for finding in findings)
+    allocation_findings: list[dict[str, str]] = []
+    candidate_indexes: dict[str, dict[str, object]] = {}
+    if layout is not None and indexes and not has_policy:
+        plans, allocation_findings = _allocate_public_ids(
+            plans,
+            indexes,
+            public_projection_root,
+            {collection_map["plan"]: "P", collection_map["work"]: "W"},
+        )
+        findings.extend(allocation_findings)
+        if not allocation_findings:
+            candidate_indexes = {
+                collection: {
+                    "version": INDEX_VERSION,
+                    "records": [dict(item) for item in index.get("records", []) if isinstance(item, Mapping)],
+                    "retired_ids": list(index.get("retired_ids", [])),
+                }
+                for collection, index in indexes.items()
+            }
+            for plan in plans:
+                public_ids.append(str(plan["public_id"]))
+                expected_files = _plan_target_files(plan, layout)
+                plan["expected_files"] = expected_files
+                plan["is_new"] = plan.get("existing_entry") is None
+                if plan["is_new"]:
+                    directory = str(plan["path"])
+                    _, directory_path = _target_locator(public_projection_root, directory, f"{plan['collection']}.record")
+                    if directory_path.exists() or directory_path.is_symlink():
+                        findings.append(_projection_finding("TARGET_CONFLICT", directory, "the proposed public record directory already exists"))
+                    else:
+                        planned_paths.update(expected_files)
+                    candidate_indexes[str(plan["collection"])]["records"].append(_projection_index_entry(plan))
+                else:
+                    findings.extend(_existing_record_matches(public_projection_root, plan, expected_files))
+
+            for collection, candidate_index in candidate_indexes.items():
+                has_new = any(plan.get("is_new") and plan.get("collection") == collection for plan in plans)
+                if not has_new:
+                    continue
+                index_relative = f"{collection}/index.yaml"
+                index_path = _target_locator(public_projection_root, index_relative, index_relative)[1]
+                current_index, _ = _target_regular(index_path, index_relative)
+                replacement_index = _index_bytes(candidate_index)
+                if current_index != replacement_index:
+                    target_updates[index_relative] = (current_index, replacement_index)
+                    planned_paths.add(index_relative)
+                readme_relative = f"{collection}/README.md"
+                readme_path = _target_locator(public_projection_root, readme_relative, readme_relative)[1]
+                try:
+                    current_readme, _ = _target_regular(readme_path, readme_relative)
+                    current_text = current_readme.decode("utf-8")
+                    desired_text = _replace_marker_block(
+                        current_text,
+                        layout,
+                        _catalog_text(candidate_index, collection),
+                        readme_relative,
+                    )
+                except (PreparationError, UnicodeDecodeError) as exc:
+                    code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
+                    remediation = exc.remediation if isinstance(exc, PreparationError) else "collection README must remain UTF-8"
+                    findings.append(_projection_finding(code, readme_relative, remediation))
+                else:
+                    desired_readme = desired_text.encode("utf-8")
+                    if current_readme != desired_readme:
+                        target_updates[readme_relative] = (current_readme, desired_readme)
+                        planned_paths.add(readme_relative)
+
+    return {
+        "projection_id": projection_id,
+        "request_sha256": request_sha256(request),
+        "source_refs": source_refs,
+        "layout": layout,
+        "indexes": indexes,
+        "before": before,
+        "findings": _dedupe_projection_findings(findings),
+        "plans": plans,
+        "public_ids": sorted(set(public_ids)),
+        "planned_paths": sorted(planned_paths),
+        "target_updates": target_updates,
+        "candidate_indexes": candidate_indexes,
+    }
 
 
 def _project_dry_run_result(
@@ -1979,6 +2453,237 @@ def project_dry_run(
     return result
 
 
+def _load_approval_document(path: Path) -> object:
+    """Read a separately supplied approval without accepting path aliases."""
+    candidate = path.expanduser()
+    if not candidate.is_absolute():
+        if ".." in candidate.parts:
+            raise _prepare_error("SOURCE_PATH_UNSAFE", "approval", "use a separate approval file without traversal")
+        candidate = Path.cwd() / candidate
+    if ".." in candidate.parts:
+        raise _prepare_error("SOURCE_PATH_UNSAFE", "approval", "use a separate approval file without traversal")
+    try:
+        if candidate.is_symlink():
+            raise _prepare_error("SOURCE_PATH_UNSAFE", "approval", "the approval file may not be a symlink")
+        # The macOS temporary root commonly contains the harmless /var ->
+        # /private/var alias.  Resolve parent aliases, but still reject a
+        # symlink at the approval file itself.
+        candidate = candidate.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise _prepare_error("MISSING_APPROVAL", "approval", "provide a readable separate approval file") from exc
+    _read_regular(candidate, "approval")
+    return _load_document(candidate)
+
+
+def _projection_result(
+    request: Mapping[str, object],
+    plan_data: Mapping[str, object],
+    *,
+    status: str,
+    approval_digest: str | None,
+    findings: list[Mapping[str, object]],
+    public_ids: list[str] | None = None,
+    planned_paths: list[str] | None = None,
+    changed_paths: list[str] | None = None,
+    before: str | None = None,
+    after: str | None = None,
+    human_gate: str = "BLOCKED_HUMAN",
+    extra_remediations: list[str] | None = None,
+) -> dict[str, object]:
+    safe_findings = _dedupe_projection_findings(list(findings))
+    changed = sorted(set(changed_paths or []))
+    result: dict[str, object] = {
+        "contract_version": "public-projection-result/v1",
+        "projection_id": str(plan_data["projection_id"]),
+        "generated_at": str(request["generated_at"]),
+        "status": status,
+        "request_sha256": str(plan_data["request_sha256"]),
+        "approval_sha256": approval_digest,
+        "source_refs": list(plan_data.get("source_refs", [])),
+        "public_ids": sorted(set(public_ids if public_ids is not None else plan_data.get("public_ids", []))),
+        "changed_paths": changed,
+        "planned_paths": sorted(set(planned_paths if planned_paths is not None else plan_data.get("planned_paths", []))),
+        "target": {
+            "root_role": "public_projection_root",
+            "mutation_count": len(changed),
+            "before_fingerprint": before or str(plan_data["before"]),
+            "after_fingerprint": after or before or str(plan_data["before"]),
+        },
+        "findings": safe_findings,
+        "remediations": sorted({
+            *(str(item["remediation"]) for item in safe_findings),
+            *(extra_remediations or []),
+        }),
+        "human_gate": {"status": human_gate, "operation": "public_share"},
+        "remote_operations": [],
+        "child_mutations": [],
+        "privacy": {
+            "internal_content_stored": False,
+            "credential_stored": False,
+            "raw_conversation_stored": False,
+            "media_bytes_stored": False,
+            "direct_identifier_stored": False,
+        },
+    }
+    errors = validate_result(result)
+    if errors:
+        raise _prepare_error("LAYOUT_INVALID", "result", "repair the generated public-projection result before writing evidence")
+    return result
+
+
+def _replay_dirty_target_allowed(target: Path, plan_data: Mapping[str, object]) -> bool:
+    """Allow only the exact uncommitted paths created by an earlier apply."""
+    if not any(finding.get("code") == "TARGET_DIRTY" for finding in plan_data.get("findings", [])):
+        return False
+    if any(
+        finding.get("code") in PROJECTION_POLICY_CODES | {"TARGET_CONFLICT", "LAYOUT_INVALID"}
+        for finding in plan_data.get("findings", [])
+    ):
+        return False
+    plans = plan_data.get("plans", [])
+    if not isinstance(plans, list) or not plans or any(plan.get("is_new") for plan in plans if isinstance(plan, Mapping)):
+        return False
+    observed = _git_target_status_paths(target)
+    if not observed:
+        return False
+    managed: set[str] = set()
+    for plan in plans:
+        if not isinstance(plan, Mapping):
+            return False
+        managed.update(str(path) for path in plan.get("expected_files", {}) if isinstance(path, str))
+        collection = str(plan.get("collection", ""))
+        if collection:
+            managed.add(f"{collection}/index.yaml")
+            managed.add(f"{collection}/README.md")
+    return set(observed).issubset(managed)
+
+
+def _existing_result_request_conflict(state_root: Path, projection_id: str, request_hash: str) -> bool:
+    """Detect an occupied evidence slot for another canonical request."""
+    evidence = resolve_run_destination(state_root, projection_id) / "public-projection-result.json"
+    if not evidence.exists():
+        return False
+    if evidence.is_symlink():
+        raise _prepare_error("SOURCE_PATH_UNSAFE", "result", "result evidence may not be a symlink")
+    try:
+        current = json.loads(evidence.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise _prepare_error("TARGET_CONFLICT", "result", "inspect the existing result evidence before applying") from exc
+    return not isinstance(current, Mapping) or current.get("request_sha256") != request_hash
+
+
+def project_apply(
+    request_path: Path,
+    *,
+    approval_path: Path | None,
+    internal_output_root: Path,
+    public_projection_root: Path,
+    state_root: Path,
+    now: datetime | None = None,
+    fail_after: int | None = None,
+) -> dict[str, object]:
+    """Apply a human-approved local projection with exact-path rollback."""
+    _locator, resolved_request = _source_locator(internal_output_root, request_path, "request")
+    request = _load_document(resolved_request)
+    if not isinstance(request, Mapping):
+        raise _prepare_error("LAYOUT_INVALID", "request", "provide a public-projection-request/v1 mapping")
+    plan_data = _projection_plan_data(
+        request,
+        internal_output_root=internal_output_root.expanduser().resolve(strict=False),
+        public_projection_root=public_projection_root.expanduser().resolve(strict=False),
+    )
+    state_root = state_root.expanduser().resolve(strict=False)
+    if _existing_result_request_conflict(state_root, str(plan_data["projection_id"]), str(plan_data["request_sha256"])):
+        findings = list(plan_data["findings"]) + [_projection_finding("TARGET_CONFLICT", "result", "use a new projection ID for a different canonical request")]
+        result = _projection_result(
+            request,
+            plan_data,
+            status="BLOCKED_CONFLICT",
+            approval_digest=None,
+            findings=findings,
+            public_ids=[],
+            planned_paths=[],
+        )
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+
+    approval: object = None
+    if approval_path is not None:
+        try:
+            approval = _load_approval_document(approval_path)
+        except (PreparationError, PublicProjectionError, OSError, UnicodeError, TypeError, ValueError):
+            approval = None
+    approval_findings, approval_digest = _approval_findings(approval, request, now=now)
+    findings = list(plan_data["findings"]) + approval_findings
+    if _replay_dirty_target_allowed(public_projection_root, plan_data):
+        findings = [finding for finding in findings if finding.get("code") != "TARGET_DIRTY"]
+    findings = _dedupe_projection_findings(findings)
+
+    if any(finding.get("code") in PROJECTION_POLICY_CODES for finding in findings):
+        result = _projection_result(request, plan_data, status="BLOCKED_POLICY", approval_digest=approval_digest, findings=findings, public_ids=[], planned_paths=[])
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+    if any(finding.get("code") in {"TARGET_CONFLICT", "TARGET_DIRTY", "LAYOUT_INVALID"} for finding in findings):
+        result = _projection_result(request, plan_data, status="BLOCKED_CONFLICT", approval_digest=approval_digest, findings=findings, public_ids=[], planned_paths=[])
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+    if approval_findings:
+        result = _projection_result(request, plan_data, status="BLOCKED_HUMAN", approval_digest=None, findings=findings, human_gate="BLOCKED_HUMAN")
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+
+    plans = [plan for plan in plan_data.get("plans", []) if isinstance(plan, Mapping)]
+    if not plans or not all(isinstance(plan.get("expected_files"), Mapping) for plan in plans):
+        result = _projection_result(
+            request,
+            plan_data,
+            status="BLOCKED_CONFLICT",
+            approval_digest=approval_digest,
+            findings=[*findings, _projection_finding("LAYOUT_INVALID", "projection.plan", "produce a complete target plan before applying")],
+            public_ids=[],
+            planned_paths=[],
+            human_gate="APPROVED",
+        )
+        _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+        return result
+
+    planned_files: dict[str, bytes] = {}
+    for plan in plans:
+        if plan.get("is_new"):
+            expected_files = plan.get("expected_files")
+            if isinstance(expected_files, Mapping):
+                planned_files.update({str(path): content for path, content in expected_files.items() if isinstance(path, str) and isinstance(content, bytes)})
+    target_updates = plan_data.get("target_updates", {}) if isinstance(plan_data.get("target_updates"), Mapping) else {}
+    if not planned_files and not target_updates:
+        transaction = {"outcome": "ALREADY_PROJECTED", "changed_paths": [], "after": str(plan_data["before"]), "findings": []}
+    else:
+        transaction = _apply_projection_transaction(
+            public_projection_root,
+            before=str(plan_data["before"]),
+            planned_files=planned_files,
+            target_updates=target_updates,
+            fail_after=fail_after,
+        )
+    status = str(transaction["outcome"])
+    transaction_findings = list(transaction.get("findings", []))
+    result = _projection_result(
+        request,
+        plan_data,
+        status=status,
+        approval_digest=approval_digest,
+        findings=[*findings, *transaction_findings],
+        public_ids=plan_data.get("public_ids", []) if status in {"APPLIED", "ALREADY_PROJECTED", "FAILED"} else [],
+        planned_paths=plan_data.get("planned_paths", []) if status in {"APPLIED", "FAILED"} else [],
+        changed_paths=transaction.get("changed_paths", []) if isinstance(transaction.get("changed_paths"), list) else [],
+        before=str(plan_data["before"]),
+        after=str(transaction.get("after", plan_data["before"])),
+        human_gate="APPROVED",
+        extra_remediations=list(transaction.get("remediations", [])) if isinstance(transaction.get("remediations"), list) else [],
+    )
+    _write_projection_result(state_root, str(plan_data["projection_id"]), result, allow_transition=True)
+    return result
+
+
 def _load_document(path: Path) -> object:
     try:
         with path.open(encoding="utf-8") as handle:
@@ -2002,14 +2707,18 @@ def _prepare_stdout(result: Mapping[str, object]) -> dict[str, object]:
 
 def _projection_stdout(result: Mapping[str, object]) -> dict[str, object]:
     """Render only stable, non-sensitive plan/init metadata to stdout."""
+    findings = result.get("findings", [])
+    finding_codes = result.get("finding_codes", [])
+    if isinstance(findings, list):
+        finding_codes = [item.get("code") for item in findings if isinstance(item, Mapping)]
     return {
-        "command": result.get("command"),
+        "command": result.get("command", "project"),
         "status": result.get("status"),
         "projection_id": result.get("projection_id"),
         "record_count": result.get("record_count", len(result.get("source_refs", [])) if isinstance(result.get("source_refs"), list) else 0),
         "public_ids": sorted({str(value) for value in result.get("public_ids", [])}),
         "planned_paths": sorted({str(value) for value in result.get("planned_paths", [])}),
-        "finding_codes": sorted({str(value) for value in result.get("finding_codes", [])}),
+        "finding_codes": sorted({str(value) for value in finding_codes if value}),
     }
 
 
@@ -2051,10 +2760,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "project":
         if args.request is None:
             parser.error("project requires --request")
-        if args.apply:
-            parser.error("project --apply is reserved for the human-approval-gated apply task")
         if args.approval is not None:
-            parser.error("project --dry-run does not consume an approval file")
+            if args.dry_run:
+                parser.error("project --dry-run does not consume an approval file")
     try:
         if args.command == "prepare":
             if args.run_report is not None:
@@ -2090,14 +2798,23 @@ def main(argv: list[str] | None = None) -> int:
                 raise _prepare_error("SOURCE_INVALID", "request", "provide a request with a stable projection_id")
             projection_id = str(request_document["projection_id"])
             resolution = _projection_resolution(args.destinations_file, projection_id, target_root=args.target_root)
-            result = project_dry_run(
-                request_path,
-                internal_output_root=_resolution_role(resolution, "internal_output_root"),
-                public_projection_root=_resolution_role(resolution, "public_projection_root"),
-                state_root=_resolution_role(resolution, "state_root"),
-            )
+            if args.apply:
+                result = project_apply(
+                    request_path,
+                    approval_path=args.approval,
+                    internal_output_root=_resolution_role(resolution, "internal_output_root"),
+                    public_projection_root=_resolution_role(resolution, "public_projection_root"),
+                    state_root=_resolution_role(resolution, "state_root"),
+                )
+            else:
+                result = project_dry_run(
+                    request_path,
+                    internal_output_root=_resolution_role(resolution, "internal_output_root"),
+                    public_projection_root=_resolution_role(resolution, "public_projection_root"),
+                    state_root=_resolution_role(resolution, "state_root"),
+                )
             print(json.dumps(_projection_stdout(result), ensure_ascii=False, sort_keys=True))
-            return 0 if result.get("status") in PROJECT_STATUSES and result.get("status") == "DRY_RUN_READY" else 2
+            return 0 if result.get("status") in {"DRY_RUN_READY", "APPLIED", "ALREADY_PROJECTED"} else 2
         values = {
             "layout": _load_document(args.layout) if args.layout else None,
             "request": _load_document(args.request) if args.request else None,

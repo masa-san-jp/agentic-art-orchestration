@@ -8,6 +8,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -183,6 +184,14 @@ class PublicProjectionContractTests(unittest.TestCase):
         request_path.write_bytes(projection._request_yaml_bytes(request))
         return request_path
 
+    def _approval_for(self, root: Path, request_path: Path, *, request_hash: str | None = None) -> Path:
+        request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+        approval = copy.deepcopy(self.approval)
+        approval["request_sha256"] = request_hash or projection.request_sha256(request)
+        approval_path = root / f"{request['projection_id']}-approval.yaml"
+        approval_path.write_bytes(projection._request_yaml_bytes(approval))
+        return approval_path
+
     def test_init_target_is_explicit_and_scaffolds_only_missing_layout(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-target-init-") as temporary:
             root = Path(temporary)
@@ -235,6 +244,137 @@ class PublicProjectionContractTests(unittest.TestCase):
                 state_root=root / "state",
             )
             self.assertEqual(result, replay)
+
+    def test_project_apply_requires_matching_human_approval_and_is_allowlisted(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-apply-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            head_before = self._git(target, "rev-parse", "HEAD")
+            request_path = self._prepared_public_request(root, "PUBLIC-APPLY-001")
+            approval_path = self._approval_for(root, request_path)
+            before = projection._tree_fingerprint(target)
+
+            applied = projection.project_apply(
+                request_path,
+                approval_path=approval_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+            )
+            self.assertEqual("APPLIED", applied["status"])
+            self.assertEqual(["P0001"], applied["public_ids"])
+            self.assertEqual(len(applied["changed_paths"]), applied["target"]["mutation_count"])
+            self.assertNotEqual(before, applied["target"]["after_fingerprint"])
+            self.assertEqual(head_before, self._git(target, "rev-parse", "HEAD"))
+            self.assertEqual([], applied["remote_operations"])
+            self.assertEqual([], projection.validate_result(applied))
+            self.assertEqual("public", yaml.safe_load((target / "plans/P0001-example-plan/metadata.yaml").read_text(encoding="utf-8"))["visibility"])
+            metadata_text = (target / "plans/P0001-example-plan/metadata.yaml").read_text(encoding="utf-8")
+            self.assertNotIn("agentic-art-production", metadata_text)
+            self.assertNotIn("RUN-PROJECT-001", metadata_text)
+            self.assertNotIn(str(root), metadata_text)
+
+            replay = projection.project_apply(
+                request_path,
+                approval_path=approval_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-replay",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+            )
+            self.assertEqual("ALREADY_PROJECTED", replay["status"])
+            self.assertEqual([], replay["changed_paths"])
+            self.assertEqual(0, replay["target"]["mutation_count"])
+            self.assertEqual(replay["target"]["before_fingerprint"], replay["target"]["after_fingerprint"])
+            self.assertEqual([], projection.validate_result(replay))
+
+    def test_project_apply_blocks_missing_or_mismatched_approval_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-human-gate-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            request_path = self._prepared_public_request(root, "PUBLIC-HUMAN-001")
+            before = projection._tree_fingerprint(target)
+            missing = projection.project_apply(
+                request_path,
+                approval_path=None,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-missing",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+            )
+            self.assertEqual("BLOCKED_HUMAN", missing["status"])
+            self.assertIn("MISSING_APPROVAL", {item["code"] for item in missing["findings"]})
+            self.assertEqual(before, projection._tree_fingerprint(target))
+
+            mismatched = self._approval_for(root, request_path, request_hash="f" * 64)
+            result = projection.project_apply(
+                request_path,
+                approval_path=mismatched,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-mismatch",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+            )
+            self.assertEqual("BLOCKED_HUMAN", result["status"])
+            self.assertIn("APPROVAL_MISMATCH", {item["code"] for item in result["findings"]})
+            self.assertEqual(before, projection._tree_fingerprint(target))
+            self.assertEqual([], projection.validate_result(result))
+
+    def test_project_apply_conflict_preserves_existing_record_and_rollback_restores_tree(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-recovery-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            request_path = self._prepared_public_request(root, "PUBLIC-RECOVERY-001")
+            approval_path = self._approval_for(root, request_path)
+            before = projection._tree_fingerprint(target)
+            failed = projection.project_apply(
+                request_path,
+                approval_path=approval_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-failed",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+                fail_after=1,
+            )
+            self.assertEqual("FAILED", failed["status"])
+            self.assertEqual([], failed["changed_paths"])
+            self.assertEqual(before, projection._tree_fingerprint(target))
+            self.assertFalse((target / "plans/P0001-example-plan").exists())
+            self.assertEqual([], projection.validate_result(failed))
+
+            applied = projection.project_apply(
+                request_path,
+                approval_path=approval_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-success",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+            )
+            self.assertEqual("APPLIED", applied["status"])
+            body = target / "plans/P0001-example-plan/plan.md"
+            body.write_text("# human changed this\n", encoding="utf-8")
+            conflict_before = body.read_bytes()
+            conflict = projection.project_apply(
+                request_path,
+                approval_path=approval_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-conflict",
+                now=datetime(2026, 9, 5, tzinfo=timezone.utc),
+            )
+            self.assertEqual("BLOCKED_CONFLICT", conflict["status"])
+            self.assertIn("TARGET_CONFLICT", {item["code"] for item in conflict["findings"]})
+            self.assertEqual(conflict_before, body.read_bytes())
 
     def test_project_dry_run_blocks_unknown_clearance_without_target_mutation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-project-policy-") as temporary:
@@ -350,6 +490,17 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual("DRY_RUN_READY", payload["status"])
             self.assertEqual(1, payload["record_count"])
             self.assertEqual(["P0001"], payload["public_ids"])
+
+            approval_path = self._approval_for(root, request_path)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = projection.main([
+                    "project", "--request", str(request_path), "--approval", str(approval_path),
+                    "--destinations-file", str(profile), "--target-root", str(target), "--apply",
+                ])
+            self.assertEqual(0, code)
+            self.assertNotIn(str(root), output.getvalue())
+            self.assertEqual("APPLIED", json.loads(output.getvalue())["status"])
 
     def test_project_dry_run_allocates_one_hundred_records_deterministically(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-project-batch-") as temporary:
