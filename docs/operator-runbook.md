@@ -50,8 +50,9 @@ M14完了前はこのcommandが存在しないため、従来のnetworkless smok
 stateと内部成果物を会話やGitへ依存させないため、fresh cloneではprofileをGit外に作る。
 `config/output-destinations.example.yaml`を外部一時ディレクトリへコピーし、3つのroleを
 絶対パスへ置き換える。`state_root`と`internal_output_root`は必須で、各rootはfilesystem root、
-親repo、child checkout、他roleの配下に置かない。`public_projection_root`は予約領域であり、
-現在の実装はここへ書き込まない。
+親repo、child checkout、他roleの配下に置かない。`public_projection_root`は明示的な公開projection
+のlocal targetであり、通常のruntimeは暗黙にここへ書き込まない。`project --apply`もremote公開や
+Git操作までは行わず、`public_share` human gateを必要とする。
 
 ~~~bash
 DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
@@ -83,6 +84,77 @@ profile・run-idで再開するか新しいrun-id／空rootを使い、既存デ
 `inside ... repository/child checkout`はGit外へ、`not empty`は新しい空rootへ直す。profileを外す
 rollbackでは`--destinations-file`を外し、環境変数を`unset`し、legacy入口の明示引数へ戻す。
 profile、evidence、ログへcredential、会話本文、PRIVATE_RAW、RESTRICTED、個人識別情報を入れない。
+
+### 公開projection（Issue #149）
+
+公開projectionは、内部出力をそのままコピーする処理ではない。`PLAN_READY` runまたは`PASSED`
+batchを`tools/public_projection.py prepare`へ渡し、内部の
+`public-projection-candidates/<projection-id>/`にpublic-ready fileとrequestをcreate-onlyで作る。
+draftのvisibility、rights、consentは、同じsource hashに結び付いた明示evidenceがない限り
+`unknown`のままである。agentはこれを`cleared`へ変更せず、元のcanonical internal outputも
+変更しない。更新後のcandidateは`prepare --refresh`でhashを再計算する。
+
+~~~bash
+.venv/bin/python tools/public_projection.py prepare \
+  --run-report <run.json> --projection-id <stable-id> \
+  --destinations-file "$DESTINATIONS_FILE"
+.venv/bin/python tools/public_projection.py prepare \
+  --batch-summary <batch-run.json> --projection-id <stable-id> \
+  --destinations-file "$DESTINATIONS_FILE"
+.venv/bin/python tools/public_projection.py prepare \
+  --refresh <draft-request.yaml> --destinations-file "$DESTINATIONS_FILE"
+~~~
+
+次に、利用者が指定した既存のlocal Git worktreeをtargetにする。targetを作る場合も、先に
+`init-target --dry-run`で不足layoutを確認し、`--apply`は明示指定する。init-targetは
+`public_share` approvalを要求しないが、public contentは作成しない。
+
+~~~bash
+.venv/bin/python tools/public_projection.py init-target \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
+.venv/bin/python tools/public_projection.py init-target \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
+~~~
+
+targetのclean状態、`public-project-layout/v1`、indexの重複、catalog marker、source/file hash、
+security、rights、allowlistを先に確認する。dry-runはapprovalなしでよく、target変更0件と
+`public-projection-result/v1`のmetadata-only evidenceをGit外のstate rootへ出す。
+
+~~~bash
+.venv/bin/python tools/public_projection.py project \
+  --request <public-projection-request.yaml> \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
+~~~
+
+公開範囲と権利・同意を人間が確認し、requestのcanonical SHA-256に一致する別ファイルの
+`public-projection-approval/v1`を用意した後だけ、次を実行できる。approvalは`public_share`、
+`APPROVED`、`HUMAN`、scope `local-public-project-projection`、有効な承認期間を要求する。
+agentはapprovalを生成・補完しない。
+
+~~~bash
+.venv/bin/python tools/public_projection.py project \
+  --request <public-projection-request.yaml> \
+  --approval <public-projection-approval.yaml> \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
+~~~
+
+適用範囲は新規record、対応collection index、catalog marker内に限定され、root README、既存
+record、marker外、Git ref、remoteは保持される。`APPLIED`後もtargetは未commitのままであり、
+commit、push、merge、release、repository visibility変更、実際のpublic shareは別human gateで
+人間が行う。代表的な終端は、承認欠落・不一致・期限切れが`BLOCKED_HUMAN`、unknown/restricted
+やsecurity違反が`BLOCKED_POLICY`、dirty/layout/index/content競合が`BLOCKED_CONFLICT`、同じ
+source/contentの再実行が`ALREADY_PROJECTED`、I/Oまたはrollback不全が`FAILED`である。
+
+途中失敗時はtoolがtransactionで新規作成したpathだけを復元する。既存fileの削除、hard reset、
+自動commitは行わない。`FAILED`のresultに残存pathがあればtargetを人間が確認し、既存データを
+壊さずに手動復旧してから新しいdry-runを行う。同じrequestの再実行は既存evidenceとtarget
+fingerprintを確認し、変更0件の`ALREADY_PROJECTED`または安全な`BLOCKED_CONFLICT`で終わる。
+
+合成temporary targetでの証拠は次で実行する。実target、Drive、GitHubへは書き込まない。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_public_projection tests.test_security_boundary -v
+~~~
 
 ### networkless smoke
 

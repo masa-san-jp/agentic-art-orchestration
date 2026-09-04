@@ -125,6 +125,43 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("docs/incident-runbook.md", text)
         self.assertIn("docs/interaction-improvement-runbook.md", text)
 
+    def test_public_projection_is_operable_without_conversation_history(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        guide = (ROOT / "docs/agent-runtime-guide.md").read_text(encoding="utf-8")
+        gates = (ROOT / "config/human-gates.yaml").read_text(encoding="utf-8")
+        combined = "\n".join((readme, runbook, guide, gates))
+        for required in (
+            "tools/public_projection.py prepare",
+            "tools/public_projection.py init-target",
+            "tools/public_projection.py project",
+            "--target-root",
+            "--dry-run",
+            "--apply",
+            "public-projection-approval/v1",
+            "public_share",
+            "local-public-project-projection",
+            "BLOCKED_HUMAN",
+            "BLOCKED_POLICY",
+            "BLOCKED_CONFLICT",
+            "ALREADY_PROJECTED",
+            "public-projection-result.json",
+            "catalog marker",
+            "commit、push、merge、release",
+            "tests.test_public_projection",
+        ):
+            self.assertIn(required, combined)
+        self.assertNotIn("approvalなしでapply", combined)
+        self.assertNotIn("自動公開する", combined)
+
+    def test_public_share_gate_scope_is_closed_and_layout_only_init_is_distinct(self):
+        gates = (ROOT / "config/human-gates.yaml").read_text(encoding="utf-8")
+        self.assertIn("operation_scopes:", gates)
+        self.assertIn("tools/public_projection.py project --apply", gates)
+        self.assertIn("tools/public_projection.py init-target --apply", gates)
+        self.assertIn("repository_visibility_change", gates)
+        self.assertIn("target_git_commit_push_merge_release", gates)
+
     def test_theme_free_planning_entry_is_explicit_and_fail_closed(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         guide = (ROOT / "docs/agent-runtime-guide.md").read_text(encoding="utf-8")

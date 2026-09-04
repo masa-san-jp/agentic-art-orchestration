@@ -10,6 +10,23 @@ human_operations:
 default_status: BLOCKED_HUMAN
 worker_may_request: true
 execution_policy: never_execute_requested_human_operation
+# public_share is the human boundary for a request-backed local projection only.
+# The worker may validate and request this operation, but it never creates the
+# approval or performs remote publication. init-target --apply is layout-only
+# local scaffolding and is outside this operation; target commit/push/merge,
+# release, visibility changes, and actual public sharing remain separate gates.
+operation_scopes:
+  public_share:
+    contract_version: public-projection-approval/v1
+    required_status: APPROVED
+    required_authority: HUMAN
+    required_scope: local-public-project-projection
+    applies_to:
+      - tools/public_projection.py project --apply
+    excludes:
+      - tools/public_projection.py init-target --apply
+      - target_git_commit_push_merge_release
+      - repository_visibility_change
 merge_classes:
   CLASS_RECORD:
     description: execution state, handoff, and task-queue records only
