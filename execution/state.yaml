@@ -1,29 +1,29 @@
-version: 193
-updated_at: "2026-09-04T15:58:31+09:00"
-active_task: null
-active_repository: null
+version: 194
+updated_at: "2026-09-04T16:01:28+09:00"
+active_task: WORKSPACE-BOOTSTRAP-DOCS-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T14:03:44+09:00"
-  expires_at: "2026-09-04T17:00:00+09:00"
+  status: held
+  owner: codex-workspace-docs
+  acquired_at: "2026-09-04T16:01:28+09:00"
+  expires_at: "2026-09-04T19:00:00+09:00"
   lane: WORKSPACE_BOOTSTRAP
-  execution_id: WORKSPACE-BOOTSTRAP-APPLY-001:20260904-142944
-  released_at: "2026-09-04T15:58:31+09:00"
+  execution_id: WORKSPACE-BOOTSTRAP-DOCS-001:20260904-160128
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/workspace.py, tools/validate.py, tests/test_workspace_bootstrap.py, tests/test_workspace.py, tests/test_workspace_guards.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
+    paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
-  task: WORKSPACE-BOOTSTRAP-APPLY-001
+  task: WORKSPACE-BOOTSTRAP-DOCS-001
   repository: agentic-art-orchestration
-  start_point: 66ca349dfe86665d147f305ca0f10481a8b396ab
-  expected_changes: Clone every missing manifest entry into tool-owned staging, validate origin/branch/identity/clean state and pin readiness, atomically place all staged checkouts, recover only this run's staging on failure, and preserve clean existing checkouts.
-  result: completed; implementation merged as cf2655bbc691d68d7bca92294a9f2a01aab8d238 and completion record pending.
+  start_point: b557923652b879325b60a3333a729450a47ecfef
+  expected_changes: Synchronize fresh-clone bootstrap, live credential preflight, offline proof, sanitized status/remediation, pin drift recovery, recovery ownership, and unchanged legacy command guidance across README and operator/agent runbooks.
+  result: in_progress; claimed 2026-09-04T16:01:28+09:00 by codex-workspace-docs; documentation and checks pending.
 last_completed_task: WORKSPACE-BOOTSTRAP-APPLY-001
 resume_from:
   task: WORKSPACE-BOOTSTRAP-DOCS-001
-  action: "Claim the docs task from fresh main, inspect Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands."
+  action: "Read Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands."
   command: .venv/bin/python tools/validate.py --check
 
 workspace_bootstrap_apply:
