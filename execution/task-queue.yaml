@@ -1,5 +1,5 @@
-version: 60
-updated_at: "2026-09-04T17:37:47+09:00"
+version: 61
+updated_at: "2026-09-04T17:49:45+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1460,7 +1460,7 @@ tasks:
   - id: SELF-MODEL-AUTONOMY-001
     milestone: M30
     title: Make self-model fresh-clone agent setup explicit
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/83
     target_repositories: [self-model]
     agent_terminal: DRAFT_PR_READY
@@ -1508,7 +1508,7 @@ tasks:
   - id: VIEWER-RESPONSE-AUTONOMY-001
     milestone: M30
     title: Complete viewer-response agent work contract
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/4
     target_repositories: [viewer-response-notes]
     agent_terminal: DRAFT_PR_READY
@@ -1518,4 +1518,5 @@ tasks:
     depends_on: [AUTONOMY-READINESS-MANIFEST-001]
     acceptance: Viewer-response AGENTS defines authority order, one-task workflow, allowed paths, generated-file rules, required validation, stop conditions, metadata-only completion evidence, and existing aggregate-only/append-only privacy boundaries; no record/assessment/export/schema data changes.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Viewer implementation commit 7e38c305c3b2b82c3ab04f640aa69370d50ded67 was merged to the child default branch by PR #5 as 78b6e9a87831eca5a5c20993374b61b8cc61bd0d; Issue #4 is CLOSED. AGENTS.md now defines Issue/schema/README/tests authority order, one-task inspect -> decide -> edit -> test -> diff -> report workflow, allowed and generated paths, append-only/create-only rules, privacy/external stop conditions, and metadata-only completion evidence. tests/test_contract.py adds documentation regression coverage. Child checks: 13/13 unittest PASS, validator PASS, README export example EXPORTED, and git diff --check PASS. PR #5 reported no remote checks; local checks are the observable quality evidence. No record, assessment, export, schema, credential, private data, raw response, or external artifact body changed. Acceptance 1/1."
     stop_if: [Raw response/PII/free text is needed, An existing record must be rewritten, An external write or schema change is required]
