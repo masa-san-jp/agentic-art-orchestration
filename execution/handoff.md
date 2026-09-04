@@ -1964,3 +1964,15 @@
 ### Next exact action
 
 1. Claim `OUTPUT-DESTINATIONS-CONTRACT-001` on a fresh branch from parent `main`, inspect Issue #148 and the nearest contract/tests, then implement and validate the shared resolver.
+
+## 2026-09-04 — OUTPUT-DESTINATIONS-CONTRACT-001 completed
+
+- Parent PR #152 merged to `main` as `cf8f53ee111a4363ace75481e837b3cc7c455a09`; feature commit `a47a94b6515d035b144eff231efba39a1b872856` is recorded in the queue.
+- The contract lane now has two closed schemas, a placeholder-only external profile, one resolver with fixed precedence, metadata-only resolution evidence, repository/child/symlink/overlap guards, safe run/project path derivation, and create-only directory validation.
+- Observed checks: validator PASS; focused output-destination tests 7/7 PASS; parent full suite 490/490 PASS with 1 expected skip; py_compile PASS; diff check PASS. GitHub run 33829084529 failed before any job steps due to the account billing limit and is not counted as a test pass.
+- Lease is released and the next deterministic READY task is `WORKSPACE-BOOTSTRAP-CONTRACT-001` for Issue #150. Runtime wiring for #148 remains BACKLOG until this contract is complete (it is complete) and the scheduler advances it after the current READY task.
+- Safety: no child checkout, manifest pin, user path, credential, private profile, raw conversation, public target, or external artifact body was written.
+
+### Next exact action
+
+1. Claim `WORKSPACE-BOOTSTRAP-CONTRACT-001` from fresh parent `main`, inspect the existing workspace command contract and Issue #150, then implement only the closed result parser and offline contract.
