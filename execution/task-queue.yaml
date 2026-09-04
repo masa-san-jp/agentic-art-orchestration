@@ -1,4 +1,4 @@
-version: 44
+version: 45
 updated_at: "2026-09-04T11:32:03+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
@@ -1376,7 +1376,7 @@ tasks:
   - id: PUBLIC-PROJECTION-PREPARE-001
     milestone: M29
     title: Generate deterministic public projection candidates from run and batch output
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1386,12 +1386,14 @@ tasks:
     depends_on: [PUBLIC-PROJECTION-CONTRACT-001]
     acceptance: Implement prepare and refresh as the only request producer, connect run and batch output, preserve canonical hashes and provenance, handle 100 or more plans deterministically, and return NOT_AVAILABLE instead of inventing work records.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_run tests.test_batch_run -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #162 merged to main as 85149023b0f0d85714674853e95337941118aa88; implementation commit 6c78836 added the single tools/public_projection.py prepare/refresh producer, deterministic internal candidate copies, relative source/file locators, canonical Markdown hashes, production provenance, unknown-clearance drafts, and NOT_AVAILABLE handling for incomplete work. PLAN_READY run output now invokes the producer; PASSED batch output records its output locator, production source commit, Markdown hash, and invokes the same producer, including resume idempotency. Focused public/run/batch tests 41/41 PASS; parent full suite 512 tests with 1 expected skip; validator, project-status README check, py_compile, and diff check PASS. GitHub run 33834871827 failed before steps for all jobs because of the account billing limit and is not counted as a quality-gate pass. No public target, child repository, pin, credential, private data, raw conversation, or external artifact body was written. Explicit feedback was the request to evaluate and complete autonomous implementation requirements; inferred feedback none. Acceptance 1/1."
+
     stop_if: [A plan or work body must be invented, Unknown clearance must be promoted, An external public target is read or written, A second request format is needed]
 
   - id: PUBLIC-PROJECTION-PLAN-001
     milestone: M29
     title: Implement public target onboarding and dry-run projection planning
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

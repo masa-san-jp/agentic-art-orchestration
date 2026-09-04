@@ -2030,3 +2030,17 @@
 ### Next exact action
 
 1. `PUBLIC-PROJECTION-PREPARE-001`をclaimし、run/batch outputの正本schema・既存resolver・Issue #149を確認してprepare/refreshを実装する。public targetは読まない。
+
+## 2026-09-04 — PUBLIC-PROJECTION-PREPARE-001 completed
+
+- Task ID: `PUBLIC-PROJECTION-PREPARE-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。開始点はparent main `bd4074a7eb81d779bd6c1bac7912ff3d7f40438a`、implementation commitは`6c78836`、PR [#162](https://github.com/masa-san-jp/agentic-art-orchestration/pull/162) merge commitは`85149023b0f0d85714674853e95337941118aa88`。
+- `tools/public_projection.py`に`prepare`/`refresh`を唯一のrequest producerとして実装した。PLAN_READY runはproduction-plan.mdをinternal candidateへcreate-only copyし、PASSED batchはsource key順に100件以上を一括生成する。source/file locatorはinternal root相対、canonical Markdown hashとproduction commitを保持し、publication clearanceは明示evidenceがない限りunknownのままにした。
+- `run.py`と`batch_run.py`はこのproducerだけを呼び、batch summaryにもoutput locator・production source commit・Markdown hashを保持する。未完了run、work canonical manifest不在、provenance不足は`NOT_AVAILABLE`/fail-closedとし、public target・approval・Git操作は実行しない。refreshはcandidate file hashとrecord-level hashだけを再計算し、canonical provenanceとpublication状態を保持する。
+- Acceptanceは`1/1`。focused public/run/batch tests `41/41 PASS`、parent full suite `512 tests / 1 skipped PASS`、validator、project-status README check、py_compile、diff check PASS。合成100件fixtureで決定的順序とrequest validationを確認した。
+- Remote run `33834871827`は全jobがsteps開始前にaccount billing limitで失敗。ローカル結果のみを品質ゲート根拠とし、remote失敗を成功・skipへ変換していない。
+- Safety: public target、child repository、manifest pin、user path、credential、PRIVATE_RAW、RESTRICTED、raw conversation、external artifact bodyは書込み・Git保存していない。candidate bodyはGit外internal outputにのみcreate-onlyで生成した。Drive/Issueへの外部artifact作成なし。explicit feedbackは「各repoの自律実装要件を評価し不足を補完」、inferred feedbackはnone。
+- Leaseは`available/unassigned`へ解放済み。`PUBLIC-PROJECTION-PLAN-001`を`READY`へ進めた。未解決はtarget onboarding/dry-run、human approval付きapply、workspace bootstrap preflight/apply/docs、GitHub billing環境制約。
+
+### Next exact action
+
+1. `PUBLIC-PROJECTION-PLAN-001`をclaimし、temporary Git worktree fixtureに対するinit-targetとzero-mutation project dry-runを実装する。public targetは使用しない。

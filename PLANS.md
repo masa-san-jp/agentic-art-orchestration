@@ -768,3 +768,14 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `PUBLIC-PROJECTION-PREPARE-001`, inspect the existing run/batch output contracts and Issue #149, then implement the single deterministic request producer without reading or writing a public target.
+
+## PUBLIC-PROJECTION-PREPARE-001 — completed
+
+- Parent PR [#162](https://github.com/masa-san-jp/agentic-art-orchestration/pull/162) merged to `main` as `85149023b0f0d85714674853e95337941118aa88`; implementation commit `6c78836` added the only `prepare`/`refresh` request producer and connected it to PLAN_READY run and PASSED batch outputs.
+- Internal candidates are created below `public-projection-candidates/<safe-projection-id>/`, with canonical Markdown source hashes, production repository commits, relative locators, unknown clearance, and no public-target or approval access. Batch output records its relative output locator and Markdown source hash so 100+ plans are generated from the summary without hand entry; unfinished work returns `NOT_AVAILABLE`.
+- Acceptance evidence: focused public/run/batch tests `41/41 PASS`; parent full suite `512 tests / 1 skipped PASS`; validator, project-status README check, py_compile, and diff check PASS. Remote run `33834871827` failed before steps from the account billing limit and is not counted as a gate pass.
+- Safety and feedback: no child repository, pin, public target, credential, private/raw data, conversation, or external artifact body changed; explicit feedback is the user's autonomous-completion request and inferred feedback is none.
+
+### Next exact action
+
+1. Claim `PUBLIC-PROJECTION-PLAN-001`, implement temporary-worktree target onboarding and metadata-only zero-mutation dry-run planning, then run the task checks.

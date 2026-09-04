@@ -1,15 +1,15 @@
-version: 182
-updated_at: "2026-09-04T12:36:32+09:00"
-active_task: PUBLIC-PROJECTION-PREPARE-001
-active_repository: agentic-art-orchestration
+version: 183
+updated_at: "2026-09-04T12:58:20+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-public-projection-prepare
+  status: available
+  owner: null
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: "2026-09-04T14:36:32+09:00"
+  expires_at: null
   lane: PUBLIC_PROJECTION
   execution_id: PUBLIC-PROJECTION-PREPARE-001:20260904-123632
-  released_at: null
+  released_at: "2026-09-04T12:58:20+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [tools/public_projection.py, tools/run.py, tools/batch_run.py, tools/output_destinations.py, schemas/public-projection-request.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/fixtures/public-projection, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: bd4074a7eb81d779bd6c1bac7912ff3d7f40438a
   expected_changes: Add the single prepare/refresh producer, connect PLAN_READY run and PASSED batch outputs, preserve source hashes/provenance, emit internal candidates only, and return NOT_AVAILABLE for unavailable work without public target access.
-  result: in_progress; claimed 2026-09-04T12:36:32+09:00 by codex-public-projection-prepare; implementation and checks pending.
-last_completed_task: PUBLIC-PROJECTION-CONTRACT-001
+  result: completed; implementation commit 6c78836; parent PR #162 merged to main as 85149023b0f0d85714674853e95337941118aa88; focused 41/41 PASS; parent full 512 tests with 1 expected skip PASS; validator, project-status, py_compile, and diff check PASS; remote run 33834871827 billing-blocked before steps and not counted.
+last_completed_task: PUBLIC-PROJECTION-PREPARE-001
 resume_from:
-  task: PUBLIC-PROJECTION-PREPARE-001
-  action: "Implement and test prepare/refresh from the run and batch source contracts; keep the public target unread and unwritten."
+  task: PUBLIC-PROJECTION-PLAN-001
+  action: "Claim the smallest dependency-complete public projection plan task, then implement target onboarding and zero-mutation dry-run planning without generating approval."
   command: python3 tools/validate.py --check
 
 issue_intake:
