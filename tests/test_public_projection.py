@@ -5,6 +5,7 @@ import contextlib
 import hashlib
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -137,6 +138,292 @@ class PublicProjectionContractTests(unittest.TestCase):
             encoding="utf-8",
         )
         return resolve_destinations(profile, repository_root=ROOT, run_id=run_id)
+
+    def _git(self, root: Path, *arguments: str) -> str:
+        completed = subprocess.run(["git", *arguments], cwd=root, capture_output=True, text=True, check=True)
+        return completed.stdout.strip()
+
+    def _new_target(self, root: Path) -> Path:
+        target = root / "public-target"
+        subprocess.run(["git", "init", "-q", "-b", "main", str(target)], check=True, capture_output=True)
+        self._git(target, "config", "user.name", "Public Projection Fixture")
+        self._git(target, "config", "user.email", "fixture@example.invalid")
+        return target
+
+    def _prepared_public_request(self, root: Path, projection_id: str = "PUBLIC-PLAN-001") -> Path:
+        run_id = "RUN-PROJECT-001"
+        resolution = self._profile_resolution(root, run_id)
+        source = root / "internal" / "production" / "example-plan" / "03_plan" / "production-plan.md"
+        source.parent.mkdir(parents=True)
+        content = b"# Example public plan\n\nOnly public-ready candidate content.\n"
+        source.write_bytes(content)
+        report = {
+            "run_id": run_id,
+            "status": "PLAN_READY",
+            "generated_at": "2026-09-04T00:00:00Z",
+            "project_slug": "example-plan",
+            "project_title": "Example public plan",
+            "plan": str(source),
+            "production_plan_sha256": hashlib.sha256(content).hexdigest(),
+            "production_repository": "agentic-art-production",
+            "production_source_commit": "d" * 40,
+            "destination_resolution": resolution,
+        }
+        prepared = projection.prepare_run_report(report, internal_output_root=root / "internal", projection_id=projection_id)
+        request_path = root / "internal" / prepared["request_locator"]
+        request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+        request["records"][0]["publication"] = {
+            "visibility": "public",
+            "rights_status": "cleared",
+            "consent_status": "cleared",
+            "attribution": [],
+        }
+        for file in request["records"][0]["files"]:
+            file["rights_status"] = "cleared"
+        request_path.write_bytes(projection._request_yaml_bytes(request))
+        return request_path
+
+    def test_init_target_is_explicit_and_scaffolds_only_missing_layout(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-target-init-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            before = projection._tree_fingerprint(target)
+            dry_run = projection.init_target(target, apply=False)
+            self.assertEqual("DRY_RUN_READY", dry_run["status"])
+            self.assertEqual([], dry_run["changed_paths"])
+            self.assertEqual(before, projection._tree_fingerprint(target))
+            applied = projection.init_target(target, apply=True)
+            self.assertEqual("APPLIED", applied["status"])
+            self.assertEqual(6, len(applied["changed_paths"]))
+            self.assertTrue((target / "public-project.yaml").exists())
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            replay = projection.init_target(target, apply=False)
+            self.assertEqual("DRY_RUN_READY", replay["status"])
+            self.assertEqual([], replay["planned_paths"])
+
+    def test_project_dry_run_is_metadata_only_deterministic_and_create_only(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-plan-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            request_path = self._prepared_public_request(root)
+            before = projection._tree_fingerprint(target)
+            result = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+            self.assertEqual("DRY_RUN_READY", result["status"])
+            self.assertEqual(["P0001"], result["public_ids"])
+            self.assertEqual([], result["changed_paths"])
+            self.assertIn("plans/P0001-example-plan/plan.md", result["planned_paths"])
+            self.assertEqual(before, result["target"]["before_fingerprint"])
+            self.assertEqual(before, result["target"]["after_fingerprint"])
+            self.assertEqual(before, projection._tree_fingerprint(target))
+            self.assertFalse((target / "plans/P0001-example-plan").exists())
+            evidence = root / "state" / "PUBLIC-PLAN-001" / "public-projection-result.json"
+            self.assertTrue(evidence.exists())
+            self.assertEqual([], projection.validate_result(json.loads(evidence.read_text(encoding="utf-8"))))
+            replay = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+            self.assertEqual(result, replay)
+
+    def test_project_dry_run_blocks_unknown_clearance_without_target_mutation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-policy-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            request_path = self._prepared_public_request(root, "PUBLIC-POLICY-001")
+            request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+            request["records"][0]["publication"]["visibility"] = "unknown"
+            request["records"][0]["publication"]["rights_status"] = "unknown"
+            request["records"][0]["publication"]["consent_status"] = "unknown"
+            for file in request["records"][0]["files"]:
+                file["rights_status"] = "unknown"
+            request_path.write_bytes(projection._request_yaml_bytes(request))
+            before = projection._tree_fingerprint(target)
+            result = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+            self.assertEqual("BLOCKED_POLICY", result["status"])
+            self.assertEqual([], result["public_ids"])
+            self.assertEqual([], result["planned_paths"])
+            self.assertEqual(before, projection._tree_fingerprint(target))
+            self.assertIn("UNKNOWN_CLEARANCE", {finding["code"] for finding in result["findings"]})
+
+    def test_public_ids_include_retired_numbers_and_existing_content_conflicts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-index-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            request_path = self._prepared_public_request(root, "PUBLIC-INDEX-001")
+            request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+            source = request["records"][0]["source"]
+            index = {
+                "version": 1,
+                "records": [],
+                "retired_ids": ["P0001"],
+            }
+            (target / "plans/index.yaml").write_bytes(projection._request_yaml_bytes(index))
+            self._git(target, "add", "plans/index.yaml")
+            self._git(target, "commit", "-m", "retire first plan id")
+            result = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+            self.assertEqual("DRY_RUN_READY", result["status"])
+            self.assertEqual(["P0002"], result["public_ids"])
+
+            conflict_index = {
+                "version": 1,
+                "records": [{
+                    "id": "P0002",
+                    "slug": "example-plan",
+                    "title": "Example public plan",
+                    "path": "plans/P0002-example-plan",
+                    "source_key": f"plan:{source['canonical_sha256']}",
+                    "content_sha256": "e" * 64,
+                    "status": "ready-for-publication",
+                    "visibility": "public",
+                    "rights_status": "cleared",
+                }],
+                "retired_ids": ["P0001"],
+            }
+            (target / "plans/index.yaml").write_bytes(projection._request_yaml_bytes(conflict_index))
+            self._git(target, "add", "plans/index.yaml")
+            self._git(target, "commit", "-m", "add conflicting public index")
+            before = projection._tree_fingerprint(target)
+            blocked = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state-conflict",
+            )
+            self.assertEqual("BLOCKED_CONFLICT", blocked["status"])
+            self.assertIn("TARGET_CONFLICT", {finding["code"] for finding in blocked["findings"]})
+            self.assertEqual(before, projection._tree_fingerprint(target))
+
+    def test_project_cli_uses_target_override_and_keeps_stdout_path_free(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-cli-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            request_path = self._prepared_public_request(root, "PUBLIC-CLI-001")
+            profile = root / "destinations-cli.yaml"
+            profile.write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "public-cli-test",
+                "destinations": {
+                    "state_root": str(root / "state"),
+                    "internal_output_root": str(root / "internal"),
+                },
+            }, sort_keys=False), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = projection.main([
+                    "project", "--request", str(request_path), "--destinations-file", str(profile),
+                    "--target-root", str(target), "--dry-run",
+                ])
+            self.assertEqual(0, code)
+            rendered = output.getvalue()
+            self.assertNotIn(str(root), rendered)
+            payload = json.loads(rendered)
+            self.assertEqual("DRY_RUN_READY", payload["status"])
+            self.assertEqual(1, payload["record_count"])
+            self.assertEqual(["P0001"], payload["public_ids"])
+
+    def test_project_dry_run_allocates_one_hundred_records_deterministically(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-project-batch-") as temporary:
+            root = Path(temporary)
+            target = self._new_target(root)
+            projection.init_target(target, apply=True)
+            self._git(target, "add", "public-project.yaml", "README.md", "plans", "works")
+            self._git(target, "commit", "-m", "scaffold public project")
+            records = []
+            for number in range(100, 0, -1):
+                slug = f"batch-{number:03d}"
+                content = f"# Batch plan {number}\n".encode("utf-8")
+                canonical = root / "internal" / "canonical" / f"{slug}.md"
+                candidate = root / "internal" / "candidate" / f"{slug}.md"
+                canonical.parent.mkdir(parents=True, exist_ok=True)
+                candidate.parent.mkdir(parents=True, exist_ok=True)
+                canonical.write_bytes(content)
+                candidate.write_bytes(content)
+                candidate_hash = hashlib.sha256(content).hexdigest()
+                files = [{
+                    "role": "body",
+                    "source_locator": f"candidate/{slug}.md",
+                    "target_locator": "plan.md",
+                    "sha256": candidate_hash,
+                    "mime_type": "text/markdown",
+                    "rights_status": "cleared",
+                }]
+                records.append({
+                    "record_kind": "plan",
+                    "slug": slug,
+                    "title": f"Batch plan {number}",
+                    "source": {
+                        "repository": "agentic-art-production",
+                        "commit": "e" * 40,
+                        "run_id": "BATCH-PLAN-001",
+                        "locator": f"canonical/{slug}.md",
+                        "canonical_sha256": hashlib.sha256(content).hexdigest(),
+                        "sha256": projection.record_file_sha256(files),
+                    },
+                    "publication": {
+                        "visibility": "public",
+                        "rights_status": "cleared",
+                        "consent_status": "cleared",
+                        "attribution": [],
+                    },
+                    "files": files,
+                })
+            request = {
+                "contract_version": "public-projection-request/v1",
+                "projection_id": "PUBLIC-BATCH-100",
+                "generated_at": "2026-09-04T00:00:00Z",
+                "source_root_role": "internal_output_root",
+                "records": records,
+            }
+            self.assertEqual([], projection.validate_request(request))
+            request_path = root / "internal" / "batch-request.yaml"
+            request_path.write_bytes(projection._request_yaml_bytes(request))
+            first = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+            second = projection.project_dry_run(
+                request_path,
+                internal_output_root=root / "internal",
+                public_projection_root=target,
+                state_root=root / "state",
+            )
+            self.assertEqual("DRY_RUN_READY", first["status"])
+            self.assertEqual([f"P{number:04d}" for number in range(1, 101)], first["public_ids"])
+            self.assertEqual(first, second)
+            self.assertEqual(100, len([path for path in first["planned_paths"] if path.endswith("/plan.md")]))
+            self.assertEqual([], projection.validate_result(first))
 
     def test_prepare_run_copies_one_plan_with_unknown_clearance_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-prepare-run-") as temporary:
