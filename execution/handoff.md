@@ -2101,3 +2101,16 @@
 ### Next exact action
 
 1. `WORKSPACE-BOOTSTRAP-APPLY-001`をclaimし、最初にIssue #150と`tools/workspace.py`のpreflight/legacy helperを読み、temporary fixtureでall-missing stagingの実装境界を確定する。
+
+## 2026-09-04 — WORKSPACE-BOOTSTRAP-APPLY-001 completed
+
+- Task ID: `WORKSPACE-BOOTSTRAP-APPLY-001`; target repository: `agentic-art-orchestration`; Issue SSOTは[#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commit `371a36b063794cb35b6417fe66f7d3d08eed48e8`、PR [#172](https://github.com/masa-san-jp/agentic-art-orchestration/pull/172)、main merge `cf2655bbc691d68d7bca92294a9f2a01aab8d238`。
+- `bootstrap`はmanifest全entryの不足checkoutをmarker付きtool-owned stagingへcloneし、origin/default branch/upstream/local `orchestration.repo-id`/clean stateを検証してから同一filesystem renameで配置する。既存checkout fingerprintとmissing destinationを配置直前に再検査し、race・placement failureではこのrunの配置だけを逆順でstagingへ戻す。残存stagingはmarkerを確認して次回に`BLOCKED_RACE`で報告し、自動採用・自動削除しない。
+- Clean offline fixtureで全entryの`cloned`→`reused`、`changed_count`のmanifest件数→0、pin matched、guard PASSを確認した。clone failureと配置raceはtarget partialなし、既存checkoutは未変更、pin driftは自動checkoutせず`BLOCKED_PIN_DRIFT`となる。
+- Acceptance `1/1`。focused `25/25 PASS`、parent full suite `533 tests / 1 skipped PASS`、validator、py_compile、diff check PASS。GitHub run `33846579157`は全job `steps=[]`のbilling開始前失敗で、品質gateへ算入していない。child repository変更・child gate・外部artifact作成なし。
+- 機微情報確認: credential/token、PRIVATE_RAW、RESTRICTED、raw conversation、direct identifier、remote response、user pathは保存・送信していない。remote操作はsynthetic temporary fixture内のread/access probeとtool-owned clone/renameだけで、既存checkoutのfetch/pull/checkout/reset/pin adoptionは行っていない。
+- Explicit feedbackは「各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完」、inferred feedbackはnone。未解決なし。stateはversion 193、leaseは`available/unassigned`、次の開始点は`WORKSPACE-BOOTSTRAP-DOCS-001`のclaimである。
+
+### Next exact action
+
+1. `WORKSPACE-BOOTSTRAP-DOCS-001`をclaimし、Issue #150、`workspace-bootstrap/v1`、`tools/workspace.py`の実装を読み、会話履歴なしのagentでもfresh cloneから安全にbootstrap・認証確認・失敗復旧・pin drift判断を実行できる文書を作る。

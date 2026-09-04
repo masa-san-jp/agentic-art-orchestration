@@ -834,3 +834,16 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. `WORKSPACE-BOOTSTRAP-APPLY-001`をclaimし、Issue #150と完了済みpreflightを読み、tool-owned stagingからの検証済みatomic placementとfailure recoveryをtemporary fixtureで実装する。
+
+## 2026-09-04 — WORKSPACE-BOOTSTRAP-APPLY-001 completed
+
+- Task ID: `WORKSPACE-BOOTSTRAP-APPLY-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`371a36b063794cb35b6417fe66f7d3d08eed48e8`、PR [#172](https://github.com/masa-san-jp/agentic-art-orchestration/pull/172)はmainへ`cf2655bbc691d68d7bca92294a9f2a01aab8d238`としてmergeされた。
+- `tools/workspace.py bootstrap`は不足するmanifest entryをmarker付きtool-owned stagingへcloneし、origin/default branch/upstream/local repository identity/clean stateを検証した後、same-filesystem renameで一括配置する。配置前のrace再検査、配置途中の逆順rollback、残存stagingの自動採用・削除禁止、clean checkoutのreuse、pin driftの`BLOCKED_PIN_DRIFT`判定を実装した。
+- Acceptance `1/1`。focused workspace bootstrap/workspace/guard tests `25/25 PASS`、parent full suite `533 tests / 1 skipped PASS`、validator、py_compile、diff check、offline synthetic clone/idempotency/race recoveryを確認した。child quality gateは対象なし。
+- GitHub Actions run `33846579157`は全jobが`steps=[]`でaccount billing limitにより開始前失敗したため、品質gateのPASSへ算入していない。ローカル検証をremote失敗の成功・skipへ変換していない。
+- 機微情報・外部artifact: credential、token、private/restricted data、raw conversation、direct identifier、remote response、user workspace、Drive artifact bodyの保存・送信なし。synthetic temporary fixtureのみで、既存checkoutの修復、pin採用、Git commit/push/releaseは行っていない。
+- Feedback: explicitは「各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完」、inferredはnone。未解決なし。leaseは`available/unassigned`へ解放し、`WORKSPACE-BOOTSTRAP-DOCS-001`をREADYへ昇格した。
+
+### Next exact action
+
+1. `WORKSPACE-BOOTSTRAP-DOCS-001`をclaimし、Issue #150と実装済みbootstrapを確認して、README・operator runbook・agent runtime guideへfresh-clone、auth、offline proof、failure recovery、pin drift、legacy commandの手順を同期する。
