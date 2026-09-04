@@ -1,15 +1,15 @@
-version: 184
-updated_at: "2026-09-04T13:00:00+09:00"
-active_task: PUBLIC-PROJECTION-PLAN-001
-active_repository: agentic-art-orchestration
+version: 185
+updated_at: "2026-09-04T13:24:00+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-public-projection-plan
+  status: available
+  owner: null
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: "2026-09-04T15:00:00+09:00"
+  expires_at: null
   lane: PUBLIC_PROJECTION
   execution_id: PUBLIC-PROJECTION-PLAN-001:20260904-130000
-  released_at: null
+  released_at: "2026-09-04T13:24:00+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [tools/public_projection.py, tools/output_destinations.py, schemas/public-project-layout.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_security_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: bd4074a7eb81d779bd6c1bac7912ff3d7f40438a
   expected_changes: Implement init-target and project dry-run planning for a local public-project worktree, with layout/source/hash/security/conflict checks, deterministic metadata-only result evidence, and zero target mutation until a later human-gated apply task.
-  result: in_progress; claimed 2026-09-04T13:00:00+09:00 by codex-public-projection-plan; implementation and checks pending.
-last_completed_task: PUBLIC-PROJECTION-PREPARE-001
+  result: "completed; implementation commit 7de680b224f4bfb1daa21741b0879a8c15e16529; parent PR #164 merged as 0f958a908e02403b7cf2b2b70d48552762032ebe; local checks passed."
+last_completed_task: PUBLIC-PROJECTION-PLAN-001
 resume_from:
-  task: PUBLIC-PROJECTION-PLAN-001
-  action: "Claim the smallest dependency-complete public projection plan task, then implement target onboarding and zero-mutation dry-run planning without generating approval."
+  task: PUBLIC-PROJECTION-APPLY-001
+  action: "Claim the smallest dependency-complete public projection apply task, then implement approval verification, staged atomic apply, rollback, and idempotency only in temporary Git fixtures."
   command: python3 tools/validate.py --check
 
 issue_intake:
@@ -1205,3 +1205,42 @@ research_self_repetition:
     explicit: user requested Issue confirmation and continuation toward harness completion
     inferred: none
   unresolved: []
+
+public_projection_plan:
+  status: complete
+  observed_at: "2026-09-04T13:24:00+09:00"
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+  target_repository: agentic-art-orchestration
+  acceptance: 1/1
+  implementation_commit: 7de680b224f4bfb1daa21741b0879a8c15e16529
+  pull_request: 164
+  merge_commit: 0f958a908e02403b7cf2b2b70d48552762032ebe
+  changes:
+    - init-target performs explicit local Git worktree onboarding for missing layout, index, and catalog marker scaffold only.
+    - project --dry-run validates target cleanliness/layout/index/markers, internal source/file hashes, clearance, media, security, conflicts, and stable public ID allocation without target mutation.
+    - metadata-only public-projection-result/v1 evidence is create-only under the external state root; stdout contains only sanitized status, IDs, paths, and finding codes.
+  verification:
+    focused_public_security_tests: "21/21 PASS"
+    parent_full_suite: "518 tests / 1 skipped PASS"
+    parent_validator: PASS
+    py_compile: PASS
+    diff_check: PASS
+    temporary_git_worktree: PASS
+    target_mutation_during_dry_run: false
+    target_content_applied: false
+  remote_ci:
+    run_id: 33836463884
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit prevented all three jobs from starting
+    counted_as_quality_gate: false
+  sensitive_data: none; no credential, private/restricted data, raw conversation, direct identifier, or user path entered Git
+  external_artifact: none; result evidence was written only to temporary Git-external fixture state roots and no Drive artifact was created
+  child_repository_mutation: false
+  parent_pin_changed: false
+  feedback:
+    explicit: user requested evaluation and supplementation of autonomous implementation requirements for every repository
+    inferred: none
+  unresolved:
+    - PUBLIC-PROJECTION-APPLY-001 must add human approval verification, atomic staged apply, rollback, and idempotency.
+    - PUBLIC-PROJECTION-DOCS-001 must document the new commands and boundaries.
+    - GitHub Actions billing remains an external environment blocker; local gates are the observable evidence.

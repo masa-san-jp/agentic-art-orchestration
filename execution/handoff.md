@@ -2044,3 +2044,17 @@
 ### Next exact action
 
 1. `PUBLIC-PROJECTION-PLAN-001`をclaimし、temporary Git worktree fixtureに対するinit-targetとzero-mutation project dry-runを実装する。public targetは使用しない。
+
+## 2026-09-04 — PUBLIC-PROJECTION-PLAN-001 completed
+
+- Task ID: `PUBLIC-PROJECTION-PLAN-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。implementation commitは`7de680b224f4bfb1daa21741b0879a8c15e16529`、PR [#164](https://github.com/masa-san-jp/agentic-art-orchestration/pull/164) merge commitは`0f958a908e02403b7cf2b2b70d48552762032ebe`。
+- `tools/public_projection.py`に`init-target`と`project --dry-run`を実装した。前者はcleanなlocal Git worktreeへ不足する`public-project.yaml`、README、index、catalog markerだけを明示`--apply`でscaffoldする。後者はtargetをread-onlyでpreflightし、internal requestのsource/file実体・hash・rights・media・security、index重複、ID再利用、target conflictを検査する。
+- 100件のrequestを一回で決定的にP0001〜P0100へ採番し、同じ入力を再実行して同じresultを得ること、retired IDを再利用しないこと、unknown clearance/security/dirty targetで`BLOCKED_*`となりtarget fingerprintとchanged pathsが不変であることをtemporary Git fixtureで確認した。result evidenceはstate rootへcreate-onlyで保存し、stdoutはstatus/ID/予定相対path/finding codeだけである。
+- Acceptanceは`1/1`。focused public/security `21/21 PASS`、parent full suite `518 tests / 1 skipped PASS`、validator、py_compile、diff check PASS。GitHub run `33836463884`はbilling limitにより全jobがstep開始前失敗し、品質ゲートの合格数へ算入していない。
+- 機微情報・外部artifact: credential、private/restricted data、raw conversation、direct identifier、user path、public content、child repository、manifest pin、Drive/外部artifact本文の書込みなし。approval生成、Git add/commit/push/merge/release、target public shareも未実行。
+- Feedback: explicitは「各repoのエージェント自律実装要件を評価し不足を補完」。inferredはなし。未解決はhuman approval付き`PUBLIC-PROJECTION-APPLY-001`、公開投影docs、workspace bootstrap lane、GitHub billing環境制約。
+- Leaseは`available/unassigned`へ解放済み。次taskは`PUBLIC-PROJECTION-APPLY-001`（READY）。
+
+### Next exact action
+
+1. `PUBLIC-PROJECTION-APPLY-001`をclaimし、Issue #149、approval/result schema、今回のplan helperを確認して、approval hash/scope/expiry検証→staging→atomic apply→rollback/idempotencyをtemporary Git fixtureへ実装する。

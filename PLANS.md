@@ -705,6 +705,21 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 
 1. Claim `OUTPUT-DESTINATIONS-CONTRACT-001`, read Issue #148 and the nearest schemas/tests, then implement the contract and shared resolver in an isolated branch.
 
+## PUBLIC-PROJECTION-PLAN-001 — completed
+
+- Task ID: `PUBLIC-PROJECTION-PLAN-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149).
+- Parent implementation commit `7de680b224f4bfb1daa21741b0879a8c15e16529`; PR [#164](https://github.com/masa-san-jp/agentic-art-orchestration/pull/164) merged to `main` as `0f958a908e02403b7cf2b2b70d48552762032ebe`.
+- `init-target` now requires an existing clean local Git worktree and explicit `--apply`, and creates only missing layout/index/catalog scaffold. `project --dry-run` validates target layout, markers, indexes, internal source/file hashes, clearance, media, security, stable non-reused IDs, and conflicts without changing the target.
+- Observable acceptance: focused public/security tests `21/21 PASS`; 100-record P0001–P0100 deterministic allocation and replay pass; validator PASS; parent full suite `518 tests / 1 skipped PASS`; py_compile and diff check PASS. Metadata-only `public-projection-result/v1` evidence is create-only under external state; CLI stdout has no absolute path or source body.
+- Remote run `33836463884` failed before any job step because the account billing limit prevented all three jobs from starting. It is recorded as an environment failure and is not counted as a quality-gate pass.
+- Safety: no public content was applied, no approval was generated, no child repository or manifest pin changed, and no user path, credential, PRIVATE_RAW, RESTRICTED, raw conversation, direct identifier, or external artifact body entered Git. Temporary fixtures only.
+- Feedback: explicit = the user's request to evaluate and supplement autonomous completion requirements for each repository; inferred = none.
+- Lease released to `available/unassigned`; `PUBLIC-PROJECTION-APPLY-001` is promoted to `READY` as the smallest dependency-complete task. Remaining public apply/docs and workspace bootstrap tasks are explicit backlog work.
+
+### Next exact action
+
+1. Claim `PUBLIC-PROJECTION-APPLY-001`, inspect Issue #149 plus the approval/result schemas and current plan helpers, then implement human approval verification and staged atomic apply only in temporary Git fixtures.
+
 ## OUTPUT-DESTINATIONS-CONTRACT-001 — completed
 
 - Parent PR #152 merged to `main` as `cf8f53ee111a4363ace75481e837b3cc7c455a09`; implementation commit was `a47a94b6515d035b144eff231efba39a1b872856`.
