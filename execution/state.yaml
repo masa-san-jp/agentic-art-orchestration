@@ -1,29 +1,29 @@
-version: 177
-updated_at: "2026-09-04T11:56:52+09:00"
-active_task: null
-active_repository: null
+version: 178
+updated_at: "2026-09-04T12:00:23+09:00"
+active_task: OUTPUT-DESTINATIONS-DOCS-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T11:40:00+09:00"
-  expires_at: null
+  status: held
+  owner: codex-output-destinations-docs
+  acquired_at: "2026-09-04T12:00:23+09:00"
+  expires_at: "2026-09-04T14:00:23+09:00"
   lane: OUTPUT_DESTINATIONS
-  execution_id: OUTPUT-DESTINATIONS-RUNTIME-001:20260904-114000
-  released_at: "2026-09-04T11:56:52+09:00"
+  execution_id: OUTPUT-DESTINATIONS-DOCS-001:20260904-120023
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/output_destinations.py, tools/run.py, tools/batch_run.py, tools/production_exchange.py, tools/autonomous_runner.py, schemas, tests]
+    paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, PLANS.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: OUTPUT-DESTINATIONS-RUNTIME-001
+  task: OUTPUT-DESTINATIONS-DOCS-001
   repository: agentic-art-orchestration
-  start_point: 3af852180a6b3525b5d6d852d8c4c95b1288162d
-  expected_changes: Connect one shared output-destination resolver to run, batch_run, production_exchange, and autonomous_runner; preserve legacy defaults and required arguments; write atomic internal resolution evidence; prove profile output separation.
-  result: completed; parent PR #156 merged as b3bfbdb4aa2b1f305f5decfdea635485ecb6c947 after 501/501 parent tests, validator, py_compile, and diff check passed.
+  start_point: 0884c58e2fea34d32561873a50d2097f86e90847
+  expected_changes: Document the implemented output-destinations/v1 profile, four runtime CLI adapters, fresh-clone setup, deterministic recovery/errors, legacy rollback, and privacy boundary without recording user paths.
+  result: in_progress
 last_completed_task: OUTPUT-DESTINATIONS-RUNTIME-001
 resume_from:
   task: OUTPUT-DESTINATIONS-DOCS-001
-  action: "Claim the smallest dependency-complete BACKLOG task, then document configured destinations and recovery behavior from Issue #148."
+  action: "Synchronize the destination profile documentation and verify all documented commands against the implementation."
   command: python3 tools/validate.py --check
 
 issue_intake:

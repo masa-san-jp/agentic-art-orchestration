@@ -1283,7 +1283,7 @@ tasks:
   - id: OUTPUT-DESTINATIONS-DOCS-001
     milestone: M28
     title: Document configured destinations and recovery behavior
-    status: BACKLOG
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY

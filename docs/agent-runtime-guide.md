@@ -48,6 +48,51 @@ Productionまで進んだ後の再開では、`<state-root>/production/productio
 
 startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テーマやPLAN_READYを捏造せず、startup reportの解除条件を返す。外部CREATE、merge、releaseなどのhuman gateは別途必要である。
 
+## 出力先プロファイルと決定的な復旧
+
+fresh cloneのagentは、まず`config/output-destinations.example.yaml`をGit外の一時ディレクトリへ
+コピーし、`state_root`、`internal_output_root`、任意の`public_projection_root`を、絶対かつ
+互いに重ならない外部パスへ置き換える。profile自体もrepoへ保存しない。`state_root`と
+`internal_output_root`は必須で、public rootは将来のprojection用に予約され、現在のruntimeから
+は書き込まれない。
+
+~~~bash
+DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
+DESTINATIONS_FILE="$DESTINATIONS_DIR/profile.yaml"
+cp config/output-destinations.example.yaml "$DESTINATIONS_FILE"
+$EDITOR "$DESTINATIONS_FILE"
+.venv/bin/python tools/validate.py --check
+.venv/bin/python tools/run.py --offline-fixture --run-id DEST-AGENT-001 \
+  --destinations-file "$DESTINATIONS_FILE"
+~~~
+
+実行入口のrole対応は次の通りである。
+
+| 入口 | profile未指定時の互換引数 | profile指定時の既定先 |
+|---|---|---|
+| `tools/run.py` | `--state-root`（任意） | stateは`state_root`、bundleは`internal_output_root/run/<project-id>/` |
+| `tools/batch_run.py` | `--output-root`と`--state-root` | `internal_output_root/batch/<run-id>/`と`state_root` |
+| `tools/production_exchange.py` | `--output-root`（省略時は一時領域） | `internal_output_root/production-exchange/` |
+| `tools/autonomous_runner.py` | `--state-root` | `state_root` |
+
+`--destinations-file`が最優先のprofile選択で、未指定なら
+`AGENTIC_ART_DESTINATIONS_FILE`、それも無ければ各入口のlegacy動作になる。直接CLIで同じ
+roleを渡した場合は、そのroleだけ直接値が優先される。profileを暗黙検索することはない。
+batch、production exchange、autonomous runnerには各既存のmanifest、workspace、export、
+workerなどの必須引数が別にあるため、profileがそれらを省略可能にするとは解釈しない。
+
+エラーは停止理由と復旧方針を含む。相対パス・空値・NULは絶対外部パスへ直し、orchestration
+repoまたはchild checkout内・filesystem root・role同士の重なりは専用の兄弟ディレクトリへ直す。
+create-onlyの派生出力が`not empty`なら既存データを消さず、新しいrun-idまたは空の専用rootを
+使う。`destination-resolution.json`が同じrun-idで別内容なら、同じprofileを復元して再開するか
+新しいrun-idを選ぶ。失敗を成功扱いにしたり、既存のstate/outputを削除して直したりしない。
+
+profileを外してlegacyへ戻すときは、CLIの`--destinations-file`を外し、設定した
+`AGENTIC_ART_DESTINATIONS_FILE`を`unset`する。runは`--state-root`、batchは両方のroot、
+autonomous runnerは`--state-root`を明示する。resolution evidenceはGit外のstate root内にだけ
+create-onlyで残り、credentials、会話本文、PRIVATE_RAW、RESTRICTED、個人識別情報はprofileや
+evidenceへ入れない。
+
 ## Context loading
 
 manifest記載の全repoを無条件に全文読込しない。task context packは次だけを含める。
