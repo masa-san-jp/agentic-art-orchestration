@@ -1,5 +1,5 @@
-version: 59
-updated_at: "2026-09-04T17:11:01+09:00"
+version: 60
+updated_at: "2026-09-04T17:37:47+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1492,7 +1492,7 @@ tasks:
   - id: PRODUCTION-AUTONOMY-001
     milestone: M30
     title: Make production agent setup explicit for fresh clones
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/58
     target_repositories: [agentic-art-production]
     agent_terminal: DRAFT_PR_READY
@@ -1502,12 +1502,13 @@ tasks:
     depends_on: [AUTONOMY-READINESS-MANIFEST-001]
     acceptance: Production AGENTS provides conditional requirements setup, repository-local check commands, explicit external output boundaries, task/completion evidence, and human effect gates so a fresh-clone agent can run declared checks without conversation history; no production project/data/schema change is made.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/run_evaluation.py --format json, git diff --check]
+    completion: "Production implementation commit fe8292ecfda30168db18f43201198d9ec5ac6a67 was merged to main by PR #59 as 9d125fb87be133f5e73e61e04e23c0a3bfafb462; Issue #58 is CLOSED. AGENTS.md now conditionally prepares .venv from requirements.txt, uses .venv/bin/python for validation, tests, and evaluation, names the explicit Git-external <external-output-root>/<project-id> boundary, and records completion evidence while preserving task selection and human approval boundaries for physical/external effects. Documentation regression test was added; no production project/data/schema/credential/external effect changed. Child focused docs tests 4/4 PASS; full unittest 99/99 PASS; validator, run_evaluation (6/6), compileall, and git diff checks PASS. Remote CI runs 33854267688 and 33854280941 failed before steps with steps=[] because of the account billing limit; the second run also cancelled one matrix job and neither is counted as a quality-gate pass. Acceptance 1/1."
     stop_if: [A physical/external effect or public share is requested, A production project must enter tracked Git, A schema/approval boundary must change]
 
   - id: VIEWER-RESPONSE-AUTONOMY-001
     milestone: M30
     title: Complete viewer-response agent work contract
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/4
     target_repositories: [viewer-response-notes]
     agent_terminal: DRAFT_PR_READY

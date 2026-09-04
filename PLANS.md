@@ -884,6 +884,17 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 
 1. `PRODUCTION-AUTONOMY-001`をclaimし、agentic-art-production Issue #58とAGENTS/testsを読み、fresh-clone setupとportable external-output guidanceだけを補完する。
 
+## PRODUCTION-AUTONOMY-001 — completed
+
+- Task ID: `PRODUCTION-AUTONOMY-001`; target repository: `agentic-art-production`; Issue SSOTは[#58](https://github.com/masa-san-jp/agentic-art-production/issues/58)。implementation commit `fe8292ecfda30168db18f43201198d9ec5ac6a67`、PR [#59](https://github.com/masa-san-jp/agentic-art-production/pull/59)、main merge `9d125fb87be133f5e73e61e04e23c0a3bfafb462`。Issue #58はCLOSED。
+- fresh cloneで依存が無い場合だけ`python3 -m venv .venv`と`.venv/bin/python -m pip install -r requirements.txt`を行い、validation・tests・evaluationは`.venv/bin/python`で実行する契約をAGENTS.mdへ追加した。Git外outputを`<external-output-root>/<project-id>/`として明記し、task selection、completion evidence、physical/external effectのhuman approval境界を明示した。
+- 文書回帰testを追加し、focused docs tests `4/4 PASS`、child full suite `99/99 PASS`、validator、run_evaluation `6/6 PASS`、compileall、git diff checkがPASSした。child project/data/schema、credential、外部effect、外部artifactは変更していない。
+- GitHub Actions runs `33854267688`と`33854280941`はjob開始前の`steps=[]`失敗（account billing limit。後者はmatrixの1 jobがcancel）で、品質gateのPASSへ算入していない。explicit feedbackは自律実装要件の評価・補完依頼、inferredはnone。leaseは`available/unassigned`。
+
+### Next exact action
+
+1. `VIEWER-RESPONSE-AUTONOMY-001`をclaimし、viewer-response-notes Issue #4とAGENTS/testsを読み、不足する自律task/work/completion contractだけを補完する。
+
 ## 2026-09-04 — WORKSPACE-BOOTSTRAP-DOCS-001 completed
 
 - Task ID: `WORKSPACE-BOOTSTRAP-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`b9e01f132670f6322297a463600055c8d3aef163`、PR [#174](https://github.com/masa-san-jp/agentic-art-orchestration/pull/174)はmainへ`267a51c31f110c9fc431a332af1eb4199ec77e20`としてmergeされた。
