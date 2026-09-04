@@ -2016,3 +2016,17 @@
 ### Next exact action
 
 1. `PUBLIC-PROJECTION-CONTRACT-001`をclaimし、Issue #149、近接schema/testsを読んでからpublic target mutationなしの閉じたsynthetic contractを実装する。
+
+## 2026-09-04 — PUBLIC-PROJECTION-CONTRACT-001 completed
+
+- Task ID: `PUBLIC-PROJECTION-CONTRACT-001`; repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。開始点はparent main `f7dddb96784b6837f5d85a7c30fae45a6186c36b`、implementation commitは`62f8908b30644f735c78c314be7be5c1dad45234`、PR #160 merge commitは`9a131318c8f1bc88d0db7b2cc0876d07160a28a6`。
+- 4つのclosed contract (`public-project-layout/v1`, `public-projection-request/v1`, `public-projection-approval/v1`, `public-projection-result/v1`)、validation-only public projection tool、canonical hash、unknown-clearance policy、sanitized security findings、合成metadata-only fixtureを追加した。prepare/applyは後続taskへ残し、contract taskではpublic targetへアクセスしていない。
+- Acceptanceはvalidator PASS、focused public/security/validate `24/24 PASS`、public contract CLI PASS、parent full suite `507 tests / 1 skipped`、diff check PASS。request source hashはfile descriptor順で決定的に算出し、resultのblocked/dry-runはtarget mutation 0件を要求する。
+- Remote CI run `33833406523`はbootstrap/production-exchange/real-chainの全jobがsteps空でbilling制限により開始前失敗。ローカル結果のみを品質ゲート根拠とし、remote failureを成功・skipへ変換していない。
+- Safety/外部境界: public target、child repo、manifest pin、user path、credential、PRIVATE_RAW、RESTRICTED、会話全文、内部URL/ID、外部artifact本文は親Gitへ保存・書込みしていない。fixtureは合成値のみ。
+- Feedback: explicitは「各repoの自律実装要件を評価し不足を補完」の依頼、inferredはなし。未解決はprepare/run-batch接続、target dry-run/apply、public share human gateであり、後続taskの範囲に記録した。
+- Leaseは`available/unassigned`へ解放済み。次の再開点は`PUBLIC-PROJECTION-PREPARE-001`（READY）、最初の1操作はIssue #149とrun/batch contractを読み、唯一のrequest producerの実装境界を確定すること。
+
+### Next exact action
+
+1. `PUBLIC-PROJECTION-PREPARE-001`をclaimし、run/batch outputの正本schema・既存resolver・Issue #149を確認してprepare/refreshを実装する。public targetは読まない。

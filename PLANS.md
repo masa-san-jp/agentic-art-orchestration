@@ -753,3 +753,18 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `PUBLIC-PROJECTION-CONTRACT-001`, inspect Issue #149 plus the nearest public-projection schemas/tests, then implement the closed synthetic contracts without public target mutation.
+
+## PUBLIC-PROJECTION-CONTRACT-001 — completed
+
+- Task ID: `PUBLIC-PROJECTION-CONTRACT-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149).
+- Parent PR [#160](https://github.com/masa-san-jp/agentic-art-orchestration/pull/160) merged to `main` as `9a131318c8f1bc88d0db7b2cc0876d07160a28a6`; implementation commit `62f8908b30644f735c78c314be7be5c1dad45234` added four closed v1 contracts, validation-only `tools/public_projection.py`, deterministic record/request hashes, sanitized public security finding vocabulary, and synthetic metadata-only fixtures.
+- Observable boundary: public projection contracts distinguish internal source provenance from public target metadata; unknown/internal/restricted visibility, rights, or consent remains `BLOCKED_POLICY`; dry-run and blocked results report zero changed paths and zero target mutations; remote operations and child mutations are const-empty.
+- Acceptance evidence: validator PASS; focused public/security/validate tests `24/24 PASS`; public contract CLI PASS; parent full suite `507` tests with `1` expected skip; `git diff --check` PASS. No public target was read or written.
+- Remote validate run `33833406523` failed before all job steps because the GitHub account billing limit prevented startup. It is an environment observation, not a quality-gate pass.
+- Safety: no child repository, manifest pin, user path, credential, private/restricted/raw content, raw conversation, public target, or external artifact body entered Git. All fixtures are synthetic and metadata-only; external artifacts are create-only and none were created.
+- Feedback: explicit = the user's request to evaluate whether each repository can be completed autonomously and supplement missing requirements; inferred = none.
+- Lease is released as `available/unassigned`. `PUBLIC-PROJECTION-PREPARE-001` is promoted to `READY`; workspace preflight remains an independent eligible backlog task but follows the deterministic ID order.
+
+### Next exact action
+
+1. Claim `PUBLIC-PROJECTION-PREPARE-001`, inspect the existing run/batch output contracts and Issue #149, then implement the single deterministic request producer without reading or writing a public target.

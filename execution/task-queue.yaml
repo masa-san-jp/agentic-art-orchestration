@@ -1360,7 +1360,7 @@ tasks:
   - id: PUBLIC-PROJECTION-CONTRACT-001
     milestone: M29
     title: Define public project, request, approval, and result contracts
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1370,12 +1370,13 @@ tasks:
     depends_on: [OUTPUT-DESTINATIONS-DOCS-001]
     acceptance: Add closed public-project-layout/v1, public-projection-request/v1, public-projection-approval/v1, and public-projection-result/v1 contracts with synthetic fixtures, security vocabulary, unknown-clearance blocking, and no public target mutation.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #160 merged to main as 9a131318c8f1bc88d0db7b2cc0876d07160a28a6; implementation commit 62f8908b30644f735c78c314be7be5c1dad45234 added closed public-project-layout/v1, public-projection-request/v1, public-projection-approval/v1, and public-projection-result/v1 schemas, validation-only tools/public_projection.py, canonical hashes, sanitized public security findings, and synthetic metadata-only fixtures. Unknown visibility/rights/consent stays BLOCKED_POLICY and blocked/dry-run results require zero target mutation. Validator, focused public/security/validate tests 24/24, public contract CLI, parent full suite 507 tests with 1 skipped, and diff check passed. Remote validate run 33833406523 failed before all steps because of the account billing limit and is not counted as a quality-gate pass. No public target, child repository, pin, user path, credential, private data, raw conversation, or external artifact body was written. Explicit feedback was the request to evaluate and complete autonomous implementation requirements; inferred feedback none."
     stop_if: [A public clearance or consent must be inferred, A target repository must be changed, Internal content or credential must enter a fixture, A child production schema must change]
 
   - id: PUBLIC-PROJECTION-PREPARE-001
     milestone: M29
     title: Generate deterministic public projection candidates from run and batch output
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
