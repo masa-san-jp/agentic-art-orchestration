@@ -2073,3 +2073,18 @@
 ### Next exact action
 
 1. `PUBLIC-PROJECTION-DOCS-001`をclaimし、README、operator runbook、agent runtime guide、human-gates config、PLANS、state、handoffを実装済みのprepare/project apply lifecycleと自律実装境界に同期する。
+
+## 2026-09-04 — PUBLIC-PROJECTION-DOCS-001 completed
+
+- Task ID: `PUBLIC-PROJECTION-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。開始点はparent main `75c0b2d5930b340d804d930c06af95e2e48c6f0b`、implementation commitは`bb11d38f6a2df80b7c9750aae93454024ebb607c`、PR #168 merge commitは`d840912`。
+- README、operator runbook、agent runtime guideを、`prepare`、`init-target`、`project --dry-run`、別ファイルのhuman approval、`project --apply`まで会話履歴なしで辿れる手順へ更新した。通常runtimeは公開targetへ書き込まず、project applyもlocal allowlist pathだけを変更し、Git/remote公開はしない。
+- `config/human-gates.yaml`に`operation_scopes.public_share`を追加し、approval contract、status、authority、scopeとapply対象を固定した。init-targetのlayout scaffold、target commit/push/merge/release、repository visibility、実public shareはこのapprovalの対象外で、別human gateに残した。
+- `BLOCKED_HUMAN`、`BLOCKED_POLICY`、`BLOCKED_CONFLICT`、`ALREADY_PROJECTED`、`FAILED`の復旧境界、metadata-only result、synthetic temporary target検証を追記し、docs testsでコマンドと禁止境界を検査した。
+- Acceptanceは`1/1`。focused public/docs/status tests `37/37 PASS`、parent full suite `523 tests / 1 skipped PASS`、validator、project-status README check、py_compile、diff check PASS。GitHub Actions run `33838751364`はbilling制限で全jobがstep開始前失敗し、ローカルgateのpassには算入していない。
+- 機微情報・外部artifact: credential、user path、PRIVATE_RAW、RESTRICTED、raw conversation、direct identifier、public target、child repo、manifest pin、Drive/Issue本文、外部artifact bodyは書き込んでいない。synthetic temporary fixtureのみを使用し、resultはhash/metadataだけである。
+- Feedback: explicitは「各repoのエージェントが自律的に実装完了できる要件を評価し不足を補完」、inferredはnone。未解決はGitHub Actions billingによるremote gate未実行のみ。
+- Leaseは`available/unassigned`へ解放し、`WORKSPACE-BOOTSTRAP-PREFLIGHT-001`を依存完了済みの最小BACKLOGとして`READY`へ昇格した。
+
+### Next exact action
+
+1. `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`をclaimし、Issue #150、bootstrap contract、workspace guardを読み、manifest pin・remote・checkout状態をread-onlyで検査する。

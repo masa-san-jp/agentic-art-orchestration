@@ -806,3 +806,17 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. `PUBLIC-PROJECTION-DOCS-001`をclaimし、実装済みのprepare/project apply lifecycle、human approval、target restrictions、recovery、会話履歴なしの自律実行手順をREADMEとrunbookへ同期する。
+
+## PUBLIC-PROJECTION-DOCS-001 — completed
+
+- Task ID: `PUBLIC-PROJECTION-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。implementation commitは`bb11d38f6a2df80b7c9750aae93454024ebb607c`、PR [#168](https://github.com/masa-san-jp/agentic-art-orchestration/pull/168)はmainへ`d840912`としてmergeされた。
+- README、operator runbook、agent runtime guideを、会話履歴なしで再実行できる`prepare` → `init-target` → `project --dry-run` → human approval → `project --apply`の手順へ同期した。通常runtimeはpublic targetへ書き込まず、applyもremote公開・Git commit/push/merge/release・repository visibility変更を行わない。
+- `config/human-gates.yaml`に`public_share`の適用範囲を追加し、`public-projection-approval/v1`、`APPROVED`、`HUMAN`、`local-public-project-projection`を要求するapplyだけを対象とした。layout-onlyの`init-target --apply`とGit/visibility/remote操作は別ゲートとして明示した。
+- 終端状態、metadata-onlyのresult evidence、allowlist済みtarget path、unknown clearanceの`BLOCKED_POLICY`、approval問題の`BLOCKED_HUMAN`、競合の`BLOCKED_CONFLICT`、再実行の`ALREADY_PROJECTED`、失敗時のtransaction-created path限定復旧を文書化した。文書回帰テストで各コマンドと境界を固定した。
+- Acceptanceは`1/1`。focused public/docs/status tests `37/37 PASS`、parent full suite `523 tests / 1 skipped PASS`、validator、project-status README check、py_compile、diff check、synthetic temporary target proofがPASSした。GitHub Actions run `33838751364`はaccount billing limitで全jobがstep開始前失敗し、品質gateへ算入していない。
+- Safety: child repository、manifest pin、user path、credential、PRIVATE_RAW、RESTRICTED、raw conversation、public target、Drive/Issue本文、外部artifact bodyの書込みなし。explicit feedbackは「各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完」、inferredはnone。
+- Leaseは`available/unassigned`へ解放し、依存完了済みの最小BACKLOG task `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`を`READY`へ昇格した。
+
+### Next exact action
+
+1. `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`をclaimし、Issue #150、`workspace-bootstrap/v1`、既存workspace guardを読み、manifest pin・remote・checkout状態のread-only preflightを実装する。
