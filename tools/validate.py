@@ -62,6 +62,7 @@ BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
 OUTPUT_DESTINATIONS_SCHEMA_PATH = ROOT / "schemas/output-destinations.schema.json"
 DESTINATION_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/destination-resolution.schema.json"
 OUTPUT_DESTINATIONS_EXAMPLE_PATH = ROOT / "config/output-destinations.example.yaml"
+WORKSPACE_BOOTSTRAP_SCHEMA_PATH = ROOT / "schemas/workspace-bootstrap.schema.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -117,6 +118,7 @@ REQUIRED_FILES = [
     "schemas/batch-run.schema.json",
     "schemas/output-destinations.schema.json",
     "schemas/destination-resolution.schema.json",
+    "schemas/workspace-bootstrap.schema.json",
     "tools/batch_status.py",
     "tools/batch_run.py",
     "tools/output_destinations.py",
@@ -519,6 +521,43 @@ def validate_output_destinations_contract(
     if example is not None and isinstance(config_schema, dict):
         for schema_error in _schema_errors(example, config_schema, _source_label(OUTPUT_DESTINATIONS_EXAMPLE_PATH)):
             errors.append(f"{schema_error}; remediation: keep the tracked example placeholder-only and schema-valid")
+    return errors
+
+
+def validate_workspace_bootstrap_contract(
+    schema: dict | None = None,
+    source: str = "schemas/workspace-bootstrap.schema.json",
+) -> list[str]:
+    """Keep the bootstrap result vocabulary closed before implementation stages use it."""
+    schema = schema if schema is not None else load_json(WORKSPACE_BOOTSTRAP_SCHEMA_PATH)
+    errors: list[str] = []
+    if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        return [f"{source}: schema must be Draft 2020-12; remediation: restore workspace-bootstrap/v1"]
+    if schema.get("additionalProperties") is not False:
+        errors.append(f"{source}: schema must reject unknown fields; remediation: set additionalProperties to false")
+    contract = schema.get("properties", {}).get("contract_version", {})
+    if not isinstance(contract, dict) or contract.get("const") != "workspace-bootstrap/v1":
+        errors.append(f"{source}: wrong contract version; remediation: preserve workspace-bootstrap/v1")
+    command = schema.get("properties", {}).get("command", {})
+    if not isinstance(command, dict) or command.get("const") != "bootstrap":
+        errors.append(f"{source}: command must be bootstrap; remediation: keep the standalone bootstrap subcommand")
+    statuses = schema.get("properties", {}).get("status", {}).get("enum")
+    expected_statuses = [
+        "READY",
+        "BLOCKED_PIN_DRIFT",
+        "BLOCKED_EXISTING_WORKSPACE",
+        "BLOCKED_REMOTE_ACCESS",
+        "BLOCKED_RACE",
+        "FAILED",
+    ]
+    if statuses != expected_statuses:
+        errors.append(f"{source}: status vocabulary is incomplete or reordered; remediation: preserve the fixed bootstrap outcomes")
+    repository = schema.get("$defs", {}).get("repository", {})
+    if not isinstance(repository, dict) or repository.get("additionalProperties") is not False:
+        errors.append(f"{source}: repository records must be closed; remediation: reject unrecognized checkout fields")
+    privacy = schema.get("properties", {}).get("privacy", {})
+    if not isinstance(privacy, dict) or privacy.get("additionalProperties") is not False:
+        errors.append(f"{source}: privacy result must be closed; remediation: keep credential fields out of evidence")
     return errors
 
 
@@ -3869,6 +3908,12 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_json(DESTINATION_RESOLUTION_SCHEMA_PATH),
                 load_yaml(OUTPUT_DESTINATIONS_EXAMPLE_PATH),
                 _source_label(OUTPUT_DESTINATIONS_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_workspace_bootstrap_contract(
+                load_json(WORKSPACE_BOOTSTRAP_SCHEMA_PATH),
+                _source_label(WORKSPACE_BOOTSTRAP_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

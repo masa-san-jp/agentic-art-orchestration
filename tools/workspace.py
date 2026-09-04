@@ -19,11 +19,26 @@ ROOT = TOOLS.parent
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
-from validate import load_yaml, validate_manifest  # noqa: E402
+from validate import (  # noqa: E402
+    _schema_errors,
+    load_json,
+    load_yaml,
+    validate_manifest,
+    validate_workspace_bootstrap_contract,
+)
 
 
 DEFAULT_MANIFEST = ROOT / "config/repositories.yaml"
 DEFAULT_OFFLINE_FIXTURE_ROOT = Path(tempfile.gettempdir()) / "agentic-art-orchestration-offline-fixture"
+WORKSPACE_BOOTSTRAP_SCHEMA = ROOT / "schemas/workspace-bootstrap.schema.json"
+BOOTSTRAP_STATUS_EXIT_CODES = {
+    "READY": 0,
+    "BLOCKED_PIN_DRIFT": 2,
+    "BLOCKED_EXISTING_WORKSPACE": 2,
+    "BLOCKED_REMOTE_ACCESS": 2,
+    "BLOCKED_RACE": 2,
+    "FAILED": 1,
+}
 
 
 class WorkspaceError(RuntimeError):
@@ -712,9 +727,151 @@ def guard_workspace(manifest: dict, workspace_root: Path, offline: bool, fixture
     }
 
 
+def validate_bootstrap_result(result: dict, source: str = "workspace-bootstrap") -> list[str]:
+    """Validate the closed result and the status/exit-code relationship."""
+    errors = _schema_errors(result, load_json(WORKSPACE_BOOTSTRAP_SCHEMA), source)
+    if errors or not isinstance(result, dict):
+        return errors
+    status = result.get("status")
+    expected_exit = BOOTSTRAP_STATUS_EXIT_CODES.get(status)
+    if result.get("exit_code") != expected_exit:
+        errors.append(
+            f"{source}.exit_code: {status} must use exit {expected_exit}; "
+            "remediation: preserve the fixed bootstrap status vocabulary"
+        )
+    repositories = result.get("repositories", [])
+    ids = [item.get("id") for item in repositories if isinstance(item, dict)]
+    if len(ids) != len(set(ids)):
+        errors.append(f"{source}.repositories: repository IDs must be unique; remediation: emit one record per manifest entry")
+    if result.get("changed_count") != sum(item.get("action") == "cloned" for item in repositories if isinstance(item, dict)):
+        errors.append(
+            f"{source}.changed_count: must equal cloned repository count; "
+            "remediation: count only newly placed checkouts"
+        )
+    if status == "READY":
+        for item in repositories:
+            if not isinstance(item, dict):
+                continue
+            if item.get("action") not in {"cloned", "reused"}:
+                errors.append(f"{source}.repositories[{item.get('id')}]: READY cannot contain not-run; remediation: complete every manifest entry")
+            if item.get("pin_status") != "MATCHED" or item.get("guard_status") != "PASS":
+                errors.append(f"{source}.repositories[{item.get('id')}]: READY requires matched pin and passing guard; remediation: preserve fail-closed readiness")
+            if item.get("finding_codes"):
+                errors.append(f"{source}.repositories[{item.get('id')}]: READY cannot hide findings; remediation: return a blocking status")
+    elif not result.get("remediations"):
+        errors.append(f"{source}.remediations: non-ready result needs remediation; remediation: state the next safe human action")
+    return errors
+
+
+def build_bootstrap_result(
+    manifest: dict,
+    workspace_root: Path,
+    *,
+    status: str,
+    repositories: list[dict],
+    changed_count: int,
+    offline_fixture: bool,
+    remediations: list[str] | tuple[str, ...] = (),
+    lock_status: str = "RELEASED",
+) -> dict:
+    """Build canonical bootstrap evidence in manifest order without hardcoding IDs."""
+    if status not in BOOTSTRAP_STATUS_EXIT_CODES:
+        raise WorkspaceError(f"unknown bootstrap status {status!r}; remediation: use workspace-bootstrap/v1")
+    if not isinstance(repositories, list):
+        raise WorkspaceError("bootstrap repositories must be a list; remediation: emit one record per manifest entry")
+    by_id: dict[str, dict] = {}
+    for record in repositories:
+        if not isinstance(record, dict) or not isinstance(record.get("id"), str):
+            raise WorkspaceError("bootstrap repository record is malformed; remediation: include the manifest repository ID")
+        repository_id = record["id"]
+        if repository_id in by_id:
+            raise WorkspaceError(f"bootstrap repository {repository_id!r} is duplicated; remediation: emit one record per manifest entry")
+        by_id[repository_id] = dict(record)
+    manifest_ids = [repository.get("id") for repository in manifest.get("repositories", [])]
+    if set(by_id) != set(manifest_ids):
+        raise WorkspaceError("bootstrap records do not match the manifest repository set; remediation: derive records from repositories.yaml")
+    ordered = [by_id[repository_id] for repository_id in manifest_ids]
+    if not isinstance(changed_count, int) or isinstance(changed_count, bool) or changed_count < 0:
+        raise WorkspaceError("bootstrap changed_count is invalid; remediation: count newly cloned entries")
+    if any(not isinstance(item, str) or not item for item in remediations):
+        raise WorkspaceError("bootstrap remediation is invalid; remediation: use sanitized non-empty instructions")
+    result = {
+        "contract_version": "workspace-bootstrap/v1",
+        "command": "bootstrap",
+        "status": status,
+        "exit_code": BOOTSTRAP_STATUS_EXIT_CODES[status],
+        "manifest_hash": sha256_text(canonical_json(manifest)),
+        "workspace_root": str(workspace_root.expanduser().resolve()),
+        "offline_fixture": bool(offline_fixture),
+        "changed_count": changed_count,
+        "repositories": ordered,
+        "remediations": sorted(set(remediations)),
+        "lock_status": lock_status,
+        "remote_operations": [],
+        "child_mutations": [],
+        "privacy": {
+            "credentials_stored": False,
+            "token_stored": False,
+            "remote_response_stored": False,
+        },
+    }
+    errors = validate_bootstrap_result(result)
+    if errors:
+        raise WorkspaceError("bootstrap result is invalid:\n" + "\n".join(f"- {error}" for error in errors))
+    return result
+
+
+def bootstrap_workspace(manifest: dict, workspace_root: Path, offline: bool, fixture_root: Path) -> dict:
+    """Expose the contract boundary before the staged preflight/apply tasks land.
+
+    The contract task intentionally performs no clone.  Returning a structured
+    terminal result keeps the opt-in command honest and gives later tasks one
+    stable result shape to implement; existing ``init`` remains the legacy
+    operation until the non-destructive preflight and staged apply tasks are
+    complete.
+    """
+    del fixture_root
+    repositories = [
+        {
+            "id": repository["id"],
+            "full_name": repository["full_name"],
+            "path": repository["path"],
+            "action": "not-run",
+            "head": None,
+            "observed_commit": repository["observed_commit"],
+            "pin_status": "NOT_RUN",
+            "guard_status": "NOT_RUN",
+            "finding_codes": ["BOOTSTRAP_NOT_READY"],
+        }
+        for repository in manifest["repositories"]
+    ]
+    return build_bootstrap_result(
+        manifest,
+        workspace_root,
+        status="FAILED",
+        repositories=repositories,
+        changed_count=0,
+        offline_fixture=offline,
+        remediations=[
+            "bootstrap apply is staged behind the non-destructive preflight and atomic placement tasks",
+            "use workspace.py init only for the legacy workflow until bootstrap implementation is complete",
+        ],
+        lock_status="NOT_ACQUIRED",
+    )
+
+
 def print_result(result: dict, as_json: bool = True) -> None:
     if as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return
+    if result.get("command") == "bootstrap":
+        print(f"workspace: {result['workspace_root']}")
+        print(f"status: {result['status']} (exit {result['exit_code']})")
+        for repository in result["repositories"]:
+            findings = ",".join(repository["finding_codes"]) or "none"
+            print(f"{repository['id']}: {repository['action']} / pin={repository['pin_status']} / findings={findings}")
+        for remediation in result["remediations"]:
+            print(f"remediation: {remediation}")
         return
     print(f"workspace: {result['workspace_root']}")
     for repository in result["repositories"]:
@@ -729,6 +886,11 @@ def parse_args() -> argparse.Namespace:
         command_parser.add_argument("--offline-fixture", action="store_true")
         command_parser.add_argument("--fixture-root", type=Path, default=DEFAULT_OFFLINE_FIXTURE_ROOT)
         command_parser.add_argument("--workspace-root", type=Path)
+    bootstrap_parser = subparsers.add_parser("bootstrap")
+    bootstrap_parser.add_argument("--offline-fixture", action="store_true")
+    bootstrap_parser.add_argument("--fixture-root", type=Path, default=DEFAULT_OFFLINE_FIXTURE_ROOT)
+    bootstrap_parser.add_argument("--json", action="store_true")
+    bootstrap_parser.add_argument("--workspace-root", type=Path)
     status_parser = subparsers.add_parser("status")
     status_parser.add_argument("--json", action="store_true")
     status_parser.add_argument("--workspace-root", type=Path)
@@ -751,6 +913,10 @@ def main() -> int:
         manifest = load_manifest()
         workspace_root = resolve_workspace_root(manifest, args.workspace_root)
         fixture_root = resolve_path(args.fixture_root) if hasattr(args, "fixture_root") else DEFAULT_OFFLINE_FIXTURE_ROOT
+        if args.command == "bootstrap":
+            result = bootstrap_workspace(manifest, workspace_root, args.offline_fixture, fixture_root)
+            print_result(result, as_json=args.json)
+            return result["exit_code"]
         if args.command == "init":
             result = init_workspace(manifest, workspace_root, args.offline_fixture, fixture_root)
             print_result(result)
