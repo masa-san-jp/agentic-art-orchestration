@@ -966,7 +966,7 @@ Issue #190に従い、`agentic-art-project`を親repo側でも正規の公開成
 - [x] Issue #190を作成し、taskをqueue/stateへclaimした。
 - [x] closed relationship registry、validator、testsを実装した。
 - [x] README、設計、operator/agent guideを同期した。
-- [ ] 全検証とimplementation commitは完了。実行SSOTのpush、Draft PR、lease releaseを完了する。
+- [x] 全検証、実行SSOTのpush、Draft PR #191、lease releaseを完了した。
 
 ### Surprises & Discoveries
 
@@ -983,7 +983,9 @@ Issue #190に従い、`agentic-art-project`を親repo側でも正規の公開成
 
 relationship registryと文書同期をimplementation commit `2f016f6`へ記録した。初回full suiteで既存の
 Git管理外snapshot不一致を観測し、正準networkless bootstrapで再生成後、focused `41/41`とfull
-`545/545`がPASSした。外部repo、実target、visibility、artifact本文は変更していない。
+`545/545`がPASSした。remote checkpoint `ef7b57e`とDraft PR #191を確認した。GitHub Actions run
+`33922983461`はaccount billingにより全job `steps=[]`で開始前失敗し、品質gateには算入していない。
+外部repo、実target、visibility、artifact本文は変更していない。
 
 ### Context and Orientation
 

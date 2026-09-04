@@ -1,5 +1,5 @@
-version: 67
-updated_at: "2026-09-05T06:35:55+09:00"
+version: 68
+updated_at: "2026-09-05T06:51:34+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1572,7 +1572,7 @@ tasks:
   - id: PUBLIC-PROJECT-RELATIONSHIP-001
     milestone: M31
     title: Define agentic-art-project as the canonical public output repository
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/190
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1582,5 +1582,5 @@ tasks:
     depends_on: [PUBLIC-PROJECTION-AUTO-PLAN-001]
     acceptance: A closed machine-readable registry and synchronized documentation define agentic-art-project as the canonical export-only public output catalog, keep it outside the input manifest and snapshot pins, preserve automatic plan versus human-gated work and Git boundaries, and record private-staging as the current pre-completion lifecycle without changing repository visibility.
     checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest tests.test_validate tests.test_docs -v, .venv/bin/python -m unittest discover -s tests -v, .venv/bin/python tools/project_status.py --check-readme, git diff --check]
-    completion: null
+    completion: "Task registration commit 7fa1b46; implementation commit 2f016f6; pushed checkpoint ef7b57ec5f23582d1bfcbf2a36908be3005a1b7f; Draft PR #191. Added the closed repository-relationships/v1 registry and schema, defined masa-san-jp/agentic-art-project as the canonical export-only public-output-catalog, kept it outside the input manifest/snapshot/retrieval/pins, and synchronized private-staging plus plan/work/Git/visibility boundaries across validator, tests, README, design, execution plan, and operator/agent guides. Acceptance 6/6. Validator PASS; docs/contract focused 29/29 PASS; snapshot recovery focused 41/41 PASS; parent full suite 545/545 PASS after the documented networkless generated snapshot refresh; project-status README, py_compile, JSON/YAML load, and diff check PASS. GitHub Actions run 33922983461 failed before steps because account payments/spending limit blocked job start and is not counted as a quality-gate pass. No child repository, manifest pin, real public target, Drive artifact, visibility, credential, private/restricted data, raw conversation, merge, or release changed."
     stop_if: [The output repository must become an input or knowledge authority, Runtime code must depend on one remote repository name, GitHub visibility must change, A child repository or real public target must be mutated, A credential or private/restricted body is required]

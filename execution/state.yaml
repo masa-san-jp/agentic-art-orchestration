@@ -1,15 +1,15 @@
-version: 207
-updated_at: "2026-09-05T06:35:55+09:00"
-active_task: PUBLIC-PROJECT-RELATIONSHIP-001
-active_repository: agentic-art-orchestration
+version: 208
+updated_at: "2026-09-05T06:51:34+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: active
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-05T06:35:55+09:00"
-  expires_at: "2026-09-05T08:35:55+09:00"
+  expires_at: null
   lane: PUBLIC_PROJECTION
   execution_id: PUBLIC-PROJECT-RELATIONSHIP-001:20260905-063555
-  released_at: null
+  released_at: "2026-09-05T06:51:34+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [config/repository-relationships.yaml, schemas/repository-relationships.schema.json, tools/validate.py, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_validate.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
@@ -19,12 +19,12 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 477ae8ee6e67d33bb53bcedeb7a2f990ee9b1bcf
   expected_changes: Define agentic-art-project as the canonical export-only public output catalog in a separate closed registry; keep generic runtime configuration and input manifest boundaries intact; document private-staging and human-gated remote publication.
-  result: in_progress
-last_completed_task: PUBLIC-PROJECTION-AUTO-PLAN-001
+  result: completed; implementation commit 2f016f6; pushed checkpoint ef7b57e; Draft PR #191; acceptance 6/6; local full suite 545/545 PASS.
+last_completed_task: PUBLIC-PROJECT-RELATIONSHIP-001
 resume_from:
-  task: PUBLIC-PROJECT-RELATIONSHIP-001
-  action: "Implement and validate the canonical public project relationship registry and synchronized documentation."
-  command: .venv/bin/python tools/validate.py --check
+  task: null
+  action: "Human-review Draft PR #191; merge only after reviewing the canonical relationship, input isolation, and private-staging boundary."
+  command: gh pr view 191 --repo masa-san-jp/agentic-art-orchestration
 
 workspace_bootstrap_apply:
   status: complete
