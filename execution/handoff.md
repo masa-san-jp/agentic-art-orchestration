@@ -2002,3 +2002,17 @@
 ### Next exact action
 
 1. Claim `OUTPUT-DESTINATIONS-DOCS-001` from the released lease, then update the operator and agent runtime documentation using the implemented CLI flags and placeholder profile.
+
+## 2026-09-04 — OUTPUT-DESTINATIONS-DOCS-001 completed
+
+- Task ID: `OUTPUT-DESTINATIONS-DOCS-001`; repository: `agentic-art-orchestration`; Issue SSOT: [#148](https://github.com/masa-san-jp/agentic-art-orchestration/issues/148)。開始点はparent main `0884c58e2fea34d32561873a50d2097f86e90847`、implementation commitは`1363991d101b6b34e19aac91cad265ce9290197e`、PR #158 merge commitは`c874a60bff6357cf25d94c3a8d4107e6e1517580`。
+- README、operator runbook、agent runtime guideを、実装済みの`output-destinations/v1`と一致するよう更新した。新しいagentはGit外profileの作成、4入口のrole解決、優先順位、外部stateのresolution evidence、unsafe path/overlap/non-empty/conflictの復旧、legacy rollback、public projection未実装境界を会話履歴なしで確認できる。
+- Acceptanceはvalidator PASS、focused docs/output/project-status `24/24 PASS`、README整合性PASS、profile offline dry run `DEST-DOCS-001` PASS、parent full suite `501 tests / 1 skipped`、diff check PASS。dry runは`/private/tmp`の外部profile/stateを使い、親repoやchild checkoutを変更しなかった。
+- Remote CI run `33832170207`はbootstrap/production-exchange/real-chainの全jobがsteps空でbilling制限により開始前失敗。ローカル結果のみを品質ゲート根拠とし、remote失敗を成功・skipへ変換していない。
+- Safety/外部境界: user path、credential、PRIVATE_RAW、RESTRICTED、会話全文、public target、Drive/Issue本文、外部artifact本文は親Gitへ保存していない。profileとresolution evidenceはGit外、create-onlyである。child repo/manifest pinの変更なし。
+- Feedback: explicitは「各repoの自律実装要件を評価し不足を補完」の依頼、inferredはなし。未解決はpublic projectionの人間gateと、GitHub billing制約によるremote CI未実行のみ。
+- Leaseは`available/unassigned`へ解放済み。次の再開点は`PUBLIC-PROJECTION-CONTRACT-001`（依存完了済みの最小IDとしてREADYへ昇格済み）。workspace preflightも独立して実行可能だが、task選択規則に従いpublic contractを先にclaimする。
+
+### Next exact action
+
+1. `PUBLIC-PROJECTION-CONTRACT-001`をclaimし、Issue #149、近接schema/testsを読んでからpublic target mutationなしの閉じたsynthetic contractを実装する。
