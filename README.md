@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T13:43:06+09:00`.
+Source updated at: `2026-09-04T13:46:46+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 1 | 0 | 0 | 126 | 130 |
+| 3 | 0 | 1 | 0 | 126 | 130 |
 
-Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECTION-APPLY-001`.
-Next action: Claim the smallest dependency-complete public projection docs task and synchronize the operator-facing commands, approval boundary, recovery, and autonomous repository completion guidance.
-Ready: `PUBLIC-PROJECTION-DOCS-001`.
-Next task: `PUBLIC-PROJECTION-DOCS-001`.
+Current task: `PUBLIC-PROJECTION-DOCS-001`; repository: `agentic-art-orchestration`; checkpoint: `PUBLIC-PROJECTION-DOCS-001`.
+Next action: Inspect the public projection Issue SSOT, implemented CLI, human-gates config, and nearest documentation/tests, then synchronize operator guidance without enabling automatic public share.
+Ready: none.
+Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
 Blocked:
 - none
 
@@ -117,8 +117,10 @@ python3 -m venv .venv
 新しいagentが会話履歴なしで実行を再開できるよう、実行stateと内部成果物はGit外の
 `output-destinations/v1`プロファイルへ分離します。プロファイルはrepoへ追加せず、
 `config/output-destinations.example.yaml`を外部ディレクトリへコピーして、3つの絶対パスを
-置き換えます。`state_root`と`internal_output_root`は必須、`public_projection_root`は将来の
-公開projection用であり、現在のruntimeはここへ書き込みません。
+置き換えます。`state_root`と`internal_output_root`は必須です。`public_projection_root`は
+明示的な公開projectionでだけ使う任意のlocal targetであり、通常のruntimeは暗黙にここへ
+書き込みません。公開projectionの`project --apply`もremote公開・Git操作までは行わず、別の
+human gateを必要とします。
 
 ~~~bash
 DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
@@ -166,6 +168,83 @@ profileを一時的に外すときは`--destinations-file`を外し、環境変�
 Gitやpublic projectionへコピーせず、state rootのrun単位にだけ保持します。既存の成果物を
 移動・削除してrollbackしないでください。
 
+### 公開projection（prepare → dry-run → human approval → apply）
+
+通常の`run.py`、`batch_run.py`、`production_exchange.py`、`autonomous_runner.py`は公開targetへ
+書き込みません。公開用recordが必要なときだけ、同じprofileの`internal_output_root`で
+candidateを作り、利用者が指定したlocal public-project worktreeへ明示的に投影します。
+これは内部出力のrecursive copyではなく、requestで列挙されたpublic-ready fileだけを対象にする
+別laneです。実際のGitHub repository、Drive、remote visibilityには接続しません。
+
+1. PLAN_READYのrunまたはPASSEDのbatchから、唯一のproducerでcandidate requestを作ります。
+   `prepare`は内部candidateと`request.yaml`だけをcreate-onlyで出し、canonical source hashを
+   保持します。clearance evidenceがないdraftのvisibility、rights、consentは`unknown`です。
+
+~~~bash
+.venv/bin/python tools/public_projection.py prepare \
+  --run-report <run.json> --projection-id <stable-id> \
+  --destinations-file "$DESTINATIONS_FILE"
+
+.venv/bin/python tools/public_projection.py prepare \
+  --batch-summary <batch-run.json> --projection-id <stable-id> \
+  --destinations-file "$DESTINATIONS_FILE"
+
+# candidateを人間が確認・更新した後に、source hashを再計算する場合
+.venv/bin/python tools/public_projection.py prepare \
+  --refresh <draft-request.yaml> --destinations-file "$DESTINATIONS_FILE"
+~~~
+
+2. 空の、または互換layoutを持つlocal Git worktreeをtargetとして用意し、scaffoldをdry-runで
+   確認してから不足するlayoutだけを`--apply`します。`init-target --apply`は公開contentを
+   扱わないため`public_share` approval不要ですが、local書込みなので明示指定が必要です。
+
+~~~bash
+.venv/bin/python tools/public_projection.py init-target \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
+.venv/bin/python tools/public_projection.py init-target \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
+~~~
+
+3. requestのbytes、source hash、security、rights、targetのclean/layout/index/markerを検査し、
+   まず`project --dry-run`を実行します。dry-runはapprovalなしで行え、結果は
+   `<state_root>/<projection-id>/public-projection-result.json`へhashとmetadataだけを
+   create-onlyで記録します。`unknown` clearanceは`BLOCKED_POLICY`となり、agentが`cleared`へ
+   昇格させたりapprovalを生成したりしません。
+
+~~~bash
+.venv/bin/python tools/public_projection.py project \
+  --request <public-projection-request.yaml> \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
+~~~
+
+4. 利用者がcandidate bytesと公開範囲・権利・同意を確認し、requestのcanonical SHA-256に一致
+   する別ファイルの`public-projection-approval/v1`を作成した場合だけapplyします。approvalは
+   `operation: public_share`、`status: APPROVED`、`authority: HUMAN`、scope
+   `local-public-project-projection`、有効な`approved_at`/`expires_at`を持つ必要があります。
+   agentは`approved_by`を補完せず、hash不一致・期限切れ・欠落を`BLOCKED_HUMAN`として返します。
+
+~~~bash
+.venv/bin/python tools/public_projection.py project \
+  --request <public-projection-request.yaml> \
+  --approval <public-projection-approval.yaml> \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
+~~~
+
+applyが変更できるのは新規record directory、対応する`plans/index.yaml`または`works/index.yaml`、
+collection READMEのcatalog marker内だけです。root README、既存record、marker外、Git ref、remote、
+branch、commit、push、merge、release、repository visibilityは変更しません。同じsource/contentの
+再実行は`ALREADY_PROJECTED`、既存内容・dirty target・layout/index競合は`BLOCKED_CONFLICT`、
+policy違反は`BLOCKED_POLICY`、途中I/Oまたはrollback不全は`FAILED`です。失敗時はtransactionが
+作ったpathだけを復元し、既存データを削除・resetしません。apply後のGit commitや公開は人間が
+別ゲートで判断します。
+
+合成temporary Git worktreeだけを使う再現証拠は次で確認できます。実target、Drive、GitHubへは
+書き込みません。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_public_projection tests.test_security_boundary -v
+~~~
+
 full suiteは、実行時に参照する`data/snapshot.json`や`data/audit.json`などのnetworkless生成物を必要とします。fresh cloneからfull suiteまで確認する場合は、共有tempに残った古いoffline remoteを再利用しないよう、一時fixture rootを作り、次を上から実行してください。実repo・GitHub・Driveへの操作は発生しません。
 
 通常のauditは`data/runs/<run-id>/signals/portfolio.json`を対象にし、引数なしではrun IDを決定的に並べた最新runを選びます。再現対象を固定する場合は`tools/audit.py --portfolio-root <signals-directory>`を使います。`tests/fixtures`を読むのは`--offline-fixture`を明示したnetworkless検証だけです。
@@ -201,7 +280,7 @@ config/       リポジトリ一覧、横断ポリシー、品質ゲート
 schemas/      manifest・signal・work item・retrieval・interaction・artifact・feedback・routing・improvement・agent UI・E2E・async auditの契約
 docs/         設計、実行計画、横断契約、実行ガイド
 execution/    task queue、状態、判断、引継ぎ
-tools/        workspace、検証、status、audit、retrieval、agent UI、issue router、improvement、interaction E2E、async auditor、dispatcher
+tools/        workspace、検証、status、audit、retrieval、agent UI、issue router、improvement、interaction E2E、async auditor、dispatcher、public projection
 tests/        offline fixtureと障害試験
 data/         生成されたstatus・audit・retrieval-result・feedback-routing・improvement-loop・interaction-e2e・async-audit・trace。手編集禁止
 repos/        ローカルの子repo展開先。Git管理外

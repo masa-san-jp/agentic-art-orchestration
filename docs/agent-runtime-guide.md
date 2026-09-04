@@ -53,8 +53,8 @@ startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テー�
 fresh cloneのagentは、まず`config/output-destinations.example.yaml`をGit外の一時ディレクトリへ
 コピーし、`state_root`、`internal_output_root`、任意の`public_projection_root`を、絶対かつ
 互いに重ならない外部パスへ置き換える。profile自体もrepoへ保存しない。`state_root`と
-`internal_output_root`は必須で、public rootは将来のprojection用に予約され、現在のruntimeから
-は書き込まれない。
+`internal_output_root`は必須で、public rootは明示的なprojectionのlocal targetとしてだけ使う。
+通常のruntimeは暗黙にpublic rootへ書き込まず、`project --apply`もremote公開・Git操作を行わない。
 
 ~~~bash
 DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
@@ -92,6 +92,80 @@ profileを外してlegacyへ戻すときは、CLIの`--destinations-file`を外�
 autonomous runnerは`--state-root`を明示する。resolution evidenceはGit外のstate root内にだけ
 create-onlyで残り、credentials、会話本文、PRIVATE_RAW、RESTRICTED、個人識別情報はprofileや
 evidenceへ入れない。
+
+## 公開projectionを自律的に扱う
+
+公開projectionは通常のResearch/Production実行から分離された、明示依頼時だけ進むlaneである。
+エージェントは会話履歴に頼らず、request、target layout、human approval、result evidenceを
+読み直して再開する。`prepare`は`PLAN_READY` runまたは`PASSED` batchから内部候補を作る唯一の
+producerで、public targetやapprovalを読まず、canonical internal outputを変更しない。
+候補のpublication clearanceは明示evidenceがない限り`unknown`であり、エージェントが公開可へ
+昇格してはならない。
+
+### 実行順
+
+1. profileの`internal_output_root`から候補を作る。単一runかbatchかに応じて次のどちらかを
+   選び、既存候補を変更する場合だけ最後のrefreshを使う。
+
+~~~bash
+.venv/bin/python tools/public_projection.py prepare \
+  --run-report <run.json> --projection-id <stable-id> \
+  --destinations-file "$DESTINATIONS_FILE"
+.venv/bin/python tools/public_projection.py prepare \
+  --batch-summary <batch-run.json> --projection-id <stable-id> \
+  --destinations-file "$DESTINATIONS_FILE"
+.venv/bin/python tools/public_projection.py prepare \
+  --refresh <draft-request.yaml> --destinations-file "$DESTINATIONS_FILE"
+~~~
+
+2. 利用者指定の既存local Git worktreeへ、`init-target --dry-run`でlayout scaffoldを確認する。
+   不足layoutのlocal書込みが必要な場合だけ`init-target --apply`を明示する。この操作は
+   `public_share` approvalを要求しないが、公開recordは作らない。
+
+~~~bash
+.venv/bin/python tools/public_projection.py init-target \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
+.venv/bin/python tools/public_projection.py init-target \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
+~~~
+
+3. requestをtargetへ当てる前に`project --dry-run`を実行する。approvalは渡さず、targetは
+   read-onlyである。成功時は`DRY_RUN_READY`、unknown/内部/restricted clearanceやsecurity
+   違反は`BLOCKED_POLICY`、dirty/layout/index/source/content競合は`BLOCKED_CONFLICT`となる。
+   resultはstate rootの`<projection-id>/public-projection-result.json`へhash、ID、path、finding
+   だけをcreate-onlyで残す。
+
+~~~bash
+.venv/bin/python tools/public_projection.py project \
+  --request <public-projection-request.yaml> \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
+~~~
+
+4. 人間がcandidateのbytesと公開範囲・権利・同意を確認した後、requestのcanonical SHA-256へ
+   結び付いた別ファイルを受け取った場合だけ`project --apply`を実行する。approvalには
+   `public_share`、`APPROVED`、`HUMAN`、scope `local-public-project-projection`、有効な
+   `approved_at`/`expires_at`が必要で、エージェントはapprovalや`approved_by`を生成・補完しない。
+
+~~~bash
+.venv/bin/python tools/public_projection.py project \
+  --request <public-projection-request.yaml> \
+  --approval <public-projection-approval.yaml> \
+  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
+~~~
+
+applyの変更先は新規record、対応index、collection READMEのcatalog marker内だけである。root
+README、既存record、marker外、Git ref、remote、branch、commit、push、merge、release、visibility
+は変更しない。終端は`APPLIED`、同一source/contentの再実行`ALREADY_PROJECTED`、承認問題
+`BLOCKED_HUMAN`、policy問題`BLOCKED_POLICY`、target競合`BLOCKED_CONFLICT`、I/O/rollback不全
+`FAILED`である。`FAILED`に残存pathがあれば、resetや既存record削除をせずtarget fingerprintを
+人間が確認して復旧する。apply後のcommit・push・release・実際のpublic shareも人間の別ゲートで
+ある。
+
+合成temporary Git targetだけを使い、会話履歴なしの再現経路を確認するには次を実行する。
+
+~~~bash
+.venv/bin/python -m unittest tests.test_public_projection tests.test_security_boundary -v
+~~~
 
 ## Context loading
 

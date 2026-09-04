@@ -1,29 +1,29 @@
-version: 187
-updated_at: "2026-09-04T13:43:06+09:00"
-active_task: null
-active_repository: null
+version: 188
+updated_at: "2026-09-04T13:46:46+09:00"
+active_task: PUBLIC-PROJECTION-DOCS-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
+  status: held
+  owner: codex-public-projection-docs
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: null
+  expires_at: "2026-09-04T16:00:00+09:00"
   lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-APPLY-001:20260904-133000
-  released_at: "2026-09-04T13:43:06+09:00"
+  execution_id: PUBLIC-PROJECTION-DOCS-001:20260904-134646
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/public_projection.py, schemas/public-projection-approval.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_security_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+    paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, config/human-gates.yaml, PLANS.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, tests/test_docs.py, tests/test_public_projection.py]
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-APPLY-001
+  task: PUBLIC-PROJECTION-DOCS-001
   repository: agentic-art-orchestration
-  start_point: d71ef6774e5a4886fc605ca1f49c33e974b9e3bf
-  expected_changes: Implement human approval verification, staged atomic public projection apply, allowlisted record/index/catalog mutations, rollback, and deterministic idempotency/conflict outcomes without Git ref or remote mutation.
-  result: "completed; implementation commit 7f4c4404c6edd51144a74ff1e43a660613a4a67; parent PR #166 merged as c384e5ec70ef7b007a105abede415456e94f75bb; local checks passed."
+  start_point: 75c0b2d5930b340d804d930c06af95e2e48c6f0b
+  expected_changes: Synchronize README, operator runbook, agent runtime guide, human-gates config, PLANS, state, and handoff with public projection prepare/dry-run/apply, synthetic proof, approval boundaries, target restrictions, no-public-share behavior, recovery, and autonomous repository completion guidance.
+  result: in_progress; claimed 2026-09-04T13:46:46+09:00 by codex-public-projection-docs; documentation and checks pending.
 last_completed_task: PUBLIC-PROJECTION-APPLY-001
 resume_from:
   task: PUBLIC-PROJECTION-DOCS-001
-  action: "Claim the smallest dependency-complete public projection docs task and synchronize the operator-facing commands, approval boundary, recovery, and autonomous repository completion guidance."
+  action: "Inspect the public projection Issue SSOT, implemented CLI, human-gates config, and nearest documentation/tests, then synchronize operator guidance without enabling automatic public share."
   command: python3 tools/validate.py --check
 
 issue_intake:
