@@ -1,0 +1,31 @@
+{
+  "contract_version": "public-projection-result/v1",
+  "projection_id": "PUBLIC-20260904-001",
+  "generated_at": "2026-09-04T00:00:00Z",
+  "status": "DRY_RUN_READY",
+  "request_sha256": "b9d1916752cbd8f4a1e831c82be9be587ad5b000fa3aecfe126eab9f80e68d1d",
+  "approval_sha256": null,
+  "source_refs": [
+    {"record_kind": "plan", "source_sha256": "84ce220804f29e460c2915800dad3534116ba0ba0a1197e672e9604f6b3edbc4"}
+  ],
+  "public_ids": ["P0001"],
+  "changed_paths": [],
+  "target": {
+    "root_role": "public_projection_root",
+    "mutation_count": 0,
+    "before_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "after_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "findings": [],
+  "remediations": [],
+  "human_gate": {"status": "BLOCKED_HUMAN", "operation": "public_share"},
+  "remote_operations": [],
+  "child_mutations": [],
+  "privacy": {
+    "internal_content_stored": false,
+    "credential_stored": false,
+    "raw_conversation_stored": false,
+    "media_bytes_stored": false,
+    "direct_identifier_stored": false
+  }
+}

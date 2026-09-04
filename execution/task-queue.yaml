@@ -1360,7 +1360,7 @@ tasks:
   - id: PUBLIC-PROJECTION-CONTRACT-001
     milestone: M29
     title: Define public project, request, approval, and result contracts
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

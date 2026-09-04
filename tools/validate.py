@@ -12,6 +12,8 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 MANIFEST_PATH = ROOT / "config/repositories.yaml"
 MANIFEST_SCHEMA_PATH = ROOT / "schemas/repository-manifest.schema.json"
 SIGNAL_SCHEMA_PATH = ROOT / "schemas/normalized-research-signal.schema.json"
@@ -63,6 +65,11 @@ OUTPUT_DESTINATIONS_SCHEMA_PATH = ROOT / "schemas/output-destinations.schema.jso
 DESTINATION_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/destination-resolution.schema.json"
 OUTPUT_DESTINATIONS_EXAMPLE_PATH = ROOT / "config/output-destinations.example.yaml"
 WORKSPACE_BOOTSTRAP_SCHEMA_PATH = ROOT / "schemas/workspace-bootstrap.schema.json"
+PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH = ROOT / "schemas/public-project-layout.schema.json"
+PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH = ROOT / "schemas/public-projection-request.schema.json"
+PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH = ROOT / "schemas/public-projection-approval.schema.json"
+PUBLIC_PROJECTION_RESULT_SCHEMA_PATH = ROOT / "schemas/public-projection-result.schema.json"
+PUBLIC_PROJECTION_FIXTURE_ROOT = ROOT / "tests/fixtures/public-projection"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -119,6 +126,11 @@ REQUIRED_FILES = [
     "schemas/output-destinations.schema.json",
     "schemas/destination-resolution.schema.json",
     "schemas/workspace-bootstrap.schema.json",
+    "schemas/public-project-layout.schema.json",
+    "schemas/public-projection-request.schema.json",
+    "schemas/public-projection-approval.schema.json",
+    "schemas/public-projection-result.schema.json",
+    "tools/public_projection.py",
     "tools/batch_status.py",
     "tools/batch_run.py",
     "tools/output_destinations.py",
@@ -558,6 +570,100 @@ def validate_workspace_bootstrap_contract(
     privacy = schema.get("properties", {}).get("privacy", {})
     if not isinstance(privacy, dict) or privacy.get("additionalProperties") is not False:
         errors.append(f"{source}: privacy result must be closed; remediation: keep credential fields out of evidence")
+    return errors
+
+
+def validate_public_projection_contract(
+    layout_schema: dict | None = None,
+    request_schema: dict | None = None,
+    approval_schema: dict | None = None,
+    result_schema: dict | None = None,
+    source: str = "public-projection",
+) -> list[str]:
+    """Keep public projection contracts closed before any later target task runs."""
+    schemas = (
+        (layout_schema, PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH, "public project layout", "public-project-layout/v1"),
+        (request_schema, PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH, "public projection request", "public-projection-request/v1"),
+        (approval_schema, PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH, "public projection approval", "public-projection-approval/v1"),
+        (result_schema, PUBLIC_PROJECTION_RESULT_SCHEMA_PATH, "public projection result", "public-projection-result/v1"),
+    )
+    errors: list[str] = []
+    draft = "https://json-schema.org/draft/2020-12/schema"
+    loaded: dict[str, dict] = {}
+    for supplied, path, label, version in schemas:
+        schema = supplied if supplied is not None else load_json(path)
+        loaded[label] = schema
+        if not isinstance(schema, dict) or schema.get("$schema") != draft:
+            errors.append(f"{source}: {label} schema must be Draft 2020-12; remediation: restore the closed versioned schema")
+            continue
+        if schema.get("additionalProperties") is not False:
+            errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
+        contract = schema.get("properties", {}).get("contract_version", {})
+        if not isinstance(contract, dict) or contract.get("const") != version:
+            errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
+
+    request = loaded.get("public projection request")
+    if isinstance(request, dict):
+        required = set(request.get("required", []))
+        expected = {"contract_version", "projection_id", "generated_at", "source_root_role", "records"}
+        if required != expected:
+            errors.append(f"{source}: public projection request required fields are incomplete or expanded; remediation: keep the metadata-only draft envelope minimal")
+        source_root = request.get("properties", {}).get("source_root_role", {})
+        if not isinstance(source_root, dict) or source_root.get("const") != "internal_output_root":
+            errors.append(f"{source}: public projection request must name internal_output_root; remediation: never source a request from the public target")
+
+    result = loaded.get("public projection result")
+    expected_statuses = [
+        "DRY_RUN_READY", "BLOCKED_HUMAN", "APPLIED", "ALREADY_PROJECTED",
+        "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED",
+    ]
+    if isinstance(result, dict):
+        statuses = result.get("properties", {}).get("status", {}).get("enum")
+        if statuses != expected_statuses:
+            errors.append(f"{source}: public projection result status vocabulary is incomplete or reordered; remediation: preserve the fixed human/policy/conflict outcomes")
+        for field in ("remote_operations", "child_mutations"):
+            if result.get("properties", {}).get(field, {}).get("const") != []:
+                errors.append(f"{source}: result {field} must be const empty; remediation: public projection must not perform remote or child mutation")
+
+    try:
+        from tools.public_projection import (
+            projection_policy_status,
+            request_sha256,
+            validate_approval,
+            validate_layout,
+            validate_request,
+            validate_result,
+        )
+
+        layout_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "layout.yaml"
+        request_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "request.yaml"
+        approval_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "approval.yaml"
+        result_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "result.json"
+        layout = load_yaml(layout_path)
+        request_value = load_yaml(request_path)
+        approval = load_yaml(approval_path)
+        result_value = load_json(result_path)
+        errors.extend(validate_layout(layout, _source_label(layout_path)))
+        errors.extend(validate_request(request_value, _source_label(request_path)))
+        errors.extend(validate_approval(approval, _source_label(approval_path)))
+        errors.extend(validate_result(result_value, _source_label(result_path)))
+        if projection_policy_status(request_value) != "READY_FOR_DRY_RUN":
+            errors.append(f"{source}: valid public projection fixture is not dry-run ready; remediation: keep the synthetic clearance evidence explicit")
+        expected_request_hash = request_sha256(request_value)
+        if approval.get("request_sha256") != expected_request_hash or result_value.get("request_sha256") != expected_request_hash:
+            errors.append(f"{source}: fixture request hashes do not match canonical request bytes; remediation: regenerate synthetic evidence from the same request")
+        if result_value.get("target", {}).get("mutation_count") != 0:
+            errors.append(f"{source}: contract fixture reports target mutation; remediation: keep contract validation target-free")
+    except (OSError, TypeError, ValueError, KeyError) as exc:
+        errors.append(f"{source}: synthetic fixture validation failed: {exc}; remediation: repair public projection fixtures without adding real target data")
+
+    try:
+        from tools.security import PUBLIC_PROJECTION_FINDING_CODES
+        finding_enum = result.get("$defs", {}).get("finding", {}).get("properties", {}).get("code", {}).get("enum", []) if isinstance(result, dict) else []
+        if set(finding_enum) != PUBLIC_PROJECTION_FINDING_CODES:
+            errors.append(f"{source}: security finding vocabulary differs between tool and result schema; remediation: keep sanitized public finding codes synchronized")
+    except (ImportError, AttributeError, TypeError):
+        errors.append(f"{source}: public security finding vocabulary unavailable; remediation: expose the fixed sanitized vocabulary")
     return errors
 
 
@@ -3914,6 +4020,15 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
             validate_workspace_bootstrap_contract(
                 load_json(WORKSPACE_BOOTSTRAP_SCHEMA_PATH),
                 _source_label(WORKSPACE_BOOTSTRAP_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_public_projection_contract(
+                load_json(PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH),
+                load_json(PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH),
+                load_json(PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH),
+                load_json(PUBLIC_PROJECTION_RESULT_SCHEMA_PATH),
+                _source_label(PUBLIC_PROJECTION_RESULT_SCHEMA_PATH),
             )
         )
         state = load_yaml(ROOT / "execution/state.yaml")

@@ -1,0 +1,10 @@
+contract_version: public-project-layout/v1
+collections:
+  plans: plans
+  works: works
+catalog_markers:
+  start: "<!-- agentic-art:catalog:start -->"
+  end: "<!-- agentic-art:catalog:end -->"
+media_policy:
+  max_file_bytes: 50000000
+  allowed_extensions: [.png, .jpg, .jpeg, .webp, .gif, .svg, .mp4, .webm, .mp3, .wav, .pdf, .txt, .md, .py]

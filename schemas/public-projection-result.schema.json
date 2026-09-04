@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/public-projection-result.schema.json",
+  "title": "Public projection result evidence v1",
+  "description": "Closed, metadata-only result for dry-run or human-gated local public projection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "projection_id", "generated_at", "status", "request_sha256", "approval_sha256", "source_refs", "public_ids", "changed_paths", "target", "findings", "remediations", "human_gate", "remote_operations", "child_mutations", "privacy"],
+  "properties": {
+    "contract_version": {"const": "public-projection-result/v1"},
+    "projection_id": {"$ref": "#/$defs/stable_id"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["DRY_RUN_READY", "BLOCKED_HUMAN", "APPLIED", "ALREADY_PROJECTED", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"]},
+    "request_sha256": {"$ref": "#/$defs/hash64"},
+    "approval_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
+    "source_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "public_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[PW][0-9]{4}$"}
+    },
+    "changed_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/relative_path"}
+    },
+    "target": {"$ref": "#/$defs/target"},
+    "findings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "remediations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "human_gate": {"$ref": "#/$defs/human_gate"},
+    "remote_operations": {"const": []},
+    "child_mutations": {"const": []},
+    "privacy": {"$ref": "#/$defs/privacy"}
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "hash64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_kind", "source_sha256"],
+      "properties": {
+        "record_kind": {"enum": ["plan", "work"]},
+        "source_sha256": {"$ref": "#/$defs/hash64"}
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root_role", "mutation_count", "before_fingerprint", "after_fingerprint"],
+      "properties": {
+        "root_role": {"const": "public_projection_root"},
+        "mutation_count": {"type": "integer", "minimum": 0},
+        "before_fingerprint": {"$ref": "#/$defs/hash64"},
+        "after_fingerprint": {"$ref": "#/$defs/hash64"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "location", "remediation"],
+      "properties": {
+        "code": {
+          "enum": [
+            "UNKNOWN_CLEARANCE",
+            "MISSING_APPROVAL",
+            "APPROVAL_MISMATCH",
+            "APPROVAL_EXPIRED",
+            "TARGET_CONFLICT",
+            "TARGET_DIRTY",
+            "LAYOUT_INVALID",
+            "SOURCE_PATH_UNSAFE",
+            "SOURCE_HASH_MISMATCH",
+            "FORBIDDEN_CONTENT",
+            "CREDENTIAL",
+            "PRIVATE_URL",
+            "ABSOLUTE_PATH",
+            "FORBIDDEN_ARTIFACT",
+            "UNAPPROVED_MEDIA",
+            "INTERNAL_REFERENCE",
+            "REMOTE_OPERATION",
+            "ROLLBACK_FAILED"
+          ]
+        },
+        "location": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:/\\[\\]$-]+$"},
+        "remediation": {"type": "string", "minLength": 1}
+      }
+    },
+    "human_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "operation"],
+      "properties": {
+        "status": {"enum": ["NOT_REQUIRED", "BLOCKED_HUMAN", "APPROVED"]},
+        "operation": {"const": "public_share"}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["internal_content_stored", "credential_stored", "raw_conversation_stored", "media_bytes_stored", "direct_identifier_stored"],
+      "properties": {
+        "internal_content_stored": {"const": false},
+        "credential_stored": {"const": false},
+        "raw_conversation_stored": {"const": false},
+        "media_bytes_stored": {"const": false},
+        "direct_identifier_stored": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/public-projection-request.schema.json",
+  "title": "Public projection request v1",
+  "description": "Closed, metadata-only request describing public-ready records without carrying their bytes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "projection_id", "generated_at", "source_root_role", "records"],
+  "properties": {
+    "contract_version": {"const": "public-projection-request/v1"},
+    "projection_id": {"$ref": "#/$defs/stable_id"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_root_role": {"const": "internal_output_root"},
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/record"}
+    }
+  },
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "slug": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "hash64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+    },
+    "repository_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_kind", "slug", "title", "source", "publication", "files"],
+      "properties": {
+        "record_kind": {"enum": ["plan", "work"]},
+        "slug": {"$ref": "#/$defs/slug"},
+        "title": {"type": "string", "minLength": 1},
+        "source": {"$ref": "#/$defs/source"},
+        "publication": {"$ref": "#/$defs/publication"},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/file"}
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "run_id", "locator", "canonical_sha256", "sha256"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/repository_id"},
+        "commit": {"$ref": "#/$defs/sha40"},
+        "run_id": {"$ref": "#/$defs/stable_id"},
+        "locator": {"$ref": "#/$defs/relative_path"},
+        "canonical_sha256": {"$ref": "#/$defs/hash64"},
+        "sha256": {"$ref": "#/$defs/hash64"}
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visibility", "rights_status", "consent_status", "attribution"],
+      "properties": {
+        "visibility": {"enum": ["public", "unknown", "internal", "restricted"]},
+        "rights_status": {"enum": ["cleared", "unknown", "internal", "restricted"]},
+        "consent_status": {"enum": ["cleared", "unknown", "internal", "restricted"]},
+        "attribution": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "source_locator", "target_locator", "sha256", "mime_type", "rights_status"],
+      "properties": {
+        "role": {"enum": ["readme", "body", "media", "process"]},
+        "source_locator": {"$ref": "#/$defs/relative_path"},
+        "target_locator": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:README\\.md|plan\\.md|record\\.md|media/[A-Za-z0-9._/-]+|process/[A-Za-z0-9._/-]+)$"
+        },
+        "sha256": {"$ref": "#/$defs/hash64"},
+        "mime_type": {"type": "string", "pattern": "^[a-z0-9.+-]+/[A-Za-z0-9.+-]+$"},
+        "rights_status": {"enum": ["cleared", "unknown", "internal", "restricted"]}
+      }
+    }
+  }
+}
