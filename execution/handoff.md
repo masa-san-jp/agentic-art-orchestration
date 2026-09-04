@@ -2223,6 +2223,7 @@
 - P0007独自改訂PR #7はProduction正本SHAと不一致でcanonical finding 28件、部分修正PR #8は正本がある3件を誤ってblockedにしていたため、どちらも理由をcommentしてsupersededとしてcloseした。履歴とbranchは削除していない。
 - PR #9のActions runs `33926170008` / `33926195797`は`steps=[]`で、account payment failureまたはspending limitによるjob開始前停止。local/integration quality gateとは分離して保持する。
 - P0006のユーザー出力とローカル公開先のSHA-256を再確認し、どちらも`846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624`だった。credential、private/raw/restricted data、会話全文、ローカル絶対パスは公開branchへ追加していない。explicit feedbackは正しい制作プランを無断要約せず公開すること、inferred feedbackはnone。
+- 親Draft PR #191の競合を解くため、最新`origin/main` `02153dde6304ec4457cf41113a73a83c7f67d361`をfeature branchへmergeした。main側のroot catalog helperとcanonical guardを統合し、focused `95/95`、full `547/547`、再度の親→子P0008接続試験がPASSした。default branch自体へのmergeは行っていない。
 
 ### Next exact action
 

@@ -59,7 +59,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-05T07:37:46+09:00`.
+Source updated at: `2026-09-05T07:47:31+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -305,6 +305,9 @@ preflight後に`plans/Pxxxx-<slug>/`へ反映します。各recordには`README.
 run ID、canonical SHA-256を記録します。Production固有の計画メタデータ、完成像、成果物、
 技術仕様・材料・資源、工程、受入評価、日程・予算、リスク、承認・安全境界、証跡のsectionを欠く
 手書き要約は`CANONICAL_PLAN_INVALID`として拒否します。
+公開targetのルート`README.md`にも同じ`catalog_markers`のペアがある場合は、そこにルートからの
+`plans/.../README.md`リンク一覧を同じtransactionで更新します。ルートmarkerがない旧targetでは
+従来どおりcollection READMEだけを更新します。
 plan固有の素材が正規のrequestに含まれる場合だけ、既存のlayout contractで定める`media/`
 配下のallowlist pathを使います（Issueでいう`assets`相当の領域です）。
 
@@ -381,7 +384,7 @@ requestを対象とする既存のhuman-gated laneです。
 ~~~
 
 applyが変更できるのは新規record directory、対応する`plans/index.yaml`または`works/index.yaml`、
-collection READMEのcatalog marker内だけです。root README、既存record、marker外、Git ref、remote、
+collection READMEのcatalog marker内、および自動plan投影で明示的にmarkerを置いたroot READMEのcatalog marker内だけです。既存record、marker外、Git ref、remote、
 branch、commit、push、merge、release、repository visibilityは変更しません。同じsource/contentの
 再実行は`ALREADY_PROJECTED`、既存内容・dirty target・layout/index競合は`BLOCKED_CONFLICT`、
 policy違反は`BLOCKED_POLICY`、途中I/Oまたはrollback不全は`FAILED`です。失敗時はtransactionが

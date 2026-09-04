@@ -1471,6 +1471,53 @@ def _replace_marker_block(text: str, layout: Mapping[str, object], body: str, lo
     return f"{before}{start}\n{inner}{end}{body_suffix}{after}"
 
 
+def _root_catalog_update(
+    target: Path,
+    layout: Mapping[str, object],
+    plans_index: Mapping[str, object],
+) -> tuple[bytes, bytes] | None:
+    """Return a root README replacement when the target opts into root links.
+
+    Older public targets may not have a root catalog block, so the feature is
+    opt-in by the presence of the existing layout marker pair.  The current
+    ``agentic-art-project`` target contains the pair and therefore receives a
+    deterministic list of links rooted at ``plans/``.
+    """
+
+    root = target / "README.md"
+    if not root.exists() or root.is_symlink():
+        return None
+    current, _ = _target_regular(root, "target.root.README")
+    try:
+        text = current.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise _prepare_error("LAYOUT_INVALID", "target.root.README", "root README must remain UTF-8") from exc
+    markers = layout.get("catalog_markers")
+    if not isinstance(markers, Mapping):
+        raise _prepare_error("LAYOUT_INVALID", "layout.catalog_markers", "declare catalog markers in public-project.yaml")
+    start = markers.get("start")
+    end = markers.get("end")
+    if not isinstance(start, str) or not isinstance(end, str):
+        raise _prepare_error("LAYOUT_INVALID", "layout.catalog_markers", "declare string catalog markers")
+    starts = text.count(start)
+    ends = text.count(end)
+    if starts == 0 and ends == 0:
+        return None
+    if starts != 1 or ends != 1 or text.find(start) >= text.find(end):
+        raise _prepare_error(
+            "LAYOUT_INVALID",
+            "target.root.README",
+            "root README catalog markers must be one ordered pair or both absent",
+        )
+    desired = _replace_marker_block(
+        text,
+        layout,
+        _catalog_text(plans_index, "plans", root=True),
+        "target.root.README",
+    ).encode("utf-8")
+    return current, desired
+
+
 def _index_scaffold_bytes() -> bytes:
     return b"version: 1\nrecords: []\nretired_ids: []\n"
 
@@ -1603,9 +1650,8 @@ def _catalog_line(entry: Mapping[str, object], collection: str, *, root: bool = 
     if entry.get("status") == "blocked-missing-canonical":
         title = f"{title} — 正本待ち（制作不可）"
     path = Path(str(entry["path"]))
-    child = path.name
-    link = f"{path.as_posix()}/README.md" if root else f"{child}/README.md"
-    return f"- [{title}]({link})"
+    link = path.as_posix() if root else path.name
+    return f"- [{title}]({link}/README.md)"
 
 
 def _catalog_text(index: Mapping[str, object], collection: str, *, root: bool = False) -> str:
@@ -2403,6 +2449,7 @@ def _projection_plan_data(
     public_ids: list[str] = []
     planned_paths: set[str] = set()
     target_updates: dict[str, tuple[bytes, bytes]] = {}
+    root_catalog_enabled = False
     has_policy = any(finding.get("code") in PROJECTION_POLICY_CODES for finding in findings)
     allocation_findings: list[dict[str, str]] = []
     candidate_indexes: dict[str, dict[str, object]] = {}
@@ -2475,29 +2522,19 @@ def _projection_plan_data(
             plan_index = candidate_indexes.get(plan_collection) if isinstance(plan_collection, str) else None
             has_plan = any(plan.get("collection") == plan_collection for plan in plans)
             if has_plan and isinstance(plan_index, Mapping):
-                root_relative = "README.md"
-                root_path = _target_locator(public_projection_root, root_relative, root_relative)[1]
                 try:
-                    current_root, _ = _target_regular(root_path, root_relative)
-                    root_text = current_root.decode("utf-8")
-                    markers = layout.get("catalog_markers")
-                    marker_start = str(markers.get("start")) if isinstance(markers, Mapping) else ""
-                    marker_end = str(markers.get("end")) if isinstance(markers, Mapping) else ""
-                    if marker_start in root_text or marker_end in root_text:
-                        desired_root_text = _replace_marker_block(
-                            root_text,
-                            layout,
-                            _catalog_text(plan_index, plan_collection, root=True),
-                            root_relative,
-                        )
-                        desired_root = desired_root_text.encode("utf-8")
-                        if current_root != desired_root:
-                            target_updates[root_relative] = (current_root, desired_root)
-                            planned_paths.add(root_relative)
+                    root_update = _root_catalog_update(public_projection_root, layout, plan_index)
                 except (PreparationError, UnicodeDecodeError) as exc:
                     code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
                     remediation = exc.remediation if isinstance(exc, PreparationError) else "root README must remain UTF-8"
-                    findings.append(_projection_finding(code, root_relative, remediation))
+                    findings.append(_projection_finding(code, "target.root.README", remediation))
+                else:
+                    root_catalog_enabled = root_update is not None
+                    if root_update is not None:
+                        current_root, desired_root = root_update
+                        if current_root != desired_root:
+                            target_updates["README.md"] = (current_root, desired_root)
+                            planned_paths.add("README.md")
 
     return {
         "projection_id": projection_id,
@@ -2512,6 +2549,7 @@ def _projection_plan_data(
         "planned_paths": sorted(planned_paths),
         "target_updates": target_updates,
         "candidate_indexes": candidate_indexes,
+        "root_catalog_enabled": root_catalog_enabled,
     }
 
 
@@ -2609,6 +2647,23 @@ def _project_dry_run_result(
                         code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
                         remediation = exc.remediation if isinstance(exc, PreparationError) else "collection README must remain UTF-8"
                         findings.append(_projection_finding(code, readme_relative, remediation))
+            plan_collection = collection_map.get("plan")
+            plan_index = candidate_indexes.get(plan_collection) if plan_collection else None
+            has_new_plan = any(
+                plan.get("existing_entry") is None and plan.get("collection") == plan_collection
+                for plan in plans
+                if isinstance(plan, Mapping)
+            )
+            if has_new_plan and isinstance(plan_index, Mapping):
+                try:
+                    root_update = _root_catalog_update(public_projection_root, layout, plan_index)
+                except (PreparationError, UnicodeDecodeError) as exc:
+                    code = exc.code if isinstance(exc, PreparationError) else "LAYOUT_INVALID"
+                    remediation = exc.remediation if isinstance(exc, PreparationError) else "root README must remain UTF-8"
+                    findings.append(_projection_finding(code, "target.root.README", remediation))
+                else:
+                    if root_update is not None and root_update[0] != root_update[1]:
+                        planned_paths.add("README.md")
     findings = _dedupe_projection_findings(findings)
     if any(finding.get("code") in policy_codes for finding in findings):
         status = "BLOCKED_POLICY"
@@ -2783,17 +2838,8 @@ def _replay_dirty_target_allowed(target: Path, plan_data: Mapping[str, object]) 
         if collection:
             managed.add(f"{collection}/index.yaml")
             managed.add(f"{collection}/README.md")
-    layout = plan_data.get("layout")
-    if isinstance(layout, Mapping):
-        markers = layout.get("catalog_markers")
-        root_readme = target / "README.md"
-        if isinstance(markers, Mapping) and root_readme.is_file() and not root_readme.is_symlink():
-            try:
-                root_text = root_readme.read_text(encoding="utf-8")
-            except (OSError, UnicodeError):
-                return False
-            if str(markers.get("start", "")) in root_text and str(markers.get("end", "")) in root_text:
-                managed.add("README.md")
+    if plan_data.get("root_catalog_enabled") is True:
+        managed.add("README.md")
     return set(observed).issubset(managed)
 
 

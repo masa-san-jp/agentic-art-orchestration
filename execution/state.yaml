@@ -1,5 +1,5 @@
-version: 212
-updated_at: "2026-09-05T07:37:46+09:00"
+version: 213
+updated_at: "2026-09-05T07:47:31+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -36,10 +36,12 @@ completion_snapshot:
   user_output: "/Users/masa/マイドライブ/Agentic-Art-Output/距離が選ぶ境界/正式制作計画書.md"
   public_output: "agent/issue-6-canonical-plan-20260905:plans/P0006-distance-selects-boundary/plan.md"
   parent_focused_tests: "87/87 PASS"
-  parent_full_tests: "546/546 PASS"
+  parent_full_tests: "547/547 PASS after merging origin/main 02153dd"
+  parent_post_merge_focused_tests: "95/95 PASS"
+  parent_merge_base: 02153dde6304ec4457cf41113a73a83c7f67d361
   child_validator: PASS
   child_full_tests: "12/12 PASS"
-  integration_e2e: "Parent automatic P0008 APPLIED; receiver validator, catalog sync, and 12/12 tests PASS"
+  integration_e2e: "Repeated after origin/main merge: parent automatic P0008 APPLIED; receiver validator, catalog sync, and 12/12 tests PASS"
   active_canonical_records: [P0002, P0003, P0006, P0007]
   blocked_legacy_summaries: [P0001, P0004, P0005]
   external_pr: 9
