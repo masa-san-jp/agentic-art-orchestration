@@ -2151,12 +2151,13 @@
 
 1. 親repoの最終validator、full suite、README status、py_compile、diff checkを実行し、親mainと全child Issueの状態を確認する。
 
-## 2026-09-04 — PARENT-ENTRYPOINT-HARDENING-001 in progress
+## 2026-09-04 — PARENT-ENTRYPOINT-HARDENING-001 completed
 
 - 親repoの入口に、目的を「エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。」と明記し、READMEへ制作プランの実用性、複数プラン、自律継続、アートとAI技術の判定要件を追加した。設計仕様書にも同じ目的境界を追加した。
 - `tools/run.py`の生成run stateが既定の`data/runs/`へ書かれる場合に共有checkoutをdirtyにしないよう、`.gitignore`へ`data/runs/`を追加した。
-- 子repo、schema/data/pin、credential、private data、raw conversation、Drive/外部artifact本文は変更していない。最終acceptanceと検証結果は実装commit・PRの確定後に追記する。GitHub Actions billingは外部環境事項としてローカル証跡と分離する。
+- implementation commit `ccdf897756c6a2d630e9687362071cb1d7ef94ed`、PR [#184](https://github.com/masa-san-jp/agentic-art-orchestration/pull/184)、main merge `df76b2f4826c3621f2b0fccabe4a6fc249179a52`。parent validator、full suite `535 tests / 1 skipped PASS`、README status、py_compile、diff checkがPASSした。子repo、schema/data/pin、credential、private data、raw conversation、Drive/外部artifact本文は変更していない。
+- GitHub Actions run `33858927901`は全jobが`steps=[]`のbilling開始前失敗であり、quality gateのPASSには算入していない。
 
 ### Next exact action
 
-1. 変更を検証し、実装commitとPRを作成する。
+1. 親mainの最終SHAと全repoのIssue/PR、queue残件数をread-onlyで確認して引き渡す。

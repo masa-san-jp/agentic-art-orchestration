@@ -1,5 +1,5 @@
-version: 63
-updated_at: "2026-09-04T18:24:48+09:00"
+version: 64
+updated_at: "2026-09-04T18:34:08+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1540,7 +1540,7 @@ tasks:
   - id: PARENT-ENTRYPOINT-HARDENING-001
     milestone: M30
     title: Make parent purpose and clean run-state boundary explicit
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1550,5 +1550,5 @@ tasks:
     depends_on: [RESEARCH-EVALUATION-DOCS-001]
     acceptance: The parent AGENTS, README, and design specification state the exact agent-harness purpose and observable production-plan requirements, while generated data/runs state cannot dirty a shared checkout; no child repository, schema, data, pin, credential, or external artifact changes are made.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/project_status.py --check-readme, python3 -m py_compile tools/*.py tests/*.py, git diff --check]
-    completion: "Implementation is in progress; the implementation and final verification evidence will be recorded after the task commit and PR are created."
+    completion: "Implementation commit ccdf897756c6a2d630e9687362071cb1d7ef94ed was merged to parent main by PR #184 as df76b2f4826c3621f2b0fccabe4a6fc249179a52. AGENTS.md now makes the exact harness purpose and README requirements authoritative; README.md states usable production-plan, multi-plan, autonomous-continuation, and art-versus-AI requirements; the system design specification records the same purpose boundary; .gitignore excludes generated data/runs/. Parent validator, full unittest 535 tests with 1 skipped, project-status README check, py_compile, and git diff --check PASS. Remote run 33858927901 failed before steps with steps=[] because of the account billing limit and is not counted as a quality-gate pass. No child repository, schema/data/pin, credential, private data, raw conversation, or external artifact changed. Acceptance 1/1."
     stop_if: [The purpose or production-plan acceptance must be weakened, generated run state must be committed as canonical evidence, a child/schema/data/pin/credential/external artifact change is required]
