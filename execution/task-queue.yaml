@@ -1,5 +1,5 @@
-version: 42
-updated_at: "2026-09-04T11:22:34+09:00"
+version: 43
+updated_at: "2026-09-04T11:32:03+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1267,7 +1267,7 @@ tasks:
   - id: OUTPUT-DESTINATIONS-RUNTIME-001
     milestone: M28
     title: Connect the shared destination resolver to all runtime commands
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1297,16 +1297,17 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-CONTRACT-001
     milestone: M28
     title: Define the manifest-driven workspace bootstrap result contract
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
-    agent_terminal: DRAFT_PR_READY
+    agent_terminal: EVIDENCE_READY
     lane: WORKSPACE_BOOTSTRAP
     interaction_blocking: false
     user_artifact_policy: READ_ONLY
     depends_on: [HARNESS-RESEARCH-PIN-85-001]
     acceptance: Add the closed workspace-bootstrap/v1 result contract and bootstrap parser to tools/workspace.py without hardcoding repository entries, preserving existing init/fetch/status/guard/snapshot commands and supporting deterministic offline fixtures.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_workspace -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #154 merged to main as 331f2027a35198630dab5559257cc7ea7ad65d85. Implementation commit a787c016fe2e4759d6871abea11425c87ccb17cb added the closed workspace-bootstrap/v1 schema, fixed status/exit-code and sanitized finding vocabulary, deterministic manifest-order result builder/validator, and the opt-in bootstrap parser with JSON/human rendering. The contract-only bootstrap performs no clone until preflight/apply tasks land; existing init/fetch/status/guard/snapshot behavior is unchanged. Focused tests 15/15, parent full suite 495/495 with 1 expected skip, validator, py_compile, and diff check passed. GitHub jobs were billing-blocked or queued before steps and are not counted as test passes. No child repository, credential, token, remote response, or user workspace was written."
     stop_if: [The manifest must be duplicated outside repositories.yaml, Existing commands must be removed or renamed, A live credential or remote is required for acceptance, A child repository or pin must change]
 
   - id: WORKSPACE-BOOTSTRAP-PREFLIGHT-001

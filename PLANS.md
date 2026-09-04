@@ -715,3 +715,14 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `WORKSPACE-BOOTSTRAP-CONTRACT-001`, inspect Issue #150 and `tools/workspace.py`, then add the closed bootstrap result contract and deterministic offline parser.
+
+## WORKSPACE-BOOTSTRAP-CONTRACT-001 — completed
+
+- Parent PR #154 merged to `main` as `331f2027a35198630dab5559257cc7ea7ad65d85`; implementation commit was `a787c016fe2e4759d6871abea11425c87ccb17cb`.
+- Added the closed `workspace-bootstrap/v1` result schema, fixed readiness status/exit-code vocabulary, sanitized finding codes, deterministic manifest-order result construction/validation, and the opt-in `bootstrap` parser with JSON/human rendering. The current contract-only command deliberately performs no clone until preflight/apply tasks land, while legacy workspace commands remain unchanged.
+- Acceptance evidence: focused workspace bootstrap/workspace/guard tests `15/15 PASS`; parent full suite `495/495 PASS` with 1 expected skip; validator, py_compile, and diff check PASS. Remote jobs were billing-blocked or queued before steps and are not counted as test passes.
+- Safety: no live remote, credential, token, child checkout, user workspace, private data, or external artifact body was accessed or written.
+
+### Next exact action
+
+1. Claim `OUTPUT-DESTINATIONS-RUNTIME-001`, inspect the four runtime command parsers and existing default paths, then connect the shared resolver with legacy compatibility tests.

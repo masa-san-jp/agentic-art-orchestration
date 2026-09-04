@@ -1976,3 +1976,15 @@
 ### Next exact action
 
 1. Claim `WORKSPACE-BOOTSTRAP-CONTRACT-001` from fresh parent `main`, inspect the existing workspace command contract and Issue #150, then implement only the closed result parser and offline contract.
+
+## 2026-09-04 — WORKSPACE-BOOTSTRAP-CONTRACT-001 completed
+
+- Parent PR #154 merged to `main` as `331f2027a35198630dab5559257cc7ea7ad65d85`; feature commit `a787c016fe2e4759d6871abea11425c87ccb17cb` is recorded in the queue.
+- `workspace-bootstrap/v1` now has a closed schema, fixed status/exit vocabulary, sanitized repository finding codes, deterministic manifest-order evidence, and the opt-in `bootstrap` parser. Contract-only execution returns a structured `FAILED/BOOTSTRAP_NOT_READY` result without cloning; the later preflight/apply tasks own all workspace mutation.
+- Observed checks: validator PASS; focused tests 15/15 PASS; parent full suite 495/495 PASS with 1 expected skip; py_compile PASS; diff check PASS. GitHub run 33829819235 had billing-blocked failures before steps and one queued job; none are counted as test passes.
+- Lease is released. The dependency-complete smallest BACKLOG task `OUTPUT-DESTINATIONS-RUNTIME-001` is promoted to READY and is the next deterministic start point; workspace preflight remains downstream of its own contract.
+- Safety: no child checkout, live remote, credential, token, user workspace, private data, or external artifact body was written.
+
+### Next exact action
+
+1. Claim `OUTPUT-DESTINATIONS-RUNTIME-001` from fresh parent `main`, inspect run/batch/exchange/runner defaults, then connect only the shared destination resolver and prove legacy compatibility.
