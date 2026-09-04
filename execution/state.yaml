@@ -1,29 +1,29 @@
-version: 195
-updated_at: "2026-09-04T16:12:53+09:00"
-active_task: null
-active_repository: null
+version: 196
+updated_at: "2026-09-04T16:16:48+09:00"
+active_task: AUTONOMY-READINESS-MANIFEST-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T16:01:28+09:00"
+  status: held
+  owner: codex-autonomy-manifest
+  acquired_at: "2026-09-04T16:16:48+09:00"
   expires_at: "2026-09-04T19:00:00+09:00"
-  lane: WORKSPACE_BOOTSTRAP
-  execution_id: WORKSPACE-BOOTSTRAP-DOCS-001:20260904-160128
-  released_at: "2026-09-04T16:12:53+09:00"
+  lane: AUTONOMY_READINESS
+  execution_id: AUTONOMY-READINESS-MANIFEST-001:20260904-161648
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
+    paths: [config/repositories.yaml, tests/test_validate.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
     child_repositories: []
 checkpoint:
-  task: WORKSPACE-BOOTSTRAP-DOCS-001
+  task: AUTONOMY-READINESS-MANIFEST-001
   repository: agentic-art-orchestration
-  start_point: b557923652b879325b60a3333a729450a47ecfef
-  expected_changes: Synchronize fresh-clone bootstrap, live credential preflight, offline proof, sanitized status/remediation, pin drift recovery, recovery ownership, and unchanged legacy command guidance across README and operator/agent runbooks.
-  result: completed; documentation merged as 267a51c31f110c9fc431a332af1eb4199ec77e20 and completion record pending.
-last_completed_task: WORKSPACE-BOOTSTRAP-APPLY-001
+  start_point: e7258d0b4e816bd915a7a8ab41c01404f3567d1a
+  expected_changes: Point every manifest child at its authoritative AGENTS.md instruction entrypoint, add a regression check, preserve all URLs/pins/quality gates, and update only parent execution evidence.
+  result: in_progress; claimed 2026-09-04T16:16:48+09:00 by codex-autonomy-manifest; implementation and checks pending.
+last_completed_task: WORKSPACE-BOOTSTRAP-DOCS-001
 resume_from:
-  task: null
-  action: "No dependency-complete task remains; observe the open Issue set read-only and register a new task only with an Issue SSOT, explicit acceptance, target repository, checks, and human gate."
+  task: AUTONOMY-READINESS-MANIFEST-001
+  action: "Fix the parent manifest instruction entrypoints for art-history and marketing, add deterministic validation coverage, run parent gates, and record the child readiness follow-up tasks without changing child data or pins."
   command: .venv/bin/python tools/validate.py --check
 
 workspace_bootstrap_apply:

@@ -1,5 +1,5 @@
-version: 55
-updated_at: "2026-09-04T16:01:28+09:00"
+version: 56
+updated_at: "2026-09-04T16:16:48+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1440,3 +1440,78 @@ tasks:
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
     completion: "Implementation commit bb11d38f6a2df80b7c9750aae93454024ebb607c; parent PR #168 merged to main as d840912. README, operator runbook, and agent runtime guide now document prepare, init-target, project --dry-run, and project --apply without conversation history; human-gates.yaml explicitly scopes public_share to the separate public-projection-approval/v1 envelope and excludes layout-only init, Git mutation, repository visibility, and remote publication. Synthetic temporary-target proof and documentation regression coverage were added. Focused public/docs/status tests 37/37 PASS; parent full suite 523 tests / 1 skipped PASS; validator, project-status README check, py_compile, and diff check PASS. GitHub Actions run 33838751364 failed before all steps because of the account billing limit and is not counted as a quality-gate pass. No child repository, manifest pin, user path, credential, private/restricted data, raw conversation, public target, or external artifact body was written. Acceptance 1/1."
     stop_if: [Docs imply automatic public sharing, A private path or internal ID is exposed, Human approval is weakened, README status cannot be regenerated]
+
+  - id: AUTONOMY-READINESS-MANIFEST-001
+    milestone: M30
+    title: Align manifest instruction entrypoints with child agent contracts
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/176
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [WORKSPACE-BOOTSTRAP-DOCS-001]
+    acceptance: Parent manifest points every child to its authoritative agent instruction entrypoint, art-history and marketing resolve to AGENTS.md, manifest validation and context/workspace tests pass, and no child schema/data/pin/credential is changed.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_validate tests.test_workspace_bootstrap -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A child schema/data/pin must change, The authoritative child instruction file is missing, A user path or credential is required]
+
+  - id: SELF-MODEL-AUTONOMY-001
+    milestone: M30
+    title: Make self-model fresh-clone agent setup explicit
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/83
+    target_repositories: [self-model]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [AUTONOMY-READINESS-MANIFEST-001]
+    acceptance: Self-model AGENTS provides conditional repository-local dependency setup, canonical agent runtime/task lifecycle, completion evidence, and no-secret boundaries so a fresh-clone agent can run declared checks without conversation history; no entity/data/schema/consent change is made.
+    checks: [python3 tools/agent_runtime.py tools/task_harness.py validate, python3 tools/agent_runtime.py -m unittest discover -s tests -p "test_*.py", git diff --check]
+    stop_if: [A self-model entity or consent scope must change, Raw voice/private data is needed, Dependency setup requires an unapproved external write]
+
+  - id: RESEARCH-AUTONOMY-001
+    milestone: M30
+    title: Make research agent setup portable and self-contained
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/89
+    target_repositories: [agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [AUTONOMY-READINESS-MANIFEST-001]
+    acceptance: Research AGENTS provides conditional requirements setup, portable external output placeholders, canonical next_action/task/runtime lifecycle, completion evidence, and safety boundaries so a fresh-clone agent can run declared checks without conversation history; no project/data/schema change is made.
+    checks: [python3 -m compileall -q tools tests, python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/build_graph.py --check, git diff --check]
+    stop_if: [A project output must enter tracked Git, A child repository/provider/credential is required, Research schema or data must change]
+
+  - id: PRODUCTION-AUTONOMY-001
+    milestone: M30
+    title: Make production agent setup explicit for fresh clones
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/58
+    target_repositories: [agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [AUTONOMY-READINESS-MANIFEST-001]
+    acceptance: Production AGENTS provides conditional requirements setup, repository-local check commands, explicit external output boundaries, task/completion evidence, and human effect gates so a fresh-clone agent can run declared checks without conversation history; no production project/data/schema change is made.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/run_evaluation.py --format json, git diff --check]
+    stop_if: [A physical/external effect or public share is requested, A production project must enter tracked Git, A schema/approval boundary must change]
+
+  - id: VIEWER-RESPONSE-AUTONOMY-001
+    milestone: M30
+    title: Complete viewer-response agent work contract
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/4
+    target_repositories: [viewer-response-notes]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [AUTONOMY-READINESS-MANIFEST-001]
+    acceptance: Viewer-response AGENTS defines authority order, one-task workflow, allowed paths, generated-file rules, required validation, stop conditions, metadata-only completion evidence, and existing aggregate-only/append-only privacy boundaries; no record/assessment/export/schema data changes.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [Raw response/PII/free text is needed, An existing record must be rewritten, An external write or schema change is required]

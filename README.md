@@ -35,14 +35,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T16:12:53+09:00`.
+Source updated at: `2026-09-04T16:16:48+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 130 | 130 |
+| 4 | 0 | 1 | 0 | 130 | 135 |
 
-Current task: `null`; repository: `null`; checkpoint: `WORKSPACE-BOOTSTRAP-DOCS-001`.
-Next action: No dependency-complete task remains; observe the open Issue set read-only and register a new task only with an Issue SSOT, explicit acceptance, target repository, checks, and human gate.
+Current task: `AUTONOMY-READINESS-MANIFEST-001`; repository: `agentic-art-orchestration`; checkpoint: `AUTONOMY-READINESS-MANIFEST-001`.
+Next action: Fix the parent manifest instruction entrypoints for art-history and marketing, add deterministic validation coverage, run parent gates, and record the child readiness follow-up tasks without changing child data or pins.
 Ready: none.
 Next task: `null`.
 Blocked:
