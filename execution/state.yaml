@@ -1,29 +1,29 @@
-version: 185
-updated_at: "2026-09-04T13:24:00+09:00"
-active_task: null
-active_repository: null
+version: 186
+updated_at: "2026-09-04T13:30:00+09:00"
+active_task: PUBLIC-PROJECTION-APPLY-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
+  status: held
+  owner: codex-public-projection-apply
   acquired_at: "2026-09-04T12:36:32+09:00"
-  expires_at: null
+  expires_at: "2026-09-04T15:30:00+09:00"
   lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-PLAN-001:20260904-130000
-  released_at: "2026-09-04T13:24:00+09:00"
+  execution_id: PUBLIC-PROJECTION-APPLY-001:20260904-133000
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/public_projection.py, tools/output_destinations.py, schemas/public-project-layout.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_security_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+    paths: [tools/public_projection.py, schemas/public-projection-approval.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_security_boundary.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-PLAN-001
+  task: PUBLIC-PROJECTION-APPLY-001
   repository: agentic-art-orchestration
-  start_point: bd4074a7eb81d779bd6c1bac7912ff3d7f40438a
-  expected_changes: Implement init-target and project dry-run planning for a local public-project worktree, with layout/source/hash/security/conflict checks, deterministic metadata-only result evidence, and zero target mutation until a later human-gated apply task.
-  result: "completed; implementation commit 7de680b224f4bfb1daa21741b0879a8c15e16529; parent PR #164 merged as 0f958a908e02403b7cf2b2b70d48552762032ebe; local checks passed."
+  start_point: d71ef6774e5a4886fc605ca1f49c33e974b9e3bf
+  expected_changes: Implement human approval verification, staged atomic public projection apply, allowlisted record/index/catalog mutations, rollback, and deterministic idempotency/conflict outcomes without Git ref or remote mutation.
+  result: in_progress; claimed 2026-09-04T13:30:00+09:00 by codex-public-projection-apply; implementation and checks pending.
 last_completed_task: PUBLIC-PROJECTION-PLAN-001
 resume_from:
   task: PUBLIC-PROJECTION-APPLY-001
-  action: "Claim the smallest dependency-complete public projection apply task, then implement approval verification, staged atomic apply, rollback, and idempotency only in temporary Git fixtures."
+  action: "Implement approval verification, staged atomic apply, rollback, and idempotency only in temporary Git fixtures."
   command: python3 tools/validate.py --check
 
 issue_intake:
