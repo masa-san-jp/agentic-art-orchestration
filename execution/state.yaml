@@ -1,29 +1,29 @@
-version: 181
-updated_at: "2026-09-04T12:30:50+09:00"
-active_task: null
-active_repository: null
+version: 182
+updated_at: "2026-09-04T12:36:32+09:00"
+active_task: PUBLIC-PROJECTION-PREPARE-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T12:15:34+09:00"
-  expires_at: null
+  status: held
+  owner: codex-public-projection-prepare
+  acquired_at: "2026-09-04T12:36:32+09:00"
+  expires_at: "2026-09-04T14:36:32+09:00"
   lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-CONTRACT-001:20260904-121534
-  released_at: "2026-09-04T12:30:50+09:00"
+  execution_id: PUBLIC-PROJECTION-PREPARE-001:20260904-123632
+  released_at: null
   scope:
     repository: agentic-art-orchestration
-    paths: [schemas/public-project-layout.schema.json, schemas/public-projection-request.schema.json, schemas/public-projection-approval.schema.json, schemas/public-projection-result.schema.json, tools/public_projection.py, tools/security.py, tools/validate.py, tests/test_public_projection.py, tests/test_security_boundary.py, tests/fixtures/public-projection, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
+    paths: [tools/public_projection.py, tools/run.py, tools/batch_run.py, tools/output_destinations.py, schemas/public-projection-request.schema.json, schemas/public-projection-result.schema.json, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/fixtures/public-projection, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-CONTRACT-001
+  task: PUBLIC-PROJECTION-PREPARE-001
   repository: agentic-art-orchestration
-  start_point: f7dddb96784b6837f5d85a7c30fae45a6186c36b
-  expected_changes: Add the four closed public-project/projection request/approval/result contracts, synthetic metadata-only fixtures, security vocabulary and validation without touching a public target or child repository.
-  result: completed; parent PR #160 merged to main as 9a131318c8f1bc88d0db7b2cc0876d07160a28a6 after validator, focused public/security/validate tests 24/24, public contract CLI, parent full suite 507 tests with 1 expected skip, and diff check passed; remote CI run 33833406523 failed before steps due to billing limit and was not counted.
+  start_point: bd4074a7eb81d779bd6c1bac7912ff3d7f40438a
+  expected_changes: Add the single prepare/refresh producer, connect PLAN_READY run and PASSED batch outputs, preserve source hashes/provenance, emit internal candidates only, and return NOT_AVAILABLE for unavailable work without public target access.
+  result: in_progress; claimed 2026-09-04T12:36:32+09:00 by codex-public-projection-prepare; implementation and checks pending.
 last_completed_task: PUBLIC-PROJECTION-CONTRACT-001
 resume_from:
   task: PUBLIC-PROJECTION-PREPARE-001
-  action: "Claim the smallest dependency-complete public projection prepare task, then inspect run/batch report contracts and implement one deterministic request producer without public target access."
+  action: "Implement and test prepare/refresh from the run and batch source contracts; keep the public target unread and unwritten."
   command: python3 tools/validate.py --check
 
 issue_intake:
