@@ -1,5 +1,5 @@
 version: 42
-updated_at: "2026-09-04T11:20:01+09:00"
+updated_at: "2026-09-04T11:22:34+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1297,7 +1297,7 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-CONTRACT-001
     milestone: M28
     title: Define the manifest-driven workspace bootstrap result contract
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

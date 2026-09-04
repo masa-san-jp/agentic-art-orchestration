@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/workspace-bootstrap.schema.json",
+  "title": "Manifest-driven workspace bootstrap result v1",
+  "description": "Closed, deterministic metadata result for the all-repository workspace bootstrap boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "command",
+    "status",
+    "exit_code",
+    "manifest_hash",
+    "workspace_root",
+    "offline_fixture",
+    "changed_count",
+    "repositories",
+    "remediations",
+    "lock_status",
+    "remote_operations",
+    "child_mutations",
+    "privacy"
+  ],
+  "properties": {
+    "contract_version": {"const": "workspace-bootstrap/v1"},
+    "command": {"const": "bootstrap"},
+    "status": {
+      "enum": [
+        "READY",
+        "BLOCKED_PIN_DRIFT",
+        "BLOCKED_EXISTING_WORKSPACE",
+        "BLOCKED_REMOTE_ACCESS",
+        "BLOCKED_RACE",
+        "FAILED"
+      ]
+    },
+    "exit_code": {"enum": [0, 1, 2]},
+    "manifest_hash": {"$ref": "#/$defs/hash64"},
+    "workspace_root": {"type": "string", "minLength": 1},
+    "offline_fixture": {"type": "boolean"},
+    "changed_count": {"type": "integer", "minimum": 0},
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/repository"}
+    },
+    "remediations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "lock_status": {
+      "enum": ["NOT_ACQUIRED", "HELD", "RELEASED", "BLOCKED_EXISTING"]
+    },
+    "remote_operations": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "child_mutations": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["credentials_stored", "token_stored", "remote_response_stored"],
+      "properties": {
+        "credentials_stored": {"const": false},
+        "token_stored": {"const": false},
+        "remote_response_stored": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "hash64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sha40_or_null": {
+      "oneOf": [
+        {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        {"type": "null"}
+      ]
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "full_name",
+        "path",
+        "action",
+        "head",
+        "observed_commit",
+        "pin_status",
+        "guard_status",
+        "finding_codes"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "full_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+        },
+        "action": {
+          "enum": ["cloned", "reused", "not-run"]
+        },
+        "head": {"$ref": "#/$defs/sha40_or_null"},
+        "observed_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "pin_status": {
+          "enum": ["MATCHED", "DRIFTED", "NOT_RUN"]
+        },
+        "guard_status": {
+          "enum": ["PASS", "BLOCKED", "FAILED", "NOT_RUN"]
+        },
+        "finding_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "MISSING",
+              "NON_DIRECTORY",
+              "INVALID_CHECKOUT",
+              "REPOSITORY_MISMATCH",
+              "REMOTE_MISMATCH",
+              "DIRTY",
+              "UNTRACKED",
+              "DETACHED",
+              "UPSTREAM_MISSING",
+              "UPSTREAM_INVALID",
+              "AHEAD",
+              "BEHIND",
+              "DIVERGED",
+              "REMOTE_ACCESS",
+              "CLONE_FAILED",
+              "PIN_DRIFT",
+              "RACE",
+              "NOT_RUN",
+              "BOOTSTRAP_NOT_READY"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

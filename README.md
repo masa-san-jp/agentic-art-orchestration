@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T11:20:01+09:00`.
+Source updated at: `2026-09-04T11:22:34+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10 | 1 | 0 | 0 | 119 | 130 |
+| 10 | 0 | 1 | 0 | 119 | 130 |
 
-Current task: `null`; repository: `null`; checkpoint: `OUTPUT-DESTINATIONS-CONTRACT-001`.
-Next action: Claim the lowest-ID READY task after verifying Issue #150 SSOT, dependency HARNESS-RESEARCH-PIN-85-001, target repository, and available lease; then define the workspace-bootstrap/v1 result contract without changing legacy commands.
-Ready: `WORKSPACE-BOOTSTRAP-CONTRACT-001`.
-Next task: `WORKSPACE-BOOTSTRAP-CONTRACT-001`.
+Current task: `WORKSPACE-BOOTSTRAP-CONTRACT-001`; repository: `agentic-art-orchestration`; checkpoint: `WORKSPACE-BOOTSTRAP-CONTRACT-001`.
+Next action: Implement the closed workspace-bootstrap/v1 result contract and parser for Issue #150, preserving existing workspace commands and avoiding repository hardcoding or live remote access.
+Ready: none.
+Next task: `OUTPUT-DESTINATIONS-RUNTIME-001`.
 Blocked:
 - none
 
