@@ -861,6 +861,18 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 
 1. `SELF-MODEL-AUTONOMY-001`をclaimし、self-model Issue #83とAGENTS/testsを読み、fresh-clone dependency setupだけを補完してchild gateを実行する。
 
+## SELF-MODEL-AUTONOMY-001 — completed
+
+- Task ID: `SELF-MODEL-AUTONOMY-001`; target repository: `self-model-notes`; Issue SSOTは[#83](https://github.com/masa-san-jp/self-model-notes/issues/83)。子repo task登録PR [#84](https://github.com/masa-san-jp/self-model-notes/pull/84)をmainへ`6d035574cb01322402ba8221f14a912439358a6b`としてmergeし、SM-031をchild harnessの選択対象にした。
+- implementation commit `da703abf4faf61b4080dba77495a98163cbe1c44`、PR [#85](https://github.com/masa-san-jp/self-model-notes/pull/85)、child main merge `717255465449648066d8b5c89d34ec60b0f1cbda`。AGENTS.mdへfresh clone時のみのvenv準備を記載し、通常task実行はinstall/network/secretなし、runtime/task lifecycle/no-secret境界を維持した。文書回帰testを追加し、entity・generated data・schema・consent・privacy・export・runtimeは変更していない。
+- Acceptance `1/1`。registration queue tests `46/46 PASS`、child focused tests `52/52 PASS`、full suite `142/142 PASS`、task harness verify、trusted-base PR policy verify、graph/audit/bundle freshness、diff、generated data diff PASS。GitHub Actions run `33850419342`はvalidate/harness-policyがaccount billing limitでstep開始前失敗し、品質gateへ算入していない。SM-031のremote lockは正規releaseで解放済み。
+- Issue #83へ完了証跡をコメントし、completedとしてcloseした。機微情報・外部artifactはなし。explicit feedbackは自律実装要件の評価・補完依頼、inferredはnone。
+- Leaseは`available/unassigned`。task選択規則に従い、次の最小dependency-complete task `RESEARCH-AUTONOMY-001`を`READY`へ昇格した。
+
+### Next exact action
+
+1. `RESEARCH-AUTONOMY-001`をclaimし、agentic-art-research Issue #89とAGENTS/testsを読み、fresh-clone setupとportable external output guidanceだけを補完する。
+
 ## 2026-09-04 — WORKSPACE-BOOTSTRAP-DOCS-001 completed
 
 - Task ID: `WORKSPACE-BOOTSTRAP-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`b9e01f132670f6322297a463600055c8d3aef163`、PR [#174](https://github.com/masa-san-jp/agentic-art-orchestration/pull/174)はmainへ`267a51c31f110c9fc431a332af1eb4199ec77e20`としてmergeされた。

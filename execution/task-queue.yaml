@@ -1,5 +1,5 @@
-version: 57
-updated_at: "2026-09-04T16:27:44+09:00"
+version: 58
+updated_at: "2026-09-04T16:53:19+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1470,12 +1470,13 @@ tasks:
     depends_on: [AUTONOMY-READINESS-MANIFEST-001]
     acceptance: Self-model AGENTS provides conditional repository-local dependency setup, canonical agent runtime/task lifecycle, completion evidence, and no-secret boundaries so a fresh-clone agent can run declared checks without conversation history; no entity/data/schema/consent change is made.
     checks: [python3 tools/agent_runtime.py tools/task_harness.py validate, python3 tools/agent_runtime.py -m unittest discover -s tests -p "test_*.py", git diff --check]
+    completion: "Child task SM-031 was registered by PR #84 and merged to self-model main as 6d035574cb01322402ba8221f14a912439358a6b; implementation commit da703abf4faf61b4080dba77495a98163cbe1c44 documented conditional fresh-clone venv setup in AGENTS.md and added regression coverage, with no entity/data/schema/consent/privacy/export/runtime change. Implementation PR #85 merged to child main as 717255465449648066d8b5c89d34ec60b0f1cbda; Issue #83 received completion evidence and was closed. Canonical task harness verify and trusted-base PR policy verification passed; declared checks included focused 52/52 PASS, full 142/142 PASS, build_graph/audit/bundle freshness PASS, diff PASS, and generated data diff PASS. Remote CI run 33850419342 failed before steps because of the account billing limit and is not counted as a quality-gate pass. Remote harness lock refs/heads/harness-lock/sm-031 was released after merge. Acceptance 1/1."
     stop_if: [A self-model entity or consent scope must change, Raw voice/private data is needed, Dependency setup requires an unapproved external write]
 
   - id: RESEARCH-AUTONOMY-001
     milestone: M30
     title: Make research agent setup portable and self-contained
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/89
     target_repositories: [agentic-art-research]
     agent_terminal: DRAFT_PR_READY
