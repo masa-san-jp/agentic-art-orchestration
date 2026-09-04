@@ -848,6 +848,19 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 
 1. `WORKSPACE-BOOTSTRAP-DOCS-001`をclaimし、Issue #150と実装済みbootstrapを確認して、README・operator runbook・agent runtime guideへfresh-clone、auth、offline proof、failure recovery、pin drift、legacy commandの手順を同期する。
 
+## AUTONOMY-READINESS-MANIFEST-001 — completed
+
+- Task ID: `AUTONOMY-READINESS-MANIFEST-001`; target repository: `agentic-art-orchestration`; Issue SSOTは[#176](https://github.com/masa-san-jp/agentic-art-orchestration/issues/176)。implementation commit `67bb0aca281bc8d98ae14b992f88c7aaa65ad500`、PR [#177](https://github.com/masa-san-jp/agentic-art-orchestration/pull/177)、main merge `6bc99df7ed6e66f95ae91aad9a86a08e57781d6a`。
+- `config/repositories.yaml`の6 child entryをすべて`AGENTS.md`へ統一した。art-historyとmarketing-trendsはREADME指定からauthoritative AGENTS指定へ修正し、manifest regression testを追加した。既存URL、pin、quality gate、子repoのschema/dataは変更していない。
+- Read-only評価で、art-history/marketingは既存AGENTSが自律実装契約を満たすこと、self-modelはfresh-clone依存準備、researchは依存準備とportable external output、productionは依存準備、viewer-responseはtask workflow/完了報告等が不足することを確認した。補完Issueはそれぞれ[#83](https://github.com/masa-san-jp/self-model-notes/issues/83)、[#89](https://github.com/masa-san-jp/agentic-art-research/issues/89)、[#58](https://github.com/masa-san-jp/agentic-art-production/issues/58)、[#4](https://github.com/masa-san-jp/viewer-response-notes/issues/4)として登録した。
+- Acceptance `1/1`。focused parent tests `29/29 PASS`、parent full suite `535 tests / 1 skipped PASS`、validator、`project_status.py --check-readme`、py_compile、diff check PASS。GitHub Actions run `33848689209`はaccount billing limitにより全jobがstep開始前失敗し、品質gateへ算入していない。
+- 機微情報・外部artifact: credential、token、PRIVATE_RAW、RESTRICTED、direct identifier、private data、raw conversation、Drive/外部artifact本文の保存なし。子repoのschema/data/pinと利用者workspaceの変更なし。explicit feedbackは自律実装要件の評価・補完依頼、inferredはnone。
+- Leaseは`available/unassigned`へ解放し、task選択規則に従い`SELF-MODEL-AUTONOMY-001`を`READY`へ昇格した。
+
+### Next exact action
+
+1. `SELF-MODEL-AUTONOMY-001`をclaimし、self-model Issue #83とAGENTS/testsを読み、fresh-clone dependency setupだけを補完してchild gateを実行する。
+
 ## 2026-09-04 — WORKSPACE-BOOTSTRAP-DOCS-001 completed
 
 - Task ID: `WORKSPACE-BOOTSTRAP-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`b9e01f132670f6322297a463600055c8d3aef163`、PR [#174](https://github.com/masa-san-jp/agentic-art-orchestration/pull/174)はmainへ`267a51c31f110c9fc431a332af1eb4199ec77e20`としてmergeされた。

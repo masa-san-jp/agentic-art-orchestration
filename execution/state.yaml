@@ -1,15 +1,15 @@
-version: 196
-updated_at: "2026-09-04T16:16:48+09:00"
-active_task: AUTONOMY-READINESS-MANIFEST-001
-active_repository: agentic-art-orchestration
+version: 197
+updated_at: "2026-09-04T16:27:44+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-autonomy-manifest
+  status: available
+  owner: null
   acquired_at: "2026-09-04T16:16:48+09:00"
   expires_at: "2026-09-04T19:00:00+09:00"
   lane: AUTONOMY_READINESS
   execution_id: AUTONOMY-READINESS-MANIFEST-001:20260904-161648
-  released_at: null
+  released_at: "2026-09-04T16:27:44+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [config/repositories.yaml, tests/test_validate.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
@@ -19,12 +19,12 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: e7258d0b4e816bd915a7a8ab41c01404f3567d1a
   expected_changes: Point every manifest child at its authoritative AGENTS.md instruction entrypoint, add a regression check, preserve all URLs/pins/quality gates, and update only parent execution evidence.
-  result: in_progress; claimed 2026-09-04T16:16:48+09:00 by codex-autonomy-manifest; implementation and checks pending.
-last_completed_task: WORKSPACE-BOOTSTRAP-DOCS-001
+  result: completed; parent PR #177 merged as 6bc99df7ed6e66f95ae91aad9a86a08e57781d6a; child follow-up Issues recorded; lease released.
+last_completed_task: AUTONOMY-READINESS-MANIFEST-001
 resume_from:
-  task: AUTONOMY-READINESS-MANIFEST-001
-  action: "Fix the parent manifest instruction entrypoints for art-history and marketing, add deterministic validation coverage, run parent gates, and record the child readiness follow-up tasks without changing child data or pins."
-  command: .venv/bin/python tools/validate.py --check
+  task: SELF-MODEL-AUTONOMY-001
+  action: "Claim the lowest dependency-complete child task, read self-model's authoritative AGENTS.md/Issue #83/tests, add only fresh-clone setup and contract documentation, then run the child gates."
+  command: python3 tools/agent_runtime.py tools/task_harness.py validate
 
 workspace_bootstrap_apply:
   status: complete
@@ -1381,3 +1381,58 @@ public_projection_docs:
     inferred: none
   unresolved:
     - GitHub Actions billing remains an external environment blocker; local gates are the observable evidence.
+
+autonomy_readiness_evaluation:
+  status: complete
+  observed_at: "2026-09-04T16:27:44+09:00"
+  task: AUTONOMY-READINESS-MANIFEST-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/176
+  target_repository: agentic-art-orchestration
+  implementation_commit: 67bb0aca281bc8d98ae14b992f88c7aaa65ad500
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/177
+  merge_commit: 6bc99df7ed6e66f95ae91aad9a86a08e57781d6a
+  acceptance: 1/1
+  changes:
+    - "The parent manifest now points all six child repositories at AGENTS.md, including art-history and marketing-trends, which previously pointed at README.md."
+    - "A deterministic parent regression test protects the authoritative instruction entrypoint contract."
+    - "Child read-only evaluation was recorded as four follow-up Issue SSOTs: self-model #83, research #89, production #58, and viewer-response #4."
+  child_evaluation:
+    self-model:
+      observed: "Canonical runtime/task lifecycle exists, but AGENTS.md did not make fresh-clone dependency preparation explicit."
+      follow_up_issue: https://github.com/masa-san-jp/self-model-notes/issues/83
+    art-history:
+      observed: "AGENTS.md already provides a self-contained task, verification, and completion contract; only the parent manifest entrypoint was misaligned."
+      follow_up_issue: none
+    marketing-trends:
+      observed: "AGENTS.md already provides setup, task, scope, stop, and completion rules; only the parent manifest entrypoint was misaligned."
+      follow_up_issue: none
+    agentic-art-research:
+      observed: "Task lifecycle and safety boundaries exist, but fresh-clone dependency preparation and machine-portable external output guidance were incomplete."
+      follow_up_issue: https://github.com/masa-san-jp/agentic-art-research/issues/89
+    agentic-art-production:
+      observed: "Task lifecycle and human effect gates exist, but fresh-clone dependency preparation was not explicit in AGENTS.md."
+      follow_up_issue: https://github.com/masa-san-jp/agentic-art-production/issues/58
+    viewer-response-notes:
+      observed: "Privacy and validation commands exist, but authority order, one-task workflow, write scope, stop conditions, and completion evidence were incomplete."
+      follow_up_issue: https://github.com/masa-san-jp/viewer-response-notes/issues/4
+  verification:
+    focused_parent_tests: "29/29 PASS"
+    parent_full_suite: "535 tests / 1 skipped PASS"
+    parent_validator: PASS
+    project_status_readme: PASS
+    py_compile: PASS
+    diff_check: PASS
+  remote_ci:
+    run_id: 33848689209
+    status: FAILED_BEFORE_STEPS
+    reason: account billing limit prevented all three jobs from starting
+    counted_as_quality_gate: false
+  child_repositories_changed: none
+  sensitive_data: "none; no credential, token, PRIVATE_RAW, RESTRICTED value, direct identifier, private data, or raw conversation was stored"
+  external_artifact: "none; no Drive or other external artifact body was created"
+  feedback:
+    explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
+    inferred: none
+  unresolved:
+    - "The four child follow-up Issues require their own child-repository PRs and quality gates."
+    - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
