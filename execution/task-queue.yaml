@@ -1347,7 +1347,7 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-DOCS-001
     milestone: M28
     title: Document the canonical fresh-clone bootstrap and recovery path
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -1357,6 +1357,7 @@ tasks:
     depends_on: [WORKSPACE-BOOTSTRAP-APPLY-001]
     acceptance: Synchronize README, operator runbook, agent runtime guide, PLANS, state, and handoff with the bootstrap command, auth preflight, offline proof, sanitized failure remediation, pin drift recovery, and unchanged legacy commands.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Implementation commit b9e01f132670f6322297a463600055c8d3aef163; parent PR #174 merged to main as 267a51c31f110c9fc431a332af1eb4199ec77e20. README, docs/operator-runbook.md, and docs/agent-runtime-guide.md now provide a conversation-history-free manifest bootstrap path with ambient GitHub auth preflight, noninteractive remote checks, offline synthetic proof, workspace-bootstrap/v1 status/exit handling, tool-owned staging and rollback recovery, pin drift remediation, and unchanged legacy init/fetch/status/guard/snapshot commands. Documentation regression focused tests 34/34 PASS; parent full suite 534 tests with 1 expected skip PASS; validator, project-status README check, and diff check passed. GitHub run 33847441472 failed before all steps with steps=[] because of the account billing limit and is not counted as a quality-gate pass. No child repository, user workspace, credential, token, remote response, raw conversation, or external artifact body was written. Acceptance 1/1. Explicit feedback was the request to evaluate and supplement autonomous implementation requirements; inferred feedback none."
     stop_if: [Documentation requires live private access to pass, A credential is exposed in examples or evidence, README status is inconsistent with queue/state, Existing command behavior is silently changed]
 
   - id: PUBLIC-PROJECTION-CONTRACT-001

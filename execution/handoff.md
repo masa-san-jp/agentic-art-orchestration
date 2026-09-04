@@ -2114,3 +2114,16 @@
 ### Next exact action
 
 1. `WORKSPACE-BOOTSTRAP-DOCS-001`をclaimし、Issue #150、`workspace-bootstrap/v1`、`tools/workspace.py`の実装を読み、会話履歴なしのagentでもfresh cloneから安全にbootstrap・認証確認・失敗復旧・pin drift判断を実行できる文書を作る。
+
+## 2026-09-04 — WORKSPACE-BOOTSTRAP-DOCS-001 completed
+
+- Task ID: `WORKSPACE-BOOTSTRAP-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOTは[#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commit `b9e01f132670f6322297a463600055c8d3aef163`、PR [#174](https://github.com/masa-san-jp/agentic-art-orchestration/pull/174)、main merge `267a51c31f110c9fc431a332af1eb4199ec77e20`。
+- README・operator runbook・agent runtime guideへ、fresh cloneの依存準備、GitHub ambient auth確認、manifest全entryのnoninteractive bootstrap、offline fixture証明、`READY`/`BLOCKED_PIN_DRIFT`/`BLOCKED_EXISTING_WORKSPACE`/`BLOCKED_REMOTE_ACCESS`/`BLOCKED_RACE`/`FAILED`の機械的判定、staging/lock復旧、pin採用入口、legacy `init`等の互換を記載した。
+- Agentがテーマ・repo名を質問せず、resultのstatus/exit codeから次動作を選べるようにした。credentials・token・remote応答本文・child内容・raw conversationを保存しない境界、既存checkoutを自動修復しない境界も文書回帰で固定した。
+- Acceptance `1/1`。focused `34/34 PASS`、parent full suite `534 tests / 1 skipped PASS`、validator、README status check、diff check PASS。GitHub run `33847441472`は全job `steps=[]`のbilling開始前失敗で、品質gateへ算入していない。child gate・外部artifact作成なし。
+- 機微情報確認: credential、PRIVATE_RAW、RESTRICTED、raw conversation、direct identifier、user path、remote responseの保存・送信なし。synthetic temporary fixtureのみで検証した。explicit feedbackは「各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完」、inferredはnone。
+- docs taskは完了し、stateはversion 195、leaseは`available/unassigned`。read-only子repo評価で、親manifestのart-history/marketing `instructions`がREADMEを指すこと、self-model/research/productionのAGENTSにfresh clone依存準備が不足すること、viewer AGENTSにtask workflow/完了報告が不足することを観測した。次はこれらを個別Issue/PRへ分解する。
+
+### Next exact action
+
+1. 親manifestと各childのIssue SSOTを再確認し、補完候補を対象repo別のclosed acceptance/checks/human gate付きtaskとして登録する。既存childのschema・データは親へコピーしない。

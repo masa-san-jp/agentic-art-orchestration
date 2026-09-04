@@ -1,15 +1,15 @@
-version: 194
-updated_at: "2026-09-04T16:01:28+09:00"
-active_task: WORKSPACE-BOOTSTRAP-DOCS-001
-active_repository: agentic-art-orchestration
+version: 195
+updated_at: "2026-09-04T16:12:53+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-workspace-docs
+  status: available
+  owner: null
   acquired_at: "2026-09-04T16:01:28+09:00"
   expires_at: "2026-09-04T19:00:00+09:00"
   lane: WORKSPACE_BOOTSTRAP
   execution_id: WORKSPACE-BOOTSTRAP-DOCS-001:20260904-160128
-  released_at: null
+  released_at: "2026-09-04T16:12:53+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [README.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: b557923652b879325b60a3333a729450a47ecfef
   expected_changes: Synchronize fresh-clone bootstrap, live credential preflight, offline proof, sanitized status/remediation, pin drift recovery, recovery ownership, and unchanged legacy command guidance across README and operator/agent runbooks.
-  result: in_progress; claimed 2026-09-04T16:01:28+09:00 by codex-workspace-docs; documentation and checks pending.
+  result: completed; documentation merged as 267a51c31f110c9fc431a332af1eb4199ec77e20 and completion record pending.
 last_completed_task: WORKSPACE-BOOTSTRAP-APPLY-001
 resume_from:
-  task: WORKSPACE-BOOTSTRAP-DOCS-001
-  action: "Read Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands."
+  task: null
+  action: "No dependency-complete task remains; observe the open Issue set read-only and register a new task only with an Issue SSOT, explicit acceptance, target repository, checks, and human gate."
   command: .venv/bin/python tools/validate.py --check
 
 workspace_bootstrap_apply:
@@ -53,6 +53,35 @@ workspace_bootstrap_apply:
   remote_operations: [READ, CLONE_TO_TOOL_OWNED_STAGING, SAME_FILESYSTEM_RENAME, ROLLBACK_ON_RACE]
   existing_checkout_mutation: none
   pin_adoption: none
+  feedback:
+    explicit: "各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完"
+    inferred: none
+  unresolved: none
+
+workspace_bootstrap_docs:
+  status: complete
+  task: WORKSPACE-BOOTSTRAP-DOCS-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+  implementation_commit: b9e01f132670f6322297a463600055c8d3aef163
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/174
+  merge_commit: 267a51c31f110c9fc431a332af1eb4199ec77e20
+  remote_main: 267a51c31f110c9fc431a332af1eb4199ec77e20
+  acceptance: 1/1
+  focused_tests: "34/34 PASS"
+  parent_full_suite: "534 tests / 1 skipped PASS"
+  parent_validation: PASS
+  project_status_readme: PASS
+  diff_check: PASS
+  remote_ci:
+    run: 33847441472
+    status: FAILED_BEFORE_STEPS
+    jobs: [bootstrap, production-exchange, real-chain]
+    reason: account billing limit; steps=[]
+    counted_as_quality_gate: false
+  child_repositories: none
+  sensitive_data: none; no credential, token, private data, raw conversation, or remote response stored
+  external_artifact: none; no Drive artifact or external artifact body created
+  user_workspace: unchanged
   feedback:
     explicit: "各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完"
     inferred: none

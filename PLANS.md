@@ -847,3 +847,15 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. `WORKSPACE-BOOTSTRAP-DOCS-001`をclaimし、Issue #150と実装済みbootstrapを確認して、README・operator runbook・agent runtime guideへfresh-clone、auth、offline proof、failure recovery、pin drift、legacy commandの手順を同期する。
+
+## 2026-09-04 — WORKSPACE-BOOTSTRAP-DOCS-001 completed
+
+- Task ID: `WORKSPACE-BOOTSTRAP-DOCS-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#150](https://github.com/masa-san-jp/agentic-art-orchestration/issues/150)。implementation commitは`b9e01f132670f6322297a463600055c8d3aef163`、PR [#174](https://github.com/masa-san-jp/agentic-art-orchestration/pull/174)はmainへ`267a51c31f110c9fc431a332af1eb4199ec77e20`としてmergeされた。
+- README、operator runbook、agent runtime guideに、会話履歴なしで実行できるmanifest-driven `bootstrap`、`gh auth status`/`gh auth setup-git`、noninteractive remote preflight、offline synthetic proof、`workspace-bootstrap/v1`のstatus/exit、tool-owned staging/rollback、pin drift復旧、legacy command互換を同期した。
+- Documentation focused tests `34/34 PASS`、parent full suite `534 tests / 1 skipped PASS`、validator、`project_status.py --check-readme`、diff check PASS。default offline manifestのpin driftをexit 2として扱い、pin自動採用と既存checkout修復を案内しないことを文書テストで固定した。
+- GitHub Actions run `33847441472`は全jobが`steps=[]`でaccount billing limitにより開始前失敗したため、品質gateのPASSへ算入していない。child repository、credential、token、remote response、raw conversation、external artifact body、user workspaceの変更・保存なし。
+- Acceptance `1/1`。explicit feedbackは「各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完」、inferredはnone。未解決は自律実装要件の子repo実測で発見した補完候補（別taskへ登録予定）であり、docs task自体は完了。leaseは`available/unassigned`。
+
+### Next exact action
+
+1. 子repoのAGENTS/README/schema/testsとmanifest宣言をread-onlyで比較し、環境準備・task入口・完了報告が欠けるrepoだけをIssue/PR単位で補完する。
