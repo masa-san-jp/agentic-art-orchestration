@@ -1,15 +1,15 @@
-version: 210
-updated_at: "2026-09-05T07:28:54+09:00"
-active_task: PUBLIC-PLAN-CANONICAL-001
-active_repository: agentic-art-orchestration
+version: 211
+updated_at: "2026-09-05T07:34:12+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-05T07:09:14+09:00"
-  expires_at: "2026-09-05T09:09:14+09:00"
+  expires_at: null
   lane: PUBLIC_PROJECTION
   execution_id: PUBLIC-PLAN-CANONICAL-001:20260905-070914
-  released_at: null
+  released_at: "2026-09-05T07:34:12+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [tools/public_projection.py, config/repository-relationships.yaml, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/test_validate.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
@@ -19,17 +19,17 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 8fe2efb7976878d6874d230100fbf236f3db0b17
   expected_changes: Reject summary-shaped automatic plan bodies, emit no-transform canonical Production provenance, align parent output with the receiver validator, and quarantine or replace legacy summarized records in agentic-art-project through a separate child commit and PR.
-  result: implementation_complete_locally; parent canonical guard and child validator/migration passed; P0006 canonical bytes are published to the requested output and child branch; Draft PR creation is UNKNOWN because GitHub API/DNS is unavailable.
-last_completed_task: PUBLIC-PROJECT-RELATIONSHIP-001
+  result: completed; parent commit 13aea2e; child commits a699bc3 and dbfa65c; P0006 canonical bytes published to the requested output and public catalog; Draft PR #8 created; acceptance 5/5; parent full 546/546 PASS and child full 6/6 PASS.
+last_completed_task: PUBLIC-PLAN-CANONICAL-001
 resume_from:
-  task: PUBLIC-PLAN-CANONICAL-001
-  action: "Retry creation of the child Draft PR when GitHub API connectivity returns; then leave merge and visibility changes to human approval."
-  command: gh pr create --repo masa-san-jp/agentic-art-project --base main --head agent/canonical-plan-validator-20260905 --draft
+  task: null
+  action: "Human-review Draft PR #8 in agentic-art-project and the parent branch update; merge, release, and visibility changes remain human-gated."
+  command: gh pr view 8 --repo masa-san-jp/agentic-art-project
 
 completion_snapshot:
   task: PUBLIC-PLAN-CANONICAL-001
   acceptance: 5/5 local acceptance conditions PASS
-  parent_commit_pending: true
+  parent_commit: 13aea2e55847bfcc4c1819b5ef811a908a9abaf9
   child_branch_commit: dbfa65c33fc254ee4787a9e04cbfc0b5971a7e5a
   canonical_plan_sha256: sha256:846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624
   user_output: "/Users/masa/マイドライブ/Agentic-Art-Output/距離が選ぶ境界/正式制作計画書.md"
@@ -38,8 +38,10 @@ completion_snapshot:
   parent_full_tests: "546/546 PASS"
   child_validator: PASS
   child_full_tests: "6/6 PASS"
-  external_pr: UNKNOWN
-  external_pr_reason: "gh pr create failed twice because api.github.com could not be reached; no PR number is claimed."
+  external_pr: 8
+  external_pr_url: https://github.com/masa-san-jp/agentic-art-project/pull/8
+  external_pr_readback: UNKNOWN
+  external_pr_readback_reason: "PR creation returned the canonical URL; immediate gh pr view read-back encountered a subsequent api.github.com connection failure."
 
 workspace_bootstrap_apply:
   status: complete
