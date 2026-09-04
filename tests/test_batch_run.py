@@ -3,8 +3,10 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import yaml
 
@@ -13,6 +15,7 @@ from tools.batch_run import (
     _append_events,
     _event,
     _prepare_plan_projection,
+    main,
     validate_batch_run,
 )
 
@@ -130,6 +133,39 @@ class BatchRunContractTests(unittest.TestCase):
             self.assertEqual(64, len(plan_hash))
             self.assertEqual(64, len(brief_hash))
             self.assertEqual(b"# plan\n", (root / "output/production-plan.md").read_bytes())
+
+    def test_profiled_batch_derives_output_root_and_passes_one_resolution(self) -> None:
+        repository_root = Path(__file__).parents[1]
+        with tempfile.TemporaryDirectory(prefix="batch-destinations-") as temporary:
+            root = Path(temporary)
+            profile = root / "profile.yaml"
+            profile.write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "test",
+                "destinations": {
+                    "state_root": str(root / "state"),
+                    "internal_output_root": str(root / "internal"),
+                },
+            }, sort_keys=False), encoding="utf-8")
+            fake_result = {"status": "PASSED", "summary_path": root / "summary.json"}
+            with patch("tools.batch_run.run_batch", return_value=fake_result) as run_mock:
+                status = main([
+                    "--manifest", str(repository_root / "config/repositories.yaml"),
+                    "--workspace-root", str(root / "workspace"),
+                    "--self-export", str(root / "self.json"),
+                    "--art-history-export", str(root / "art.json"),
+                    "--marketing-export", str(root / "marketing.json"),
+                    "--destinations-file", str(profile),
+                    "--run-id", "BATCH-001",
+                    "--generated-at", "2026-08-27T00:00:00+09:00",
+                    "--child-python", sys.executable,
+                    "--limit", "1",
+                ])
+            self.assertEqual(0, status)
+            kwargs = run_mock.call_args.kwargs
+            self.assertEqual((root / "internal" / "batch" / "BATCH-001").resolve(), kwargs["output_root"])
+            self.assertEqual((root / "state").resolve(), kwargs["state_root"])
+            self.assertEqual("destination-resolution/v1", kwargs["destination_resolution"]["contract_version"])
 
 
 if __name__ == "__main__":

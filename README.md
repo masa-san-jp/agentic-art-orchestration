@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T11:32:03+09:00`.
+Source updated at: `2026-09-04T11:40:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 9 | 1 | 0 | 0 | 120 | 130 |
+| 9 | 0 | 1 | 0 | 120 | 130 |
 
-Current task: `null`; repository: `null`; checkpoint: `WORKSPACE-BOOTSTRAP-CONTRACT-001`.
-Next action: Claim the lowest-ID READY task after verifying Issue #148 SSOT, dependency OUTPUT-DESTINATIONS-CONTRACT-001, target repository, and available lease; connect the shared resolver to run, batch_run, production_exchange, and autonomous_runner while preserving legacy behavior.
-Ready: `OUTPUT-DESTINATIONS-RUNTIME-001`.
-Next task: `OUTPUT-DESTINATIONS-RUNTIME-001`.
+Current task: `OUTPUT-DESTINATIONS-RUNTIME-001`; repository: `agentic-art-orchestration`; checkpoint: `OUTPUT-DESTINATIONS-RUNTIME-001`.
+Next action: Implement and test the shared resolver adapters, then record the completion evidence and release the lease.
+Ready: none.
+Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
 Blocked:
 - none
 

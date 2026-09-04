@@ -15,7 +15,8 @@
     "remote_operations": {"const": []},
     "child_mutations": {"const": []},
     "acceptance": {"$ref": "#/$defs/acceptance"},
-    "privacy": {"$ref": "#/$defs/privacy"}
+    "privacy": {"$ref": "#/$defs/privacy"},
+    "destination_resolution": {"type": "object"}
   },
   "$defs": {
     "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},

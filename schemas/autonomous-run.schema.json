@@ -21,7 +21,8 @@
     "checkpoint": {"$ref": "#/$defs/checkpoint"},
     "lease": {"$ref": "#/$defs/lease"},
     "history": {"type": "array", "items": {"$ref": "#/$defs/history"}},
-    "privacy": {"$ref": "#/$defs/privacy"}
+    "privacy": {"$ref": "#/$defs/privacy"},
+    "destination_resolution": {"type": "object"}
   },
   "$defs": {
     "timestamp": {"type": "string", "format": "date-time"},

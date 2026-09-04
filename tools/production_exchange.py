@@ -18,6 +18,18 @@ from typing import Any, Callable, Mapping
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.output_destinations import (
+    destinations_profile_selected,
+    manifest_child_roots,
+    resolve_destinations,
+    resolve_run_destination,
+    validate_destination_resolution,
+    write_resolution_evidence,
+)
+
 SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
 E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
 E2E_OUTPUT_PATH = ROOT / "data/production-exchange.json"
@@ -76,6 +88,10 @@ def validate_exchange_evidence(data: dict[str, Any], source: str = "production-e
         errors.append(f"{source}.contract_version: unsupported contract; remediation: use production-exchange-evidence/v1")
     if data.get("mode") != "immutable-networkless":
         errors.append(f"{source}.mode: exchange must be immutable-networkless; remediation: use immutable child archives")
+    if "destination_resolution" in data:
+        errors.extend(validate_destination_resolution(data["destination_resolution"], f"{source}.destination_resolution"))
+        if isinstance(data["destination_resolution"], dict) and data["destination_resolution"].get("run_id") != data.get("run_id"):
+            errors.append(f"{source}.destination_resolution.run_id: must match exchange run_id; remediation: resolve the same run")
     if data.get("remote_operations") != [] or data.get("child_mutations") != []:
         errors.append(f"{source}: remote or child mutation was recorded; remediation: keep this orchestrator read-only")
     acceptance = data.get("acceptance")
@@ -479,9 +495,13 @@ def run_exchange_e2e(
     handoff_id: str = "HO001",
     result_id: str = "PR001",
     child_python: str | None = None,
+    destination_resolution: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
     """Execute the clean exchange and qualify sanitized terminal-state scenarios."""
     clean_run_id = f"{run_id}:clean"
+    clean_resolution = copy.deepcopy(dict(destination_resolution)) if destination_resolution is not None else None
+    if clean_resolution is not None:
+        clean_resolution["run_id"] = clean_run_id
     clean = run_exchange(
         manifest,
         workspace_root,
@@ -493,6 +513,7 @@ def run_exchange_e2e(
         handoff_id=handoff_id,
         result_id=result_id,
         child_python=child_python,
+        destination_resolution=clean_resolution,
     )
     clean_dir = _run_directory(output_root, clean_run_id)
     result_statuses, external_validation_required = _result_statuses(clean_dir / "result" / "production-result.yaml")
@@ -508,7 +529,17 @@ def run_exchange_e2e(
     stale_manifest = copy.deepcopy(manifest)
     _repo(stale_manifest, "agentic-art-research")["observed_commit"] = "0" * 40
     try:
-        run_exchange(stale_manifest, workspace_root, output_root, run_id=f"{run_id}:stale", generated_at=generated_at)
+        stale_resolution = copy.deepcopy(dict(destination_resolution)) if destination_resolution is not None else None
+        if stale_resolution is not None:
+            stale_resolution["run_id"] = f"{run_id}:stale"
+        run_exchange(
+            stale_manifest,
+            workspace_root,
+            output_root,
+            run_id=f"{run_id}:stale",
+            generated_at=generated_at,
+            destination_resolution=stale_resolution,
+        )
     except ExchangeError:
         stale_terminal = _scenario("stale", "BLOCKED", "BLOCKED", "SOURCE_STALE")
     else:
@@ -550,6 +581,7 @@ def run_exchange_e2e(
         handoff_id=handoff_id,
         result_id=result_id,
         child_python=child_python,
+        destination_resolution=clean_resolution,
     )
     if clean_bytes != (clean_dir / "exchange-evidence.json").read_bytes() or replay != clean:
         raise ExchangeError("replay scenario changed an existing exchange result")
@@ -735,6 +767,7 @@ def run_exchange(
     child_python: str | None = None,
     research_output_root: Path | None = None,
     production_output_root: Path | None = None,
+    destination_resolution: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
     if not RUN_ID_PATTERN.fullmatch(run_id):
         raise ExchangeError("run_id is not stable")
@@ -749,6 +782,12 @@ def run_exchange(
     _verify_source(research_source, str(research["observed_commit"]))
     _verify_source(production_source, str(production["observed_commit"]))
     _verify_source(viewer_source, str(viewer["observed_commit"]))
+    if destination_resolution is not None:
+        write_resolution_evidence(
+            destination_resolution["destinations"]["state_root"]["path"],
+            run_id,
+            destination_resolution,
+        )
     output_root.mkdir(parents=True, exist_ok=True)
     run_dir = output_root / re.sub(r"[^A-Za-z0-9._-]+", "-", run_id)
     existing_evidence = run_dir / "exchange-evidence.json"
@@ -761,6 +800,8 @@ def run_exchange(
             raise ExchangeError("existing exchange evidence is invalid; use a new run_id")
         if previous.get("run_id") != run_id:
             raise ExchangeError("existing exchange evidence belongs to another run_id")
+        if destination_resolution is not None and previous.get("destination_resolution") != dict(destination_resolution):
+            raise ExchangeError("existing exchange evidence has different destination resolution")
         return previous
     run_dir.mkdir()
     stages: list[dict[str, Any]] = []
@@ -794,6 +835,8 @@ def run_exchange(
         },
         "privacy": {"raw_bundle_stored": False, "raw_asset_body_stored": False, "sensitive_data_stored": False, "opaque_paths_only": True},
     }
+    if destination_resolution is not None:
+        base["destination_resolution"] = dict(destination_resolution)
     try:
         with tempfile.TemporaryDirectory(prefix="aap-exchange-", dir=run_dir) as temporary:
             temp_root = Path(temporary)
@@ -987,7 +1030,9 @@ def run_exchange(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
-    parser.add_argument("--output-root", type=Path, default=Path(tempfile.gettempdir()) / "agentic-art-orchestration-production-exchange")
+    parser.add_argument("--output-root", type=Path)
+    parser.add_argument("--destinations-file", type=Path,
+                        help="explicit external output-destinations/v1 profile")
     parser.add_argument("--run-id", default="PRODUCTION-E2E-001:offline-fixture")
     parser.add_argument("--generated-at", default="2026-08-13T08:00:00+09:00")
     parser.add_argument("--manifest", type=Path, default=ROOT / "config/repositories.yaml")
@@ -1022,15 +1067,49 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"status": "PASSED", "evidence": str(args.evidence.name)}, ensure_ascii=False, sort_keys=True))
             return 0
         manifest = _load_yaml(args.manifest)
+        profile_selected = destinations_profile_selected(args.destinations_file)
+        destination_resolution = None
+        if profile_selected:
+            direct = {"internal_output_root": args.output_root} if args.output_root is not None else None
+            destination_resolution = resolve_destinations(
+                args.destinations_file,
+                direct=direct,
+                repository_root=ROOT,
+                child_roots=manifest_child_roots(manifest, args.workspace_root),
+                run_id=args.run_id,
+            )
+            if args.output_root is None:
+                args.output_root = resolve_run_destination(
+                    destination_resolution["destinations"]["internal_output_root"]["path"],
+                    "production-exchange",
+                )
+        else:
+            args.output_root = args.output_root or Path(tempfile.gettempdir()) / "agentic-art-orchestration-production-exchange"
         if args.e2e:
-            report = run_exchange_e2e(manifest, args.workspace_root, args.output_root, run_id=args.run_id, generated_at=args.generated_at, child_python=args.child_python)
+            report = run_exchange_e2e(
+                manifest,
+                args.workspace_root,
+                args.output_root,
+                run_id=args.run_id,
+                generated_at=args.generated_at,
+                child_python=args.child_python,
+                destination_resolution=destination_resolution,
+            )
             rendered = json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
             if args.offline_fixture:
                 args.e2e_output.parent.mkdir(parents=True, exist_ok=True)
                 args.e2e_output.write_text(rendered, encoding="utf-8")
             print(json.dumps({"status": report["status"], "evidence": str(args.e2e_output)}, ensure_ascii=False, sort_keys=True))
             return 0 if report["status"] == "PASSED" else 2
-        evidence = run_exchange(manifest, args.workspace_root, args.output_root, run_id=args.run_id, generated_at=args.generated_at, child_python=args.child_python)
+        evidence = run_exchange(
+            manifest,
+            args.workspace_root,
+            args.output_root,
+            run_id=args.run_id,
+            generated_at=args.generated_at,
+            child_python=args.child_python,
+            destination_resolution=destination_resolution,
+        )
         print(json.dumps(evidence, ensure_ascii=False, sort_keys=True))
         return 0 if evidence["status"] == "PASSED" else 2
     except (OSError, ValueError, ExchangeError) as exc:

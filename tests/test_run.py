@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import yaml
+
 from tools.input_pipeline import run_input_pipeline
 from tools.run import run
 from tools.signal_bundle import build_signal_bundle
@@ -87,6 +89,40 @@ class RunTests(unittest.TestCase):
             self.assertEqual(summary["intent_sha256"], output["intent_sha256"])
             self.assertEqual(summary["intent_sha256"], output["selection"]["intent_sha256"])
             self.assertEqual("intent-rank/v1", summary["intent_algorithm"])
+
+    def test_profiled_bundle_uses_internal_output_and_records_resolution(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="run-destinations-") as temporary:
+            root = Path(temporary)
+            profile_path = root / "profile.yaml"
+            profile_path.write_text(
+                yaml.safe_dump({
+                    "contract_version": "output-destinations/v1",
+                    "profile": "test",
+                    "destinations": {
+                        "state_root": str(root / "state"),
+                        "internal_output_root": str(root / "internal"),
+                    },
+                }, sort_keys=False),
+                encoding="utf-8",
+            )
+            bundle_path = root / "bundle.json"
+            bundle_path.write_text(json.dumps(self.bundle(), ensure_ascii=False), encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    sys.executable, str(ROOT / "tools" / "run.py"),
+                    "--bundle", str(bundle_path), "--project-id", "run-test", "--seed-input", "seed",
+                    "--run-id", "BUNDLE-RUN", "--destinations-file", str(profile_path),
+                ], cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            summary = json.loads(completed.stdout)
+            output = root / "internal" / "run" / "run-test" / "run.json"
+            evidence = root / "state" / "BUNDLE-RUN" / "destination-resolution.json"
+            self.assertTrue(output.is_file())
+            self.assertTrue(evidence.is_file())
+            document = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual("destination-resolution/v1", document["destination_resolution"]["contract_version"])
+            self.assertEqual(document["destination_resolution"], summary["destination_resolution"])
 
 
 class MechanicalStepTests(unittest.TestCase):

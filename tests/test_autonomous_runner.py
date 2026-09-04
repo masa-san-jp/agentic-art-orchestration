@@ -10,6 +10,8 @@ import textwrap
 import time
 import unittest
 
+import yaml
+
 from tools.autonomous_runner import (
     HUMAN_OPERATIONS,
     run_autonomous,
@@ -99,6 +101,36 @@ class AutonomousRunnerTests(unittest.TestCase):
             self.assertEqual("1", count.read_text())
             self.assertEqual([], validate_autonomous_state(second))
             self.assertEqual(1, len(second["history"]))
+
+    def test_profiled_runner_uses_shared_state_root_and_atomic_resolution_evidence(self):
+        with tempfile.TemporaryDirectory(prefix="autonomous-destinations-") as directory:
+            temporary = Path(directory)
+            worker, _count = self.worker(temporary, "complete")
+            profile = temporary / "profile.yaml"
+            profile.write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "test",
+                "destinations": {
+                    "state_root": str(temporary / "profile-state"),
+                    "internal_output_root": str(temporary / "profile-internal"),
+                },
+            }, sort_keys=False), encoding="utf-8")
+            project = temporary / "project"
+            project.mkdir()
+            state = run_autonomous(
+                run_id="profiled-runner",
+                worker_command=str(worker),
+                destinations_file=profile,
+                source_commit=COMMIT,
+                project_path=str(project),
+                allowed_paths=("project",),
+                once=True,
+            )
+            self.assertEqual("PLAN_READY", state["status"])
+            self.assertEqual("destination-resolution/v1", state["destination_resolution"]["contract_version"])
+            evidence = temporary / "profile-state" / "profiled-runner" / "destination-resolution.json"
+            self.assertTrue(evidence.is_file())
+            self.assertEqual([], validate_autonomous_state(state))
 
     def test_failed_worker_retries_three_times_then_exhausts_on_fourth_failure(self):
         with tempfile.TemporaryDirectory(prefix="autonomous-runner-") as directory:
