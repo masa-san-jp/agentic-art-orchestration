@@ -1,15 +1,15 @@
-version: 176
-updated_at: "2026-09-04T11:40:00+09:00"
-active_task: OUTPUT-DESTINATIONS-RUNTIME-001
-active_repository: agentic-art-orchestration
+version: 177
+updated_at: "2026-09-04T11:56:52+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-output-destinations-runtime
+  status: available
+  owner: null
   acquired_at: "2026-09-04T11:40:00+09:00"
-  expires_at: "2026-09-04T13:40:00+09:00"
+  expires_at: null
   lane: OUTPUT_DESTINATIONS
   execution_id: OUTPUT-DESTINATIONS-RUNTIME-001:20260904-114000
-  released_at: null
+  released_at: "2026-09-04T11:56:52+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [tools/output_destinations.py, tools/run.py, tools/batch_run.py, tools/production_exchange.py, tools/autonomous_runner.py, schemas, tests]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 3af852180a6b3525b5d6d852d8c4c95b1288162d
   expected_changes: Connect one shared output-destination resolver to run, batch_run, production_exchange, and autonomous_runner; preserve legacy defaults and required arguments; write atomic internal resolution evidence; prove profile output separation.
-  result: in_progress
-last_completed_task: WORKSPACE-BOOTSTRAP-CONTRACT-001
+  result: completed; parent PR #156 merged as b3bfbdb4aa2b1f305f5decfdea635485ecb6c947 after 501/501 parent tests, validator, py_compile, and diff check passed.
+last_completed_task: OUTPUT-DESTINATIONS-RUNTIME-001
 resume_from:
-  task: OUTPUT-DESTINATIONS-RUNTIME-001
-  action: "Implement and test the shared resolver adapters, then record the completion evidence and release the lease."
+  task: OUTPUT-DESTINATIONS-DOCS-001
+  action: "Claim the smallest dependency-complete BACKLOG task, then document configured destinations and recovery behavior from Issue #148."
   command: python3 tools/validate.py --check
 
 issue_intake:

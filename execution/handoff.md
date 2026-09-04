@@ -1988,3 +1988,17 @@
 ### Next exact action
 
 1. Claim `OUTPUT-DESTINATIONS-RUNTIME-001` from fresh parent `main`, inspect run/batch/exchange/runner defaults, then connect only the shared destination resolver and prove legacy compatibility.
+
+## 2026-09-04 — OUTPUT-DESTINATIONS-RUNTIME-001 completed
+
+- Task ID: `OUTPUT-DESTINATIONS-RUNTIME-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#148](https://github.com/masa-san-jp/agentic-art-orchestration/issues/148).
+- Observable changes: `run.py`, `batch_run.py`, `production_exchange.py`, and `autonomous_runner.py` now use the shared destination resolver when a profile is explicitly selected. Direct CLI paths retain precedence; profile-free defaults and required arguments remain backward compatible. Existing runtime reports carry the resolution object when configured, and `<state-root>/<run-id>/destination-resolution.json` is created atomically and conflict-checked.
+- Acceptance: runtime-focused tests `51/51 PASS`; parent full suite `501/501 PASS` with 1 expected skip; `python3 tools/validate.py --check`, py_compile, and `git diff --check` PASS. Parent implementation commit `3fe8b6a79311dfe725211a388247d692d2c089a2`; PR #156 merged as `b3bfbdb4aa2b1f305f5decfdea635485ecb6c947`.
+- Parent and child Git state: parent branch was clean before push; no child checkout was changed, copied, or used as an output destination. No manifest pin changed.
+- Sensitive information: zero user paths, credentials, tokens, private/restricted/raw conversation data, public target, or external artifact body entered Git. The tracked example contains placeholders only. External artifacts remain create-only and none were created.
+- Feedback classification: explicit = the user's request to assess each repository's autonomous completion requirements and fill gaps; inferred = none.
+- Unresolved: GitHub validate run `33831327488` was billing-blocked before steps for all three jobs; local gates remain the observable acceptance evidence. Documentation still needs to explain profile setup/recovery; public projection remains downstream and human-gated.
+
+### Next exact action
+
+1. Claim `OUTPUT-DESTINATIONS-DOCS-001` from the released lease, then update the operator and agent runtime documentation using the implemented CLI flags and placeholder profile.

@@ -726,3 +726,15 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `OUTPUT-DESTINATIONS-RUNTIME-001`, inspect the four runtime command parsers and existing default paths, then connect the shared resolver with legacy compatibility tests.
+
+## OUTPUT-DESTINATIONS-RUNTIME-001 — completed
+
+- Parent PR #156 merged to `main` as `b3bfbdb4aa2b1f305f5decfdea635485ecb6c947`; implementation commit was `3fe8b6a79311dfe725211a388247d692d2c089a2`.
+- Connected the one shared `output-destinations/v1` resolver to `run.py`, `batch_run.py`, `production_exchange.py`, and `autonomous_runner.py`. Profile-selected commands now derive state and internal output paths, preserve direct CLI precedence, include `destination-resolution/v1` in existing reports/state, and atomically create the external run-scoped evidence file without replacing conflicts. Profile-free legacy defaults and required-argument failures remain unchanged.
+- Observable acceptance: focused runtime tests `51/51 PASS`; parent full suite `501/501 PASS` with 1 expected skip; `python3 tools/validate.py --check`, py_compile, and `git diff --check` PASS. Profile separation tests prove outputs are outside the parent/child checkout boundaries and do not mutate them.
+- Remote CI run `33831327488` has `bootstrap`, `production-exchange`, and `real-chain` failures with zero steps because the account billing limit prevented job startup. This is recorded as an environment failure and is not counted as a skipped or passing quality gate.
+- Safety: no child repository, manifest pin, user absolute path, credential, private data, raw conversation, public projection, Drive artifact, or external artifact body was written. The tracked profile remains placeholder-only. Explicit feedback is the user's request to evaluate and complete autonomous implementation requirements; inferred feedback is none.
+
+### Next exact action
+
+1. Claim `OUTPUT-DESTINATIONS-DOCS-001` and synchronize README, operator runbook, agent runtime guide, PLANS, state, and handoff with the now-implemented profile configuration and recovery behavior.
