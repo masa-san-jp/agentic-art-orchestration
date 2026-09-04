@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/public-projection-approval.schema.json",
+  "title": "Public projection human approval v1",
+  "description": "Closed human approval envelope kept separate from a public projection request.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "operation", "request_sha256", "status", "approved_at", "expires_at", "approved_by", "authority", "scope"],
+  "properties": {
+    "contract_version": {"const": "public-projection-approval/v1"},
+    "operation": {"const": "public_share"},
+    "request_sha256": {"$ref": "#/$defs/hash64"},
+    "status": {"const": "APPROVED"},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "approved_by": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "authority": {"const": "HUMAN"},
+    "scope": {"const": "local-public-project-projection"}
+  },
+  "$defs": {
+    "hash64": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/public-project-layout.schema.json",
+  "title": "Public project layout v1",
+  "description": "Closed, target-local layout declaration for a public projection workspace.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "collections", "catalog_markers", "media_policy"],
+  "properties": {
+    "contract_version": {"const": "public-project-layout/v1"},
+    "collections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plans", "works"],
+      "properties": {
+        "plans": {"$ref": "#/$defs/relative_path"},
+        "works": {"$ref": "#/$defs/relative_path"}
+      }
+    },
+    "catalog_markers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"$ref": "#/$defs/marker"},
+        "end": {"$ref": "#/$defs/marker"}
+      }
+    },
+    "media_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_file_bytes", "allowed_extensions"],
+      "properties": {
+        "max_file_bytes": {"type": "integer", "minimum": 1, "maximum": 1000000000},
+        "allowed_extensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^\\.[a-z0-9]{1,8}$"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+    },
+    "marker": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n]+$"
+    }
+  }
+}

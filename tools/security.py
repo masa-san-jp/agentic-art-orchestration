@@ -45,6 +45,47 @@ SECRET_PATTERN = re.compile(
 )
 TOKEN_PATTERN = re.compile(r"\b(?:ghp|github_pat|sk)-[A-Za-z0-9_-]{8,}\b")
 ALLOWED_SELF_CONSENT = {"approved-derived-only"}
+PUBLIC_PROJECTION_FINDING_CODES = {
+    "UNKNOWN_CLEARANCE",
+    "MISSING_APPROVAL",
+    "APPROVAL_MISMATCH",
+    "APPROVAL_EXPIRED",
+    "TARGET_CONFLICT",
+    "TARGET_DIRTY",
+    "LAYOUT_INVALID",
+    "SOURCE_PATH_UNSAFE",
+    "SOURCE_HASH_MISMATCH",
+    "FORBIDDEN_CONTENT",
+    "CREDENTIAL",
+    "PRIVATE_URL",
+    "ABSOLUTE_PATH",
+    "FORBIDDEN_ARTIFACT",
+    "UNAPPROVED_MEDIA",
+    "INTERNAL_REFERENCE",
+    "REMOTE_OPERATION",
+    "ROLLBACK_FAILED",
+}
+_PUBLIC_FORBIDDEN_KEY_NAMES = {key.casefold() for key in FORBIDDEN_KEYS}
+_PUBLIC_DIRECT_IDENTIFIER_KEYS = {
+    "direct_identifier",
+    "email",
+    "phone",
+    "user_id",
+    "person_id",
+    "internal_id",
+    "drive_id",
+    "issue_id",
+    "signed_url",
+    "private_url",
+}
+_PUBLIC_ABSOLUTE_PATH = re.compile(r"(?<![A-Za-z0-9])/(?:Users|home|private|tmp|var|Volumes|System|opt)/")
+_PUBLIC_INTERNAL_URL = re.compile(
+    r"(?i)(?:https?://(?:drive|docs)\.google\.com/|"
+    r"https?://github\.com/[^/\s]+/[^/\s]+/(?:issues|pull|commit)/|"
+    r"git@github\.com:[^\s]+\.git)"
+)
+_PUBLIC_FORBIDDEN_ARTIFACT = re.compile(r"(?i)\.(?:gdoc|gsheet|gslides)(?:$|[?#\s])")
+_PUBLIC_FORBIDDEN_LITERAL = re.compile(r"(?i)\b(?:PRIVATE_RAW|RESTRICTED)\b")
 
 
 def _error(detail: str, remediation: str) -> SecurityBoundaryError:
@@ -81,6 +122,50 @@ def scan_payload(payload: object, source: str = "payload") -> list[dict]:
 def _dedupe_findings(findings: list[dict]) -> list[dict]:
     unique = {json.dumps(finding, ensure_ascii=False, sort_keys=True): finding for finding in findings}
     return [unique[key] for key in sorted(unique)]
+
+
+def scan_public_projection(payload: object, source: str = "public-projection") -> list[dict]:
+    """Scan a projection envelope without copying forbidden values into findings.
+
+    The request contract intentionally retains internal source provenance. This
+    scanner therefore reports only values that are never safe at the public
+    boundary (credentials, raw/restricted classes, direct identifiers, private
+    provider locators, absolute paths, and provider-native document artifacts).
+    Policy decisions such as unknown clearance are reported by the projection
+    contract validator, not inferred from arbitrary prose here.
+    """
+    findings: list[dict] = []
+    for key, child, location in _walk(payload):
+        key_name = key.casefold()
+        if key_name in _PUBLIC_FORBIDDEN_KEY_NAMES:
+            findings.append(_finding("FORBIDDEN_CONTENT", source, location, "remove PRIVATE_RAW, RESTRICTED, or raw content before projection"))
+        if key_name in _PUBLIC_DIRECT_IDENTIFIER_KEYS:
+            findings.append(_finding("INTERNAL_REFERENCE", source, location, "replace direct identifiers with an approved opaque reference"))
+        if isinstance(child, str):
+            if SECRET_PATTERN.search(child) or TOKEN_PATTERN.search(child):
+                findings.append(_finding("CREDENTIAL", source, location, "remove credential-like values and rotate exposed credentials"))
+            if _PUBLIC_FORBIDDEN_LITERAL.search(child):
+                findings.append(_finding("FORBIDDEN_CONTENT", source, location, "remove restricted or raw content before projection"))
+            if _PUBLIC_FORBIDDEN_ARTIFACT.search(child):
+                findings.append(_finding("FORBIDDEN_ARTIFACT", source, location, "export approved plain files instead of provider-native artifacts"))
+            if _PUBLIC_ABSOLUTE_PATH.search(child):
+                findings.append(_finding("ABSOLUTE_PATH", source, location, "use a relative public locator or an opaque hash"))
+            if _PUBLIC_INTERNAL_URL.search(child):
+                findings.append(_finding("PRIVATE_URL", source, location, "remove internal provider URLs and use an opaque public reference"))
+            if key_name.endswith("locator") and (child.startswith("/") or ".." in child.split("/")):
+                findings.append(_finding("SOURCE_PATH_UNSAFE", source, location, "use a normalized relative locator without traversal"))
+    if isinstance(payload, str):
+        if SECRET_PATTERN.search(payload) or TOKEN_PATTERN.search(payload):
+            findings.append(_finding("CREDENTIAL", source, "$", "remove credential-like values and rotate exposed credentials"))
+        if _PUBLIC_FORBIDDEN_LITERAL.search(payload):
+            findings.append(_finding("FORBIDDEN_CONTENT", source, "$", "remove restricted or raw content before projection"))
+        if _PUBLIC_FORBIDDEN_ARTIFACT.search(payload):
+            findings.append(_finding("FORBIDDEN_ARTIFACT", source, "$", "export approved plain files instead of provider-native artifacts"))
+        if _PUBLIC_ABSOLUTE_PATH.search(payload):
+            findings.append(_finding("ABSOLUTE_PATH", source, "$", "use a relative public locator or an opaque hash"))
+        if _PUBLIC_INTERNAL_URL.search(payload):
+            findings.append(_finding("PRIVATE_URL", source, "$", "remove internal provider URLs and use an opaque public reference"))
+    return _dedupe_findings(findings)
 
 
 def check_export(signal: Mapping[str, object], source: str = "signal") -> list[dict]:
