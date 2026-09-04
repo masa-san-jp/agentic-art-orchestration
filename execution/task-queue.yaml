@@ -1,5 +1,5 @@
-version: 48
-updated_at: "2026-09-04T13:30:00+09:00"
+version: 49
+updated_at: "2026-09-04T13:43:06+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1409,7 +1409,7 @@ tasks:
   - id: PUBLIC-PROJECTION-APPLY-001
     milestone: M29
     title: Apply approved public projection with atomic rollback and idempotency
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1419,12 +1419,13 @@ tasks:
     depends_on: [PUBLIC-PROJECTION-PLAN-001]
     acceptance: Verify a human approval hash/scope/expiry, require a clean compatible target and exact source hashes, stage and atomically apply only allowlisted record/index/marker paths, preserve existing content, classify repeat/conflict outcomes, and recover transaction-created paths on failure.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Implementation commit 7f4c4404c6edd51144a74ff1e43a660613a4a67; parent PR #166 merged to main as c384e5ec70ef7b007a105abede415456e94f75bb. Added project --apply with exact human approval hash/scope/expiry verification, clean target/source revalidation, staged allowlisted record/index/catalog application, atomic replacements, exact-path rollback, ALREADY_PROJECTED replay, conflict blocking, and sanitized result evidence. Temporary Git fixtures cover APPLIED, missing/mismatched approval, CLI apply, idempotency, existing-record conflict, and injected failure recovery. Focused public/security tests 24/24 PASS; parent full suite 521 tests with 1 skipped; validator, py_compile, and diff check PASS. GitHub run 33837745526 failed before any job step because of the account billing limit and is not counted as a quality-gate pass. No user public target, child repository, manifest pin, credential, private/restricted data, raw conversation, direct identifier, or external artifact body was written; synthetic temporary targets only. Acceptance 1/1."
     stop_if: [Approval is missing/expired/mismatched, Target commit/push/merge/release is requested, Existing content must be deleted or reset, Rollback cannot restore the pre-transaction fingerprint]
 
   - id: PUBLIC-PROJECTION-DOCS-001
     milestone: M29
     title: Document public projection human gates and privacy boundaries
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY

@@ -2058,3 +2058,18 @@
 ### Next exact action
 
 1. `PUBLIC-PROJECTION-APPLY-001`をclaimし、Issue #149、approval/result schema、今回のplan helperを確認して、approval hash/scope/expiry検証→staging→atomic apply→rollback/idempotencyをtemporary Git fixtureへ実装する。
+
+## 2026-09-04 — PUBLIC-PROJECTION-APPLY-001 completed
+
+- Task ID: `PUBLIC-PROJECTION-APPLY-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#149](https://github.com/masa-san-jp/agentic-art-orchestration/issues/149)。implementation commitは`7f4c4404c6edd51144a74ff1e43a660613a4a67`、PR [#166](https://github.com/masa-san-jp/agentic-art-orchestration/pull/166) merge commitは`c384e5ec70ef7b007a105abede415456e94f75bb`。
+- `project --apply`を実装した。別ファイルのhuman approvalについて、canonical request hash、`public_share`、`APPROVED`、`HUMAN`、scope、有効期間を照合し、targetのclean状態・layout・index・source hashを再検証する。agentはapprovalを生成・補完しない。
+- 適用はtemporary stagingから、新規record directory内のallowlist済みpublic-ready file、対応index、collection READMEのcatalog marker内だけに限定した。root README、既存record、marker外、Git ref、remoteは変更しない。index/catalogはatomic replaceし、transaction作成pathだけをrollbackする。
+- `APPLIED`、`ALREADY_PROJECTED`、`BLOCKED_HUMAN`、`BLOCKED_POLICY`、`BLOCKED_CONFLICT`、`FAILED`をresultへ記録し、再実行・source/content衝突・途中失敗復元をtemporary Git fixtureで確認した。approval hash、source refs、public IDs、changed paths、before/after fingerprint、remote operations空配列のみをresultへ保持し、本文・media bytes・credentialは保存しない。
+- Acceptanceは`1/1`。focused public/security `24/24 PASS`、parent full suite `521 tests / 1 skipped PASS`、validator、py_compile、diff check、CLI apply、approval gate、rollback fingerprint restore PASS。GitHub run `33837745526`はbilling limitにより全jobがstep開始前失敗し、品質ゲートへ算入していない。
+- 機微情報・外部artifact: credential、user path、PRIVATE_RAW、RESTRICTED、raw conversation、direct identifier、child repo、manifest pin、Drive/Issue本文、実利用者のpublic targetは書込みなし。approval・public contentはsynthetic temporary fixtureだけで扱った。
+- Feedback: explicitは「各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完」。inferredはなし。未解決は公開投影docsとGitHub billing環境制約。
+- Leaseは`available/unassigned`へ解放し、依存完了済みの最小task `PUBLIC-PROJECTION-DOCS-001`を`READY`へ昇格した。
+
+### Next exact action
+
+1. `PUBLIC-PROJECTION-DOCS-001`をclaimし、README、operator runbook、agent runtime guide、human-gates config、PLANS、state、handoffを実装済みのprepare/project apply lifecycleと自律実装境界に同期する。
