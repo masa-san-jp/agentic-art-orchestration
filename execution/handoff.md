@@ -2150,3 +2150,13 @@
 ### Next exact action
 
 1. 親repoの最終validator、full suite、README status、py_compile、diff checkを実行し、親mainと全child Issueの状態を確認する。
+
+## 2026-09-04 — PARENT-ENTRYPOINT-HARDENING-001 in progress
+
+- 親repoの入口に、目的を「エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。」と明記し、READMEへ制作プランの実用性、複数プラン、自律継続、アートとAI技術の判定要件を追加した。設計仕様書にも同じ目的境界を追加した。
+- `tools/run.py`の生成run stateが既定の`data/runs/`へ書かれる場合に共有checkoutをdirtyにしないよう、`.gitignore`へ`data/runs/`を追加した。
+- 子repo、schema/data/pin、credential、private data、raw conversation、Drive/外部artifact本文は変更していない。最終acceptanceと検証結果は実装commit・PRの確定後に追記する。GitHub Actions billingは外部環境事項としてローカル証跡と分離する。
+
+### Next exact action
+
+1. 変更を検証し、実装commitとPRを作成する。

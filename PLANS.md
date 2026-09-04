@@ -928,3 +928,14 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. 親repoの最終validator、full suite、README status、py_compile、diff checkを実行し、親mainと全child Issueの状態を確認する。
+
+## PARENT-ENTRYPOINT-HARDENING-001 — in progress
+
+- Task ID: `PARENT-ENTRYPOINT-HARDENING-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#1](https://github.com/masa-san-jp/agentic-art-orchestration/issues/1)。開始点はparent main `07cbbe0b6ba83d7b8638d9e86b732db40198222c`。
+- `AGENTS.md`、`README.md`、設計仕様書の先頭へ、エージェントハーネスの目的と制作プラン要件を明記し、control planeを目的達成の手段として位置付けた。`.gitignore`へ`data/runs/`を追加し、既定実行の生成状態が共有checkoutをdirtyにしないようにした。
+- 親のvalidator、全テスト、README status、py_compile、diff checkを実行し、子repo、schema/data/pin、credential、private data、raw conversation、external artifactは変更しない。実測結果はtask commit後に追記する。
+- Acceptanceは検証完了後に判定する。GitHub Actionsはbilling制限で開始前失敗した場合もquality gateへ算入せず、ローカル検証と分離して記録する。
+
+### Next exact action
+
+1. 変更を検証し、実装commitとPRを作成してからDONE証跡を記録する。

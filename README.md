@@ -1,5 +1,29 @@
 # Agentic Art Orchestration
 
+## 目的
+
+**エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。**
+
+（2026-08-25 マサさんの言葉のまま。要約・言い換えをしない。）
+
+## 要件
+
+制作プランに、人間が実際にどうやって製作するのかが書かれていること。読んで手を動かせないプランは、この要件を満たしていない。
+
+制作プランの冒頭に、アートコンセプト、メッセージ、表現手法、どんな調査を行なったかのサマリーが書かれていること。
+
+他の制作プランも作れること。1本出せることは、この要件を満たしたことにならない。
+
+**エージェントが自律的に動くこと。** 意図を受け取ったら、完了するか、人にしか決められないことに当たるまで、自分で次を呼び続ける。止まったら自分で原因を見て、直せるものは直して、再開する。誰かがコマンドを打ちに来るのを待たない。
+
+作品の側の要件（この仕組みが保証するのは「判定を持ち、満たさないものを止められること」までである）:
+
+> 「作品」じゃなくて「アート」を出さないといけない。ようはコンセプチュアルでメッセージ性が無いとダメなんだ
+> 大事なのは「AI」の部分じゃなく「アート」の部分
+> その技術を外したとき、作品は「地味になる」のか「成立しなくなる」のか
+
+以下に書かれている基盤・契約・ゲートは、すべてこの目的のための手段である。手段の完成を目的と読み替えない。
+
 Self Model × Art History × Marketing Trends → Agentic Art Research → Agentic Art Production を、独立したリポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
 
 ## 利用者向けの最短ルート
@@ -35,14 +59,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T18:12:24+09:00`.
+Source updated at: `2026-09-04T18:24:48+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 136 | 136 |
+| 0 | 0 | 1 | 0 | 136 | 137 |
 
-Current task: `null`; repository: `null`; checkpoint: `RESEARCH-EVALUATION-DOCS-001`.
-Next action: The autonomy-readiness child tasks are complete; run the final parent validation and remote-state audit before handoff.
+Current task: `PARENT-ENTRYPOINT-HARDENING-001`; repository: `agentic-art-orchestration`; checkpoint: `PARENT-ENTRYPOINT-HARDENING-001`.
+Next action: Complete PARENT-ENTRYPOINT-HARDENING-001, then verify the final parent main and issue/PR state before handoff.
 Ready: none.
 Next task: `null`.
 Blocked:
