@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T13:57:27+09:00`.
+Source updated at: `2026-09-04T14:03:44+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 1 | 0 | 0 | 127 | 130 |
+| 2 | 0 | 1 | 0 | 127 | 130 |
 
-Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECTION-DOCS-001`.
-Next action: Promote the dependency-complete workspace bootstrap preflight task, then inspect Issue #150, the bootstrap contract, and existing workspace guards before implementing read-only manifest/worktree preflight.
-Ready: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
-Next task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
+Current task: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`; repository: `agentic-art-orchestration`; checkpoint: `WORKSPACE-BOOTSTRAP-PREFLIGHT-001`.
+Next action: Inspect Issue #150, the workspace-bootstrap/v1 contract, existing workspace guards, and the bootstrap parser, then implement sanitized read-only preflight and lock handling before any future clone stage.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 
