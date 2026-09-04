@@ -35,13 +35,13 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T17:49:45+09:00`.
+Source updated at: `2026-09-04T18:12:24+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 135 | 135 |
+| 0 | 0 | 0 | 0 | 136 | 136 |
 
-Current task: `null`; repository: `null`; checkpoint: `VIEWER-RESPONSE-AUTONOMY-001`.
+Current task: `null`; repository: `null`; checkpoint: `RESEARCH-EVALUATION-DOCS-001`.
 Next action: The autonomy-readiness child tasks are complete; run the final parent validation and remote-state audit before handoff.
 Ready: none.
 Next task: `null`.

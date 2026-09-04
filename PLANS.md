@@ -918,3 +918,13 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. 親repoで`python3 tools/validate.py --check`を実行し、`python3 -m unittest discover -s tests -v`、`python3 tools/project_status.py --check-readme`、`python3 -m py_compile tools/*.py tests/*.py`、`git diff --check`を確認して最終親PRを作成する。
+## RESEARCH-EVALUATION-DOCS-001 — completed
+
+- Task ID: `RESEARCH-EVALUATION-DOCS-001`; target repository: `agentic-art-research`; Issue SSOTは[#91](https://github.com/masa-san-jp/agentic-art-research/issues/91)。開始点は`f1731e6cc7e63154bffdafc33af31c1462b6ab8b`、implementation commitは`bc3bf4f77614cc1718fa9e875207d4c073bb1403`、PR [#92](https://github.com/masa-san-jp/agentic-art-research/pull/92)はmainへ`71bfec77ea0d189186b8248565d340c124b81eab`としてmergeされた。Issue #91はCLOSED。
+- READMEの直接`evaluate.py --offline-fixture`例へ一時`EVAL_ROOT`と`--root`を追加し、canonical `projects/`/`data/`を出力先にしない導線へ修正した。`tests/test_docs_check.py`はportable commandを実行し、canonical treeが不変であることを確認する。project/data/schema/runtimeは変更していない。
+- Acceptance `1/1`。focused docs tests `4/4 PASS`、child full suite `291/291 PASS`、compileall、validator、security、docs、graph、chaos、release、handoff release、git diff checkがPASSした。GitHub Actions run `33857111971`は`steps=[]`のbilling開始前失敗で、品質gateのPASSへ算入していない。
+- 機微情報・外部artifact: credential、token、PRIVATE_RAW、RESTRICTED、direct identifier、private data、raw conversation、user path、外部artifact本文の保存・送信なし。explicit feedbackは自律実装要件の評価・補完依頼、inferredはnone。未解決はGitHub Actions billingのみ。
+
+### Next exact action
+
+1. 親repoの最終validator、full suite、README status、py_compile、diff checkを実行し、親mainと全child Issueの状態を確認する。
