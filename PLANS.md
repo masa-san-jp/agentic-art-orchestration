@@ -683,3 +683,24 @@ intakeはIssue、Git、queueをremoteから変更しない。本文はreportへ�
 ### Next exact action
 
 1. `PURPOSE-PRODUCTION-VISUAL-PACKAGE-001`をclaimし、Production Issue #52の正本と実repoのREADME/AGENTSを読んでからchild branchで実装する。
+
+## M28-M29 actionable Issue registration — pending
+
+### Purpose
+
+Issue intake identified three qualified parent-repository Issue SSOTs: #148 (configured output destinations), #150 (fresh-clone workspace bootstrap), and #149 (human-gated public projection). Their missing autonomous-execution requirements were decomposed into a dependency-ordered task DAG in `execution/task-queue.yaml`.
+
+### Registration result
+
+- `OUTPUT-DESTINATIONS-CONTRACT-001` and `WORKSPACE-BOOTSTRAP-CONTRACT-001` are independent `READY` tasks after `HARNESS-RESEARCH-PIN-85-001`; the lowest ID is the next task.
+- The remaining ten tasks are `BACKLOG` with explicit dependencies, acceptance, checks, stop conditions, target repositories, and terminal states.
+- #149 is deliberately downstream of the complete #148 lane because public projection must consume the configured, Git-external output boundary.
+- Self-model #81 is separately scoped to SM-031..034; #82 is a human-gated n=1 profile migration and is not an autonomous implementation task.
+
+### Safety boundary
+
+All examples remain placeholders or synthetic fixtures. No user absolute path, credential, private profile, raw conversation, child schema/data, public target, or external artifact body is registered in the parent. Merge, release, live profile migration, and public projection remain human-gated.
+
+### Next exact action
+
+1. Claim `OUTPUT-DESTINATIONS-CONTRACT-001`, read Issue #148 and the nearest schemas/tests, then implement the contract and shared resolver in an isolated branch.

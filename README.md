@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-03T21:26:57+09:00`.
+Source updated at: `2026-09-04T11:04:46+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 118 | 118 |
+| 10 | 2 | 0 | 0 | 118 | 130 |
 
 Current task: `null`; repository: `null`; checkpoint: `HARNESS-RESEARCH-PIN-85-001`.
-Next action: No implementation task remains; perform repository-scoped Issue re-audit when a new implementation Issue or explicit feedback arrives. Production Issue #10 remains the permanent requirement SSOT.
-Ready: none.
-Next task: `null`.
+Next action: Claim the lowest-ID READY task after verifying its Issue #148 SSOT, dependency HARNESS-RESEARCH-PIN-85-001, target repository, and clean lease; then implement only the versioned contract and shared resolver.
+Ready: `OUTPUT-DESTINATIONS-CONTRACT-001`, `WORKSPACE-BOOTSTRAP-CONTRACT-001`.
+Next task: `OUTPUT-DESTINATIONS-CONTRACT-001`.
 Blocked:
 - none
 

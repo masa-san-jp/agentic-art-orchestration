@@ -1,5 +1,5 @@
-version: 40
-updated_at: "2026-09-03T18:07:29+09:00"
+version: 41
+updated_at: "2026-09-04T11:04:46+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1247,3 +1247,183 @@ tasks:
     depends_on: [HARNESS-ISSUE-141-INTERSECTION-001]
     acceptance: The parent manifest and retrieval fixture adopt the exact Research main merge commit 9a35dd74d53c756e5b509e1b0d8d217c53a71e37, parent validation confirms the pin and retrieval provenance, and the pinned child quality gates pass without copying child schema/data or writing raw/private content.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_retrieval tests.test_knowledge_profiles tests.test_child_quality_gates -v, python3 -m unittest discover -s tests -v, python3 tools/child_quality_gates.py --manifest config/repositories.yaml --workspace-root <verified-child-workspace> --run-id research-pin-85 --check, git diff --check]
+
+  - id: OUTPUT-DESTINATIONS-CONTRACT-001
+    milestone: M28
+    title: Define the versioned output destination contract and shared resolver
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: OUTPUT_DESTINATIONS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-RESEARCH-PIN-85-001]
+    acceptance: Define closed output-destinations/v1 and destination-resolution/v1 contracts, a single deterministic resolver, direct-CLI > destinations-file > AGENTIC_ART_DESTINATIONS_FILE > legacy precedence, and fail-closed path collision/symlink/repository-boundary checks. Use placeholder examples only; never track a user absolute path, credential, or output body.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_output_destinations -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A destination contract requires personal data or credentials, A path outside the issue allowance is required, A child repository or parent manifest pin must change, Existing CLI compatibility cannot be preserved]
+
+  - id: OUTPUT-DESTINATIONS-RUNTIME-001
+    milestone: M28
+    title: Connect the shared destination resolver to all runtime commands
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: OUTPUT_DESTINATIONS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [OUTPUT-DESTINATIONS-CONTRACT-001]
+    acceptance: Connect run, batch_run, production_exchange, and autonomous_runner to the shared resolver, preserve all legacy defaults and required-argument failures when no profile is used, write internal resolution evidence atomically, and prove profile output separation without mutating parent Git or child checkouts.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_output_destinations tests.test_run tests.test_batch_run -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A runtime command needs a second destination resolver, Existing output must be moved or deleted, A live user path or external artifact is required, A child repository must change]
+
+  - id: OUTPUT-DESTINATIONS-DOCS-001
+    milestone: M28
+    title: Document configured destinations and recovery behavior
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: OUTPUT_DESTINATIONS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [OUTPUT-DESTINATIONS-RUNTIME-001]
+    acceptance: Synchronize README, operator runbook, agent runtime guide, PLANS, state, and handoff with the destination contract, fresh-clone setup, deterministic errors, legacy rollback, and privacy boundary. A new agent can configure a temporary profile and run the offline checks without conversation history.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_output_destinations tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [Documentation would promise an unimplemented command, A personal absolute path or credential would be tracked, README status cannot be generated from queue/state, A public projection behavior is required]
+
+  - id: WORKSPACE-BOOTSTRAP-CONTRACT-001
+    milestone: M28
+    title: Define the manifest-driven workspace bootstrap result contract
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: WORKSPACE_BOOTSTRAP
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [HARNESS-RESEARCH-PIN-85-001]
+    acceptance: Add the closed workspace-bootstrap/v1 result contract and bootstrap parser to tools/workspace.py without hardcoding repository entries, preserving existing init/fetch/status/guard/snapshot commands and supporting deterministic offline fixtures.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_workspace -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [The manifest must be duplicated outside repositories.yaml, Existing commands must be removed or renamed, A live credential or remote is required for acceptance, A child repository or pin must change]
+
+  - id: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
+    milestone: M28
+    title: Add non-destructive workspace and remote preflight
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: WORKSPACE_BOOTSTRAP
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [WORKSPACE-BOOTSTRAP-CONTRACT-001]
+    acceptance: Inspect every manifest entry before cloning, report dirty/untracked/detached/remote/upstream/ahead/behind/diverged and access findings with sanitized reasons, acquire the bootstrap lock before cloning, and guarantee zero new clones when an existing workspace or remote preflight is unsafe.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_workspace_guards -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [Preflight would fetch or mutate an existing checkout, A credential or remote response would be written, Partial clone behavior cannot be isolated, A path outside the temporary fixture is required]
+
+  - id: WORKSPACE-BOOTSTRAP-APPLY-001
+    milestone: M28
+    title: Implement staged bootstrap, idempotent reuse, and pin readiness
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: WORKSPACE_BOOTSTRAP
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [WORKSPACE-BOOTSTRAP-PREFLIGHT-001]
+    acceptance: Clone all missing entries into tool-owned staging, validate origin/branch/clean state, atomically place only after all stages pass, recover only this run's staging on failure, reuse a clean workspace byte-idempotently, and return READY or the specified BLOCKED_* status without auto-checkout, pin adoption, reset, or deletion.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_workspace tests.test_workspace_guards -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [An existing checkout must be repaired, A partial placement cannot be rolled back, Pin adoption or merge is needed, Tool-owned staging cannot be distinguished from user paths]
+
+  - id: WORKSPACE-BOOTSTRAP-DOCS-001
+    milestone: M28
+    title: Document the canonical fresh-clone bootstrap and recovery path
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: WORKSPACE_BOOTSTRAP
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [WORKSPACE-BOOTSTRAP-APPLY-001]
+    acceptance: Synchronize README, operator runbook, agent runtime guide, PLANS, state, and handoff with the bootstrap command, auth preflight, offline proof, sanitized failure remediation, pin drift recovery, and unchanged legacy commands.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [Documentation requires live private access to pass, A credential is exposed in examples or evidence, README status is inconsistent with queue/state, Existing command behavior is silently changed]
+
+  - id: PUBLIC-PROJECTION-CONTRACT-001
+    milestone: M29
+    title: Define public project, request, approval, and result contracts
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: PUBLIC_PROJECTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [OUTPUT-DESTINATIONS-DOCS-001]
+    acceptance: Add closed public-project-layout/v1, public-projection-request/v1, public-projection-approval/v1, and public-projection-result/v1 contracts with synthetic fixtures, security vocabulary, unknown-clearance blocking, and no public target mutation.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A public clearance or consent must be inferred, A target repository must be changed, Internal content or credential must enter a fixture, A child production schema must change]
+
+  - id: PUBLIC-PROJECTION-PREPARE-001
+    milestone: M29
+    title: Generate deterministic public projection candidates from run and batch output
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: PUBLIC_PROJECTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PUBLIC-PROJECTION-CONTRACT-001]
+    acceptance: Implement prepare and refresh as the only request producer, connect run and batch output, preserve canonical hashes and provenance, handle 100 or more plans deterministically, and return NOT_AVAILABLE instead of inventing work records.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_run tests.test_batch_run -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A plan or work body must be invented, Unknown clearance must be promoted, An external public target is read or written, A second request format is needed]
+
+  - id: PUBLIC-PROJECTION-PLAN-001
+    milestone: M29
+    title: Implement public target onboarding and dry-run projection planning
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: PUBLIC_PROJECTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PUBLIC-PROJECTION-PREPARE-001]
+    acceptance: Implement init-target and project dry-run, validate layout/source/hash/rights/security/target conflicts, allocate stable public IDs without reuse, and produce metadata-only result evidence with zero target mutation.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A public approval is generated, Existing target content must be overwritten, An unknown or restricted source is accepted, A public ID must be guessed]
+
+  - id: PUBLIC-PROJECTION-APPLY-001
+    milestone: M29
+    title: Apply approved public projection with atomic rollback and idempotency
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: PUBLIC_PROJECTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PUBLIC-PROJECTION-PLAN-001]
+    acceptance: Verify a human approval hash/scope/expiry, require a clean compatible target and exact source hashes, stage and atomically apply only allowlisted record/index/marker paths, preserve existing content, classify repeat/conflict outcomes, and recover transaction-created paths on failure.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [Approval is missing/expired/mismatched, Target commit/push/merge/release is requested, Existing content must be deleted or reset, Rollback cannot restore the pre-transaction fingerprint]
+
+  - id: PUBLIC-PROJECTION-DOCS-001
+    milestone: M29
+    title: Document public projection human gates and privacy boundaries
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    lane: PUBLIC_PROJECTION
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: [PUBLIC-PROJECTION-APPLY-001]
+    acceptance: Synchronize README, operator runbook, agent runtime guide, human-gates config, PLANS, state, and handoff with prepare/project commands, synthetic dry-run proof, approval boundaries, target restrictions, no-public-share behavior, and recovery.
+    checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_docs tests.test_project_status -v, python3 tools/project_status.py --check-readme, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [Docs imply automatic public sharing, A private path or internal ID is exposed, Human approval is weakened, README status cannot be regenerated]
