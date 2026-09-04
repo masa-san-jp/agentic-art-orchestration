@@ -17,6 +17,31 @@
 5. execution/state.yaml と execution/handoff.md
 6. 変更対象に最も近いschema、文書、テスト
 
+## 作業開始時のリポジトリ同期
+
+新しいagentまたは新しいtaskを開始するときは、task選択・実装・外部writeより前に、親repoの
+remote状態を確認する。同期の正本は`origin/main`であり、古いlocal tracking refだけを根拠に
+「最新」と判定しない。
+
+~~~bash
+git status --short --branch
+git fetch origin main
+git rev-parse HEAD
+git rev-parse origin/main
+git rev-list --left-right --count HEAD...origin/main
+~~~
+
+- 親repoの`main`を更新する場合は、working treeがcleanであることを確認してから
+  `git pull --ff-only origin main`だけを使う。reset、force、merge、rebaseで同期しない。
+- 作業branchにいる場合は、既存branchを暗黙にpull・rebase・mergeしない。最新`origin/main`から
+  作業branchまたはfresh worktreeを用意し、既存branchの未push commitを保持する。
+- dirty、detached、unpushed、remote先行、diverged、fetch失敗を検出したら、観測結果を記録して
+  同期が必要なtaskを開始しない。ユーザーの変更をstash・削除・上書きしてはならない。
+- 実装・レビュー・最終検証・working branchへのpushの直前にもう一度`git fetch origin main`し、
+  baseが変わっていれば再baselineしてから続行する。既定branchへ直接pushしない。
+- 子repoはこの手順で自動更新しない。manifest pin、workspace guard、`bootstrap`の既定手順に従い、
+  fetch・checkout・pin採用は別の明示された処理とhuman gateで扱う。
+
 ## Task selection
 
 - 依存がすべてDONEである最小IDのREADYタスクを1件選ぶ。

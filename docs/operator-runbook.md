@@ -4,13 +4,24 @@
 
 ## 0. 最初の1操作
 
-作業開始時は、親repoの作業状態を変更せずに確認する。
+作業開始時は、親repoの作業状態を変更せずに確認し、remote mainとの同期状態を確認する。
 
 ~~~bash
-git status --short
+git status --short --branch
+git fetch origin main
+git rev-parse HEAD
+git rev-parse origin/main
+git rev-list --left-right --count HEAD...origin/main
 ~~~
 
 次に必ず [AGENTS.md](../AGENTS.md)、設計仕様、実行計画、`PLANS.md`、`execution/task-queue.yaml`、`execution/state.yaml`、[handoff](../execution/handoff.md)を読む。`state.yaml`の`active_task`とleaseが自分の作業範囲と一致しない場合、同じpathを編集しない。
+
+親repoの`main`を使うときだけ、working treeがcleanなら`git pull --ff-only origin main`を実行する。
+作業branch、dirty、detached、unpushed、diverged、remote先行、fetch失敗の場合は自動同期せず、
+観測結果と解除条件を記録する。未push変更をstash・reset・rebase・mergeで動かしてはならない。
+実装・レビュー・最終検証・working branchへのpushの前には`git fetch origin main`を再実行し、baseが
+変わっていれば最新mainからfresh worktreeまたは新しい作業branchを用意して再baselineする。子repoは
+親repoのfetchで更新済みと見なさず、manifest pinとworkspace guardを使う。
 
 Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstrap](../README.md#ブートストラップ検証)を上から実行する。GitHub認証がない環境では、実repoを操作せずREADME記載の`--offline-fixture`経路を使う。
 

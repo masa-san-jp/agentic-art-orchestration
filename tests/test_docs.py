@@ -8,6 +8,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_startup_sync_policy_is_explicit_and_non_destructive(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        combined = "\n".join((readme, agents, runbook))
+        for required in (
+            "git fetch origin main",
+            "git rev-list --left-right --count HEAD...origin/main",
+            "git pull --ff-only origin main",
+            "dirty",
+            "unpushed",
+            "fresh worktree",
+            "最終検証",
+            "子repoの同期",
+        ):
+            self.assertIn(required, combined)
+        self.assertIn("stash・reset・rebase", readme)
+        self.assertIn("reset、force、merge、rebaseで同期しない", agents)
+        self.assertIn("自動同期せず", runbook)
+
     def test_fresh_clone_bootstrap_is_canonical_and_venv_based(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")

@@ -116,12 +116,19 @@ Startup update check + audit -> findings / Issue candidate
 
 ## エージェントの開始手順
 
-1. AGENTS.mdを読む。
-2. システム設計と実行計画を全文読む。
-3. task-queue.yamlから、依存がDONEの最小IDのREADYタスクを選ぶ。
-4. 受入条件と検証コマンドを満たすまで実装する。
-5. queue、state、handoff、実行計画を更新する。
-6. 定義済み停止条件以外では、人間へ次工程を質問せず次のREADYタスクへ進む。
+1. `git status --short --branch`で作業ツリーを確認し、`git fetch origin main`でremote mainを取得する。
+2. `HEAD`と`origin/main`を照合し、cleanな親repoの`main`だけを`git pull --ff-only origin main`で更新する。
+3. AGENTS.mdを読み、システム設計と実行計画を全文読む。
+4. task-queue.yamlから、依存がDONEの最小IDのREADYタスクを選ぶ。
+5. 受入条件と検証コマンドを満たすまで実装する。
+6. 最終検証とworking branchへのpush前に再度`git fetch origin main`し、remote先行やdivergedを解消してから続行する。
+7. queue、state、handoff、実行計画を更新する。
+8. dirty・detached・unpushed・同期不能な状態では、stash・reset・rebaseを自動実行せず停止条件として記録する。
+9. 定義済み停止条件以外では、人間へ次工程を質問せず次のREADYタスクへ進む。
+
+作業branchを勝手にmainへmerge・rebase・pullして未push変更を動かしてはならない。既存変更を保持した
+まま、最新mainから別branchまたはfresh worktreeを用意する。子repoの同期はmanifest pinとworkspace
+guardの契約に従い、親repoのfetchだけで最新化したと判定しない。
 
 ## ブートストラップ検証
 
