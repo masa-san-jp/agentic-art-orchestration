@@ -704,3 +704,14 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. Claim `OUTPUT-DESTINATIONS-CONTRACT-001`, read Issue #148 and the nearest schemas/tests, then implement the contract and shared resolver in an isolated branch.
+
+## OUTPUT-DESTINATIONS-CONTRACT-001 — completed
+
+- Parent PR #152 merged to `main` as `cf8f53ee111a4363ace75481e837b3cc7c455a09`; implementation commit was `a47a94b6515d035b144eff231efba39a1b872856`.
+- Added closed `output-destinations/v1` and `destination-resolution/v1` schemas, a placeholder-only profile, and one deterministic resolver. It enforces direct CLI > explicit profile file > `AGENTIC_ART_DESTINATIONS_FILE` > legacy precedence, role provenance, config hashes, repository/child/symlink/overlap guards, safe derived paths, and create-only checks.
+- Acceptance evidence: focused tests `7/7 PASS`; parent full suite `490/490 PASS` with one expected checkout skip; validator, py_compile, and diff check PASS. Remote jobs were billing-blocked before steps and are retained as an environment observation, not a test pass.
+- Safety: no runtime command was rewired yet, no child repository or manifest pin changed, and no user path, credential, private data, raw conversation, public target, or external artifact body was written.
+
+### Next exact action
+
+1. Claim `WORKSPACE-BOOTSTRAP-CONTRACT-001`, inspect Issue #150 and `tools/workspace.py`, then add the closed bootstrap result contract and deterministic offline parser.

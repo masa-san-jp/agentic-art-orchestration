@@ -1,5 +1,5 @@
-version: 41
-updated_at: "2026-09-04T11:04:46+09:00"
+version: 42
+updated_at: "2026-09-04T11:20:01+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1251,7 +1251,7 @@ tasks:
   - id: OUTPUT-DESTINATIONS-CONTRACT-001
     milestone: M28
     title: Define the versioned output destination contract and shared resolver
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1261,6 +1261,7 @@ tasks:
     depends_on: [HARNESS-RESEARCH-PIN-85-001]
     acceptance: Define closed output-destinations/v1 and destination-resolution/v1 contracts, a single deterministic resolver, direct-CLI > destinations-file > AGENTIC_ART_DESTINATIONS_FILE > legacy precedence, and fail-closed path collision/symlink/repository-boundary checks. Use placeholder examples only; never track a user absolute path, credential, or output body.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_output_destinations -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #152 merged to main as cf8f53ee111a4363ace75481e837b3cc7c455a09. Implementation commit a47a94b6515d035b144eff231efba39a1b872856 added both closed schemas, the placeholder example, one resolver with fixed precedence and fail-closed path guards, and 7 focused tests. Parent validator, focused tests 7/7, parent full suite 490/490 with 1 expected skip, py_compile, and diff check passed. GitHub jobs were not started because of the account billing limit and are not counted as test passes. No child repository, user path, credential, private data, raw conversation, or external artifact body entered Git."
     stop_if: [A destination contract requires personal data or credentials, A path outside the issue allowance is required, A child repository or parent manifest pin must change, Existing CLI compatibility cannot be preserved]
 
   - id: OUTPUT-DESTINATIONS-RUNTIME-001

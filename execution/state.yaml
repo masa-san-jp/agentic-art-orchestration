@@ -1,15 +1,15 @@
-version: 172
-updated_at: "2026-09-04T11:09:24+09:00"
-active_task: OUTPUT-DESTINATIONS-CONTRACT-001
-active_repository: agentic-art-orchestration
+version: 173
+updated_at: "2026-09-04T11:20:01+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-output-destinations-contract
+  status: available
+  owner: null
   acquired_at: "2026-09-04T11:09:24+09:00"
-  expires_at: "2026-09-04T12:30:00+09:00"
+  expires_at: null
   lane: OUTPUT_DESTINATIONS
   execution_id: OUTPUT-DESTINATIONS-CONTRACT-001:20260904-110924
-  released_at: null
+  released_at: "2026-09-04T11:20:01+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [schemas, config/output-destinations.example.yaml, tools/output_destinations.py, tools/validate.py, tests]
@@ -19,11 +19,11 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 9511a343c6fae0552b112f86cab4c44d42b07391
   expected_changes: Define output-destinations/v1 and destination-resolution/v1, implement the sole deterministic resolver with precedence and fail-closed path guards, and add synthetic contract tests without runtime wiring or user data.
-  result: in_progress; claim and lease recorded before implementation.
-last_completed_task: HARNESS-RESEARCH-PIN-85-001
+  result: completed; parent PR #152 merged as cf8f53ee111a4363ace75481e837b3cc7c455a09 after local contract and full-suite evidence.
+last_completed_task: OUTPUT-DESTINATIONS-CONTRACT-001
 resume_from:
-  task: OUTPUT-DESTINATIONS-CONTRACT-001
-  action: "Claim the lowest-ID READY task after verifying its Issue #148 SSOT, dependency HARNESS-RESEARCH-PIN-85-001, target repository, and clean lease; then implement only the versioned contract and shared resolver."
+  task: WORKSPACE-BOOTSTRAP-CONTRACT-001
+  action: "Claim the lowest-ID READY task after verifying Issue #150 SSOT, dependency HARNESS-RESEARCH-PIN-85-001, target repository, and available lease; then define the workspace-bootstrap/v1 result contract without changing legacy commands."
   command: python3 tools/validate.py --check
 
 issue_intake:
