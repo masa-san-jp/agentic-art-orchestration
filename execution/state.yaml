@@ -1,15 +1,15 @@
-version: 192
-updated_at: "2026-09-04T14:29:44+09:00"
-active_task: WORKSPACE-BOOTSTRAP-APPLY-001
-active_repository: agentic-art-orchestration
+version: 193
+updated_at: "2026-09-04T15:58:31+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-workspace-apply
+  status: available
+  owner: null
   acquired_at: "2026-09-04T14:03:44+09:00"
   expires_at: "2026-09-04T17:00:00+09:00"
   lane: WORKSPACE_BOOTSTRAP
   execution_id: WORKSPACE-BOOTSTRAP-APPLY-001:20260904-142944
-  released_at: null
+  released_at: "2026-09-04T15:58:31+09:00"
   scope:
     repository: agentic-art-orchestration
     paths: [tools/workspace.py, tools/validate.py, tests/test_workspace_bootstrap.py, tests/test_workspace.py, tests/test_workspace_guards.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
@@ -19,12 +19,44 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 66ca349dfe86665d147f305ca0f10481a8b396ab
   expected_changes: Clone every missing manifest entry into tool-owned staging, validate origin/branch/identity/clean state and pin readiness, atomically place all staged checkouts, recover only this run's staging on failure, and preserve clean existing checkouts.
-  result: in_progress; claimed 2026-09-04T14:29:44+09:00 by codex-workspace-apply; implementation and checks pending.
-last_completed_task: WORKSPACE-BOOTSTRAP-PREFLIGHT-001
+  result: completed; implementation merged as cf2655bbc691d68d7bca92294a9f2a01aab8d238 and completion record pending.
+last_completed_task: WORKSPACE-BOOTSTRAP-APPLY-001
 resume_from:
-  task: WORKSPACE-BOOTSTRAP-APPLY-001
-  action: "Inspect Issue #150, the workspace-bootstrap/v1 contract, the completed preflight, and legacy clone helpers, then implement tool-owned staging, validated atomic placement, race recovery, idempotent reuse, and pin readiness in temporary fixtures."
+  task: WORKSPACE-BOOTSTRAP-DOCS-001
+  action: "Claim the docs task from fresh main, inspect Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands."
   command: .venv/bin/python tools/validate.py --check
+
+workspace_bootstrap_apply:
+  status: complete
+  task: WORKSPACE-BOOTSTRAP-APPLY-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+  implementation_commit: 371a36b063794cb35b6417fe66f7d3d08eed48e8
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/172
+  merge_commit: cf2655bbc691d68d7bca92294a9f2a01aab8d238
+  remote_main: cf2655bbc691d68d7bca92294a9f2a01aab8d238
+  acceptance: 1/1
+  focused_tests: "25/25 PASS"
+  parent_full_suite: "533 tests / 1 skipped PASS"
+  parent_validation: PASS
+  py_compile: PASS
+  diff_check: PASS
+  remote_ci:
+    run: 33846579157
+    status: FAILED_BEFORE_STEPS
+    jobs: [bootstrap, production-exchange, real-chain]
+    reason: account billing limit; steps=[]
+    counted_as_quality_gate: false
+  child_repositories: none
+  sensitive_data: none; no credential, token, private data, raw conversation, or remote response stored
+  external_artifact: none; no Drive artifact or external artifact body created
+  user_workspace: unchanged; synthetic temporary fixture only
+  remote_operations: [READ, CLONE_TO_TOOL_OWNED_STAGING, SAME_FILESYSTEM_RENAME, ROLLBACK_ON_RACE]
+  existing_checkout_mutation: none
+  pin_adoption: none
+  feedback:
+    explicit: "各repositoryのエージェントが自律的に実装完了できる要件を評価し不足を補完"
+    inferred: none
+  unresolved: none
 
 issue_intake:
   status: complete

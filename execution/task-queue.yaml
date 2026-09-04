@@ -1331,7 +1331,7 @@ tasks:
   - id: WORKSPACE-BOOTSTRAP-APPLY-001
     milestone: M28
     title: Implement staged bootstrap, idempotent reuse, and pin readiness
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1341,12 +1341,13 @@ tasks:
     depends_on: [WORKSPACE-BOOTSTRAP-PREFLIGHT-001]
     acceptance: Clone all missing entries into tool-owned staging, validate origin/branch/clean state, atomically place only after all stages pass, recover only this run's staging on failure, reuse a clean workspace byte-idempotently, and return READY or the specified BLOCKED_* status without auto-checkout, pin adoption, reset, or deletion.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_workspace_bootstrap tests.test_workspace tests.test_workspace_guards -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Implementation commit 371a36b063794cb35b6417fe66f7d3d08eed48e8; parent PR #172 merged to main as cf2655bbc691d68d7bca92294a9f2a01aab8d238. tools/workspace.py now clones missing manifest entries into marker-bearing tool-owned staging, validates origin/default branch/upstream/local repository identity/clean state before placement, performs same-filesystem placement with race detection and reverse rollback, preserves existing clean checkouts, reuses them idempotently, and returns READY or BLOCKED_PIN_DRIFT with sanitized closed records. Focused workspace bootstrap/workspace/guard tests 25/25 PASS; parent full suite 533 tests with 1 expected skip PASS; validator, py_compile, and diff check passed. GitHub run 33846579157 failed before all steps with steps=[] because of the account billing limit and is not counted as a quality-gate pass. No child repository, user workspace, credential, token, remote response, raw conversation, or external artifact body was written; existing checkouts were not repaired and no fetch/pull/checkout/reset/pin adoption occurred. Acceptance 1/1. Explicit feedback was the request to evaluate and supplement autonomous implementation requirements; inferred feedback none."
     stop_if: [An existing checkout must be repaired, A partial placement cannot be rolled back, Pin adoption or merge is needed, Tool-owned staging cannot be distinguished from user paths]
 
   - id: WORKSPACE-BOOTSTRAP-DOCS-001
     milestone: M28
     title: Document the canonical fresh-clone bootstrap and recovery path
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY

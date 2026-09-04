@@ -35,16 +35,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-04T14:29:44+09:00`.
+Source updated at: `2026-09-04T15:58:31+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 0 | 1 | 0 | 128 | 130 |
+| 0 | 1 | 0 | 0 | 129 | 130 |
 
-Current task: `WORKSPACE-BOOTSTRAP-APPLY-001`; repository: `agentic-art-orchestration`; checkpoint: `WORKSPACE-BOOTSTRAP-APPLY-001`.
-Next action: Inspect Issue #150, the workspace-bootstrap/v1 contract, the completed preflight, and legacy clone helpers, then implement tool-owned staging, validated atomic placement, race recovery, idempotent reuse, and pin readiness in temporary fixtures.
-Ready: none.
-Next task: `null`.
+Current task: `null`; repository: `null`; checkpoint: `WORKSPACE-BOOTSTRAP-APPLY-001`.
+Next action: Claim the docs task from fresh main, inspect Issue #150 and the implemented bootstrap path, then synchronize README, operator runbook, and agent runtime guide with auth, offline proof, sanitized recovery, pin drift, and unchanged legacy commands.
+Ready: `WORKSPACE-BOOTSTRAP-DOCS-001`.
+Next task: `WORKSPACE-BOOTSTRAP-DOCS-001`.
 Blocked:
 - none
 
