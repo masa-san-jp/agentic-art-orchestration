@@ -7,3 +7,6 @@ __pycache__/
 data/*.json
 data/*.md
 !data/.gitkeep
+
+# Run state written by tools/run.py. Generated per run id, never reviewed.
+data/runs/

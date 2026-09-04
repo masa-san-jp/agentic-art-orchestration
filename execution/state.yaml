@@ -1,29 +1,29 @@
-version: 202
-updated_at: "2026-09-04T18:12:24+09:00"
-active_task: null
-active_repository: null
+version: 203
+updated_at: "2026-09-04T18:24:48+09:00"
+active_task: PARENT-ENTRYPOINT-HARDENING-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T16:16:48+09:00"
-  expires_at: "2026-09-04T19:00:00+09:00"
+  status: held
+  owner: codex
+  acquired_at: "2026-09-04T18:24:48+09:00"
+  expires_at: "2026-09-04T20:00:00+09:00"
   lane: AUTONOMY_READINESS
   execution_id: AUTONOMY-READINESS-MANIFEST-001:20260904-161648
-  released_at: "2026-09-04T16:27:44+09:00"
+  released_at: null
   scope:
     repository: agentic-art-orchestration
     paths: [config/repositories.yaml, tests/test_validate.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
     child_repositories: []
 checkpoint:
-  task: RESEARCH-EVALUATION-DOCS-001
-  repository: agentic-art-research
-  start_point: f1731e6cc7e63154bffdafc33af31c1462b6ab8b
-  expected_changes: Correct the direct research README offline evaluation example to use an explicit temporary root, add executable documentation regression evidence, and preserve canonical project/data/schema/runtime boundaries.
-  result: completed; child PR #92 merged as 71bfec77ea0d189186b8248565d340c124b81eab; Issue #91 closed; lease released.
+  task: PARENT-ENTRYPOINT-HARDENING-001
+  repository: agentic-art-orchestration
+  start_point: 07cbbe0b6ba83d7b8638d9e86b732db40198222c
+  expected_changes: State the exact agent-harness purpose and observable production-plan requirements in the parent entrypoints, and keep generated run state from dirtying a shared checkout.
+  result: in progress; parent purpose, requirements, and generated run-state boundary are being hardened.
 last_completed_task: RESEARCH-EVALUATION-DOCS-001
 resume_from:
   task: null
-  action: "The autonomy-readiness child tasks are complete; run the final parent validation and remote-state audit before handoff."
+  action: "Complete PARENT-ENTRYPOINT-HARDENING-001, then verify the final parent main and issue/PR state before handoff."
   command: python3 tools/validate.py --check
 
 workspace_bootstrap_apply:
@@ -1475,6 +1475,34 @@ self_model_autonomy:
     status: released
   child_schema_data_consent_changed: false
   sensitive_data: "none; no credential, token, PRIVATE_RAW, RESTRICTED value, direct identifier, raw voice, or conversation text was stored"
+  external_artifact: none
+  feedback:
+    explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
+    inferred: none
+  unresolved:
+    - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
+
+parent_entrypoint_hardening:
+  status: in_progress
+  observed_at: "2026-09-04T18:24:48+09:00"
+  task: PARENT-ENTRYPOINT-HARDENING-001
+  issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
+  target_repository: agentic-art-orchestration
+  start_point: 07cbbe0b6ba83d7b8638d9e86b732db40198222c
+  changes:
+    - "AGENTS.md now makes the exact agent-harness purpose authoritative and points agents to the README requirements section."
+    - "README.md states the exact purpose, usable production-plan, multi-plan, autonomous-continuation, and art-versus-AI requirements."
+    - "The system design specification records the same purpose boundary and frames the control plane as its means."
+    - ".gitignore excludes generated data/runs/ state from a shared checkout."
+  acceptance: 1/1
+  verification:
+    validator: PASS
+    full_suite: "pending final run"
+    project_status_readme: PASS
+    py_compile: PASS
+    diff_check: PASS
+  child_repository_mutation: false
+  sensitive_data: "none; no child data, private data, credential, token, raw conversation, or external artifact body was handled"
   external_artifact: none
   feedback:
     explicit: "User requested evaluation and supplementation of autonomous implementation requirements for every repository."
