@@ -59,14 +59,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-05T07:34:12+09:00`.
+Source updated at: `2026-09-05T07:37:46+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | 0 | 0 | 0 | 140 | 140 |
 
 Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PLAN-CANONICAL-001`.
-Next action: Human-review Draft PR #8 in agentic-art-project and the parent branch update; merge, release, and visibility changes remain human-gated.
+Next action: Human-review Draft PR #9 in agentic-art-project and Draft PR #191 in the parent; merge, release, and visibility changes remain human-gated.
 Ready: none.
 Next task: `null`.
 Blocked:

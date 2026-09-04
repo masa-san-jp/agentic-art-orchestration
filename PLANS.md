@@ -1044,13 +1044,14 @@ Issue #193と公開先Issue #6に従い、制作に使う`plan.md`がProduction�
 - [x] 親Issue #193と公開先Issue #6を作成し、taskとleaseをclaimした。
 - [x] 親のcanonical plan guard、metadata/index契約、負例E2Eを実装する。
 - [x] 公開先のAGENTS、validator、CI、既存record migrationを別commit/PRで実装する。
-- [x] 両repoの全check、記録、push、公開先Draft PR #8作成を完了する。PRの即時read-backだけは一時的なGitHub API障害で`UNKNOWN`として保持する。
+- [x] 両repoの全check、親→公開先接続試験、記録、push、公開先Draft PR #9作成とread-backを完了する。
 
 ### Surprises & Discoveries
 
 - 現行の自動経路は本文bytesを正しくコピーするが、`PLAN_READY`形の手書きMarkdownをProduction生成物と区別する構造guardがない。
 - 公開先READMEの「人間向けに要約」が`plan.md`にも適用され、P0001〜P0007が`sanitized-public-plan`として登録された。
 - P0006ではsummary hash `67735d...`とProduction正本hash `846bf1...`が不一致で、正本のWBS・資源・予算・日程・リスク・承認・証跡が公開本文から失われた。
+- 親のcanonical YAMLは全キー引用・indentless sequence、公開先の初期parserは未引用・2-space sequenceだけを受理していた。実接続試験で検出し、両形式を受ける回帰テストを追加した。
 
 ### Decision Log
 
@@ -1091,5 +1092,7 @@ Production schemaは子repoが正本であり、親は公開境界として生�
 
 - P0006の正式Production `production-plan.md`を、ユーザー指定の`Agentic-Art-Output`と公開catalogの`plan.md`へ同一bytesで出力した。SHA-256は`846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624`。
 - 正式計画書は15章、制作リファレンスボード、コンセプトモックアップ、WBS、受入テスト、予算、日程、リスク、承認境界、証跡を含む。状態は`PLANNING`、物理制作と受入評価は人間承認後であり、実行済みとは表示しない。
-- 親focused `87/87`、親full `546/546`、公開先validator、公開先full `6/6`、diff checkがPASS。親変更と子変更は別commit、子branch `agent/canonical-plan-validator-20260905`はpush済み。
-- 公開先Draft PR [#8](https://github.com/masa-san-jp/agentic-art-project/pull/8)を作成した。直後の`gh pr view`は一時的なGitHub API障害でread-backできなかったが、作成コマンドはcanonical URLを返している。default branch merge、release、visibility変更は未実行。
+- P0002・P0003・P0006・P0007は確認できたProduction正本へbyte-for-byte置換し、P0001・P0004・P0005だけを`summary.md` / `blocked-missing-canonical`として制作不可にした。
+- 親focused `87/87`、親full `546/546`、公開先validator、公開先full `12/12`、catalog sync、diff checkがPASS。さらに親から一時公開先へP0008を自動投影し、`APPLIED`後のreceiver validator、catalog sync、12/12 testsがPASSした。
+- 親変更は`13aea2e`、子変更は`55615f9`として別commit・別branchへpush済み。公開先Draft PR [#9](https://github.com/masa-san-jp/agentic-art-project/pull/9)をread-back確認し、部分修正PR #8と非正本PR #7はsupersededとして閉じた。
+- PR #9のActions 2件は`steps=[]`で、account payment failureまたはspending limitによりjob開始前に停止したため、品質gateの成否には算入しない。default branch merge、release、visibility変更は未実行。

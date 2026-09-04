@@ -1,5 +1,5 @@
-version: 211
-updated_at: "2026-09-05T07:34:12+09:00"
+version: 212
+updated_at: "2026-09-05T07:37:46+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -19,29 +19,39 @@ checkpoint:
   repository: agentic-art-orchestration
   start_point: 8fe2efb7976878d6874d230100fbf236f3db0b17
   expected_changes: Reject summary-shaped automatic plan bodies, emit no-transform canonical Production provenance, align parent output with the receiver validator, and quarantine or replace legacy summarized records in agentic-art-project through a separate child commit and PR.
-  result: completed; parent commit 13aea2e; child commits a699bc3 and dbfa65c; P0006 canonical bytes published to the requested output and public catalog; Draft PR #8 created; acceptance 5/5; parent full 546/546 PASS and child full 6/6 PASS.
+  result: completed and integration-corrected; parent commit 13aea2e; comprehensive child commit 55615f9; P0002/P0003/P0006/P0007 canonical Production bytes active; P0001/P0004/P0005 summaries quarantined; parent-to-receiver P0008 integration PASS; Draft PR #9 verified; partial PR #8 and noncanonical PR #7 closed as superseded.
 last_completed_task: PUBLIC-PLAN-CANONICAL-001
 resume_from:
   task: null
-  action: "Human-review Draft PR #8 in agentic-art-project and the parent branch update; merge, release, and visibility changes remain human-gated."
-  command: gh pr view 8 --repo masa-san-jp/agentic-art-project
+  action: "Human-review Draft PR #9 in agentic-art-project and Draft PR #191 in the parent; merge, release, and visibility changes remain human-gated."
+  command: gh pr view 9 --repo masa-san-jp/agentic-art-project
 
 completion_snapshot:
   task: PUBLIC-PLAN-CANONICAL-001
   acceptance: 5/5 local acceptance conditions PASS
   parent_commit: 13aea2e55847bfcc4c1819b5ef811a908a9abaf9
-  child_branch_commit: dbfa65c33fc254ee4787a9e04cbfc0b5971a7e5a
+  child_branch: agent/issue-6-canonical-plan-20260905
+  child_branch_commit: 55615f985d3376cafd5c9c08ecdc579be1c8641d
   canonical_plan_sha256: sha256:846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624
   user_output: "/Users/masa/マイドライブ/Agentic-Art-Output/距離が選ぶ境界/正式制作計画書.md"
-  public_output: "/Users/masa/マイドライブ/Dev/agentic-art-project/plans/P0006-distance-selects-boundary/plan.md"
+  public_output: "agent/issue-6-canonical-plan-20260905:plans/P0006-distance-selects-boundary/plan.md"
   parent_focused_tests: "87/87 PASS"
   parent_full_tests: "546/546 PASS"
   child_validator: PASS
-  child_full_tests: "6/6 PASS"
-  external_pr: 8
-  external_pr_url: https://github.com/masa-san-jp/agentic-art-project/pull/8
-  external_pr_readback: UNKNOWN
-  external_pr_readback_reason: "PR creation returned the canonical URL; immediate gh pr view read-back encountered a subsequent api.github.com connection failure."
+  child_full_tests: "12/12 PASS"
+  integration_e2e: "Parent automatic P0008 APPLIED; receiver validator, catalog sync, and 12/12 tests PASS"
+  active_canonical_records: [P0002, P0003, P0006, P0007]
+  blocked_legacy_summaries: [P0001, P0004, P0005]
+  external_pr: 9
+  external_pr_url: https://github.com/masa-san-jp/agentic-art-project/pull/9
+  external_pr_readback: VERIFIED
+  superseded_pull_requests: [7, 8]
+  remote_ci:
+    runs: [33926170008, 33926195797]
+    status: FAILED_BEFORE_STEPS
+    reason: account payment failure or spending limit
+    steps: []
+    counted_as_quality_gate: false
 
 workspace_bootstrap_apply:
   status: complete

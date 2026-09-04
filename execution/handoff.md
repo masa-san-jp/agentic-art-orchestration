@@ -2214,4 +2214,16 @@
 
 ### Next exact action
 
-1. `gh pr view 8 --repo masa-san-jp/agentic-art-project`でDraft PRのhead SHAと差分をread-only確認する。merge、release、visibility変更は人間承認後のみ。
+1. `gh pr view 9 --repo masa-san-jp/agentic-art-project`と`gh pr view 191 --repo masa-san-jp/agentic-art-orchestration`を確認し、人間がmerge可否を判断する。releaseとvisibility変更も人間承認後のみ。
+
+## 2026-09-05 — PUBLIC-PLAN-CANONICAL-001 completion evidence corrected
+
+- 包括監査でP0002・P0003・P0007にもProduction正本が見つかったため、P0006だけの部分修正PR #8をsupersedeした。P0002/P0003/P0006/P0007を正本へbyte-for-byte置換し、正本未発見のP0001/P0004/P0005だけを`summary.md` / `blocked-missing-canonical`とする子commitは`55615f985d3376cafd5c9c08ecdc579be1c8641d`、Draft PRは[#9](https://github.com/masa-san-jp/agentic-art-project/pull/9)。
+- 親から一時公開先へP0008を自動投影した結果は`APPLIED`。親の全キー引用・indentless YAMLを受信側が処理する互換修正後、receiver validator、catalog sync、子tests `12/12`がPASSした。
+- P0007独自改訂PR #7はProduction正本SHAと不一致でcanonical finding 28件、部分修正PR #8は正本がある3件を誤ってblockedにしていたため、どちらも理由をcommentしてsupersededとしてcloseした。履歴とbranchは削除していない。
+- PR #9のActions runs `33926170008` / `33926195797`は`steps=[]`で、account payment failureまたはspending limitによるjob開始前停止。local/integration quality gateとは分離して保持する。
+- P0006のユーザー出力とローカル公開先のSHA-256を再確認し、どちらも`846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624`だった。credential、private/raw/restricted data、会話全文、ローカル絶対パスは公開branchへ追加していない。explicit feedbackは正しい制作プランを無断要約せず公開すること、inferred feedbackはnone。
+
+### Next exact action
+
+1. Draft PR #9と親Draft PR #191を人間reviewし、merge可否を判断する。merge、release、visibility変更は人間承認後のみ。
