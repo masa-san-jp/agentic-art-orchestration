@@ -929,13 +929,13 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 
 1. 親repoの最終validator、full suite、README status、py_compile、diff checkを実行し、親mainと全child Issueの状態を確認する。
 
-## PARENT-ENTRYPOINT-HARDENING-001 — in progress
+## PARENT-ENTRYPOINT-HARDENING-001 — completed
 
-- Task ID: `PARENT-ENTRYPOINT-HARDENING-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#1](https://github.com/masa-san-jp/agentic-art-orchestration/issues/1)。開始点はparent main `07cbbe0b6ba83d7b8638d9e86b732db40198222c`。
+- Task ID: `PARENT-ENTRYPOINT-HARDENING-001`; target repository: `agentic-art-orchestration`; Issue SSOT: [#1](https://github.com/masa-san-jp/agentic-art-orchestration/issues/1)。開始点はparent main `07cbbe0b6ba83d7b8638d9e86b732db40198222c`、implementation commitは`ccdf897756c6a2d630e9687362071cb1d7ef94ed`、PR [#184](https://github.com/masa-san-jp/agentic-art-orchestration/pull/184)はmainへ`df76b2f4826c3621f2b0fccabe4a6fc249179a52`としてmergeされた。
 - `AGENTS.md`、`README.md`、設計仕様書の先頭へ、エージェントハーネスの目的と制作プラン要件を明記し、control planeを目的達成の手段として位置付けた。`.gitignore`へ`data/runs/`を追加し、既定実行の生成状態が共有checkoutをdirtyにしないようにした。
-- 親のvalidator、全テスト、README status、py_compile、diff checkを実行し、子repo、schema/data/pin、credential、private data、raw conversation、external artifactは変更しない。実測結果はtask commit後に追記する。
-- Acceptanceは検証完了後に判定する。GitHub Actionsはbilling制限で開始前失敗した場合もquality gateへ算入せず、ローカル検証と分離して記録する。
+- 親のvalidator、全テスト、README status、py_compile、diff checkを実行し、子repo、schema/data/pin、credential、private data、raw conversation、external artifactは変更しなかった。
+- Acceptance `1/1`。parent full suiteは`535 tests / 1 skipped PASS`。GitHub Actions run `33858927901`は全jobが`steps=[]`のbilling開始前失敗で、quality gateへ算入していない。
 
 ### Next exact action
 
-1. 変更を検証し、実装commitとPRを作成してからDONE証跡を記録する。
+1. 親mainの最終SHA、Issue/PRの状態、queueのREADY/BACKLOG/IN_PROGRESS/BLOCKED残件数をread-onlyで確認する。

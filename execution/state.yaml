@@ -1,29 +1,29 @@
-version: 203
-updated_at: "2026-09-04T18:24:48+09:00"
-active_task: PARENT-ENTRYPOINT-HARDENING-001
-active_repository: agentic-art-orchestration
+version: 204
+updated_at: "2026-09-04T18:34:08+09:00"
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: null
   acquired_at: "2026-09-04T18:24:48+09:00"
   expires_at: "2026-09-04T20:00:00+09:00"
   lane: AUTONOMY_READINESS
-  execution_id: AUTONOMY-READINESS-MANIFEST-001:20260904-161648
-  released_at: null
+  execution_id: PARENT-ENTRYPOINT-HARDENING-001:20260904-182448
+  released_at: "2026-09-04T18:34:08+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [config/repositories.yaml, tests/test_validate.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md, README.md]
+    paths: [.gitignore, AGENTS.md, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
     child_repositories: []
 checkpoint:
   task: PARENT-ENTRYPOINT-HARDENING-001
   repository: agentic-art-orchestration
   start_point: 07cbbe0b6ba83d7b8638d9e86b732db40198222c
   expected_changes: State the exact agent-harness purpose and observable production-plan requirements in the parent entrypoints, and keep generated run state from dirtying a shared checkout.
-  result: in progress; parent purpose, requirements, and generated run-state boundary are being hardened.
-last_completed_task: RESEARCH-EVALUATION-DOCS-001
+  result: completed; parent purpose, requirements, and generated run-state boundary were hardened by implementation commit ccdf897756c6a2d630e9687362071cb1d7ef94ed and merged by PR #184 as df76b2f4826c3621f2b0fccabe4a6fc249179a52; lease released.
+last_completed_task: PARENT-ENTRYPOINT-HARDENING-001
 resume_from:
   task: null
-  action: "Complete PARENT-ENTRYPOINT-HARDENING-001, then verify the final parent main and issue/PR state before handoff."
+  action: "Verify the final parent main and issue/PR state before handoff."
   command: python3 tools/validate.py --check
 
 workspace_bootstrap_apply:
@@ -1483,12 +1483,16 @@ self_model_autonomy:
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
 
 parent_entrypoint_hardening:
-  status: in_progress
+  status: complete
   observed_at: "2026-09-04T18:24:48+09:00"
   task: PARENT-ENTRYPOINT-HARDENING-001
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/1
   target_repository: agentic-art-orchestration
   start_point: 07cbbe0b6ba83d7b8638d9e86b732db40198222c
+  implementation_commit: ccdf897756c6a2d630e9687362071cb1d7ef94ed
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/184
+  merge_commit: df76b2f4826c3621f2b0fccabe4a6fc249179a52
+  remote_main: df76b2f4826c3621f2b0fccabe4a6fc249179a52
   changes:
     - "AGENTS.md now makes the exact agent-harness purpose authoritative and points agents to the README requirements section."
     - "README.md states the exact purpose, usable production-plan, multi-plan, autonomous-continuation, and art-versus-AI requirements."
@@ -1497,7 +1501,10 @@ parent_entrypoint_hardening:
   acceptance: 1/1
   verification:
     validator: PASS
-    full_suite: "pending final run"
+    full_suite: "535 tests / 1 skipped PASS"
+    remote_ci_run: 33858927901
+    remote_ci_status: FAILED_BEFORE_STEPS
+    remote_ci_counted_as_quality_gate: false
     project_status_readme: PASS
     py_compile: PASS
     diff_check: PASS
