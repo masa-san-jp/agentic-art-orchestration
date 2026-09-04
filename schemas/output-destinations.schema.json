@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/output-destinations.schema.json",
+  "title": "Configured output destinations v1",
+  "description": "Git-external, metadata-only destination profile for orchestration runtime output.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "profile", "destinations"],
+  "properties": {
+    "contract_version": {"const": "output-destinations/v1"},
+    "profile": {"$ref": "#/$defs/profile"},
+    "destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_root", "internal_output_root"],
+      "properties": {
+        "state_root": {"$ref": "#/$defs/absolute_path"},
+        "internal_output_root": {"$ref": "#/$defs/absolute_path"},
+        "public_projection_root": {"$ref": "#/$defs/absolute_path"}
+      }
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]{0,63}$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^/(?:[^\\u0000]*)$"
+    }
+  }
+}
