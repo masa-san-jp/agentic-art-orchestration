@@ -69,6 +69,10 @@
       "minItems": 1,
       "items": {"$ref": "#/$defs/project"}
     },
+    "output_root_locator": {
+      "type": "string",
+      "pattern": "^(?:\\.|[A-Za-z0-9._:-]+(?:/[A-Za-z0-9._:-]+)*)$"
+    },
     "acceptance": {
       "type": "object",
       "additionalProperties": false,
@@ -134,6 +138,9 @@
         "research_locator": {"$ref": "#/$defs/locator"},
         "production_locator": {"$ref": "#/$defs/locator"},
         "production_plan_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
+        "production_repository": {"$ref": "#/$defs/id"},
+        "production_source_commit": {"$ref": "#/$defs/sha40"},
+        "production_plan_markdown_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
         "brief_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},
         "decision_log_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]}
       }

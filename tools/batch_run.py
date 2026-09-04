@@ -39,6 +39,7 @@ try:
         validate_destination_resolution,
         write_resolution_evidence,
     )
+    from tools.public_projection import prepare_batch_summary
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
     from tools.signal_bundle import build_signal_bundle
@@ -59,6 +60,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         validate_destination_resolution,
         write_resolution_evidence,
     )
+    from tools.public_projection import prepare_batch_summary
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
     from tools.signal_bundle import build_signal_bundle
@@ -376,6 +378,9 @@ def _run_project(
                 "research_locator": f"run://{batch_run_id}/research/projects/{slug}",
                 "production_locator": f"run://{batch_run_id}/production/{slug}",
                 "production_plan_sha256": plan_hash,
+                "production_repository": "agentic-art-production",
+                "production_source_commit": str(_repo_map(manifest)["agentic-art-production"]["observed_commit"]),
+                "production_plan_markdown_sha256": _sha256_file(final_plan_root / "production-plan.md"),
                 "brief_sha256": brief_hash,
                 "decision_log_sha256": _sha256_file(decision_log),
                 "events": events,
@@ -398,6 +403,9 @@ def _run_project(
                 "research_locator": f"run://{batch_run_id}/research/projects/{slug}",
                 "production_locator": f"run://{batch_run_id}/production/{slug}",
                 "production_plan_sha256": None,
+                "production_repository": "agentic-art-production",
+                "production_source_commit": str(_repo_map(manifest)["agentic-art-production"]["observed_commit"]),
+                "production_plan_markdown_sha256": None,
                 "brief_sha256": None,
                 "decision_log_sha256": None,
                 "events": events,
@@ -551,9 +559,19 @@ def run_batch(
             raise BatchRunError("existing batch summary is invalid")
         if destination_resolution is not None and existing.get("destination_resolution") != dict(destination_resolution):
             raise BatchRunError("existing batch summary has different destination resolution")
+        public_projection = None
         if destination_resolution is not None:
             write_resolution_evidence(state_root, run_id, destination_resolution)
-        return {"status": "ALREADY_COMPLETED", "summary": existing, "summary_path": summary_path}
+            if existing.get("status") == "PASSED" and existing.get("output_root_locator"):
+                try:
+                    public_projection = prepare_batch_summary(
+                        existing,
+                        internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
+                        projection_id=run_id,
+                    )
+                except (OSError, TypeError, ValueError, KeyError) as exc:
+                    raise BatchRunError("public projection candidate preparation failed while resuming") from exc
+        return {"status": "ALREADY_COMPLETED", "summary": existing, "summary_path": summary_path, "public_projection": public_projection}
     state_dir = state_root / run_id
     if state_dir.exists() and any(path.name != "destination-resolution.json" for path in state_dir.iterdir()):
         raise BatchRunError("partial batch state exists without a valid summary; use a new run_id after inspection")
@@ -684,11 +702,27 @@ def run_batch(
     }
     if destination_resolution is not None:
         summary["destination_resolution"] = dict(destination_resolution)
+        internal_root = Path(destination_resolution["destinations"]["internal_output_root"]["path"])
+        try:
+            output_relative = output_root.resolve(strict=False).relative_to(internal_root.resolve(strict=False))
+        except ValueError as exc:
+            raise BatchRunError("output_root is outside the resolved internal_output_root") from exc
+        summary["output_root_locator"] = output_relative.as_posix() or "."
     errors = validate_batch_run(summary)
     if errors:
         raise BatchRunError("generated batch summary is invalid")
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-    return {"status": status, "summary": summary, "summary_path": summary_path, "acceptance_detail": acceptance_detail}
+    public_projection = None
+    if destination_resolution is not None and status == "PASSED":
+        try:
+            public_projection = prepare_batch_summary(
+                summary,
+                internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
+                projection_id=run_id,
+            )
+        except (OSError, TypeError, ValueError, KeyError) as exc:
+            raise BatchRunError("public projection candidate preparation failed") from exc
+    return {"status": status, "summary": summary, "summary_path": summary_path, "acceptance_detail": acceptance_detail, "public_projection": public_projection}
 
 
 def main(argv: Iterable[str] | None = None) -> int:

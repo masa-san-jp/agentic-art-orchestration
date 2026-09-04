@@ -12,6 +12,7 @@ from unittest.mock import patch
 import yaml
 
 from tools.input_pipeline import run_input_pipeline
+from tools.output_destinations import resolve_destinations
 from tools.run import run
 from tools.signal_bundle import build_signal_bundle
 
@@ -494,6 +495,62 @@ class ProductionHistoryTests(unittest.TestCase):
         plans = [item for item in captured if item["step"] == "plan"]
         self.assertEqual([False, True], [item["previously_materialized"] for item in accepts])
         self.assertEqual([True, True], [item["prior_records_visible"] for item in plans])
+
+    def test_profiled_plan_ready_run_invokes_the_single_public_candidate_producer(self):
+        with tempfile.TemporaryDirectory(prefix="run-public-prepare-") as temporary:
+            root = Path(temporary)
+            profile = root / "destinations.yaml"
+            profile.write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "run-prepare-test",
+                "destinations": {
+                    "state_root": str(root / "state"),
+                    "internal_output_root": str(root / "internal"),
+                },
+            }, sort_keys=False), encoding="utf-8")
+            resolution = resolve_destinations(profile, repository_root=ROOT, run_id="RUN-PROJECTION-001")
+
+            def fake_tool(args: list[str], python: str) -> dict:
+                if args[0] == "tools/build_research_request.py":
+                    output = Path(args[args.index("--output") + 1])
+                    output.mkdir(parents=True, exist_ok=True)
+                    (output / "RR001.yaml").write_text(
+                        "request_id: RR001\nintent:\n  creative_question: derived\n", encoding="utf-8",
+                    )
+                return {"status": "PASSED"}
+
+            def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
+                if args[0] == "tools/complete.py":
+                    return {"status": "COMPLETE"}
+                if args[0] == "tools/new_production.py":
+                    project = Path(args[args.index("--output-root") + 1]) / "production" / "run-plan"
+                    (project / "05_execution").mkdir(parents=True, exist_ok=True)
+                    (project / "05_execution" / "output-versions.yaml").write_text("version: 1\n", encoding="utf-8")
+                if args[0] == "tools/build_plan.py":
+                    project = Path(args[args.index("--project-root") + 1])
+                    (project / "03_plan").mkdir(parents=True, exist_ok=True)
+                    (project / "03_plan" / "production-plan.md").write_text("# plan\n", encoding="utf-8")
+                return {"status": "PASSED"}
+
+            with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                    patch.object(MODULE, "_run_child", side_effect=fake_child), \
+                    patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                    patch.object(MODULE, "_head", return_value="d" * 40):
+                report = MODULE._run_orchestration(
+                    "調和", root / "workspace", root / "state", "RUN-PROJECTION-001", "artistic-research",
+                    "run-plan", "Run plan", "2026-09-04T00:00:00+09:00", sys.executable,
+                    research_root=root / "research", production_root=root / "production",
+                    offline_fixture=True, destination_resolution=resolution,
+                    internal_output_root=root / "internal",
+                )
+
+            self.assertEqual("PLAN_READY", report["status"])
+            self.assertEqual("PASSED", report["public_projection"]["status"])
+            request_path = root / "internal" / report["public_projection"]["request_locator"]
+            request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+            self.assertEqual(1, len(request["records"]))
+            self.assertEqual("unknown", request["records"][0]["publication"]["consent_status"])
 
 
 if __name__ == "__main__":

@@ -217,8 +217,22 @@ def _run_tool(args: list[str], python: str) -> dict:
 
 
 def _head(root: Path) -> str:
-    result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True)
+    try:
+        result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True)
+    except OSError:
+        return "0" * 40
     return result.stdout.strip() if result.returncode == 0 else "0" * 40
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError as exc:
+        raise StepFailure(f"production plan cannot be hashed: {path}") from exc
+    return digest.hexdigest()
 
 
 def _production_output_root(state_root: Path) -> Path:
@@ -574,16 +588,38 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         plan = _run_child(production_root, ["tools/build_plan.py", "--project-root",
                                             str(persistent_production_root / "production" / project_slug)], python)
         record("plan", plan)
+        plan_path = persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"
         report = {
             "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
-            "plan": str(persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"),
+            "generated_at": requested_at,
+            "project_slug": project_slug,
+            "project_title": project_title,
+            "plan": str(plan_path),
+            "production_repository": "agentic-art-production",
             "production_root": str(persistent_production_root),
             "production_history": str(history_path),
             "theme_proposal": theme_proposal,
             "state": str(work),
         }
+        production_source_commit = _head(production_root)
+        if re.fullmatch(r"[0-9a-f]{40}", production_source_commit):
+            report["production_source_commit"] = production_source_commit
+        if plan_path.is_file():
+            report["production_plan_sha256"] = _sha256_file(plan_path)
         if destination_resolution is not None:
             report["destination_resolution"] = dict(destination_resolution)
+            if internal_output_root is None:
+                raise StepFailure("destination resolution has no internal output root for public projection preparation")
+            from tools.public_projection import prepare_run_report
+
+            try:
+                report["public_projection"] = prepare_run_report(
+                    report,
+                    internal_output_root=internal_output_root,
+                    projection_id=run_id,
+                )
+            except (OSError, TypeError, ValueError, KeyError) as exc:
+                raise StepFailure("public projection candidate preparation failed") from exc
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return report
 

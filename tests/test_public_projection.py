@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import copy
 import contextlib
+import hashlib
 import io
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
 import yaml
 
 from tools import public_projection as projection
+from tools.output_destinations import resolve_destinations
 from tools.security import PUBLIC_PROJECTION_FINDING_CODES, scan_public_projection
 
 
@@ -119,6 +122,137 @@ class PublicProjectionContractTests(unittest.TestCase):
         report = json.loads(output.getvalue())
         self.assertEqual("PASSED", report["status"])
         self.assertEqual("READY_FOR_DRY_RUN", report["policy_status"])
+
+    def _profile_resolution(self, root: Path, run_id: str) -> dict:
+        profile = root / "destinations.yaml"
+        profile.write_text(
+            yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "prepare-test",
+                "destinations": {
+                    "state_root": str(root / "state"),
+                    "internal_output_root": str(root / "internal"),
+                },
+            }, sort_keys=False),
+            encoding="utf-8",
+        )
+        return resolve_destinations(profile, repository_root=ROOT, run_id=run_id)
+
+    def test_prepare_run_copies_one_plan_with_unknown_clearance_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-prepare-run-") as temporary:
+            root = Path(temporary)
+            run_id = "RUN:PREPARE-001"
+            resolution = self._profile_resolution(root, run_id)
+            source = root / "internal" / "production" / "example-plan" / "03_plan" / "production-plan.md"
+            source.parent.mkdir(parents=True)
+            content = b"# Example plan\n\nA source-owned plan.\n"
+            source.write_bytes(content)
+            report = {
+                "run_id": run_id,
+                "status": "PLAN_READY",
+                "generated_at": "2026-09-04T00:00:00Z",
+                "project_slug": "example-plan",
+                "project_title": "Example plan",
+                "plan": str(source),
+                "production_plan_sha256": hashlib.sha256(content).hexdigest(),
+                "production_repository": "agentic-art-production",
+                "production_source_commit": "a" * 40,
+                "destination_resolution": resolution,
+            }
+            first = projection.prepare_run_report(report, internal_output_root=root / "internal", projection_id=run_id)
+            second = projection.prepare_run_report(report, internal_output_root=root / "internal", projection_id=run_id)
+            self.assertEqual("PASSED", first["status"])
+            self.assertEqual("ALREADY_PREPARED", second["status"])
+            request_path = root / "internal" / first["request_locator"]
+            request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+            self.assertEqual([], projection.validate_request(request))
+            self.assertEqual(1, len(request["records"]))
+            record = request["records"][0]
+            self.assertEqual("unknown", record["publication"]["visibility"])
+            self.assertEqual(report["production_plan_sha256"], record["source"]["canonical_sha256"])
+            candidate = root / "internal" / record["files"][0]["source_locator"]
+            self.assertEqual(content, candidate.read_bytes())
+            self.assertFalse((root / "public-target").exists())
+
+    def test_refresh_rehashes_candidate_without_changing_canonical_provenance(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-prepare-refresh-") as temporary:
+            root = Path(temporary)
+            run_id = "RUN-REFRESH-001"
+            resolution = self._profile_resolution(root, run_id)
+            source = root / "internal" / "production" / "refresh-plan" / "03_plan" / "production-plan.md"
+            source.parent.mkdir(parents=True)
+            original = b"# Refresh plan\n"
+            source.write_bytes(original)
+            report = {
+                "run_id": run_id,
+                "status": "PLAN_READY",
+                "generated_at": "2026-09-04T00:00:00Z",
+                "project_slug": "refresh-plan",
+                "project_title": "Refresh plan",
+                "plan": str(source),
+                "production_plan_sha256": hashlib.sha256(original).hexdigest(),
+                "production_source_commit": "b" * 40,
+                "destination_resolution": resolution,
+            }
+            prepared = projection.prepare_run_report(report, internal_output_root=root / "internal", projection_id=run_id)
+            request_path = root / "internal" / prepared["request_locator"]
+            before = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+            candidate = root / "internal" / before["records"][0]["files"][0]["source_locator"]
+            candidate.write_bytes(b"# Edited public-ready candidate\n")
+            refreshed = projection.refresh_request(request_path, internal_output_root=root / "internal")
+            after = yaml.safe_load(request_path.read_text(encoding="utf-8"))
+            self.assertEqual("REFRESHED", refreshed["status"])
+            self.assertEqual(before["records"][0]["source"]["canonical_sha256"], after["records"][0]["source"]["canonical_sha256"])
+            self.assertNotEqual(before["records"][0]["source"]["sha256"], after["records"][0]["source"]["sha256"])
+            self.assertEqual([], projection.validate_request(after))
+            self.assertEqual(before["records"][0]["publication"], after["records"][0]["publication"])
+
+    def test_prepare_batch_handles_one_hundred_plans_in_source_key_order(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-prepare-batch-") as temporary:
+            root = Path(temporary)
+            run_id = "BATCH-PREPARE-001"
+            resolution = self._profile_resolution(root, run_id)
+            projects = []
+            for number in range(100, 0, -1):
+                project_id = f"batch-{number:03d}"
+                content = f"# Plan {number}\n".encode("utf-8")
+                source = root / "internal" / "batch" / run_id / "production" / project_id / "03_plan" / "production-plan.md"
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_bytes(content)
+                projects.append({
+                    "project_id": project_id,
+                    "status": "PASSED",
+                    "production_locator": f"run://{run_id}/production/{project_id}",
+                    "production_repository": "agentic-art-production",
+                    "production_source_commit": "c" * 40,
+                    "production_plan_markdown_sha256": hashlib.sha256(content).hexdigest(),
+                })
+            summary = {
+                "run_id": run_id,
+                "status": "PASSED",
+                "generated_at": "2026-09-04T00:00:00Z",
+                "output_root_locator": f"batch/{run_id}",
+                "projects": projects,
+                "destination_resolution": resolution,
+            }
+            result = projection.prepare_batch_summary(summary, internal_output_root=root / "internal", projection_id=run_id)
+            self.assertEqual("PASSED", result["status"])
+            self.assertEqual(100, result["record_count"])
+            request = yaml.safe_load((root / "internal" / result["request_locator"]).read_text(encoding="utf-8"))
+            self.assertEqual([], projection.validate_request(request))
+            self.assertEqual(100, len(request["records"]))
+            keys = [record["source"]["canonical_sha256"] for record in request["records"]]
+            self.assertEqual(sorted(keys), keys)
+            self.assertTrue(all(record["publication"]["visibility"] == "unknown" for record in request["records"]))
+
+    def test_unfinished_run_returns_not_available_without_inventing_work(self) -> None:
+        result = projection.prepare_run_report(
+            {"run_id": "RUN-PENDING-001", "status": "RESEARCH_PENDING"},
+            internal_output_root=Path("/private/tmp/nonexistent-internal-root"),
+            projection_id="RUN-PENDING-001",
+        )
+        self.assertEqual("NOT_AVAILABLE", result["status"])
+        self.assertEqual(0, result["record_count"])
 
 
 if __name__ == "__main__":
