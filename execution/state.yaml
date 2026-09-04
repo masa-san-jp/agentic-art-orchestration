@@ -1,5 +1,5 @@
-version: 170
-updated_at: "2026-09-03T21:26:57+09:00"
+version: 171
+updated_at: "2026-09-04T11:04:46+09:00"
 active_task: null
 active_repository: null
 lease:
@@ -22,8 +22,8 @@ checkpoint:
   result: completed; parent PR #145 merged as 29221de2fbf95604329aade4b6cfe6562185c18a, final completion record PR #146 merged as c8eff8c468493e9aeb119495db9a1f21f986d7c2, exact Research pin adopted, and all declared local checks passed.
 last_completed_task: HARNESS-RESEARCH-PIN-85-001
 resume_from:
-  task: null
-  action: "No implementation task remains; perform repository-scoped Issue re-audit when a new implementation Issue or explicit feedback arrives. Production Issue #10 remains the permanent requirement SSOT."
+  task: OUTPUT-DESTINATIONS-CONTRACT-001
+  action: "Claim the lowest-ID READY task after verifying its Issue #148 SSOT, dependency HARNESS-RESEARCH-PIN-85-001, target repository, and clean lease; then implement only the versioned contract and shared resolver."
   command: python3 tools/validate.py --check
 
 issue_intake:
@@ -31,12 +31,17 @@ issue_intake:
   issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/114
   implementation_commit: ce3026b7bfffc93bb6b0932bf2c80d5d936fc1c4
   implementation: repository-scoped gh issue list metadata plus repository-scoped gh issue view body retrieval
-  live_observed_at: "2026-09-03T12:24:00Z"
+  live_observed_at: "2026-09-04T01:55:00Z"
   manifest_repositories: 7
-  open_issues: 1
+  open_issues: 6
   queued: 1
-  qualified_unqueued: 0
-  qualified_candidates: []
+  qualified_unqueued: 5
+  qualified_candidates:
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/148
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/150
+    - https://github.com/masa-san-jp/self-model-notes/issues/81
+    - https://github.com/masa-san-jp/self-model-notes/issues/82
   unqueued_needs_ssot: 0
   report_sha256: 34aa7150d1572060e9590986ca429052e5d037a4ed60b28841bf4fdfb4fa227a
   focused_tests: "7/7 PASS"

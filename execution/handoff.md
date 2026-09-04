@@ -1952,3 +1952,15 @@
 ### Next exact action
 
 1. On a new actionable Issue or explicit user feedback, run `python3 tools/validate.py --check`, then register the smallest dependency-complete task; otherwise use the current pinned main as the reproducible harness baseline.
+
+## 2026-09-04 — actionable Issue DAG registered
+
+- Live repository-scoped intake observed 6 open Issues: parent #148/#149/#150, self-model #81/#82, and the permanent Production #10 requirement SSOT. Five qualified candidates have complete SSOT/acceptance metadata; one existing parent task remains queued. No candidate is `UNQUEUED_NEEDS_SSOT`.
+- Parent queue version 41 registers 12 tasks: three for configured output destinations (#148), four for workspace bootstrap (#150), and five for the human-gated public projection lane (#149). All tasks include target repositories, dependencies, acceptance, checks, stop conditions, and agent terminal states.
+- Selection is deterministic: `OUTPUT-DESTINATIONS-CONTRACT-001` and `WORKSPACE-BOOTSTRAP-CONTRACT-001` are READY with the same completed dependency; the lowest ID is `OUTPUT-DESTINATIONS-CONTRACT-001`. Public projection waits for the complete output-destination lane.
+- The self-model profile boundary is separately recorded in Issues #1/#81/#82. Repository work may implement schema/tool/docs/tests using synthetic fixtures; real n=1 profile migration requires the #82 human gate and explicit external-root/consent/retention inputs.
+- No user path, credential, private profile, raw conversation, child schema/data, public target, or external artifact body was written. Existing generated data and historical completion evidence were not hand-edited.
+
+### Next exact action
+
+1. Claim `OUTPUT-DESTINATIONS-CONTRACT-001` on a fresh branch from parent `main`, inspect Issue #148 and the nearest contract/tests, then implement and validate the shared resolver.
