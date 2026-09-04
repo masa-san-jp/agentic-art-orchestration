@@ -1,5 +1,5 @@
-version: 46
-updated_at: "2026-09-04T11:32:03+09:00"
+version: 47
+updated_at: "2026-09-04T13:24:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1393,7 +1393,7 @@ tasks:
   - id: PUBLIC-PROJECTION-PLAN-001
     milestone: M29
     title: Implement public target onboarding and dry-run projection planning
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1403,12 +1403,13 @@ tasks:
     depends_on: [PUBLIC-PROJECTION-PREPARE-001]
     acceptance: Implement init-target and project dry-run, validate layout/source/hash/rights/security/target conflicts, allocate stable public IDs without reuse, and produce metadata-only result evidence with zero target mutation.
     checks: [python3 tools/validate.py --check, python3 -m unittest tests.test_public_projection tests.test_security_boundary -v, python3 -m unittest discover -s tests -v, git diff --check]
+    completion: "Parent PR #164 merged to main as 0f958a908e02403b7cf2b2b70d48552762032ebe; implementation commit 7de680b224f4bfb1daa21741b0879a8c15e16529 added explicit init-target scaffolding and project --dry-run planning. Temporary Git worktrees prove clean/local-branch preflight, zero target mutation for dry-run and blocked policy, deterministic P0001-P0100 allocation, retired-ID non-reuse, source/hash/rights/media/security checks, target conflict detection, sanitized CLI output, and create-only metadata-only result evidence. Focused public/security tests 21/21 PASS; parent full suite 518 tests with 1 expected skip; validator, py_compile, and diff check PASS. GitHub run 33836463884 failed before any job step because of the account billing limit and is not counted as a quality-gate pass. No public content was applied, no approval was generated, and no child repository, pin, credential, private data, raw conversation, or external artifact body was written. Acceptance 1/1."
     stop_if: [A public approval is generated, Existing target content must be overwritten, An unknown or restricted source is accepted, A public ID must be guessed]
 
   - id: PUBLIC-PROJECTION-APPLY-001
     milestone: M29
     title: Apply approved public projection with atomic rollback and idempotency
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/149
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
