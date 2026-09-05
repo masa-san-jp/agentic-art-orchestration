@@ -334,7 +334,9 @@ def _run_project(
         started = time.monotonic()
         attempt_run_id = f"{batch_run_id}:project-{project_number:03d}:attempt-{attempt}"
         stage_root = state_dir / "staging" / project_id / f"attempt-{attempt}"
-        child_production_root = stage_root / "child-production"
+        # Preserve the complete owner project under internal output. The batch
+        # aggregate is a reporting projection, not a canonical owner input.
+        child_production_root = production_output_root.parent / "canonical-production" / project_id / f"attempt-{attempt}"
         try:
             evidence = run_exchange(
                 dict(manifest),
@@ -371,7 +373,13 @@ def _run_project(
             ]
             if attempt > 1:
                 events.insert(0, _event(batch_run_id, project_id, source_commit, "RETRY", attempt, f"{project_id}-retry-{attempt}", observed_at=generated_at))
+            from tools.canonical_plan_projection import source_fields
+            canonical_fields = source_fields(
+                child_plan_path.with_suffix(".md"),
+                workspace_root / str(_repo_map(manifest)["agentic-art-production"]["path"]),
+            )
             return {
+                **canonical_fields,
                 "project_id": project_id,
                 "candidate_id": str(candidate["candidate_id"]),
                 "status": "PASSED",

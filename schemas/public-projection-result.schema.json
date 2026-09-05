@@ -66,9 +66,18 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["record_kind", "source_sha256"],
+      "dependentRequired": {"source_identity": ["plan_revision", "attestation_sha256", "production_commit", "body_transform"]},
       "properties": {
         "record_kind": {"enum": ["plan", "work"]},
-        "source_sha256": {"$ref": "#/$defs/hash64"}
+        "source_sha256": {"$ref": "#/$defs/hash64"},
+        "source_identity": {"type": "string", "minLength": 1},
+        "plan_revision": {"type": "integer", "minimum": 1},
+        "attestation_sha256": {"$ref": "#/$defs/hash64"},
+        "production_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "production_repository": {"const": "masa-san-jp/agentic-art-production"},
+        "source_run_id": {"$ref": "#/$defs/stable_id"},
+        "assets": {"type": "array", "items": {"type": "object"}},
+        "body_transform": {"const": "none"}
       }
     },
     "target": {

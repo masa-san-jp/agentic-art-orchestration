@@ -1,5 +1,14 @@
 # Agentic Art Orchestration
 
+自動公開投影は `canonical-plan-projection/v2` を使います。run/batchが記録した
+Production code pin、stable identity/revision、本文とattestationのlocator/hashを
+pin済みowner CLIで検証し、本文・attestation・許諾済み画像を無変換で投影します。
+公開reviewが無い場合は内部プランを保持して `BLOCKED_POLICY` を返します。
+requestは内部出力の `public-projection/<run-id>/canonical-request.json`、resultは
+stateの `<run-id>/public-projection-result.json` に保存します。metadata/indexの
+`assets` はowner manifestをJSON文字列として保持し、flat YAML受信契約と整合します。
+詳細・検証・再開は [Issue193 execution](docs/issue-193-execution.md) を参照してください。
+
 ## AAK：自律制作と累積知識の追加系列
 
 今回の追加要件は[仕様SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のprinciples/authority/compatibility、実装順・検証・再開は[実装計画SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)を読む。Issue参照版は `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`。既存機能全体の仕様を置き換えない。

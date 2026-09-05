@@ -1,6 +1,6 @@
 version: 212
 updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-13
+active_task: PUBLIC-PROJECTION-ATTESTATION-001
 active_repository: agentic-art-orchestration
 lease:
   status: held
@@ -8,7 +8,7 @@ lease:
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-13:production-60:20260905
+  execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260905
   scope:
     repository: agentic-art-orchestration
     paths:
@@ -23,13 +23,13 @@ lease:
     - execution/**
     child_repositories: [agentic-art-production, agentic-art-project]
 checkpoint:
-  task: AAK-13
+  task: PUBLIC-PROJECTION-ATTESTATION-001
   prerequisite: agentic-art-production#60
-  repository: agentic-art-production
-  branch: agent/production-60-public-attestation
-  start_point: 9d125fb87be133f5e73e61e04e23c0a3bfafb462
+  repository: agentic-art-orchestration
+  branch: agent/issue-193-attested-projection
+  start_point: ecfa00f71957c4c04e052ea3a7574f042c8ab6f0
   status: IN_PROGRESS
-  result: Production attestation implemented; focused 5 PASS before native validator integration, final full suite running. Project6 PR9 uses old v1 contract and is not qualified for current acceptance. No actual public-plan migration performed.
+  result: Production63 candidate d323b92ffef34fc80b2e0c47daa1b8acff40368a qualified 104 full PASS. Project6 PR11 synthetic receiver 6 PASS, actual migration remains blocked. Issue193 native intake qualified; implement projection/v2 without child schema copy or real target writes.
   integration_status: NOT_RUN
 aak04_checkpoint:
   task: AAK-04

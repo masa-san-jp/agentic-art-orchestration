@@ -555,14 +555,12 @@ class ProductionHistoryTests(unittest.TestCase):
             self.assertEqual("PLAN_READY", report["status"])
             self.assertEqual("automatic-plan-projection-authority/v1", report["automatic_plan_authority"]["contract_version"])
             self.assertEqual("tools/run.py", report["automatic_plan_authority"]["producer"])
-            self.assertEqual("APPLIED", report["public_projection"]["status"])
+            self.assertEqual("BLOCKED_POLICY", report["public_projection"]["status"])
             self.assertEqual("AUTOMATIC_PLAN", report["public_projection"]["projection_mode"])
-            request_path = root / "internal" / report["public_projection"]["request_locator"]
-            request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
-            self.assertEqual(1, len(request["records"]))
-            self.assertEqual("public", request["records"][0]["publication"]["visibility"])
-            self.assertEqual("cleared", request["records"][0]["publication"]["consent_status"])
-            self.assertTrue((target / "plans/P0001-run-plan/plan.md").is_file())
+            # Fake worker success is not owner attestation or public consent.
+            self.assertIsNone(report["public_projection"]["request_locator"])
+            self.assertFalse((target / "plans/P0001-run-plan/plan.md").exists())
+            self.assertTrue(Path(report["plan"]).is_file())
             evidence = root / "state" / "RUN-PROJECTION-001" / "public-projection-result.json"
             self.assertTrue(evidence.is_file())
             self.assertEqual("AUTOMATIC_PLAN", json.loads(evidence.read_text(encoding="utf-8"))["projection_mode"])
