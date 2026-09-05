@@ -35,10 +35,18 @@ Issue193 synthetic acceptance: owner validation and Project receiver boundary PA
 34 focused tests PASS (6.539s), including actual Production CLI and Project code,
 eight negative owner-source cases, byte equality, replay, revision conflict,
 stable IDs, reserved IDs, 100-record ordering and transactional rollback.
+Final code: local 8bcbbb78475fa4ac03896839c48395aaacc53721, remote
+2b1787a3bfd995582075a4723747528781a18df2, identical full tree
+9b41d0797e957388a81331ef22d3d4dced7a6c24. Draft PR202.
+Final full suite: 587 PASS, zero skips, 126.520s; validator/diff PASS.
+Full log SHA256 b2c53cfc1d11d9cb1a097c34c27b42c969ea2ce9f16cb18ae796d35446c23245.
+Actual owner fixture input: Production local f904c70 (remote evidence tree alias
+69567e88131e3f033d010791fb5849e1b2ebff8d), Project local 70ccaa6 (remote
+939411c72aa8cdc77a4831170f2d049126e24b4f). Both were clean dedicated checkouts.
 The 100-record transaction regression explicitly uses a synthetic owner boundary;
 it is not live agent acceptance. Full prequalification: 587 tests PASS, one skip,
-123.518s after the README networkless fixture setup. The final frozen code/full
-suite is pending. No real public projection, migration or AAK-02 live run performed.
+123.518s after the README networkless fixture setup. No real public projection,
+migration or AAK-02 live run performed.
 
 ## Context and Orientation
 

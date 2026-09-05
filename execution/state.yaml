@@ -28,8 +28,8 @@ checkpoint:
   repository: agentic-art-orchestration
   branch: agent/issue-193-attested-projection
   start_point: ecfa00f71957c4c04e052ea3a7574f042c8ab6f0
-  status: IN_PROGRESS
-  result: Production63 candidate d323b92ffef34fc80b2e0c47daa1b8acff40368a qualified 104 full PASS. Project6 PR11 synthetic receiver 6 PASS, actual migration remains blocked. Issue193 native intake qualified; implement projection/v2 without child schema copy or real target writes.
+  status: CODE_VERIFIED
+  result: Parent193 draft PR202 candidate 2b1787a3bfd995582075a4723747528781a18df2, full 587 PASS zero skips. Production63 candidate 8824ea7746c35c05ff25c7ac24cf42768888c131 full104 PASS. Project6 PR11 receiver6 PASS; actual migration remains blocked. Actual owner and receiver synthetic projection PASS; live AAK02 NOT_RUN.
   integration_status: NOT_RUN
 aak04_checkpoint:
   task: AAK-04
@@ -44,10 +44,10 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: 'User-authorized non-force API branch update plus complete tree verification; no merge/publication'
-last_completed_task: AAK-12
+last_completed_task: PUBLIC-PROJECTION-ATTESTATION-001
 resume_from:
-  task: AAK-13
-  action: Finish Production60 verification and draft PR, then Project6 receiver prerequisites. Preserve self-model trusted-base registration and Marketing closed-dependency human gates. AAK02 live integration remains NOT_RUN.
+  task: ISSUE-189-PIN-QUALIFICATION
+  action: Observe Research main and run native pin qualification in an isolated workspace. Preserve self-model trusted-base registration, Marketing closed-dependency and Project real-migration human gates. AAK02 live integration remains NOT_RUN.
   command: python3 tools/validate.py --check
 
 workspace_bootstrap_apply:

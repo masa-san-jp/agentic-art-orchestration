@@ -10,7 +10,15 @@ AAK-01/03/04の検証済みcandidateとdraft PR199/200/201は維持。AAK-06はa
 | AAK-08 | agentic-art-research 13c819eb34e91198c3584b8cfd75c81494ab148c / PR95 | AC1..5 synthetic PASS; 7 focused, 298 full PASS | explicit second-decision common reuse-trace retained in owner Git; AAK-09 awaits 05/07 |
 | AAK-12 | viewer-response-notes ca2fbe2cb66ed771486e60159431a670721be3e7 / PR7 | AC1..5 synthetic PASS; 19 tests, validator, README export PASS | scoped aggregate reload/correction/empty evidence; real integration remains NOT_RUN |
 
-Active prerequisite: Production #60 on agent/production-60-public-attestation from 9d125fb87be133f5e73e61e04e23c0a3bfafb462. Project #6 PR9 candidate 55615f985d3376cafd5c9c08ecdc579be1c8641d still implements old projection/v1 with heading checks and lacks the current attestation/v1 contract. Finish Production owner verification first. Actual public-record migration is not performed under this instruction.
+Production #60 PR63: qualified code 8824ea7746c35c05ff25c7ac24cf42768888c131,
+104 full tests PASS, six evaluation checks PASS. Project #6 PR11: code
+939411c72aa8cdc77a4831170f2d049126e24b4f; six receiver tests PASS, full 18 has
+16 PASS / 1 FAIL / 1 ERROR because P0001-P0007 need authorized real migration.
+Parent #193 PR202: qualified 2b1787a3bfd995582075a4723747528781a18df2,
+587 full tests PASS, zero skips; actual owner/receiver synthetic fixture PASS.
+Its execution record is docs/issue-193-execution.md. These are candidate branches,
+not main integration. Next eligible prerequisite is parent #189 Research pin
+qualification; observe current remote/main and preserve existing worktrees.
 
 Owner evidence and receipts stay in owner Git/stores. Parent records only refs and statuses. Synthetic research second knowledge commit 7188bc56daa900455d4cf757b91d901611703238 uses first 74e3518df8e2c69d281b80a5dc07b72f2194f3cd to change DC001. Viewer receipt df0c1156b097ac08440dfef9c7d930b2a34d47f3 preserves aggregate conditions. These are synthetic owner tests, not live-agent artistic acceptance. No merge, release, publication, real n=1 migration, private raw or inferred personal preference was performed.
 

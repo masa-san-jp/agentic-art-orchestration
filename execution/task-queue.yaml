@@ -6,7 +6,7 @@ tasks:
   - id: PUBLIC-PROJECTION-ATTESTATION-001
     milestone: M29
     title: Require owner attestation for exact canonical plan projection
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -14,13 +14,14 @@ tasks:
     external_dependencies: [https://github.com/masa-san-jp/agentic-art-production/issues/60]
     dependency_evidence:
       production60:
-        candidate_commit: d323b92ffef34fc80b2e0c47daa1b8acff40368a
+        candidate_commit: 8824ea7746c35c05ff25c7ac24cf42768888c131
         contract_version: production-public-plan-attestation/v1
         reference: https://github.com/masa-san-jp/agentic-art-production/pull/63
         verification: 11 focused and 104 full PASS; validator and evaluation PASS; unmerged candidate
     acceptance: Issue193 canonical-plan-projection/v2; qualified owner validator, exact body/attestation/assets, stable identity/revision, atomic replay/update/rollback and 100-record order, Project6 synthetic receiver compatibility.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
     intake_evidence: Actual Issue body passes native intake after mechanical heading synchronization; all four SSOT criteria true. No acceptance or human-gate semantics changed.
+    completion: Issue193 synthetic acceptance1..7 PASS; qualified candidate 2b1787a3bfd995582075a4723747528781a18df2, exact tree 9b41d0797e957388a81331ef22d3d4dced7a6c24, draft PR202. Full587 PASS zero skips; validator/diff PASS. Actual Production CLI and Project receiver synthetic fixture PASS; 100-record transaction uses explicit boundary double. Real migration, main integration, AAK02 live NOT_RUN.
   - id: BOOTSTRAP-001
     milestone: M0
     title: Bootstrap orchestration repository
