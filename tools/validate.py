@@ -64,6 +64,8 @@ BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
 OUTPUT_DESTINATIONS_SCHEMA_PATH = ROOT / "schemas/output-destinations.schema.json"
 DESTINATION_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/destination-resolution.schema.json"
 OUTPUT_DESTINATIONS_EXAMPLE_PATH = ROOT / "config/output-destinations.example.yaml"
+INSTANCE_PROFILE_SCHEMA_PATH = ROOT / "schemas/instance-profile.schema.json"
+INSTANCE_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/instance-resolution.schema.json"
 WORKSPACE_BOOTSTRAP_SCHEMA_PATH = ROOT / "schemas/workspace-bootstrap.schema.json"
 PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH = ROOT / "schemas/public-project-layout.schema.json"
 PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH = ROOT / "schemas/public-projection-request.schema.json"
@@ -130,6 +132,8 @@ REQUIRED_FILES = [
     "schemas/batch-report-event.schema.json",
     "schemas/batch-run.schema.json",
     "schemas/output-destinations.schema.json",
+    "schemas/instance-profile.schema.json",
+    "schemas/instance-resolution.schema.json",
     "schemas/destination-resolution.schema.json",
     "schemas/workspace-bootstrap.schema.json",
     "schemas/public-project-layout.schema.json",
@@ -146,6 +150,7 @@ REQUIRED_FILES = [
     "tools/batch_status.py",
     "tools/batch_run.py",
     "tools/output_destinations.py",
+    "tools/instance_profiles.py",
     "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
@@ -507,3608 +512,980 @@ def validate_output_destinations_contract(
             errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
         contract = schema.get("properties", {}).get("contract_version", {})
         if not isinstance(contract, dict) or contract.get("const") != version:
-            errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
-
-    if isinstance(config_schema, dict):
-        if set(config_schema.get("required", [])) != {"contract_version", "profile", "destinations"}:
-            errors.append(f"{source}: output destination required fields are incomplete or expanded; remediation: keep the v1 profile minimal")
-        destinations = config_schema.get("properties", {}).get("destinations", {})
-        if not isinstance(destinations, dict) or destinations.get("additionalProperties") is not False:
-            errors.append(f"{source}: destination roles must be closed; remediation: reject unknown destination roles")
-        elif set(destinations.get("required", [])) != {"state_root", "internal_output_root"}:
-            errors.append(f"{source}: required destination roles are unsafe; remediation: require state_root and internal_output_root only")
-
-    if isinstance(resolution_schema, dict):
-        expected_required = {
-            "contract_version", "profile", "config_source", "config_sha256",
-            "run_id", "project_id", "destinations", "classification",
-        }
-        if set(resolution_schema.get("required", [])) != expected_required:
-            errors.append(f"{source}: resolution evidence required fields are incomplete or expanded; remediation: preserve the metadata-only envelope")
-        destinations = resolution_schema.get("properties", {}).get("destinations", {})
-        if not isinstance(destinations, dict) or destinations.get("additionalProperties") is not False:
-            errors.append(f"{source}: resolved destination roles must be closed; remediation: reject unknown roles")
-        resolved = {}
-        if isinstance(destinations, dict):
-            resolved = destinations.get("properties", {}).get("state_root", {})
-            if isinstance(resolved, dict) and "$ref" in resolved:
-                resolved = resolution_schema.get("$defs", {}).get("resolved_destination", {})
-        role_sources = resolved.get("properties", {}).get("source", {}).get("enum") if isinstance(resolved, dict) else None
-        if role_sources != ["direct-cli", "profile", "legacy-default"]:
-            errors.append(f"{source}: destination source vocabulary is unsafe; remediation: preserve direct/profile/legacy precedence")
-
-    if example is None:
-        try:
-            example = load_yaml(OUTPUT_DESTINATIONS_EXAMPLE_PATH)
-        except ValueError as exc:
-            errors.append(str(exc))
-    if example is not None and isinstance(config_schema, dict):
-        for schema_error in _schema_errors(example, config_schema, _source_label(OUTPUT_DESTINATIONS_EXAMPLE_PATH)):
-            errors.append(f"{schema_error}; remediation: keep the tracked example placeholder-only and schema-valid")
-    return errors
-
-
-def validate_workspace_bootstrap_contract(
-    schema: dict | None = None,
-    source: str = "schemas/workspace-bootstrap.schema.json",
-) -> list[str]:
-    """Keep the bootstrap result vocabulary closed before implementation stages use it."""
-    schema = schema if schema is not None else load_json(WORKSPACE_BOOTSTRAP_SCHEMA_PATH)
-    errors: list[str] = []
-    if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
-        return [f"{source}: schema must be Draft 2020-12; remediation: restore workspace-bootstrap/v1"]
-    if schema.get("additionalProperties") is not False:
-        errors.append(f"{source}: schema must reject unknown fields; remediation: set additionalProperties to false")
-    contract = schema.get("properties", {}).get("contract_version", {})
-    if not isinstance(contract, dict) or contract.get("const") != "workspace-bootstrap/v1":
-        errors.append(f"{source}: wrong contract version; remediation: preserve workspace-bootstrap/v1")
-    command = schema.get("properties", {}).get("command", {})
-    if not isinstance(command, dict) or command.get("const") != "bootstrap":
-        errors.append(f"{source}: command must be bootstrap; remediation: keep the standalone bootstrap subcommand")
-    statuses = schema.get("properties", {}).get("status", {}).get("enum")
-    expected_statuses = [
-        "READY",
-        "BLOCKED_PIN_DRIFT",
-        "BLOCKED_EXISTING_WORKSPACE",
-        "BLOCKED_REMOTE_ACCESS",
-        "BLOCKED_RACE",
-        "FAILED",
-    ]
-    if statuses != expected_statuses:
-        errors.append(f"{source}: status vocabulary is incomplete or reordered; remediation: preserve the fixed bootstrap outcomes")
-    repository = schema.get("$defs", {}).get("repository", {})
-    if not isinstance(repository, dict) or repository.get("additionalProperties") is not False:
-        errors.append(f"{source}: repository records must be closed; remediation: reject unrecognized checkout fields")
-    privacy = schema.get("properties", {}).get("privacy", {})
-    if not isinstance(privacy, dict) or privacy.get("additionalProperties") is not False:
-        errors.append(f"{source}: privacy result must be closed; remediation: keep credential fields out of evidence")
-    return errors
-
-
-def validate_public_projection_contract(
-    layout_schema: dict | None = None,
-    request_schema: dict | None = None,
-    approval_schema: dict | None = None,
-    result_schema: dict | None = None,
-    source: str = "public-projection",
-) -> list[str]:
-    """Keep public projection contracts closed before any later target task runs."""
-    schemas = (
-        (layout_schema, PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH, "public project layout", "public-project-layout/v1"),
-        (request_schema, PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH, "public projection request", "public-projection-request/v1"),
-        (approval_schema, PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH, "public projection approval", "public-projection-approval/v1"),
-        (result_schema, PUBLIC_PROJECTION_RESULT_SCHEMA_PATH, "public projection result", "public-projection-result/v1"),
-    )
-    errors: list[str] = []
-    draft = "https://json-schema.org/draft/2020-12/schema"
-    loaded: dict[str, dict] = {}
-    for supplied, path, label, version in schemas:
-        schema = supplied if supplied is not None else load_json(path)
-        loaded[label] = schema
-        if not isinstance(schema, dict) or schema.get("$schema") != draft:
-            errors.append(f"{source}: {label} schema must be Draft 2020-12; remediation: restore the closed versioned schema")
-            continue
-        if schema.get("additionalProperties") is not False:
-            errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
-        contract = schema.get("properties", {}).get("contract_version", {})
-        if not isinstance(contract, dict) or contract.get("const") != version:
-            errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
-
-    request = loaded.get("public projection request")
-    if isinstance(request, dict):
-        required = set(request.get("required", []))
-        expected = {"contract_version", "projection_id", "generated_at", "source_root_role", "records"}
-        if required != expected:
-            errors.append(f"{source}: public projection request required fields are incomplete or expanded; remediation: keep the metadata-only draft envelope minimal")
-        source_root = request.get("properties", {}).get("source_root_role", {})
-        if not isinstance(source_root, dict) or source_root.get("const") != "internal_output_root":
-            errors.append(f"{source}: public projection request must name internal_output_root; remediation: never source a request from the public target")
-
-    result = loaded.get("public projection result")
-    expected_statuses = [
-        "DRY_RUN_READY", "BLOCKED_HUMAN", "APPLIED", "ALREADY_PROJECTED",
-        "BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED",
-    ]
-    if isinstance(result, dict):
-        statuses = result.get("properties", {}).get("status", {}).get("enum")
-        if statuses != expected_statuses:
-            errors.append(f"{source}: public projection result status vocabulary is incomplete or reordered; remediation: preserve the fixed human/policy/conflict outcomes")
-        for field in ("remote_operations", "child_mutations"):
-            if result.get("properties", {}).get(field, {}).get("const") != []:
-                errors.append(f"{source}: result {field} must be const empty; remediation: public projection must not perform remote or child mutation")
-
-    try:
-        from tools.public_projection import (
-            projection_policy_status,
-            request_sha256,
-            validate_approval,
-            validate_layout,
-            validate_request,
-            validate_result,
-        )
-
-        layout_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "layout.yaml"
-        request_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "request.yaml"
-        approval_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "approval.yaml"
-        result_path = PUBLIC_PROJECTION_FIXTURE_ROOT / "result.json"
-        layout = load_yaml(layout_path)
-        request_value = load_yaml(request_path)
-        approval = load_yaml(approval_path)
-        result_value = load_json(result_path)
-        errors.extend(validate_layout(layout, _source_label(layout_path)))
-        errors.extend(validate_request(request_value, _source_label(request_path)))
-        errors.extend(validate_approval(approval, _source_label(approval_path)))
-        errors.extend(validate_result(result_value, _source_label(result_path)))
-        if projection_policy_status(request_value) != "READY_FOR_DRY_RUN":
-            errors.append(f"{source}: valid public projection fixture is not dry-run ready; remediation: keep the synthetic clearance evidence explicit")
-        expected_request_hash = request_sha256(request_value)
-        if approval.get("request_sha256") != expected_request_hash or result_value.get("request_sha256") != expected_request_hash:
-            errors.append(f"{source}: fixture request hashes do not match canonical request bytes; remediation: regenerate synthetic evidence from the same request")
-        if result_value.get("target", {}).get("mutation_count") != 0:
-            errors.append(f"{source}: contract fixture reports target mutation; remediation: keep contract validation target-free")
-    except (OSError, TypeError, ValueError, KeyError) as exc:
-        errors.append(f"{source}: synthetic fixture validation failed: {exc}; remediation: repair public projection fixtures without adding real target data")
-
-    try:
-        from tools.security import PUBLIC_PROJECTION_FINDING_CODES
-        finding_enum = result.get("$defs", {}).get("finding", {}).get("properties", {}).get("code", {}).get("enum", []) if isinstance(result, dict) else []
-        if set(finding_enum) != PUBLIC_PROJECTION_FINDING_CODES:
-            errors.append(f"{source}: security finding vocabulary differs between tool and result schema; remediation: keep sanitized public finding codes synchronized")
-    except (ImportError, AttributeError, TypeError):
-        errors.append(f"{source}: public security finding vocabulary unavailable; remediation: expose the fixed sanitized vocabulary")
-    return errors
-
-
-def _source_label(path: Path) -> str:
-    try:
-        return str(path.relative_to(ROOT))
-    except ValueError:
-        return str(path)
-
-
-def _is_safe_relative_path(value) -> bool:
-    if not isinstance(value, str) or not value or value.startswith(("/", "\\")):
-        return False
-    parts = value.replace("\\", "/").split("/")
-    return all(part not in {"", ".", ".."} for part in parts)
-
-
-def _absolute_command_token(command: str) -> str | None:
-    """Return an absolute filesystem token from a recorded command, if any."""
-    try:
-        tokens = shlex.split(command)
-    except ValueError:
-        return "<unparseable command>"
-    for token in tokens:
-        candidates = [token]
-        if "=" in token:
-            candidates.append(token.split("=", 1)[1])
-        if any(candidate.startswith(("/", "\\")) for candidate in candidates):
-            return token
-    return None
-
-
-def validate_execution_state(data: dict, source: str = "execution/state.yaml") -> list[str]:
-    """Reject non-replayable absolute paths in every recorded command field."""
-    errors: list[str] = []
-
-    def visit(value, path: str) -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                child_path = f"{path}.{key}"
-                if key == "command":
-                    if not isinstance(child, str):
-                        errors.append(
-                            f"{source}: {child_path} must be a string; "
-                            "remediation: record a repo-relative replay command"
-                        )
-                    else:
-                        token = _absolute_command_token(child)
-                        if token is not None:
-                            errors.append(
-                                f"{source}: {child_path} contains absolute path token {token!r}; "
-                                "remediation: record the command with repo-relative interpreter, workspace, and output paths"
-                            )
-                else:
-                    visit(child, child_path)
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                visit(child, f"{path}[{index}]")
-
-    visit(data, source)
-    return errors
-
-
-def validate_knowledge_cycle_contracts() -> list[str]:
-    errors: list[str] = []
-    expected_ids = {
-        "artifact-record/v1", "knowledge-write-receipt/v1", "reuse-trace/v1"
-    }
-    observed_ids: set[str] = set()
-    for path in KNOWLEDGE_CONTRACT_PATHS:
-        schema = load_json(path)
-        observed_ids.add(schema.get("$id"))
-        if schema.get("additionalProperties") is not False:
-            errors.append(f"{_source_label(path)}: must be a closed schema")
-    if observed_ids != expected_ids:
-        errors.append("knowledge schemas: contract IDs differ from AAK-SPEC/v1")
-    registry = load_yaml(KNOWLEDGE_OWNER_REGISTRY_PATH)
-    owners = registry.get("owners", []) if isinstance(registry, dict) else []
-    owner_ids = [item.get("id") for item in owners if isinstance(item, dict)]
-    expected_owners = {
-        "self-model-notes", "art-history-notes", "marketing-trends-notes",
-        "agentic-art-research", "agentic-art-production", "viewer-response-notes",
-        "agentic-art-project", "agentic-art-orchestration",
-    }
-    if registry.get("contract_version") != "knowledge-owner-registry/v1" or set(owner_ids) != expected_owners or len(owner_ids) != 8:
-        errors.append("knowledge owner registry: expected eight unique AAK owners")
-    project = next((item for item in owners if item.get("id") == "agentic-art-project"), {})
-    if project.get("write") is not False or project.get("catalog_reference") is not True:
-        errors.append("knowledge owner registry: Project must remain write-disabled with separate catalog-reference capability")
-    return errors
-
-
-def validate_manifest(data: dict, source: str = "config/repositories.yaml") -> list[str]:
-    errors: list[str] = []
-    schema = load_json(MANIFEST_SCHEMA_PATH)
-    for schema_error in _schema_errors(data, schema):
-        errors.append(f"{source}: {schema_error}; remediation: correct the manifest field")
-
-    if not isinstance(data, dict):
-        return errors
-    repositories = data.get("repositories")
-    if not isinstance(repositories, list):
-        return errors
-    if len(repositories) < len(CORE_REPOSITORY_IDS):
-        errors.append(
-            f"{source}: expected at least {len(CORE_REPOSITORY_IDS)} repositories; "
-            "remediation: retain the four core repositories and append new repositories through the manifest"
-        )
-
-    seen: dict[str, set[str]] = {
-        "id": set(),
-        "path": set(),
-        "full_name": set(),
-        "authority": set(),
-    }
-    role_counts: dict[str, int] = {}
-    for index, repo in enumerate(repositories):
-        prefix = f"{source}: repositories[{index}]"
-        if not isinstance(repo, dict):
-            continue
-        for field in seen:
-            value = repo.get(field)
-            if isinstance(value, str):
-                if value in seen[field]:
-                    errors.append(
-                        f"{prefix}.{field}: duplicate {field} ownership {value!r}; "
-                        "remediation: assign unique repository ownership metadata"
-                    )
-                seen[field].add(value)
-
-        role = repo.get("role")
-        if isinstance(role, str):
-            role_counts[role] = role_counts.get(role, 0) + 1
-        if role not in ROLES:
-            errors.append(
-                f"{prefix}.role: unknown role {role!r}; "
-                f"remediation: use one of {sorted(ROLES)!r}"
-            )
-
-        if not SHA40.fullmatch(str(repo.get("observed_commit", ""))):
-            errors.append(
-                f"{prefix}.observed_commit: expected lowercase 40-character SHA; "
-                "remediation: record the complete immutable source commit"
-            )
-        if not _is_safe_relative_path(repo.get("path")):
-            errors.append(
-                f"{prefix}.path: must be a safe relative workspace path; "
-                "remediation: remove absolute paths and . or .. segments"
-            )
-        full_name = repo.get("full_name")
-        url = repo.get("url")
-        if isinstance(full_name, str) and isinstance(url, str):
-            expected_url = f"https://github.com/{full_name}.git"
-            if url != expected_url:
-                errors.append(
-                    f"{prefix}.url: must match full_name as {expected_url!r}; "
-                    "remediation: correct the HTTPS GitHub clone URL"
-                )
-        requirement_ssot = repo.get("requirement_ssot")
-        if isinstance(full_name, str) and isinstance(requirement_ssot, str):
-            expected_prefix = f"https://github.com/{full_name}/issues/"
-            if not requirement_ssot.startswith(expected_prefix):
-                errors.append(
-                    f"{prefix}.requirement_ssot: must belong to {full_name!r}; "
-                    "remediation: point to the authoritative Issue in the same repository"
-                )
-
-        contract_fields = [
-            field for field in ("export_contract", "import_contract", "exchange_contracts")
-            if field in repo
-        ]
-        if len(contract_fields) == 1:
-            contract_field = contract_fields[0]
-            contract = repo.get(contract_field)
-            if contract_field == "exchange_contracts":
-                imports = contract.get("imports", []) if isinstance(contract, dict) else []
-                exports = contract.get("exports", []) if isinstance(contract, dict) else []
-                unknown = sorted((set(imports) | set(exports)) - EXCHANGE_CONTRACTS)
-                if unknown:
-                    errors.append(
-                        f"{prefix}.exchange_contracts: unknown contracts {unknown!r}; "
-                        f"remediation: use only registered exchange contracts {sorted(EXCHANGE_CONTRACTS)!r}"
-                    )
-                if role != "control-plane-extension":
-                    errors.append(
-                        f"{prefix}: exchange_contracts require control-plane-extension role; "
-                        "remediation: use the bidirectional runtime role for non-signal boundaries"
-                    )
-                if set(imports) != {"production-handoff/v1"} or set(exports) != {"production-result/v1"}:
-                    errors.append(
-                        f"{prefix}.exchange_contracts: production runtime must import production-handoff/v1 "
-                        "and export production-result/v1; remediation: preserve the Research/Production boundary"
-                    )
-            elif contract not in CONTRACTS:
-                errors.append(
-                    f"{prefix}.{contract_field}: unknown contract {contract!r}; "
-                    f"remediation: use one of {sorted(CONTRACTS)!r}"
-                )
-            if role == "input-kb" and contract_field != "export_contract":
-                errors.append(
-                    f"{prefix}: input-kb must export a contract; "
-                    "remediation: use export_contract"
-                )
-            if role == "consumer-runtime" and contract_field != "import_contract":
-                errors.append(
-                    f"{prefix}: consumer-runtime must import a contract; "
-                    "remediation: use import_contract"
-                )
-
-        quality_gates = repo.get("quality_gates")
-        if isinstance(quality_gates, list):
-            for gate_index, command in enumerate(quality_gates):
-                if not isinstance(command, str) or not command.strip():
-                    errors.append(
-                        f"{prefix}.quality_gates[{gate_index}]: command must be non-empty; "
-                        "remediation: declare one executable quality-gate command"
-                    )
-                elif any(token in command for token in COMMAND_FORBIDDEN_TOKENS):
-                    errors.append(
-                        f"{prefix}.quality_gates[{gate_index}]: command contains shell control syntax; "
-                        "remediation: split it into a separate non-shell quality-gate command"
-                    )
-
-        profile = repo.get("knowledge_profile")
-        if isinstance(profile, dict):
-            known_profile_owners = {
-                item.get("id")
-                for item in repositories
-                if isinstance(item, dict) and isinstance(item.get("id"), str)
-            } | {"agentic-art-orchestration"}
-            feedback_owner = profile.get("feedback_owner")
-            if feedback_owner not in known_profile_owners:
-                errors.append(
-                    f"{prefix}.knowledge_profile.feedback_owner: unknown repository {feedback_owner!r}; "
-                    "remediation: route feedback to a declared repository or the parent control plane"
-                )
-
-            forbidden_data = profile.get("forbidden_data")
-            if isinstance(forbidden_data, list):
-                missing_forbidden = sorted(REQUIRED_PROFILE_FORBIDDEN_DATA - set(forbidden_data))
-                if missing_forbidden:
-                    errors.append(
-                        f"{prefix}.knowledge_profile.forbidden_data: missing baseline classes {missing_forbidden!r}; "
-                        "remediation: keep the aggregate privacy and credential boundary explicit"
-                    )
-
-            evidence_rules = profile.get("evidence_rules")
-            if isinstance(evidence_rules, dict) and evidence_rules.get("requires_locator") is not True:
-                errors.append(
-                    f"{prefix}.knowledge_profile.evidence_rules.requires_locator: must be true; "
-                    "remediation: require an opaque or repository-local evidence locator"
-                )
-
-            write_scope = profile.get("write_scope")
-            if isinstance(write_scope, dict):
-                allowed_paths = write_scope.get("allowed_paths")
-                if isinstance(allowed_paths, list):
-                    for path_index, path in enumerate(allowed_paths):
-                        if not _is_safe_relative_path(path):
-                            errors.append(
-                                f"{prefix}.knowledge_profile.write_scope.allowed_paths[{path_index}]: unsafe path; "
-                                "remediation: use a relative path without ., .., or an absolute prefix"
-                            )
-
-            entry_points = profile.get("retrieval_entry_points")
-            if isinstance(entry_points, list):
-                for point_index, point in enumerate(entry_points):
-                    if not isinstance(point, dict):
-                        continue
-                    kind = point.get("kind")
-                    locator = point.get("locator")
-                    if kind in {"file", "directory", "command"} and not _is_safe_relative_path(locator):
-                        errors.append(
-                            f"{prefix}.knowledge_profile.retrieval_entry_points[{point_index}].locator: unsafe local locator; "
-                            "remediation: use a safe relative repository path"
-                        )
-
-    missing_core = sorted(CORE_REPOSITORY_IDS - seen["id"])
-    if missing_core:
-        errors.append(
-            f"{source}: missing core repository IDs {missing_core!r}; "
-            "remediation: preserve the core repositories and add new entries instead of replacing them"
-        )
-    if role_counts.get("input-kb", 0) < 3 or role_counts.get("consumer-runtime", 0) < 1:
-        errors.append(
-            f"{source}: role ownership requires at least 3 input-kb and 1 consumer-runtime; "
-            "remediation: preserve the core role assignments and declare an explicit role for additions"
-        )
-    return errors
-
-
-def _known_input_repository_ids() -> set[str]:
-    manifest = load_yaml(MANIFEST_PATH)
-    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
-    return {
-        repo.get("id")
-        for repo in repositories
-        if isinstance(repo, dict) and repo.get("role") == "input-kb"
-    }
-
-
-def _known_repository_ids() -> set[str]:
-    manifest = load_yaml(MANIFEST_PATH)
-    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
-    return {
-        repo.get("id")
-        for repo in repositories
-        if isinstance(repo, dict) and isinstance(repo.get("id"), str)
-    }
-
-
-def _signal_error(source: str, detail: str, remediation: str) -> str:
-    return f"{source}: {detail}; remediation: {remediation}"
-
-
-def validate_research_execution_boundary(data: dict, source: str = "research-execution-boundary") -> list[str]:
-    """Validate the metadata-only v1.2 worker and authority boundary."""
-    errors: list[str] = []
-    schema = load_json(V12_BOUNDARY_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the v1.2 boundary field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    def require_exact_set(path: str, value: object, expected: set[str], label: str) -> None:
-        if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
-            return
-        actual = set(value)
-        if actual != expected:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"{path} must define {label} exactly; missing={sorted(expected - actual)!r}, unexpected={sorted(actual - expected)!r}",
-                    f"use the v1.2 boundary vocabulary for {label}",
-                )
-            )
-
-    input_contract = data.get("input_contract")
-    if isinstance(input_contract, dict):
-        require_exact_set(
-            "input_contract.accepted_signal_kinds",
-            input_contract.get("accepted_signal_kinds"),
-            {"self", "art-history", "marketing"},
-            "accepted normalized signal kinds",
-        )
-        require_exact_set(
-            "input_contract.required_fields",
-            input_contract.get("required_fields"),
-            {
-                "contract_version",
-                "signal_id",
-                "signal_kind",
-                "source",
-                "statement",
-                "evidence_refs",
-                "certainty",
-                "unknowns",
-                "constraints",
-                "validity",
-                "freshness",
-                "adapter",
-                "generated_at",
-            },
-            "normalized signal envelope fields",
-        )
-
-    source_requirements = data.get("source_requirements")
-    if isinstance(source_requirements, dict):
-        require_exact_set(
-            "source_requirements.required_fields",
-            source_requirements.get("required_fields"),
-            {"repository", "commit", "entity_ids", "locators"},
-            "source provenance fields",
-        )
-
-    worker_policy = data.get("worker_policy")
-    if isinstance(worker_policy, dict):
-        allowed = worker_policy.get("allowed_operations")
-        forbidden = worker_policy.get("forbidden_operations")
-        require_exact_set(
-            "worker_policy.allowed_operations",
-            allowed,
-            {"retrieve", "normalize", "classify", "match", "execute", "verify"},
-            "allowed worker operations",
-        )
-        require_exact_set(
-            "worker_policy.forbidden_operations",
-            forbidden,
-            {
-                "invent",
-                "free_form_ideation",
-                "open_ended_artistic_synthesis",
-                "add_unproven_concept",
-                "alter_source_provenance",
-                "bypass_gate",
-            },
-            "forbidden worker operations",
-        )
-        if isinstance(allowed, list) and isinstance(forbidden, list):
-            overlap = sorted(set(allowed) & set(forbidden))
-            if overlap:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"worker operation vocabularies overlap: {overlap!r}",
-                        "keep allowed execution operations disjoint from forbidden artistic or provenance mutations",
-                    )
-                )
-
-    child_authority = data.get("child_authority")
-    if isinstance(child_authority, dict):
-        require_exact_set(
-            "child_authority.quality_gate_statuses",
-            child_authority.get("quality_gate_statuses"),
-            {"NOT_RUN", "PASSED", "FAILED", "BLOCKED", "ENV_UNSATISFIED"},
-            "child quality gate statuses",
-        )
-
-    output_policy = data.get("output_policy")
-    if isinstance(output_policy, dict):
-        require_exact_set(
-            "output_policy.required_provenance",
-            output_policy.get("required_provenance"),
-            {"signal_id", "rule_id", "source_repository", "source_commit", "evidence_locator"},
-            "proposition provenance fields",
-        )
-    return errors
-
-
-def validate_transformation_rule_registry(data: dict, source: str = "transformation-rules") -> list[str]:
-    """Validate finite rule composition without authorizing free-form synthesis."""
-    errors: list[str] = []
-    schema = load_json(TRANSFORMATION_RULE_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the transformation-rule field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-    rules = data.get("rules")
-    if not isinstance(rules, list):
-        return errors
-
-    expected_kinds = {"self", "art-history", "marketing"}
-    expected_constraints = {"require_all_inputs", "require_source_provenance", "no_unproven_concepts"}
-    expected_rejections = {"missing-required-signal", "unknown-attribute", "missing-provenance", "constraint-failure"}
-    allowed_attributes = {
-        "self": {"tensions", "recurring_patterns", "seeks", "protects", "avoids", "traits", "states", "contexts"},
-        "art-history": {"relations", "canonical_graph_locator", "entity_kind", "time", "geo"},
-        "marketing": {"stage", "freshness", "vendor_interest", "counterevidence", "prediction_status"},
-    }
-    seen_rule_ids: set[str] = set()
-    for index, rule in enumerate(rules):
-        prefix = f"rules[{index}]"
-        if not isinstance(rule, dict):
-            continue
-        rule_id = rule.get("rule_id")
-        if isinstance(rule_id, str):
-            if rule_id in seen_rule_ids:
-                errors.append(_signal_error(source, f"duplicate rule_id {rule_id!r}", "give every transformation rule a unique stable ID"))
-            seen_rule_ids.add(rule_id)
-
-        required_kinds = rule.get("required_signal_kinds")
-        if isinstance(required_kinds, list) and set(required_kinds) != expected_kinds:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"{prefix}.required_signal_kinds must include each normalized signal kind exactly",
-                    "require self, art-history, and marketing inputs before composing a proposition",
-                )
-            )
-
-        bindings = rule.get("attribute_bindings")
-        if isinstance(bindings, dict):
-            for kind, values in bindings.items():
-                if kind not in allowed_attributes or not isinstance(values, list):
-                    continue
-                unknown = sorted(set(values) - allowed_attributes[kind])
-                if unknown:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"{prefix}.attribute_bindings.{kind} contains undeclared attributes {unknown!r}",
-                            "bind only attributes exposed by the normalized signal contract",
-                        )
-                    )
-
-        composition = rule.get("composition")
-        if isinstance(composition, dict):
-            composition_mode = composition.get("composition_mode")
-            if composition_mode is not None and composition_mode != "intersection":
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"{prefix}.composition.composition_mode must be intersection when declared",
-                        "use intersection for a declared three-way composition mode",
-                    )
-                )
-            slots = composition.get("slots")
-            if isinstance(slots, dict) and isinstance(bindings, dict):
-                for slot_name, slot in slots.items():
-                    if not isinstance(slot, dict):
-                        continue
-                    kind = slot.get("signal_kind")
-                    attribute = slot.get("attribute")
-                    if kind in allowed_attributes and isinstance(attribute, str):
-                        bound = bindings.get(kind, [])
-                        if attribute not in bound:
-                            errors.append(
-                                _signal_error(
-                                    source,
-                                    f"{prefix}.composition.slots.{slot_name} references unbound attribute {attribute!r}",
-                                    "select a declared attribute from the rule binding for that signal kind",
-                                )
-                            )
-                slot_kinds = {
-                    slot.get("signal_kind")
-                    for slot in slots.values()
-                    if isinstance(slot, dict)
-                }
-                # A rule may add slots beyond the three required kinds, so require
-                # coverage rather than rejecting useful additional slots.
-                if not expected_kinds <= slot_kinds:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"{prefix}.composition.slots must cover all signal kinds; observed {sorted(slot_kinds)!r}",
-                            "declare one explicit composition slot for self, art-history, and marketing",
-                        )
-                    )
-            template = composition.get("template")
-            if isinstance(slots, dict) and isinstance(template, str):
-                if composition_mode == "intersection" and " âˆ© " not in template:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"{prefix}.composition.template must expose the declared intersection operator",
-                            "use the intersection template so changing the art-history or marketing input changes the mechanism",
-                        )
-                    )
-                unused = sorted(name for name in slots if "{" + str(name) + "}" not in template)
-                if unused:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"{prefix}.composition.template does not use declared slots {unused!r}",
-                            "reference every declared slot in the template, or remove the slot",
-                        )
-                    )
-
-        constraints = rule.get("constraints")
-        if isinstance(constraints, list) and set(constraints) != expected_constraints:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"{prefix}.constraints must preserve the finite safety constraints",
-                    "require all inputs, source provenance, and no unproven concepts",
-                )
-            )
-        rejection_reasons = rule.get("rejection_reasons")
-        if isinstance(rejection_reasons, list) and set(rejection_reasons) != expected_rejections:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"{prefix}.rejection_reasons must preserve deterministic rejection vocabulary",
-                    "record missing inputs, unknown attributes, provenance, and constraint failures",
-                )
-            )
-    return errors
-
-
-def validate_startup_contract(
-    policy: dict | None = None,
-    report_schema: dict | None = None,
-    policy_source: str = "config/startup-policy.yaml",
-    schema_source: str = "schemas/startup-report.schema.json",
-) -> list[str]:
-    """Validate the versioned, privacy-safe startup contract before runtime exists."""
-    policy = policy if policy is not None else load_yaml(STARTUP_POLICY_PATH)
-    report_schema = report_schema if report_schema is not None else load_json(STARTUP_REPORT_SCHEMA_PATH)
-    errors: list[str] = []
-
-    def error(message: str, remediation: str) -> None:
-        errors.append(_signal_error(policy_source, message, remediation))
-
-    if not isinstance(policy, dict):
-        error("startup policy must be an object", "restore config/startup-policy.yaml as a mapping")
-        return errors
-    if policy.get("version") != 1:
-        error("version must be 1", "set the startup policy version to the supported major contract")
-    if policy.get("contract_version") != "orchestration-startup/v1":
-        error("contract_version must be orchestration-startup/v1", "keep the startup policy on the v1 contract")
-    if policy.get("report_contract_version") != "startup-report/v1":
-        error("report_contract_version must be startup-report/v1", "point the policy at the versioned startup report")
-    if policy.get("profile") != "initial-operations":
-        error("profile must be initial-operations", "use the bounded initial operations profile")
-    if policy.get("agent_clients") != ["Codex", "Claude Code"]:
-        error("agent_clients must expose exactly Codex and Claude Code", "declare only the supported conversation clients")
-
-    startup = policy.get("startup")
-    if not isinstance(startup, dict):
-        error("startup must be an object", "declare the startup command, reuse policy, and ordered preflight")
-    else:
-        if startup.get("command") != "python3 tools/startup.py --check":
-            error("startup.command is not the repository startup command", "use python3 tools/startup.py --check")
-        reuse = startup.get("reuse")
-        if not isinstance(reuse, dict) or reuse.get("same_process") is not True or reuse.get("expiry_minutes") != 60 or reuse.get("new_process_requires_rerun") is not True:
-            error("startup reuse policy is unsafe or incomplete", "rerun startup for each new process and expire reports after 60 minutes")
-        steps = startup.get("ordered_preflight")
-        observed_steps = [step.get("id") for step in steps] if isinstance(steps, list) and all(isinstance(step, dict) for step in steps) else []
-        if observed_steps != STARTUP_STEPS:
-            error(f"ordered_preflight must be {STARTUP_STEPS!r}", "preserve the startup safety order")
-        for step in steps if isinstance(steps, list) else []:
-            if not isinstance(step, dict):
-                continue
-            if step.get("mode") != "read_only":
-                error(f"preflight step {step.get('id')!r} is not read-only", "startup preflight must not mutate repositories or external systems")
-
-    remote = policy.get("remote_head_observation")
-    if not isinstance(remote, dict):
-        error("remote_head_observation must be an object", "declare read-only remote default-branch observation")
-    else:
-        if remote.get("mode") != "read_only":
-            error("remote head observation must be read-only", "observe remote heads without checkout, pull, or pin updates")
-        if remote.get("branch_source") != "manifest.default_branch":
-            error("remote head branch_source is not manifest.default_branch", "observe each repository's declared default branch")
-        if remote.get("compare_targets") != ["observed_commit", "qualified_snapshot"]:
-            error("remote head compare_targets are incomplete", "compare observed heads with both the manifest pin and qualified snapshot")
-        if remote.get("difference_result") != "update_candidate" or remote.get("unavailable_result") != "observation_unavailable":
-            error("remote head non-clean outcomes are not explicit", "record drift and observation outages without normalizing them")
-        if remote.get("mutation_operations") != []:
-            error("remote head observation declares mutation operations", "keep startup remote observation create-free and checkout-free")
-
-    pinned = policy.get("pinned_workspace")
-    if not isinstance(pinned, dict):
-        error("pinned_workspace must be an object", "declare the qualified pin source and workspace guard")
-    else:
-        if pinned.get("pin_source") != "manifest.observed_commit" or pinned.get("use_source") != "qualified_snapshot":
-            error("pinned workspace pin sources are inconsistent", "observe the manifest pin but use only the qualified snapshot")
-        if pinned.get("guard_checks") != ["dirty", "untracked", "detached", "unpushed", "behind", "diverged", "remote_mismatch"]:
-            error("pinned workspace guard checks are incomplete", "block unsafe local workspaces before knowledge use")
-        if pinned.get("failure_result") != "BLOCKED" or pinned.get("mutation_operations") != []:
-            error("pinned workspace guard does not fail closed", "block unsafe workspaces and perform no recovery mutation")
-
-    outcomes = policy.get("outcomes")
-    if not isinstance(outcomes, dict) or set(outcomes) != STARTUP_OUTCOMES:
-        error("outcomes must define READY, READY_WITH_FINDINGS, and BLOCKED", "declare all startup terminal states")
-    else:
-        expected_answers = {
-            "READY": "qualified_read_and_approved_create_only",
-            "READY_WITH_FINDINGS": "qualified_read_only_with_constraints",
-            "BLOCKED": "stop_affected_capabilities",
-        }
-        for outcome, answer_policy in expected_answers.items():
-            if outcomes.get(outcome, {}).get("answer_policy") != answer_policy:
-                error(f"outcomes.{outcome}.answer_policy is unsafe", "restrict capabilities according to the startup decision")
-
-    capabilities = policy.get("capabilities")
-    capability_map = {
-        item.get("id"): item for item in capabilities
-    } if isinstance(capabilities, list) and all(isinstance(item, dict) for item in capabilities) else {}
-    if list(capability_map) != STARTUP_CAPABILITIES:
-        error(f"capabilities must be exactly {STARTUP_CAPABILITIES!r}", "expose only the initial profile capability matrix")
-    expected_capabilities = {
-        "qualified_knowledge_read": ("read", ["READY", "READY_WITH_FINDINGS"]),
-        "evidence_trace_read": ("read", ["READY", "READY_WITH_FINDINGS"]),
-        "feedback_capture": ("local_record", ["READY", "READY_WITH_FINDINGS"]),
-        "audit_observation": ("read", ["READY", "READY_WITH_FINDINGS"]),
-        "drive_create": ("external_create", ["READY"]),
-        "github_issue_create": ("external_create", ["READY"]),
-        "child_repository_mutation": ("mutation", []),
-        "drive_update_delete_share": ("mutation", []),
-        "github_issue_update_close_delete_comment_label": ("mutation", []),
-        "branch_commit_pull_request_merge_release": ("mutation", []),
-    }
-    for capability, (expected_class, allowed_outcomes) in expected_capabilities.items():
-        item = capability_map.get(capability)
-        if not isinstance(item, dict) or item.get("class") != expected_class or item.get("allowed_outcomes") != allowed_outcomes:
-            error(f"capabilities.{capability} violates the initial profile matrix", "allow only read and explicitly approved create-only operations")
-
-    boundary = policy.get("data_boundary")
-    if not isinstance(boundary, dict):
-        error("data_boundary must be an object", "declare report allowlist and forbidden data classes")
-    else:
-        expected_allowed = {
-            "run_id", "generated_at", "parent_commit", "qualified_commit", "remote_observed_commit",
-            "observation_timestamp", "drift", "workspace_guard", "finding_code", "capability", "remediation", "issue_candidates",
-        }
-        if set(boundary.get("report_allowed_fields", [])) != expected_allowed:
-            error("data_boundary.report_allowed_fields is not the minimal report allowlist", "store metadata and decisions only")
-        if not set(STARTUP_FORBIDDEN_FIELDS).issubset(set(boundary.get("forbidden_fields", []))):
-            error("data_boundary.forbidden_fields omits a protected class", "forbid raw conversation, credentials, direct identifiers, and restricted data")
-        expected_guards = {
-            "raw_conversation_stored": False,
-            "credentials_stored": False,
-            "raw_remote_response_stored": False,
-            "drive_content_stored": False,
-            "direct_identifiers_stored": False,
-        }
-        if boundary.get("boolean_guards") != expected_guards:
-            error("data_boundary.boolean_guards must all be false", "prove that startup reports do not retain protected content")
-
-    security = policy.get("security")
-    if not isinstance(security, dict) or set(security.get("critical_findings", [])) != {"credential", "PRIVATE_RAW", "RESTRICTED", "consent_violation", "schema_major_mismatch"} or set(security.get("noncritical_findings", [])) != {"remote_update_candidate", "audit_finding", "remote_observation_unavailable"} or security.get("critical_result") != "BLOCKED" or security.get("noncritical_result") != "READY_WITH_FINDINGS":
-        error("security severity mapping is incomplete", "map critical/privacy findings to BLOCKED and noncritical findings to READY_WITH_FINDINGS")
-
-    if not isinstance(report_schema, dict):
-        errors.append(_signal_error(schema_source, "startup report schema must be an object", "restore schemas/startup-report.schema.json"))
-    else:
-        if report_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
-            errors.append(_signal_error(schema_source, "$schema must be Draft 2020-12", "use the repository schema dialect"))
-        if report_schema.get("$id", "").endswith("/schemas/startup-report.schema.json") is False:
-            errors.append(_signal_error(schema_source, "$id must identify the startup report schema", "keep the schema ID stable"))
-        schema_properties = report_schema.get("properties", {})
-        if set(report_schema.get("required", [])) != {
-            "contract_version", "run_id", "generated_at", "profile", "agent_client", "status", "parent_commit",
-            "ordered_steps", "repositories", "workspace_guard", "findings", "issue_candidates", "capabilities", "remediation", "privacy", "remote_operations",
-        }:
-            errors.append(_signal_error(schema_source, "required report fields are incomplete or expanded", "keep the report metadata-only and versioned"))
-        if report_schema.get("additionalProperties") is not False or not isinstance(schema_properties, dict):
-            errors.append(_signal_error(schema_source, "report schema must reject unknown fields", "set additionalProperties to false"))
-        for forbidden in STARTUP_FORBIDDEN_FIELDS:
-            if forbidden in schema_properties:
-                errors.append(_signal_error(schema_source, f"report schema exposes forbidden field {forbidden!r}", "remove protected content from the startup report"))
-
-    return errors
-
-
-def validate_issue_delivery_contract(
-    policy: dict | None = None,
-    report_schema: dict | None = None,
-    manifest: dict | None = None,
-    policy_source: str = "config/issue-delivery-policy.yaml",
-    schema_source: str = "schemas/github-issue-delivery.schema.json",
-) -> list[str]:
-    """Validate the allowlist and create-only GitHub Issue delivery envelope."""
-    policy = policy if policy is not None else load_yaml(ISSUE_DELIVERY_POLICY_PATH)
-    report_schema = report_schema if report_schema is not None else load_json(ISSUE_DELIVERY_SCHEMA_PATH)
-    manifest = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
-    errors: list[str] = []
-
-    def error(message: str, remediation: str) -> None:
-        errors.append(_signal_error(policy_source, message, remediation))
-
-    if not isinstance(policy, dict):
-        error("Issue delivery policy must be an object", "restore config/issue-delivery-policy.yaml as a mapping")
-        return errors
-    if policy.get("version") != 1 or policy.get("contract_version") != "github-issue-delivery/v1":
-        error("Issue delivery policy version is unsupported", "keep the create-only delivery policy on v1")
-    if policy.get("parent_repository") != "agentic-art-orchestration":
-        error("parent_repository must be the orchestration repository", "keep the authoritative parent explicit")
-    if policy.get("allowed_operations") != ["READ", "CREATE"]:
-        error("allowed_operations must be exactly READ and CREATE", "do not authorize Issue mutation or implementation")
-    forbidden = policy.get("forbidden_operations")
-    expected_forbidden = {"UPDATE", "CLOSE", "DELETE", "COMMENT", "LABEL", "IMPLEMENT", "BRANCH", "COMMIT", "PULL_REQUEST", "MERGE", "RELEASE"}
-    if not isinstance(forbidden, list) or set(forbidden) != expected_forbidden:
-        error("forbidden_operations is incomplete or expanded", "keep Issue delivery create-only and human-gated")
-    if policy.get("max_creates_per_deduplication_key") != 1 or policy.get("human_confirmation_required") is not True:
-        error("Issue create idempotency or human confirmation is unsafe", "allow at most one create per key and require confirmation")
-
-    manifest_ids = {
-        repository.get("id"): repository.get("full_name")
-        for repository in manifest.get("repositories", [])
-        if isinstance(repository, dict)
-    } if isinstance(manifest, dict) else {}
-    expected_allowlist = {"agentic-art-orchestration": "masa-san-jp/agentic-art-orchestration", **manifest_ids}
-    entries = policy.get("allowlisted_repositories")
-    observed_allowlist = {
-        entry.get("id"): entry.get("full_name")
-        for entry in entries
-        if isinstance(entry, dict)
-    } if isinstance(entries, list) else {}
-    if isinstance(entries, list):
-        entry_ids = [entry.get("id") for entry in entries if isinstance(entry, dict)]
-        entry_full_names = [entry.get("full_name") for entry in entries if isinstance(entry, dict)]
-        if len(entry_ids) != len(set(entry_ids)) or len(entry_full_names) != len(set(entry_full_names)):
-            error("allowlisted_repositories contains duplicate IDs or full names", "retain one unique authority entry per repository")
-    if observed_allowlist != expected_allowlist:
-        error("allowlisted_repositories does not match the manifest and parent", "allow only declared authoritative repositories")
-
-    if not isinstance(report_schema, dict):
-        errors.append(_signal_error(schema_source, "Issue delivery schema must be an object", "restore schemas/github-issue-delivery.schema.json"))
-        return errors
-    if report_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" or report_schema.get("additionalProperties") is not False:
-        errors.append(_signal_error(schema_source, "Issue delivery schema must be closed Draft 2020-12", "reject fields outside the create-only envelope"))
-    if set(report_schema.get("required", [])) != {"contract_version", "delivery_run_id", "mode", "generated_at", "status", "records", "remote_operations"}:
-        errors.append(_signal_error(schema_source, "Issue delivery required fields are incomplete or expanded", "keep the delivery evidence envelope minimal"))
-    properties = report_schema.get("properties", {})
-    if properties.get("mode", {}).get("enum") != ["PLAN", "LIVE"]:
-        errors.append(_signal_error(schema_source, "Issue delivery mode must expose PLAN and LIVE", "separate networkless planning from explicitly confirmed live delivery"))
-    record = report_schema.get("$defs", {}).get("record", {})
-    if record.get("properties", {}).get("operation", {}).get("enum") != ["NONE", "READ", "CREATE", "REUSE"]:
-        errors.append(_signal_error(schema_source, "Issue record operation vocabulary is unsafe", "allow only read, create, and existing Issue reuse"))
-    remote = report_schema.get("$defs", {}).get("remote_operation", {})
-    if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE", "REUSE"}:
-        errors.append(_signal_error(schema_source, "remote operation vocabulary is unsafe", "exclude update, close, delete, comment, and label operations"))
-    return errors
-
-
-def validate_drive_live_contract(
-    policy: dict | None = None,
-    evidence_schema: dict | None = None,
-    policy_source: str = "config/drive-live-policy.yaml",
-    schema_source: str = "schemas/drive-live-evidence.schema.json",
-) -> list[str]:
-    """Validate the approved-folder, create/read-only Drive live boundary."""
-    policy = policy if policy is not None else load_yaml(DRIVE_LIVE_POLICY_PATH)
-    evidence_schema = evidence_schema if evidence_schema is not None else load_json(DRIVE_LIVE_SCHEMA_PATH)
-    errors: list[str] = []
-
-    def error(source: str, message: str, remediation: str) -> None:
-        errors.append(_signal_error(source, message, remediation))
-
-    if not isinstance(policy, dict):
-        error(policy_source, "Drive live policy must be an object", "restore the provider-neutral create/read policy")
-        return errors
-    if policy.get("version") != 1 or policy.get("contract_version") != "drive-live/v1":
-        error(policy_source, "Drive live policy version is unsupported", "keep the Drive live boundary on v1")
-    if policy.get("provider") != "google-drive":
-        error(policy_source, "Drive live provider must be google-drive", "keep the external artifact provider explicit")
-    approved_folder = policy.get("approved_folder")
-    if not isinstance(approved_folder, dict):
-        error(policy_source, "approved_folder must be an object", "require an explicit approved folder ID or environment variable")
-    else:
-        env_name = approved_folder.get("id_env_var")
-        fixture_id = approved_folder.get("fixture_id")
-        if not isinstance(env_name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", env_name) is None:
-            error(policy_source, "approved_folder.id_env_var is invalid", "use an uppercase environment variable name")
-        if not isinstance(fixture_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", fixture_id) is None:
-            error(policy_source, "approved_folder.fixture_id is invalid", "use a stable offline fixture folder ID")
-        credential_env_name = policy.get("credential_env_var")
-        if not isinstance(credential_env_name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", credential_env_name) is None:
-            error(policy_source, "credential_env_var is invalid", "use an uppercase environment variable and keep the credential outside Git")
-    credential_env = policy.get("credential_env_var")
-    if not isinstance(credential_env, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", credential_env) is None:
-        error(policy_source, "credential_env_var is invalid", "use an uppercase environment variable name and never commit its value")
-    if policy.get("allowed_operations") != ["READ", "CREATE"]:
-        error(policy_source, "allowed_operations must be exactly READ and CREATE", "exclude all Drive mutation beyond append-only CREATE")
-    expected_forbidden = {"UPDATE", "OVERWRITE", "DELETE", "MOVE", "SHARE", "PERMISSION"}
-    forbidden = policy.get("forbidden_operations")
-    if not isinstance(forbidden, list) or set(forbidden) != expected_forbidden:
-        error(policy_source, "forbidden_operations is incomplete or expanded", "retain the append-only Drive boundary")
-    if policy.get("human_confirmation_required") is not True:
-        error(policy_source, "human_confirmation_required must be true", "require explicit approval for live external CREATE")
-    if policy.get("content_in_repository") is not False:
-        error(policy_source, "content_in_repository must be false", "keep artifact bodies outside Git")
-    if policy.get("response_loss_policy") != "search_by_idempotency_then_read_back":
-        error(policy_source, "response_loss_policy is unsafe", "search by stable key before retrying a CREATE")
-
-    if not isinstance(evidence_schema, dict):
-        error(schema_source, "Drive live evidence schema must be an object", "restore schemas/drive-live-evidence.schema.json")
-        return errors
-    if evidence_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" or evidence_schema.get("additionalProperties") is not False:
-        error(schema_source, "Drive live evidence schema must be closed Draft 2020-12", "reject fields outside the metadata evidence envelope")
-    expected_required = {"contract_version", "run_id", "mode", "status", "operation", "provider", "approved_folder_id_hash", "idempotency_key_hash", "content_hash", "artifact", "remote_operations"}
-    if set(evidence_schema.get("required", [])) != expected_required:
-        error(schema_source, "Drive live evidence required fields are incomplete or expanded", "keep the evidence envelope minimal and deterministic")
-    properties = evidence_schema.get("properties", {})
-    if properties.get("mode", {}).get("enum") != ["PLAN", "LIVE"]:
-        error(schema_source, "Drive live mode must expose PLAN and LIVE", "separate offline planning from explicit live execution")
-    remote = evidence_schema.get("$defs", {}).get("remote_operation", {})
-    if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE"}:
-        error(schema_source, "remote operation vocabulary is unsafe", "exclude update, overwrite, delete, move, share, and permission operations")
-    return errors
-
-
-def validate_github_sandbox_live_contract(
-    policy: dict | None = None,
-    evidence_schema: dict | None = None,
-    manifest: dict | None = None,
-    policy_source: str = "config/github-sandbox-live-policy.yaml",
-    schema_source: str = "schemas/github-sandbox-live-evidence.schema.json",
-) -> list[str]:
-    """Validate the separately designated GitHub sandbox create-only lane."""
-    policy = policy if policy is not None else load_yaml(GITHUB_SANDBOX_LIVE_POLICY_PATH)
-    evidence_schema = evidence_schema if evidence_schema is not None else load_json(GITHUB_SANDBOX_LIVE_SCHEMA_PATH)
-    manifest = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
-    errors: list[str] = []
-
-    def error(source: str, message: str, remediation: str) -> None:
-        errors.append(_signal_error(source, message, remediation))
-
-    if not isinstance(policy, dict):
-        error(policy_source, "GitHub sandbox live policy must be an object", "restore the dedicated create-only policy")
-        return errors
-    if policy.get("version") != 1 or policy.get("contract_version") != "github-sandbox-live/v1":
-        error(policy_source, "GitHub sandbox live policy version is unsupported", "keep the dedicated sandbox lane on v1")
-    if policy.get("provider") != "github":
-        error(policy_source, "GitHub sandbox provider must be github", "keep the external Issue provider explicit")
-    approved = policy.get("approved_repository")
-    if not isinstance(approved, dict):
-        error(policy_source, "approved_repository must be an object", "require an explicit repository environment variable and fixture ID")
-    else:
-        env_name = approved.get("id_env_var")
-        fixture_id = approved.get("fixture_id")
-        if not isinstance(env_name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", env_name) is None:
-            error(policy_source, "approved_repository.id_env_var is invalid", "use an uppercase environment variable name")
-        if not isinstance(fixture_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", fixture_id) is None:
-            error(policy_source, "approved_repository.fixture_id is invalid", "use a stable offline fixture ID")
-    if policy.get("idempotency_key_prefix") != "initial-operations-github-sandbox-v1":
-        error(policy_source, "idempotency_key_prefix is not the approved v1 prefix", "use the fixed prefix and append a validated attempt ID")
-    fixture_attempt_id = policy.get("fixture_attempt_id")
-    if not isinstance(fixture_attempt_id, str) or re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", fixture_attempt_id) is None:
-        error(policy_source, "fixture_attempt_id is invalid", "use a lowercase fixture attempt ID such as fixture-attempt-1")
-    token_env_vars = policy.get("token_env_vars")
-    if token_env_vars != ["GITHUB_TOKEN", "GH_TOKEN"]:
-        error(policy_source, "token_env_vars must be GITHUB_TOKEN then GH_TOKEN", "accept credentials only from repo-external GitHub token variables")
-    if policy.get("allowed_operations") != ["READ", "CREATE"]:
-        error(policy_source, "allowed_operations must be exactly READ and CREATE", "exclude all Issue mutation beyond one append-only CREATE")
-    expected_forbidden = {"UPDATE", "CLOSE", "DELETE", "COMMENT", "LABEL", "IMPLEMENT", "BRANCH", "COMMIT", "PULL_REQUEST", "MERGE", "RELEASE"}
-    if set(policy.get("forbidden_operations", [])) != expected_forbidden:
-        error(policy_source, "forbidden_operations is incomplete or expanded", "retain the create-only sandbox boundary")
-    if policy.get("max_creates_per_idempotency_key") != 1 or policy.get("human_confirmation_required") is not True:
-        error(policy_source, "sandbox create idempotency or human confirmation is unsafe", "allow one create per key and require explicit confirmation")
-    if policy.get("existing_issue_mutation") is not False or policy.get("production_repositories_must_be_rejected") is not True:
-        error(policy_source, "sandbox isolation flags are unsafe", "reject production repositories and never mutate existing Issues")
-    retry = policy.get("post_create_search")
-    if not isinstance(retry, dict):
-        error(policy_source, "post_create_search must be an object", "bound eventual-consistency retries in the policy")
-    else:
-        if not isinstance(retry.get("max_attempts"), int) or not 1 <= retry["max_attempts"] <= 10:
-            error(policy_source, "post_create_search.max_attempts is unsafe", "use a finite retry bound between 1 and 10")
-        if not isinstance(retry.get("initial_delay_seconds"), (int, float)) or not 0 <= retry["initial_delay_seconds"] <= 60:
-            error(policy_source, "post_create_search.initial_delay_seconds is unsafe", "use a non-negative bounded delay")
-        if not isinstance(retry.get("backoff_multiplier"), (int, float)) or not 1 <= retry["backoff_multiplier"] <= 4:
-            error(policy_source, "post_create_search.backoff_multiplier is unsafe", "use a finite multiplier between 1 and 4")
-        if not isinstance(retry.get("max_delay_seconds"), (int, float)) or not 0 <= retry["max_delay_seconds"] <= 120:
-            error(policy_source, "post_create_search.max_delay_seconds is unsafe", "use a bounded maximum delay")
-        if isinstance(retry.get("initial_delay_seconds"), (int, float)) and isinstance(retry.get("max_delay_seconds"), (int, float)) and retry["initial_delay_seconds"] > retry["max_delay_seconds"]:
-            error(policy_source, "post_create_search initial delay exceeds maximum", "keep the retry schedule monotonic")
-
-    declared = {
-        item.get("full_name")
-        for item in manifest.get("repositories", [])
-        if isinstance(item, dict) and isinstance(item.get("full_name"), str)
-    } | {"masa-san-jp/agentic-art-orchestration"}
-    if isinstance(approved, dict) and approved.get("fixture_id") in declared:
-        error(policy_source, "fixture sandbox identifier overlaps a declared repository", "keep the fixture and production authorities separate")
-
-    if not isinstance(evidence_schema, dict):
-        error(schema_source, "GitHub sandbox evidence schema must be an object", "restore the closed metadata-only evidence schema")
-        return errors
-    if evidence_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" or evidence_schema.get("additionalProperties") is not False:
-        error(schema_source, "GitHub sandbox evidence schema must be closed Draft 2020-12", "reject fields outside the metadata-only envelope")
-    expected_required = {"contract_version", "run_id", "mode", "status", "operation", "provider", "repository_id_hash", "idempotency_key_hash", "issue_id_hash", "remote_operations"}
-    if set(evidence_schema.get("required", [])) != expected_required:
-        error(schema_source, "GitHub sandbox evidence required fields are incomplete or expanded", "keep the evidence envelope minimal")
-    properties = evidence_schema.get("properties", {})
-    if properties.get("mode", {}).get("enum") != ["PLAN", "LIVE"]:
-        error(schema_source, "GitHub sandbox mode must expose PLAN and LIVE", "separate planning from explicit live execution")
-    remote = evidence_schema.get("$defs", {}).get("remote_operation", {})
-    if set(remote.get("properties", {}).get("operation", {}).get("enum", [])) != {"READ", "CREATE", "REUSE"}:
-        error(schema_source, "GitHub sandbox remote operation vocabulary is unsafe", "allow only search, create, and reuse")
-    return errors
-
-
-def validate_candidate_space(data: dict, source: str = "candidate-space") -> list[str]:
-    """Validate candidate references and require every composition slot to be traceable."""
-    errors: list[str] = []
-    schema = load_json(CANDIDATE_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the research-candidate field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    candidates = data.get("candidates")
-    if not isinstance(candidates, list):
-        return errors
-    if data.get("candidate_count") != len(candidates):
-        errors.append(
-            _signal_error(
-                source,
-                "candidate_count does not equal the number of candidates",
-                "recompute the count from the complete deterministic candidate list",
-            )
-        )
-    seen_candidate_ids: set[str] = set()
-    for index, candidate in enumerate(candidates):
-        if not isinstance(candidate, dict):
-            continue
-        candidate_id = candidate.get("candidate_id")
-        if candidate_id in seen_candidate_ids:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"candidates[{index}] duplicates candidate_id {candidate_id!r}",
-                    "retain one candidate per stable rule and signal combination",
-                )
-            )
-        if isinstance(candidate_id, str):
-            seen_candidate_ids.add(candidate_id)
-
-        inputs = candidate.get("inputs")
-        input_refs: dict[tuple[str, str, str], dict] = {}
-        if isinstance(inputs, dict):
-            for kind, refs in inputs.items():
-                if not isinstance(refs, list):
-                    continue
-                for ref_index, ref in enumerate(refs):
-                    if not isinstance(ref, dict):
-                        continue
-                    key = (kind, ref.get("signal_id"), ref.get("attribute"))
-                    if key in input_refs:
-                        errors.append(
-                            _signal_error(
-                                source,
-                                f"candidates[{index}].inputs.{kind}[{ref_index}] duplicates signal/attribute reference",
-                                "retain one provenance reference per selected signal attribute",
-                            )
-                        )
-                    input_refs[key] = ref
-                    if ref.get("signal_kind") != kind:
-                        errors.append(
-                            _signal_error(
-                                source,
-                                f"candidates[{index}].inputs.{kind}[{ref_index}] signal_kind is inconsistent",
-                                "keep the input bucket aligned with the normalized signal kind",
-                            )
-                        )
-
-        composition = candidate.get("composition")
-        if isinstance(composition, dict):
-            if candidate.get("composition_mode") not in {None, "intersection"}:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"candidates[{index}].composition_mode must be intersection when declared",
-                        "carry the declared intersection mode into the candidate",
-                    )
-                )
-            for slot_name, slot in composition.items():
-                if not isinstance(slot, dict):
-                    continue
-                key = (slot.get("signal_kind"), slot.get("signal_id"), slot.get("attribute"))
-                if key not in input_refs:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"candidates[{index}].composition.{slot_name} is not traceable to inputs",
-                            "reference a declared input signal and attribute in the same candidate",
-                        )
-                    )
-                if isinstance(slot.get("signal_id"), str) and not any(
-                    isinstance(ref, dict) and ref.get("signal_id") == slot["signal_id"]
-                    for ref in input_refs.values()
-                ):
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"candidates[{index}].composition.{slot_name} lost its signal ID",
-                            "preserve the selected normalized signal ID through composition",
-                        )
-                    )
-    return errors
-
-
-def validate_candidate_gates(data: dict, source: str = "candidate-gates") -> list[str]:
-    """Validate six explicit gate outcomes and their fail-closed status semantics."""
-    errors: list[str] = []
-    schema = load_json(CANDIDATE_GATES_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the research-candidate-gates field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    expected_gate_ids = {
-        "personal-specificity",
-        "historical-specificity",
-        "contemporary-specificity",
-        "provenance",
-        "genericness",
-        "counterfactual",
-    }
-    expected_reasons = {
-        "personal-specificity": "missing-personal-signal",
-        "historical-specificity": "missing-historical-signal",
-        "contemporary-specificity": "missing-contemporary-signal",
-        "provenance": "missing-provenance",
-        "genericness": "generic-candidate",
-        "counterfactual": "counterfactual-failure",
-    }
-    evaluations = data.get("evaluations")
-    if not isinstance(evaluations, list):
-        return errors
-    seen_candidate_ids: set[str] = set()
-    for index, evaluation in enumerate(evaluations):
-        if not isinstance(evaluation, dict):
-            continue
-        candidate_id = evaluation.get("candidate_id")
-        if candidate_id in seen_candidate_ids:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"evaluations[{index}] duplicates candidate_id {candidate_id!r}",
-                    "return exactly one gate evaluation per candidate",
-                )
-            )
-        if isinstance(candidate_id, str):
-            seen_candidate_ids.add(candidate_id)
-        gates = evaluation.get("gates")
-        if not isinstance(gates, list):
-            continue
-        observed_ids = [gate.get("gate_id") for gate in gates if isinstance(gate, dict)]
-        if set(observed_ids) != expected_gate_ids or len(observed_ids) != len(expected_gate_ids):
-            errors.append(
-                _signal_error(
-                    source,
-                    f"evaluations[{index}].gates must contain each gate exactly once; observed {sorted(observed_ids)!r}",
-                    "emit personal, historical, contemporary, provenance, genericness, and counterfactual gates",
-                )
-            )
-        statuses: list[str] = []
-        for gate_index, gate in enumerate(gates):
-            if not isinstance(gate, dict):
-                continue
-            gate_id = gate.get("gate_id")
-            status = gate.get("status")
-            reason = gate.get("reason_code")
-            if isinstance(status, str):
-                statuses.append(status)
-            if status == "PASS" and reason is not None:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"evaluations[{index}].gates[{gate_index}] PASS carries reason_code {reason!r}",
-                        "set reason_code to null for a passing gate",
-                    )
-                )
-            if status == "REJECT":
-                if reason != expected_reasons.get(gate_id):
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"evaluations[{index}].gates[{gate_index}] has inconsistent reason_code",
-                            "use the deterministic reason code assigned to the gate ID",
-                        )
-                    )
-            if isinstance(gate.get("evidence"), list) and not gate["evidence"]:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"evaluations[{index}].gates[{gate_index}] has no evidence",
-                        "retain source repository, commit, and evidence locators for every gate result",
-                    )
-                )
-        expected_overall = "PASS" if statuses and all(status == "PASS" for status in statuses) else "REJECT"
-        if evaluation.get("overall_status") != expected_overall:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"evaluations[{index}].overall_status does not match gate statuses",
-                    "derive overall PASS only when every explicit gate passes",
-                )
-            )
-    return errors
-
-
-def validate_selection(data: dict, source: str = "selection") -> list[str]:
-    """Validate seeded selection ranks and ensure selected references retain provenance."""
-    errors: list[str] = []
-    is_v2 = isinstance(data, dict) and data.get("contract_version") == "research-selection/v2"
-    schema = load_json(SELECTION_V2_SCHEMA_PATH if is_v2 else SELECTION_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the research-selection field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-    selected = data.get("selected_candidates")
-    if not isinstance(selected, list):
-        return errors
-    if data.get("selected_count") != len(selected):
-        errors.append(
-            _signal_error(
-                source,
-                "selected_count does not equal selected_candidates length",
-                "derive selected_count from the emitted selection package",
-            )
-        )
-    selection_limit = data.get("selection_limit")
-    if isinstance(selection_limit, int) and isinstance(data.get("selected_count"), int) and data["selected_count"] > selection_limit:
-        errors.append(
-            _signal_error(
-                source,
-                "selected_count exceeds selection_limit",
-                "return no more candidates than the requested selection limit",
-            )
-        )
-    candidate_ids: set[str] = set()
-    ranks: list[int] = []
-    scores: set[str] = set()
-    for index, candidate in enumerate(selected):
-        if not isinstance(candidate, dict):
-            continue
-        candidate_id = candidate.get("candidate_id")
-        if candidate_id in candidate_ids:
-            errors.append(_signal_error(source, f"selected_candidates[{index}] duplicates candidate_id {candidate_id!r}", "select each candidate at most once"))
-        if isinstance(candidate_id, str):
-            candidate_ids.add(candidate_id)
-        rank = candidate.get("rank")
-        if isinstance(rank, int) and not isinstance(rank, bool):
-            ranks.append(rank)
-        score = candidate.get("selection_score")
-        if isinstance(score, str):
-            if score in scores:
-                errors.append(_signal_error(source, f"selected_candidates[{index}] duplicates selection_score", "use the deterministic candidate score for each ranked candidate"))
-            scores.add(score)
-        if is_v2:
-            kind_scores = candidate.get("intent_kind_scores")
-            total_score = candidate.get("intent_score")
-            if isinstance(kind_scores, dict) and isinstance(total_score, (int, float)) and not isinstance(total_score, bool):
-                try:
-                    quantum = Decimal("0.000001")
-                    for kind in ("self", "art-history", "marketing"):
-                        score_value = Decimal(str(kind_scores[kind]))
-                        if score_value != score_value.quantize(quantum, rounding=ROUND_HALF_UP):
-                            errors.append(
-                                _signal_error(
-                                    source,
-                                    f"selected_candidates[{index}].intent_kind_scores.{kind} is not rounded to six decimals",
-                                    "round every kind score with ROUND_HALF_UP to six decimal places",
-                                )
-                            )
-                    expected = sum(
-                        (
-                            Decimal(weight) * Decimal(str(kind_scores[kind]))
-                            for kind, weight in (
-                                ("self", "0.50"),
-                                ("art-history", "0.30"),
-                                ("marketing", "0.20"),
-                            )
-                        ),
-                        Decimal("0"),
-                    ).quantize(quantum, rounding=ROUND_HALF_UP)
-                    observed_unrounded = Decimal(str(total_score))
-                    observed = observed_unrounded.quantize(quantum, rounding=ROUND_HALF_UP)
-                    if observed_unrounded != observed:
-                        errors.append(
-                            _signal_error(
-                                source,
-                                f"selected_candidates[{index}].intent_score is not rounded to six decimals",
-                                "round total intent_score with ROUND_HALF_UP to six decimal places",
-                            )
-                        )
-                    if observed != expected:
-                        errors.append(
-                            _signal_error(
-                                source,
-                                f"selected_candidates[{index}].intent_score does not match weighted kind scores",
-                                "derive total intent_score from the declared self, art-history, and marketing scores",
-                            )
-                        )
-                except (InvalidOperation, KeyError, TypeError, ValueError):
-                    # The JSON schema error above is the actionable report for
-                    # malformed score values; avoid masking it with arithmetic.
-                    pass
-        inputs = candidate.get("inputs")
-        input_refs: dict[tuple[str, str, str], dict] = {}
-        if isinstance(inputs, dict):
-            for kind, refs in inputs.items():
-                if not isinstance(refs, list):
-                    continue
-                for ref in refs:
-                    if not isinstance(ref, dict):
-                        continue
-                    input_refs[(kind, ref.get("signal_id"), ref.get("attribute"))] = ref
-        composition = candidate.get("composition")
-        if isinstance(composition, dict):
-            for slot_name, slot in composition.items():
-                if not isinstance(slot, dict):
-                    continue
-                key = (slot.get("signal_kind"), slot.get("signal_id"), slot.get("attribute"))
-                if key not in input_refs:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"selected_candidates[{index}].composition.{slot_name} is not traceable to inputs",
-                            "preserve candidate composition references through selection",
-                        )
-                    )
-    if ranks and sorted(ranks) != list(range(1, len(selected) + 1)):
-        errors.append(_signal_error(source, "selection ranks are not contiguous from 1", "emit deterministic ranks in selection order"))
-    return errors
-
-
-def validate_self_diversity_report(data: dict, source: str = "self-diversity") -> list[str]:
-    """Validate opaque self-model anchor counts, distribution, and provenance."""
-    errors: list[str] = []
-    schema = load_json(SELF_DIVERSITY_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the self-diversity-report field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    anchor_ids = data.get("anchor_ids")
-    attribute_counts = data.get("attribute_counts")
-    selected_anchor_ids = data.get("selected_anchor_ids")
-    if isinstance(anchor_ids, list) and isinstance(data.get("eligible_anchor_count"), int):
-        if data["eligible_anchor_count"] != len(anchor_ids):
-            errors.append(
-                _signal_error(
-                    source,
-                    "eligible_anchor_count does not equal anchor_ids length",
-                    "derive the count from the complete eligible anchor set",
-                )
-            )
-        if len(anchor_ids) != len(set(anchor_ids)):
-            errors.append(_signal_error(source, "anchor_ids contains duplicates", "deduplicate anchors by their stable hash ID"))
-    if isinstance(attribute_counts, dict) and isinstance(data.get("eligible_anchor_count"), int):
-        if sum(value for value in attribute_counts.values() if isinstance(value, int) and not isinstance(value, bool)) != data["eligible_anchor_count"]:
-            errors.append(
-                _signal_error(
-                    source,
-                    "attribute_counts does not sum to eligible_anchor_count",
-                    "count each tensions or recurring_patterns anchor exactly once",
-                )
-            )
-    if isinstance(selected_anchor_ids, list):
-        selected_count = data.get("selected_count")
-        if selected_count != len(selected_anchor_ids):
-            errors.append(
-                _signal_error(
-                    source,
-                    "selected_count does not equal selected_anchor_ids length",
-                    "derive selected_count from the selected candidate anchors",
-                )
-            )
-        distinct_count = len(set(selected_anchor_ids))
-        if data.get("distinct_selected_count") != distinct_count:
-            errors.append(
-                _signal_error(
-                    source,
-                    "distinct_selected_count does not equal unique selected anchor IDs",
-                    "derive distinct_selected_count from selected_anchor_ids",
-                )
-            )
-        if isinstance(anchor_ids, list) and not set(selected_anchor_ids).issubset(set(anchor_ids)):
-            errors.append(
-                _signal_error(
-                    source,
-                    "selected_anchor_ids contains an ineligible anchor",
-                    "select only anchors present in the same immutable eligibility report",
-                )
-            )
-        frequencies: dict[str, int] = {}
-        for anchor_id in selected_anchor_ids:
-            frequencies[anchor_id] = frequencies.get(anchor_id, 0) + 1
-        selected_count = len(selected_anchor_ids)
-        expected_share = max((count / selected_count for count in frequencies.values()), default=0.0)
-        observed_share = data.get("max_anchor_share")
-        if isinstance(observed_share, (int, float)) and not isinstance(observed_share, bool) and abs(observed_share - expected_share) > 1e-12:
-            errors.append(
-                _signal_error(
-                    source,
-                    "max_anchor_share does not match selected anchor frequencies",
-                    "derive the maximum selected anchor frequency divided by selected_count",
-                )
-            )
-
-    eligible_count = data.get("eligible_anchor_count")
-    selected_count = data.get("selected_count")
-    selection_limit = data.get("selection_limit")
-    distinct_count = data.get("distinct_selected_count")
-    max_share = data.get("max_anchor_share")
-    status = data.get("status")
-    expected_status = "PASS"
-    if isinstance(eligible_count, int) and eligible_count == 0:
-        expected_status = "INSUFFICIENT_SELF_DIVERSITY"
-    elif isinstance(selected_count, int) and isinstance(selection_limit, int):
-        if selected_count > selection_limit or (selected_count > 0 and selected_count < selection_limit):
-            expected_status = "REJECT"
-        elif selection_limit >= 10 and isinstance(eligible_count, int) and eligible_count >= 3 and (
-            not isinstance(distinct_count, int)
-            or distinct_count < 3
-            or not isinstance(max_share, (int, float))
-            or isinstance(max_share, bool)
-            or max_share > 0.4
-        ):
-            expected_status = "REJECT"
-        elif isinstance(eligible_count, int) and eligible_count < 3:
-            expected_status = "PASS_LIMITED_DIVERSITY"
-    if status != expected_status:
-        errors.append(
-            _signal_error(
-                source,
-                f"status {status!r} does not match observed diversity conditions; expected {expected_status!r}",
-                "preserve INSUFFICIENT_SELF_DIVERSITY, PASS_LIMITED_DIVERSITY, REJECT, or PASS without fallback or waterfilling",
-            )
-        )
-    return errors
-
-
-def validate_pin_adoption(data: dict, source: str = "pin-adoption") -> list[str]:
-    """Validate an adoption report. A partly-adopted manifest describes a workspace that never existed."""
-    errors: list[str] = []
-    schema = load_json(PIN_ADOPTION_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the pin-adoption field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-    repositories = data.get("repositories")
-    if isinstance(repositories, list):
-        adoptable = [item for item in repositories if isinstance(item, dict) and item.get("adoptable")]
-        if data.get("status") == "READY" and not adoptable:
-            errors.append(_signal_error(source, "status READY with nothing adoptable", "use UNCHANGED"))
-        if data.get("adoptable_count") != len(adoptable):
-            errors.append(_signal_error(source, "adoptable_count does not match the repositories", "recount"))
-        for item in adoptable:
-            if not item.get("occurrences"):
-                errors.append(_signal_error(source, f"{item.get('repository')} is adoptable with no occurrences recorded",
-                                            "record every file that repeats the pin"))
-    return errors
-
-
-def validate_child_quality_gates(data: dict, source: str = "child-quality-gates") -> list[str]:
-    """Validate immutable child gate evidence and preserve stale/unknown/failed states."""
-    errors: list[str] = []
-    schema = load_json(CHILD_QUALITY_GATES_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the child-quality-gates field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-    results = data.get("results")
-    if not isinstance(results, list):
-        return errors
-    if data.get("repository_count") != len(results):
-        errors.append(_signal_error(source, "repository_count does not equal results length", "derive the count from every manifest repository result"))
-    seen: set[str] = set()
-    for index, result in enumerate(results):
-        if not isinstance(result, dict):
-            continue
-        repository = result.get("repository")
-        if repository in seen:
-            errors.append(_signal_error(source, f"results[{index}] duplicates repository {repository!r}", "record one immutable gate result per repository"))
-        if isinstance(repository, str):
-            seen.add(repository)
-        status = result.get("status")
-        execution_mode = result.get("execution_mode")
-        gates = result.get("gates")
-        gate_statuses = [gate.get("status") for gate in gates if isinstance(gate, dict)] if isinstance(gates, list) else []
-        if status == "PASSED" and (execution_mode != "immutable-archive" or not gate_statuses or any(value != "PASSED" for value in gate_statuses)):
-            errors.append(_signal_error(source, f"results[{index}] PASSED without all immutable archive gates passing", "run every manifest command at the exact observed commit"))
-        if status == "FAILED" and "FAILED" not in gate_statuses:
-            errors.append(_signal_error(source, f"results[{index}] FAILED without a failed gate", "preserve the failing command status and redacted evidence"))
-        if status == "BLOCKED" and execution_mode != "NOT_RUN":
-            errors.append(_signal_error(source, f"results[{index}] BLOCKED with an execution mode", "do not report blocked work as executed"))
-        if status == "ENV_UNSATISFIED":
-            if execution_mode != "NOT_RUN" or not gate_statuses or any(value != "NOT_RUN" for value in gate_statuses):
-                errors.append(_signal_error(source, f"results[{index}] ENV_UNSATISFIED after executing a gate", "record dependency insufficiency before running any immutable gate"))
-            if not isinstance(result.get("remediation"), str) or not result["remediation"].strip():
-                errors.append(_signal_error(source, f"results[{index}] ENV_UNSATISFIED without remediation", "record the external dependency installation command and rerun path"))
-        if result.get("workspace_state") in {"MISSING", "UNKNOWN"} and status != "BLOCKED":
-            errors.append(_signal_error(source, f"results[{index}] has unavailable workspace state but is not BLOCKED", "preserve missing or unknown child checkout state"))
-        for gate_index, gate in enumerate(gates if isinstance(gates, list) else []):
-            if not isinstance(gate, dict):
-                continue
-            gate_status = gate.get("status")
-            exit_code = gate.get("exit_code")
-            if gate_status == "PASSED" and exit_code != 0:
-                errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] passed with non-zero exit code", "retain the observed command exit status"))
-            if gate_status == "FAILED" and exit_code == 0:
-                errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] failed with zero exit code", "align gate status with the command result"))
-            if gate_status == "NOT_RUN" and exit_code is not None:
-                errors.append(_signal_error(source, f"results[{index}].gates[{gate_index}] NOT_RUN has an exit code", "leave exit_code null for unexecuted gates"))
-    return errors
-
-
-def validate_research_provenance(data: dict, source: str = "provenance") -> list[str]:
-    """Validate that every structured proposition reference remains traceable."""
-    errors: list[str] = []
-    schema = load_json(RESEARCH_PROVENANCE_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the research-provenance field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-    propositions = data.get("propositions")
-    selection = data.get("selection_decision")
-    if not isinstance(propositions, list) or not isinstance(selection, dict):
-        return errors
-    if data.get("proposition_count") != len(propositions):
-        errors.append(_signal_error(source, "proposition_count does not equal propositions length", "derive the count from every emitted proposition trace"))
-    selected_refs = selection.get("selected_candidates")
-    if not isinstance(selected_refs, list):
-        return errors
-    if selection.get("selected_count") != len(selected_refs):
-        errors.append(_signal_error(source, "selection_decision.selected_count does not equal selected_candidates length", "preserve the selection decision count"))
-    selected_by_id: dict[str, dict] = {}
-    ranks: list[int] = []
-    for index, selected in enumerate(selected_refs):
-        if not isinstance(selected, dict):
-            continue
-        candidate_id = selected.get("candidate_id")
-        if candidate_id in selected_by_id:
-            errors.append(_signal_error(source, f"selection_decision.selected_candidates[{index}] duplicates {candidate_id!r}", "record one selection decision per candidate"))
-        if isinstance(candidate_id, str):
-            selected_by_id[candidate_id] = selected
-        rank = selected.get("rank")
-        if isinstance(rank, int) and not isinstance(rank, bool):
-            ranks.append(rank)
-    if ranks and sorted(ranks) != list(range(1, len(ranks) + 1)):
-        errors.append(_signal_error(source, "selection decision ranks are not contiguous from 1", "retain the deterministic selection ranks"))
-    proposition_ids: set[str] = set()
-    proposition_candidates: set[str] = set()
-    for index, proposition in enumerate(propositions):
-        if not isinstance(proposition, dict):
-            continue
-        proposition_id = proposition.get("proposition_id")
-        if proposition_id in proposition_ids:
-            errors.append(_signal_error(source, f"propositions[{index}] duplicates proposition_id {proposition_id!r}", "derive one stable proposition ID per selected candidate"))
-        if isinstance(proposition_id, str):
-            proposition_ids.add(proposition_id)
-        candidate_id = proposition.get("candidate_id")
-        if candidate_id in proposition_candidates:
-            errors.append(_signal_error(source, f"propositions[{index}] duplicates candidate_id {candidate_id!r}", "emit one proposition trace per selected candidate"))
-        if isinstance(candidate_id, str):
-            proposition_candidates.add(candidate_id)
-        selected_ref = selected_by_id.get(candidate_id)
-        if selected_ref is None:
-            errors.append(_signal_error(source, f"propositions[{index}] is not present in the selection decision", "trace only candidates selected by the seeded decision"))
-        elif proposition.get("selection") != selected_ref:
-            errors.append(_signal_error(source, f"propositions[{index}] selection differs from selection_decision", "copy rank and score without mutation"))
-        candidate = proposition.get("candidate")
-        rule = proposition.get("rule")
-        structured = proposition.get("structured_output")
-        signals = proposition.get("normalized_signals")
-        if not isinstance(candidate, dict) or not isinstance(rule, dict) or not isinstance(structured, dict) or not isinstance(signals, list):
-            continue
-        if candidate.get("candidate_id") != candidate_id or candidate.get("rule_id") != proposition.get("rule_id"):
-            errors.append(_signal_error(source, f"propositions[{index}] candidate identity is inconsistent", "preserve candidate and rule IDs through the trace"))
-        if rule.get("rule_id") != proposition.get("rule_id") or rule.get("rule_set_hash") != data.get("rule_set_hash"):
-            errors.append(_signal_error(source, f"propositions[{index}] rule identity is inconsistent", "preserve the active rule and registry hash"))
-        if structured.get("output_type") != rule.get("output_type") or structured.get("template") != rule.get("template"):
-            errors.append(_signal_error(source, f"propositions[{index}] structured output differs from rule", "use the finite rule template without free-form rewriting"))
-        composition_mode = candidate.get("composition_mode")
-        if composition_mode is not None:
-            if rule.get("composition_mode") != composition_mode or structured.get("composition_mode") != composition_mode:
-                errors.append(_signal_error(source, f"propositions[{index}] composition mode is not preserved", "carry the declared intersection mode through candidate, rule, and structured output"))
-        trace_by_id: dict[str, dict] = {}
-        for signal_index, trace in enumerate(signals):
-            if not isinstance(trace, dict):
-                continue
-            signal_id = trace.get("signal_id")
-            if signal_id in trace_by_id:
-                errors.append(_signal_error(source, f"propositions[{index}].normalized_signals[{signal_index}] duplicates {signal_id!r}", "record one trace per normalized signal"))
-            if isinstance(signal_id, str):
-                trace_by_id[signal_id] = trace
-        if {trace.get("signal_kind") for trace in trace_by_id.values()} != {"self", "art-history", "marketing"}:
-            errors.append(_signal_error(source, f"propositions[{index}] does not trace all required signal kinds", "preserve self, art-history, and marketing provenance"))
-        inputs = candidate.get("inputs")
-        if isinstance(inputs, dict):
-            for kind, refs in inputs.items():
-                if not isinstance(refs, list):
-                    continue
-                for ref_index, ref in enumerate(refs):
-                    if not isinstance(ref, dict):
-                        continue
-                    if ref.get("signal_kind") != kind:
-                        errors.append(_signal_error(source, f"propositions[{index}].candidate.inputs.{kind}[{ref_index}] has an inconsistent signal kind", "keep each provenance reference in its declared signal bucket"))
-                    trace = trace_by_id.get(ref.get("signal_id"))
-                    if trace is None:
-                        errors.append(_signal_error(source, f"propositions[{index}].candidate.inputs.{kind}[{ref_index}] has no normalized signal trace", "retain every selected signal in normalized_signals"))
-                        continue
-                    for field in ("signal_kind", "source_repository", "source_commit", "source_entity_ids", "source_locators", "evidence_locators"):
-                        if ref.get(field) != trace.get(field):
-                            errors.append(_signal_error(source, f"propositions[{index}] input {ref.get('signal_id')!r} mismatches normalized signal {field}", "preserve source provenance exactly"))
-                    if ref.get("attribute") not in trace.get("attributes", []):
-                        errors.append(_signal_error(source, f"propositions[{index}] input attribute is absent from normalized signal trace", "retain every referenced attribute"))
-        slots = structured.get("slots") if isinstance(structured, dict) else None
-        composition = candidate.get("composition")
-        if isinstance(slots, dict) and isinstance(composition, dict):
-            for slot_name, slot in slots.items():
-                if not isinstance(slot, dict) or not isinstance(composition.get(slot_name), dict):
-                    continue
-                composition_ref = composition[slot_name]
-                trace = trace_by_id.get(slot.get("signal_id"))
-                if trace is None:
-                    continue
-                for field in ("signal_id", "signal_kind", "attribute"):
-                    if slot.get(field) != composition_ref.get(field):
-                        errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} loses composition {field}", "preserve rule slot identity"))
-                if slot.get("source_repository") != trace.get("source_repository") or slot.get("source_commit") != trace.get("source_commit"):
-                    errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} loses source identity", "copy repository and commit from the normalized signal trace"))
-                if slot.get("evidence_locator") not in trace.get("evidence_locators", []):
-                    errors.append(_signal_error(source, f"propositions[{index}].structured_output.slots.{slot_name} has an untraceable evidence locator", "use an evidence locator from the normalized signal"))
-    if len(propositions) != len(selected_by_id):
-        errors.append(_signal_error(source, "proposition count does not cover the selection decision", "emit one proposition trace for every selected candidate"))
-    return errors
-
-
-def validate_v12_e2e(data: dict, manifest: dict | None = None, source: str = "v12-e2e") -> list[str]:
-    """Validate v1.2 stage integration and the preserved v1.1 regression boundary."""
-    errors: list[str] = []
-    schema = load_json(V12_E2E_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the v12-e2e field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-    pipeline = data.get("pipeline")
-    child = data.get("child_quality_gates")
-    regression = data.get("v11_regression")
-    acceptance = data.get("acceptance")
-    if isinstance(pipeline, dict):
-        provenance = pipeline.get("provenance", {})
-        selection = pipeline.get("selection", {})
-        if isinstance(provenance, dict) and isinstance(selection, dict):
-            if provenance.get("proposition_count") != selection.get("selected_count"):
-                errors.append(_signal_error(source, "provenance count differs from selection count", "trace exactly every selected candidate"))
-            if not set(selection.get("selected_candidate_ids", [])):
-                errors.append(_signal_error(source, "selection has no selected candidate IDs", "retain the deterministic selected package"))
-            if not set(provenance.get("signal_ids", [])):
-                errors.append(_signal_error(source, "provenance has no signal IDs", "preserve normalized signal identity through the E2E"))
-    if isinstance(child, dict) and isinstance(manifest, dict):
-        repositories = manifest.get("repositories", [])
-        if child.get("repository_count") != len(repositories):
-            errors.append(_signal_error(source, "child gate repository count differs from manifest", "run every manifest-declared child gate"))
-        if "FAILED" in child.get("statuses", []) and acceptance and acceptance.get("child_gates_observed"):
-            errors.append(_signal_error(source, "failed child gate was hidden by a passing E2E acceptance", "preserve failed child quality gates as a non-passing state"))
-    if isinstance(regression, dict):
-        if regression.get("remote_operations") != [] or regression.get("raw_conversation_stored") is not False:
-            errors.append(_signal_error(source, "v1.1 regression boundary was widened", "keep interaction artifacts reference-only and remote operations empty"))
-        regression_acceptance = regression.get("acceptance")
-        if isinstance(regression_acceptance, dict) and any(value is not True for value in regression_acceptance.values()):
-            errors.append(_signal_error(source, "v1.1 regression acceptance is incomplete", "preserve every v1.1 interaction and artifact invariant"))
-    if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
-        errors.append(_signal_error(source, "v1.2 E2E acceptance is incomplete", "keep every research, child gate, regression, and remote safety invariant true"))
-    return errors
-
-
-def validate_signal_export(data: dict, source: str = "signal-export") -> list[str]:
-    """Validate the metadata envelope emitted by a knowledge-base export."""
-    errors: list[str] = []
-    schema = load_json(SIGNAL_EXPORT_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the signal export field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    signals = data.get("signals")
-    declared = data.get("signal_count")
-    if isinstance(signals, list) and isinstance(declared, int) and declared != len(signals):
-        errors.append(
-            _signal_error(
-                source,
-                f"signal_count {declared} does not match the {len(signals)} records carried",
-                "report the number of records the payload actually contains",
-            )
-        )
-    if isinstance(signals, list):
-        seen: set[str] = set()
-        for index, record in enumerate(signals):
-            if not isinstance(record, dict):
-                continue
-            identifier = record.get("signal_id")
-            if isinstance(identifier, str):
-                if identifier in seen:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"signals[{index}].signal_id {identifier!r} appears more than once",
-                            "give every exported record a unique signal_id",
-                        )
-                    )
-                seen.add(identifier)
-    return errors
-
-
-def validate_signal(data: dict, source: str = "signal") -> list[str]:
-    """Validate the v1 boundary envelope and its domain-preserving invariants."""
-    errors: list[str] = []
-    schema = load_json(SIGNAL_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the signal field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    if data.get("contract_version") != "normalized-research-signal/v1":
-        errors.append(
-            _signal_error(
-                source,
-                "contract_version must be normalized-research-signal/v1",
-                "use the supported major contract version or reject the signal",
-            )
-        )
-
-    source_data = data.get("source")
-    if isinstance(source_data, dict):
-        repository = source_data.get("repository")
-        if repository not in _known_input_repository_ids():
-            errors.append(
-                _signal_error(
-                    source,
-                    f"source.repository {repository!r} is not a declared input repository",
-                    "use a repository ID from config/repositories.yaml",
-                )
-            )
-        entity_ids = source_data.get("entity_ids")
-        if isinstance(entity_ids, list) and len(entity_ids) != len(set(entity_ids)):
-            errors.append(
-                _signal_error(
-                    source,
-                    "source.entity_ids must be unique",
-                    "retain stable source entity IDs without duplicates",
-                )
-            )
-        locators = source_data.get("locators")
-        if isinstance(locators, list) and len(locators) != len(set(locators)):
-            errors.append(
-                _signal_error(
-                    source,
-                    "source.locators must be unique",
-                    "retain distinct opaque source locators",
-                )
-            )
-
-    evidence_refs = data.get("evidence_refs")
-    if isinstance(evidence_refs, list):
-        evidence_locators = [
-            ref.get("locator")
-            for ref in evidence_refs
-            if isinstance(ref, dict) and isinstance(ref.get("locator"), str)
-        ]
-        if len(evidence_locators) != len(set(evidence_locators)):
-            errors.append(
-                _signal_error(
-                    source,
-                    "evidence_refs locators must be unique",
-                    "retain each evidence reference once",
-                )
-            )
-        entity_ids = source_data.get("entity_ids", []) if isinstance(source_data, dict) else []
-        for index, ref in enumerate(evidence_refs):
-            if not isinstance(ref, dict):
-                continue
-            entity_id = ref.get("entity_id")
-            if entity_id is not None and entity_id not in entity_ids:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"evidence_refs[{index}].entity_id {entity_id!r} is not in source.entity_ids",
-                        "reference a declared source entity or omit entity_id",
-                    )
-                )
-
-    freshness = data.get("freshness")
-    validity = data.get("validity")
-    if isinstance(freshness, dict) and isinstance(validity, dict):
-        if freshness.get("status") == "stale" and validity.get("status") == "valid":
-            errors.append(
-                _signal_error(
-                    source,
-                    "stale freshness cannot have valid validity status",
-                    "propagate stale state as stale or unknown and retain it as a constraint",
-                )
-            )
-        if freshness.get("status") == "stale":
-            constraints = data.get("constraints", [])
-            if not any("stale" in constraint.lower() for constraint in constraints if isinstance(constraint, str)):
-                errors.append(
-                    _signal_error(
-                        source,
-                        "stale freshness must be represented in constraints",
-                        "add an explicit stale/revalidation constraint; do not silently drop the signal",
-                    )
-                )
-
-    signal_kind = data.get("signal_kind")
-    domain = data.get("domain")
-    expected_domain = {
-        "self": "self_model",
-        "art-history": "art_history",
-        "marketing": "marketing",
-    }.get(signal_kind)
-    if expected_domain and isinstance(domain, dict):
-        if expected_domain not in domain:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"signal_kind {signal_kind!r} requires domain.{expected_domain}",
-                    "use the domain extension matching signal_kind",
-                )
-            )
-        if len(domain) == 1 and expected_domain not in domain:
-            errors.append(
-                _signal_error(
-                    source,
-                    "domain extension does not match signal_kind",
-                    "keep exactly one matching domain extension",
-                )
-            )
-
-    if signal_kind == "self" and isinstance(domain, dict):
-        self_model = domain.get("self_model")
-        if isinstance(self_model, dict):
-            if self_model.get("export_permitted") is not True:
-                errors.append(
-                    _signal_error(
-                        source,
-                        "self-model signal export_permitted must be true",
-                        "export only approved derived content within consent_scope",
-                    )
-                )
-            forbidden_raw_fields = {"raw_voice", "raw_voice_text", "raw_voice_body", "raw_audio"}
-            leaked = sorted(forbidden_raw_fields.intersection(self_model))
-            if leaked:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"self-model signal contains forbidden raw field(s) {leaked!r}",
-                        "export an approved raw_voice_locator only; keep raw voice in the child repository",
-                    )
-                )
-
-    if signal_kind == "art-history" and isinstance(domain, dict):
-        art_history = domain.get("art_history")
-        if isinstance(art_history, dict):
-            source_entity_ids = source_data.get("entity_ids", []) if isinstance(source_data, dict) else []
-            for index, relation in enumerate(art_history.get("relations", [])):
-                if isinstance(relation, dict) and relation.get("target_entity_id") in source_entity_ids:
-                    errors.append(
-                        _signal_error(
-                            source,
-                            f"domain.art_history.relations[{index}] copies a source entity as target",
-                            "reference a stable external entity ID rather than copying the canonical graph",
-                        )
-                    )
-
-    if signal_kind == "marketing" and isinstance(domain, dict):
-        marketing = domain.get("marketing")
-        if isinstance(marketing, dict) and isinstance(freshness, dict):
-            if marketing.get("freshness") != freshness.get("status"):
-                errors.append(
-                    _signal_error(
-                        source,
-                        "marketing freshness must match the common freshness status",
-                        "preserve one machine-checkable freshness value across the envelope",
-                    )
-                )
-            if marketing.get("freshness") == "stale" and marketing.get("prediction_status") == "confirmed":
-                errors.append(
-                    _signal_error(
-                        source,
-                        "stale marketing evidence cannot be marked prediction_status confirmed",
-                        "retain stale status and require revalidation before confirmation",
-                    )
-                )
-            if (
-                marketing.get("prediction_status") == "confirmed"
-                and isinstance(evidence_refs, list)
-                and any(
-                    isinstance(ref, dict) and ref.get("kind") == "anecdotal"
-                    for ref in evidence_refs
-                )
-            ):
-                errors.append(
-                    _signal_error(
-                        source,
-                        "anecdotal marketing evidence cannot be marked prediction_status confirmed",
-                        "retain anecdotal evidence status and require non-anecdotal corroboration",
-                    )
-                )
-    return errors
-
-
-def _artifact_error(source: str, detail: str, remediation: str) -> str:
-    return f"{source}: {detail}; remediation: {remediation}"
-
-
-def validate_external_artifact(data: dict, source: str = "external-artifact") -> list[str]:
-    """Validate a create-only Google Drive artifact reference without reading its content."""
-    errors: list[str] = []
-    schema = load_json(EXTERNAL_ARTIFACT_SCHEMA_PATH)
-    errors.extend(
-        _artifact_error(source, schema_error, "correct the external artifact field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    if data.get("contract_version") != "external-artifact/v1":
-        errors.append(
-            _artifact_error(
-                source,
-                "contract_version must be external-artifact/v1",
-                "use the supported major contract version or reject the artifact",
-            )
-        )
-    if data.get("operation") != "CREATE":
-        errors.append(
-            _artifact_error(
-                source,
-                "operation must be CREATE; UPDATE and DELETE are forbidden",
-                "create a new artifact and link it with derived_from or supersedes",
-            )
-        )
-    if data.get("provider") != "google-drive":
-        errors.append(
-            _artifact_error(
-                source,
-                "provider must be google-drive",
-                "store the user artifact in the approved Google Drive location",
-            )
-        )
-
-    snapshots = data.get("source_snapshots")
-    if isinstance(snapshots, list):
-        known = _known_repository_ids()
-        repositories: list[str] = []
-        for index, snapshot in enumerate(snapshots):
-            if not isinstance(snapshot, dict):
-                continue
-            repository = snapshot.get("repository")
-            if isinstance(repository, str):
-                repositories.append(repository)
-                if repository not in known:
-                    errors.append(
-                        _artifact_error(
-                            source,
-                            f"source_snapshots[{index}].repository {repository!r} is not declared",
-                            "use a repository ID from config/repositories.yaml",
-                        )
-                    )
-        if len(repositories) != len(set(repositories)):
-            errors.append(
-                _artifact_error(
-                    source,
-                    "source_snapshots repositories must be unique",
-                    "record one immutable commit per consulted repository",
-                )
-            )
-
-    artifact_id = data.get("artifact_id")
-    lineage = data.get("lineage")
-    if isinstance(artifact_id, str) and isinstance(lineage, dict):
-        for field in ("derived_from", "supersedes"):
-            references = lineage.get(field)
-            if isinstance(references, list) and artifact_id in references:
-                errors.append(
-                    _artifact_error(
-                        source,
-                        f"lineage.{field} must not reference itself",
-                        "reference an earlier immutable artifact ID",
-                    )
-                )
-    return errors
-
-
-def _interaction_error(source: str, detail: str, remediation: str) -> str:
-    return f"{source}: {detail}; remediation: {remediation}"
-
-
-def validate_interaction_event(data: dict, source: str = "interaction-event") -> list[str]:
-    """Validate experience metadata while excluding raw conversation and identifiers."""
-    errors: list[str] = []
-    schema = load_json(INTERACTION_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the interaction event field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    forbidden_fields = {
-        "conversation",
-        "transcript",
-        "prompt",
-        "message",
-        "raw_text",
-        "raw_conversation",
-        "user_text",
-        "assistant_text",
-        "body",
-        "content",
-    }
-
-    def scan(value, path: str = "$") -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                child_path = f"{path}.{key}"
-                if key.lower() in forbidden_fields:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"{child_path} is a forbidden raw conversation field",
-                            "store only intent categories and opaque external references",
-                        )
-                    )
-                scan(child, child_path)
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                scan(child, f"{path}[{index}]")
-
-    scan(data)
-
-    snapshots = data.get("source_snapshots")
-    if isinstance(snapshots, list):
-        known = _known_repository_ids()
-        repositories: list[str] = []
-        for index, snapshot in enumerate(snapshots):
-            if not isinstance(snapshot, dict):
-                continue
-            repository = snapshot.get("repository")
-            if isinstance(repository, str):
-                repositories.append(repository)
-                if repository not in known:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"source_snapshots[{index}].repository {repository!r} is not declared",
-                            "use a repository ID from config/repositories.yaml",
-                        )
-                    )
-        if len(repositories) != len(set(repositories)):
-            errors.append(
-                _interaction_error(
-                    source,
-                    "source_snapshots repositories must be unique",
-                    "record one immutable commit per consulted repository",
-                )
-            )
-
-    privacy = data.get("privacy")
-    if isinstance(privacy, dict):
-        if privacy.get("raw_conversation_stored") is not False:
-            errors.append(
-                _interaction_error(
-                    source,
-                    "privacy.raw_conversation_stored must be false",
-                    "retain only privacy-minimal interaction metadata in Git",
-                )
-            )
-        if privacy.get("direct_identifiers_stored") is not False:
-            errors.append(
-                _interaction_error(
-                    source,
-                    "privacy.direct_identifiers_stored must be false",
-                    "remove direct identifiers and retain an approved opaque reference",
-                )
-            )
-    return errors
-
-
-def validate_feedback_signal(data: dict, source: str = "feedback-signal") -> list[str]:
-    """Validate explicit and inferred feedback without treating inference as user truth."""
-    errors: list[str] = []
-    schema = load_json(FEEDBACK_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the feedback signal field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    forbidden_fields = {"conversation", "transcript", "prompt", "message", "raw_text", "body", "content"}
-
-    def scan(value, path: str = "$") -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                child_path = f"{path}.{key}"
-                if key.lower() in forbidden_fields:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"{child_path} is a forbidden raw feedback field",
-                            "retain a privacy-safe summary_code and opaque evidence reference",
-                        )
-                    )
-                scan(child, child_path)
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                scan(child, f"{path}[{index}]")
-
-    scan(data)
-
-    explicit_kinds = {"explicit_request", "explicit_dissatisfaction", "output_correction", "knowledge_gap"}
-    inferred_kinds = {"inferred_friction", "inferred_need"}
-    kind = data.get("kind")
-    hypothesis = data.get("hypothesis")
-    confidence = data.get("confidence")
-    confidence_level = confidence.get("level") if isinstance(confidence, dict) else None
-    if kind in inferred_kinds:
-        if not isinstance(hypothesis, dict):
-            errors.append(
-                _interaction_error(source, "inferred feedback requires a hypothesis", "record an unconfirmed claim_code with evidence and confidence")
-            )
-        elif hypothesis.get("confirmation_status") != "unconfirmed":
-            errors.append(
-                _interaction_error(source, "inferred feedback hypothesis must start unconfirmed", "require explicit confirmation before changing its status")
-            )
-        if confidence_level == "explicit":
-            errors.append(
-                _interaction_error(source, "inferred feedback cannot use explicit confidence", "use high, medium, or low confidence")
-            )
-    if kind in explicit_kinds:
-        if hypothesis is not None:
-            errors.append(
-                _interaction_error(source, "explicit feedback must not carry an inferred hypothesis", "set hypothesis to null")
-            )
-        if confidence_level != "explicit":
-            errors.append(
-                _interaction_error(source, "explicit feedback requires explicit confidence", "set confidence.level to explicit and score to 1")
-            )
-
-    target = data.get("target")
-    if isinstance(target, dict):
-        owner = target.get("owner_repository")
-        known = _known_repository_ids() | {"agentic-art-orchestration"}
-        if owner not in known:
-            errors.append(
-                _interaction_error(source, f"target.owner_repository {owner!r} is not declared", "route to the parent or an owning repository from config/repositories.yaml")
-            )
-    return errors
-
-
-def validate_async_audit(data: dict, source: str = "async-audit") -> list[str]:
-    """Validate a non-blocking audit result and its gated repair proposals."""
-    errors: list[str] = []
-    schema = load_json(ASYNC_AUDIT_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the asynchronous audit field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    forbidden_fields = {
-        "conversation",
-        "transcript",
-        "prompt",
-        "message",
-        "raw_text",
-        "raw_conversation",
-        "user_text",
-        "assistant_text",
-        "body",
-        "content",
-        "PRIVATE_RAW",
-        "RESTRICTED",
-        "credential",
-        "direct_identifier",
-    }
-
-    def scan(value, path: str = "$") -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                if str(key).lower() in {item.lower() for item in forbidden_fields}:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"{path}.{key} is a forbidden raw or sensitive audit field",
-                            "retain privacy-safe finding metadata and opaque references only",
-                        )
-                    )
-                scan(child, f"{path}.{key}")
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                scan(child, f"{path}[{index}]")
-
-    scan(data)
-    if data.get("lane") != "ASYNC_AUDIT":
-        errors.append(
-            _interaction_error(source, "lane must be ASYNC_AUDIT", "keep audit work on the independent asynchronous lane")
-        )
-    if data.get("interaction_blocking") is not False:
-        errors.append(
-            _interaction_error(source, "interaction_blocking must be false", "never wait for audit/refactoring in the interaction request path")
-        )
-    if data.get("user_artifact_policy") != "READ_ONLY" or data.get("artifact_operations") != []:
-        errors.append(
-            _interaction_error(source, "user artifacts must be read-only with no operations", "create no update/delete operation for user artifacts")
-        )
-
-    snapshot = data.get("source_snapshot")
-    source_commits: dict[str, str] = {}
-    known = _known_repository_ids() | {"agentic-art-orchestration"}
-    if isinstance(snapshot, dict):
-        repositories = snapshot.get("repositories")
-        if isinstance(repositories, list):
-            for index, repository in enumerate(repositories):
-                if not isinstance(repository, dict):
-                    continue
-                repository_id = repository.get("repository")
-                commit = repository.get("source_commit")
-                if repository_id in source_commits:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"source_snapshot.repositories[{index}] duplicates {repository_id!r}",
-                            "record one immutable commit per repository",
-                        )
-                    )
-                if isinstance(repository_id, str):
-                    source_commits[repository_id] = commit
-                    if repository_id not in known:
-                        errors.append(
-                            _interaction_error(
-                                source,
-                                f"source snapshot repository {repository_id!r} is not declared",
-                                "use manifest repository IDs",
-                            )
-                        )
-        parent_commit = snapshot.get("parent_commit")
-        if isinstance(parent_commit, str):
-            source_commits["agentic-art-orchestration"] = parent_commit
-
-    lease = data.get("lease")
-    if isinstance(lease, dict):
-        if lease.get("lane") != "ASYNC_AUDIT" or lease.get("status") != "held":
-            errors.append(
-                _interaction_error(
-                    source,
-                    "lease must be held on ASYNC_AUDIT",
-                    "acquire the independent audit lane lease before emitting proposals",
-                )
-            )
-        if lease.get("owner") == "unassigned":
-            errors.append(
-                _interaction_error(source, "held audit lease cannot be unassigned", "record the worker owner and execution ID")
-            )
-
-    gates: dict[str, str] = {}
-    quality_gates = data.get("quality_gates")
-    if isinstance(quality_gates, list):
-        for index, gate in enumerate(quality_gates):
-            if not isinstance(gate, dict):
-                continue
-            repository = gate.get("repository")
-            status = gate.get("status")
-            if repository in gates:
-                errors.append(
-                    _interaction_error(source, f"quality_gates[{index}] duplicates {repository!r}", "record one gate result per repository")
-                )
-            if isinstance(repository, str):
-                gates[repository] = status
-                if repository not in source_commits:
-                    errors.append(
-                        _interaction_error(source, f"quality gate names unknown repository {repository!r}", "use a repository in the source snapshot")
-                    )
-                if gate.get("observed_commit") != source_commits.get(repository):
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"quality gate for {repository!r} is not tied to its source commit",
-                            "run or record the gate against the audited immutable commit",
-                        )
-                    )
-
-    proposals = data.get("proposals")
-    proposal_ids: set[str] = set()
-    deduplication_keys: set[str] = set()
-    audit_hash = data.get("audit_observation", {}).get("audit_hash") if isinstance(data.get("audit_observation"), dict) else None
-    if isinstance(proposals, list):
-        for index, proposal in enumerate(proposals):
-            if not isinstance(proposal, dict):
-                continue
-            proposal_id = proposal.get("proposal_id")
-            key = proposal.get("deduplication_key")
-            if proposal_id in proposal_ids:
-                errors.append(_interaction_error(source, f"proposals[{index}] duplicates proposal_id {proposal_id!r}", "preserve one proposal per stable ID"))
-            if key in deduplication_keys:
-                errors.append(_interaction_error(source, f"proposals[{index}] duplicates deduplication_key {key!r}", "suppress duplicate issue or draft-PR proposals"))
-            if isinstance(proposal_id, str):
-                proposal_ids.add(proposal_id)
-            if isinstance(key, str):
-                deduplication_keys.add(key)
-            repository = proposal.get("repository")
-            if repository not in source_commits:
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} targets unknown repository {repository!r}", "route to a source snapshot repository or the parent"))
-                continue
-            if proposal.get("source_commit") != source_commits[repository]:
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} source commit does not match snapshot", "rebase the proposal on the observed commit"))
-            gate_status = proposal.get("quality_gate_status")
-            if gate_status != gates.get(repository):
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} gate status is not the recorded repository gate", "do not bypass a missing or failed quality gate"))
-            if proposal.get("kind") == "DRAFT_PR" and gate_status != "PASSED":
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} is a draft PR without a passed gate", "keep it as a triage issue until the gate passes"))
-            if proposal.get("kind") == "DRAFT_PR" and proposal.get("status") != "READY":
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} draft PR plan is not READY", "make a gated draft plan explicitly READY"))
-            finding = proposal.get("finding")
-            if isinstance(finding, dict) and finding.get("audit_hash") != audit_hash:
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} is not traceable to this audit", "retain the source audit hash in each proposal"))
-            if proposal.get("human_gate") is not True:
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} must retain the human gate", "do not merge or release automatically"))
-            if proposal.get("artifact_operations") != []:
-                errors.append(_interaction_error(source, f"proposal {proposal_id!r} mutates a user artifact", "keep user artifact operations empty"))
-    return errors
-
-
-def validate_issue_routing(data: dict, source: str = "issue-routing") -> list[str]:
-    """Validate authority-based feedback routes without creating remote Issues."""
-    errors: list[str] = []
-    schema = load_json(ISSUE_ROUTING_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the feedback routing field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    forbidden_fields = {
-        "conversation",
-        "transcript",
-        "prompt",
-        "message",
-        "raw_text",
-        "raw_conversation",
-        "user_text",
-        "assistant_text",
-        "body",
-        "content",
-        "PRIVATE_RAW",
-        "RESTRICTED",
-        "credential",
-        "direct_identifier",
-    }
-
-    def scan(value, path: str = "$") -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                if str(key).lower() in {item.lower() for item in forbidden_fields}:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"{path}.{key} is a forbidden raw or sensitive routing field",
-                            "retain summary codes and opaque evidence references only",
-                        )
-                    )
-                scan(child, f"{path}.{key}")
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                scan(child, f"{path}[{index}]")
-
-    scan(data)
-    if data.get("lane") != "FEEDBACK_ROUTING":
-        errors.append(_interaction_error(source, "lane must be FEEDBACK_ROUTING", "keep routing on the feedback lane"))
-    if data.get("interaction_blocking") is not False:
-        errors.append(_interaction_error(source, "interaction_blocking must be false", "do not make the user wait for Issue routing"))
-    if data.get("user_artifact_policy") != "READ_ONLY" or data.get("issue_operations") != []:
-        errors.append(_interaction_error(source, "routing must not mutate user artifacts or create remote Issues", "return metadata-only Issue candidates"))
-
-    known = _known_repository_ids() | {"agentic-art-orchestration"}
-    parent = "agentic-art-orchestration"
-    feedback_ids = data.get("input_feedback_ids")
-    routes = data.get("routes")
-    route_ids: set[str] = set()
-    if isinstance(routes, list):
-        for index, route in enumerate(routes):
-            if not isinstance(route, dict):
-                continue
-            feedback_id = route.get("feedback_id")
-            if feedback_id in route_ids:
-                errors.append(_interaction_error(source, f"routes[{index}] duplicates feedback_id {feedback_id!r}", "route each feedback signal once"))
-            if isinstance(feedback_id, str):
-                route_ids.add(feedback_id)
-            target = route.get("target_repository")
-            target_role = route.get("target_role")
-            if isinstance(target, str) and target not in known:
-                errors.append(_interaction_error(source, f"route {feedback_id!r} targets unknown repository {target!r}", "use a manifest repository or the parent"))
-            if target_role == "PARENT" and target != parent:
-                errors.append(_interaction_error(source, f"route {feedback_id!r} marks a non-parent target as PARENT", "route orchestration and UX feedback to the parent"))
-            if target_role == "CHILD" and (target is None or target == parent):
-                errors.append(_interaction_error(source, f"route {feedback_id!r} marks the parent as CHILD", "route domain feedback to its owning child"))
-            candidates = route.get("candidate_repositories")
-            if isinstance(candidates, list):
-                for candidate in candidates:
-                    if candidate not in known:
-                        errors.append(_interaction_error(source, f"route {feedback_id!r} has unknown candidate {candidate!r}", "use manifest repository IDs"))
-            inference = route.get("inference")
-            kind = route.get("kind")
-            if isinstance(inference, dict):
-                if kind in {"inferred_friction", "inferred_need"}:
-                    if inference.get("is_inferred") is not True or inference.get("hypothesis_status") != "unconfirmed":
-                        errors.append(_interaction_error(source, f"inferred route {feedback_id!r} lost its unconfirmed hypothesis", "keep inference separate from user truth"))
-                elif inference.get("is_inferred") is not False or inference.get("hypothesis_status") != "not-applicable":
-                    errors.append(_interaction_error(source, f"explicit route {feedback_id!r} carries inference state", "mark explicit feedback as not-applicable for inference"))
-            status = route.get("routing_status")
-            candidate = route.get("issue_candidate")
-            if status in {"ROUTED", "TRIAGE"} and not isinstance(candidate, dict):
-                errors.append(_interaction_error(source, f"route {feedback_id!r} lacks a metadata-only Issue candidate", "retain a triageable candidate without creating it remotely"))
-            if status in {"BLOCKED", "DUPLICATE_SUPPRESSED"} and candidate is not None:
-                errors.append(_interaction_error(source, f"route {feedback_id!r} has a candidate after {status}", "suppress or block the candidate without side effects"))
-            if isinstance(candidate, dict):
-                if candidate.get("target_repository") != target:
-                    errors.append(_interaction_error(source, f"Issue candidate for {feedback_id!r} does not match route target", "keep target authority consistent"))
-                if feedback_id not in candidate.get("source_feedback_ids", []):
-                    errors.append(_interaction_error(source, f"Issue candidate for {feedback_id!r} lost its source reference", "retain the feedback ID in the candidate"))
-                if candidate.get("human_gate") is not True or candidate.get("side_effect") != "NONE":
-                    errors.append(_interaction_error(source, f"Issue candidate for {feedback_id!r} bypasses the human/no-side-effect boundary", "create no remote Issue automatically"))
-                if status == "ROUTED" and candidate.get("creation_permitted") is not True:
-                    errors.append(_interaction_error(source, f"routed candidate for {feedback_id!r} is not marked permitted", "keep explicit consent and routing state aligned"))
-                if status == "TRIAGE" and candidate.get("creation_permitted") is not False:
-                    errors.append(_interaction_error(source, f"triage candidate for {feedback_id!r} is marked creatable", "keep uncertain routing in triage"))
-    if isinstance(feedback_ids, list) and set(feedback_ids) != route_ids:
-        errors.append(_interaction_error(source, "input_feedback_ids and routes do not cover the same feedback", "retain one traceable route for every input signal"))
-
-    suppressions = data.get("duplicate_suppressions")
-    seen_suppressions: set[tuple[object, object]] = set()
-    if isinstance(suppressions, list):
-        for suppression in suppressions:
-            if not isinstance(suppression, dict):
-                continue
-            pair = (suppression.get("issue_key"), suppression.get("suppressed_feedback_id"))
-            if pair in seen_suppressions:
-                errors.append(_interaction_error(source, f"duplicate suppression {pair!r} appears twice", "record one suppression per feedback and Issue key"))
-            seen_suppressions.add(pair)
-            if suppression.get("canonical_feedback_id") not in route_ids or suppression.get("suppressed_feedback_id") not in route_ids:
-                errors.append(_interaction_error(source, "duplicate suppression references an unknown feedback ID", "retain the canonical and suppressed route records"))
-    return errors
-
-
-def _scan_forbidden_retrieval_fields(data: object, source: str) -> list[str]:
-    errors: list[str] = []
-    forbidden_fields = {
-        "conversation",
-        "transcript",
-        "prompt",
-        "message",
-        "raw_text",
-        "raw_query",
-        "query",
-        "question",
-        "user_text",
-        "assistant_text",
-        "statement",
-        "body",
-        "content",
-        "PRIVATE_RAW",
-        "RESTRICTED",
-        "credential",
-        "direct_identifier",
-    }
-    forbidden_lower = {field.lower() for field in forbidden_fields}
-
-    def scan(value: object, path: str = "$") -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                if str(key).lower() in forbidden_lower:
-                    errors.append(
-                        _interaction_error(
-                            source,
-                            f"{path}.{key} is a forbidden raw or sensitive retrieval field",
-                            "store structured capability codes and opaque evidence locators only",
-                        )
-                    )
-                scan(child, f"{path}.{key}")
-        elif isinstance(value, list):
-            for index, child in enumerate(value):
-                scan(child, f"{path}[{index}]")
-
-    scan(data)
-    return errors
-
-
-def _retrieval_manifest_index(manifest: dict | None = None) -> dict[str, dict]:
-    loaded = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
-    repositories = loaded.get("repositories") if isinstance(loaded, dict) else None
-    return {
-        repository.get("id"): repository
-        for repository in repositories or []
-        if isinstance(repository, dict) and isinstance(repository.get("id"), str)
-    }
-
-
-def _safe_retrieval_locator(value: object) -> bool:
-    return (
-        _is_safe_relative_path(value)
-        and isinstance(value, str)
-        and "://" not in value
-        and all(character not in value for character in (" ", "\n", "\r"))
-    )
-
-
-def validate_retrieval_request(
-    data: dict,
-    source: str = "retrieval-request",
-    manifest: dict | None = None,
-) -> list[str]:
-    """Validate a structured request without retaining its conversational wording."""
-    errors: list[str] = []
-    schema = load_json(RETRIEVAL_REQUEST_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the retrieval request field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-    known = set(_retrieval_manifest_index(manifest))
-    preferred = data.get("preferred_repositories")
-    if isinstance(preferred, list):
-        for repository in preferred:
-            if repository not in known:
-                errors.append(
-                    _interaction_error(
-                        source,
-                        f"preferred repository {repository!r} is not declared",
-                        "use a repository ID from config/repositories.yaml",
-                    )
-                )
-    privacy = data.get("privacy")
-    if isinstance(privacy, dict):
-        if privacy.get("raw_query_stored") is not False:
-            errors.append(
-                _interaction_error(
-                    source,
-                    "privacy.raw_query_stored must be false",
-                    "derive capability codes transiently and do not persist raw query text",
-                )
-            )
-        if privacy.get("direct_identifiers_stored") is not False:
-            errors.append(
-                _interaction_error(
-                    source,
-                    "privacy.direct_identifiers_stored must be false",
-                    "remove direct identifiers from the retrieval envelope",
-                )
-            )
-    return errors
-
-
-def validate_retrieval_index(data: dict, manifest: dict | None = None, source: str = "retrieval-index") -> list[str]:
-    """Validate adapter-provided evidence metadata against immutable manifest pins."""
-    errors: list[str] = []
-    schema = load_json(RETRIEVAL_INDEX_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the retrieval index field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-    repositories = _retrieval_manifest_index(manifest)
-    seen_evidence: set[str] = set()
-    entries = data.get("entries")
-    if not isinstance(entries, list):
-        return errors
-    for index, entry in enumerate(entries):
-        if not isinstance(entry, dict):
-            continue
-        prefix = f"{source}: entries[{index}]"
-        evidence_id = entry.get("evidence_id")
-        if evidence_id in seen_evidence:
-            errors.append(_interaction_error(source, f"entries[{index}] duplicates evidence_id {evidence_id!r}", "retain one immutable evidence entry per ID"))
-        if isinstance(evidence_id, str):
-            seen_evidence.add(evidence_id)
-        repository_id = entry.get("repository")
-        repository = repositories.get(repository_id)
-        if repository is None:
-            errors.append(_interaction_error(source, f"entries[{index}] names unknown repository {repository_id!r}", "use a repository declared in the manifest"))
-            continue
-        observed_commit = repository.get("observed_commit")
-        if entry.get("source_commit") != observed_commit:
-            errors.append(
-                _interaction_error(
-                    source,
-                    f"entries[{index}] source_commit is not the manifest observed commit",
-                    "refresh the adapter index from the immutable repository snapshot",
-                )
-            )
-        if not _safe_retrieval_locator(entry.get("locator")):
-            errors.append(_interaction_error(source, f"entries[{index}].locator is unsafe", "use a repository-local or opaque relative locator"))
-        profile = repository.get("knowledge_profile", {})
-        evidence_rules = profile.get("evidence_rules", {}) if isinstance(profile, dict) else {}
-        allowed_kinds = evidence_rules.get("allowed_kinds", []) if isinstance(evidence_rules, dict) else []
-        if entry.get("evidence_kind") not in allowed_kinds:
-            errors.append(
-                _interaction_error(
-                    source,
-                    f"entries[{index}].evidence_kind is outside the repository profile",
-                    "retain the child repository evidence policy at the parent boundary",
-                )
-            )
-        freshness_rules = profile.get("freshness_rules", {}) if isinstance(profile, dict) else {}
-        allowed_statuses = freshness_rules.get("allowed_statuses", []) if isinstance(freshness_rules, dict) else []
-        if entry.get("freshness_status") not in allowed_statuses:
-            errors.append(
-                _interaction_error(
-                    source,
-                    f"entries[{index}].freshness_status is outside the repository profile",
-                    "preserve stale or unknown state and follow the child freshness policy",
-                )
-            )
-        capability_codes = entry.get("capability_codes")
-        if isinstance(capability_codes, list) and len(capability_codes) != len(set(capability_codes)):
-            errors.append(_interaction_error(source, f"entries[{index}].capability_codes are duplicated", "declare each retrieval capability once"))
-    return errors
-
-
-def validate_retrieval_result(
-    data: dict,
-    manifest: dict | None = None,
-    request: dict | None = None,
-    source: str = "retrieval-result",
-) -> list[str]:
-    """Validate selected repositories and evidence provenance in a retrieval result."""
-    errors: list[str] = []
-    schema = load_json(RETRIEVAL_RESULT_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the retrieval result field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-    repositories = _retrieval_manifest_index(manifest)
-    known = set(repositories)
-    requested = set(data.get("capability_codes", [])) if isinstance(data.get("capability_codes"), list) else set()
-    selected = data.get("selected_repositories")
-    selected_by_id: dict[str, dict] = {}
-    if isinstance(selected, list):
-        for index, record in enumerate(selected):
-            if not isinstance(record, dict):
-                continue
-            repository_id = record.get("repository")
-            if repository_id in selected_by_id:
-                errors.append(_interaction_error(source, f"selected_repositories[{index}] duplicates {repository_id!r}", "select each repository once"))
-            if isinstance(repository_id, str):
-                selected_by_id[repository_id] = record
-            repository = repositories.get(repository_id)
-            if repository is None:
-                errors.append(_interaction_error(source, f"selected repository {repository_id!r} is unknown", "use a repository declared in the manifest"))
-                continue
-            if record.get("source_commit") != repository.get("observed_commit"):
-                errors.append(_interaction_error(source, f"selected repository {repository_id!r} is not tied to its observed commit", "return the immutable source commit used for retrieval"))
-            matched = record.get("matched_capability_codes")
-            if isinstance(matched, list) and not set(matched).issubset(requested):
-                errors.append(_interaction_error(source, f"selected repository {repository_id!r} reports an unrequested capability", "keep selection evidence tied to the structured request"))
-    evidence = data.get("evidence")
-    seen_evidence: set[str] = set()
-    if isinstance(evidence, list):
-        for index, record in enumerate(evidence):
-            if not isinstance(record, dict):
-                continue
-            evidence_id = record.get("evidence_id")
-            if evidence_id in seen_evidence:
-                errors.append(_interaction_error(source, f"evidence[{index}] duplicates evidence_id {evidence_id!r}", "return each evidence reference once"))
-            if isinstance(evidence_id, str):
-                seen_evidence.add(evidence_id)
-            repository_id = record.get("repository")
-            if repository_id not in selected_by_id:
-                errors.append(_interaction_error(source, f"evidence[{index}] is outside selected repositories", "return evidence only from the minimum selected set"))
-                continue
-            repository = repositories.get(repository_id)
-            if repository is not None and record.get("source_commit") != repository.get("observed_commit"):
-                errors.append(_interaction_error(source, f"evidence[{index}] source_commit does not match its repository pin", "preserve immutable evidence provenance"))
-            if not _safe_retrieval_locator(record.get("locator")):
-                errors.append(_interaction_error(source, f"evidence[{index}].locator is unsafe", "return a repository-local or opaque relative locator"))
-            profile = repository.get("knowledge_profile", {}) if repository else {}
-            evidence_rules = profile.get("evidence_rules", {}) if isinstance(profile, dict) else {}
-            if record.get("evidence_kind") not in evidence_rules.get("allowed_kinds", []):
-                errors.append(_interaction_error(source, f"evidence[{index}] violates its repository evidence policy", "retain the child repository evidence rule"))
-            freshness_rules = profile.get("freshness_rules", {}) if isinstance(profile, dict) else {}
-            if record.get("freshness_status") not in freshness_rules.get("allowed_statuses", []):
-                errors.append(_interaction_error(source, f"evidence[{index}] violates its repository freshness policy", "preserve the source freshness state"))
-            matched = record.get("matched_capability_codes")
-            if isinstance(matched, list) and not set(matched).issubset(requested):
-                errors.append(_interaction_error(source, f"evidence[{index}] reports an unrequested capability", "keep evidence tied to the structured request"))
-    if data.get("status") == "NO_MATCH" and (selected_by_id or seen_evidence):
-        errors.append(_interaction_error(source, "NO_MATCH result contains selected repositories or evidence", "use COMPLETE_WITH_GAPS when partial evidence exists"))
-    if request is not None:
-        if data.get("request_ref") != request.get("request_id"):
-            errors.append(_interaction_error(source, "request_ref does not match the retrieval request", "retain the request ID for traceability"))
-        if data.get("intent_code") != request.get("intent_code") or data.get("capability_codes") != request.get("capability_codes"):
-            errors.append(_interaction_error(source, "result request fields do not match the retrieval request", "preserve structured request intent and capability codes"))
-    return errors
-
-
-def validate_improvement_loop(
-    data: dict,
-    manifest: dict | None = None,
-    source: str = "improvement-loop",
-) -> list[str]:
-    """Validate resumable improvement outcomes without permitting remote side effects."""
-    errors: list[str] = []
-    schema = load_json(IMPROVEMENT_LOOP_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the improvement loop field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-
-    repositories = _retrieval_manifest_index(manifest)
-    known = set(repositories) | {"agentic-art-orchestration"}
-    if data.get("lane") != "AUTONOMOUS_IMPROVEMENT":
-        errors.append(_interaction_error(source, "lane must be AUTONOMOUS_IMPROVEMENT", "keep improvement work on its independent backstage lane"))
-    if data.get("interaction_blocking") is not False:
-        errors.append(_interaction_error(source, "interaction_blocking must be false", "never delay the frontstage response for improvement work"))
-    if data.get("user_artifact_policy") != "READ_ONLY" or data.get("remote_operations") != []:
-        errors.append(_interaction_error(source, "improvement must not mutate user artifacts or perform remote operations", "return a human-gated metadata-only draft plan"))
-
-    input_issue_keys = data.get("input_issue_keys")
-    input_keys = set(input_issue_keys) if isinstance(input_issue_keys, list) else set()
-    outcomes = data.get("outcomes")
-    outcome_by_key: dict[str, dict] = {}
-    plan_ids: set[str] = set()
-    expected_plan_ids: set[str] = set()
-    for index, outcome in enumerate(outcomes if isinstance(outcomes, list) else []):
-        if not isinstance(outcome, dict):
-            continue
-        issue_key = outcome.get("issue_key")
-        if issue_key in outcome_by_key:
-            errors.append(_interaction_error(source, f"outcomes[{index}] duplicates issue_key {issue_key!r}", "select each canonical Issue once"))
-        if isinstance(issue_key, str):
-            outcome_by_key[issue_key] = outcome
-        if isinstance(issue_key, str) and issue_key not in input_keys:
-            errors.append(_interaction_error(source, f"outcome {issue_key!r} is not in input_issue_keys", "retain the Issue routing trace"))
-        target = outcome.get("target_repository")
-        repository = repositories.get(target) if isinstance(target, str) else None
-        if target is not None and target not in known:
-            errors.append(_interaction_error(source, f"outcome {issue_key!r} targets unknown repository {target!r}", "route only to a manifest repository or the parent"))
-            repository = None
-        base_commit = outcome.get("base_commit")
-        if repository is not None and base_commit != repository.get("observed_commit"):
-            errors.append(_interaction_error(source, f"outcome {issue_key!r} is not tied to the target observed commit", "rebase the improvement plan on the immutable source commit"))
-        if target is None and base_commit is not None:
-            errors.append(_interaction_error(source, f"outcome {issue_key!r} has a commit without a target repository", "keep unresolved triage metadata unbound"))
-
-        changed_paths = outcome.get("changed_paths")
-        if isinstance(changed_paths, list) and repository is not None:
-            profile = repository.get("knowledge_profile", {}) if isinstance(repository, dict) else {}
-            write_scope = profile.get("write_scope", {}) if isinstance(profile, dict) else {}
-            allowed_scope = write_scope.get("allowed_paths", []) if isinstance(write_scope, dict) else []
-            if target == "agentic-art-orchestration":
-                allowed_scope = ["docs", "execution", "schemas", "tools", "tests", "config"]
-            for path in changed_paths:
-                if not _is_safe_relative_path(path):
-                    errors.append(_interaction_error(source, f"outcome {issue_key!r} has an unsafe changed path", "limit implementation scope to safe relative paths"))
-                elif not any(path == root or path.startswith(f"{root}/") for root in allowed_scope):
-                    errors.append(_interaction_error(source, f"outcome {issue_key!r} changes a path outside write_scope", "respect the target knowledge profile write scope"))
-
-        work_item = outcome.get("work_item")
-        if isinstance(work_item, dict):
-            if work_item.get("owner_repository") != target:
-                errors.append(_interaction_error(source, f"work item for {issue_key!r} has a different owner", "keep scheduler and Issue authority aligned"))
-            if work_item.get("source_commit") != base_commit:
-                errors.append(_interaction_error(source, f"work item for {issue_key!r} is not tied to the outcome commit", "retain one immutable base commit across runtime checkpoints"))
-            if work_item.get("scheduler_status") != "SELECTED":
-                errors.append(_interaction_error(source, f"work item for {issue_key!r} was not scheduler-selected", "do not progress an excluded work item"))
-
-        draft = outcome.get("draft_pr_plan")
-        delivery = outcome.get("delivery_status")
-        if delivery == "DRAFT_PR_READY":
-            if outcome.get("implementation_status") != "PASSED" or outcome.get("test_status") != "PASSED" or outcome.get("quality_gate_status") != "PASSED":
-                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} lacks implementation/test/gate evidence", "keep failed or missing evidence out of draft PR planning"))
-            if not isinstance(draft, dict):
-                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} is missing", "emit a human-gated plan only after all checks pass"))
-        elif draft is not None:
-            errors.append(_interaction_error(source, f"non-ready outcome {issue_key!r} has a draft PR plan", "keep triage and blocked work without a draft plan"))
-        if isinstance(draft, dict):
-            plan_id = draft.get("plan_id")
-            if plan_id in plan_ids:
-                errors.append(_interaction_error(source, f"draft plan {plan_id!r} is duplicated", "emit one plan per canonical Issue"))
-            if isinstance(plan_id, str):
-                plan_ids.add(plan_id)
-                expected_plan_ids.add(plan_id)
-            if draft.get("issue_key") != issue_key or draft.get("target_repository") != target:
-                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} lost its Issue authority", "keep plan and outcome targets identical"))
-            if draft.get("base_commit") != base_commit or draft.get("changed_paths") != changed_paths:
-                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} lost its source or path scope", "preserve the checkpointed implementation scope"))
-            if draft.get("quality_gate_status") != "PASSED" or draft.get("human_gate") is not True or draft.get("merge_permitted") is not False or draft.get("release_permitted") is not False or draft.get("side_effect") != "NONE":
-                errors.append(_interaction_error(source, f"draft plan for {issue_key!r} bypasses a human or side-effect gate", "do not merge, release, or create a remote PR automatically"))
-
-        checkpoints = outcome.get("checkpoints")
-        if isinstance(checkpoints, list):
-            checkpoint_keys: set[str] = set()
-            checkpoint_steps: set[str] = set()
-            for checkpoint in checkpoints:
-                if not isinstance(checkpoint, dict):
-                    continue
-                key = checkpoint.get("idempotency_key")
-                step = checkpoint.get("step")
-                if key in checkpoint_keys:
-                    errors.append(_interaction_error(source, f"outcome {issue_key!r} duplicates checkpoint idempotency key", "resume the same checkpoint instead of duplicating side effects"))
-                if step in checkpoint_steps:
-                    errors.append(_interaction_error(source, f"outcome {issue_key!r} duplicates checkpoint step {step!r}", "record one terminal observation per improvement step"))
-                if isinstance(key, str):
-                    checkpoint_keys.add(key)
-                if isinstance(step, str):
-                    checkpoint_steps.add(step)
-    if input_keys and not input_keys.issuperset(outcome_by_key):
-        errors.append(_interaction_error(source, "outcomes do not have a matching input Issue key", "retain one outcome for each canonical input candidate"))
-
-    plans = data.get("draft_pr_plans")
-    actual_plan_ids = {plan.get("plan_id") for plan in plans if isinstance(plan, dict)} if isinstance(plans, list) else set()
-    if actual_plan_ids != expected_plan_ids:
-        errors.append(_interaction_error(source, "top-level draft_pr_plans do not match outcome plans", "keep the plan index deterministic and traceable"))
-    return errors
-
-
-def validate_interaction_e2e(
-    data: dict,
-    manifest: dict | None = None,
-    source: str = "interaction-e2e",
-) -> list[str]:
-    """Validate the networkless frontstage/backstage integration proof."""
-    errors: list[str] = []
-    schema = load_json(INTERACTION_E2E_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the interaction E2E field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-    repositories = _retrieval_manifest_index(manifest)
-    known = set(repositories)
-    snapshots: dict[str, str] = {}
-    retrieval = data.get("retrieval", {})
-    if isinstance(retrieval, dict):
-        for index, snapshot in enumerate(retrieval.get("source_snapshots", [])):
-            if not isinstance(snapshot, dict):
-                continue
-            repository = snapshot.get("repository")
-            commit = snapshot.get("commit")
-            if repository in snapshots:
-                errors.append(_interaction_error(source, f"retrieval source snapshot duplicates {repository!r}", "record one immutable snapshot per repository"))
-            if repository not in known:
-                errors.append(_interaction_error(source, f"retrieval source snapshot names unknown repository {repository!r}", "use manifest repository IDs"))
-            if isinstance(repository, str):
-                snapshots[repository] = commit
-                if repository in repositories and commit != repositories[repository].get("observed_commit"):
-                    errors.append(_interaction_error(source, f"retrieval source snapshot {repository!r} is not pinned to the manifest commit", "preserve the immutable input snapshot"))
-    artifact = data.get("artifact", {})
-    artifact_snapshots = artifact.get("source_snapshots", []) if isinstance(artifact, dict) else []
-    for snapshot in artifact_snapshots:
-        if not isinstance(snapshot, dict):
-            continue
-        repository = snapshot.get("repository")
-        commit = snapshot.get("commit")
-        if repository not in snapshots or snapshots.get(repository) != commit:
-            errors.append(_interaction_error(source, f"artifact snapshot {repository!r} does not match retrieval provenance", "carry the same repository@commit into the artifact envelope"))
-    if isinstance(artifact, dict):
-        if artifact.get("artifact_id") not in data.get("interaction", {}).get("artifact_refs", []):
-            errors.append(_interaction_error(source, "artifact is not referenced by the interaction outcome", "retain the immutable artifact reference in the experience event"))
-        evidence_refs = artifact.get("evidence_refs", [])
-        retrieval_evidence = set(retrieval.get("evidence_ids", [])) if isinstance(retrieval, dict) else set()
-        if not set(evidence_refs).issubset(retrieval_evidence):
-            errors.append(_interaction_error(source, "artifact evidence is not present in retrieval output", "preserve evidence lineage from retrieval to artifact"))
-    interaction = data.get("interaction", {})
-    if isinstance(interaction, dict):
-        if set(interaction.get("artifact_refs", [])) != {artifact.get("artifact_id")}:
-            errors.append(_interaction_error(source, "interaction artifact references are inconsistent", "record exactly the created immutable artifact"))
-        if interaction.get("raw_conversation_stored") is not False or interaction.get("direct_identifiers_stored") is not False:
-            errors.append(_interaction_error(source, "interaction privacy boundary is not closed", "keep raw conversation and direct identifiers outside Git"))
-    feedback = data.get("feedback", {})
-    if isinstance(feedback, dict) and feedback.get("promoted_to_user_fact") is not False:
-        errors.append(_interaction_error(source, "feedback was promoted to user fact", "keep inferred feedback as an unconfirmed hypothesis"))
-    routing = data.get("routing", {})
-    if isinstance(routing, dict) and routing.get("issue_operations") != []:
-        errors.append(_interaction_error(source, "interaction E2E attempted a remote Issue operation", "keep Issue routing metadata-only until a human gate"))
-    improvement = data.get("improvement", {})
-    if isinstance(improvement, dict) and improvement.get("remote_operations") != []:
-        errors.append(_interaction_error(source, "interaction E2E attempted a remote improvement operation", "keep draft PR planning metadata-only"))
-    audit = data.get("audit", {})
-    if isinstance(audit, dict) and (audit.get("lane") != "ASYNC_AUDIT" or audit.get("interaction_blocking") is not False or audit.get("artifact_operations") != []):
-        errors.append(_interaction_error(source, "audit is not independent and read-only", "run audit on its own non-blocking lane"))
-    acceptance = data.get("acceptance", {})
-    if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
-        errors.append(_interaction_error(source, "interaction E2E acceptance is incomplete", "preserve every frontstage/backstage safety invariant"))
-    return errors
-
-
-def validate_agent_ui_result(data: dict, source: str = "agent-ui") -> list[str]:
-    """Validate the closed metadata envelope emitted by the initial UI command."""
-    errors: list[str] = []
-    schema = load_json(AGENT_UI_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the agent UI result field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-    startup = data.get("startup", {})
-    if isinstance(startup, dict) and startup.get("status") != data.get("status"):
-        errors.append(_interaction_error(source, "agent UI status does not match startup status", "do not expose capabilities beyond the startup decision"))
-    answer = data.get("answer", {})
-    sources = answer.get("sources", []) if isinstance(answer, dict) else []
-    known = _known_repository_ids() | {"agentic-art-orchestration"}
-    seen: set[str] = set()
-    if isinstance(sources, list):
-        for index, source_item in enumerate(sources):
-            if not isinstance(source_item, dict):
-                continue
-            repository = source_item.get("repository")
-            commit = source_item.get("commit")
-            if repository in seen:
-                errors.append(_interaction_error(source, f"answer.sources[{index}] duplicates {repository!r}", "emit one repository@commit source record"))
-            if repository not in known:
-                errors.append(_interaction_error(source, f"answer.sources[{index}] names unknown repository", "use only manifest repository IDs"))
-            seen.add(repository)
-            if source_item.get("repository_at_commit") != f"{repository}@{commit}":
-                errors.append(_interaction_error(source, f"answer.sources[{index}] repository@commit is inconsistent", "render the immutable source commit explicitly"))
-    artifact = data.get("artifact", {})
-    if isinstance(artifact, dict) and artifact.get("requested") is False:
-        if any(artifact.get(field) is not None for field in ("artifact_id", "provider_file_id", "content_hash")):
-            errors.append(_interaction_error(source, "not-requested artifact contains a provider reference", "keep absent outputs null"))
-    feedback = data.get("feedback", {})
-    if isinstance(feedback, dict) and not set(feedback.get("inferred_ids", [])).isdisjoint(set(feedback.get("explicit_ids", []))):
-        errors.append(_interaction_error(source, "feedback is both explicit and inferred", "preserve the distinction between observed request and hypothesis"))
-    privacy = data.get("privacy", {})
-    if isinstance(privacy, dict) and any(privacy.get(field) is not False for field in ("raw_query_stored", "raw_conversation_stored", "drive_content_stored", "credentials_stored", "direct_identifiers_stored")):
-        errors.append(_interaction_error(source, "agent UI privacy boundary is open", "store only structured metadata and opaque references"))
-    return errors
-
-
-def validate_inspiration(data: dict, source: str = "inspiration-input") -> list[str]:
-    """Validate the code-only inspiration capture and its optional settlement."""
-    errors: list[str] = []
-    schema = load_json(INSPIRATION_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the inspiration input field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-
-    provenance = data.get("provenance")
-    if isinstance(provenance, dict):
-        snapshots = provenance.get("retrieval_source_snapshots")
-        if isinstance(snapshots, list):
-            repositories = [item.get("repository") for item in snapshots if isinstance(item, dict)]
-            if len(repositories) != len(set(repositories)):
-                errors.append(_interaction_error(source, "retrieval source snapshots must be unique", "retain one immutable commit per repository"))
-        pipeline_snapshots = provenance.get("pipeline_source_snapshots")
-        if data.get("phase") == "SETTLED" and isinstance(pipeline_snapshots, list) and not pipeline_snapshots:
-            errors.append(_interaction_error(source, "settled inspiration lacks pipeline source snapshots", "settle only after the candidate pipeline has run"))
-        if data.get("phase") == "SETTLED" and not provenance.get("candidate_input_refs"):
-            errors.append(_interaction_error(source, "settled inspiration lacks candidate input references", "retain the selected candidate provenance without copying signal content"))
-
-    phase = data.get("phase")
-    settlement = data.get("settlement")
-    consent = data.get("consent")
-    if phase == "CAPTURED" and settlement is not None:
-        errors.append(_interaction_error(source, "CAPTURED inspiration must not contain settlement", "run the explicit settlement step after candidate generation"))
-    if phase == "SETTLED":
-        if not isinstance(settlement, dict) or settlement.get("status") != "SETTLED":
-            errors.append(_interaction_error(source, "SETTLED inspiration lacks a settled result", "retain candidate pipeline hashes and selected candidate IDs"))
-        if not isinstance(consent, dict) or consent.get("settlement_confirmed") is not True:
-            errors.append(_interaction_error(source, "settlement consent is not confirmed", "settle only within the captured consent scope"))
-    if isinstance(consent, dict) and consent.get("profile_update_permitted") is not False:
-        errors.append(_interaction_error(source, "profile_update_permitted must be false", "do not promote an inspiration into a user profile fact"))
-    privacy = data.get("privacy")
-    if isinstance(privacy, dict):
-        for field in ("raw_inspiration_stored", "raw_conversation_stored", "direct_identifiers_stored"):
-            if privacy.get(field) is not False:
-                errors.append(_interaction_error(source, f"privacy.{field} must be false", "retain only codes, hashes, and opaque provenance references"))
-    return errors
-
-
-def validate_initial_operations_e2e(data: dict, source: str = "initial-operations-e2e") -> list[str]:
-    """Validate the closed networkless initial operations evidence envelope."""
-    errors: list[str] = []
-    schema = load_json(INITIAL_OPERATIONS_E2E_SCHEMA_PATH)
-    errors.extend(
-        _interaction_error(source, schema_error, "correct the initial operations E2E field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    errors.extend(_scan_forbidden_retrieval_fields(data, source))
-    if not isinstance(data, dict):
-        return errors
-    startup = data.get("startup", {})
-    if isinstance(startup, dict) and startup.get("ordered_step_count") != 9:
-        errors.append(_interaction_error(source, "startup preflight is incomplete", "run all nine read-only startup steps"))
-    retrieval = data.get("retrieval", {})
-    if isinstance(retrieval, dict):
-        for index, source_item in enumerate(retrieval.get("sources", [])):
-            if not isinstance(source_item, dict):
-                continue
-            repository_at_commit = source_item.get("repository_at_commit", "")
-            repository = source_item.get("repository")
-            if repository not in repository_at_commit or "@" not in repository_at_commit:
-                errors.append(_interaction_error(source, f"retrieval.sources[{index}] lacks repository@commit", "retain immutable source provenance in the answer"))
-    drive = data.get("drive", {})
-    if isinstance(drive, dict) and drive.get("operation_sequence") != ["READ", "CREATE", "READ", "READ", "READ"]:
-        errors.append(_interaction_error(source, "Drive operation sequence is not create/read/replay-only", "keep replay as a marker search and read-back without a second CREATE"))
-    issue = data.get("issue", {})
-    if isinstance(issue, dict):
-        if issue.get("create", {}).get("target_repository") != issue.get("reuse", {}).get("target_repository"):
-            errors.append(_interaction_error(source, "Issue CREATE/REUSE targets differ", "reuse the same authoritative deduplication target"))
-    if data.get("network") != "disabled" or data.get("remote_operations") != []:
-        errors.append(_interaction_error(source, "initial operations E2E has remote operations", "keep the qualification path networkless and use a separate opt-in live gate"))
-    live_gate = data.get("live_gate", {})
-    if isinstance(live_gate, dict) and live_gate.get("status") != "NOT_REQUESTED":
-        errors.append(_interaction_error(source, "live gate was implicitly executed", "require an explicit sandbox and human confirmation before live operations"))
-    acceptance = data.get("acceptance", {})
-    if isinstance(acceptance, dict) and any(value is not True for value in acceptance.values()):
-        errors.append(_interaction_error(source, "initial operations E2E acceptance is incomplete", "preserve every startup, provenance, idempotency, and privacy invariant"))
-    return errors
-
-
-def validate_work_item(data: dict, source: str = "work-item") -> list[str]:
-    """Validate a resumable cross-repository work item and its safety rules."""
-    errors: list[str] = []
-    schema = load_json(WORKITEM_SCHEMA_PATH)
-    errors.extend(
-        _signal_error(source, schema_error, "correct the work item field")
-        for schema_error in _schema_errors(data, schema)
-    )
-    if not isinstance(data, dict):
-        return errors
-
-    manifest = load_yaml(MANIFEST_PATH)
-    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
-    known_repositories = {
-        repo.get("id") for repo in repositories if isinstance(repo, dict)
-    }
-    known_repositories.add("agentic-art-orchestration")
-    owner = data.get("owner_repository")
-    targets = data.get("target_repositories")
-    if owner not in known_repositories:
-        errors.append(
-            _signal_error(
-                source,
-                f"owner_repository {owner!r} is not declared",
-                "use a repository ID from config/repositories.yaml",
-            )
-        )
-    if isinstance(targets, list):
-        for index, repository in enumerate(targets):
-            if repository not in known_repositories:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"target_repositories[{index}] {repository!r} is not declared",
-                        "use only manifest repository IDs",
-                    )
-                )
-        if owner not in targets:
-            errors.append(
-                _signal_error(
-                    source,
-                    "owner_repository must be included in target_repositories",
-                    "make the owner an explicit target of the work item",
-                )
-            )
-
-    allowed_paths = data.get("allowed_paths")
-    if isinstance(allowed_paths, list):
-        if len(allowed_paths) != len(set(allowed_paths)):
-            errors.append(
-                _signal_error(
-                    source,
-                    "allowed_paths must be unique",
-                    "declare each writable path once",
-                )
-            )
-        for index, path in enumerate(allowed_paths):
-            if not _is_safe_relative_path(path):
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"allowed_paths[{index}] is not a safe relative path",
-                        "remove absolute paths and . or .. segments",
-                    )
-                )
-
-    dependencies = data.get("depends_on")
-    if isinstance(dependencies, list):
-        if len(dependencies) != len(set(dependencies)):
-            errors.append(
-                _signal_error(
-                    source,
-                    "depends_on must be unique",
-                    "declare each dependency once",
-                )
-            )
-        if data.get("id") in dependencies:
-            errors.append(
-                _signal_error(
-                    source,
-                    "work item cannot depend on itself",
-                    "remove the self dependency and keep the task DAG acyclic",
-                )
-            )
-
-    checks = data.get("checks")
-    if isinstance(checks, list):
-        for index, check in enumerate(checks):
-            if not isinstance(check, dict):
-                continue
-            repository = check.get("repository")
-            if repository not in known_repositories:
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"checks[{index}].repository {repository!r} is not declared",
-                        "run each check in a manifest repository",
-                    )
-                )
-            command = check.get("command")
-            if isinstance(command, str) and any(token in command for token in COMMAND_FORBIDDEN_TOKENS):
-                errors.append(
-                    _signal_error(
-                        source,
-                        f"checks[{index}].command contains shell control syntax",
-                        "split checks into separate safe commands",
-                    )
-                )
-
-    attempts = data.get("attempts")
-    if isinstance(attempts, dict):
-        used = attempts.get("used")
-        maximum = attempts.get("max")
-        if isinstance(used, int) and isinstance(maximum, int) and used > maximum:
-            errors.append(
-                _signal_error(
-                    source,
-                    "attempts.used cannot exceed attempts.max",
-                    "record the actual retry count within the declared retry budget",
-                )
-            )
-        config = load_yaml(ROOT / "config/orchestration.yaml")
-        configured_max = config.get("execution", {}).get("max_attempts")
-        if isinstance(maximum, int) and isinstance(configured_max, int) and maximum > configured_max:
-            errors.append(
-                _signal_error(
-                    source,
-                    f"attempts.max {maximum} exceeds configured max_attempts {configured_max}",
-                    "use the repository retry budget or update policy explicitly",
-                )
-            )
-
-    lease = data.get("lease")
-    terminal_state = data.get("terminal_state")
-    if isinstance(lease, dict):
-        if lease.get("status") == "available" and lease.get("owner") != "unassigned":
-            errors.append(
-                _signal_error(
-                    source,
-                    "available lease must have owner 'unassigned'",
-                    "clear the lease owner before returning the item to the queue",
-                )
-            )
-        if lease.get("status") == "held" and lease.get("owner") == "unassigned":
-            errors.append(
-                _signal_error(
-                    source,
-                    "held lease must identify its owner",
-                    "record the active worker owner and expiry",
-                )
-            )
-        if terminal_state in {"READY", "BACKLOG"} and lease.get("status") == "held":
-            errors.append(
-                _signal_error(
-                    source,
-                    "queued work item cannot retain a held lease",
-                    "release the lease before returning to BACKLOG or READY",
-                )
-            )
-
-    evidence = data.get("evidence")
-    if terminal_state == "DONE" and isinstance(evidence, dict):
-        if not evidence.get("tests"):
-            errors.append(
-                _signal_error(
-                    source,
-                    "DONE work item requires test evidence",
-                    "record the observed test commands before marking DONE",
-                )
-            )
-        if not evidence.get("commits"):
-            errors.append(
-                _signal_error(
-                    source,
-                    "DONE work item requires commit evidence",
-                    "record the repository commit SHA or keep the item non-terminal",
-                )
-            )
-    return errors
-
-
-def validate_repositories(errors: list[str], manifest_path: Path = MANIFEST_PATH) -> None:
-    data = load_yaml(manifest_path)
-    errors.extend(validate_manifest(data, _source_label(manifest_path)))
-
-
-def validate_tasks(errors: list[str], queue_path: Path | None = None) -> None:
-    queue_path = queue_path or ROOT / "execution/task-queue.yaml"
-    data = load_yaml(queue_path)
-    tasks = data.get("tasks", []) if isinstance(data, dict) else []
-    ids = [task.get("id") for task in tasks]
-    if len(ids) != len(set(ids)):
-        errors.append(f"{queue_path}: task IDs must be unique")
-    by_id = {task.get("id"): task for task in tasks}
-    manifest = load_yaml(MANIFEST_PATH)
-    known_repositories = {
-        repo.get("id"): repo.get("full_name")
-        for repo in manifest.get("repositories", [])
-        if isinstance(repo, dict)
-    }
-    known_repositories["agentic-art-orchestration"] = "masa-san-jp/agentic-art-orchestration"
-    if any(str(task.get("id", "")).startswith("AAK-") for task in tasks) or (queue_path == ROOT / "execution/task-queue.yaml" and (ROOT / "config/aak-task-projection.json").is_file()):
-        from tools.issue_intake import aak_projection, validate_aak_projection
-        errors.extend(validate_aak_projection(ROOT, data))
-        try:
-            for projection in aak_projection(ROOT)["tasks"]:
-                known_repositories[projection["owner"]] = "masa-san-jp/" + projection["owner"]
-        except ValueError as exc:
-            errors.append(str(exc))
-    for task in tasks:
-        task_id = task.get("id", "<missing>")
-        for field in ("milestone", "title", "status", "depends_on", "acceptance", "checks"):
-            if field not in task:
-                errors.append(f"{queue_path}: {task_id}.{field} is required")
-        if task.get("status") not in STATUSES:
-            errors.append(f"{queue_path}: {task_id}.status is unknown")
-        issue_fields = ("issue_ssot", "target_repositories", "agent_terminal")
-        has_issue_fields = [field in task for field in issue_fields]
-        if task_id in ISSUE_SSO_TASK_IDS and not all(has_issue_fields):
-            missing = [field for field in issue_fields if field not in task]
-            errors.append(
-                f"{queue_path}: {task_id} missing issue SSOT field(s) {missing}; "
-                "add issue_ssot, target_repositories, and agent_terminal"
-            )
-        elif any(has_issue_fields) and not all(has_issue_fields):
-            missing = [field for field in issue_fields if field not in task]
-            errors.append(
-                f"{queue_path}: {task_id} has incomplete issue SSOT contract; "
-                f"missing {missing}"
-            )
-        if all(has_issue_fields):
-            issue_url = task.get("issue_ssot")
-            match = GITHUB_ISSUE_URL.fullmatch(issue_url) if isinstance(issue_url, str) else None
-            if match is None:
-                errors.append(
-                    f"{queue_path}: {task_id}.issue_ssot is not a canonical GitHub Issue URL; "
-                    "use https://github.com/<owner>/<repo>/issues/<number>"
-                )
-            targets = task.get("target_repositories")
-            if not isinstance(targets, list) or not targets:
-                errors.append(
-                    f"{queue_path}: {task_id}.target_repositories must be a non-empty list; "
-                    "declare the owning manifest repository"
-                )
-            else:
-                if len(targets) != len(set(targets)):
-                    errors.append(
-                        f"{queue_path}: {task_id}.target_repositories must be unique; "
-                        "remove duplicate repository IDs"
-                    )
-                unknown = [repo for repo in targets if repo not in known_repositories]
-                if unknown:
-                    errors.append(
-                        f"{queue_path}: {task_id}.target_repositories has unknown repository IDs {unknown}; "
-                        "use repositories.yaml IDs"
-                    )
-                if match is not None:
-                    target_full_names = {
-                        known_repositories[repo] for repo in targets if repo in known_repositories
-                    }
-                    if match.group(1) not in target_full_names:
-                        errors.append(
-                            f"{queue_path}: {task_id}.issue_ssot authority {match.group(1)!r} "
-                            "is outside target_repositories; point to the authoritative repository Issue"
-                        )
-            if task.get("agent_terminal") not in AGENT_TERMINALS:
-                errors.append(
-                    f"{queue_path}: {task_id}.agent_terminal is unknown; "
-                    f"use one of {sorted(AGENT_TERMINALS)}"
-                )
-        deps = task.get("depends_on", [])
-        for dep in deps:
-            if dep not in by_id:
-                errors.append(f"{queue_path}: {task_id} depends on missing {dep}")
-        if task.get("status") == "READY":
-            incomplete = [dep for dep in deps if by_id.get(dep, {}).get("status") != "DONE"]
-            if incomplete:
-                errors.append(f"{queue_path}: {task_id} READY with incomplete {incomplete}")
-
-    visiting: set[str] = set()
-    visited: set[str] = set()
-
-    def visit(task_id: str, chain: list[str]) -> None:
-        if task_id in visiting:
-            errors.append(f"{queue_path}: cycle {' -> '.join(chain + [task_id])}")
-            return
-        if task_id in visited or task_id not in by_id:
-            return
-        visiting.add(task_id)
-        for dep in by_id[task_id].get("depends_on", []):
-            visit(dep, chain + [task_id])
-        visiting.remove(task_id)
-        visited.add(task_id)
-
-    for task_id in by_id:
-        visit(task_id, [])
-
-
-def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
-    errors: list[str] = []
-    for rel in REQUIRED_FILES:
-        if not (ROOT / rel).is_file():
-            errors.append(f"{rel}: required file is missing")
-    if errors:
-        return errors
-    try:
-        validate_repositories(errors, manifest_path)
-        validate_tasks(errors)
-        errors.extend(
-            validate_research_execution_boundary(
-                load_yaml(V12_BOUNDARY_CONFIG_PATH),
-                _source_label(V12_BOUNDARY_CONFIG_PATH),
-            )
-        )
-        errors.extend(
-            validate_transformation_rule_registry(
-                load_yaml(TRANSFORMATION_RULE_CONFIG_PATH),
-                _source_label(TRANSFORMATION_RULE_CONFIG_PATH),
-            )
-        )
-        errors.extend(
-            validate_startup_contract(
-                load_yaml(STARTUP_POLICY_PATH),
-                load_json(STARTUP_REPORT_SCHEMA_PATH),
-                _source_label(STARTUP_POLICY_PATH),
-                _source_label(STARTUP_REPORT_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_issue_delivery_contract(
-                load_yaml(ISSUE_DELIVERY_POLICY_PATH),
-                load_json(ISSUE_DELIVERY_SCHEMA_PATH),
-                load_yaml(manifest_path),
-                _source_label(ISSUE_DELIVERY_POLICY_PATH),
-                _source_label(ISSUE_DELIVERY_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_drive_live_contract(
-                load_yaml(DRIVE_LIVE_POLICY_PATH),
-                load_json(DRIVE_LIVE_SCHEMA_PATH),
-                _source_label(DRIVE_LIVE_POLICY_PATH),
-                _source_label(DRIVE_LIVE_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_github_sandbox_live_contract(
-                load_yaml(GITHUB_SANDBOX_LIVE_POLICY_PATH),
-                load_json(GITHUB_SANDBOX_LIVE_SCHEMA_PATH),
-                load_yaml(manifest_path),
-                _source_label(GITHUB_SANDBOX_LIVE_POLICY_PATH),
-                _source_label(GITHUB_SANDBOX_LIVE_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_autonomous_contract(
-                load_yaml(HUMAN_GATES_PATH),
-                load_json(AGENT_ACTION_SCHEMA_PATH),
-                load_json(AGENT_RESULT_SCHEMA_PATH),
-                load_json(AUTONOMOUS_RUN_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_batch_report_contract(
-                load_json(BATCH_REPORT_EVENT_SCHEMA_PATH),
-                _source_label(BATCH_REPORT_EVENT_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_output_destinations_contract(
-                load_json(OUTPUT_DESTINATIONS_SCHEMA_PATH),
-                load_json(DESTINATION_RESOLUTION_SCHEMA_PATH),
-                load_yaml(OUTPUT_DESTINATIONS_EXAMPLE_PATH),
-                _source_label(OUTPUT_DESTINATIONS_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_workspace_bootstrap_contract(
-                load_json(WORKSPACE_BOOTSTRAP_SCHEMA_PATH),
-                _source_label(WORKSPACE_BOOTSTRAP_SCHEMA_PATH),
-            )
-        )
-        errors.extend(
-            validate_public_projection_contract(
-                load_json(PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH),
-                load_json(PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH),
-                load_json(PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH),
-                load_json(PUBLIC_PROJECTION_RESULT_SCHEMA_PATH),
-                _source_label(PUBLIC_PROJECTION_RESULT_SCHEMA_PATH),
-            )
-        )
-        state = load_yaml(ROOT / "execution/state.yaml")
-        errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
-        errors.extend(validate_knowledge_cycle_contracts())
-        if state.get("last_completed_task") is None:
-            errors.append("execution/state.yaml: last_completed_task is required")
-    except ValueError as exc:
-        errors.append(str(exc))
-    return errors
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate orchestration bootstrap")
-    parser.add_argument("--check", action="store_true", help="validate without writing")
-    parser.add_argument(
-        "--manifest",
-        type=Path,
-        default=MANIFEST_PATH,
-        help="manifest YAML to validate (defaults to config/repositories.yaml)",
-    )
-    args = parser.parse_args()
-    manifest_path = args.manifest if args.manifest.is_absolute() else Path.cwd() / args.manifest
-    errors = validate(manifest_path)
-    if errors:
-        for error in errors:
-            print(f"ERROR: {error}", file=sys.stderr)
-        return 1
-    print("OK: orchestration bootstrap is valid")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+            errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve#¸ÓKh‘éì¶»§q«^t˜ÙKˆˆÜ]KÚÙ^_H\ÈH›Ü˜šY[ˆ˜]ÈÜˆÙ[œÚ]]™H]Y]šY[‹ˆœ™]Z[ˆš]˜XŞK\ØY™Hš[™[™ÈY]Y]H[™Ü\]YH™Y™\™[˜Ù\ÈÛ›H‹ˆ
+Bˆ
+BˆØØ[ŠÚ[ˆÜ]KÚÙ^_HŠBˆ[Yˆ\Ú[œİ[˜ÙJ˜[YK\İ
+N‚ˆ›Üˆ[™^Ú[[ˆ[[Y\˜]J˜[YJN‚ˆØØ[ŠÚ[ˆÜ]VŞÚ[™^WHŠB‚ˆØØ[Š]JBˆYˆ]K™Ù]
+›[™HŠHOHTÖS×ĞUQU‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK›[™H]\İ™HTÖS×ĞUQU‹šÙY\]Y]ÛÜšÈÛˆH[™\[™[\Ş[˜Ú›Û›İ\È[™HŠBˆ
+BˆYˆ]K™Ù]
+š[\˜Xİ[Û—Ø›ØÚÚ[™ÈŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[Û—Ø›ØÚÚ[™È]\İ™H˜[ÙH‹›™]™\ˆØZ]›Üˆ]Y]Ü™Y˜XİÜš[™È[ˆH[\˜Xİ[Ûˆ™\]Y\İ]ŠBˆ
+BˆYˆ]K™Ù]
+\Ù\—Ø\Y˜XİÜÛXŞHŠHOH”‘PQÓÓ“HˆÜˆ]K™Ù]
+˜\Y˜XİÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK\Ù\ˆ\Y˜XİÈ]\İ™H™XY[Û›HÚ]›ÈÜ\˜][ÛœÈ‹˜Ü™X]H›È\]KÙ[]HÜ\˜][Ûˆ›Üˆ\Ù\ˆ\Y˜XİÈŠBˆ
+B‚ˆÛ˜\ÚİH]K™Ù]
+œÛİ\˜ÙWÜÛ˜\ÚİŠBˆÛİ\˜ÙWØÛÛ[Z]ÎˆXİÜİ‹İ—HHßBˆÛ›İÛˆHÚÛ›İÛ—Ü™\ÜÚ]ÜWÚYÊ
+HÈ˜YÙ[XËX\[Ü˜Ú\İ˜][ÛˆŸBˆYˆ\Ú[œİ[˜ÙJÛ˜\ÚİXİ
+N‚ˆ™\ÜÚ]ÜšY\ÈHÛ˜\Úİ™Ù]
+œ™\ÜÚ]ÜšY\ÈŠBˆYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜšY\Ë\İ
+N‚ˆ›Üˆ[™^™\ÜÚ]ÜH[ˆ[[Y\˜]J™\ÜÚ]ÜšY\ÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJ™\ÜÚ]ÜKXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜWÚYH™\ÜÚ]ÜK™Ù]
+œ™\ÜÚ]ÜHŠBˆÛÛ[Z]H™\ÜÚ]ÜK™Ù]
+œÛİ\˜ÙWØÛÛ[Z]ŠBˆYˆ™\ÜÚ]ÜWÚY[ˆÛİ\˜ÙWØÛÛ[Z]Î‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆœÛİ\˜ÙWÜÛ˜\Úİœ™\ÜÚ]ÜšY\ÖŞÚ[™^WH\XØ]\ÈÜ™\ÜÚ]ÜWÚY\ŸH‹ˆœ™XÛÜ™Û™H[[]]X›HÛÛ[Z]\ˆ™\ÜÚ]ÜH‹ˆ
+Bˆ
+BˆYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜWÚYİŠN‚ˆÛİ\˜ÙWØÛÛ[Z]ÖÜ™\ÜÚ]ÜWÚYHHÛÛ[Z]ˆYˆ™\ÜÚ]ÜWÚY›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆœÛİ\˜ÙHÛ˜\Úİ™\ÜÚ]ÜHÜ™\ÜÚ]ÜWÚY\ŸH\È›İXÛ\™Y‹ˆ\ÙHX[šY™\İ™\ÜÚ]ÜHQÈ‹ˆ
+Bˆ
+Bˆ\™[ØÛÛ[Z]HÛ˜\Úİ™Ù]
+œ\™[ØÛÛ[Z]ŠBˆYˆ\Ú[œİ[˜ÙJ\™[ØÛÛ[Z]İŠN‚ˆÛİ\˜ÙWØÛÛ[Z]ÖÈ˜YÙ[XËX\[Ü˜Ú\İ˜][Ûˆ—HH\™[ØÛÛ[Z]‚ˆX\ÙHH]K™Ù]
+›X\ÙHŠBˆYˆ\Ú[œİ[˜ÙJX\ÙKXİ
+N‚ˆYˆX\ÙK™Ù]
+›[™HŠHOHTÖS×ĞUQUˆÜˆX\ÙK™Ù]
+œİ]\ÈŠHOHš[‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆ›X\ÙH]\İ™H[ÛˆTÖS×ĞUQU‹ˆ˜XÜ]Z\™HH[™\[™[]Y][™HX\ÙH™Y›Ü™H[Z][™È›ÜÜØ[È‹ˆ
+Bˆ
+BˆYˆX\ÙK™Ù]
+›İÛ™\ˆŠHOH[˜\ÜÚYÛ™Y‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[]Y]X\ÙHØ[››İ™H[˜\ÜÚYÛ™Y‹œ™XÛÜ™HÛÜšÙ\ˆİÛ™\ˆ[™^Xİ][ÛˆQŠBˆ
+B‚ˆØ]\ÎˆXİÜİ‹İ—HHßBˆ]X[]WÙØ]\ÈH]K™Ù]
+œ]X[]WÙØ]\ÈŠBˆYˆ\Ú[œİ[˜ÙJ]X[]WÙØ]\Ë\İ
+N‚ˆ›Üˆ[™^Ø]H[ˆ[[Y\˜]J]X[]WÙØ]\ÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJØ]KXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜHHØ]K™Ù]
+œ™\ÜÚ]ÜHŠBˆİ]\ÈHØ]K™Ù]
+œİ]\ÈŠBˆYˆ™\ÜÚ]ÜH[ˆØ]\Î‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ]X[]WÙØ]\ÖŞÚ[™^WH\XØ]\ÈÜ™\ÜÚ]ÜH\ŸH‹œ™XÛÜ™Û™HØ]H™\İ[\ˆ™\ÜÚ]ÜHŠBˆ
+BˆYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜKİŠN‚ˆØ]\ÖÜ™\ÜÚ]ÜWHHİ]\ÂˆYˆ™\ÜÚ]ÜH›İ[ˆÛİ\˜ÙWØÛÛ[Z]Î‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ]X[]HØ]H˜[Y\È[šÛ›İÛˆ™\ÜÚ]ÜHÜ™\ÜÚ]ÜH\ŸH‹\ÙHH™\ÜÚ]ÜH[ˆHÛİ\˜ÙHÛ˜\ÚİŠBˆ
+BˆYˆØ]K™Ù]
+›ØœÙ\™YØÛÛ[Z]ŠHOHÛİ\˜ÙWØÛÛ[Z]Ë™Ù]
+™\ÜÚ]ÜJN‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆœ]X[]HØ]H›ÜˆÜ™\ÜÚ]ÜH\ŸH\È›İYYÈ]ÈÛİ\˜ÙHÛÛ[Z]‹ˆœ[ˆÜˆ™XÛÜ™HØ]HYØZ[œİH]Y]Y[[]]X›HÛÛ[Z]‹ˆ
+Bˆ
+B‚ˆ›ÜÜØ[ÈH]K™Ù]
+œ›ÜÜØ[ÈŠBˆ›ÜÜØ[ÚYÎˆÙ]Üİ—HHÙ]
+
+BˆY\XØ][Û—ÚÙ^\ÎˆÙ]Üİ—HHÙ]
+
+Bˆ]Y]Ú\ÚH]K™Ù]
+˜]Y]ÛØœÙ\˜][Ûˆ‹ßJK™Ù]
+˜]Y]Ú\ÚŠHYˆ\Ú[œİ[˜ÙJ]K™Ù]
+˜]Y]ÛØœÙ\˜][ÛˆŠKXİ
+H[ÙH›Û™BˆYˆ\Ú[œİ[˜ÙJ›ÜÜØ[Ë\İ
+N‚ˆ›Üˆ[™^›ÜÜØ[[ˆ[[Y\˜]J›ÜÜØ[ÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJ›ÜÜØ[Xİ
+N‚ˆÛÛ[YBˆ›ÜÜØ[ÚYH›ÜÜØ[™Ù]
+œ›ÜÜØ[ÚYŠBˆÙ^HH›ÜÜØ[™Ù]
+™Y\XØ][Û—ÚÙ^HŠBˆYˆ›ÜÜØ[ÚY[ˆ›ÜÜØ[ÚYÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[ÖŞÚ[™^WH\XØ]\È›ÜÜØ[ÚYÜ›ÜÜØ[ÚY\ŸH‹œ™\Ù\™HÛ™H›ÜÜØ[\ˆİX›HQŠJBˆYˆÙ^H[ˆY\XØ][Û—ÚÙ^\Î‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[ÖŞÚ[™^WH\XØ]\ÈY\XØ][Û—ÚÙ^HÚÙ^H\ŸH‹œİ\™\ÜÈ\XØ]H\ÜİYHÜˆ˜YTˆ›ÜÜØ[ÈŠJBˆYˆ\Ú[œİ[˜ÙJ›ÜÜØ[ÚYİŠN‚ˆ›ÜÜØ[ÚYË˜Y
+›ÜÜØ[ÚY
+BˆYˆ\Ú[œİ[˜ÙJÙ^KİŠN‚ˆY\XØ][Û—ÚÙ^\Ë˜Y
+Ù^JBˆ™\ÜÚ]ÜHH›ÜÜØ[™Ù]
+œ™\ÜÚ]ÜHŠBˆYˆ™\ÜÚ]ÜH›İ[ˆÛİ\˜ÙWØÛÛ[Z]Î‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸH\™Ù]È[šÛ›İÛˆ™\ÜÚ]ÜHÜ™\ÜÚ]ÜH\ŸH‹œ›İ]HÈHÛİ\˜ÙHÛ˜\Úİ™\ÜÚ]ÜHÜˆH\™[ŠJBˆÛÛ[YBˆYˆ›ÜÜØ[™Ù]
+œÛİ\˜ÙWØÛÛ[Z]ŠHOHÛİ\˜ÙWØÛÛ[Z]ÖÜ™\ÜÚ]ÜWN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸHÛİ\˜ÙHÛÛ[Z]Ù\È›İX]ÚÛ˜\Úİ‹œ™X˜\ÙHH›ÜÜØ[ÛˆHØœÙ\™YÛÛ[Z]ŠJBˆØ]WÜİ]\ÈH›ÜÜØ[™Ù]
+œ]X[]WÙØ]WÜİ]\ÈŠBˆYˆØ]WÜİ]\ÈOHØ]\Ë™Ù]
+™\ÜÚ]ÜJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸHØ]Hİ]\È\È›İH™XÛÜ™Y™\ÜÚ]ÜHØ]H‹™È›İ\\ÜÈHZ\ÜÚ[™ÈÜˆ˜Z[Y]X[]HØ]HŠJBˆYˆ›ÜÜØ[™Ù]
+šÚ[™ŠHOH‘Q•Ôˆˆ[™Ø]WÜİ]\ÈOH”TÔÑQ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸH\ÈH˜YˆÚ]İ]H\ÜÙYØ]H‹šÙY\]\ÈHšXYÙH\ÜİYH[[HØ]H\ÜÙ\ÈŠJBˆYˆ›ÜÜØ[™Ù]
+šÚ[™ŠHOH‘Q•Ôˆˆ[™›ÜÜØ[™Ù]
+œİ]\ÈŠHOH”‘PQH‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸH˜Yˆ[ˆ\È›İ‘PQH‹›XZÙHHØ]Y˜Y[ˆ^XÚ]H‘PQHŠJBˆš[™[™ÈH›ÜÜØ[™Ù]
+™š[™[™ÈŠBˆYˆ\Ú[œİ[˜ÙJš[™[™ËXİ
+H[™š[™[™Ë™Ù]
+˜]Y]Ú\ÚŠHOH]Y]Ú\Ú‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸH\È›İ˜XÙXX›HÈ\È]Y]‹œ™]Z[ˆHÛİ\˜ÙH]Y]\Ú[ˆXXÚ›ÜÜØ[ŠJBˆYˆ›ÜÜØ[™Ù]
+š[X[—ÙØ]HŠH\È›İYN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸH]\İ™]Z[ˆH[X[ˆØ]H‹™È›İY\™ÙHÜˆ™[X\ÙH]]ÛX]XØ[HŠJBˆYˆ›ÜÜØ[™Ù]
+˜\Y˜XİÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›ÜÜØ[Ü›ÜÜØ[ÚY\ŸH]]]\ÈH\Ù\ˆ\Y˜Xİ‹šÙY\\Ù\ˆ\Y˜XİÜ\˜][ÛœÈ[\HŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÚ\ÜİYWÜ›İ][™Ê]NˆXİÛİ\˜ÙNˆİˆHš\ÜİYK\›İ][™ÈŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]H]]Üš]KX˜\ÙY™YY˜XÚÈ›İ]\ÈÚ]İ]Ü™X][™È™[[İH\ÜİY\Ëˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠTÔÕQWÔ“ÕUS‘×ÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH™YY˜XÚÈ›İ][™ÈšY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+BˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂ‚ˆ›Ü˜šY[—ÙšY[ÈHÂˆ˜ÛÛ™\œØ][Ûˆ‹ˆ˜[œØÜš\‹ˆœ›Û\‹ˆ›Y\ÜØYÙH‹ˆœ˜]×İ^‹ˆœ˜]×ØÛÛ™\œØ][Ûˆ‹ˆ\Ù\—İ^‹ˆ˜\ÜÚ\İ[İ^‹ˆ˜›ÙH‹ˆ˜ÛÛ[‹ˆ”’UUWÔUÈ‹ˆ”‘TÕ’PÕQ‹ˆ˜Ü™Y[X[‹ˆ™\™XİÚY[YšY\ˆ‹ˆB‚ˆYˆØØ[Š˜[YK]ˆİˆH‰ŠHOˆ›Û™N‚ˆYˆ\Ú[œİ[˜ÙJ˜[YKXİ
+N‚ˆ›ÜˆÙ^KÚ[[ˆ˜[YKš][\Ê
+N‚ˆYˆİŠÙ^JK›İÙ\Š
+H[ˆÚ][K›İÙ\Š
+H›Üˆ][H[ˆ›Ü˜šY[—ÙšY[ßN‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆÜ]KÚÙ^_H\ÈH›Ü˜šY[ˆ˜]ÈÜˆÙ[œÚ]]™H›İ][™ÈšY[‹ˆœ™]Z[ˆİ[[X\HÛÙ\È[™Ü\]YH]šY[˜ÙH™Y™\™[˜Ù\ÈÛ›H‹ˆ
+Bˆ
+BˆØØ[ŠÚ[ˆÜ]KÚÙ^_HŠBˆ[Yˆ\Ú[œİ[˜ÙJ˜[YK\İ
+N‚ˆ›Üˆ[™^Ú[[ˆ[[Y\˜]J˜[YJN‚ˆØØ[ŠÚ[ˆÜ]VŞÚ[™^WHŠB‚ˆØØ[Š]JBˆYˆ]K™Ù]
+›[™HŠHOH‘‘QQPÒ×Ô“ÕUS‘È‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK›[™H]\İ™H‘QQPÒ×Ô“ÕUS‘È‹šÙY\›İ][™ÈÛˆH™YY˜XÚÈ[™HŠJBˆYˆ]K™Ù]
+š[\˜Xİ[Û—Ø›ØÚÚ[™ÈŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[Û—Ø›ØÚÚ[™È]\İ™H˜[ÙH‹™È›İXZÙHH\Ù\ˆØZ]›Üˆ\ÜİYH›İ][™ÈŠJBˆYˆ]K™Ù]
+\Ù\—Ø\Y˜XİÜÛXŞHŠHOH”‘PQÓÓ“HˆÜˆ]K™Ù]
+š\ÜİYWÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœ›İ][™È]\İ›İ]]]H\Ù\ˆ\Y˜XİÈÜˆÜ™X]H™[[İH\ÜİY\È‹œ™]\›ˆY]Y]K[Û›H\ÜİYHØ[™Y]\ÈŠJB‚ˆÛ›İÛˆHÚÛ›İÛ—Ü™\ÜÚ]ÜWÚYÊ
+HÈ˜YÙ[XËX\[Ü˜Ú\İ˜][ÛˆŸBˆ\™[H˜YÙ[XËX\[Ü˜Ú\İ˜][Ûˆ‚ˆ™YY˜XÚ×ÚYÈH]K™Ù]
+š[œ]Ù™YY˜XÚ×ÚYÈŠBˆ›İ]\ÈH]K™Ù]
+œ›İ]\ÈŠBˆ›İ]WÚYÎˆÙ]Üİ—HHÙ]
+
+BˆYˆ\Ú[œİ[˜ÙJ›İ]\Ë\İ
+N‚ˆ›Üˆ[™^›İ]H[ˆ[[Y\˜]J›İ]\ÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJ›İ]KXİ
+N‚ˆÛÛ[YBˆ™YY˜XÚ×ÚYH›İ]K™Ù]
+™™YY˜XÚ×ÚYŠBˆYˆ™YY˜XÚ×ÚY[ˆ›İ]WÚYÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]\ÖŞÚ[™^WH\XØ]\È™YY˜XÚ×ÚYÙ™YY˜XÚ×ÚY\ŸH‹œ›İ]HXXÚ™YY˜XÚÈÚYÛ˜[Û˜ÙHŠJBˆYˆ\Ú[œİ[˜ÙJ™YY˜XÚ×ÚYİŠN‚ˆ›İ]WÚYË˜Y
+™YY˜XÚ×ÚY
+Bˆ\™Ù]H›İ]K™Ù]
+\™Ù]Ü™\ÜÚ]ÜHŠBˆ\™Ù]Ü›ÛHH›İ]K™Ù]
+\™Ù]Ü›ÛHŠBˆYˆ\Ú[œİ[˜ÙJ\™Ù]İŠH[™\™Ù]›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]HÙ™YY˜XÚ×ÚY\ŸH\™Ù]È[šÛ›İÛˆ™\ÜÚ]ÜHİ\™Ù]\ŸH‹\ÙHHX[šY™\İ™\ÜÚ]ÜHÜˆH\™[ŠJBˆYˆ\™Ù]Ü›ÛHOH”T‘S•ˆ[™\™Ù]OH\™[‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]HÙ™YY˜XÚ×ÚY\ŸHX\šÜÈH›Û‹\\™[\™Ù]\ÈT‘S•‹œ›İ]HÜ˜Ú\İ˜][Ûˆ[™V™YY˜XÚÈÈH\™[ŠJBˆYˆ\™Ù]Ü›ÛHOHÒSˆ[™
+\™Ù]\È›Û™HÜˆ\™Ù]OH\™[
+N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]HÙ™YY˜XÚ×ÚY\ŸHX\šÜÈH\™[\ÈÒS‹œ›İ]HÛXZ[ˆ™YY˜XÚÈÈ]ÈİÛš[™ÈÚ[ŠJBˆØ[™Y]\ÈH›İ]K™Ù]
+˜Ø[™Y]WÜ™\ÜÚ]ÜšY\ÈŠBˆYˆ\Ú[œİ[˜ÙJØ[™Y]\Ë\İ
+N‚ˆ›ÜˆØ[™Y]H[ˆØ[™Y]\Î‚ˆYˆØ[™Y]H›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]HÙ™YY˜XÚ×ÚY\ŸH\È[šÛ›İÛˆØ[™Y]HØØ[™Y]H\ŸH‹\ÙHX[šY™\İ™\ÜÚ]ÜHQÈŠJBˆ[™™\™[˜ÙHH›İ]K™Ù]
+š[™™\™[˜ÙHŠBˆÚ[™H›İ]K™Ù]
+šÚ[™ŠBˆYˆ\Ú[œİ[˜ÙJ[™™\™[˜ÙKXİ
+N‚ˆYˆÚ[™[ˆÈš[™™\œ™YÙœšXİ[Ûˆ‹š[™™\œ™YÛ™YYŸN‚ˆYˆ[™™\™[˜ÙK™Ù]
+š\×Ú[™™\œ™YŠH\È›İYHÜˆ[™™\™[˜ÙK™Ù]
+š\İ\Ú\×Üİ]\ÈŠHOH[˜ÛÛ™š\›YY‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆš[™™\œ™Y›İ]HÙ™YY˜XÚ×ÚY\ŸHÜİ]È[˜ÛÛ™š\›YY\İ\Ú\È‹šÙY\[™™\™[˜ÙHÙ\\˜]Hœ›ÛH\Ù\ˆ]ŠJBˆ[Yˆ[™™\™[˜ÙK™Ù]
+š\×Ú[™™\œ™YŠH\È›İ˜[ÙHÜˆ[™™\™[˜ÙK™Ù]
+š\İ\Ú\×Üİ]\ÈŠHOH››İX\XØX›H‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™^XÚ]›İ]HÙ™YY˜XÚ×ÚY\ŸHØ\œšY\È[™™\™[˜ÙHİ]H‹›X\šÈ^XÚ]™YY˜XÚÈ\È›İX\XØX›H›Üˆ[™™\™[˜ÙHŠJBˆİ]\ÈH›İ]K™Ù]
+œ›İ][™×Üİ]\ÈŠBˆØ[™Y]HH›İ]K™Ù]
+š\ÜİYWØØ[™Y]HŠBˆYˆİ]\È[ˆÈ”“ÕUQ‹•’PQÑHŸH[™›İ\Ú[œİ[˜ÙJØ[™Y]KXİ
+N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]HÙ™YY˜XÚ×ÚY\ŸHXÚÜÈHY]Y]K[Û›H\ÜİYHØ[™Y]H‹œ™]Z[ˆHšXYÙXX›HØ[™Y]HÚ]İ]Ü™X][™È]™[[İ[HŠJBˆYˆİ]\È[ˆÈ“ĞÒÑQ‹‘TPĞUWÔÕT‘TÔÑQŸH[™Ø[™Y]H\È›İ›Û™N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]HÙ™YY˜XÚ×ÚY\ŸH\ÈHØ[™Y]HY\ˆÜİ]\ßH‹œİ\™\ÜÈÜˆ›ØÚÈHØ[™Y]HÚ]İ]ÚYHY™™XİÈŠJBˆYˆ\Ú[œİ[˜ÙJØ[™Y]KXİ
+N‚ˆYˆØ[™Y]K™Ù]
+\™Ù]Ü™\ÜÚ]ÜHŠHOH\™Ù]‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ’\ÜİYHØ[™Y]H›ÜˆÙ™YY˜XÚ×ÚY\ŸHÙ\È›İX]Ú›İ]H\™Ù]‹šÙY\\™Ù]]]Üš]HÛÛœÚ\İ[ŠJBˆYˆ™YY˜XÚ×ÚY›İ[ˆØ[™Y]K™Ù]
+œÛİ\˜ÙWÙ™YY˜XÚ×ÚYÈ‹×JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ’\ÜİYHØ[™Y]H›ÜˆÙ™YY˜XÚ×ÚY\ŸHÜİ]ÈÛİ\˜ÙH™Y™\™[˜ÙH‹œ™]Z[ˆH™YY˜XÚÈQ[ˆHØ[™Y]HŠJBˆYˆØ[™Y]K™Ù]
+š[X[—ÙØ]HŠH\È›İYHÜˆØ[™Y]K™Ù]
+œÚYWÙY™™XİŠHOH““Ó‘H‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ’\ÜİYHØ[™Y]H›ÜˆÙ™YY˜XÚ×ÚY\ŸH\\ÜÙ\ÈH[X[‹Û›Ë\ÚYKYY™™Xİ›İ[™\H‹˜Ü™X]H›È™[[İH\ÜİYH]]ÛX]XØ[HŠJBˆYˆİ]\ÈOH”“ÕUQˆ[™Ø[™Y]K™Ù]
+˜Ü™X][Û—Ü\›Z]YŠH\È›İYN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ›İ]YØ[™Y]H›ÜˆÙ™YY˜XÚ×ÚY\ŸH\È›İX\šÙY\›Z]Y‹šÙY\^XÚ]ÛÛœÙ[[™›İ][™Èİ]H[YÛ™YŠJBˆYˆİ]\ÈOH•’PQÑHˆ[™Ø[™Y]K™Ù]
+˜Ü™X][Û—Ü\›Z]YŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆšXYÙHØ[™Y]H›ÜˆÙ™YY˜XÚ×ÚY\ŸH\ÈX\šÙYÜ™X]X›H‹šÙY\[˜Ù\Z[ˆ›İ][™È[ˆšXYÙHŠJBˆYˆ\Ú[œİ[˜ÙJ™YY˜XÚ×ÚYË\İ
+H[™Ù]
+™YY˜XÚ×ÚYÊHOH›İ]WÚYÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[œ]Ù™YY˜XÚ×ÚYÈ[™›İ]\ÈÈ›İÛİ™\ˆHØ[YH™YY˜XÚÈ‹œ™]Z[ˆÛ™H˜XÙXX›H›İ]H›Üˆ]™\H[œ]ÚYÛ˜[ŠJB‚ˆİ\™\ÜÚ[ÛœÈH]K™Ù]
+™\XØ]WÜİ\™\ÜÚ[ÛœÈŠBˆÙY[—Üİ\™\ÜÚ[ÛœÎˆÙ]İ\VÛØš™XİØš™XİWHHÙ]
+
+BˆYˆ\Ú[œİ[˜ÙJİ\™\ÜÚ[ÛœË\İ
+N‚ˆ›Üˆİ\™\ÜÚ[Ûˆ[ˆİ\™\ÜÚ[ÛœÎ‚ˆYˆ›İ\Ú[œİ[˜ÙJİ\™\ÜÚ[Û‹Xİ
+N‚ˆÛÛ[YBˆZ\ˆH
+İ\™\ÜÚ[Û‹™Ù]
+š\ÜİYWÚÙ^HŠKİ\™\ÜÚ[Û‹™Ù]
+œİ\™\ÜÙYÙ™YY˜XÚ×ÚYŠJBˆYˆZ\ˆ[ˆÙY[—Üİ\™\ÜÚ[ÛœÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™\XØ]Hİ\™\ÜÚ[ÛˆÜZ\ˆ\ŸH\X\œÈÚXÙH‹œ™XÛÜ™Û™Hİ\™\ÜÚ[Ûˆ\ˆ™YY˜XÚÈ[™\ÜİYHÙ^HŠJBˆÙY[—Üİ\™\ÜÚ[ÛœË˜Y
+Z\ŠBˆYˆİ\™\ÜÚ[Û‹™Ù]
+˜Ø[›ÛšXØ[Ù™YY˜XÚ×ÚYŠH›İ[ˆ›İ]WÚYÈÜˆİ\™\ÜÚ[Û‹™Ù]
+œİ\™\ÜÙYÙ™YY˜XÚ×ÚYŠH›İ[ˆ›İ]WÚYÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK™\XØ]Hİ\™\ÜÚ[Ûˆ™Y™\™[˜Ù\È[ˆ[šÛ›İÛˆ™YY˜XÚÈQ‹œ™]Z[ˆHØ[›ÛšXØ[[™İ\™\ÜÙY›İ]H™XÛÜ™ÈŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™YˆÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]NˆØš™XİÛİ\˜ÙNˆİŠHOˆ\İÜİ—N‚ˆ\œ›ÜœÎˆ\İÜİ—HH×Bˆ›Ü˜šY[—ÙšY[ÈHÂˆ˜ÛÛ™\œØ][Ûˆ‹ˆ˜[œØÜš\‹ˆœ›Û\‹ˆ›Y\ÜØYÙH‹ˆœ˜]×İ^‹ˆœ˜]×Ü]Y\H‹ˆœ]Y\H‹ˆœ]Y\İ[Ûˆ‹ˆ\Ù\—İ^‹ˆ˜\ÜÚ\İ[İ^‹ˆœİ][Y[‹ˆ˜›ÙH‹ˆ˜ÛÛ[‹ˆ”’UUWÔUÈ‹ˆ”‘TÕ’PÕQ‹ˆ˜Ü™Y[X[‹ˆ™\™XİÚY[YšY\ˆ‹ˆBˆ›Ü˜šY[—ÛİÙ\ˆHÙšY[›İÙ\Š
+H›ÜˆšY[[ˆ›Ü˜šY[—ÙšY[ßB‚ˆYˆØØ[Š˜[YNˆØš™Xİ]ˆİˆH‰ŠHOˆ›Û™N‚ˆYˆ\Ú[œİ[˜ÙJ˜[YKXİ
+N‚ˆ›ÜˆÙ^KÚ[[ˆ˜[YKš][\Ê
+N‚ˆYˆİŠÙ^JK›İÙ\Š
+H[ˆ›Ü˜šY[—ÛİÙ\‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆÜ]KÚÙ^_H\ÈH›Ü˜šY[ˆ˜]ÈÜˆÙ[œÚ]]™H™]šY]˜[šY[‹ˆœİÜ™HİXİ\™YØ\Xš[]HÛÙ\È[™Ü\]YH]šY[˜ÙHØØ]ÜœÈÛ›H‹ˆ
+Bˆ
+BˆØØ[ŠÚ[ˆÜ]KÚÙ^_HŠBˆ[Yˆ\Ú[œİ[˜ÙJ˜[YK\İ
+N‚ˆ›Üˆ[™^Ú[[ˆ[[Y\˜]J˜[YJN‚ˆØØ[ŠÚ[ˆÜ]VŞÚ[™^WHŠB‚ˆØØ[Š]JBˆ™]\›ˆ\œ›ÜœÂ‚‚™YˆÜ™]šY]˜[ÛX[šY™\İÚ[™^
+X[šY™\İˆXİ›Û™HH›Û™JHOˆXİÜİ‹XİN‚ˆØYYHX[šY™\İYˆX[šY™\İ\È›İ›Û™H[ÙHØYŞX[[
+PS’Q‘TÕÔU
+Bˆ™\ÜÚ]ÜšY\ÈHØYY™Ù]
+œ™\ÜÚ]ÜšY\ÈŠHYˆ\Ú[œİ[˜ÙJØYYXİ
+H[ÙH›Û™Bˆ™]\›ˆÂˆ™\ÜÚ]ÜK™Ù]
+šYŠNˆ™\ÜÚ]ÜBˆ›Üˆ™\ÜÚ]ÜH[ˆ™\ÜÚ]ÜšY\ÈÜˆ×BˆYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜKXİ
+H[™\Ú[œİ[˜ÙJ™\ÜÚ]ÜK™Ù]
+šYŠKİŠBˆB‚‚™YˆÜØY™WÜ™]šY]˜[ÛØØ]ÜŠ˜[YNˆØš™Xİ
+HOˆ›ÛÛ‚ˆ™]\›ˆ
+ˆÚ\×ÜØY™WÜ™[]]™WÜ]
+˜[YJBˆ[™\Ú[œİ[˜ÙJ˜[YKİŠBˆ[™‹ËÈˆ›İ[ˆ˜[YBˆ[™[
+Ú\˜Xİ\ˆ›İ[ˆ˜[YH›ÜˆÚ\˜Xİ\ˆ[ˆ
+ˆ‹—ˆ‹—ˆŠJBˆ
+B‚‚™Yˆ˜[Y]WÜ™]šY]˜[Ü™\]Y\İ
+ˆ]NˆXİˆÛİ\˜ÙNˆİˆHœ™]šY]˜[\™\]Y\İ‹ˆX[šY™\İˆXİ›Û™HH›Û™KŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HHİXİ\™Y™\]Y\İÚ]İ]™]Z[š[™È]ÈÛÛ™\œØ][Û˜[ÛÜ™[™Ëˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠ‘U’QUSÔ‘TUQTÕÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH™]šY]˜[™\]Y\İšY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆÛ›İÛˆHÙ]
+Ü™]šY]˜[ÛX[šY™\İÚ[™^
+X[šY™\İ
+JBˆ™Y™\œ™YH]K™Ù]
+œ™Y™\œ™YÜ™\ÜÚ]ÜšY\ÈŠBˆYˆ\Ú[œİ[˜ÙJ™Y™\œ™Y\İ
+N‚ˆ›Üˆ™\ÜÚ]ÜH[ˆ™Y™\œ™Y‚ˆYˆ™\ÜÚ]ÜH›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆœ™Y™\œ™Y™\ÜÚ]ÜHÜ™\ÜÚ]ÜH\ŸH\È›İXÛ\™Y‹ˆ\ÙHH™\ÜÚ]ÜHQœ›ÛHÛÛ™šYËÜ™\ÜÚ]ÜšY\ËX[[‹ˆ
+Bˆ
+Bˆš]˜XŞHH]K™Ù]
+œš]˜XŞHŠBˆYˆ\Ú[œİ[˜ÙJš]˜XŞKXİ
+N‚ˆYˆš]˜XŞK™Ù]
+œ˜]×Ü]Y\WÜİÜ™YŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆœš]˜XŞKœ˜]×Ü]Y\WÜİÜ™Y]\İ™H˜[ÙH‹ˆ™\š]™HØ\Xš[]HÛÙ\È˜[œÚY[H[™È›İ\œÚ\İ˜]È]Y\H^‹ˆ
+Bˆ
+BˆYˆš]˜XŞK™Ù]
+™\™XİÚY[YšY\œ×ÜİÜ™YŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆœš]˜XŞK™\™XİÚY[YšY\œ×ÜİÜ™Y]\İ™H˜[ÙH‹ˆœ™[[İ™H\™XİY[YšY\œÈœ›ÛHH™]šY]˜[[™[ÜH‹ˆ
+Bˆ
+Bˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÜ™]šY]˜[Ú[™^
+]NˆXİX[šY™\İˆXİ›Û™HH›Û™KÛİ\˜ÙNˆİˆHœ™]šY]˜[Z[™^ŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HY\\‹\›İšYY]šY[˜ÙHY]Y]HYØZ[œİ[[]]X›HX[šY™\İ[œËˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠ‘U’QUSÒS‘VÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH™]šY]˜[[™^šY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆ™\ÜÚ]ÜšY\ÈHÜ™]šY]˜[ÛX[šY™\İÚ[™^
+X[šY™\İ
+BˆÙY[—Ù]šY[˜ÙNˆÙ]Üİ—HHÙ]
+
+Bˆ[šY\ÈH]K™Ù]
+™[šY\ÈŠBˆYˆ›İ\Ú[œİ[˜ÙJ[šY\Ë\İ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆ›Üˆ[™^[H[ˆ[[Y\˜]J[šY\ÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJ[KXİ
+N‚ˆÛÛ[YBˆ™Yš^HˆÜÛİ\˜Ù_Nˆ[šY\ÖŞÚ[™^WH‚ˆ]šY[˜ÙWÚYH[K™Ù]
+™]šY[˜ÙWÚYŠBˆYˆ]šY[˜ÙWÚY[ˆÙY[—Ù]šY[˜ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™[šY\ÖŞÚ[™^WH\XØ]\È]šY[˜ÙWÚYÙ]šY[˜ÙWÚY\ŸH‹œ™]Z[ˆÛ™H[[]]X›H]šY[˜ÙH[H\ˆQŠJBˆYˆ\Ú[œİ[˜ÙJ]šY[˜ÙWÚYİŠN‚ˆÙY[—Ù]šY[˜ÙK˜Y
+]šY[˜ÙWÚY
+Bˆ™\ÜÚ]ÜWÚYH[K™Ù]
+œ™\ÜÚ]ÜHŠBˆ™\ÜÚ]ÜHH™\ÜÚ]ÜšY\Ë™Ù]
+™\ÜÚ]ÜWÚY
+BˆYˆ™\ÜÚ]ÜH\È›Û™N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™[šY\ÖŞÚ[™^WH˜[Y\È[šÛ›İÛˆ™\ÜÚ]ÜHÜ™\ÜÚ]ÜWÚY\ŸH‹\ÙHH™\ÜÚ]ÜHXÛ\™Y[ˆHX[šY™\İŠJBˆÛÛ[YBˆØœÙ\™YØÛÛ[Z]H™\ÜÚ]ÜK™Ù]
+›ØœÙ\™YØÛÛ[Z]ŠBˆYˆ[K™Ù]
+œÛİ\˜ÙWØÛÛ[Z]ŠHOHØœÙ\™YØÛÛ[Z]‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ™[šY\ÖŞÚ[™^WHÛİ\˜ÙWØÛÛ[Z]\È›İHX[šY™\İØœÙ\™YÛÛ[Z]‹ˆœ™Yœ™\ÚHY\\ˆ[™^œ›ÛHH[[]]X›H™\ÜÚ]ÜHÛ˜\Úİ‹ˆ
+Bˆ
+BˆYˆ›İÜØY™WÜ™]šY]˜[ÛØØ]ÜŠ[K™Ù]
+›ØØ]ÜˆŠJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™[šY\ÖŞÚ[™^WK›ØØ]Üˆ\È[œØY™H‹\ÙHH™\ÜÚ]ÜK[ØØ[ÜˆÜ\]YH™[]]™HØØ]ÜˆŠJBˆ›Ùš[HH™\ÜÚ]ÜK™Ù]
+šÛ›İÛYÙWÜ›Ùš[H‹ßJBˆ]šY[˜ÙWÜ[\ÈH›Ùš[K™Ù]
+™]šY[˜ÙWÜ[\È‹ßJHYˆ\Ú[œİ[˜ÙJ›Ùš[KXİ
+H[ÙHßBˆ[İÙYÚÚ[™ÈH]šY[˜ÙWÜ[\Ë™Ù]
+˜[İÙYÚÚ[™È‹×JHYˆ\Ú[œİ[˜ÙJ]šY[˜ÙWÜ[\ËXİ
+H[ÙH×BˆYˆ[K™Ù]
+™]šY[˜ÙWÚÚ[™ŠH›İ[ˆ[İÙYÚÚ[™Î‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ™[šY\ÖŞÚ[™^WK™]šY[˜ÙWÚÚ[™\Èİ]ÚYHH™\ÜÚ]ÜH›Ùš[H‹ˆœ™]Z[ˆHÚ[™\ÜÚ]ÜH]šY[˜ÙHÛXŞH]H\™[›İ[™\H‹ˆ
+Bˆ
+Bˆœ™\Ú™\Ü×Ü[\ÈH›Ùš[K™Ù]
+™œ™\Ú™\Ü×Ü[\È‹ßJHYˆ\Ú[œİ[˜ÙJ›Ùš[KXİ
+H[ÙHßBˆ[İÙYÜİ]\Ù\ÈHœ™\Ú™\Ü×Ü[\Ë™Ù]
+˜[İÙYÜİ]\Ù\È‹×JHYˆ\Ú[œİ[˜ÙJœ™\Ú™\Ü×Ü[\ËXİ
+H[ÙH×BˆYˆ[K™Ù]
+™œ™\Ú™\Ü×Üİ]\ÈŠH›İ[ˆ[İÙYÜİ]\Ù\Î‚ˆ\œ›ÜœË˜\[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ™[šY\ÖŞÚ[™^WK™œ™\Ú™\Ü×Üİ]\È\Èİ]ÚYHH™\ÜÚ]ÜH›Ùš[H‹ˆœ™\Ù\™Hİ[HÜˆ[šÛ›İÛˆİ]H[™›ÛİÈHÚ[œ™\Ú™\ÜÈÛXŞH‹ˆ
+Bˆ
+BˆØ\Xš[]WØÛÙ\ÈH[K™Ù]
+˜Ø\Xš[]WØÛÙ\ÈŠBˆYˆ\Ú[œİ[˜ÙJØ\Xš[]WØÛÙ\Ë\İ
+H[™[ŠØ\Xš[]WØÛÙ\ÊHOH[ŠÙ]
+Ø\Xš[]WØÛÙ\ÊJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™[šY\ÖŞÚ[™^WK˜Ø\Xš[]WØÛÙ\È\™H\XØ]Y‹™XÛ\™HXXÚ™]šY]˜[Ø\Xš[]HÛ˜ÙHŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÜ™]šY]˜[Ü™\İ[
+ˆ]NˆXİˆX[šY™\İˆXİ›Û™HH›Û™Kˆ™\]Y\İˆXİ›Û™HH›Û™KˆÛİ\˜ÙNˆİˆHœ™]šY]˜[\™\İ[‹ŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HÙ[XİY™\ÜÚ]ÜšY\È[™]šY[˜ÙH›İ™[˜[˜ÙH[ˆH™]šY]˜[™\İ[ˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠ‘U’QUSÔ‘TÕSÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH™]šY]˜[™\İ[šY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆ™\ÜÚ]ÜšY\ÈHÜ™]šY]˜[ÛX[šY™\İÚ[™^
+X[šY™\İ
+BˆÛ›İÛˆHÙ]
+™\ÜÚ]ÜšY\ÊBˆ™\]Y\İYHÙ]
+]K™Ù]
+˜Ø\Xš[]WØÛÙ\È‹×JJHYˆ\Ú[œİ[˜ÙJ]K™Ù]
+˜Ø\Xš[]WØÛÙ\ÈŠK\İ
+H[ÙHÙ]
+
+BˆÙ[XİYH]K™Ù]
+œÙ[XİYÜ™\ÜÚ]ÜšY\ÈŠBˆÙ[XİYØWÚYˆXİÜİ‹XİHHßBˆYˆ\Ú[œİ[˜ÙJÙ[XİY\İ
+N‚ˆ›Üˆ[™^™XÛÜ™[ˆ[[Y\˜]JÙ[XİY
+N‚ˆYˆ›İ\Ú[œİ[˜ÙJ™XÛÜ™Xİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜWÚYH™XÛÜ™™Ù]
+œ™\ÜÚ]ÜHŠBˆYˆ™\ÜÚ]ÜWÚY[ˆÙ[XİYØWÚY‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœÙ[XİYÜ™\ÜÚ]ÜšY\ÖŞÚ[™^WH\XØ]\ÈÜ™\ÜÚ]ÜWÚY\ŸH‹œÙ[XİXXÚ™\ÜÚ]ÜHÛ˜ÙHŠJBˆYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜWÚYİŠN‚ˆÙ[XİYØWÚYÜ™\ÜÚ]ÜWÚYHH™XÛÜ™ˆ™\ÜÚ]ÜHH™\ÜÚ]ÜšY\Ë™Ù]
+™\ÜÚ]ÜWÚY
+BˆYˆ™\ÜÚ]ÜH\È›Û™N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœÙ[XİY™\ÜÚ]ÜHÜ™\ÜÚ]ÜWÚY\ŸH\È[šÛ›İÛˆ‹\ÙHH™\ÜÚ]ÜHXÛ\™Y[ˆHX[šY™\İŠJBˆÛÛ[YBˆYˆ™XÛÜ™™Ù]
+œÛİ\˜ÙWØÛÛ[Z]ŠHOH™\ÜÚ]ÜK™Ù]
+›ØœÙ\™YØÛÛ[Z]ŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœÙ[XİY™\ÜÚ]ÜHÜ™\ÜÚ]ÜWÚY\ŸH\È›İYYÈ]ÈØœÙ\™YÛÛ[Z]‹œ™]\›ˆH[[]]X›HÛİ\˜ÙHÛÛ[Z]\ÙY›Üˆ™]šY]˜[ŠJBˆX]ÚYH™XÛÜ™™Ù]
+›X]ÚYØØ\Xš[]WØÛÙ\ÈŠBˆYˆ\Ú[œİ[˜ÙJX]ÚY\İ
+H[™›İÙ]
+X]ÚY
+Kš\ÜİXœÙ]
+™\]Y\İY
+N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœÙ[XİY™\ÜÚ]ÜHÜ™\ÜÚ]ÜWÚY\ŸH™\ÜÈ[ˆ[œ™\]Y\İYØ\Xš[]H‹šÙY\Ù[Xİ[Ûˆ]šY[˜ÙHYYÈHİXİ\™Y™\]Y\İŠJBˆ]šY[˜ÙHH]K™Ù]
+™]šY[˜ÙHŠBˆÙY[—Ù]šY[˜ÙNˆÙ]Üİ—HHÙ]
+
+BˆYˆ\Ú[œİ[˜ÙJ]šY[˜ÙK\İ
+N‚ˆ›Üˆ[™^™XÛÜ™[ˆ[[Y\˜]J]šY[˜ÙJN‚ˆYˆ›İ\Ú[œİ[˜ÙJ™XÛÜ™Xİ
+N‚ˆÛÛ[YBˆ]šY[˜ÙWÚYH™XÛÜ™™Ù]
+™]šY[˜ÙWÚYŠBˆYˆ]šY[˜ÙWÚY[ˆÙY[—Ù]šY[˜ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WH\XØ]\È]šY[˜ÙWÚYÙ]šY[˜ÙWÚY\ŸH‹œ™]\›ˆXXÚ]šY[˜ÙH™Y™\™[˜ÙHÛ˜ÙHŠJBˆYˆ\Ú[œİ[˜ÙJ]šY[˜ÙWÚYİŠN‚ˆÙY[—Ù]šY[˜ÙK˜Y
+]šY[˜ÙWÚY
+Bˆ™\ÜÚ]ÜWÚYH™XÛÜ™™Ù]
+œ™\ÜÚ]ÜHŠBˆYˆ™\ÜÚ]ÜWÚY›İ[ˆÙ[XİYØWÚY‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WH\Èİ]ÚYHÙ[XİY™\ÜÚ]ÜšY\È‹œ™]\›ˆ]šY[˜ÙHÛ›Hœ›ÛHHZ[š[][HÙ[XİYÙ]ŠJBˆÛÛ[YBˆ™\ÜÚ]ÜHH™\ÜÚ]ÜšY\Ë™Ù]
+™\ÜÚ]ÜWÚY
+BˆYˆ™\ÜÚ]ÜH\È›İ›Û™H[™™XÛÜ™™Ù]
+œÛİ\˜ÙWØÛÛ[Z]ŠHOH™\ÜÚ]ÜK™Ù]
+›ØœÙ\™YØÛÛ[Z]ŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WHÛİ\˜ÙWØÛÛ[Z]Ù\È›İX]Ú]È™\ÜÚ]ÜH[ˆ‹œ™\Ù\™H[[]]X›H]šY[˜ÙH›İ™[˜[˜ÙHŠJBˆYˆ›İÜØY™WÜ™]šY]˜[ÛØØ]ÜŠ™XÛÜ™™Ù]
+›ØØ]ÜˆŠJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WK›ØØ]Üˆ\È[œØY™H‹œ™]\›ˆH™\ÜÚ]ÜK[ØØ[ÜˆÜ\]YH™[]]™HØØ]ÜˆŠJBˆ›Ùš[HH™\ÜÚ]ÜK™Ù]
+šÛ›İÛYÙWÜ›Ùš[H‹ßJHYˆ™\ÜÚ]ÜH[ÙHßBˆ]šY[˜ÙWÜ[\ÈH›Ùš[K™Ù]
+™]šY[˜ÙWÜ[\È‹ßJHYˆ\Ú[œİ[˜ÙJ›Ùš[KXİ
+H[ÙHßBˆYˆ™XÛÜ™™Ù]
+™]šY[˜ÙWÚÚ[™ŠH›İ[ˆ]šY[˜ÙWÜ[\Ë™Ù]
+˜[İÙYÚÚ[™È‹×JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WHš[Û]\È]È™\ÜÚ]ÜH]šY[˜ÙHÛXŞH‹œ™]Z[ˆHÚ[™\ÜÚ]ÜH]šY[˜ÙH[HŠJBˆœ™\Ú™\Ü×Ü[\ÈH›Ùš[K™Ù]
+™œ™\Ú™\Ü×Ü[\È‹ßJHYˆ\Ú[œİ[˜ÙJ›Ùš[KXİ
+H[ÙHßBˆYˆ™XÛÜ™™Ù]
+™œ™\Ú™\Ü×Üİ]\ÈŠH›İ[ˆœ™\Ú™\Ü×Ü[\Ë™Ù]
+˜[İÙYÜİ]\Ù\È‹×JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WHš[Û]\È]È™\ÜÚ]ÜHœ™\Ú™\ÜÈÛXŞH‹œ™\Ù\™HHÛİ\˜ÙHœ™\Ú™\ÜÈİ]HŠJBˆX]ÚYH™XÛÜ™™Ù]
+›X]ÚYØØ\Xš[]WØÛÙ\ÈŠBˆYˆ\Ú[œİ[˜ÙJX]ÚY\İ
+H[™›İÙ]
+X]ÚY
+Kš\ÜİXœÙ]
+™\]Y\İY
+N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™]šY[˜ÙVŞÚ[™^WH™\ÜÈ[ˆ[œ™\]Y\İYØ\Xš[]H‹šÙY\]šY[˜ÙHYYÈHİXİ\™Y™\]Y\İŠJBˆYˆ]K™Ù]
+œİ]\ÈŠHOH““×ÓPUÒˆ[™
+Ù[XİYØWÚYÜˆÙY[—Ù]šY[˜ÙJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK““×ÓPUÒ™\İ[ÛÛZ[œÈÙ[XİY™\ÜÚ]ÜšY\ÈÜˆ]šY[˜ÙH‹\ÙHÓÓTUWÕÒUÑĞTÈÚ[ˆ\X[]šY[˜ÙH^\İÈŠJBˆYˆ™\]Y\İ\È›İ›Û™N‚ˆYˆ]K™Ù]
+œ™\]Y\İÜ™YˆŠHOH™\]Y\İ™Ù]
+œ™\]Y\İÚYŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœ™\]Y\İÜ™YˆÙ\È›İX]ÚH™]šY]˜[™\]Y\İ‹œ™]Z[ˆH™\]Y\İQ›Üˆ˜XÙXXš[]HŠJBˆYˆ]K™Ù]
+š[[ØÛÙHŠHOH™\]Y\İ™Ù]
+š[[ØÛÙHŠHÜˆ]K™Ù]
+˜Ø\Xš[]WØÛÙ\ÈŠHOH™\]Y\İ™Ù]
+˜Ø\Xš[]WØÛÙ\ÈŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœ™\İ[™\]Y\İšY[ÈÈ›İX]ÚH™]šY]˜[™\]Y\İ‹œ™\Ù\™HİXİ\™Y™\]Y\İ[[[™Ø\Xš[]HÛÙ\ÈŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÚ[\›İ™[Y[ÛÛÜ
+ˆ]NˆXİˆX[šY™\İˆXİ›Û™HH›Û™KˆÛİ\˜ÙNˆİˆHš[\›İ™[Y[[ÛÜ‹ŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]H™\İ[XX›H[\›İ™[Y[İ]ÛÛY\ÈÚ]İ]\›Z][™È™[[İHÚYHY™™XİËˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠST“Õ‘SQS•ÓÓÔÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH[\›İ™[Y[ÛÜšY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂ‚ˆ™\ÜÚ]ÜšY\ÈHÜ™]šY]˜[ÛX[šY™\İÚ[™^
+X[šY™\İ
+BˆÛ›İÛˆHÙ]
+™\ÜÚ]ÜšY\ÊHÈ˜YÙ[XËX\[Ü˜Ú\İ˜][ÛˆŸBˆYˆ]K™Ù]
+›[™HŠHOHUUÓ“ÓSÕT×ÒST“Õ‘SQS•‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK›[™H]\İ™HUUÓ“ÓSÕT×ÒST“Õ‘SQS•‹šÙY\[\›İ™[Y[ÛÜšÈÛˆ]È[™\[™[˜XÚÜİYÙH[™HŠJBˆYˆ]K™Ù]
+š[\˜Xİ[Û—Ø›ØÚÚ[™ÈŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[Û—Ø›ØÚÚ[™È]\İ™H˜[ÙH‹›™]™\ˆ[^HHœ›ÛİYÙH™\ÜÛœÙH›Üˆ[\›İ™[Y[ÛÜšÈŠJBˆYˆ]K™Ù]
+\Ù\—Ø\Y˜XİÜÛXŞHŠHOH”‘PQÓÓ“HˆÜˆ]K™Ù]
+œ™[[İWÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\›İ™[Y[]\İ›İ]]]H\Ù\ˆ\Y˜XİÈÜˆ\™›Ü›H™[[İHÜ\˜][ÛœÈ‹œ™]\›ˆH[X[‹YØ]YY]Y]K[Û›H˜Y[ˆŠJB‚ˆ[œ]Ú\ÜİYWÚÙ^\ÈH]K™Ù]
+š[œ]Ú\ÜİYWÚÙ^\ÈŠBˆ[œ]ÚÙ^\ÈHÙ]
+[œ]Ú\ÜİYWÚÙ^\ÊHYˆ\Ú[œİ[˜ÙJ[œ]Ú\ÜİYWÚÙ^\Ë\İ
+H[ÙHÙ]
+
+Bˆİ]ÛÛY\ÈH]K™Ù]
+›İ]ÛÛY\ÈŠBˆİ]ÛÛYWØWÚÙ^NˆXİÜİ‹XİHHßBˆ[—ÚYÎˆÙ]Üİ—HHÙ]
+
+Bˆ^XİYÜ[—ÚYÎˆÙ]Üİ—HHÙ]
+
+Bˆ›Üˆ[™^İ]ÛÛYH[ˆ[[Y\˜]Jİ]ÛÛY\ÈYˆ\Ú[œİ[˜ÙJİ]ÛÛY\Ë\İ
+H[ÙH×JN‚ˆYˆ›İ\Ú[œİ[˜ÙJİ]ÛÛYKXİ
+N‚ˆÛÛ[YBˆ\ÜİYWÚÙ^HHİ]ÛÛYK™Ù]
+š\ÜİYWÚÙ^HŠBˆYˆ\ÜİYWÚÙ^H[ˆİ]ÛÛYWØWÚÙ^N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛY\ÖŞÚ[™^WH\XØ]\È\ÜİYWÚÙ^HÚ\ÜİYWÚÙ^H\ŸH‹œÙ[XİXXÚØ[›ÛšXØ[\ÜİYHÛ˜ÙHŠJBˆYˆ\Ú[œİ[˜ÙJ\ÜİYWÚÙ^KİŠN‚ˆİ]ÛÛYWØWÚÙ^VÚ\ÜİYWÚÙ^WHHİ]ÛÛYBˆYˆ\Ú[œİ[˜ÙJ\ÜİYWÚÙ^KİŠH[™\ÜİYWÚÙ^H›İ[ˆ[œ]ÚÙ^\Î‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\È›İ[ˆ[œ]Ú\ÜİYWÚÙ^\È‹œ™]Z[ˆH\ÜİYH›İ][™È˜XÙHŠJBˆ\™Ù]Hİ]ÛÛYK™Ù]
+\™Ù]Ü™\ÜÚ]ÜHŠBˆ™\ÜÚ]ÜHH™\ÜÚ]ÜšY\Ë™Ù]
+\™Ù]
+HYˆ\Ú[œİ[˜ÙJ\™Ù]İŠH[ÙH›Û™BˆYˆ\™Ù]\È›İ›Û™H[™\™Ù]›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\™Ù]È[šÛ›İÛˆ™\ÜÚ]ÜHİ\™Ù]\ŸH‹œ›İ]HÛ›HÈHX[šY™\İ™\ÜÚ]ÜHÜˆH\™[ŠJBˆ™\ÜÚ]ÜHH›Û™Bˆ˜\ÙWØÛÛ[Z]Hİ]ÛÛYK™Ù]
+˜˜\ÙWØÛÛ[Z]ŠBˆYˆ™\ÜÚ]ÜH\È›İ›Û™H[™˜\ÙWØÛÛ[Z]OH™\ÜÚ]ÜK™Ù]
+›ØœÙ\™YØÛÛ[Z]ŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\È›İYYÈH\™Ù]ØœÙ\™YÛÛ[Z]‹œ™X˜\ÙHH[\›İ™[Y[[ˆÛˆH[[]]X›HÛİ\˜ÙHÛÛ[Z]ŠJBˆYˆ\™Ù]\È›Û™H[™˜\ÙWØÛÛ[Z]\È›İ›Û™N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\ÈHÛÛ[Z]Ú]İ]H\™Ù]™\ÜÚ]ÜH‹šÙY\[œ™\ÛÛ™YšXYÙHY]Y]H[˜›İ[™ŠJB‚ˆÚ[™ÙYÜ]ÈHİ]ÛÛYK™Ù]
+˜Ú[™ÙYÜ]ÈŠBˆYˆ\Ú[œİ[˜ÙJÚ[™ÙYÜ]Ë\İ
+H[™™\ÜÚ]ÜH\È›İ›Û™N‚ˆ›Ùš[HH™\ÜÚ]ÜK™Ù]
+šÛ›İÛYÙWÜ›Ùš[H‹ßJHYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜKXİ
+H[ÙHßBˆÜš]WÜØÛÜHH›Ùš[K™Ù]
+Üš]WÜØÛÜH‹ßJHYˆ\Ú[œİ[˜ÙJ›Ùš[KXİ
+H[ÙHßBˆ[İÙYÜØÛÜHHÜš]WÜØÛÜK™Ù]
+˜[İÙYÜ]È‹×JHYˆ\Ú[œİ[˜ÙJÜš]WÜØÛÜKXİ
+H[ÙH×BˆYˆ\™Ù]OH˜YÙ[XËX\[Ü˜Ú\İ˜][Ûˆ‚ˆ[İÙYÜØÛÜHHÈ™ØÜÈ‹™^Xİ][Ûˆ‹œØÚ[X\È‹ÛÛÈ‹\İÈ‹˜ÛÛ™šYÈ—Bˆ›Üˆ][ˆÚ[™ÙYÜ]Î‚ˆYˆ›İÚ\×ÜØY™WÜ™[]]™WÜ]
+]
+N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\È[ˆ[œØY™HÚ[™ÙY]‹›[Z][\[Y[][ÛˆØÛÜHÈØY™H™[]]™H]ÈŠJBˆ[Yˆ›İ[J]OH›ÛİÜˆ]œİ\İÚ]
+ˆÜ›ÛİKÈŠH›Üˆ›Ûİ[ˆ[İÙYÜØÛÜJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸHÚ[™Ù\ÈH]İ]ÚYHÜš]WÜØÛÜH‹œ™\ÜXİH\™Ù]Û›İÛYÙH›Ùš[HÜš]HØÛÜHŠJB‚ˆÛÜš×Ú][HHİ]ÛÛYK™Ù]
+ÛÜš×Ú][HŠBˆYˆ\Ú[œİ[˜ÙJÛÜš×Ú][KXİ
+N‚ˆYˆÛÜš×Ú][K™Ù]
+›İÛ™\—Ü™\ÜÚ]ÜHŠHOH\™Ù]‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆÛÜšÈ][H›ÜˆÚ\ÜİYWÚÙ^H\ŸH\ÈHY™™\™[İÛ™\ˆ‹šÙY\ØÚY[\ˆ[™\ÜİYH]]Üš]H[YÛ™YŠJBˆYˆÛÜš×Ú][K™Ù]
+œÛİ\˜ÙWØÛÛ[Z]ŠHOH˜\ÙWØÛÛ[Z]‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆÛÜšÈ][H›ÜˆÚ\ÜİYWÚÙ^H\ŸH\È›İYYÈHİ]ÛÛYHÛÛ[Z]‹œ™]Z[ˆÛ™H[[]]X›H˜\ÙHÛÛ[Z]XÜ›ÜÜÈ[[YHÚXÚÜÚ[ÈŠJBˆYˆÛÜš×Ú][K™Ù]
+œØÚY[\—Üİ]\ÈŠHOH”ÑSPÕQ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆÛÜšÈ][H›ÜˆÚ\ÜİYWÚÙ^H\ŸHØ\È›İØÚY[\‹\Ù[XİY‹™È›İ›ÙÜ™\ÜÈ[ˆ^ÛYYÛÜšÈ][HŠJB‚ˆ˜YHİ]ÛÛYK™Ù]
+™˜YÜ—Ü[ˆŠBˆ[]™\HHİ]ÛÛYK™Ù]
+™[]™\WÜİ]\ÈŠBˆYˆ[]™\HOH‘Q•Ô—Ô‘PQH‚ˆYˆİ]ÛÛYK™Ù]
+š[\[Y[][Û—Üİ]\ÈŠHOH”TÔÑQˆÜˆİ]ÛÛYK™Ù]
+\İÜİ]\ÈŠHOH”TÔÑQˆÜˆİ]ÛÛYK™Ù]
+œ]X[]WÙØ]WÜİ]\ÈŠHOH”TÔÑQ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™˜Y[ˆ›ÜˆÚ\ÜİYWÚÙ^H\ŸHXÚÜÈ[\[Y[][Û‹İ\İÙØ]H]šY[˜ÙH‹šÙY\˜Z[YÜˆZ\ÜÚ[™È]šY[˜ÙHİ]Ùˆ˜Yˆ[›š[™ÈŠJBˆYˆ›İ\Ú[œİ[˜ÙJ˜YXİ
+N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™˜Y[ˆ›ÜˆÚ\ÜİYWÚÙ^H\ŸH\ÈZ\ÜÚ[™È‹™[Z]H[X[‹YØ]Y[ˆÛ›HY\ˆ[ÚXÚÜÈ\ÜÈŠJBˆ[Yˆ˜Y\È›İ›Û™N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ››Û‹\™XYHİ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\ÈH˜Yˆ[ˆ‹šÙY\šXYÙH[™›ØÚÙYÛÜšÈÚ]İ]H˜Y[ˆŠJBˆYˆ\Ú[œİ[˜ÙJ˜YXİ
+N‚ˆ[—ÚYH˜Y™Ù]
+œ[—ÚYŠBˆYˆ[—ÚY[ˆ[—ÚYÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™˜Y[ˆÜ[—ÚY\ŸH\È\XØ]Y‹™[Z]Û™H[ˆ\ˆØ[›ÛšXØ[\ÜİYHŠJBˆYˆ\Ú[œİ[˜ÙJ[—ÚYİŠN‚ˆ[—ÚYË˜Y
+[—ÚY
+Bˆ^XİYÜ[—ÚYË˜Y
+[—ÚY
+BˆYˆ˜Y™Ù]
+š\ÜİYWÚÙ^HŠHOH\ÜİYWÚÙ^HÜˆ˜Y™Ù]
+\™Ù]Ü™\ÜÚ]ÜHŠHOH\™Ù]‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™˜Y[ˆ›ÜˆÚ\ÜİYWÚÙ^H\ŸHÜİ]È\ÜİYH]]Üš]H‹šÙY\[ˆ[™İ]ÛÛYH\™Ù]ÈY[XØ[ŠJBˆYˆ˜Y™Ù]
+˜˜\ÙWØÛÛ[Z]ŠHOH˜\ÙWØÛÛ[Z]Üˆ˜Y™Ù]
+˜Ú[™ÙYÜ]ÈŠHOHÚ[™ÙYÜ]Î‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™˜Y[ˆ›ÜˆÚ\ÜİYWÚÙ^H\ŸHÜİ]ÈÛİ\˜ÙHÜˆ]ØÛÜH‹œ™\Ù\™HHÚXÚÜÚ[Y[\[Y[][ÛˆØÛÜHŠJBˆYˆ˜Y™Ù]
+œ]X[]WÙØ]WÜİ]\ÈŠHOH”TÔÑQˆÜˆ˜Y™Ù]
+š[X[—ÙØ]HŠH\È›İYHÜˆ˜Y™Ù]
+›Y\™ÙWÜ\›Z]YŠH\È›İ˜[ÙHÜˆ˜Y™Ù]
+œ™[X\ÙWÜ\›Z]YŠH\È›İ˜[ÙHÜˆ˜Y™Ù]
+œÚYWÙY™™XİŠHOH““Ó‘H‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ™˜Y[ˆ›ÜˆÚ\ÜİYWÚÙ^H\ŸH\\ÜÙ\ÈH[X[ˆÜˆÚYKYY™™XİØ]H‹™È›İY\™ÙK™[X\ÙKÜˆÜ™X]HH™[[İHˆ]]ÛX]XØ[HŠJB‚ˆÚXÚÜÚ[ÈHİ]ÛÛYK™Ù]
+˜ÚXÚÜÚ[ÈŠBˆYˆ\Ú[œİ[˜ÙJÚXÚÜÚ[Ë\İ
+N‚ˆÚXÚÜÚ[ÚÙ^\ÎˆÙ]Üİ—HHÙ]
+
+BˆÚXÚÜÚ[Üİ\ÎˆÙ]Üİ—HHÙ]
+
+Bˆ›ÜˆÚXÚÜÚ[[ˆÚXÚÜÚ[Î‚ˆYˆ›İ\Ú[œİ[˜ÙJÚXÚÜÚ[Xİ
+N‚ˆÛÛ[YBˆÙ^HHÚXÚÜÚ[™Ù]
+šY[\İ[˜ŞWÚÙ^HŠBˆİ\HÚXÚÜÚ[™Ù]
+œİ\ŠBˆYˆÙ^H[ˆÚXÚÜÚ[ÚÙ^\Î‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\XØ]\ÈÚXÚÜÚ[Y[\İ[˜ŞHÙ^H‹œ™\İ[YHHØ[YHÚXÚÜÚ[[œİXYÙˆ\XØ][™ÈÚYHY™™XİÈŠJBˆYˆİ\[ˆÚXÚÜÚ[Üİ\Î‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ›İ]ÛÛYHÚ\ÜİYWÚÙ^H\ŸH\XØ]\ÈÚXÚÜÚ[İ\Üİ\\ŸH‹œ™XÛÜ™Û™H\›Z[˜[ØœÙ\˜][Ûˆ\ˆ[\›İ™[Y[İ\ŠJBˆYˆ\Ú[œİ[˜ÙJÙ^KİŠN‚ˆÚXÚÜÚ[ÚÙ^\Ë˜Y
+Ù^JBˆYˆ\Ú[œİ[˜ÙJİ\İŠN‚ˆÚXÚÜÚ[Üİ\Ë˜Y
+İ\
+BˆYˆ[œ]ÚÙ^\È[™›İ[œ]ÚÙ^\Ëš\Üİ\\œÙ]
+İ]ÛÛYWØWÚÙ^JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK›İ]ÛÛY\ÈÈ›İ]™HHX]Ú[™È[œ]\ÜİYHÙ^H‹œ™]Z[ˆÛ™Hİ]ÛÛYH›ÜˆXXÚØ[›ÛšXØ[[œ]Ø[™Y]HŠJB‚ˆ[œÈH]K™Ù]
+™˜YÜ—Ü[œÈŠBˆXİX[Ü[—ÚYÈHÜ[‹™Ù]
+œ[—ÚYŠH›Üˆ[ˆ[ˆ[œÈYˆ\Ú[œİ[˜ÙJ[‹Xİ
+_HYˆ\Ú[œİ[˜ÙJ[œË\İ
+H[ÙHÙ]
+
+BˆYˆXİX[Ü[—ÚYÈOH^XİYÜ[—ÚYÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKÜ[]™[˜YÜ—Ü[œÈÈ›İX]Úİ]ÛÛYH[œÈ‹šÙY\H[ˆ[™^]\›Z[š\İXÈ[™˜XÙXX›HŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÚ[\˜Xİ[Û—ÙL™Jˆ]NˆXİˆX[šY™\İˆXİ›Û™HH›Û™KˆÛİ\˜ÙNˆİˆHš[\˜Xİ[Û‹YL™H‹ŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HH™]ÛÜšÛ\ÜÈœ›ÛİYÙKØ˜XÚÜİYÙH[YÜ˜][Ûˆ›ÛÙ‹ˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠS•TPÕSÓ—ÑL‘WÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH[\˜Xİ[ÛˆL‘HšY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆ™\ÜÚ]ÜšY\ÈHÜ™]šY]˜[ÛX[šY™\İÚ[™^
+X[šY™\İ
+BˆÛ›İÛˆHÙ]
+™\ÜÚ]ÜšY\ÊBˆÛ˜\ÚİÎˆXİÜİ‹İ—HHßBˆ™]šY]˜[H]K™Ù]
+œ™]šY]˜[‹ßJBˆYˆ\Ú[œİ[˜ÙJ™]šY]˜[Xİ
+N‚ˆ›Üˆ[™^Û˜\Úİ[ˆ[[Y\˜]J™]šY]˜[™Ù]
+œÛİ\˜ÙWÜÛ˜\ÚİÈ‹×JJN‚ˆYˆ›İ\Ú[œİ[˜ÙJÛ˜\ÚİXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜHHÛ˜\Úİ™Ù]
+œ™\ÜÚ]ÜHŠBˆÛÛ[Z]HÛ˜\Úİ™Ù]
+˜ÛÛ[Z]ŠBˆYˆ™\ÜÚ]ÜH[ˆÛ˜\ÚİÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ™]šY]˜[Ûİ\˜ÙHÛ˜\Úİ\XØ]\ÈÜ™\ÜÚ]ÜH\ŸH‹œ™XÛÜ™Û™H[[]]X›HÛ˜\Úİ\ˆ™\ÜÚ]ÜHŠJBˆYˆ™\ÜÚ]ÜH›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ™]šY]˜[Ûİ\˜ÙHÛ˜\Úİ˜[Y\È[šÛ›İÛˆ™\ÜÚ]ÜHÜ™\ÜÚ]ÜH\ŸH‹\ÙHX[šY™\İ™\ÜÚ]ÜHQÈŠJBˆYˆ\Ú[œİ[˜ÙJ™\ÜÚ]ÜKİŠN‚ˆÛ˜\ÚİÖÜ™\ÜÚ]ÜWHHÛÛ[Z]ˆYˆ™\ÜÚ]ÜH[ˆ™\ÜÚ]ÜšY\È[™ÛÛ[Z]OH™\ÜÚ]ÜšY\ÖÜ™\ÜÚ]ÜWK™Ù]
+›ØœÙ\™YØÛÛ[Z]ŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ™]šY]˜[Ûİ\˜ÙHÛ˜\ÚİÜ™\ÜÚ]ÜH\ŸH\È›İ[›™YÈHX[šY™\İÛÛ[Z]‹œ™\Ù\™HH[[]]X›H[œ]Û˜\ÚİŠJBˆ\Y˜XİH]K™Ù]
+˜\Y˜Xİ‹ßJBˆ\Y˜XİÜÛ˜\ÚİÈH\Y˜Xİ™Ù]
+œÛİ\˜ÙWÜÛ˜\ÚİÈ‹×JHYˆ\Ú[œİ[˜ÙJ\Y˜XİXİ
+H[ÙH×Bˆ›ÜˆÛ˜\Úİ[ˆ\Y˜XİÜÛ˜\ÚİÎ‚ˆYˆ›İ\Ú[œİ[˜ÙJÛ˜\ÚİXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜHHÛ˜\Úİ™Ù]
+œ™\ÜÚ]ÜHŠBˆÛÛ[Z]HÛ˜\Úİ™Ù]
+˜ÛÛ[Z]ŠBˆYˆ™\ÜÚ]ÜH›İ[ˆÛ˜\ÚİÈÜˆÛ˜\ÚİË™Ù]
+™\ÜÚ]ÜJHOHÛÛ[Z]‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ˜\Y˜XİÛ˜\ÚİÜ™\ÜÚ]ÜH\ŸHÙ\È›İX]Ú™]šY]˜[›İ™[˜[˜ÙH‹˜Ø\œHHØ[YH™\ÜÚ]ÜPÛÛ[Z][ÈH\Y˜Xİ[™[ÜHŠJBˆYˆ\Ú[œİ[˜ÙJ\Y˜XİXİ
+N‚ˆYˆ\Y˜Xİ™Ù]
+˜\Y˜XİÚYŠH›İ[ˆ]K™Ù]
+š[\˜Xİ[Ûˆ‹ßJK™Ù]
+˜\Y˜XİÜ™YœÈ‹×JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK˜\Y˜Xİ\È›İ™Y™\™[˜ÙYHH[\˜Xİ[Ûˆİ]ÛÛYH‹œ™]Z[ˆH[[]]X›H\Y˜Xİ™Y™\™[˜ÙH[ˆH^\šY[˜ÙH]™[ŠJBˆ]šY[˜ÙWÜ™YœÈH\Y˜Xİ™Ù]
+™]šY[˜ÙWÜ™YœÈ‹×JBˆ™]šY]˜[Ù]šY[˜ÙHHÙ]
+™]šY]˜[™Ù]
+™]šY[˜ÙWÚYÈ‹×JJHYˆ\Ú[œİ[˜ÙJ™]šY]˜[Xİ
+H[ÙHÙ]
+
+BˆYˆ›İÙ]
+]šY[˜ÙWÜ™YœÊKš\ÜİXœÙ]
+™]šY]˜[Ù]šY[˜ÙJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK˜\Y˜Xİ]šY[˜ÙH\È›İ™\Ù[[ˆ™]šY]˜[İ]]‹œ™\Ù\™H]šY[˜ÙH[™XYÙHœ›ÛH™]šY]˜[È\Y˜XİŠJBˆ[\˜Xİ[ÛˆH]K™Ù]
+š[\˜Xİ[Ûˆ‹ßJBˆYˆ\Ú[œİ[˜ÙJ[\˜Xİ[Û‹Xİ
+N‚ˆYˆÙ]
+[\˜Xİ[Û‹™Ù]
+˜\Y˜XİÜ™YœÈ‹×JJHOHØ\Y˜Xİ™Ù]
+˜\Y˜XİÚYŠ_N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[Ûˆ\Y˜Xİ™Y™\™[˜Ù\È\™H[˜ÛÛœÚ\İ[‹œ™XÛÜ™^XİHHÜ™X]Y[[]]X›H\Y˜XİŠJBˆYˆ[\˜Xİ[Û‹™Ù]
+œ˜]×ØÛÛ™\œØ][Û—ÜİÜ™YŠH\È›İ˜[ÙHÜˆ[\˜Xİ[Û‹™Ù]
+™\™XİÚY[YšY\œ×ÜİÜ™YŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[Ûˆš]˜XŞH›İ[™\H\È›İÛÜÙY‹šÙY\˜]ÈÛÛ™\œØ][Ûˆ[™\™XİY[YšY\œÈİ]ÚYHÚ]ŠJBˆ™YY˜XÚÈH]K™Ù]
+™™YY˜XÚÈ‹ßJBˆYˆ\Ú[œİ[˜ÙJ™YY˜XÚËXİ
+H[™™YY˜XÚË™Ù]
+œ›Û[İYİ×İ\Ù\—Ù˜XİŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK™™YY˜XÚÈØ\È›Û[İYÈ\Ù\ˆ˜Xİ‹šÙY\[™™\œ™Y™YY˜XÚÈ\È[ˆ[˜ÛÛ™š\›YY\İ\Ú\ÈŠJBˆ›İ][™ÈH]K™Ù]
+œ›İ][™È‹ßJBˆYˆ\Ú[œİ[˜ÙJ›İ][™ËXİ
+H[™›İ][™Ë™Ù]
+š\ÜİYWÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[ÛˆL‘H][\YH™[[İH\ÜİYHÜ\˜][Ûˆ‹šÙY\\ÜİYH›İ][™ÈY]Y]K[Û›H[[H[X[ˆØ]HŠJBˆ[\›İ™[Y[H]K™Ù]
+š[\›İ™[Y[‹ßJBˆYˆ\Ú[œİ[˜ÙJ[\›İ™[Y[Xİ
+H[™[\›İ™[Y[™Ù]
+œ™[[İWÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[ÛˆL‘H][\YH™[[İH[\›İ™[Y[Ü\˜][Ûˆ‹šÙY\˜Yˆ[›š[™ÈY]Y]K[Û›HŠJBˆ]Y]H]K™Ù]
+˜]Y]‹ßJBˆYˆ\Ú[œİ[˜ÙJ]Y]Xİ
+H[™
+]Y]™Ù]
+›[™HŠHOHTÖS×ĞUQUˆÜˆ]Y]™Ù]
+š[\˜Xİ[Û—Ø›ØÚÚ[™ÈŠH\È›İ˜[ÙHÜˆ]Y]™Ù]
+˜\Y˜XİÛÜ\˜][ÛœÈŠHOH×JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK˜]Y]\È›İ[™\[™[[™™XY[Û›H‹œ[ˆ]Y]Ûˆ]ÈİÛˆ›Û‹X›ØÚÚ[™È[™HŠJBˆXØÙ\[˜ÙHH]K™Ù]
+˜XØÙ\[˜ÙH‹ßJBˆYˆ\Ú[œİ[˜ÙJXØÙ\[˜ÙKXİ
+H[™[J˜[YH\È›İYH›Üˆ˜[YH[ˆXØÙ\[˜ÙK˜[Y\Ê
+JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[\˜Xİ[ÛˆL‘HXØÙ\[˜ÙH\È[˜ÛÛ\]H‹œ™\Ù\™H]™\Hœ›ÛİYÙKØ˜XÚÜİYÙHØY™]H[˜\šX[ŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WØYÙ[İZWÜ™\İ[
+]NˆXİÛİ\˜ÙNˆİˆH˜YÙ[]ZHŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HHÛÜÙYY]Y]H[™[ÜH[Z]YHH[š]X[RHÛÛ[X[™ˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠQÑS•ÕRWÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİHYÙ[RH™\İ[šY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆİ\\H]K™Ù]
+œİ\\‹ßJBˆYˆ\Ú[œİ[˜ÙJİ\\Xİ
+H[™İ\\™Ù]
+œİ]\ÈŠHOH]K™Ù]
+œİ]\ÈŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK˜YÙ[RHİ]\ÈÙ\È›İX]Úİ\\İ]\È‹™È›İ^ÜÙHØ\Xš[]Y\È™^[Û™Hİ\\XÚ\Ú[ÛˆŠJBˆ[œİÙ\ˆH]K™Ù]
+˜[œİÙ\ˆ‹ßJBˆÛİ\˜Ù\ÈH[œİÙ\‹™Ù]
+œÛİ\˜Ù\È‹×JHYˆ\Ú[œİ[˜ÙJ[œİÙ\‹Xİ
+H[ÙH×BˆÛ›İÛˆHÚÛ›İÛ—Ü™\ÜÚ]ÜWÚYÊ
+HÈ˜YÙ[XËX\[Ü˜Ú\İ˜][ÛˆŸBˆÙY[ˆÙ]Üİ—HHÙ]
+
+BˆYˆ\Ú[œİ[˜ÙJÛİ\˜Ù\Ë\İ
+N‚ˆ›Üˆ[™^Ûİ\˜ÙWÚ][H[ˆ[[Y\˜]JÛİ\˜Ù\ÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJÛİ\˜ÙWÚ][KXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜHHÛİ\˜ÙWÚ][K™Ù]
+œ™\ÜÚ]ÜHŠBˆÛÛ[Z]HÛİ\˜ÙWÚ][K™Ù]
+˜ÛÛ[Z]ŠBˆYˆ™\ÜÚ]ÜH[ˆÙY[‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ˜[œİÙ\‹œÛİ\˜Ù\ÖŞÚ[™^WH\XØ]\ÈÜ™\ÜÚ]ÜH\ŸH‹™[Z]Û™H™\ÜÚ]ÜPÛÛ[Z]Ûİ\˜ÙH™XÛÜ™ŠJBˆYˆ™\ÜÚ]ÜH›İ[ˆÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ˜[œİÙ\‹œÛİ\˜Ù\ÖŞÚ[™^WH˜[Y\È[šÛ›İÛˆ™\ÜÚ]ÜH‹\ÙHÛ›HX[šY™\İ™\ÜÚ]ÜHQÈŠJBˆÙY[‹˜Y
+™\ÜÚ]ÜJBˆYˆÛİ\˜ÙWÚ][K™Ù]
+œ™\ÜÚ]ÜWØ]ØÛÛ[Z]ŠHOHˆÜ™\ÜÚ]Ü_PØÛÛ[Z]H‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆ˜[œİÙ\‹œÛİ\˜Ù\ÖŞÚ[™^WH™\ÜÚ]ÜPÛÛ[Z]\È[˜ÛÛœÚ\İ[‹œ™[™\ˆH[[]]X›HÛİ\˜ÙHÛÛ[Z]^XÚ]HŠJBˆ\Y˜XİH]K™Ù]
+˜\Y˜Xİ‹ßJBˆYˆ\Ú[œİ[˜ÙJ\Y˜XİXİ
+H[™\Y˜Xİ™Ù]
+œ™\]Y\İYŠH\È˜[ÙN‚ˆYˆ[J\Y˜Xİ™Ù]
+šY[
+H\È›İ›Û™H›ÜˆšY[[ˆ
+˜\Y˜XİÚY‹œ›İšY\—Ùš[WÚY‹˜ÛÛ[Ú\ÚŠJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK››İ\™\]Y\İY\Y˜XİÛÛZ[œÈH›İšY\ˆ™Y™\™[˜ÙH‹šÙY\XœÙ[İ]]È[ŠJBˆ™YY˜XÚÈH]K™Ù]
+™™YY˜XÚÈ‹ßJBˆYˆ\Ú[œİ[˜ÙJ™YY˜XÚËXİ
+H[™›İÙ]
+™YY˜XÚË™Ù]
+š[™™\œ™YÚYÈ‹×JJKš\Ù\Ú›Ú[
+Ù]
+™YY˜XÚË™Ù]
+™^XÚ]ÚYÈ‹×JJJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK™™YY˜XÚÈ\È›İ^XÚ][™[™™\œ™Y‹œ™\Ù\™HH\İ[˜İ[Ûˆ™]ÙY[ˆØœÙ\™Y™\]Y\İ[™\İ\Ú\ÈŠJBˆš]˜XŞHH]K™Ù]
+œš]˜XŞH‹ßJBˆYˆ\Ú[œİ[˜ÙJš]˜XŞKXİ
+H[™[Jš]˜XŞK™Ù]
+šY[
+H\È›İ˜[ÙH›ÜˆšY[[ˆ
+œ˜]×Ü]Y\WÜİÜ™Y‹œ˜]×ØÛÛ™\œØ][Û—ÜİÜ™Y‹™š]™WØÛÛ[ÜİÜ™Y‹˜Ü™Y[X[×ÜİÜ™Y‹™\™XİÚY[YšY\œ×ÜİÜ™YŠJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK˜YÙ[RHš]˜XŞH›İ[™\H\ÈÜ[ˆ‹œİÜ™HÛ›HİXİ\™YY]Y]H[™Ü\]YH™Y™\™[˜Ù\ÈŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÚ[œÜ\˜][ÛŠ]NˆXİÛİ\˜ÙNˆİˆHš[œÜ\˜][Û‹Z[œ]ŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HHÛÙK[Û›H[œÜ\˜][ÛˆØ\\™H[™]ÈÜ[Û˜[Ù][Y[ˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠS”ÔTUSÓ—ÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH[œÜ\˜][Ûˆ[œ]šY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂ‚ˆ›İ™[˜[˜ÙHH]K™Ù]
+œ›İ™[˜[˜ÙHŠBˆYˆ\Ú[œİ[˜ÙJ›İ™[˜[˜ÙKXİ
+N‚ˆÛ˜\ÚİÈH›İ™[˜[˜ÙK™Ù]
+œ™]šY]˜[ÜÛİ\˜ÙWÜÛ˜\ÚİÈŠBˆYˆ\Ú[œİ[˜ÙJÛ˜\ÚİË\İ
+N‚ˆ™\ÜÚ]ÜšY\ÈHÚ][K™Ù]
+œ™\ÜÚ]ÜHŠH›Üˆ][H[ˆÛ˜\ÚİÈYˆ\Ú[œİ[˜ÙJ][KXİ
+WBˆYˆ[Š™\ÜÚ]ÜšY\ÊHOH[ŠÙ]
+™\ÜÚ]ÜšY\ÊJN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœ™]šY]˜[Ûİ\˜ÙHÛ˜\ÚİÈ]\İ™H[š\]YH‹œ™]Z[ˆÛ™H[[]]X›HÛÛ[Z]\ˆ™\ÜÚ]ÜHŠJBˆ\[[™WÜÛ˜\ÚİÈH›İ™[˜[˜ÙK™Ù]
+œ\[[™WÜÛİ\˜ÙWÜÛ˜\ÚİÈŠBˆYˆ]K™Ù]
+œ\ÙHŠHOH”ÑUQˆ[™\Ú[œİ[˜ÙJ\[[™WÜÛ˜\ÚİË\İ
+H[™›İ\[[™WÜÛ˜\ÚİÎ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœÙ]Y[œÜ\˜][ÛˆXÚÜÈ\[[™HÛİ\˜ÙHÛ˜\ÚİÈ‹œÙ]HÛ›HY\ˆHØ[™Y]H\[[™H\È[ˆŠJBˆYˆ]K™Ù]
+œ\ÙHŠHOH”ÑUQˆ[™›İ›İ™[˜[˜ÙK™Ù]
+˜Ø[™Y]WÚ[œ]Ü™YœÈŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœÙ]Y[œÜ\˜][ÛˆXÚÜÈØ[™Y]H[œ]™Y™\™[˜Ù\È‹œ™]Z[ˆHÙ[XİYØ[™Y]H›İ™[˜[˜ÙHÚ]İ]ÛÜZ[™ÈÚYÛ˜[ÛÛ[ŠJB‚ˆ\ÙHH]K™Ù]
+œ\ÙHŠBˆÙ][Y[H]K™Ù]
+œÙ][Y[ŠBˆÛÛœÙ[H]K™Ù]
+˜ÛÛœÙ[ŠBˆYˆ\ÙHOHĞTT‘Qˆ[™Ù][Y[\È›İ›Û™N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKĞTT‘Q[œÜ\˜][Ûˆ]\İ›İÛÛZ[ˆÙ][Y[‹œ[ˆH^XÚ]Ù][Y[İ\Y\ˆØ[™Y]HÙ[™\˜][ÛˆŠJBˆYˆ\ÙHOH”ÑUQ‚ˆYˆ›İ\Ú[œİ[˜ÙJÙ][Y[Xİ
+HÜˆÙ][Y[™Ù]
+œİ]\ÈŠHOH”ÑUQ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK”ÑUQ[œÜ\˜][ÛˆXÚÜÈHÙ]Y™\İ[‹œ™]Z[ˆØ[™Y]H\[[™H\Ú\È[™Ù[XİYØ[™Y]HQÈŠJBˆYˆ›İ\Ú[œİ[˜ÙJÛÛœÙ[Xİ
+HÜˆÛÛœÙ[™Ù]
+œÙ][Y[ØÛÛ™š\›YYŠH\È›İYN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœÙ][Y[ÛÛœÙ[\È›İÛÛ™š\›YY‹œÙ]HÛ›HÚ][ˆHØ\\™YÛÛœÙ[ØÛÜHŠJBˆYˆ\Ú[œİ[˜ÙJÛÛœÙ[Xİ
+H[™ÛÛœÙ[™Ù]
+œ›Ùš[Wİ\]WÜ\›Z]YŠH\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœ›Ùš[Wİ\]WÜ\›Z]Y]\İ™H˜[ÙH‹™È›İ›Û[İH[ˆ[œÜ\˜][Ûˆ[ÈH\Ù\ˆ›Ùš[H˜XİŠJBˆš]˜XŞHH]K™Ù]
+œš]˜XŞHŠBˆYˆ\Ú[œİ[˜ÙJš]˜XŞKXİ
+N‚ˆ›ÜˆšY[[ˆ
+œ˜]×Ú[œÜ\˜][Û—ÜİÜ™Y‹œ˜]×ØÛÛ™\œØ][Û—ÜİÜ™Y‹™\™XİÚY[YšY\œ×ÜİÜ™YŠN‚ˆYˆš]˜XŞK™Ù]
+šY[
+H\È›İ˜[ÙN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœš]˜XŞKÙšY[H]\İ™H˜[ÙH‹œ™]Z[ˆÛ›HÛÙ\Ë\Ú\Ë[™Ü\]YH›İ™[˜[˜ÙH™Y™\™[˜Ù\ÈŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÚ[š]X[ÛÜ\˜][Ûœ×ÙL™J]NˆXİÛİ\˜ÙNˆİˆHš[š]X[[Ü\˜][ÛœËYL™HŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HHÛÜÙY™]ÛÜšÛ\ÜÈ[š]X[Ü\˜][ÛœÈ]šY[˜ÙH[™[ÜKˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠS’UPSÓÔTUSÓ”×ÑL‘WÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÚ[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİH[š]X[Ü\˜][ÛœÈL‘HšY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+Bˆ\œ›ÜœË™^[™
+ÜØØ[—Ù›Ü˜šY[—Ü™]šY]˜[ÙšY[Ê]KÛİ\˜ÙJJBˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂˆİ\\H]K™Ù]
+œİ\\‹ßJBˆYˆ\Ú[œİ[˜ÙJİ\\Xİ
+H[™İ\\™Ù]
+›Ü™\™YÜİ\ØÛİ[ŠHOHN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKœİ\\™Y›YÚ\È[˜ÛÛ\]H‹œ[ˆ[š[™H™XY[Û›Hİ\\İ\ÈŠJBˆ™]šY]˜[H]K™Ù]
+œ™]šY]˜[‹ßJBˆYˆ\Ú[œİ[˜ÙJ™]šY]˜[Xİ
+N‚ˆ›Üˆ[™^Ûİ\˜ÙWÚ][H[ˆ[[Y\˜]J™]šY]˜[™Ù]
+œÛİ\˜Ù\È‹×JJN‚ˆYˆ›İ\Ú[œİ[˜ÙJÛİ\˜ÙWÚ][KXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜWØ]ØÛÛ[Z]HÛİ\˜ÙWÚ][K™Ù]
+œ™\ÜÚ]ÜWØ]ØÛÛ[Z]‹ˆŠBˆ™\ÜÚ]ÜHHÛİ\˜ÙWÚ][K™Ù]
+œ™\ÜÚ]ÜHŠBˆYˆ™\ÜÚ]ÜH›İ[ˆ™\ÜÚ]ÜWØ]ØÛÛ[Z]Üˆˆ›İ[ˆ™\ÜÚ]ÜWØ]ØÛÛ[Z]‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKˆœ™]šY]˜[œÛİ\˜Ù\ÖŞÚ[™^WHXÚÜÈ™\ÜÚ]ÜPÛÛ[Z]‹œ™]Z[ˆ[[]]X›HÛİ\˜ÙH›İ™[˜[˜ÙH[ˆH[œİÙ\ˆŠJBˆš]™HH]K™Ù]
+™š]™H‹ßJBˆYˆ\Ú[œİ[˜ÙJš]™KXİ
+H[™š]™K™Ù]
+›Ü\˜][Û—ÜÙ\]Y[˜ÙHŠHOHÈ”‘PQ‹Ô‘PUH‹”‘PQ‹”‘PQ‹”‘PQ—N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK‘š]™HÜ\˜][ÛˆÙ\]Y[˜ÙH\È›İÜ™X]KÜ™XYÜ™\^K[Û›H‹šÙY\™\^H\ÈHX\šÙ\ˆÙX\˜Ú[™™XYX˜XÚÈÚ]İ]HÙXÛÛ™Ô‘PUHŠJBˆ\ÜİYHH]K™Ù]
+š\ÜİYH‹ßJBˆYˆ\Ú[œİ[˜ÙJ\ÜİYKXİ
+N‚ˆYˆ\ÜİYK™Ù]
+˜Ü™X]H‹ßJK™Ù]
+\™Ù]Ü™\ÜÚ]ÜHŠHOH\ÜİYK™Ù]
+œ™]\ÙH‹ßJK™Ù]
+\™Ù]Ü™\ÜÚ]ÜHŠN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK’\ÜİYHÔ‘PUKÔ‘UTÑH\™Ù]ÈY™™\ˆ‹œ™]\ÙHHØ[YH]]Üš]]]™HY\XØ][Ûˆ\™Ù]ŠJBˆYˆ]K™Ù]
+›™]ÛÜšÈŠHOH™\ØX›YˆÜˆ]K™Ù]
+œ™[[İWÛÜ\˜][ÛœÈŠHOH×N‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[š]X[Ü\˜][ÛœÈL‘H\È™[[İHÜ\˜][ÛœÈ‹šÙY\H]X[YšXØ][Ûˆ]™]ÛÜšÛ\ÜÈ[™\ÙHHÙ\\˜]HÜZ[ˆ]™HØ]HŠJBˆ]™WÙØ]HH]K™Ù]
+›]™WÙØ]H‹ßJBˆYˆ\Ú[œİ[˜ÙJ]™WÙØ]KXİ
+H[™]™WÙØ]K™Ù]
+œİ]\ÈŠHOH““ÕÔ‘TUQTÕQ‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙK›]™HØ]HØ\È[\XÚ]H^Xİ]Y‹œ™\]Z\™H[ˆ^XÚ]Ø[™›Ş[™[X[ˆÛÛ™š\›X][Ûˆ™Y›Ü™H]™HÜ\˜][ÛœÈŠJBˆXØÙ\[˜ÙHH]K™Ù]
+˜XØÙ\[˜ÙH‹ßJBˆYˆ\Ú[œİ[˜ÙJXØÙ\[˜ÙKXİ
+H[™[J˜[YH\È›İYH›Üˆ˜[YH[ˆXØÙ\[˜ÙK˜[Y\Ê
+JN‚ˆ\œ›ÜœË˜\[™
+Ú[\˜Xİ[Û—Ù\œ›ÜŠÛİ\˜ÙKš[š]X[Ü\˜][ÛœÈL‘HXØÙ\[˜ÙH\È[˜ÛÛ\]H‹œ™\Ù\™H]™\Hİ\\›İ™[˜[˜ÙKY[\İ[˜ŞK[™š]˜XŞH[˜\šX[ŠJBˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WİÛÜš×Ú][J]NˆXİÛİ\˜ÙNˆİˆHÛÜšËZ][HŠHOˆ\İÜİ—N‚ˆˆˆ•˜[Y]HH™\İ[XX›HÜ›ÜÜË\™\ÜÚ]ÜHÛÜšÈ][H[™]ÈØY™]H[\Ëˆˆˆ‚ˆ\œ›ÜœÎˆ\İÜİ—HH×BˆØÚ[XHHØYÚœÛÛŠÓÔ’ÒUSWÔĞÒSPWÔU
+Bˆ\œ›ÜœË™^[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠÛİ\˜ÙKØÚ[XWÙ\œ›Ü‹˜ÛÜœ™XİHÛÜšÈ][HšY[ŠBˆ›ÜˆØÚ[XWÙ\œ›Üˆ[ˆÜØÚ[XWÙ\œ›ÜœÊ]KØÚ[XJBˆ
+BˆYˆ›İ\Ú[œİ[˜ÙJ]KXİ
+N‚ˆ™]\›ˆ\œ›ÜœÂ‚ˆX[šY™\İHØYŞX[[
+PS’Q‘TÕÔU
+Bˆ™\ÜÚ]ÜšY\ÈHX[šY™\İ™Ù]
+œ™\ÜÚ]ÜšY\È‹×JHYˆ\Ú[œİ[˜ÙJX[šY™\İXİ
+H[ÙH×BˆÛ›İÛ—Ü™\ÜÚ]ÜšY\ÈHÂˆ™\Ë™Ù]
+šYŠH›Üˆ™\È[ˆ™\ÜÚ]ÜšY\ÈYˆ\Ú[œİ[˜ÙJ™\ËXİ
+BˆBˆÛ›İÛ—Ü™\ÜÚ]ÜšY\Ë˜Y
+˜YÙ[XËX\[Ü˜Ú\İ˜][ÛˆŠBˆİÛ™\ˆH]K™Ù]
+›İÛ™\—Ü™\ÜÚ]ÜHŠBˆ\™Ù]ÈH]K™Ù]
+\™Ù]Ü™\ÜÚ]ÜšY\ÈŠBˆYˆİÛ™\ˆ›İ[ˆÛ›İÛ—Ü™\ÜÚ]ÜšY\Î‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ›İÛ™\—Ü™\ÜÚ]ÜHÛİÛ™\ˆ\ŸH\È›İXÛ\™Y‹ˆ\ÙHH™\ÜÚ]ÜHQœ›ÛHÛÛ™šYËÜ™\ÜÚ]ÜšY\ËX[[‹ˆ
+Bˆ
+BˆYˆ\Ú[œİ[˜ÙJ\™Ù]Ë\İ
+N‚ˆ›Üˆ[™^™\ÜÚ]ÜH[ˆ[[Y\˜]J\™Ù]ÊN‚ˆYˆ™\ÜÚ]ÜH›İ[ˆÛ›İÛ—Ü™\ÜÚ]ÜšY\Î‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ\™Ù]Ü™\ÜÚ]ÜšY\ÖŞÚ[™^WHÜ™\ÜÚ]ÜH\ŸH\È›İXÛ\™Y‹ˆ\ÙHÛ›HX[šY™\İ™\ÜÚ]ÜHQÈ‹ˆ
+Bˆ
+BˆYˆİÛ™\ˆ›İ[ˆ\™Ù]Î‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ›İÛ™\—Ü™\ÜÚ]ÜH]\İ™H[˜ÛYY[ˆ\™Ù]Ü™\ÜÚ]ÜšY\È‹ˆ›XZÙHHİÛ™\ˆ[ˆ^XÚ]\™Ù]ÙˆHÛÜšÈ][H‹ˆ
+Bˆ
+B‚ˆ[İÙYÜ]ÈH]K™Ù]
+˜[İÙYÜ]ÈŠBˆYˆ\Ú[œİ[˜ÙJ[İÙYÜ]Ë\İ
+N‚ˆYˆ[Š[İÙYÜ]ÊHOH[ŠÙ]
+[İÙYÜ]ÊJN‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ˜[İÙYÜ]È]\İ™H[š\]YH‹ˆ™XÛ\™HXXÚÜš]X›H]Û˜ÙH‹ˆ
+Bˆ
+Bˆ›Üˆ[™^][ˆ[[Y\˜]J[İÙYÜ]ÊN‚ˆYˆ›İÚ\×ÜØY™WÜ™[]]™WÜ]
+]
+N‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ˜[İÙYÜ]ÖŞÚ[™^WH\È›İHØY™H™[]]™H]‹ˆœ™[[İ™HXœÛÛ]H]È[™ˆÜˆ‹ˆÙYÛY[È‹ˆ
+Bˆ
+B‚ˆ\[™[˜ÚY\ÈH]K™Ù]
+™\[™×ÛÛˆŠBˆYˆ\Ú[œİ[˜ÙJ\[™[˜ÚY\Ë\İ
+N‚ˆYˆ[Š\[™[˜ÚY\ÊHOH[ŠÙ]
+\[™[˜ÚY\ÊJN‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ™\[™×ÛÛˆ]\İ™H[š\]YH‹ˆ™XÛ\™HXXÚ\[™[˜ŞHÛ˜ÙH‹ˆ
+Bˆ
+BˆYˆ]K™Ù]
+šYŠH[ˆ\[™[˜ÚY\Î‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆÛÜšÈ][HØ[››İ\[™Ûˆ]Ù[ˆ‹ˆœ™[[İ™HHÙ[ˆ\[™[˜ŞH[™ÙY\H\ÚÈQÈXŞXÛXÈ‹ˆ
+Bˆ
+B‚ˆÚXÚÜÈH]K™Ù]
+˜ÚXÚÜÈŠBˆYˆ\Ú[œİ[˜ÙJÚXÚÜË\İ
+N‚ˆ›Üˆ[™^ÚXÚÈ[ˆ[[Y\˜]JÚXÚÜÊN‚ˆYˆ›İ\Ú[œİ[˜ÙJÚXÚËXİ
+N‚ˆÛÛ[YBˆ™\ÜÚ]ÜHHÚXÚË™Ù]
+œ™\ÜÚ]ÜHŠBˆYˆ™\ÜÚ]ÜH›İ[ˆÛ›İÛ—Ü™\ÜÚ]ÜšY\Î‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ˜ÚXÚÜÖŞÚ[™^WKœ™\ÜÚ]ÜHÜ™\ÜÚ]ÜH\ŸH\È›İXÛ\™Y‹ˆœ[ˆXXÚÚXÚÈ[ˆHX[šY™\İ™\ÜÚ]ÜH‹ˆ
+Bˆ
+BˆÛÛ[X[™HÚXÚË™Ù]
+˜ÛÛ[X[™ŠBˆYˆ\Ú[œİ[˜ÙJÛÛ[X[™İŠH[™[JÚÙ[ˆ[ˆÛÛ[X[™›ÜˆÚÙ[ˆ[ˆÓÓSPS‘Ñ“Ô’QS—ÕÒÑS”ÊN‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ˜ÚXÚÜÖŞÚ[™^WK˜ÛÛ[X[™ÛÛZ[œÈÚ[ÛÛ›ÛŞ[^‹ˆœÜ]ÚXÚÜÈ[ÈÙ\\˜]HØY™HÛÛ[X[™È‹ˆ
+Bˆ
+B‚ˆ][\ÈH]K™Ù]
+˜][\ÈŠBˆYˆ\Ú[œİ[˜ÙJ][\ËXİ
+N‚ˆ\ÙYH][\Ë™Ù]
+\ÙYŠBˆX^[][HH][\Ë™Ù]
+›X^ŠBˆYˆ\Ú[œİ[˜ÙJ\ÙY[
+H[™\Ú[œİ[˜ÙJX^[][K[
+H[™\ÙYˆX^[][N‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ˜][\Ë\ÙYØ[››İ^ÙYY][\Ë›X^‹ˆœ™XÛÜ™HXİX[™]HÛİ[Ú][ˆHXÛ\™Y™]HYÙ]‹ˆ
+Bˆ
+BˆÛÛ™šYÈHØYŞX[[
+“ÓÕÈ˜ÛÛ™šYËÛÜ˜Ú\İ˜][Û‹X[[ŠBˆÛÛ™šYİ\™YÛX^HÛÛ™šYË™Ù]
+™^Xİ][Ûˆ‹ßJK™Ù]
+›X^Ø][\ÈŠBˆYˆ\Ú[œİ[˜ÙJX^[][K[
+H[™\Ú[œİ[˜ÙJÛÛ™šYİ\™YÛX^[
+H[™X^[][HˆÛÛ™šYİ\™YÛX^‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆˆ˜][\Ë›X^ÛX^[][_H^ÙYYÈÛÛ™šYİ\™YX^Ø][\ÈØÛÛ™šYİ\™YÛX^H‹ˆ\ÙHH™\ÜÚ]ÜH™]HYÙ]Üˆ\]HÛXŞH^XÚ]H‹ˆ
+Bˆ
+B‚ˆX\ÙHH]K™Ù]
+›X\ÙHŠBˆ\›Z[˜[Üİ]HH]K™Ù]
+\›Z[˜[Üİ]HŠBˆYˆ\Ú[œİ[˜ÙJX\ÙKXİ
+N‚ˆYˆX\ÙK™Ù]
+œİ]\ÈŠHOH˜]˜Z[X›Hˆ[™X\ÙK™Ù]
+›İÛ™\ˆŠHOH[˜\ÜÚYÛ™Y‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ˜]˜Z[X›HX\ÙH]\İ]™HİÛ™\ˆ	İ[˜\ÜÚYÛ™Y	È‹ˆ˜ÛX\ˆHX\ÙHİÛ™\ˆ™Y›Ü™H™]\›š[™ÈH][HÈH]Y]YH‹ˆ
+Bˆ
+BˆYˆX\ÙK™Ù]
+œİ]\ÈŠHOHš[ˆ[™X\ÙK™Ù]
+›İÛ™\ˆŠHOH[˜\ÜÚYÛ™Y‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆš[X\ÙH]\İY[YH]ÈİÛ™\ˆ‹ˆœ™XÛÜ™HXİ]™HÛÜšÙ\ˆİÛ™\ˆ[™^\H‹ˆ
+Bˆ
+BˆYˆ\›Z[˜[Üİ]H[ˆÈ”‘PQH‹PÒÓÑÈŸH[™X\ÙK™Ù]
+œİ]\ÈŠHOHš[‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆœ]Y]YYÛÜšÈ][HØ[››İ™]Z[ˆH[X\ÙH‹ˆœ™[X\ÙHHX\ÙH™Y›Ü™H™]\›š[™ÈÈPÒÓÑÈÜˆ‘PQH‹ˆ
+Bˆ
+B‚ˆ]šY[˜ÙHH]K™Ù]
+™]šY[˜ÙHŠBˆYˆ\›Z[˜[Üİ]HOH‘Ó‘Hˆ[™\Ú[œİ[˜ÙJ]šY[˜ÙKXİ
+N‚ˆYˆ›İ]šY[˜ÙK™Ù]
+\İÈŠN‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ‘Ó‘HÛÜšÈ][H™\]Z\™\È\İ]šY[˜ÙH‹ˆœ™XÛÜ™HØœÙ\™Y\İÛÛ[X[™È™Y›Ü™HX\šÚ[™ÈÓ‘H‹ˆ
+Bˆ
+BˆYˆ›İ]šY[˜ÙK™Ù]
+˜ÛÛ[Z]ÈŠN‚ˆ\œ›ÜœË˜\[™
+ˆÜÚYÛ˜[Ù\œ›ÜŠˆÛİ\˜ÙKˆ‘Ó‘HÛÜšÈ][H™\]Z\™\ÈÛÛ[Z]]šY[˜ÙH‹ˆœ™XÛÜ™H™\ÜÚ]ÜHÛÛ[Z]ÒHÜˆÙY\H][H›Û‹]\›Z[˜[‹ˆ
+Bˆ
+Bˆ™]\›ˆ\œ›ÜœÂ‚‚™Yˆ˜[Y]WÜ™\ÜÚ]ÜšY\Ê\œ›ÜœÎˆ\İÜİ—KX[šY™\İÜ]ˆ]HPS’Q‘TÕÔU
+HOˆ›Û™N‚ˆ]HHØYŞX[[
+X[šY™\İÜ]
+Bˆ\œ›ÜœË™^[™
+˜[Y]WÛX[šY™\İ
+]KÜÛİ\˜ÙWÛX™[
+X[šY™\İÜ]
+JJB‚‚™Yˆ˜[Y]Wİ\ÚÜÊ\œ›ÜœÎˆ\İÜİ—K]Y]YWÜ]ˆ]›Û™HH›Û™JHOˆ›Û™N‚ˆ]Y]YWÜ]H]Y]YWÜ]Üˆ“ÓÕÈ™^Xİ][Û‹İ\ÚË\]Y]YKX[[‚ˆ]HHØYŞX[[
+]Y]YWÜ]
+Bˆ\ÚÜÈH]K™Ù]
+\ÚÜÈ‹×JHYˆ\Ú[œİ[˜ÙJ]KXİ
+H[ÙH×BˆYÈHİ\ÚË™Ù]
+šYŠH›Üˆ\ÚÈ[ˆ\ÚÜ×BˆYˆ[ŠYÊHOH[ŠÙ]
+YÊJN‚ˆ\œ›ÜœË˜\[™
+ˆÜ]Y]YWÜ]Nˆ\ÚÈQÈ]\İ™H[š\]YHŠBˆWÚYHİ\ÚË™Ù]
+šYŠNˆ\ÚÈ›Üˆ\ÚÈ[ˆ\ÚÜßBˆX[šY™\İHØYŞX[[
+PS’Q‘TÕÔU
+BˆÛ›İÛ—Ü™\ÜÚ]ÜšY\ÈHÂˆ™\Ë™Ù]
+šYŠNˆ™\Ë™Ù]
+™[Û˜[YHŠBˆ›Üˆ™\È[ˆX[šY™\İ™Ù]
+œ™\ÜÚ]ÜšY\È‹×JBˆYˆ\Ú[œİ[˜ÙJ™\ËXİ
+BˆBˆÛ›İÛ—Ü™\ÜÚ]ÜšY\ÖÈ˜YÙ[XËX\[Ü˜Ú\İ˜][Ûˆ—HH›X\ØK\Ø[‹ZœØYÙ[XËX\[Ü˜Ú\İ˜][Ûˆ‚ˆYˆ[JİŠ\ÚË™Ù]
+šY‹ˆŠJKœİ\İÚ]
+PRËHŠH›Üˆ\ÚÈ[ˆ\ÚÜÊHÜˆ
+]Y]YWÜ]OH“ÓÕÈ™^Xİ][Û‹İ\ÚË\]Y]YKX[[ˆ[™
+“ÓÕÈ˜ÛÛ™šYËØXZË]\ÚË\›Ú™Xİ[Û‹šœÛÛˆŠKš\×Ùš[J
+JN‚ˆœ›ÛHÛÛËš\ÜİYWÚ[ZÙH[\ÜXZ×Ü›Ú™Xİ[Û‹˜[Y]WØXZ×Ü›Ú™Xİ[Û‚ˆ\œ›ÜœË™^[™
+˜[Y]WØXZ×Ü›Ú™Xİ[ÛŠ“ÓÕ]JJBˆN‚ˆ›Üˆ›Ú™Xİ[Ûˆ[ˆXZ×Ü›Ú™Xİ[ÛŠ“ÓÕ
+VÈ\ÚÜÈ—N‚ˆÛ›İÛ—Ü™\ÜÚ]ÜšY\ÖÜ›Ú™Xİ[Û–È›İÛ™\ˆ—WHH›X\ØK\Ø[‹ZœÈˆ
+È›Ú™Xİ[Û–È›İÛ™\ˆ—Bˆ^Ù\˜[YQ\œ›Üˆ\È^Î‚ˆ\œ›ÜœË˜\[™
+İŠ^ÊJBˆ›Üˆ\ÚÈ[ˆ\ÚÜÎ‚ˆ\Ú×ÚYH\ÚË™Ù]
+šY‹Z\ÜÚ[™ÏˆŠBˆ›ÜˆšY[[ˆ
+›Z[\İÛ™H‹]H‹œİ]\È‹™\[™×ÛÛˆ‹˜XØÙ\[˜ÙH‹˜ÚXÚÜÈŠN‚ˆYˆšY[›İ[ˆ\ÚÎ‚ˆ\œ›ÜœË˜\[™
+ˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYKÙšY[H\È™\]Z\™YŠBˆYˆ\ÚË™Ù]
+œİ]\ÈŠH›İ[ˆÕUTÑTÎ‚ˆ\œ›ÜœË˜\[™
+ˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYKœİ]\È\È[šÛ›İÛˆŠBˆ\ÜİYWÙšY[ÈH
+š\ÜİYWÜÜÛİ‹\™Ù]Ü™\ÜÚ]ÜšY\È‹˜YÙ[İ\›Z[˜[ŠBˆ\×Ú\ÜİYWÙšY[ÈHÙšY[[ˆ\ÚÈ›ÜˆšY[[ˆ\ÜİYWÙšY[×BˆYˆ\Ú×ÚY[ˆTÔÕQWÔÔÓ×ÕTÒ×ÒQÈ[™›İ[
+\×Ú\ÜİYWÙšY[ÊN‚ˆZ\ÜÚ[™ÈHÙšY[›ÜˆšY[[ˆ\ÜİYWÙšY[ÈYˆšY[›İ[ˆ\Ú×Bˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYHZ\ÜÚ[™È\ÜİYHÔÓÕšY[
+ÊHÛZ\ÜÚ[™ßNÈ‚ˆ˜Y\ÜİYWÜÜÛİ\™Ù]Ü™\ÜÚ]ÜšY\Ë[™YÙ[İ\›Z[˜[‚ˆ
+Bˆ[Yˆ[J\×Ú\ÜİYWÙšY[ÊH[™›İ[
+\×Ú\ÜİYWÙšY[ÊN‚ˆZ\ÜÚ[™ÈHÙšY[›ÜˆšY[[ˆ\ÜİYWÙšY[ÈYˆšY[›İ[ˆ\Ú×Bˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYH\È[˜ÛÛ\]H\ÜİYHÔÓÕÛÛ˜XİÈ‚ˆˆ›Z\ÜÚ[™ÈÛZ\ÜÚ[™ßH‚ˆ
+BˆYˆ[
+\×Ú\ÜİYWÙšY[ÊN‚ˆ\ÜİYWİ\›H\ÚË™Ù]
+š\ÜİYWÜÜÛİŠBˆX]ÚHÒUP—ÒTÔÕQWÕT“™[X]Ú
+\ÜİYWİ\›
+HYˆ\Ú[œİ[˜ÙJ\ÜİYWİ\›İŠH[ÙH›Û™BˆYˆX]Ú\È›Û™N‚ˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYKš\ÜİYWÜÜÛİ\È›İHØ[›ÛšXØ[Ú]Xˆ\ÜİYHT“È‚ˆ\ÙHÎ‹ËÙÚ]X‹˜ÛÛKÏİÛ™\‹Ï™\Ï‹Ú\ÜİY\ËÏ[X™\ˆ‚ˆ
+Bˆ\™Ù]ÈH\ÚË™Ù]
+\™Ù]Ü™\ÜÚ]ÜšY\ÈŠBˆYˆ›İ\Ú[œİ[˜ÙJ\™Ù]Ë\İ
+HÜˆ›İ\™Ù]Î‚ˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYK\™Ù]Ü™\ÜÚ]ÜšY\È]\İ™HH›Û‹Y[\H\İÈ‚ˆ™XÛ\™HHİÛš[™ÈX[šY™\İ™\ÜÚ]ÜH‚ˆ
+Bˆ[ÙN‚ˆYˆ[Š\™Ù]ÊHOH[ŠÙ]
+\™Ù]ÊJN‚ˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYK\™Ù]Ü™\ÜÚ]ÜšY\È]\İ™H[š\]YNÈ‚ˆœ™[[İ™H\XØ]H™\ÜÚ]ÜHQÈ‚ˆ
+Bˆ[šÛ›İÛˆHÜ™\È›Üˆ™\È[ˆ\™Ù]ÈYˆ™\È›İ[ˆÛ›İÛ—Ü™\ÜÚ]ÜšY\×BˆYˆ[šÛ›İÛ‚ˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYK\™Ù]Ü™\ÜÚ]ÜšY\È\È[šÛ›İÛˆ™\ÜÚ]ÜHQÈİ[šÛ›İÛŸNÈ‚ˆ\ÙH™\ÜÚ]ÜšY\ËX[[QÈ‚ˆ
+BˆYˆX]Ú\È›İ›Û™N‚ˆ\™Ù]Ù[Û˜[Y\ÈHÂˆÛ›İÛ—Ü™\ÜÚ]ÜšY\ÖÜ™\×H›Üˆ™\È[ˆ\™Ù]ÈYˆ™\È[ˆÛ›İÛ—Ü™\ÜÚ]ÜšY\ÂˆBˆYˆX]Ú™Ü›İ\
+JH›İ[ˆ\™Ù]Ù[Û˜[Y\Î‚ˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYKš\ÜİYWÜÜÛİ]]Üš]HÛX]Ú™Ü›İ\
+JH\ŸH‚ˆš\Èİ]ÚYH\™Ù]Ü™\ÜÚ]ÜšY\ÎÈÚ[ÈH]]Üš]]]™H™\ÜÚ]ÜH\ÜİYH‚ˆ
+BˆYˆ\ÚË™Ù]
+˜YÙ[İ\›Z[˜[ŠH›İ[ˆQÑS•ÕT“RSSÎ‚ˆ\œ›ÜœË˜\[™
+ˆˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYK˜YÙ[İ\›Z[˜[\È[šÛ›İÛÈ‚ˆˆ\ÙHÛ™HÙˆÜÛÜY
+QÑS•ÕT“RSSÊ_H‚ˆ
+Bˆ\ÈH\ÚË™Ù]
+™\[™×ÛÛˆ‹×JBˆ›Üˆ\[ˆ\Î‚ˆYˆ\›İ[ˆWÚY‚ˆ\œ›ÜœË˜\[™
+ˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYH\[™ÈÛˆZ\ÜÚ[™ÈÙ\HŠBˆYˆ\ÚË™Ù]
+œİ]\ÈŠHOH”‘PQH‚ˆ[˜ÛÛ\]HHÙ\›Üˆ\[ˆ\ÈYˆWÚY™Ù]
+\ßJK™Ù]
+œİ]\ÈŠHOH‘Ó‘H—BˆYˆ[˜ÛÛ\]N‚ˆ\œ›ÜœË˜\[™
+ˆÜ]Y]YWÜ]Nˆİ\Ú×ÚYH‘PQHÚ][˜ÛÛ\]HÚ[˜ÛÛ\]_HŠB‚ˆš\Ú][™ÎˆÙ]Üİ—HHÙ]
+
+Bˆš\Ú]YˆÙ]Üİ—HHÙ]
+
+B‚ˆYˆš\Ú]
+\Ú×ÚYˆİ‹ÚZ[ˆ\İÜİ—JHOˆ›Û™N‚ˆYˆ\Ú×ÚY[ˆš\Ú][™Î‚ˆ\œ›ÜœË˜\[™
+ˆÜ]Y]YWÜ]NˆŞXÛHÉÈOˆ	Ëš›Ú[ŠÚZ[ˆ
+Èİ\Ú×ÚYJ_HŠBˆ™]\›‚ˆYˆ\Ú×ÚY[ˆš\Ú]YÜˆ\Ú×ÚY›İ[ˆWÚY‚ˆ™]\›‚ˆš\Ú][™Ë˜Y
+\Ú×ÚY
+Bˆ›Üˆ\[ˆWÚYİ\Ú×ÚYK™Ù]
+™\[™×ÛÛˆ‹×JN‚ˆš\Ú]
+\ÚZ[ˆ
+Èİ\Ú×ÚYJBˆš\Ú][™Ëœ™[[İ™J\Ú×ÚY
+Bˆš\Ú]Y˜Y
+\Ú×ÚY
+B‚ˆ›Üˆ\Ú×ÚY[ˆWÚY‚ˆš\Ú]
+\Ú×ÚY×JB‚‚™Yˆ˜[Y]JX[šY™\İÜ]ˆ]HPS’Q‘TÕÔU
+HOˆ\İÜİ—N‚ˆ\œ›ÜœÎˆ\İÜİ—HH×Bˆ›Üˆ™[[ˆ‘TURT‘QÑ’STÎ‚ˆYˆ›İ
+“ÓÕÈ™[
+Kš\×Ùš[J
+N‚ˆ\œ›ÜœË˜\[™
+ˆÜ™[Nˆ™\]Z\™Yš[H\ÈZ\ÜÚ[™ÈŠBˆYˆ\œ›ÜœÎ‚ˆ™]\›ˆ\œ›ÜœÂˆN‚ˆ˜[Y]WÜ™\ÜÚ]ÜšY\Ê\œ›ÜœËX[šY™\İÜ]
+Bˆ˜[Y]Wİ\ÚÜÊ\œ›ÜœÊBˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÜ™\ÙX\˜ÚÙ^Xİ][Û—Ø›İ[™\JˆØYŞX[[
+ŒL—Ğ“ÕS‘T–WĞÓÓ‘’Q×ÔU
+KˆÜÛİ\˜ÙWÛX™[
+ŒL—Ğ“ÕS‘T–WĞÓÓ‘’Q×ÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]Wİ˜[œÙ›Ü›X][Û—Ü[WÜ™YÚ\İJˆØYŞX[[
+S”Ñ“Ô“PUSÓ—Ô•SWĞÓÓ‘’Q×ÔU
+KˆÜÛİ\˜ÙWÛX™[
+S”Ñ“Ô“PUSÓ—Ô•SWĞÓÓ‘’Q×ÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÜİ\\ØÛÛ˜Xİ
+ˆØYŞX[[
+ÕT•TÔÓPÖWÔU
+KˆØYÚœÛÛŠÕT•TÔ‘TÔ•ÔĞÒSPWÔU
+KˆÜÛİ\˜ÙWÛX™[
+ÕT•TÔÓPÖWÔU
+KˆÜÛİ\˜ÙWÛX™[
+ÕT•TÔ‘TÔ•ÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÚ\ÜİYWÙ[]™\WØÛÛ˜Xİ
+ˆØYŞX[[
+TÔÕQWÑSU‘T–WÔÓPÖWÔU
+KˆØYÚœÛÛŠTÔÕQWÑSU‘T–WÔĞÒSPWÔU
+KˆØYŞX[[
+X[šY™\İÜ]
+KˆÜÛİ\˜ÙWÛX™[
+TÔÕQWÑSU‘T–WÔÓPÖWÔU
+KˆÜÛİ\˜ÙWÛX™[
+TÔÕQWÑSU‘T–WÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÙš]™WÛ]™WØÛÛ˜Xİ
+ˆØYŞX[[
+’U‘WÓU‘WÔÓPÖWÔU
+KˆØYÚœÛÛŠ’U‘WÓU‘WÔĞÒSPWÔU
+KˆÜÛİ\˜ÙWÛX™[
+’U‘WÓU‘WÔÓPÖWÔU
+KˆÜÛİ\˜ÙWÛX™[
+’U‘WÓU‘WÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÙÚ]X—ÜØ[™›ŞÛ]™WØÛÛ˜Xİ
+ˆØYŞX[[
+ÒUP—ÔĞS‘“ÖÓU‘WÔÓPÖWÔU
+KˆØYÚœÛÛŠÒUP—ÔĞS‘“ÖÓU‘WÔĞÒSPWÔU
+KˆØYŞX[[
+X[šY™\İÜ]
+KˆÜÛİ\˜ÙWÛX™[
+ÒUP—ÔĞS‘“ÖÓU‘WÔÓPÖWÔU
+KˆÜÛİ\˜ÙWÛX™[
+ÒUP—ÔĞS‘“ÖÓU‘WÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WØ]]Û›Û[İ\×ØÛÛ˜Xİ
+ˆØYŞX[[
+SPS—ÑĞUT×ÔU
+KˆØYÚœÛÛŠQÑS•ĞPÕSÓ—ÔĞÒSPWÔU
+KˆØYÚœÛÛŠQÑS•Ô‘TÕSÔĞÒSPWÔU
+KˆØYÚœÛÛŠUUÓ“ÓSÕT×Ô•S—ÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WØ˜]ÚÜ™\ÜØÛÛ˜Xİ
+ˆØYÚœÛÛŠUÒÔ‘TÔ•ÑU‘S•ÔĞÒSPWÔU
+KˆÜÛİ\˜ÙWÛX™[
+UÒÔ‘TÔ•ÑU‘S•ÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÛİ]]Ù\İ[˜][Ûœ×ØÛÛ˜Xİ
+ˆØYÚœÛÛŠÕUUÑTÕSUSÓ”×ÔĞÒSPWÔU
+KˆØYÚœÛÛŠTÕSUSÓ—Ô‘TÓÓUSÓ—ÔĞÒSPWÔU
+KˆØYŞX[[
+ÕUUÑTÕSUSÓ”×ÑVSTWÔU
+KˆÜÛİ\˜ÙWÛX™[
+ÕUUÑTÕSUSÓ”×ÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WİÛÜšÜÜXÙWØ›Ûİİ˜\ØÛÛ˜Xİ
+ˆØYÚœÛÛŠÓÔ’ÔÔPÑWĞ“ÓÕÕTÔĞÒSPWÔU
+KˆÜÛİ\˜ÙWÛX™[
+ÓÔ’ÔÔPÑWĞ“ÓÕÕTÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆ\œ›ÜœË™^[™
+ˆ˜[Y]WÜX›X×Ü›Ú™Xİ[Û—ØÛÛ˜Xİ
+ˆØYÚœÛÛŠP“P×Ô“Ò‘PÕÓVSÕUÔĞÒSPWÔU
+KˆØYÚœÛÛŠP“P×Ô“Ò‘PÕSÓ—Ô‘TUQTÕÔĞÒSPWÔU
+KˆØYÚœÛÛŠP“P×Ô“Ò‘PÕSÓ—ĞT“ÕSÔĞÒSPWÔU
+KˆØYÚœÛÛŠP“P×Ô“Ò‘PÕSÓ—Ô‘TÕSÔĞÒSPWÔU
+KˆÜÛİ\˜ÙWÛX™[
+P“P×Ô“Ò‘PÕSÓ—Ô‘TÕSÔĞÒSPWÔU
+Kˆ
+Bˆ
+Bˆİ]HHØYŞX[[
+“ÓÕÈ™^Xİ][Û‹Üİ]KX[[ŠBˆ\œ›ÜœË™^[™
+˜[Y]WÙ^Xİ][Û—Üİ]Jİ]KÜÛİ\˜ÙWÛX™[
+“ÓÕÈ™^Xİ][Û‹Üİ]KX[[ŠJJBˆ\œ›ÜœË™^[™
+˜[Y]WÚÛ›İÛYÙWØŞXÛWØÛÛ˜XİÊ
+JBˆYˆİ]K™Ù]
+›\İØÛÛ\]Yİ\ÚÈŠH\È›Û™N‚ˆ\œ›ÜœË˜\[™
+™^Xİ][Û‹Üİ]KX[[ˆ\İØÛÛ\]Yİ\ÚÈ\È™\]Z\™YŠBˆ^Ù\˜[YQ\œ›Üˆ\È^Î‚ˆ\œ›ÜœË˜\[™
+İŠ^ÊJBˆ™]\›ˆ\œ›ÜœÂ‚‚™YˆXZ[Š
+HOˆ[‚ˆ\œÙ\ˆH\™Ü\œÙK\™İ[Y[\œÙ\Š\ØÜš\[ÛH•˜[Y]HÜ˜Ú\İ˜][Ûˆ›Ûİİ˜\ŠBˆ\œÙ\‹˜YØ\™İ[Y[
+‹KXÚXÚÈ‹Xİ[ÛHœİÜ™WİYH‹[H˜[Y]HÚ]İ]Üš][™ÈŠBˆ\œÙ\‹˜YØ\™İ[Y[
+ˆ‹K[X[šY™\İ‹ˆ\OT]ˆY˜][SPS’Q‘TÕÔUˆ[H›X[šY™\İPSSÈ˜[Y]H
+Y˜][ÈÈÛÛ™šYËÜ™\ÜÚ]ÜšY\ËX[[
+H‹ˆ
+Bˆ\™ÜÈH\œÙ\‹œ\œÙWØ\™ÜÊ
+BˆX[šY™\İÜ]H\™ÜË›X[šY™\İYˆ\™ÜË›X[šY™\İš\×ØXœÛÛ]J
+H[ÙH]˜İÙ
+
+HÈ\™ÜË›X[šY™\İˆ\œ›ÜœÈH˜[Y]JX[šY™\İÜ]
+BˆYˆ\œ›ÜœÎ‚ˆ›Üˆ\œ›Üˆ[ˆ\œ›ÜœÎ‚ˆš[
+ˆ‘T”“ÔˆÙ\œ›ÜŸH‹š[O\Ş\Ëœİ\œŠBˆ™]\›ˆBˆš[
+“ÒÎˆÜ˜Ú\İ˜][Ûˆ›Ûİİ˜\\È˜[YŠBˆ™]\›ˆ‚‚šYˆ×Û˜[YW×ÈOH—×ÛXZ[—×È‚ˆ˜Z\ÙHŞ\İ[Q^]
+XZ[Š
+JB

@@ -415,3 +415,6 @@ repos/        ローカルの子repo展開先。Git管理外
 ## 累積知識の共通境界
 
 AAK-SPEC/v1の交換契約は `artifact-record/v1`、`knowledge-write-receipt/v1`、`reuse-trace/v1` である。`config/knowledge-owners.yaml` が8 ownerの能力registry、`tools/knowledge_cycle.py` がowner-localのprepare/validate/commit/index/retrieve境界を提供する。Projectは公開投影のwrite ownerにせず、read-only catalog referenceを別能力として保持する。code commitとknowledge commitは別snapshotとして記録し、子ownerのpayload本文を親へ複製しない。
+# 利用者別 instance profile
+
+`instance-profile/v1` は本人継続、new clone、forkを明示的に分離し、全8 ownerのcode refとknowledge refを別々に固定します。個人設定や絶対pathを共有Gitへ保存せず、外部local mappingからknowledge storeを解決します。未設定時にMasaや現在ディレクトリへfallbackしません。`public-seed-only` は制作開始に使えますが、本人固有性は未充足として記録されます。既存の `output-destinations/v1` は互換adapterを通して維持されます。

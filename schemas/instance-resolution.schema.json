@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/instance-resolution.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["contract_version", "profile_fingerprint", "instance_id", "creator_id", "mode", "personalization_status", "code_refs", "knowledge_refs"],
+  "properties": {
+    "contract_version": {"const": "instance-resolution/v1"}, "profile_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "instance_id": {"type": "string"}, "creator_id": {"type": "string"}, "mode": {"enum": ["resume", "new-clone", "fork"]},
+    "personalization_status": {"enum": ["SATISFIED", "UNMET_PUBLIC_SEED_ONLY"]},
+    "code_refs": {"type": "object"}, "knowledge_refs": {"type": "object"}
+  }
+}
