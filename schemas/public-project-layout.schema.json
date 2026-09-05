@@ -7,6 +7,7 @@
   "additionalProperties": false,
   "required": ["contract_version", "collections", "catalog_markers", "media_policy"],
   "properties": {
+    "canonical_plan": {"type": "object", "additionalProperties": false, "required": ["source_repository", "source_artifact", "target_artifact", "projection_contract", "body_transform", "receiver_validator", "migration_registry"], "properties": {"source_repository": {"const": "agentic-art-production"}, "source_artifact": {"const": "03_plan/production-plan.md"}, "target_artifact": {"const": "plan.md"}, "projection_contract": {"const": "canonical-plan-projection/v2"}, "body_transform": {"const": "none"}, "receiver_validator": {"const": "python3 tools/validate.py --check"}, "migration_registry": {"const": "plans/migration.yaml"}}},
     "contract_version": {"const": "public-project-layout/v1"},
     "collections": {
       "type": "object",

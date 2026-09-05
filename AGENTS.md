@@ -1,5 +1,10 @@
 # Repository instructions
 
+Automatic plan projection uses the qualified Production CLI and opaque attestation,
+not parent-owned headings or semantic schemas. Missing review blocks projection;
+never invent public consent. See docs/issue-193-execution.md for v2 provenance,
+revision and rollback checks. Target Git operations and real migration stay gated.
+
 ## Mission
 
 **エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。**

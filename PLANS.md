@@ -1,5 +1,7 @@
 # Execution Plans
 
+Active prerequisite: [Issue193 attested projection](docs/issue-193-execution.md).
+
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 
 ## 使用条件

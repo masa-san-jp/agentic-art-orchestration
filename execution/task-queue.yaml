@@ -3,6 +3,24 @@ updated_at: "2026-09-04T23:21:43+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
+  - id: PUBLIC-PROJECTION-ATTESTATION-001
+    milestone: M29
+    title: Require owner attestation for exact canonical plan projection
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [PUBLIC-PROJECTION-AUTO-PLAN-001]
+    external_dependencies: [https://github.com/masa-san-jp/agentic-art-production/issues/60]
+    dependency_evidence:
+      production60:
+        candidate_commit: d323b92ffef34fc80b2e0c47daa1b8acff40368a
+        contract_version: production-public-plan-attestation/v1
+        reference: https://github.com/masa-san-jp/agentic-art-production/pull/63
+        verification: 11 focused and 104 full PASS; validator and evaluation PASS; unmerged candidate
+    acceptance: Issue193 canonical-plan-projection/v2; qualified owner validator, exact body/attestation/assets, stable identity/revision, atomic replay/update/rollback and 100-record order, Project6 synthetic receiver compatibility.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+    intake_evidence: Actual Issue body passes native intake after mechanical heading synchronization; all four SSOT criteria true. No acceptance or human-gate semantics changed.
   - id: BOOTSTRAP-001
     milestone: M0
     title: Bootstrap orchestration repository
