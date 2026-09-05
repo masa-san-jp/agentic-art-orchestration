@@ -1716,7 +1716,7 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-04
     target_repositories:
     - agentic-art-orchestration
@@ -1729,7 +1729,16 @@ tasks:
         contract_version: repository-relationships/v1
         acceptance_evidence: https://github.com/masa-san-jp/agentic-art-orchestration/pull/191
         scope: Required registry/schema/validator imported exactly; synthetic contract mutation checked. Candidate remains unmerged.
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-04-AC1: {status: PASS, candidate_commit: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685, reference: 'tests/test_instance_profiles.py#test_aak_04_ac1_modes_reopen_identity_and_empty_personal_history'}
+      AAK-04-AC2: {status: PASS, candidate_commit: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685, reference: 'tests/test_instance_profiles.py#test_aak_04_ac2_foreign_store_rejected_before_any_write'}
+      AAK-04-AC3: {status: PASS, candidate_commit: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685, reference: 'tests/test_instance_profiles.py#test_aak_04_ac3_code_and_knowledge_updates_preserve_previous_run'}
+      AAK-04-AC4: {status: PASS, candidate_commit: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685, reference: 'tests/test_instance_profiles.py#test_aak_04_ac4_cli_without_remote_auth_preserves_dirty_source'}
+      AAK-04-AC5: {status: PASS, candidate_commit: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685, reference: 'tests/test_instance_profiles.py#test_aak_04_ac5_public_seed_is_not_personalized'}
+    completion: 'Synthetic owner AC1..5 PASS; focused 14 PASS; full 580 tests, existing 1 skip, PASS. Prior a5717f0 candidate did not satisfy acceptance. Owner integration and real-agent runs remain AAK-02 NOT_RUN.'
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
   - id: AAK-05
     owner: self-model-notes
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/93

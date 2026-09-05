@@ -74,12 +74,12 @@ Source updated at: `2026-09-05T04:40:36+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10 | 0 | 1 | 0 | 140 | 151 |
+| 10 | 0 | 0 | 0 | 141 | 151 |
 
-Current task: `AAK-04`; repository: `agentic-art-orchestration`; checkpoint: `AAK-04`.
-Next action: Verify
+Current task: `AAK-05`; repository: `agentic-art-orchestration`; checkpoint: `AAK-04`.
+Next action: Inspect self-model-notes Issue 93, Issue 1 and native task registration/claim at a61460d4f9add36b256b2db9a860c53a98bd5fcd; preserve raw profile and n=1 gate.
 Ready: none.
-Next task: `null`.
+Next task: `AAK-05`.
 Blocked:
 - none
 

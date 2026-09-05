@@ -1,4 +1,23 @@
-# AAK-03修復済み、AAK-04再開（2026-09-05）
+# AAK-04修復済み、AAK-05へ（2026-09-05）
+
+AAK-04 draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
+検証済みcode candidate: `83f7e9e8d1c6e25b39351aebb6eb15cb12da4685`。
+local commit `1852c5e4a52da42a26c808eec3337bfb2390ddb0` と同一tree
+`41de5ae446b64d53847e39f4ce4959b6317ba321` をblob単位と全treeで照合済み。
+focused 14 PASS、full 580 tests・既存1 skip・PASS、validator/diff PASS。
+full log SHA-256: `be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546`。
+合成本人A/B、全8store、ローカル実Gitと隔離code checkout、CLI再実行を検証。
+旧candidate a5717f0の不十分な受入を置き換える。実owner/実Masa/実agent統合はNOT_RUN。
+各ownerのdomain保存は後続taskで実装し、最終制作プラン・次回再利用はAAK-02で確認する。
+
+次は最小の着手可能task AAK-05 / self-model-notes#93。
+owner main観測: `a61460d4f9add36b256b2db9a860c53a98bd5fcd`。
+owner AGENTS/Issue93読取済み。Issue1/schema/native task registrationとclaimを確認し、
+専用branchで着手する。本人rawの実移設#82は別human gateのまま保持する。
+APIによる非force branch更新と全tree照合は今回のユーザー許可済み。
+以下の旧再開点は履歴であり、この節が現在位置である。
+
+# AAK-03修復済み、AAK-04再開（履歴）
 
 Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
 Candidate: `e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb`。
