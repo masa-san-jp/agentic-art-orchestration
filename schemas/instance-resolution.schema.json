@@ -1,12 +1,210 @@
 {
+  "additionalProperties": false,
+  "properties": {
+    "code_refs": {
+      "additionalProperties": false,
+      "properties": {
+        "agentic-art-orchestration": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "agentic-art-production": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "agentic-art-project": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "agentic-art-research": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "art-history-notes": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "marketing-trends-notes": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "self-model-notes": {
+          "$ref": "#/$defs/code_ref"
+        },
+        "viewer-response-notes": {
+          "$ref": "#/$defs/code_ref"
+        }
+      },
+      "required": [
+        "self-model-notes",
+        "art-history-notes",
+        "marketing-trends-notes",
+        "agentic-art-research",
+        "agentic-art-production",
+        "viewer-response-notes",
+        "agentic-art-project",
+        "agentic-art-orchestration"
+      ],
+      "type": "object"
+    },
+    "contract_version": {
+      "const": "instance-resolution/v1"
+    },
+    "creator_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "destination_resolution": {
+      "type": "object"
+    },
+    "instance_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "knowledge_refs": {
+      "additionalProperties": false,
+      "properties": {
+        "agentic-art-orchestration": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "agentic-art-production": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "agentic-art-project": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "agentic-art-research": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "art-history-notes": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "marketing-trends-notes": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "self-model-notes": {
+          "$ref": "#/$defs/knowledge_ref"
+        },
+        "viewer-response-notes": {
+          "$ref": "#/$defs/knowledge_ref"
+        }
+      },
+      "required": [
+        "self-model-notes",
+        "art-history-notes",
+        "marketing-trends-notes",
+        "agentic-art-research",
+        "agentic-art-production",
+        "viewer-response-notes",
+        "agentic-art-project",
+        "agentic-art-orchestration"
+      ],
+      "type": "object"
+    },
+    "mode": {
+      "enum": [
+        "resume",
+        "new-clone",
+        "fork"
+      ]
+    },
+    "personalization_status": {
+      "enum": [
+        "SATISFIED",
+        "UNMET_PUBLIC_SEED_ONLY"
+      ]
+    },
+    "profile_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "projection_status": {
+      "enum": [
+        "SKIPPED",
+        "NOT_RUN"
+      ]
+    },
+    "source_collections": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "creator_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "origin_instance_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "readers": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "creator_id",
+          "origin_instance_id",
+          "readers"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "contract_version",
+    "profile_fingerprint",
+    "instance_id",
+    "creator_id",
+    "mode",
+    "personalization_status",
+    "code_refs",
+    "knowledge_refs",
+    "projection_status",
+    "destination_resolution",
+    "source_collections"
+  ],
+  "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/instance-resolution.schema.json",
-  "type": "object", "additionalProperties": false,
-  "required": ["contract_version", "profile_fingerprint", "instance_id", "creator_id", "mode", "personalization_status", "code_refs", "knowledge_refs"],
-  "properties": {
-    "contract_version": {"const": "instance-resolution/v1"}, "profile_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "instance_id": {"type": "string"}, "creator_id": {"type": "string"}, "mode": {"enum": ["resume", "new-clone", "fork"]},
-    "personalization_status": {"enum": ["SATISFIED", "UNMET_PUBLIC_SEED_ONLY"]},
-    "code_refs": {"type": "object"}, "knowledge_refs": {"type": "object"}
+  "$defs": {
+    "code_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "repository": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository",
+        "commit"
+      ],
+      "type": "object"
+    },
+    "knowledge_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "store_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "store_id",
+        "ref",
+        "commit"
+      ],
+      "type": "object"
+    }
   }
 }

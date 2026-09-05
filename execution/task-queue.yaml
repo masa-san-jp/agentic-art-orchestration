@@ -1676,7 +1676,7 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BLOCKED
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-03
     target_repositories:
     - agentic-art-orchestration
@@ -1684,16 +1684,16 @@ tasks:
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
     acceptance_evidence:
-      AAK-03-AC1: {status: FAIL, reference: execution/handoff.md, reason: 'LocalOwner emits a synthetic hash rather than a Git commit'}
-      AAK-03-AC2: {status: FAIL, reference: execution/handoff.md, reason: 'Payload validation and operation content comparison are missing'}
-      AAK-03-AC3: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Real commit interruption and pending-only recovery not verified'}
-      AAK-03-AC4: {status: FAIL, reference: execution/handoff.md, reason: 'Creator, expiry and superseded revision filtering are incomplete'}
-      AAK-03-AC5: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Immutable historical Git snapshot reload not implemented'}
-    completion: 'WITHDRAWN: earlier PASS claims exceeded the tests. Implementation requires repair; native Git authentication blocks mandatory Work protocol 8. PR #200 is not dependency-ready.'
-    blocker: 'BLOCKED_NATIVE_GIT_AUTH: git ls-remote origin exits 128; AGENTS Work protocol 8 requires normal fast-forward push before lease release. Configure native Git authentication or explicitly authorize an API delivery exception.'
-    code_status: INCOMPLETE
+      AAK-03-AC1: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac1_all_eight_git_stores_reload_receipts'}
+      AAK-03-AC2: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac2_same_operation_different_contents_conflicts'}
+      AAK-03-AC3: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac3_interruption_after_commit_before_receipt_save'}
+      AAK-03-AC4: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac4_source_revocation_enumerates_dependent_revision'}
+      AAK-03-AC5: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac5_historical_git_snapshot_remains_reproducible'}
+    completion: 'Repaired synthetic-owner acceptance AC1..5 PASS at e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb. Focused 23 PASS; isolated full suite 566 tests, 1 existing skip, PASS. Earlier candidate 4c0e2d5 was insufficient. Real-owner integration remains AAK-02 NOT_RUN.'
+    code_status: CODE_VERIFIED
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
+    delivery_authorization: 'User approved non-force GitHub API update with complete blob and tree verification for this series; merge/publication gates remain.'
   - id: AAK-04
     owner: agentic-art-orchestration
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/196
@@ -1716,25 +1716,20 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: IN_PROGRESS
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-04
     target_repositories:
     - agentic-art-orchestration
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence:
-      AAK-03: {status: FAIL, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
-      https://github.com/masa-san-jp/agentic-art-orchestration/issues/190: {status: PASS, candidate_commit: bfe777e165a2f9edb19415b6f40f83c901dbaf44, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/191, contract_version: repository-relationship-registry/v1, acceptance_evidence: 'registry/validator/focused/full/integration checks recorded PASS in PR #191; CI billing failure excluded'}
-    acceptance_evidence:
-      AAK-04-AC1: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Full bootstrap and runtime integration incomplete'}
-      AAK-04-AC2: {status: FAIL, reference: execution/handoff.md, reason: 'Existing personal store identity and permissions not validated'}
-      AAK-04-AC3: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Real code and knowledge updates with retained run snapshots not implemented'}
-      AAK-04-AC4: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Local init fixture alone is not complete clone operation'}
-      AAK-04-AC5: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Focused seed marker test only; end-to-end mode acceptance pending'}
-    completion: 'WITHDRAWN: earlier PASS claims exceeded test coverage. Truncated validator repaired in 239be711452786ac79065768a07d53e559395391; tree equals locally tested 96c421a. AAK-03 and native Git authentication remain unresolved.'
-    code_status: INCOMPLETE
-    integration_status: NOT_RUN
-    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
+      https://github.com/masa-san-jp/agentic-art-orchestration/issues/190:
+        status: PASS
+        candidate_commit: bfe777e165a2f9edb19415b6f40f83c901dbaf44
+        contract_version: repository-relationships/v1
+        acceptance_evidence: https://github.com/masa-san-jp/agentic-art-orchestration/pull/191
+        scope: Required registry/schema/validator imported exactly; synthetic contract mutation checked. Candidate remains unmerged.
+    acceptance_evidence: {}
   - id: AAK-05
     owner: self-model-notes
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/93

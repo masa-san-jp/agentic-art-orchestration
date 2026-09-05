@@ -51,6 +51,7 @@ class KnowledgeCycleContractsTests(unittest.TestCase):
             self.assertIn('execution/task-queue.yaml',text)
         aak = [copy.deepcopy(t) for t in self.queue['tasks'] if t['id'].startswith('AAK-')]
         for task in aak:
+            task['dependency_evidence'] = {}
             if task['id'] != 'AAK-01':
                 task['status'] = 'BACKLOG'
         aak[0]['status']='READY'
@@ -130,69 +131,212 @@ class AAK03KnowledgeCycleTests(unittest.TestCase):
               "agentic-art-project", "agentic-art-orchestration"]
 
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
 
     def record(self, owner, rid="r1", revision=1, lifecycle="accepted", invalidates=None):
-        payload = (owner + rid).encode()
         import hashlib
         return {"contract_version":"artifact-record/v1", "record_id":rid, "revision":revision,
           "origin_instance_id":"instance-a", "creator_id":"creator-a", "owner_repository":owner,
           "collection_id":"collection-a", "kind":"test-record", "payload_schema":"test/v1",
-          "payload_ref":"payloads/"+rid+".json", "content_sha256":hashlib.sha256(payload).hexdigest(),
-          "sources":[], "derived_from":[], "epistemic_status":"observed", "lifecycle":lifecycle,
+          "payload_ref":"payloads/"+rid+".json", "content_sha256":hashlib.sha256(b"synthetic payload").hexdigest(),
+          "sources":[], "derived_from":[], "epistemic_status":"simulated", "lifecycle":lifecycle,
           "applicability":{}, "rights":{}, "access_scope":"private-a", "consent_ref":"consent-a",
           "created_at":"2026-09-05T00:00:00Z", "reviewed_at":None, "valid_until":None,
           "producer":{"kind":"test","run_id":"run-1"}, "supersedes":[], "invalidates":invalidates or []}
 
-    def provider(self, owner):
-        return LocalOwner(self.root/owner, owner, "collection-a", "a"*40, "b"*40)
+    def provider(self, owner, snapshot=None, creator="creator-a"):
+        return LocalOwner(self.root/owner, owner, "collection-a", "a"*40, snapshot,
+                          creator=creator, payload_validator=lambda r,b: r["payload_schema"] == "test/v1" and b == b"synthetic payload")
 
-    def test_aak_03_ac1_all_eight_owners_commit_index_retrieve(self):
-        providers={o:self.provider(o) for o in self.OWNERS}
-        bundles=[prepare([self.record(o)],o,"collection-a","op-"+o,"run-1") for o in self.OWNERS]
-        report=dispatch(bundles,providers)
-        self.assertEqual("COMMITTED",report["status"]); self.assertEqual(8,len(report["receipts"]))
-        for owner, provider in providers.items():
-            trace=provider.retrieve("next-hypothesis","creator-a","private-a")
-            self.assertEqual("REUSED",trace["status"]); self.assertEqual(owner,trace["records"][0]["owner"])
-            self.assertEqual("a"*40,trace["input_snapshot"]["code_commit"])
+    def save(self, p, record, operation="op"):
+        return p.index(p.commit(prepare([record],p.owner,p.collection,operation,"run"),
+                               p.knowledge_commit, payloads={record["payload_ref"]: b"synthetic payload"}))
 
-    def test_aak_03_ac2_replay_conflict_owner_candidate_and_path_fail_closed(self):
-        p=self.provider(self.OWNERS[0]); record=self.record(self.OWNERS[0]); bundle=prepare([record],self.OWNERS[0],"collection-a","op-1","run-1")
-        first=p.index(p.commit(bundle,p.knowledge_commit)); self.assertEqual("COMMITTED",first["status"])
-        replay=p.commit(bundle,"b"*40); self.assertEqual("ALREADY_APPLIED",replay["status"])
-        target=p.records/"instance-a--self-model-notes--r1--r1.json"
-        changed=dict(record); changed["kind"]="different"; target.write_bytes(__import__('tools.knowledge_cycle',fromlist=['canonical']).canonical(changed))
-        other=self.provider(self.OWNERS[0]); other.root=p.root; other.records=p.records; other.receipts=self.root/"new-receipts"; other.index_path=p.index_path
-        conflict=other.commit(prepare([record],self.OWNERS[0],"collection-a","op-2","run-1"),other.knowledge_commit)
-        self.assertEqual("CONFLICT",conflict["status"])
-        for field,value in [("owner_repository","wrong"),("lifecycle","candidate"),("payload_ref","../escape")]:
-            bad=dict(record);bad[field]=value
-            receipt=other.commit(prepare([bad],self.OWNERS[0],"collection-a","bad-"+field,"run-1"),other.knowledge_commit)
-            self.assertEqual("REJECTED",receipt["status"])
+    def retrieve(self, p, records, creator="creator-a"):
+        return p.retrieve("compare next hypothesis",creator,"private-a",at="2026-09-05T00:00:00Z",
+                          decisions={p._key(r):{"decision":"adopted","reason":"explicit synthetic comparison decision",
+                                               "affected":["hypothesis-2"]} for r in records})
 
-    def test_aak_03_ac3_partial_keeps_success_and_resumes_only_pending(self):
-        providers={o:self.provider(o) for o in self.OWNERS[:2]}; bundles=[prepare([self.record(o)],o,"collection-a","op-"+o,"run-1") for o in providers]
-        report=dispatch(bundles,providers,fail_owner=self.OWNERS[1]); self.assertEqual("PARTIAL",report["status"])
-        self.assertEqual([self.OWNERS[1]],report["pending_owners"])
-        self.assertTrue(providers[self.OWNERS[0]].index_path.exists()); self.assertTrue(providers[self.OWNERS[1]].records.exists())
-        resumed=providers[self.OWNERS[1]].index(report["receipts"][1]); self.assertIsNotNone(resumed["index_hash"])
+    def test_aak_03_ac1_all_eight_git_stores_reload_receipts(self):
+        import subprocess
+        for owner in self.OWNERS:
+            with self.subTest(owner=owner):
+                p=self.provider(owner); record=self.record(owner)
+                receipt=self.save(p,record)
+                self.assertEqual("COMMITTED",receipt["status"])
+                from tools.validate import _schema_errors, load_json
+                self.assertEqual([], _schema_errors(receipt, load_json(ROOT/"schemas/knowledge-write-receipt.schema.json")))
+                kind=subprocess.check_output(["git","--git-dir",str(p.git_dir),"cat-file","-t",receipt["target_commit"]],text=True).strip()
+                self.assertEqual("commit",kind)
+                reopened=self.provider(owner)
+                self.assertEqual(receipt["target_commit"],reopened.knowledge_commit)
+                trace=self.retrieve(reopened,[record])
+                self.assertEqual("REUSED",trace["status"])
+                self.assertEqual([], _schema_errors(trace, load_json(ROOT/"schemas/reuse-trace.schema.json")))
+                self.assertEqual("instance-a",trace["records"][0]["origin_instance_id"])
+                self.assertEqual(["hypothesis-2"],trace["records"][0]["affected"])
 
-    def test_aak_03_ac4_invalidation_excludes_active_and_preserves_revalidation(self):
-        p=self.provider(self.OWNERS[0]); base=self.record(self.OWNERS[0],"old")
-        receipt=p.index(p.commit(prepare([base],p.owner,p.collection,"op-old","run-1"),p.knowledge_commit))
-        invalidator=self.record(p.owner,"revoke",invalidates=[{"record_id":"old","revision":1}])
-        receipt=p.index(p.commit(prepare([invalidator],p.owner,p.collection,"op-revoke","run-2"),p.knowledge_commit))
-        trace=p.retrieve("next","creator-a","private-a")
-        self.assertNotIn("old",[r["record_id"] for r in trace["records"]])
-        index=json.loads(p.index_path.read_text()); self.assertTrue(any(e["record_id"]=="revoke" and e["invalidates"] for e in index["entries"]))
+    def test_aak_03_ac2_same_operation_different_contents_conflicts(self):
+        p=self.provider(self.OWNERS[0]); record=self.record(p.owner); parent=p.knowledge_commit
+        bundle=prepare([record],p.owner,p.collection,"op","run")
+        self.save(p,record)
+        head=p._head()
+        self.assertEqual("ALREADY_APPLIED",p.commit(bundle,parent)["status"])
+        changed=dict(record,kind="different")
+        self.assertEqual("CONFLICT",p.commit(prepare([changed],p.owner,p.collection,"op","run"),parent)["status"])
+        self.assertEqual(head,p._head())
+        self.assertEqual("CONFLICT",p.commit(prepare([changed],p.owner,p.collection,"op-2","run"),
+                                            head,payloads={record["payload_ref"]:b"synthetic payload"})["status"])
 
-    def test_aak_03_ac5_code_and_knowledge_revisions_are_independent(self):
-        p=self.provider(self.OWNERS[0]); old_code=p.code_commit; old_knowledge=p.knowledge_commit
-        receipt=p.index(p.commit(prepare([self.record(p.owner)],p.owner,p.collection,"op","run"),old_knowledge))
-        self.assertEqual(old_code,p.code_commit); self.assertNotEqual(old_knowledge,p.knowledge_commit)
-        trace=p.retrieve("next","creator-a","private-a")
-        self.assertEqual(old_code,trace["input_snapshot"]["code_commit"]); self.assertEqual(receipt["target_commit"],trace["input_snapshot"]["knowledge_commit"])
+    def test_aak_03_ac2_invalid_payload_path_revision_and_owner_are_rejected(self):
+        p=self.provider(self.OWNERS[0]); base=self.record(p.owner); head=p._head()
+        for field,value in [("owner_repository","wrong"),("lifecycle","candidate"),
+                            ("payload_ref","../escape"),("revision",0),("payload_schema","unknown/v9"),
+                            ("creator_id","creator-b")]:
+            with self.subTest(field=field):
+                record=dict(base);record[field]=value
+                self.assertEqual("REJECTED",self.save(p,record,field)["status"])
+                self.assertEqual(head,p._head())
+        self.assertEqual("REJECTED",p.commit(prepare([base],p.owner,p.collection,"missing","run"),head)["status"])
+
+    def test_aak_03_ac3_outbox_resumes_only_pending_after_reopen(self):
+        from unittest.mock import patch
+        owners=self.OWNERS[:2]; providers={o:self.provider(o) for o in owners}
+        bundles=[prepare([self.record(o)],o,"collection-a","op-"+o,"run") for o in owners]
+        payloads={o:{"payloads/r1.json":b"synthetic payload"} for o in owners}
+        outbox=self.root/"outbox.json"
+        first=dispatch(bundles,providers,fail_owner=owners[1],payloads=payloads,outbox=outbox)
+        self.assertEqual("PARTIAL",first["status"])
+        heads={o:p._head() for o,p in providers.items()}
+        reopened={o:self.provider(o) for o in owners}
+        with patch.object(reopened[owners[0]],"commit",side_effect=AssertionError("successful owner reexecuted")), patch.object(reopened[owners[1]],"commit",side_effect=AssertionError("committed owner reexecuted")):
+            second=dispatch(bundles,reopened,payloads=payloads,outbox=outbox)
+        self.assertEqual("COMMITTED",second["status"])
+        self.assertEqual(heads,{o:p._head() for o,p in reopened.items()})
+
+    def test_aak_03_ac4_new_revision_revocation_expiry_and_creator_filter(self):
+        p=self.provider(self.OWNERS[0]); base=self.record(p.owner)
+        self.save(p,base)
+        self.assertEqual("UNAVAILABLE",self.retrieve(p,[base],creator="creator-b")["status"])
+        newer=dict(base,revision=2,lifecycle="revoked")
+        self.save(p,newer,"revoke")
+        self.assertEqual([],self.retrieve(p,[base,newer])["records"])
+        expired=dict(self.record(p.owner,"expired"),valid_until="2026-09-04T00:00:00Z")
+        self.save(p,expired,"expiry")
+        self.assertEqual([],self.retrieve(p,[expired])["records"])
+
+    def test_aak_03_ac5_historical_git_snapshot_remains_reproducible(self):
+        p=self.provider(self.OWNERS[0]); record=self.record(p.owner)
+        first=self.save(p,record)
+        self.save(p,dict(record,revision=2,lifecycle="revoked"),"revoke")
+        historical=self.provider(p.owner,snapshot=first["target_commit"])
+        historical.index(first)
+        trace=self.retrieve(historical,[record])
+        self.assertEqual("REUSED",trace["status"])
+        self.assertEqual("a"*40,trace["input_snapshot"]["code_commit"])
+        self.assertEqual(first["target_commit"],trace["input_snapshot"]["knowledge_commit"])
+
+    def test_retrieval_without_explicit_use_cannot_claim_reuse(self):
+        p=self.provider(self.OWNERS[0]); self.save(p,self.record(p.owner))
+        self.assertEqual("NOT_APPLICABLE",p.retrieve("q","creator-a","private-a",at="2026-09-05T00:00:00Z")["status"])
+
+    def test_reopen_as_another_creator_is_rejected(self):
+        from tools.knowledge_cycle import KnowledgeCycleError
+        self.provider(self.OWNERS[0])
+        with self.assertRaises(KnowledgeCycleError):
+            self.provider(self.OWNERS[0],creator="creator-b")
+
+    def test_stale_parent_cannot_overwrite_other_writer(self):
+        p=self.provider(self.OWNERS[0]); q=self.provider(p.owner)
+        stale=q.knowledge_commit
+        self.save(p,self.record(p.owner))
+        head=p._head(); record=self.record(p.owner,"second")
+        result=q.commit(prepare([record],q.owner,q.collection,"op-second","run"),stale,
+                        payloads={record["payload_ref"]:b"synthetic payload"})
+        self.assertEqual("CONFLICT",result["status"]);self.assertEqual(head,q._head())
+
+    def test_aak_03_ac3_interruption_after_commit_before_receipt_save(self):
+        from unittest.mock import patch
+        p=self.provider(self.OWNERS[0]); record=self.record(p.owner)
+        bundles=[prepare([record],p.owner,p.collection,"crash","run")]
+        outbox=self.root/"outbox.json"
+        with patch.object(p,"index",side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                dispatch(bundles,{p.owner:p},outbox=outbox,
+                         payloads={p.owner:{record["payload_ref"]:b"synthetic payload"}})
+        committed=p._head()
+        reopened=self.provider(p.owner)
+        report=dispatch(bundles,{p.owner:reopened},outbox=outbox)
+        self.assertEqual("COMMITTED",report["status"])
+        self.assertEqual(committed,reopened._head())
+
+    def test_aak_03_ac4_source_revocation_enumerates_dependent_revision(self):
+        p=self.provider(self.OWNERS[0]); source=self.record(p.owner,"source")
+        self.save(p,source,"source")
+        derived=self.record(p.owner,"derived")
+        derived["derived_from"]=[{"record_id":"source","revision":1}]
+        self.save(p,derived,"derived")
+        revocation=self.record(p.owner,"revocation",invalidates=[{"record_id":"source","revision":1}])
+        self.save(p,revocation,"revocation")
+        index=json.loads(p.index_path.read_bytes())
+        self.assertEqual(["derived"],[r["record_id"] for r in index["revalidation_candidates"]])
+        self.assertEqual([],self.retrieve(p,[source,derived])["records"])
+
+    def test_operational_owner_cli_git_reload_and_index(self):
+        import subprocess
+        import sys
+        import hashlib
+        from tools.knowledge_cycle import canonical
+        owner="agentic-art-orchestration"
+        record=self.record(owner)
+        payload=canonical({"contract_version":"operational-knowledge/v1",
+                           "failure_kind":"interruption","observation":"synthetic interrupted index",
+                           "recovery_proposal":"Rebuild index from accepted commit",
+                           "verification_refs":["fixture:restart-1"],"changes_authority":False})
+        record.update(payload_schema="operational-knowledge/v1",
+                      content_sha256=hashlib.sha256(payload).hexdigest())
+        source=self.root/"input";(source/"payloads").mkdir(parents=True)
+        (source/"payloads/r1.json").write_bytes(payload)
+        record_path=self.root/"record.json";record_path.write_bytes(canonical(record))
+        command=[sys.executable,str(ROOT/"tools/knowledge_cycle.py")]
+        common=["--store",str(self.root/"store"),"--owner",owner,"--creator","creator-a",
+                "--collection","collection-a","--code-commit","a"*40]
+        initialized=json.loads(subprocess.check_output(command+["init"]+common))
+        receipt=json.loads(subprocess.check_output(command+["commit"]+common+
+                          ["--record",str(record_path),"--payload-root",str(source),
+                           "--operation-id","cli-op","--run-id","cli-run",
+                           "--knowledge-commit",initialized["knowledge_commit"]]))
+        self.assertEqual("COMMITTED",receipt["status"])
+        receipt_path=self.root/"receipt.json";receipt_path.write_bytes(canonical(receipt))
+        indexed=json.loads(subprocess.check_output(command+["index"]+common+["--receipt",str(receipt_path)]))
+        self.assertEqual(receipt["target_commit"],indexed["index_commit"])
+
+    def test_cyclic_generated_source_is_rejected(self):
+        p=self.provider(self.OWNERS[0]); record=self.record(p.owner)
+        record["derived_from"]=[{"record_id":"r1","revision":1}]
+        head=p._head()
+        self.assertEqual("REJECTED",self.save(p,record)["status"])
+        self.assertEqual(head,p._head())
+
+    def test_owner_exception_keeps_other_owner_success(self):
+        from unittest.mock import patch
+        owners=self.OWNERS[:2];providers={o:self.provider(o) for o in owners}
+        bundles=[prepare([self.record(o)],o,"collection-a",o,"run") for o in owners]
+        with patch.object(providers[owners[0]],"commit",side_effect=RuntimeError("synthetic failure")):
+            result=dispatch(bundles,providers,payloads={o:{"payloads/r1.json":b"synthetic payload"} for o in owners})
+        self.assertEqual("PARTIAL",result["status"])
+        self.assertEqual("COMMITTED",result["receipts"][1]["status"])
+
+    def test_parent_dispatch_does_not_write_public_catalog(self):
+        from unittest.mock import patch
+        p=self.provider("agentic-art-project")
+        head=p._head()
+        bundle=prepare([self.record(p.owner)],p.owner,p.collection,"catalog","run")
+        with patch.object(p,"commit",side_effect=AssertionError("catalog write attempted")):
+            result=dispatch([bundle],{p.owner:p})
+        self.assertEqual("REJECTED",result["receipts"][0]["status"])
+        self.assertEqual(head,p._head())
 
 if __name__=='__main__':unittest.main()

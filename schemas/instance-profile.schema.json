@@ -13,7 +13,7 @@
     "delivery_mode": {"enum": ["internal", "public-catalog"]},
     "personalization_mode": {"enum": ["explicit-profile", "public-seed-only"]},
     "origin_instance_id": {"$ref": "#/$defs/id"},
-    "upstream_remote": {"type": "string", "minLength": 1},
+    "fork_remote": {"type": "string", "pattern": "^https://github[.]com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+([.]git)?$"},
     "repositories": {
       "type": "object",
       "additionalProperties": false,

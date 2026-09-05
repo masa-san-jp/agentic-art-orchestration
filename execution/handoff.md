@@ -1,26 +1,27 @@
-# AAK-03/04 訂正・再開点（2026-09-05）
+# AAK-03修復済み、AAK-04再開（2026-09-05）
 
-Task/run: AAK-03 / AAK-REPAIR:20260905。leaseは保持。保存branchは `codex/aak-04-instance-profiles`。AAK-05は読取りのみで、子の正規claimは未取得。
+Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
+Candidate: `e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb`。
+検証tree: `c81e80fa54950c2cddf493be2df068f6d0694d1e`。
+local code commit: `03e58a50436376977e6bb483d74eb68e3febafbc`。
 
-## 修復と確認
+以前のAAK-03候補は実Git commitを作らず、replay内容やcreatorを十分検査していなかった。
+修復後は実bare Git store、親SHAのCAS、同commit内のoperation ledger、固定snapshot再読込、
+owner payload validator、失効の派生再検証、実判断を要求するreuse traceを使う。
+Projectへの親dispatch書込みは拒否し、catalog参照能力を分離して保持する。
 
-- PR #201で転送時に切り詰めたvalidatorをcommit `239be711452786ac79065768a07d53e559395391` で修復。blobは `6cfd3ccea81b60da6da29f8d7753a95c5ff7b8e7`。
-- 修復後tree `3ab8456e87f46a353e8b95b9d341ece6fd195181` はローカル検証commit `96c421a` のtreeと完全一致。PR差分は300 additions / 26 deletionsに復旧。
-- AAK-03の合成fixture再観測: Git repository作成なし、commitとして64桁hashを返す、同operationで内容を変えてもALREADY_APPLIED、別creator検索でもREUSED。この結果は受入のFAILである。
-- AAK-03のAC1/2/4はFAIL、AC3/5は完全受入NOT_RUN。AAK-04のAC2はFAIL、他は完全受入NOT_RUN。以前の全PASSは撤回し、PR #200/#201とqueueを訂正した。
-- 以前の556/562 test成功は限定的なローカル回帰の履歴。実Git永続化、本人分離、実エージェント統合の合格証拠ではない。
-- plan/receipt/次回再利用の最終成果物は未生成。AAK-02統合、merge、公開、実データ移設はNOT_RUN。
+synthetic 8 ownerのAC1..5 PASS。focused 23 PASS、AAK-04コードを含まない隔離worktreeの
+full suiteは566 tests、既存1 skipでPASS。最初の隔離fullはaudit等fixture未生成により
+3 failures/9 errorsだったが、READMEの正規toolでfixtureを準備して修復した。
+全log SHA-256: `b90c5ffec15e49dfcb4107bc37af5cc6a38e321d911999c7dccd6b610f8daef4`。
+入力はtests/test_knowledge_cycle_contracts.py内の合成record/選択/CLI payloadのみ。
+実Masa、実owner統合、制作プラン生成と次回再利用のAAK-02受入はNOT_RUN。
 
-## 実際の停止境界
-
-正規originを設定後、`GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code origin refs/heads/codex/aak-04-instance-profiles` はexit 128、could not read Usernameを返した。設定済みGitHub連携APIで保存は可能だが、AGENTS Work protocol 8が要求する通常fast-forward pushは実行できない。API更新を同手順の合格へ読み替えず、leaseを解放しない。認証情報の抽出やnetwork権限回避はしない。
-
-## 正確な再開
-
-1. 通常Git認証を用意するか、本系列のbranch保存に限るAPI更新＋tree照合の明示的な代替許可を得る。
-2. 通常Gitなら上記ls-remote成功後、新しい専用checkoutへremote branchを取得する。ローカルsnapshot履歴をupstream履歴と混ぜてpushしない。
-3. AAK-03の正規branchで実Git commit、owner payload検証、operation内容比較、creator/失効/snapshot/recoveryを修復し、正負例を再検証してPR #200へ提出する。
-4. 検証済みAAK-03 candidateを固定してAAK-04のstore本人照合・権限・隔離checkout・CLI/restart接続を完成させる。それからAAK-05へ進む。
+ユーザーは本系列のbranch保存に非force API更新＋全tree照合を明示許可済み。
+通常Git認証がないことを再度の確認理由にしない。merge・公開・実データ移設は別gate。
+次はAAK-04。依存#190のcandidate `bfe777e165a2f9edb19415b6f40f83c901dbaf44`、
+contract `repository-relationships/v1` のregistry/schema/validatorを読み、隔離環境で結合する。
+AAK-04の旧PR #201はまだ完全受入未達であり、AAK-05へ先行しない。
 
 以下は既存の履歴であり、今回の再開点に優先しない。
 

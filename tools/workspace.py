@@ -12,12 +12,15 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import yaml
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from validate import (  # noqa: E402
     _schema_errors,
@@ -1662,6 +1665,11 @@ def parse_args() -> argparse.Namespace:
     bootstrap_parser.add_argument("--fixture-root", type=Path, default=DEFAULT_OFFLINE_FIXTURE_ROOT)
     bootstrap_parser.add_argument("--json", action="store_true")
     bootstrap_parser.add_argument("--workspace-root", type=Path)
+    bootstrap_parser.add_argument("--instance-profile", type=Path)
+    bootstrap_parser.add_argument("--local-config", type=Path)
+    bootstrap_parser.add_argument("--state-root", type=Path)
+    bootstrap_parser.add_argument("--run-id", default="setup")
+    bootstrap_parser.add_argument("--dry-run", action="store_true")
     status_parser = subparsers.add_parser("status")
     status_parser.add_argument("--json", action="store_true")
     status_parser.add_argument("--workspace-root", type=Path)
@@ -1681,6 +1689,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
+        if args.command == "bootstrap" and args.instance_profile:
+            from tools.instance_profiles import bootstrap, load_profile
+            if not args.local_config or not args.state_root:
+                raise ValueError("SETUP_REQUIRED: --local-config and --state-root required")
+            result = bootstrap(load_profile(args.instance_profile),
+                               yaml.safe_load(args.local_config.read_text()), args.state_root,
+                               run_id=args.run_id, dry_run=args.dry_run)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.command == "bootstrap" and (args.local_config or args.state_root or args.dry_run):
+            raise ValueError("--instance-profile is required for instance setup options")
         manifest = load_manifest()
         workspace_root = resolve_workspace_root(manifest, args.workspace_root)
         fixture_root = resolve_path(args.fixture_root) if hasattr(args, "fixture_root") else DEFAULT_OFFLINE_FIXTURE_ROOT
