@@ -21,19 +21,19 @@
 <!-- AAK-ISSUE-INDEX-START -->
 | ID | owner | Issue | 要点 | 起票時の実装状態 |
 |---|---|---|---|---|
-| AAK-01 | agentic-art-orchestration | 発行番号は起票後に追記 | 設計原則・仕様SSOT・実装DAGをエージェントの正準入口へ接続する | 未実装 |
-| AAK-02 | agentic-art-orchestration | 発行番号は起票後に追記 | 実エージェントで制作プラン出力・蓄積・次回再利用を自律完走させる | 未実装 |
-| AAK-03 | agentic-art-orchestration | 発行番号は起票後に追記 | 全8repoの生成物蓄積・還流・検索の共通契約を実装する | 未実装 |
-| AAK-04 | agentic-art-orchestration | 発行番号は起票後に追記 | 本人継続利用・clone・forkの利用者別初期化と蓄積保持を実装する | 未実装 |
-| AAK-05 | self-model-notes | 発行番号は起票後に追記 | 本人別の感性・制作選択を蓄積し、出典と不確実性を保って自己モデルへ反映する | 未実装 |
-| AAK-06 | art-history-notes | 発行番号は起票後に追記 | 制作研究の美術史知識を根拠付きで取り込み、次回探索へ還流する | 未実装 |
-| AAK-07 | marketing-trends-notes | 発行番号は起票後に追記 | 制作研究から社会・受容の変化を蓄積し、鮮度を再検証して再利用する | 未実装 |
-| AAK-08 | agentic-art-research | 発行番号は起票後に追記 | 調査・仮説・採否・未解決の問いを永続蓄積し次の研究へ再投入する | 未実装 |
-| AAK-09 | agentic-art-research | 発行番号は起票後に追記 | 蓄積を再利用しながら固有性・機構の接地・探索の幅を検証する | 未実装 |
-| AAK-10 | agentic-art-production | 発行番号は起票後に追記 | 研究要件から実制作可能な統合プランを生成し内容の完全性を検証する | 未実装 |
-| AAK-11 | agentic-art-production | 発行番号は起票後に追記 | 制作・試作・失敗の知識を条件付きで蓄積し次の計画に反映する | 未実装 |
-| AAK-12 | viewer-response-notes | 発行番号は起票後に追記 | 鑑賞者反応を作品・意図・展示条件別に蓄積し次の研究へ還流する | 未実装 |
-| AAK-13 | agentic-art-project | 発行番号は起票後に追記 | 公開プランと作品の系譜を帰属付きで蓄積し、検証済み履歴を再参照可能にする | 未実装 |
+| AAK-01 | agentic-art-orchestration | [#194](https://github.com/masa-san-jp/agentic-art-orchestration/issues/194) | 設計原則・仕様SSOT・実装DAGをエージェントの正準入口へ接続する | 起票済み・未実装 |
+| AAK-02 | agentic-art-orchestration | [#197](https://github.com/masa-san-jp/agentic-art-orchestration/issues/197) | 実エージェントで制作プラン出力・蓄積・次回再利用を自律完走させる | 起票済み・未実装 |
+| AAK-03 | agentic-art-orchestration | [#195](https://github.com/masa-san-jp/agentic-art-orchestration/issues/195) | 全8repoの生成物蓄積・還流・検索の共通契約を実装する | 起票済み・未実装 |
+| AAK-04 | agentic-art-orchestration | [#196](https://github.com/masa-san-jp/agentic-art-orchestration/issues/196) | 本人継続利用・clone・forkの利用者別初期化と蓄積保持を実装する | 起票済み・未実装 |
+| AAK-05 | self-model-notes | [#93](https://github.com/masa-san-jp/self-model-notes/issues/93) | 本人別の感性・制作選択を蓄積し、出典と不確実性を保って自己モデルへ反映する | 起票済み・未実装 |
+| AAK-06 | art-history-notes | [#386](https://github.com/masa-san-jp/art-history-notes/issues/386) | 制作研究の美術史知識を根拠付きで取り込み、次回探索へ還流する | 起票済み・未実装 |
+| AAK-07 | marketing-trends-notes | [#86](https://github.com/masa-san-jp/marketing-trends-notes/issues/86) | 制作研究から社会・受容の変化を蓄積し、鮮度を再検証して再利用する | 起票済み・未実装 |
+| AAK-08 | agentic-art-research | [#93](https://github.com/masa-san-jp/agentic-art-research/issues/93) | 調査・仮説・採否・未解決の問いを永続蓄積し次の研究へ再投入する | 起票済み・未実装 |
+| AAK-09 | agentic-art-research | [#94](https://github.com/masa-san-jp/agentic-art-research/issues/94) | 蓄積を再利用しながら固有性・機構の接地・探索の幅を検証する | 起票済み・未実装 |
+| AAK-10 | agentic-art-production | [#61](https://github.com/masa-san-jp/agentic-art-production/issues/61) | 研究要件から実制作可能な統合プランを生成し内容の完全性を検証する | 起票済み・未実装 |
+| AAK-11 | agentic-art-production | [#62](https://github.com/masa-san-jp/agentic-art-production/issues/62) | 制作・試作・失敗の知識を条件付きで蓄積し次の計画に反映する | 起票済み・未実装 |
+| AAK-12 | viewer-response-notes | [#6](https://github.com/masa-san-jp/viewer-response-notes/issues/6) | 鑑賞者反応を作品・意図・展示条件別に蓄積し次の研究へ還流する | 起票済み・未実装 |
+| AAK-13 | agentic-art-project | [#10](https://github.com/masa-san-jp/agentic-art-project/issues/10) | 公開プランと作品の系譜を帰属付きで蓄積し、検証済み履歴を再参照可能にする | 起票済み・未実装 |
 <!-- AAK-ISSUE-INDEX-END -->
 
 この表の状態は起票時のsnapshot。進行状態はowner queueと検証証拠の正本を参照する。仕様文書を置いたdraft PRは全13Issueの実装完了ではなく、closeキーワードを使わない。
@@ -606,4 +606,4 @@ tools/validate.pyは前提Project#6のreceiver実装を確認して使う。未�
 
 ## change-log
 
-- v1 / 2026-09-05: 13件の実装DAG、個別scope、検証、再開、既存Issue境界を定義。実装は未実施。
+- v1 / 2026-09-05: 13件の実装DAG、個別scope、検証、再開、既存Issue境界を定義。実装は未実施。8repoに13件のIssueを起票し、indexと依存URLを照合した。

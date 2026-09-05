@@ -57,7 +57,7 @@ Issueには仕様と計画のcommit固定URLを付ける。仕様改訂時はver
 - 個人profile分離: [self-model-notes#81](https://github.com/masa-san-jp/self-model-notes/issues/81)。実n=1移設: [self-model-notes#82](https://github.com/masa-san-jp/self-model-notes/issues/82)。後者の実データ移設は本系列で自動実行しない。
 - plan attestation: [agentic-art-production#60](https://github.com/masa-san-jp/agentic-art-production/issues/60)、無変換投影: [agentic-art-orchestration#193](https://github.com/masa-san-jp/agentic-art-orchestration/issues/193)、受信・旧要約の移行: [agentic-art-project#6](https://github.com/masa-san-jp/agentic-art-project/issues/6)。これらを完全性検証の正本として再利用する。
 - 出力先/clone基盤: 親#148/#149/#150。最新pin問題: [agentic-art-orchestration#189](https://github.com/masa-san-jp/agentic-art-orchestration/issues/189)。公式catalog関係: [agentic-art-orchestration#190](https://github.com/masa-san-jp/agentic-art-orchestration/issues/190)、自動plan出力: [agentic-art-orchestration#187](https://github.com/masa-san-jp/agentic-art-orchestration/issues/187)。
-- Orchestrationの既存PR #191とProject #9は正本検証関連の作業候補。Issueの現行契約、特にattestation/v2と一致するか検証してから採用し、PRがあるだけで解決済みとしない。
+- Orchestrationの既存PR #191とProject #9は正本検証関連の作業候補。Issueの現行契約、特にProductionのattestation/v1とcanonical-plan-projection/v2に一致するか検証してから採用し、PRがあるだけで解決済みとしない。
 
 ## ownership
 
@@ -227,6 +227,7 @@ runのCOMPLETEDは、そのdelivery modeで必須のplan保存・knowledge永続
 ## aak-01
 
 対象: `masa-san-jp/agentic-art-orchestration`  
+Issue: [agentic-art-orchestration#194](https://github.com/masa-san-jp/agentic-art-orchestration/issues/194)  
 Issue件名: 設計原則・仕様SSOT・実装DAGをエージェントの正準入口へ接続する
 
 理由: 制作プランの実体を届ける目的より、基盤の完成や成功状態の表示が優先される読み違いを防ぐ。今回の設計を会話履歴なしで実行できるようにする。
@@ -251,6 +252,7 @@ Issue件名: 設計原則・仕様SSOT・実装DAGをエージェントの正準
 ## aak-02
 
 対象: `masa-san-jp/agentic-art-orchestration`  
+Issue: [agentic-art-orchestration#197](https://github.com/masa-san-jp/agentic-art-orchestration/issues/197)  
 Issue件名: 実エージェントで制作プラン出力・蓄積・次回再利用を自律完走させる
 
 理由: ハーネスを使うエージェントが、工程ごとの人間の段取りなしに実制作可能なプランを届け、次回へ経験を返すことを実証する。
@@ -277,6 +279,7 @@ Issue件名: 実エージェントで制作プラン出力・蓄積・次回再�
 ## aak-03
 
 対象: `masa-san-jp/agentic-art-orchestration`  
+Issue: [agentic-art-orchestration#195](https://github.com/masa-san-jp/agentic-art-orchestration/issues/195)  
 Issue件名: 全8repoの生成物蓄積・還流・検索の共通契約を実装する
 
 理由: 生成物の保存を、次回に発見・検証・採用できる累積知識へ変える。全8repoを対象にし、子の知識本文を親へ集約しない。
@@ -302,6 +305,7 @@ Issue件名: 全8repoの生成物蓄積・還流・検索の共通契約を実�
 ## aak-04
 
 対象: `masa-san-jp/agentic-art-orchestration`  
+Issue: [agentic-art-orchestration#196](https://github.com/masa-san-jp/agentic-art-orchestration/issues/196)  
 Issue件名: 本人継続利用・clone・forkの利用者別初期化と蓄積保持を実装する
 
 理由: 共通知識を継承しても本人の自己モデルや自作履歴を誤継承せず、利用者ごとに育つ環境を確実に構築する。
@@ -327,6 +331,7 @@ Issue件名: 本人継続利用・clone・forkの利用者別初期化と蓄積�
 ## aak-05
 
 対象: `masa-san-jp/self-model-notes`  
+Issue: [self-model-notes#93](https://github.com/masa-san-jp/self-model-notes/issues/93)  
 Issue件名: 本人別の感性・制作選択を蓄積し、出典と不確実性を保って自己モデルへ反映する
 
 理由: 制作を重ねるほど利用者本人の感性との接点を深める。AIが生成した案や無反応を本人の好みの証拠にして循環強化しない。
@@ -352,6 +357,7 @@ Issue件名: 本人別の感性・制作選択を蓄積し、出典と不確実�
 ## aak-06
 
 対象: `masa-san-jp/art-history-notes`  
+Issue: [art-history-notes#386](https://github.com/masa-san-jp/art-history-notes/issues/386)  
 Issue件名: 制作研究の美術史知識を根拠付きで取り込み、次回探索へ還流する
 
 理由: 制作ごとの調査から作品・技法・時代背景の知識が増え、次の制作の参照範囲を広げられるようにする。
@@ -377,6 +383,7 @@ Issue件名: 制作研究の美術史知識を根拠付きで取り込み、次�
 ## aak-07
 
 対象: `masa-san-jp/marketing-trends-notes`  
+Issue: [marketing-trends-notes#86](https://github.com/masa-san-jp/marketing-trends-notes/issues/86)  
 Issue件名: 制作研究から社会・受容の変化を蓄積し、鮮度を再検証して再利用する
 
 理由: 制作と時代の接点を更新し続け、過去の観測を現在の事実として誤用しないため。
@@ -402,6 +409,7 @@ Issue件名: 制作研究から社会・受容の変化を蓄積し、鮮度を�
 ## aak-08
 
 対象: `masa-san-jp/agentic-art-research`  
+Issue: [agentic-art-research#93](https://github.com/masa-san-jp/agentic-art-research/issues/93)  
 Issue件名: 調査・仮説・採否・未解決の問いを永続蓄積し次の研究へ再投入する
 
 理由: 棄却案や未解決の問いも、別の条件で再び表現の契機となる。調査成果が実行領域に残るだけの状態を解消する。
@@ -427,6 +435,7 @@ Issue件名: 調査・仮説・採否・未解決の問いを永続蓄積し次�
 ## aak-09
 
 対象: `masa-san-jp/agentic-art-research`  
+Issue: [agentic-art-research#94](https://github.com/masa-san-jp/agentic-art-research/issues/94)  
 Issue件名: 蓄積を再利用しながら固有性・機構の接地・探索の幅を検証する
 
 理由: 蓄積が同じ仕掛けの反復やAIによる一般論への収束を強めず、固有の表現を育てるようにする。
@@ -452,6 +461,7 @@ Issue件名: 蓄積を再利用しながら固有性・機構の接地・探索�
 ## aak-10
 
 対象: `masa-san-jp/agentic-art-production`  
+Issue: [agentic-art-production#61](https://github.com/masa-san-jp/agentic-art-production/issues/61)  
 Issue件名: 研究要件から実制作可能な統合プランを生成し内容の完全性を検証する
 
 理由: 人間が受け取って具象化できる制作プランを最終成果とし、体裁だけの成功・要約・テンプレートで完了させない。
@@ -477,6 +487,7 @@ Issue件名: 研究要件から実制作可能な統合プランを生成し内�
 ## aak-11
 
 対象: `masa-san-jp/agentic-art-production`  
+Issue: [agentic-art-production#62](https://github.com/masa-san-jp/agentic-art-production/issues/62)  
 Issue件名: 制作・試作・失敗の知識を条件付きで蓄積し次の計画に反映する
 
 理由: 実現条件の知識を累積し、想定と実績の差や失敗を次の制作に生かす。
@@ -502,6 +513,7 @@ Issue件名: 制作・試作・失敗の知識を条件付きで蓄積し次の�
 ## aak-12
 
 対象: `masa-san-jp/viewer-response-notes`  
+Issue: [viewer-response-notes#6](https://github.com/masa-san-jp/viewer-response-notes/issues/6)  
 Issue件名: 鑑賞者反応を作品・意図・展示条件別に蓄積し次の研究へ還流する
 
 理由: 作品がどう届いたかを知識にし、意図しなかった受容も次の問いへ返す。人気だけに生成を最適化しない。
@@ -527,6 +539,7 @@ Issue件名: 鑑賞者反応を作品・意図・展示条件別に蓄積し次�
 ## aak-13
 
 対象: `masa-san-jp/agentic-art-project`  
+Issue: [agentic-art-project#10](https://github.com/masa-san-jp/agentic-art-project/issues/10)  
 Issue件名: 公開プランと作品の系譜を帰属付きで蓄積し、検証済み履歴を再参照可能にする
 
 理由: カタログを制作の系譜として引き継ぎ、過去の表現・未制作の構想・改訂を比較しながら各利用者の制作を育てる。
