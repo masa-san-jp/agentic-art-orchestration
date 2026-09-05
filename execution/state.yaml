@@ -1,5 +1,5 @@
-version: 207
-updated_at: '2026-09-05T04:27:59+00:00'
+version: 208
+updated_at: '2026-09-05T04:40:36+00:00'
 active_task: AAK-01
 active_repository: agentic-art-orchestration
 lease:
@@ -30,13 +30,18 @@ checkpoint:
   start_point: 02153dde6304ec4457cf41113a73a83c7f67d361
   expected_changes: 'Issue #194: SSOT-derived queue projection, entrypoint links,
     integrity validation'
-  result: IN_PROGRESS; API snapshot verified against all 259 blob hashes; local snapshot
-    commit is not upstream history
+  result: 'BLOCKED_NATIVE_BOOTSTRAP: local Git authentication unavailable; required
+    pip installation cancelled by network approval; native fast-forward push required
+    by AGENTS Work protocol 8 remains unverified. API candidate and draft PR #199
+    are saved; lease retained.'
 last_completed_task: PUBLIC-PROJECTION-AUTO-PLAN-001
 resume_from:
   task: AAK-01
-  action: Implement and validate the pinned AAK task projection
-  command: .venv/bin/python tools/validate.py --check
+  action: In an authenticated Git checkout of codex/aak-01-ssot-entrypoint, finish
+    README bootstrap and verify candidate; publish execution state with native fast-forward
+    push before releasing the retained lease. See execution/aak-01-evidence.md.
+  command: .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
+
 workspace_bootstrap_apply:
   status: complete
   task: WORKSPACE-BOOTSTRAP-APPLY-001
@@ -1683,3 +1688,35 @@ research_evaluation_docs:
     inferred: none
   unresolved:
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
+
+aak_01_implementation:
+  task: AAK-01
+  run_id: AAK-01:20260905
+  branch: codex/aak-01-ssot-entrypoint
+  base_commit: b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d
+  candidate_commit: 382742015557b93d4f4133fda4a48de51e324524
+  candidate_tree: 8a98ed24c2b8c216ecad46a850f05d90dda92ab3
+  local_verification_commit: eef3fb9dc246ff30b90ea65955d45c1a946c3ad7
+  code_status: CODE_VERIFIED
+  task_status: BLOCKED
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/199
+  full_suite:
+    tests: 551
+    skipped: 1
+    status: PASS
+    seconds: 126.28
+    log_sha256: 2dffebd919e94f2186ca3535adbb8a69bafac60123bddbfcf85c86414f96b805
+  focused:
+    tests: 22
+    status: PASS
+  validator: PASS
+  diff_check: PASS
+  native_git_push: NOT_RUN
+  api_ref_update: PASS; force=false
+  canonical_pip_install: NOT_COMPLETED; network approval cancelled
+  integration: NOT_RUN
+  next_task: AAK-03 only after AAK-01 completion and lease release
+  blocker: 'BLOCKED_NATIVE_BOOTSTRAP: local Git authentication unavailable; required
+    pip installation cancelled by network approval; native fast-forward push required
+    by AGENTS Work protocol 8 remains unverified. API candidate and draft PR #199 are
+    saved; lease retained.'

@@ -972,7 +972,8 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Progress
 - [x] 指定commitの2文書と#194、#198、親入口・queue・stateを取得。
 - [x] SSOT由来13件の投影・入口・validator・負例テストを実装。
-- [ ] canonical full suite、提出、受入完了を確認。
+- [x] 最終candidateのfull suite 551 tests / 1 skip PASS、draft PR #199作成。
+- [ ] 通常Git pushとcanonical pip bootstrapを完了し、lease解放・受入完了を確認。
 
 ### Surprises & Discoveries
 ローカルGit認証なし。GitHub連携からmain 02153dde6304ec4457cf41113a73a83c7f67d361の259ファイルを取得し、全blob SHAを検証した。ローカルsnapshot commitはupstream履歴ではない。既存queueは138件でREADMEの137件表示は古かった。pip依存取得はnetwork approval cancelledで完了せず、既存runtimeパッケージを参照するvenvで可能な検証を実行する。
@@ -981,7 +982,7 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 指定SSOT版を保持。既存138taskを保持し、13taskだけ追加。子owner本文をコピーせずURL・checks・受入IDを投影。未検証の既存Issue依存は未解決のまま保持する。
 
 ### Outcomes & Retrospective
-focused 7 tests PASS。初回のindentless YAMLへの再登録テスト失敗は、既存sequenceのindentを保存し構造比較後に追記する修正で解消。全体受入は未完了。
+focused最終22 tests PASS、full suite最終551 tests / 1 skip PASS。初回のindentless YAMLへの再登録テスト失敗は、既存sequenceのindentを保存し構造比較後に追記する修正で解消。全体受入は未完了。
 
 ### Context and Orientation
 対象#194、作業branch codex/aak-01-ssot-entrypoint。baseは上記API snapshot。状態はexecution/state.yaml。
