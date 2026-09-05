@@ -1,16 +1,16 @@
-version: 208
-updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-03
-active_repository: agentic-art-orchestration
+version: 209
+updated_at: '2026-09-05T06:20:00+00:00'
+active_task: AAK-05
+active_repository: self-model-notes
 lease:
   status: held
-  owner: codex-aak-03
+  owner: codex-aak-05
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-03:20260905
+  execution_id: AAK-05:20260905
   scope:
-    repository: agentic-art-orchestration
+    repository: self-model-notes
     paths:
     - README.md
     - AGENTS.md
@@ -25,16 +25,16 @@ lease:
     - execution/**
     child_repositories: []
 checkpoint:
-  task: AAK-03
-  repository: agentic-art-orchestration
-  start_point: 02153dde6304ec4457cf41113a73a83c7f67d361
-  expected_changes: 'Issue #195: artifact/receipt/reuse schemas, eight-owner registry, owner-local resumable knowledge dispatch'
-  result: 'IN_PROGRESS: AAK-01 remote candidate and draft PR verified; AAK-03 focused implementation underway.'
-last_completed_task: AAK-01
+  task: AAK-05
+  repository: self-model-notes
+  start_point: TO_OBSERVE
+  expected_changes: 'Issue #93: creator-owned production choices and derived self-model records'
+  result: 'AAK-04 CODE_VERIFIED; candidate 68c4bd59a2803edce66859ca2192f381720e4424; parent draft PR pending creation.'
+last_completed_task: AAK-04
 resume_from:
-  task: AAK-03
-  action: Complete focused tests, validator, full suite, commit, and draft PR for AAK-03.
-  command: .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
+  task: AAK-05
+  action: Observe self-model-notes Issue #93, native task contract, current code, and candidate dependencies; then implement.
+  command: read AGENTS.md README.md issue queue state schemas and AAK-05 SSOT sections
 
 workspace_bootstrap_apply:
   status: complete

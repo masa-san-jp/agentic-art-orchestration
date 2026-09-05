@@ -1676,14 +1676,23 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-03
     target_repositories:
     - agentic-art-orchestration
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-03-AC1: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+      AAK-03-AC2: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+      AAK-03-AC3: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+      AAK-03-AC4: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+      AAK-03-AC5: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+    completion: 'AAK-03-AC1..5 PASS; synthetic eight-owner contract validation; candidate 4c0e2d5db4b2175ce24077404d60ccd81763107b; draft PR #200; 556 tests with 1 pre-existing skip PASS. Real-owner integration remains assigned to AAK-02.'
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
   - id: AAK-04
     owner: agentic-art-orchestration
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/196
@@ -1706,14 +1715,25 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-04
     target_repositories:
     - agentic-art-orchestration
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
-    dependency_evidence: {}
-    acceptance_evidence: {}
+    dependency_evidence:
+      AAK-03: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+      https://github.com/masa-san-jp/agentic-art-orchestration/issues/190: {status: PASS, candidate_commit: bfe777e165a2f9edb19415b6f40f83c901dbaf44, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/191, contract_version: repository-relationship-registry/v1, acceptance_evidence: 'registry/validator/focused/full/integration checks recorded PASS in PR #191; CI billing failure excluded'}
+    acceptance_evidence:
+      AAK-04-AC1: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
+      AAK-04-AC2: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
+      AAK-04-AC3: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
+      AAK-04-AC4: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
+      AAK-04-AC5: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
+    completion: 'AAK-04-AC1..5 PASS; candidate 68c4bd59a2803edce66859ca2192f381720e4424; 6 focused and 562 full tests with 1 pre-existing skip PASS. Local Git fixture used no GitHub authentication; no remote write, merge, release, projection, or real-data migration.'
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
   - id: AAK-05
     owner: self-model-notes
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/93

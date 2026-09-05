@@ -1001,3 +1001,13 @@ focused最終22 tests PASS、full suite最終551 tests / 1 skip PASS。初回の
 
 ### Interfaces and Dependencies
 2文書→config/aak-task-projection.json→execution/task-queue.yaml。既存Issue依存のowner証拠がないtaskはproject_statusから選択しない。次はAAK-03だが、AAK-01受入完了が前提。
+
+## AAK-03 / AAK-04 実行記録
+
+- AAK-03はcandidate `4c0e2d5db4b2175ce24077404d60ccd81763107b`、draft PR #200。AC1..5とfull suite 556 tests / 1 skip PASS。実owner最終統合はAAK-02へ残す。
+- AAK-04は#190 candidate `bfe777e165a2f9edb19415b6f40f83c901dbaf44`の公開境界契約を前提証拠として固定。`instance-profile/v1`、全8owner mapping、本人継続/new clone/fork、local Git、code/knowledge migration dry-run、public-seed-only未充足を実装した。
+- AAK-04 candidateは`68c4bd59a2803edce66859ca2192f381720e4424`。focused 6 tests、full 562 tests / 1 skip、validator、diff check PASS。remote write、merge、release、公開、実データ移設は行っていない。
+
+### Next exact action
+
+1. AAK-04 draft PRを作成し、依存を満たした最小IDのAAK-05をself-model-notesで開始する。
