@@ -1760,14 +1760,23 @@ tasks:
     - python3 tools/agent_runtime.py -m unittest discover -s tests -p 'test_*.py'
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: BLOCKED
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-05
     target_repositories:
     - self-model-notes
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-05-AC1: {status: NOT_RUN, candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc, reference: "https://github.com/masa-san-jp/self-model-notes/pull/94"}
+      AAK-05-AC2: {status: NOT_RUN, candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc, reference: "https://github.com/masa-san-jp/self-model-notes/pull/94"}
+      AAK-05-AC3: {status: NOT_RUN, candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc, reference: "https://github.com/masa-san-jp/self-model-notes/pull/94"}
+      AAK-05-AC4: {status: NOT_RUN, candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc, reference: "https://github.com/masa-san-jp/self-model-notes/pull/94"}
+      AAK-05-AC5: {status: NOT_RUN, candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc, reference: "https://github.com/masa-san-jp/self-model-notes/pull/94"}
+    code_status: PREREQUISITE_ONLY
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/self-model-notes/pull/94
+    completion: "Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd. Registration PR only; functional acceptance NOT_RUN."
   - id: AAK-06
     owner: art-history-notes
     issue_ssot: https://github.com/masa-san-jp/art-history-notes/issues/386
@@ -1789,14 +1798,23 @@ tasks:
     - uv run --locked python tools/test_agent_readiness.py
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-06
     target_repositories:
     - art-history-notes
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-06-AC1: {status: PASS, candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e, reference: "https://github.com/masa-san-jp/art-history-notes/pull/387"}
+      AAK-06-AC2: {status: PASS, candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e, reference: "https://github.com/masa-san-jp/art-history-notes/pull/387"}
+      AAK-06-AC3: {status: PASS, candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e, reference: "https://github.com/masa-san-jp/art-history-notes/pull/387"}
+      AAK-06-AC4: {status: PASS, candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e, reference: "https://github.com/masa-san-jp/art-history-notes/pull/387"}
+      AAK-06-AC5: {status: PASS, candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e, reference: "https://github.com/masa-san-jp/art-history-notes/pull/387"}
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/art-history-notes/pull/387
+    completion: "AC1..5 synthetic PASS, 11 focused and native verification PASS. Durable Git receipt, correction propagation and INDEX_PENDING recovery verified."
   - id: AAK-07
     owner: marketing-trends-notes
     issue_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/86
@@ -1818,14 +1836,23 @@ tasks:
     - make agent-verify ISSUE_BODY=tests/fixtures/issues/valid.md NOW=2026-09-05
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: BLOCKED
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-07
     target_repositories:
     - marketing-trends-notes
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-07-AC1: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
+      AAK-07-AC2: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
+      AAK-07-AC3: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
+      AAK-07-AC4: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
+      AAK-07-AC5: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
+    code_status: PREREQUISITE_ONLY
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
+    completion: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass."
   - id: AAK-08
     owner: agentic-art-research
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/93
@@ -1847,14 +1874,23 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-08
     target_repositories:
     - agentic-art-research
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-08-AC1: {status: PASS, candidate_commit: 13c819eb34e91198c3584b8cfd75c81494ab148c, reference: "https://github.com/masa-san-jp/agentic-art-research/pull/95"}
+      AAK-08-AC2: {status: PASS, candidate_commit: 13c819eb34e91198c3584b8cfd75c81494ab148c, reference: "https://github.com/masa-san-jp/agentic-art-research/pull/95"}
+      AAK-08-AC3: {status: PASS, candidate_commit: 13c819eb34e91198c3584b8cfd75c81494ab148c, reference: "https://github.com/masa-san-jp/agentic-art-research/pull/95"}
+      AAK-08-AC4: {status: PASS, candidate_commit: 13c819eb34e91198c3584b8cfd75c81494ab148c, reference: "https://github.com/masa-san-jp/agentic-art-research/pull/95"}
+      AAK-08-AC5: {status: PASS, candidate_commit: 13c819eb34e91198c3584b8cfd75c81494ab148c, reference: "https://github.com/masa-san-jp/agentic-art-research/pull/95"}
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/95
+    completion: "AC1..5 synthetic PASS; 7 focused and 298 full PASS. Common reuse-trace/v1, immutable knowledge reload and explicit second-decision reuse verified."
   - id: AAK-09
     owner: agentic-art-research
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/94
@@ -1969,14 +2005,23 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-12
     target_repositories:
     - viewer-response-notes
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-12-AC1: {status: PASS, candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7, reference: "https://github.com/masa-san-jp/viewer-response-notes/pull/7"}
+      AAK-12-AC2: {status: PASS, candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7, reference: "https://github.com/masa-san-jp/viewer-response-notes/pull/7"}
+      AAK-12-AC3: {status: PASS, candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7, reference: "https://github.com/masa-san-jp/viewer-response-notes/pull/7"}
+      AAK-12-AC4: {status: PASS, candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7, reference: "https://github.com/masa-san-jp/viewer-response-notes/pull/7"}
+      AAK-12-AC5: {status: PASS, candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7, reference: "https://github.com/masa-san-jp/viewer-response-notes/pull/7"}
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/viewer-response-notes/pull/7
+    completion: "AC1..5 synthetic PASS; 19 full tests and validator PASS. Conditions/sample separation, append-only correction, privacy and empty evidence verified."
   - id: AAK-13
     owner: agentic-art-project
     issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/10

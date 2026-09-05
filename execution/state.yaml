@@ -1,6 +1,6 @@
 version: 212
 updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-05
+active_task: AAK-13
 active_repository: agentic-art-orchestration
 lease:
   status: held
@@ -8,7 +8,7 @@ lease:
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-05:20260905
+  execution_id: AAK-13:production-60:20260905
   scope:
     repository: agentic-art-orchestration
     paths:
@@ -21,8 +21,17 @@ lease:
     - tools/**
     - tests/**
     - execution/**
-    child_repositories: []
+    child_repositories: [agentic-art-production, agentic-art-project]
 checkpoint:
+  task: AAK-13
+  prerequisite: agentic-art-production#60
+  repository: agentic-art-production
+  branch: agent/production-60-public-attestation
+  start_point: 9d125fb87be133f5e73e61e04e23c0a3bfafb462
+  status: IN_PROGRESS
+  result: Production attestation implemented; focused 5 PASS before native validator integration, final full suite running. Project6 PR9 uses old v1 contract and is not qualified for current acceptance. No actual public-plan migration performed.
+  integration_status: NOT_RUN
+aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
   start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
@@ -35,11 +44,11 @@ checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: 'User-authorized non-force API branch update plus complete tree verification; no merge/publication'
-last_completed_task: AAK-04
+last_completed_task: AAK-12
 resume_from:
-  task: AAK-05
-  action: Inspect self-model-notes Issue 93, Issue 1 and native task registration/claim at a61460d4f9add36b256b2db9a860c53a98bd5fcd; preserve raw profile and n=1 gate.
-  command: python3 tools/agent_runtime.py tools/task_harness.py validate
+  task: AAK-13
+  action: Finish Production60 verification and draft PR, then Project6 receiver prerequisites. Preserve self-model trusted-base registration and Marketing closed-dependency human gates. AAK02 live integration remains NOT_RUN.
+  command: python3 tools/validate.py --check
 
 workspace_bootstrap_apply:
   status: complete

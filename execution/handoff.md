@@ -1,4 +1,20 @@
-# AAK-04修復済み、AAK-05へ（2026-09-05）
+# AAK owner implementation checkpoint (2026-09-05)
+
+AAK-01/03/04の検証済みcandidateとdraft PR199/200/201は維持。AAK-06はart-history-notes PR387、AAK-08はagentic-art-research PR95、AAK-12はviewer-response-notes PR7へ提出済み。全体の統合・マージ・AAK-02実エージェント3モード各2runはNOT_RUN。制作可能な統合プランの実受入はまだない。
+
+| Task | Candidate / PR | Acceptance | Resume |
+| --- | --- | --- | --- |
+| AAK-05 | self-model-notes 3eae099917bffa7b816d5cac296b98f3c736a4bc / PR94 | NOT_RUN; registration only | trusted-base SM-036 registration TASK_NOT_FOUND; native registration review/merge is required before claim |
+| AAK-06 | art-history-notes f10a4f187966d1d2602a03410e8b3c9aa31fb22e / PR387 | AC1..5 synthetic PASS; 11 focused + native verification PASS | real-owner integration AAK-02 |
+| AAK-07 | marketing-trends-notes 26684f9f433f4616a31258cdeabc422151b5ae84 / PR87 | intake AC1..4 NOT_RUN; 44 prerequisite tests PASS | native claim requires closed dependency; parent196 is open. No agent-ready/gate override |
+| AAK-08 | agentic-art-research 13c819eb34e91198c3584b8cfd75c81494ab148c / PR95 | AC1..5 synthetic PASS; 7 focused, 298 full PASS | explicit second-decision common reuse-trace retained in owner Git; AAK-09 awaits 05/07 |
+| AAK-12 | viewer-response-notes ca2fbe2cb66ed771486e60159431a670721be3e7 / PR7 | AC1..5 synthetic PASS; 19 tests, validator, README export PASS | scoped aggregate reload/correction/empty evidence; real integration remains NOT_RUN |
+
+Active prerequisite: Production #60 on agent/production-60-public-attestation from 9d125fb87be133f5e73e61e04e23c0a3bfafb462. Project #6 PR9 candidate 55615f985d3376cafd5c9c08ecdc579be1c8641d still implements old projection/v1 with heading checks and lacks the current attestation/v1 contract. Finish Production owner verification first. Actual public-record migration is not performed under this instruction.
+
+Owner evidence and receipts stay in owner Git/stores. Parent records only refs and statuses. Synthetic research second knowledge commit 7188bc56daa900455d4cf757b91d901611703238 uses first 74e3518df8e2c69d281b80a5dc07b72f2194f3cd to change DC001. Viewer receipt df0c1156b097ac08440dfef9c7d930b2a34d47f3 preserves aggregate conditions. These are synthetic owner tests, not live-agent artistic acceptance. No merge, release, publication, real n=1 migration, private raw or inferred personal preference was performed.
+
+## Earlier AAK-04 qualification
 
 AAK-04 draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
 検証済みcode candidate: `83f7e9e8d1c6e25b39351aebb6eb15cb12da4685`。
