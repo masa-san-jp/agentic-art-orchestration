@@ -1,9 +1,27 @@
-# AAK-03 実装中（2026-09-05）
+# AAK-03修復済み、AAK-04再開（2026-09-05）
 
-Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/199
-Candidate: `382742015557b93d4f4133fda4a48de51e324524`。詳細は[aak-01-evidence.md](aak-01-evidence.md)。
+Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
+Candidate: `e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb`。
+検証tree: `c81e80fa54950c2cddf493be2df068f6d0694d1e`。
+local code commit: `03e58a50436376977e6bb483d74eb68e3febafbc`。
 
-AAK-01は受入4/4、remote candidateとdraft PR #199を確認してDONE。AAK-03のartifact-record、receipt、reuse-trace、8 owner registry、owner-local knowledge cycleを実装中。次の操作はfocused test、validator、full suite、commit、draft PR。
+以前のAAK-03候補は実Git commitを作らず、replay内容やcreatorを十分検査していなかった。
+修復後は実bare Git store、親SHAのCAS、同commit内のoperation ledger、固定snapshot再読込、
+owner payload validator、失効の派生再検証、実判断を要求するreuse traceを使う。
+Projectへの親dispatch書込みは拒否し、catalog参照能力を分離して保持する。
+
+synthetic 8 ownerのAC1..5 PASS。focused 23 PASS、AAK-04コードを含まない隔離worktreeの
+full suiteは566 tests、既存1 skipでPASS。最初の隔離fullはaudit等fixture未生成により
+3 failures/9 errorsだったが、READMEの正規toolでfixtureを準備して修復した。
+全log SHA-256: `b90c5ffec15e49dfcb4107bc37af5cc6a38e321d911999c7dccd6b610f8daef4`。
+入力はtests/test_knowledge_cycle_contracts.py内の合成record/選択/CLI payloadのみ。
+実Masa、実owner統合、制作プラン生成と次回再利用のAAK-02受入はNOT_RUN。
+
+ユーザーは本系列のbranch保存に非force API更新＋全tree照合を明示許可済み。
+通常Git認証がないことを再度の確認理由にしない。merge・公開・実データ移設は別gate。
+次はAAK-04。依存#190のcandidate `bfe777e165a2f9edb19415b6f40f83c901dbaf44`、
+contract `repository-relationships/v1` のregistry/schema/validatorを読み、隔離環境で結合する。
+AAK-04の旧PR #201はまだ完全受入未達であり、AAK-05へ先行しない。
 
 以下は既存の履歴であり、今回の再開点に優先しない。
 

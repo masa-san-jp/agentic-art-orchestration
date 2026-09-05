@@ -1,14 +1,14 @@
-version: 208
+version: 212
 updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-03
+active_task: AAK-04
 active_repository: agentic-art-orchestration
 lease:
   status: held
-  owner: codex-aak-03
+  owner: codex-aak-repair
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-03:20260905
+  execution_id: AAK-04:20260905
   scope:
     repository: agentic-art-orchestration
     paths:
@@ -18,23 +18,28 @@ lease:
     - docs/**
     - config/**
     - schemas/**
-    - tools/issue_intake.py
-    - tools/validate.py
-    - tools/project_status.py
+    - tools/**
     - tests/**
     - execution/**
     child_repositories: []
 checkpoint:
-  task: AAK-03
+  task: AAK-04
   repository: agentic-art-orchestration
-  start_point: 02153dde6304ec4457cf41113a73a83c7f67d361
-  expected_changes: 'Issue #195: artifact/receipt/reuse schemas, eight-owner registry, owner-local resumable knowledge dispatch'
-  result: 'IN_PROGRESS: AAK-01 remote candidate and draft PR verified; AAK-03 focused implementation underway.'
-last_completed_task: AAK-01
+  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  expected_changes: 'Qualify #190 dependency and repair instance-profile bootstrap before AAK-05'
+  result: 'AAK-03 synthetic-owner acceptance repaired and verified; AAK-04 full acceptance remains pending.'
+  code_candidate: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  code_tree: c81e80fa54950c2cddf493be2df068f6d0694d1e
+  local_verification_commit: 03e58a50436376977e6bb483d74eb68e3febafbc
+  focused_tests: 23 PASS
+  full_tests: 566 tests, 1 existing skip, PASS
+  full_log_sha256: b90c5ffec15e49dfcb4107bc37af5cc6a38e321d911999c7dccd6b610f8daef4
+  delivery: 'User-authorized non-force API branch update plus complete tree verification; no merge/publication'
+last_completed_task: AAK-03
 resume_from:
-  task: AAK-03
-  action: Complete focused tests, validator, full suite, commit, and draft PR for AAK-03.
-  command: .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
+  task: AAK-04
+  action: Verify #190 owner candidate registry/schema/validator, then repair identity, permissions, isolated code checkouts and resume.
+  command: .venv/bin/python -m unittest tests.test_instance_profiles -v
 
 workspace_bootstrap_apply:
   status: complete

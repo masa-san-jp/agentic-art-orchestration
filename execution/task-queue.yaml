@@ -1676,14 +1676,24 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-03
     target_repositories:
     - agentic-art-orchestration
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-03-AC1: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac1_all_eight_git_stores_reload_receipts'}
+      AAK-03-AC2: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac2_same_operation_different_contents_conflicts'}
+      AAK-03-AC3: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac3_interruption_after_commit_before_receipt_save'}
+      AAK-03-AC4: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac4_source_revocation_enumerates_dependent_revision'}
+      AAK-03-AC5: {status: PASS, candidate_commit: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb, reference: 'tests/test_knowledge_cycle_contracts.py#test_aak_03_ac5_historical_git_snapshot_remains_reproducible'}
+    completion: 'Repaired synthetic-owner acceptance AC1..5 PASS at e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb. Focused 23 PASS; isolated full suite 566 tests, 1 existing skip, PASS. Earlier candidate 4c0e2d5 was insufficient. Real-owner integration remains AAK-02 NOT_RUN.'
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
+    delivery_authorization: 'User approved non-force GitHub API update with complete blob and tree verification for this series; merge/publication gates remain.'
   - id: AAK-04
     owner: agentic-art-orchestration
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/196
