@@ -1,14 +1,14 @@
 version: 208
 updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-01
+active_task: AAK-03
 active_repository: agentic-art-orchestration
 lease:
   status: held
-  owner: codex-aak-01
+  owner: codex-aak-03
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-01:20260905
+  execution_id: AAK-03:20260905
   scope:
     repository: agentic-art-orchestration
     paths:
@@ -25,21 +25,15 @@ lease:
     - execution/**
     child_repositories: []
 checkpoint:
-  task: AAK-01
+  task: AAK-03
   repository: agentic-art-orchestration
   start_point: 02153dde6304ec4457cf41113a73a83c7f67d361
-  expected_changes: 'Issue #194: SSOT-derived queue projection, entrypoint links,
-    integrity validation'
-  result: 'BLOCKED_NATIVE_BOOTSTRAP: local Git authentication unavailable; required
-    pip installation cancelled by network approval; native fast-forward push required
-    by AGENTS Work protocol 8 remains unverified. API candidate and draft PR #199
-    are saved; lease retained.'
-last_completed_task: PUBLIC-PROJECTION-AUTO-PLAN-001
+  expected_changes: 'Issue #195: artifact/receipt/reuse schemas, eight-owner registry, owner-local resumable knowledge dispatch'
+  result: 'IN_PROGRESS: AAK-01 remote candidate and draft PR verified; AAK-03 focused implementation underway.'
+last_completed_task: AAK-01
 resume_from:
-  task: AAK-01
-  action: In an authenticated Git checkout of codex/aak-01-ssot-entrypoint, finish
-    README bootstrap and verify candidate; publish execution state with native fast-forward
-    push before releasing the retained lease. See execution/aak-01-evidence.md.
+  task: AAK-03
+  action: Complete focused tests, validator, full suite, commit, and draft PR for AAK-03.
   command: .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
 
 workspace_bootstrap_apply:

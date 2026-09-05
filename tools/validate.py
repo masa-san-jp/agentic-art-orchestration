@@ -70,6 +70,12 @@ PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH = ROOT / "schemas/public-projection-reques
 PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH = ROOT / "schemas/public-projection-approval.schema.json"
 PUBLIC_PROJECTION_RESULT_SCHEMA_PATH = ROOT / "schemas/public-projection-result.schema.json"
 PUBLIC_PROJECTION_FIXTURE_ROOT = ROOT / "tests/fixtures/public-projection"
+KNOWLEDGE_OWNER_REGISTRY_PATH = ROOT / "config/knowledge-owners.yaml"
+KNOWLEDGE_CONTRACT_PATHS = [
+    ROOT / "schemas/artifact-record.schema.json",
+    ROOT / "schemas/knowledge-write-receipt.schema.json",
+    ROOT / "schemas/reuse-trace.schema.json",
+]
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -131,6 +137,12 @@ REQUIRED_FILES = [
     "schemas/public-projection-approval.schema.json",
     "schemas/public-projection-result.schema.json",
     "tools/public_projection.py",
+    "tools/knowledge_cycle.py",
+    "config/knowledge-owners.yaml",
+    "schemas/artifact-record.schema.json",
+    "schemas/knowledge-write-receipt.schema.json",
+    "schemas/reuse-trace.schema.json",
+    "knowledge/README.md",
     "tools/batch_status.py",
     "tools/batch_run.py",
     "tools/output_destinations.py",
@@ -724,6 +736,35 @@ def validate_execution_state(data: dict, source: str = "execution/state.yaml") -
                 visit(child, f"{path}[{index}]")
 
     visit(data, source)
+    return errors
+
+
+def validate_knowledge_cycle_contracts() -> list[str]:
+    errors: list[str] = []
+    expected_ids = {
+        "artifact-record/v1", "knowledge-write-receipt/v1", "reuse-trace/v1"
+    }
+    observed_ids: set[str] = set()
+    for path in KNOWLEDGE_CONTRACT_PATHS:
+        schema = load_json(path)
+        observed_ids.add(schema.get("$id"))
+        if schema.get("additionalProperties") is not False:
+            errors.append(f"{_source_label(path)}: must be a closed schema")
+    if observed_ids != expected_ids:
+        errors.append("knowledge schemas: contract IDs differ from AAK-SPEC/v1")
+    registry = load_yaml(KNOWLEDGE_OWNER_REGISTRY_PATH)
+    owners = registry.get("owners", []) if isinstance(registry, dict) else []
+    owner_ids = [item.get("id") for item in owners if isinstance(item, dict)]
+    expected_owners = {
+        "self-model-notes", "art-history-notes", "marketing-trends-notes",
+        "agentic-art-research", "agentic-art-production", "viewer-response-notes",
+        "agentic-art-project", "agentic-art-orchestration",
+    }
+    if registry.get("contract_version") != "knowledge-owner-registry/v1" or set(owner_ids) != expected_owners or len(owner_ids) != 8:
+        errors.append("knowledge owner registry: expected eight unique AAK owners")
+    project = next((item for item in owners if item.get("id") == "agentic-art-project"), {})
+    if project.get("write") is not False or project.get("catalog_reference") is not True:
+        errors.append("knowledge owner registry: Project must remain write-disabled with separate catalog-reference capability")
     return errors
 
 
@@ -4041,6 +4082,7 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
         )
         state = load_yaml(ROOT / "execution/state.yaml")
         errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
+        errors.extend(validate_knowledge_cycle_contracts())
         if state.get("last_completed_task") is None:
             errors.append("execution/state.yaml: last_completed_task is required")
     except ValueError as exc:

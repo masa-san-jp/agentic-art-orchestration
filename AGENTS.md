@@ -70,6 +70,7 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 - data/とrepos/は生成物。手編集しない。
 - Google Drive上の成果物は外部artifactの正本。親はopaque ID、hash、provenance、access scopeだけを保持する。
 - 明示・推定feedbackの実行順はtask-queue.yaml、domain内容の採否は対象子repoのIssue/PRが正本。
+- AAK知識交換は `config/knowledge-owners.yaml` と `tools/knowledge_cycle.py` の共通境界を使う。domain payloadの妥当性はowner validatorが決め、親はenvelope・receipt・分散再開だけを検証する。
 
 ## Safety invariants
 
