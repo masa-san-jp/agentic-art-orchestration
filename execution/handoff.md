@@ -1,9 +1,26 @@
-# AAK-03 実装中（2026-09-05）
+# AAK-03/04 訂正・再開点（2026-09-05）
 
-Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/199
-Candidate: `382742015557b93d4f4133fda4a48de51e324524`。詳細は[aak-01-evidence.md](aak-01-evidence.md)。
+Task/run: AAK-03 / AAK-REPAIR:20260905。leaseは保持。保存branchは `codex/aak-04-instance-profiles`。AAK-05は読取りのみで、子の正規claimは未取得。
 
-AAK-01は受入4/4、remote candidateとdraft PR #199を確認してDONE。AAK-03のartifact-record、receipt、reuse-trace、8 owner registry、owner-local knowledge cycleを実装中。次の操作はfocused test、validator、full suite、commit、draft PR。
+## 修復と確認
+
+- PR #201で転送時に切り詰めたvalidatorをcommit `239be711452786ac79065768a07d53e559395391` で修復。blobは `6cfd3ccea81b60da6da29f8d7753a95c5ff7b8e7`。
+- 修復後tree `3ab8456e87f46a353e8b95b9d341ece6fd195181` はローカル検証commit `96c421a` のtreeと完全一致。PR差分は300 additions / 26 deletionsに復旧。
+- AAK-03の合成fixture再観測: Git repository作成なし、commitとして64桁hashを返す、同operationで内容を変えてもALREADY_APPLIED、別creator検索でもREUSED。この結果は受入のFAILである。
+- AAK-03のAC1/2/4はFAIL、AC3/5は完全受入NOT_RUN。AAK-04のAC2はFAIL、他は完全受入NOT_RUN。以前の全PASSは撤回し、PR #200/#201とqueueを訂正した。
+- 以前の556/562 test成功は限定的なローカル回帰の履歴。実Git永続化、本人分離、実エージェント統合の合格証拠ではない。
+- plan/receipt/次回再利用の最終成果物は未生成。AAK-02統合、merge、公開、実データ移設はNOT_RUN。
+
+## 実際の停止境界
+
+正規originを設定後、`GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code origin refs/heads/codex/aak-04-instance-profiles` はexit 128、could not read Usernameを返した。設定済みGitHub連携APIで保存は可能だが、AGENTS Work protocol 8が要求する通常fast-forward pushは実行できない。API更新を同手順の合格へ読み替えず、leaseを解放しない。認証情報の抽出やnetwork権限回避はしない。
+
+## 正確な再開
+
+1. 通常Git認証を用意するか、本系列のbranch保存に限るAPI更新＋tree照合の明示的な代替許可を得る。
+2. 通常Gitなら上記ls-remote成功後、新しい専用checkoutへremote branchを取得する。ローカルsnapshot履歴をupstream履歴と混ぜてpushしない。
+3. AAK-03の正規branchで実Git commit、owner payload検証、operation内容比較、creator/失効/snapshot/recoveryを修復し、正負例を再検証してPR #200へ提出する。
+4. 検証済みAAK-03 candidateを固定してAAK-04のstore本人照合・権限・隔離checkout・CLI/restart接続を完成させる。それからAAK-05へ進む。
 
 以下は既存の履歴であり、今回の再開点に優先しない。
 

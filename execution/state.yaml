@@ -1,16 +1,16 @@
-version: 209
-updated_at: '2026-09-05T06:20:00+00:00'
-active_task: AAK-05
-active_repository: self-model-notes
+version: 210
+updated_at: '2026-09-05T08:47:11+00:00'
+active_task: AAK-03
+active_repository: agentic-art-orchestration
 lease:
   status: held
-  owner: codex-aak-05
+  owner: codex-aak-repair
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-05:20260905
+  execution_id: AAK-REPAIR:20260905
   scope:
-    repository: self-model-notes
+    repository: agentic-art-orchestration
     paths:
     - README.md
     - AGENTS.md
@@ -25,16 +25,19 @@ lease:
     - execution/**
     child_repositories: []
 checkpoint:
-  task: AAK-05
-  repository: self-model-notes
-  start_point: TO_OBSERVE
-  expected_changes: 'Issue #93: creator-owned production choices and derived self-model records'
-  result: 'AAK-04 CODE_VERIFIED; candidate 68c4bd59a2803edce66859ca2192f381720e4424; parent draft PR pending creation.'
-last_completed_task: AAK-04
+  task: AAK-03
+  repository: agentic-art-orchestration
+  start_point: 239be711452786ac79065768a07d53e559395391
+  expected_changes: 'Repair AAK-03 real Git persistence before completing AAK-04'
+  result: 'BLOCKED_NATIVE_GIT_AUTH: origin configured; ls-remote exits 128: could not read Username. API tree repair verified; mandatory normal push not satisfied.'
+  branch: codex/aak-04-instance-profiles
+  local_verification_commit: 96c421a
+  verified_tree: 3ab8456e87f46a353e8b95b9d341ece6fd195181
+last_completed_task: AAK-01
 resume_from:
-  task: AAK-05
-  action: Observe self-model-notes Issue #93, native task contract, current code, and candidate dependencies; then implement.
-  command: read AGENTS.md README.md issue queue state schemas and AAK-05 SSOT sections
+  task: AAK-03
+  action: Restore native Git authentication or obtain explicit permission for an API delivery exception; repair AAK-03 before AAK-04 and AAK-05.
+  command: git ls-remote --exit-code origin refs/heads/codex/aak-04-instance-profiles
 
 workspace_bootstrap_apply:
   status: complete

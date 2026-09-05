@@ -1676,7 +1676,7 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: DONE
+    status: BLOCKED
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-03
     target_repositories:
     - agentic-art-orchestration
@@ -1684,13 +1684,14 @@ tasks:
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
     acceptance_evidence:
-      AAK-03-AC1: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
-      AAK-03-AC2: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
-      AAK-03-AC3: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
-      AAK-03-AC4: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
-      AAK-03-AC5: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
-    completion: 'AAK-03-AC1..5 PASS; synthetic eight-owner contract validation; candidate 4c0e2d5db4b2175ce24077404d60ccd81763107b; draft PR #200; 556 tests with 1 pre-existing skip PASS. Real-owner integration remains assigned to AAK-02.'
-    code_status: CODE_VERIFIED
+      AAK-03-AC1: {status: FAIL, reference: execution/handoff.md, reason: 'LocalOwner emits a synthetic hash rather than a Git commit'}
+      AAK-03-AC2: {status: FAIL, reference: execution/handoff.md, reason: 'Payload validation and operation content comparison are missing'}
+      AAK-03-AC3: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Real commit interruption and pending-only recovery not verified'}
+      AAK-03-AC4: {status: FAIL, reference: execution/handoff.md, reason: 'Creator, expiry and superseded revision filtering are incomplete'}
+      AAK-03-AC5: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Immutable historical Git snapshot reload not implemented'}
+    completion: 'WITHDRAWN: earlier PASS claims exceeded the tests. Implementation requires repair; native Git authentication blocks mandatory Work protocol 8. PR #200 is not dependency-ready.'
+    blocker: 'BLOCKED_NATIVE_GIT_AUTH: git ls-remote origin exits 128; AGENTS Work protocol 8 requires normal fast-forward push before lease release. Configure native Git authentication or explicitly authorize an API delivery exception.'
+    code_status: INCOMPLETE
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
   - id: AAK-04
@@ -1715,23 +1716,23 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: DONE
+    status: BACKLOG
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-04
     target_repositories:
     - agentic-art-orchestration
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence:
-      AAK-03: {status: PASS, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
+      AAK-03: {status: FAIL, candidate_commit: 4c0e2d5db4b2175ce24077404d60ccd81763107b, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200}
       https://github.com/masa-san-jp/agentic-art-orchestration/issues/190: {status: PASS, candidate_commit: bfe777e165a2f9edb19415b6f40f83c901dbaf44, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/191, contract_version: repository-relationship-registry/v1, acceptance_evidence: 'registry/validator/focused/full/integration checks recorded PASS in PR #191; CI billing failure excluded'}
     acceptance_evidence:
-      AAK-04-AC1: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
-      AAK-04-AC2: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
-      AAK-04-AC3: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
-      AAK-04-AC4: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
-      AAK-04-AC5: {status: PASS, candidate_commit: 68c4bd59a2803edce66859ca2192f381720e4424, reference: tests/test_instance_profiles.py}
-    completion: 'AAK-04-AC1..5 PASS; candidate 68c4bd59a2803edce66859ca2192f381720e4424; 6 focused and 562 full tests with 1 pre-existing skip PASS. Local Git fixture used no GitHub authentication; no remote write, merge, release, projection, or real-data migration.'
-    code_status: CODE_VERIFIED
+      AAK-04-AC1: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Full bootstrap and runtime integration incomplete'}
+      AAK-04-AC2: {status: FAIL, reference: execution/handoff.md, reason: 'Existing personal store identity and permissions not validated'}
+      AAK-04-AC3: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Real code and knowledge updates with retained run snapshots not implemented'}
+      AAK-04-AC4: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Local init fixture alone is not complete clone operation'}
+      AAK-04-AC5: {status: NOT_RUN, reference: execution/handoff.md, reason: 'Focused seed marker test only; end-to-end mode acceptance pending'}
+    completion: 'WITHDRAWN: earlier PASS claims exceeded test coverage. Truncated validator repaired in 239be711452786ac79065768a07d53e559395391; tree equals locally tested 96c421a. AAK-03 and native Git authentication remain unresolved.'
+    code_status: INCOMPLETE
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
   - id: AAK-05
