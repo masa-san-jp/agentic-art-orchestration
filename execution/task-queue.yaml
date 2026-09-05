@@ -1,4 +1,4 @@
-version: 66
+version: 67
 updated_at: "2026-09-04T23:21:43+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
@@ -1568,3 +1568,398 @@ tasks:
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/project_status.py --check-readme, python3 -m py_compile tools/*.py tests/*.py, git diff --check]
     completion: "Implementation commit ccdf897756c6a2d630e9687362071cb1d7ef94ed was merged to parent main by PR #184 as df76b2f4826c3621f2b0fccabe4a6fc249179a52. AGENTS.md now makes the exact harness purpose and README requirements authoritative; README.md states usable production-plan, multi-plan, autonomous-continuation, and art-versus-AI requirements; the system design specification records the same purpose boundary; .gitignore excludes generated data/runs/. Parent validator, full unittest 535 tests with 1 skipped, project-status README check, py_compile, and git diff --check PASS. Remote run 33858927901 failed before steps with steps=[] because of the account billing limit and is not counted as a quality-gate pass. No child repository, schema/data/pin, credential, private data, raw conversation, or external artifact changed. Acceptance 1/1."
     stop_if: [The purpose or production-plan acceptance must be weakened, generated run state must be committed as canonical evidence, a child/schema/data/pin/credential/external artifact change is required]
+
+  - id: AAK-01
+    owner: agentic-art-orchestration
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/194
+    title: 設計原則・仕様SSOT・実装DAGをエージェントの正準入口へ接続する
+    depends_on: []
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-01
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-01
+    acceptance_ids:
+    - AAK-01-AC1
+    - AAK-01-AC2
+    - AAK-01-AC3
+    - AAK-01-AC4
+    checks:
+    - .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: IN_PROGRESS
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-01
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-02
+    owner: agentic-art-orchestration
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/197
+    title: 実エージェントで制作プラン出力・蓄積・次回再利用を自律完走させる
+    depends_on:
+    - AAK-05
+    - AAK-06
+    - AAK-07
+    - AAK-09
+    - AAK-11
+    - AAK-12
+    - AAK-13
+    external_dependencies:
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/189
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/187
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-02
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-02
+    acceptance_ids:
+    - AAK-02-AC1
+    - AAK-02-AC2
+    - AAK-02-AC3
+    - AAK-02-AC4
+    - AAK-02-AC5
+    - AAK-02-AC6
+    checks:
+    - .venv/bin/python -m unittest tests.test_knowledge_cycle_e2e -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-02
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-03
+    owner: agentic-art-orchestration
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/195
+    title: 全8repoの生成物蓄積・還流・検索の共通契約を実装する
+    depends_on:
+    - AAK-01
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-03
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-03
+    acceptance_ids:
+    - AAK-03-AC1
+    - AAK-03-AC2
+    - AAK-03-AC3
+    - AAK-03-AC4
+    - AAK-03-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-03
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-04
+    owner: agentic-art-orchestration
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/196
+    title: 本人継続利用・clone・forkの利用者別初期化と蓄積保持を実装する
+    depends_on:
+    - AAK-03
+    external_dependencies:
+    - https://github.com/masa-san-jp/agentic-art-orchestration/issues/190
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-04
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-04
+    acceptance_ids:
+    - AAK-04-AC1
+    - AAK-04-AC2
+    - AAK-04-AC3
+    - AAK-04-AC4
+    - AAK-04-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_instance_profiles -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-04
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-05
+    owner: self-model-notes
+    issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/93
+    title: 本人別の感性・制作選択を蓄積し、出典と不確実性を保って自己モデルへ反映する
+    depends_on:
+    - AAK-04
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-05
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-05
+    acceptance_ids:
+    - AAK-05-AC1
+    - AAK-05-AC2
+    - AAK-05-AC3
+    - AAK-05-AC4
+    - AAK-05-AC5
+    checks:
+    - python3 tools/agent_runtime.py -m unittest tests.test_creative_feedback_memory
+      -v
+    - python3 tools/agent_runtime.py -m unittest discover -s tests -p 'test_*.py'
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-05
+    target_repositories:
+    - self-model-notes
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-06
+    owner: art-history-notes
+    issue_ssot: https://github.com/masa-san-jp/art-history-notes/issues/386
+    title: 制作研究の美術史知識を根拠付きで取り込み、次回探索へ還流する
+    depends_on:
+    - AAK-04
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-06
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-06
+    acceptance_ids:
+    - AAK-06-AC1
+    - AAK-06-AC2
+    - AAK-06-AC3
+    - AAK-06-AC4
+    - AAK-06-AC5
+    checks:
+    - uv run --locked python -m unittest tests.test_research_knowledge_intake -v
+    - uv run --locked python tools/verify.py
+    - uv run --locked python tools/test_agent_readiness.py
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-06
+    target_repositories:
+    - art-history-notes
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-07
+    owner: marketing-trends-notes
+    issue_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/86
+    title: 制作研究から社会・受容の変化を蓄積し、鮮度を再検証して再利用する
+    depends_on:
+    - AAK-04
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-07
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-07
+    acceptance_ids:
+    - AAK-07-AC1
+    - AAK-07-AC2
+    - AAK-07-AC3
+    - AAK-07-AC4
+    - AAK-07-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_research_knowledge_intake -v
+    - make test
+    - make agent-verify ISSUE_BODY=tests/fixtures/issues/valid.md NOW=2026-09-05
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-07
+    target_repositories:
+    - marketing-trends-notes
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-08
+    owner: agentic-art-research
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/93
+    title: 調査・仮説・採否・未解決の問いを永続蓄積し次の研究へ再投入する
+    depends_on:
+    - AAK-04
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-08
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-08
+    acceptance_ids:
+    - AAK-08-AC1
+    - AAK-08-AC2
+    - AAK-08-AC3
+    - AAK-08-AC4
+    - AAK-08-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_research_memory -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-08
+    target_repositories:
+    - agentic-art-research
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-09
+    owner: agentic-art-research
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/94
+    title: 蓄積を再利用しながら固有性・機構の接地・探索の幅を検証する
+    depends_on:
+    - AAK-08
+    - AAK-05
+    - AAK-06
+    - AAK-07
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-09
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-09
+    acceptance_ids:
+    - AAK-09-AC1
+    - AAK-09-AC2
+    - AAK-09-AC3
+    - AAK-09-AC4
+    - AAK-09-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_cumulative_specificity -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-09
+    target_repositories:
+    - agentic-art-research
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-10
+    owner: agentic-art-production
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/61
+    title: 研究要件から実制作可能な統合プランを生成し内容の完全性を検証する
+    depends_on:
+    - AAK-09
+    external_dependencies:
+    - https://github.com/masa-san-jp/agentic-art-production/issues/60
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-10
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-10
+    acceptance_ids:
+    - AAK-10-AC1
+    - AAK-10-AC2
+    - AAK-10-AC3
+    - AAK-10-AC4
+    - AAK-10-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_plan_actionability -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - .venv/bin/python tools/run_evaluation.py --format json
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-10
+    target_repositories:
+    - agentic-art-production
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-11
+    owner: agentic-art-production
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/62
+    title: 制作・試作・失敗の知識を条件付きで蓄積し次の計画に反映する
+    depends_on:
+    - AAK-10
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-11
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-11
+    acceptance_ids:
+    - AAK-11-AC1
+    - AAK-11-AC2
+    - AAK-11-AC3
+    - AAK-11-AC4
+    - AAK-11-AC5
+    checks:
+    - .venv/bin/python -m unittest tests.test_production_memory -v
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - .venv/bin/python tools/run_evaluation.py --format json
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-11
+    target_repositories:
+    - agentic-art-production
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-12
+    owner: viewer-response-notes
+    issue_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/6
+    title: 鑑賞者反応を作品・意図・展示条件別に蓄積し次の研究へ還流する
+    depends_on:
+    - AAK-04
+    external_dependencies: []
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-12
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-12
+    acceptance_ids:
+    - AAK-12-AC1
+    - AAK-12-AC2
+    - AAK-12-AC3
+    - AAK-12-AC4
+    - AAK-12-AC5
+    checks:
+    - python3 -m unittest tests.test_viewer_memory -v
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-12
+    target_repositories:
+    - viewer-response-notes
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}
+  - id: AAK-13
+    owner: agentic-art-project
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/10
+    title: 公開プランと作品の系譜を帰属付きで蓄積し、検証済み履歴を再参照可能にする
+    depends_on:
+    - AAK-04
+    external_dependencies:
+    - https://github.com/masa-san-jp/agentic-art-project/issues/6
+    specification: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-13
+    implementation_plan: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md#aak-13
+    acceptance_ids:
+    - AAK-13-AC1
+    - AAK-13-AC2
+    - AAK-13-AC3
+    - AAK-13-AC4
+    - AAK-13-AC5
+    checks:
+    - python3 -m unittest tests.test_catalog_lineage -v
+    - python3 tools/validate.py --check
+    - python3 tools/catalog_sync.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    milestone: AAK
+    status: BACKLOG
+    acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-13
+    target_repositories:
+    - agentic-art-project
+    agent_terminal: DRAFT_PR_READY
+    contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
+    dependency_evidence: {}
+    acceptance_evidence: {}

@@ -1,5 +1,16 @@
 # Execution Plans
 
+## AAK：自律制作と累積知識の追加系列
+
+今回の追加要件は[仕様SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のprinciples/authority/compatibility、実装順・検証・再開は[実装計画SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)を読む。Issue参照版は `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`。既存機能全体の仕様を置き換えない。
+
+芸術の契機を「精霊や風が運び、人間が受け取って具象化する」と捉えるプロジェクトの精神を維持する。外部エージェントが既存の半決定論的ハーネスを動かす。LLM/daemonの内蔵を必須にしない。
+
+次taskは[queue](execution/task-queue.yaml)と[state](execution/state.yaml)、`.venv/bin/python tools/project_status.py --format json`から確認する。AAK-01 → AAK-03 → AAK-04以降は計画DAGの依存を満たす最小ID、AAK-02は最後。既存Issueの前提はownerのcandidate commit・contract version・受入証拠を確認し、CLOSEDだけで通過させない。
+
+機械契約 `config/aak-task-projection.json` とqueue参照は2つのMarkdownからの実行用投影であり、第三の仕様ではない。初回は `.venv/bin/python tools/issue_intake.py --register-aak` で冪等登録する。validatorは投影・参照hash・owner・DAGを照合する。子のschema/本文を親へ複製しない。merge/release/公開/実n=1移設のhuman gateを維持する。
+
+
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 
 ## 使用条件
@@ -952,3 +963,40 @@ All examples remain placeholders or synthetic fixtures. No user absolute path, c
 ### Next exact action
 
 1. 人間がdraft PR #188のautomatic authorityとlocal snapshot prerequisiteをレビューし、確認後にmerge可否を判断する。merge・公開確定は本タスクでは実行しない。
+
+## AAK-01 実行記録
+
+### Purpose / Big Picture
+目的・受入条件は上記仕様SSOTのAAK-01を参照する。ここには実行証拠だけを残す。
+
+### Progress
+- [x] 指定commitの2文書と#194、#198、親入口・queue・stateを取得。
+- [x] SSOT由来13件の投影・入口・validator・負例テストを実装。
+- [ ] canonical full suite、提出、受入完了を確認。
+
+### Surprises & Discoveries
+ローカルGit認証なし。GitHub連携からmain 02153dde6304ec4457cf41113a73a83c7f67d361の259ファイルを取得し、全blob SHAを検証した。ローカルsnapshot commitはupstream履歴ではない。既存queueは138件でREADMEの137件表示は古かった。pip依存取得はnetwork approval cancelledで完了せず、既存runtimeパッケージを参照するvenvで可能な検証を実行する。
+
+### Decision Log
+指定SSOT版を保持。既存138taskを保持し、13taskだけ追加。子owner本文をコピーせずURL・checks・受入IDを投影。未検証の既存Issue依存は未解決のまま保持する。
+
+### Outcomes & Retrospective
+focused 7 tests PASS。初回のindentless YAMLへの再登録テスト失敗は、既存sequenceのindentを保存し構造比較後に追記する修正で解消。全体受入は未完了。
+
+### Context and Orientation
+対象#194、作業branch codex/aak-01-ssot-entrypoint。baseは上記API snapshot。状態はexecution/state.yaml。
+
+### Plan of Work
+正本の実装計画AAK-01を参照。
+
+### Concrete Steps
+`.venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v`、README記載offline bootstrap、full suite、validator、diffを実行する。
+
+### Validation and Acceptance
+各AAK-01-ACの対応はtests/test_knowledge_cycle_contracts.py。検証済みcandidateと全gateの証拠が揃うまでDONEにしない。
+
+### Idempotence and Recovery
+`--register-aak`は既存AAK投影が整合する場合に変更しない。破損時は書き換えず停止。state/leaseとbranchを再観測する。
+
+### Interfaces and Dependencies
+2文書→config/aak-task-projection.json→execution/task-queue.yaml。既存Issue依存のowner証拠がないtaskはproject_statusから選択しない。次はAAK-03だが、AAK-01受入完了が前提。

@@ -1,31 +1,42 @@
-version: 206
-updated_at: "2026-09-04T23:21:43+09:00"
-active_task: null
-active_repository: null
+version: 207
+updated_at: '2026-09-05T04:27:59+00:00'
+active_task: AAK-01
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T21:07:32+09:00"
+  status: held
+  owner: codex-aak-01
+  acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
-  lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-AUTO-PLAN-001:20260904-210732
-  released_at: "2026-09-04T23:21:43+09:00"
+  lane: AAK_IMPLEMENTATION
+  execution_id: AAK-01:20260905
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/public_projection.py, tools/run.py, tools/batch_run.py, tools/output_destinations.py, tools/security.py, tools/validate.py, schemas/batch-run.schema.json, schemas/public-projection-result.schema.json, config/human-gates.yaml, config/output-destinations.example.yaml, README.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/fixtures/public-projection/result.json, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
+    paths:
+    - README.md
+    - AGENTS.md
+    - PLANS.md
+    - docs/**
+    - config/**
+    - schemas/**
+    - tools/issue_intake.py
+    - tools/validate.py
+    - tools/project_status.py
+    - tests/**
+    - execution/**
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-AUTO-PLAN-001
+  task: AAK-01
   repository: agentic-art-orchestration
-  start_point: 5de256017df862001721729f8b2f390753c15b02
-  expected_changes: Project only a canonical PLAN_READY run or PASSED batch into the configured public project plans collection through a closed automatic plan mode; keep internal data separate, preserve work/manual and Git human gates, and prove atomic idempotent 100+ behavior.
-  result: completed; implementation commit c3f62e6; draft PR #188; automatic plan projection is implemented and locally verified.
+  start_point: 02153dde6304ec4457cf41113a73a83c7f67d361
+  expected_changes: 'Issue #194: SSOT-derived queue projection, entrypoint links,
+    integrity validation'
+  result: IN_PROGRESS; API snapshot verified against all 259 blob hashes; local snapshot
+    commit is not upstream history
 last_completed_task: PUBLIC-PROJECTION-AUTO-PLAN-001
 resume_from:
-  task: null
-  action: "Human-review draft PR #188; merge only after reviewing the automatic plan authority and the remaining local snapshot prerequisite."
-  command: gh pr view 188 --repo masa-san-jp/agentic-art-orchestration
-
+  task: AAK-01
+  action: Implement and validate the pinned AAK task projection
+  command: .venv/bin/python tools/validate.py --check
 workspace_bootstrap_apply:
   status: complete
   task: WORKSPACE-BOOTSTRAP-APPLY-001

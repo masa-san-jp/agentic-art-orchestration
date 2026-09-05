@@ -3849,6 +3849,14 @@ def validate_tasks(errors: list[str], queue_path: Path | None = None) -> None:
         if isinstance(repo, dict)
     }
     known_repositories["agentic-art-orchestration"] = "masa-san-jp/agentic-art-orchestration"
+    if any(str(task.get("id", "")).startswith("AAK-") for task in tasks) or (queue_path == ROOT / "execution/task-queue.yaml" and (ROOT / "config/aak-task-projection.json").is_file()):
+        from tools.issue_intake import aak_projection, validate_aak_projection
+        errors.extend(validate_aak_projection(ROOT, data))
+        try:
+            for projection in aak_projection(ROOT)["tasks"]:
+                known_repositories[projection["owner"]] = "masa-san-jp/" + projection["owner"]
+        except ValueError as exc:
+            errors.append(str(exc))
     for task in tasks:
         task_id = task.get("id", "<missing>")
         for field in ("milestone", "title", "status", "depends_on", "acceptance", "checks"):

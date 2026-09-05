@@ -114,12 +114,18 @@ def _counts(tasks: list[dict]) -> dict[str, int]:
     return counts
 
 
+def _external_ready(task: dict) -> bool:
+    from tools.issue_intake import aak_dependency_evidence_ready
+    return aak_dependency_evidence_ready(task)
+
+
 def _ready(tasks: list[dict]) -> list[str]:
     by_id = {task.get("id"): task for task in tasks}
     return sorted(
         task.get("id")
         for task in tasks
         if task.get("status") == "READY"
+        and _external_ready(task)
         and all(by_id.get(dependency, {}).get("status") == "DONE" for dependency in task.get("depends_on", []))
     )
 
@@ -141,6 +147,7 @@ def _next_task(tasks: list[dict]) -> str | None:
         task.get("id")
         for task in tasks
         if task.get("status") == "BACKLOG"
+        and _external_ready(task)
         and all(by_id.get(dependency, {}).get("status") == "DONE" for dependency in task.get("depends_on", []))
     )
     return eligible_backlog[0] if eligible_backlog else None
