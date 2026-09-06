@@ -1,8 +1,50 @@
-version: 212
-updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-13
-active_repository: agentic-art-orchestration
+version: 213
+updated_at: '2026-09-06T15:52:17.203991+00:00'
+active_task: null
+active_repository: null
 lease:
+  status: available
+  owner: null
+  published_takeover_release: b52067085fa2a49a6fe1f0c78648cbfb06a6b910
+  reason: Historical lease already superseded and released by published PR207 takeover; current integration claim remains
+    in its isolated parent branch.
+checkpoint:
+  task: AAK-04
+  repository: agentic-art-orchestration
+  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  expected_changes: AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination
+    adapter and CLI
+  result: AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.
+  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
+  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
+  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
+  focused_tests: 14 PASS
+  full_tests: 580 tests, 1 existing skip, PASS
+  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
+  delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
+  status: CODE_VERIFIED
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
+aak04_checkpoint:
+  task: AAK-04
+  repository: agentic-art-orchestration
+  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  expected_changes: AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination
+    adapter and CLI
+  result: AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.
+  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
+  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
+  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
+  focused_tests: 14 PASS
+  full_tests: 580 tests, 1 existing skip, PASS
+  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
+  delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
+last_completed_task: AAK-04
+resume_from:
+  task: AAK-05
+  action: Registration-only Self Model PR94 requires human-approved trusted-base integration before native claim. This PR201
+    snapshot no longer holds an obsolete AAK13 claim; later qualified owner results are in PR207.
+  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
+historical_takeover_lease:
   status: held
   owner: codex-aak-repair
   acquired_at: '2026-09-05T04:27:59+00:00'
@@ -21,34 +63,9 @@ lease:
     - tools/**
     - tests/**
     - execution/**
-    child_repositories: [agentic-art-production, agentic-art-project]
-checkpoint:
-  task: AAK-13
-  prerequisite: agentic-art-production#60
-  repository: agentic-art-production
-  branch: agent/production-60-public-attestation
-  start_point: 9d125fb87be133f5e73e61e04e23c0a3bfafb462
-  status: IN_PROGRESS
-  result: Production attestation implemented; focused 5 PASS before native validator integration, final full suite running. Project6 PR9 uses old v1 contract and is not qualified for current acceptance. No actual public-plan migration performed.
-  integration_status: NOT_RUN
-aak04_checkpoint:
-  task: AAK-04
-  repository: agentic-art-orchestration
-  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
-  expected_changes: 'AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination adapter and CLI'
-  result: 'AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.'
-  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
-  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
-  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
-  focused_tests: 14 PASS
-  full_tests: 580 tests, 1 existing skip, PASS
-  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
-  delivery: 'User-authorized non-force API branch update plus complete tree verification; no merge/publication'
-last_completed_task: AAK-12
-resume_from:
-  task: AAK-13
-  action: Finish Production60 verification and draft PR, then Project6 receiver prerequisites. Preserve self-model trusted-base registration and Marketing closed-dependency human gates. AAK02 live integration remains NOT_RUN.
-  command: python3 tools/validate.py --check
+    child_repositories:
+    - agentic-art-production
+    - agentic-art-project
 
 workspace_bootstrap_apply:
   status: complete

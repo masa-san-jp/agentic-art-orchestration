@@ -1,3 +1,16 @@
+# AAK04 candidate ready-state repair (2026-09-07)
+
+AAK04 code 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685 is unchanged.
+Explicit AAK05/07 blocker reasons restore status validation; the historical
+AAK13 claim is no longer active in this earlier PR snapshot. Its takeover was
+already published/released in PR207 at b52067085fa2a49a6fe1f0c78648cbfb06a6b910.
+AAK13 remains BACKLOG here; later owner results remain in downstream PR207.
+Next native task is AAK05 after registration-only PR94 human approval/merge.
+Verification after state repair: validator and diff check PASS; 33 instance/profile,
+status and documentation tests PASS (30.698s). Feature code is unchanged from the
+previous qualified AAK04 candidate (580 full tests PASS, one environment skip).
+No feature gate, schema, user data or default branch was changed.
+
 # AAK owner implementation checkpoint (2026-09-05)
 
 AAK-01/03/04の検証済みcandidateとdraft PR199/200/201は維持。AAK-06はart-history-notes PR387、AAK-08はagentic-art-research PR95、AAK-12はviewer-response-notes PR7へ提出済み。全体の統合・マージ・AAK-02実エージェント3モード各2runはNOT_RUN。制作可能な統合プランの実受入はまだない。
