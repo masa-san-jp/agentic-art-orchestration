@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T15:49:57.108420+00:00`.
+Source updated at: `2026-09-06T15:55:14.100821+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 1 | 2 | 144 | 152 |
+| 5 | 0 | 0 | 2 | 145 | 152 |
 
-Current task: `PUBLIC-PROJECTION-ATTESTATION-001`; repository: `agentic-art-orchestration`; checkpoint: `PUBLIC-PROJECTION-ATTESTATION-001`.
-Next action: Finish exact candidate native/full tests and publish evidence before lease release.
+Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECTION-ATTESTATION-001`.
+Next action: Await human approval for registration-only Self Model PR94; final downstream integration checkpoint is recorded separately in PR207. Do not claim from an unregistered trusted base.
 Ready: none.
 Next task: `null`.
 Blocked:

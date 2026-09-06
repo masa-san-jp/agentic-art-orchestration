@@ -1,0 +1,26 @@
+{
+  "task": "PUBLIC-PROJECTION-ATTESTATION-001",
+  "code_candidate": "4b41f6da2b73e23de1c0a439aebc77f8d78c8247",
+  "upstream_aak04": "3e56c96c562f91318c44f8d70ff9924c2533a71d",
+  "production_candidate": "69567e88131e3f033d010791fb5849e1b2ebff8d",
+  "project_candidate": "2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da",
+  "before": "FAIL: native Project mapping_fields rejected wrapped assets scalar",
+  "after": "PASS: native mapping_fields and catalog index parser receive actual Production-attested exact bytes; tamper negatives preserve target",
+  "focused": "50 PASS in 28.444s on downstream combined code",
+  "standalone_full": "588 PASS in 249.741s; 1 environment skip covered by actual Research dry-run",
+  "downstream_full": "595 PASS in 253.338s; 1 existing environment skip",
+  "logs": {
+    "aak-integration-before-20260907.log": "a51bf821232f25734364fb406d66736078fddb3cb570724d00eed7a815adfb6b",
+    "aak-integration-focused-20260907.log": "76a4256ce10f445fff334c4193e7c787ce3d96c4b1023bdc2768e563e0a89480",
+    "aak-integration-full-20260907.log": "d992f3561024f77b8b23dbf35571c83f4db17a5d253539ad283231f96cf93f6d",
+    "aak-193-ready-full-20260907.log": "4bfc12671f765e2381d54712cd851a3be239792ac7f17e09cfb0e7663cb41a6f"
+  },
+  "supersession": {
+    "parent191": "relationship registry/schema retained in AAK04; old v1 projection superseded by this v2",
+    "parent205": "flat scalar delta retained with stronger native receiver regression; release byte scanning retains surrogateescape and actual Git binary negative test",
+    "project9_and_11": "superseded by owner Project12; AAK13 is Project13"
+  },
+  "integration": "CANDIDATE_ONLY",
+  "aak02_live": "NOT_RUN",
+  "human_gates": "No main merge, public catalog migration, release, billing change or consent expansion."
+}

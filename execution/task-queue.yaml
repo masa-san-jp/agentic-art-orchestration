@@ -6,7 +6,7 @@ tasks:
   - id: PUBLIC-PROJECTION-ATTESTATION-001
     milestone: M29
     title: Require owner attestation for exact canonical plan projection
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

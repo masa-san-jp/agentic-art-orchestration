@@ -1,7 +1,7 @@
-version: 213
-updated_at: '2026-09-06T15:49:57.108420+00:00'
-active_task: PUBLIC-PROJECTION-ATTESTATION-001
-active_repository: agentic-art-orchestration
+version: 214
+updated_at: '2026-09-06T15:55:14.100821+00:00'
+active_task: null
+active_repository: null
 lease:
   status: held
   owner: codex-aak-integration-20260907
@@ -28,10 +28,13 @@ checkpoint:
   repository: agentic-art-orchestration
   branch: agent/issue-193-attested-projection
   start_point: ecfa00f71957c4c04e052ea3a7574f042c8ab6f0
-  status: IN_PROGRESS
-  result: Integrate PR205 native flat scalar serialization, preserve binary history scan, repair invalid resume/status metadata;
-    Project13 candidate replaces historical Project11 failure. Full qualification in progress.
+  status: CODE_VERIFIED
+  result: Native Project parser failure reproduced and repaired. PR205 serialization delta integrated; binary history scan
+    retained. Standalone full588 PASS/1 environment skip, independently covered by actual Research dry-run. Project13/Production63
+    real-code synthetic boundary PASS. Awaiting publication before lease release.
   integration_status: NOT_RUN
+  code_candidate: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+  evidence: execution/issue-193-integration-verification.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -48,9 +51,10 @@ aak04_checkpoint:
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
 last_completed_task: PUBLIC-PROJECTION-ATTESTATION-001
 resume_from:
-  task: PUBLIC-PROJECTION-ATTESTATION-001
-  action: Finish exact candidate native/full tests and publish evidence before lease release.
-  command: .venv/bin/python tools/validate.py --check
+  task: AAK-05
+  action: Await human approval for registration-only Self Model PR94; final downstream integration checkpoint is recorded
+    separately in PR207. Do not claim from an unregistered trusted base.
+  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
 previous_projection_lease:
   status: held
   owner: codex-aak-repair
