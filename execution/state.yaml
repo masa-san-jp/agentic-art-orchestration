@@ -1,5 +1,5 @@
-version: 216
-updated_at: '2026-09-06T06:51:53.410902+00:00'
+version: 217
+updated_at: '2026-09-06T15:56:37.493251+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -31,8 +31,8 @@ checkpoint:
   status: CODE_VERIFIED
   expected_changes: Qualify four stale runtime pins in the configured six-repository workspace; preserve historical provenance;
     repair restart metadata and binary-history scan.
-  result: AC1..3 PASS; qualified four pin updates, 16 child gates, synthetic exchange, actual 6-repo guard and full 588
-    PASS with 2 environment skips; isolated boundary tests cover those paths.
+  result: AC1..3 PASS; qualified four pin updates, 16 child gates, synthetic exchange, actual 6-repo guard and full 588 PASS
+    with 2 environment skips; isolated boundary tests cover those paths.
   evidence: execution/issue-189-qualification.json
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/204
   code_candidate: 7110c1f07d0196a679d4aa6af17e5c75b1270839
@@ -84,6 +84,12 @@ takeover:
   isolation: New clone and separate branch; original branch and lease record unchanged. Remote agent process liveness cannot
     be observed from GitHub.
   branch: codex/aak-takeover-issue-189-20260906
+integration_preparation:
+  upstream_candidate: dac8de8e475875979d19cdf0a74c247a2fdec6cb
+  issue193_code: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+  native_project_reader: PASS after wrapped-scalar regression repair
+  scope: normal merge of qualified upstream; original task checkpoint retained
+  main_integration: NOT_RUN
 
 workspace_bootstrap_apply:
   status: complete

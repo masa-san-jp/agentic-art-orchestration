@@ -643,6 +643,9 @@ def _request_yaml_bytes(request: Mapping[str, object]) -> bytes:
         sort_keys=False,
         allow_unicode=True,
         default_flow_style=False,
+        # Project's native flat YAML readers require each scalar on one line.
+        # Wrapping the JSON asset manifest produces an unreadable catalog.
+        width=2_147_483_647,
     ).encode("utf-8")
 
 

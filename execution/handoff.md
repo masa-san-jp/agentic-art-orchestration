@@ -1,3 +1,10 @@
+# PR204 upstream integration prepared (2026-09-07)
+
+Qualified upstream `dac8de8e475875979d19cdf0a74c247a2fdec6cb` is merged normally into this
+candidate branch. Issue193 native Project parser correction and binary history
+verification are retained. Original task checkpoint follows; main integration
+and AAK02 live acceptance remain NOT_RUN. No force push or default-branch change.
+
 # Interrupted AAK takeover — Issue189 qualified (2026-09-06)
 
 The authorized isolated continuation is `codex/aak-takeover-issue-189-20260906`,
