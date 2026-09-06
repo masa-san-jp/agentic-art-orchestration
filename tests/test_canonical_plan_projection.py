@@ -26,6 +26,11 @@ class CanonicalPlanProjectionTests(unittest.TestCase):
     def project(self, **kwargs):
         return p.project_plan_automatic(self.report,internal_output_root=self.root/'internal',public_projection_root=self.target,state_root=self.root/'state',**kwargs)
 
+    def test_long_asset_manifest_remains_a_flat_yaml_scalar(self):
+        rendered=p._request_yaml_bytes({'assets':'[{"path":"03_plan/media/'+('x'*500)+'.svg"}]'})
+        self.assertEqual(1,len(rendered.decode().splitlines()))
+        self.assertNotIn(b'\\\n',rendered)
+
     def next_run(self, suffix):
         self.report['run_id']='RUN-REVISION-'+suffix
         self.report['destination_resolution']=self.helper._profile_resolution(self.root,self.report['run_id'],public=True)

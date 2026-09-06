@@ -643,6 +643,11 @@ def _request_yaml_bytes(request: Mapping[str, object]) -> bytes:
         sort_keys=False,
         allow_unicode=True,
         default_flow_style=False,
+        # Project's receiver contract intentionally uses flat scalar mappings.
+        # PyYAML's default width inserts escaped continuation lines into long
+        # asset-manifest JSON strings, making an otherwise valid projection
+        # unreadable by that contract.
+        width=2_147_483_647,
     ).encode("utf-8")
 
 
