@@ -8,7 +8,16 @@ No Production headings or semantic schema is copied into the parent.
 
 ## Progress
 
-IN_PROGRESS: PUBLIC-PROJECTION-ATTESTATION-001, branch
+Current qualification: `4b41f6da2b73e23de1c0a439aebc77f8d78c8247`, standalone
+588 tests PASS/1 independently covered skip; combined downstream595 PASS.
+Native Project reader failure was reproduced, then fixed with unwrapped scalar
+output. PR205 delta is retained; actual Git binary history checks remain intact.
+Production63 + Project13 are the current owner candidates. Exact input refs and
+log hashes: `execution/issue-193-integration-verification.json`.
+Earlier observations below are historical, including Project11 migration failures.
+
+
+Historical start: PUBLIC-PROJECTION-ATTESTATION-001, branch
 agent/issue-193-attested-projection, parent candidate ecfa00f71957c4c04e052ea3a7574f042c8ab6f0.
 Native intake qualified the actual Issue after mechanical heading synchronization;
 registration was committed separately. Production PR63 code

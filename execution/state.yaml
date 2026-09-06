@@ -1,5 +1,5 @@
-version: 223
-updated_at: '2026-09-06T07:43:54.531728+00:00'
+version: 224
+updated_at: '2026-09-06T15:56:39.751719+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -101,6 +101,12 @@ takeover:
   isolation: New clone and separate branch; original branch and lease record unchanged. Remote agent process liveness cannot
     be observed from GitHub.
   branch: codex/aak-takeover-issue-189-20260906
+integration_preparation:
+  upstream_candidate: 6501108a42b46eb1354bf034fcc6890c6a6ae2a8
+  issue193_code: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+  native_project_reader: PASS after wrapped-scalar regression repair
+  scope: normal merge of qualified upstream; original task checkpoint retained
+  main_integration: NOT_RUN
 
 workspace_bootstrap_apply:
   status: complete

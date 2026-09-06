@@ -1,3 +1,10 @@
+# PR207 upstream integration prepared (2026-09-07)
+
+Qualified upstream `6501108a42b46eb1354bf034fcc6890c6a6ae2a8` is merged normally into this
+candidate branch. Issue193 native Project parser correction and binary history
+verification are retained. Original task checkpoint follows; main integration
+and AAK02 live acceptance remain NOT_RUN. No force push or default-branch change.
+
 # AAK13 delivered; implementation paused at native human/dependency gates (2026-09-06)
 
 Parent checkpoint [PR207](https://github.com/masa-san-jp/agentic-art-orchestration/pull/207)
