@@ -22,6 +22,7 @@ from tools.release_check import (
     _v12_e2e_check,
     _pinned_workspace_failure,
     _observation_provenance,
+    _run,
     validate_request,
 )
 from tools.pinned_workspace import PinnedWorkspaceError
@@ -155,6 +156,14 @@ class ReleaseCheckTests(unittest.TestCase):
         self.assertEqual(0, result["finding_count"])
         self.assertTrue(result["commit_count"] >= 1)
         self.assertNotIn("password", str(result))
+
+    def test_command_capture_tolerates_non_utf8_history_bytes(self):
+        code, stdout, stderr = _run(
+            [sys.executable, "-c", "import sys; sys.stdout.buffer.write(bytes([0x8d]))"]
+        )
+        self.assertEqual(0, code)
+        self.assertEqual("\N{REPLACEMENT CHARACTER}", stdout)
+        self.assertEqual("", stderr)
 
     def test_e2e_check_has_deterministic_run_evidence(self):
         result = _e2e_check(1)

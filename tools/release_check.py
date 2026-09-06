@@ -73,6 +73,7 @@ def _run(command: list[str]) -> tuple[int, str, str]:
         env=environment,
         capture_output=True,
         text=True,
+        errors="replace",
         check=False,
     )
     return completed.returncode, completed.stdout, completed.stderr
