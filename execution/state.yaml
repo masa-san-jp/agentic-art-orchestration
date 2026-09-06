@@ -1,54 +1,35 @@
-version: 223
-updated_at: '2026-09-06T07:43:54.531728+00:00'
-active_task: null
-active_repository: null
+version: 224
+updated_at: '2026-09-06T15:16:47.363885+00:00'
+active_task: PUBLIC-PROJECTION-ATTESTATION-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: codex-aak-takeover-20260906
-  acquired_at: '2026-09-06T07:09:45.863470+00:00'
-  expires_at: '2026-09-06T07:54:45.863470+00:00'
-  lane: AAK_IMPLEMENTATION
-  execution_id: AAK-13:20260906
+  status: held
+  owner: codex-aak-integration-20260907
+  acquired_at: '2026-09-06T15:16:47.363885+00:00'
+  expires_at: '2026-09-06T17:16:47.363885+00:00'
+  lane: AAK_INTEGRATION
+  execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260907
   scope:
     repository: agentic-art-orchestration
-    branch: codex/aak-13-owner-checkpoint-20260906
+    branch: codex/aak-integration-20260907
     paths:
-    - README.md
-    - PLANS.md
+    - tools/public_projection.py
+    - tests/test_canonical_plan_projection.py
+    - tests/test_release_check.py
+    - docs/issue-193-execution.md
     - execution/**
-    child_repositories:
-    - repository: agentic-art-project
-      branch: codex/aak-13-catalog-lineage-20260906
-      candidate_base: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
-      paths:
-      - AGENTS.md
-      - README.md
-      - docs/**
-      - config/**
-      - schemas/**
-      - tools/**
-      - tests/**
-      - public-project.yaml
-      - plans/**
-      - works/**
-  released_at: '2026-09-06T07:43:54.531728+00:00'
-  published_commit: 590a7ec6d3e4fd585a1d7c6a0dff0fd0cb6f620e
-  publication_verification: Exact remote SHA confirmed with git ls-remote after normal branch push, before release; post-publication
-    audit no parent-SSOT finding.
+    - PLANS.md
+    - README.md
+    child_repositories: []
 checkpoint:
-  task: AAK-13
-  repository: agentic-art-project
-  start_point: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
-  status: CODE_VERIFIED
-  expected_changes: Add origin/creator/revision lineage, conservative migration dry-run, and separate read-only catalog-reference/v1;
-    preserve canonical bodies and unknown attribution.
-  result: AAK13 AC1..5 synthetic PASS, owner32 and parent595 PASS/1 separately covered skip. Owner PR13 and parent PR207 published;
-    lease released after exact remote confirmation. Native AAK05/07 gates remain; no eligible next task.
-  code_candidate: d3347e3177cf23c58a415c301760e9452246e965
-  owner_published_head: 2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da
-  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/13
-  evidence: execution/aak-13-owner-verification.json
-  parent_pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/207
+  task: PUBLIC-PROJECTION-ATTESTATION-001
+  repository: agentic-art-orchestration
+  start_point: b52067085fa2a49a6fe1f0c78648cbfb06a6b910
+  status: IN_PROGRESS
+  expected_changes: Qualify PR205 long-scalar serialization in existing Issue193 chain, retain binary history scan regression,
+    reconcile duplicate PRs and refresh downstream candidate ancestry without default-branch mutation.
+  result: Remote heads unchanged since prior checkpoint; original shared worktree clean and preserved. PR205 lease available;
+    current takeover lease available before acquisition.
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -65,13 +46,10 @@ aak04_checkpoint:
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
 last_completed_task: AAK-13
 resume_from:
-  task: AAK-05
-  action: Await explicit human review/merge authorization for self-model-notes PR94 registration. After merge, fetch owner
-    main, run native validate/next, then claim SM-036 using its trusted base. AAK07 also requires reviewed parent196 completion;
-    no closed-label override.
-  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
-  repository: self-model-notes
-  blocked_on: PR94 registration absent from trusted base; human merge authorization pending.
+  task: PUBLIC-PROJECTION-ATTESTATION-001
+  action: Integrate owner-compatible flat asset scalar serialization; qualify exact parent/Production/Project candidates;
+    propagate normal merges through existing PR chain.
+  command: .venv/bin/python -m unittest tests.test_canonical_plan_projection -v
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

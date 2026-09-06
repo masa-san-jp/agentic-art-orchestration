@@ -1,3 +1,13 @@
+# Issue193 integration repair resumed (2026-09-07)
+
+User requested completion of integration preparation, not another unprepared approval list.
+Existing Issue193 is reopened locally for the bounded PR205 serialization delta and
+normal-merge propagation through PR202/204/206/207. Original shared worktree and
+remote candidate branches are preserved until tests qualify their replacement heads.
+No default-branch merge, real catalog migration, billing change or gate override
+is authorized by this checkpoint. Self Model registration/native Marketing gates
+remain separate; complete unaffected preparation before presenting any final gate.
+
 # AAK13 delivered; implementation paused at native human/dependency gates (2026-09-06)
 
 Parent checkpoint [PR207](https://github.com/masa-san-jp/agentic-art-orchestration/pull/207)
