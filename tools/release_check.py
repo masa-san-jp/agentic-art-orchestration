@@ -73,6 +73,9 @@ def _run(command: list[str]) -> tuple[int, str, str]:
         env=environment,
         capture_output=True,
         text=True,
+        # Git history can contain binary blobs. Preserve undecodable bytes so
+        # ASCII credential patterns are still scanned instead of skipping blobs.
+        errors="surrogateescape",
         check=False,
     )
     return completed.returncode, completed.stdout, completed.stderr
