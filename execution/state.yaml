@@ -1,9 +1,9 @@
-version: 222
-updated_at: '2026-09-06T07:42:54.354523+00:00'
+version: 223
+updated_at: '2026-09-06T07:43:54.531728+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
+  status: available
   owner: codex-aak-takeover-20260906
   acquired_at: '2026-09-06T07:09:45.863470+00:00'
   expires_at: '2026-09-06T07:54:45.863470+00:00'
@@ -31,6 +31,10 @@ lease:
       - public-project.yaml
       - plans/**
       - works/**
+  released_at: '2026-09-06T07:43:54.531728+00:00'
+  published_commit: 590a7ec6d3e4fd585a1d7c6a0dff0fd0cb6f620e
+  publication_verification: Exact remote SHA confirmed with git ls-remote after normal branch push, before release; post-publication
+    audit no parent-SSOT finding.
 checkpoint:
   task: AAK-13
   repository: agentic-art-project
@@ -38,12 +42,13 @@ checkpoint:
   status: CODE_VERIFIED
   expected_changes: Add origin/creator/revision lineage, conservative migration dry-run, and separate read-only catalog-reference/v1;
     preserve canonical bodies and unknown attribution.
-  result: AAK13 AC1..5 synthetic PASS; owner full32 PASS; parent full595 PASS/1 environment skip separately covered; remote
-    owner SHA verified. Awaiting parent SSOT publication before lease release.
+  result: AAK13 AC1..5 synthetic PASS, owner32 and parent595 PASS/1 separately covered skip. Owner PR13 and parent PR207 published;
+    lease released after exact remote confirmation. Native AAK05/07 gates remain; no eligible next task.
   code_candidate: d3347e3177cf23c58a415c301760e9452246e965
   owner_published_head: 2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da
   pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/13
   evidence: execution/aak-13-owner-verification.json
+  parent_pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/207
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration

@@ -27,7 +27,15 @@
     "native_validator": "PASS",
     "project_status_and_docs": "19 PASS after final state/docs update",
     "workspace_status": "6/6 clean, ahead=behind=0; qualified manifest pins",
-    "audit": "pending post-publication observation"
+    "audit": {
+      "status": "FINDINGS",
+      "error_count": 0,
+      "findings": [
+        "freshness: intentionally stale synthetic marketing:trend-001 fixture"
+      ],
+      "parent_ssot_unpushed_finding": false,
+      "observed_commit": "590a7ec6d3e4fd585a1d7c6a0dff0fd0cb6f620e"
+    }
   },
   "full_log_sha256": "ed4d9f01b45851250a0a3cf5a555a10234146e139613b8aef01933000372aa05",
   "synthetic_git_reference_proof": {
@@ -64,5 +72,6 @@
     "steps": [],
     "reason": "GitHub account payments/spending-limit blocker; no job started",
     "counted_as_quality_gate": false
-  }
+  },
+  "parent_checkpoint_pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207"
 }

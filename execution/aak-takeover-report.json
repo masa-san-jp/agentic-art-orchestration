@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-06T07:42:54.354523+00:00",
+  "observed_at": "2026-09-06T07:43:54.531728+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -626,7 +626,8 @@
       "status": "CODE_VERIFIED",
       "code_commit": "d3347e3177cf23c58a415c301760e9452246e965",
       "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
-      "evidence": "execution/aak-13-owner-verification.json"
+      "evidence": "execution/aak-13-owner-verification.json",
+      "parent_checkpoint_pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207"
     }
   },
   "aak02_live_acceptance": {
@@ -742,5 +743,11 @@
       "cause": "Final owner implementations and live three-mode/two-run evidence remain incomplete",
       "status": "NOT_RUN"
     }
-  ]
+  ],
+  "remote_ci": {
+    "status": "FAILED_BEFORE_STEPS",
+    "reason": "GitHub account payments/spending-limit blocker; no catalog job step started",
+    "job_url": "https://github.com/masa-san-jp/agentic-art-project/actions/runs/34019734720/job/101449966437",
+    "local_validation": "PASS; not a remote CI pass"
+  }
 }
