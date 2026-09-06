@@ -361,6 +361,6 @@
       "freshness"
     ],
     "mode": "offline-fixture",
-    "parent_ssot": "local tracking ref MATCHED after exact remote verification"
+    "parent_ssot": "UNKNOWN: local upstream is not configured on the isolated branch; exact remote SHA 7110c1f07d0196a679d4aa6af17e5c75b1270839 was independently verified before release."
   }
 }
