@@ -6,7 +6,7 @@ tasks:
   - id: PUBLIC-PROJECTION-ATTESTATION-001
     milestone: M29
     title: Require owner attestation for exact canonical plan projection
-    status: DONE
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -1796,6 +1796,9 @@ tasks:
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/self-model-notes/pull/94
     completion: "Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd. Registration PR only; functional acceptance NOT_RUN."
+    blocker: "Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd.\
+  \ Registration PR only; functional acceptance NOT_RUN."
+
   - id: AAK-06
     owner: art-history-notes
     issue_ssot: https://github.com/masa-san-jp/art-history-notes/issues/386
@@ -1872,6 +1875,10 @@ tasks:
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
     completion: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass."
+    blocker: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite\
+  \ repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label\
+  \ or gate bypass."
+
   - id: AAK-08
     owner: agentic-art-research
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/93

@@ -1,8 +1,57 @@
-version: 212
-updated_at: '2026-09-05T04:40:36+00:00'
+version: 213
+updated_at: '2026-09-06T15:49:57.108420+00:00'
 active_task: PUBLIC-PROJECTION-ATTESTATION-001
 active_repository: agentic-art-orchestration
 lease:
+  status: held
+  owner: codex-aak-integration-20260907
+  acquired_at: '2026-09-06T15:49:57.108420+00:00'
+  expires_at: null
+  lane: AAK_INTEGRATION
+  execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260907
+  scope:
+    repository: agentic-art-orchestration
+    branch: agent/issue-193-attested-projection
+    paths:
+    - tools/public_projection.py
+    - tools/release_check.py
+    - tests/test_canonical_plan_projection.py
+    - tests/test_release_check.py
+    - docs/issue-193-execution.md
+    - README.md
+    - PLANS.md
+    - execution/**
+    child_repositories: []
+checkpoint:
+  task: PUBLIC-PROJECTION-ATTESTATION-001
+  prerequisite: agentic-art-production#60
+  repository: agentic-art-orchestration
+  branch: agent/issue-193-attested-projection
+  start_point: ecfa00f71957c4c04e052ea3a7574f042c8ab6f0
+  status: IN_PROGRESS
+  result: Integrate PR205 native flat scalar serialization, preserve binary history scan, repair invalid resume/status metadata;
+    Project13 candidate replaces historical Project11 failure. Full qualification in progress.
+  integration_status: NOT_RUN
+aak04_checkpoint:
+  task: AAK-04
+  repository: agentic-art-orchestration
+  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  expected_changes: AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination
+    adapter and CLI
+  result: AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.
+  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
+  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
+  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
+  focused_tests: 14 PASS
+  full_tests: 580 tests, 1 existing skip, PASS
+  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
+  delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
+last_completed_task: PUBLIC-PROJECTION-ATTESTATION-001
+resume_from:
+  task: PUBLIC-PROJECTION-ATTESTATION-001
+  action: Finish exact candidate native/full tests and publish evidence before lease release.
+  command: .venv/bin/python tools/validate.py --check
+previous_projection_lease:
   status: held
   owner: codex-aak-repair
   acquired_at: '2026-09-05T04:27:59+00:00'
@@ -21,34 +70,9 @@ lease:
     - tools/**
     - tests/**
     - execution/**
-    child_repositories: [agentic-art-production, agentic-art-project]
-checkpoint:
-  task: PUBLIC-PROJECTION-ATTESTATION-001
-  prerequisite: agentic-art-production#60
-  repository: agentic-art-orchestration
-  branch: agent/issue-193-attested-projection
-  start_point: ecfa00f71957c4c04e052ea3a7574f042c8ab6f0
-  status: CODE_VERIFIED
-  result: Parent193 draft PR202 candidate 2b1787a3bfd995582075a4723747528781a18df2, full 587 PASS zero skips. Production63 candidate 8824ea7746c35c05ff25c7ac24cf42768888c131 full104 PASS. Project6 PR11 receiver6 PASS; actual migration remains blocked. Actual owner and receiver synthetic projection PASS; live AAK02 NOT_RUN.
-  integration_status: NOT_RUN
-aak04_checkpoint:
-  task: AAK-04
-  repository: agentic-art-orchestration
-  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
-  expected_changes: 'AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination adapter and CLI'
-  result: 'AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.'
-  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
-  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
-  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
-  focused_tests: 14 PASS
-  full_tests: 580 tests, 1 existing skip, PASS
-  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
-  delivery: 'User-authorized non-force API branch update plus complete tree verification; no merge/publication'
-last_completed_task: PUBLIC-PROJECTION-ATTESTATION-001
-resume_from:
-  task: ISSUE-189-PIN-QUALIFICATION
-  action: Observe Research main and run native pin qualification in an isolated workspace. Preserve self-model trusted-base registration, Marketing closed-dependency and Project real-migration human gates. AAK02 live integration remains NOT_RUN.
-  command: python3 tools/validate.py --check
+    child_repositories:
+    - agentic-art-production
+    - agentic-art-project
 
 workspace_bootstrap_apply:
   status: complete
