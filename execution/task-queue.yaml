@@ -6,7 +6,7 @@ tasks:
   - id: PROFILE-ROOT-FORWARD-001
     milestone: AAK
     title: Forward explicit Self Model profile root through the real run entry
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/203
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY

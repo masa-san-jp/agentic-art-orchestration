@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the input knowledge bases' exporters and normalize what they hand over.
 
-    python3 tools/ingest_signals.py --purpose artistic-research
+    python3 tools/ingest_signals.py --purpose artistic-research --profile-root <external-profile>
 
 Until now the adapters were called only from tests, so nothing carried a
 knowledge base's records into the candidate space. This runs each declared input
@@ -57,13 +57,23 @@ class IngestError(RuntimeError):
     """An input repository could not be read, or handed over something unusable."""
 
 
-def _export(repository: dict, workspace_root: Path, purpose: str, python: str) -> dict:
+class IngestBlocked(IngestError):
+    """An explicit input is required before any real exporter may run."""
+
+
+def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
+            profile_root: Path | None = None) -> dict:
+    arguments = [python, "tools/export_signals.py", "--purpose", purpose]
+    if repository["id"] == "self-model":
+        if profile_root is None:
+            raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+        arguments.extend(["--profile-root", str(profile_root)])
     checkout = workspace_root / repository["path"]
     exporter = checkout / "tools/export_signals.py"
     if not exporter.is_file():
         raise IngestError(f"{repository['id']} has no tools/export_signals.py at {checkout}")
     result = subprocess.run(
-        [python, "tools/export_signals.py", "--purpose", purpose],
+        arguments,
         cwd=checkout, capture_output=True, text=True,
     )
     if result.returncode != 0:
@@ -80,9 +90,12 @@ def _observed_head(checkout: Path) -> str | None:
     return head.stdout.strip() if head.returncode == 0 else None
 
 
-def ingest(workspace_root: Path, output: Path, purpose: str, python: str) -> dict:
+def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
+           profile_root: Path | None = None) -> dict:
     manifest = load_yaml(MANIFEST)
     inputs = [item for item in manifest["repositories"] if item.get("role") == "input-kb"]
+    if profile_root is None and any(item["id"] == "self-model" for item in inputs):
+        raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
     normalized: list[dict] = []
     warnings: list[str] = []
     deferred_boundaries: list[dict[str, str]] = []
@@ -100,7 +113,7 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str) -> dic
             })
             continue
 
-        payload = _export(repository, workspace_root, purpose, python)
+        payload = _export(repository, workspace_root, purpose, python, profile_root)
         errors = validate_signal_export(payload, identifier)
         if errors:
             raise IngestError(f"{identifier} envelope is invalid: {errors[0]}")
@@ -150,9 +163,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--child-python", default=sys.executable)
+    parser.add_argument("--profile-root", type=Path,
+                        help="explicit external Self Model profile root; forwarded only to that owner")
     args = parser.parse_args(argv)
     try:
-        report = ingest(args.workspace_root, args.output, args.purpose, args.child_python)
+        report = ingest(args.workspace_root, args.output, args.purpose, args.child_python, args.profile_root)
+    except IngestBlocked as exc:
+        print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        return 2
     except (IngestError, OSError, KeyError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
         return 1

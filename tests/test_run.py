@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
 import yaml
@@ -336,6 +338,60 @@ class HandoverArgumentTests(unittest.TestCase):
 
 
 class RequestForwardingTests(unittest.TestCase):
+    def test_real_run_missing_profile_blocks_before_state_or_child_invocation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = root / "state"
+            with patch.object(MODULE, "_guard_pinned_workspace", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool") as tool, \
+                    patch.object(MODULE, "_run_child") as child:
+                with self.assertRaisesRegex(MODULE.BlockedPrecondition, "PROFILE_ROOT_REQUIRED"):
+                    MODULE._run_orchestration(
+                        None, root / "workspace", state, "PROFILE-MISSING", "artistic-research",
+                        None, None, "2026-09-06T00:00:00+00:00", sys.executable,
+                    )
+            tool.assert_not_called()
+            child.assert_not_called()
+            self.assertFalse(state.exists())
+
+    def test_public_cli_passes_explicit_profile_to_the_ingest_boundary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            profile = root / "外部 profile $(not-a-command)"
+            stderr = io.StringIO()
+            with patch.object(MODULE, "_guard_pinned_workspace", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool", side_effect=MODULE.StepFailure("boundary probe")) as tool, \
+                    redirect_stderr(stderr):
+                code = MODULE.main([
+                    "--workspace-root", str(root / "workspace"),
+                    "--state-root", str(root / "state"),
+                    "--profile-root", str(profile), "--run-id", "PROFILE-FORWARD",
+                ])
+            self.assertEqual(1, code)
+            self.assertEqual("boundary probe", json.loads(stderr.getvalue())["detail"])
+            self.assertEqual(1, tool.call_count)
+            args = tool.call_args.args[0]
+            self.assertEqual("tools/ingest_signals.py", args[0])
+            self.assertEqual(str(profile), args[args.index("--profile-root") + 1])
+
+    def test_offline_cli_ignores_unavailable_profile_and_real_workspace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stdout = io.StringIO()
+            with patch.object(MODULE, "_guard_pinned_workspace") as guard, redirect_stdout(stdout):
+                code = MODULE.main([
+                    "--offline-fixture", "--workspace-root", str(root / "missing"),
+                    "--profile-root", "relative-profile-that-must-not-be-read",
+                    "--state-root", str(root / "state"), "--run-id", "PROFILE-OFFLINE",
+                ])
+            self.assertEqual(0, code, stdout.getvalue())
+            guard.assert_not_called()
+            report = json.loads(stdout.getvalue())
+            self.assertEqual("AT_EDGE", report["status"])
+            self.assertEqual("OFFLINE_FIXTURE", report["steps"][0]["mode"])
+            self.assertTrue((root / "state/PROFILE-OFFLINE/requests").is_dir())
+            self.assertNotIn("profile-root", stdout.getvalue())
+
     def test_full_run_passes_research_root_to_request_builder(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

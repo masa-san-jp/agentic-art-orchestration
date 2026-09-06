@@ -12,9 +12,9 @@ or fabricate one when the option is missing.
 
 - [x] Read the actual Issue203, parent runtime and tests, and Self Model AGENTS §4.1.
 - [x] Confirm no overlapping Issue203 PR; register the existing issue as READY.
-- [ ] Claim this branch's lease before implementation.
-- [ ] Implement forwarding and stable BLOCKED before any real exporter when missing.
-- [ ] Verify literal argument boundaries, no side effects on blocked reads, offline regression, and actual synthetic owner export.
+- [x] Claim this branch's lease before implementation.
+- [x] Implement forwarding and stable BLOCKED before any real exporter when missing.
+- [x] Verify literal argument boundaries, no side effects on blocked reads, offline regression, and actual synthetic owner export.
 - [ ] Run parent validator/full suite and publish a separate stacked draft PR.
 
 ## Surprises & Discoveries
@@ -36,7 +36,7 @@ fixtures. Do not pass personal configuration to other owners or store it in Git.
 
 ## Outcomes & Retrospective
 
-REGISTERED; implementation and acceptance NOT_RUN. Issue189's six-owner pin guard
+FOCUSED_CODE_VERIFIED: 38 focused tests PASS (2.388s). Actual owner synthetic profile exports 2 valid signals; alias/repository roots are rejected. Actual six-owner preflight reaches BLOCKED/exit2 without creating run state when profile is missing. First full suite: 595 tests, 1 error / 1 environment skip. The legacy automatic-theme fixture lacked the newly explicit profile root; supply its synthetic root without changing the guard or theme behavior. Final full verification is pending. Issue189's six-owner pin guard
 passes. The existing AAK candidate PRs and human gates remain unchanged.
 
 ## Context and Orientation

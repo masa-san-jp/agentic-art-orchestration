@@ -79,16 +79,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T06:53:22.468114+00:00`.
+Source updated at: `2026-09-06T06:53:50.993195+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 1 | 0 | 2 | 146 | 154 |
+| 5 | 0 | 1 | 2 | 146 | 154 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-189-PIN-QUALIFICATION`.
-Next action: Claim the registered Issue203 task on the isolated stacked branch; implement explicit profile-root forwarding and missing-profile blocking.
-Ready: `PROFILE-ROOT-FORWARD-001`.
-Next task: `PROFILE-ROOT-FORWARD-001`.
+Current task: `PROFILE-ROOT-FORWARD-001`; repository: `agentic-art-orchestration`; checkpoint: `PROFILE-ROOT-FORWARD-001`.
+Next action: Implement Issue203 CLI forwarding and missing-profile preflight, then run positive/negative and actual synthetic owner checks.
+Ready: none.
+Next task: `null`.
 Blocked:
 - `AAK-05`: Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd. Registration PR only; functional acceptance NOT_RUN.
 - `AAK-07`: Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass.
@@ -226,6 +226,12 @@ test "$BOOTSTRAP_EXIT" -eq 2
 挙動を暗黙に置き換えません。
 
 ## Git外の出力先を設定する
+
+実Self Modelを使う制作計画では、`tools/run.py --profile-root <external-self-model-profile>`で
+利用を認められた外部profileの絶対パスを指定します。`tools/ingest_signals.py`も同じ引数を受け取り、
+Self Modelだけへ渡します。未指定時は実export前に`BLOCKED / PROFILE_ROOT_REQUIRED`となります。
+下記の出力先profileとは別の入力です。合成検証の`--offline-fixture`では不要です。
+手順は[テーマ未指定の制作計画](docs/agent-runtime-guide.md#テーマ未指定の制作計画)を参照してください。
 
 新しいagentが会話履歴なしで実行を再開できるよう、実行stateと内部成果物はGit外の
 `output-destinations/v1`プロファイルへ分離します。プロファイルはrepoへ追加せず、
