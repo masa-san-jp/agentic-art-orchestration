@@ -1,3 +1,10 @@
+# PR206 upstream integration prepared (2026-09-07)
+
+Qualified upstream `956867afebd68b7be45b3873556f6a7ce8f0132e` is merged normally into this
+candidate branch. Issue193 native Project parser correction and binary history
+verification are retained. Original task checkpoint follows; main integration
+and AAK02 live acceptance remain NOT_RUN. No force push or default-branch change.
+
 # Issue203 code verified; AAK13 prerequisite updated (2026-09-06)
 
 Code `4f4b82226f4da828bf5f7051723658eeab2c1231`, draft PR206, based on PR204. AC1..4 PASS;

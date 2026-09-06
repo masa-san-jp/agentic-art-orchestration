@@ -1,5 +1,5 @@
-version: 220
-updated_at: '2026-09-06T07:07:35.697488+00:00'
+version: 221
+updated_at: '2026-09-06T15:56:38.626477+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -34,8 +34,8 @@ checkpoint:
   status: CODE_VERIFIED
   expected_changes: Explicit external profile-root argument forwarding to Self Model only; no-export BLOCKED when absent;
     unchanged offline fixture path.
-  result: AC1..4 PASS; focused45, full595 PASS/1 environment skip separately covered; actual synthetic owner export and
-    real missing-profile blocking verified.
+  result: AC1..4 PASS; focused45, full595 PASS/1 environment skip separately covered; actual synthetic owner export and real
+    missing-profile blocking verified.
   code_candidate: 4f4b82226f4da828bf5f7051723658eeab2c1231
   evidence: execution/issue-203-verification.json
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/206
@@ -88,6 +88,12 @@ takeover:
   isolation: New clone and separate branch; original branch and lease record unchanged. Remote agent process liveness cannot
     be observed from GitHub.
   branch: codex/aak-takeover-issue-189-20260906
+integration_preparation:
+  upstream_candidate: 956867afebd68b7be45b3873556f6a7ce8f0132e
+  issue193_code: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+  native_project_reader: PASS after wrapped-scalar regression repair
+  scope: normal merge of qualified upstream; original task checkpoint retained
+  main_integration: NOT_RUN
 
 workspace_bootstrap_apply:
   status: complete
