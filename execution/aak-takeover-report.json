@@ -673,7 +673,7 @@
   },
   "safety": {
     "original_worktree": "UNCHANGED",
-    "previous_remote_branch_and_lease": "PRESERVED",
+    "previous_remote_branch_and_lease": "Original history preserved; existing PR branches advanced by normal fast-forward pushes during integration preparation.",
     "real_profile_read": false,
     "real_data_migration": false,
     "merge": false,
@@ -759,9 +759,9 @@
   ],
   "remote_ci": {
     "status": "FAILED_BEFORE_STEPS",
-    "reason": "GitHub account payments/spending-limit blocker; no catalog job step started",
-    "job_url": "https://github.com/masa-san-jp/agentic-art-project/actions/runs/34019734720/job/101449966437",
-    "local_validation": "PASS; not a remote CI pass"
+    "job_url": "https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/34043839485/job/101515244028",
+    "reason": "Repaired PR202 job has zero steps due to account payment/spending-limit restrictions",
+    "local_validation": "Standalone588 and combined595 PASS; not remote CI PASS"
   },
   "integration_preparation": "execution/aak-integration-readiness.json"
 }

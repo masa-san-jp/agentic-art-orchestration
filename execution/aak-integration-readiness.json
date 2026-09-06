@@ -110,6 +110,21 @@
       "aak-integration-full-20260907.log": "d992f3561024f77b8b23dbf35571c83f4db17a5d253539ad283231f96cf93f6d",
       "aak-193-ready-full-20260907.log": "4bfc12671f765e2381d54712cd851a3be239792ac7f17e09cfb0e7663cb41a6f",
       "aak-04-ready-focused-20260907.log": "39927432f54dcc6098e49d82694866fad98b1cdd16d9c8afa8ca86a442c7d945"
+    },
+    "post_publication_audit": {
+      "errors": 0,
+      "findings": [
+        "intentionally stale synthetic Marketing fixture"
+      ],
+      "parent_ssot_unpushed": false
+    },
+    "workspace_status": "6 pinned workspaces clean, ahead=behind=0",
+    "github_mergeability": "Parent198/199/200/201/202/204/206/207, SelfModel94, Project12/13 all MERGEABLE at observed pre-release heads; not approval or CI PASS",
+    "current_remote_ci": {
+      "job_url": "https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/34043839485/job/101515244028",
+      "status": "FAILED_BEFORE_STEPS",
+      "steps": [],
+      "reason": "Account payment/spending-limit restriction, re-observed on repaired PR202"
     }
   },
   "remaining": [
@@ -162,5 +177,11 @@
   "all13_complete": false,
   "aak02_plan_status": "NOT_RUN",
   "aak02_knowledge_status": "NOT_RUN",
-  "aak02_projection_status": "NOT_RUN"
+  "aak02_projection_status": "NOT_RUN",
+  "publication": {
+    "checkpoint": "9c87e23e674efa4ff5fa46063f63216d9396e2b5",
+    "pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207",
+    "remote_exact_sha": "CONFIRMED_BEFORE_LEASE_RELEASE",
+    "normal_push": true
+  }
 }

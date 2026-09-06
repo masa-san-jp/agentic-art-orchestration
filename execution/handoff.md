@@ -1,5 +1,9 @@
 # Integration preparation completed (2026-09-07)
 
+Published checkpoint9c87e23 was verified on remote before lease release.
+Post-publication audit: zero errors, only intentionally stale synthetic Marketing.
+Current PR202 CI has zero steps (account payment/spending-limit restriction).
+
 PR201 head3e56c96 repairs missing blocker reasons and obsolete active lease.
 PR202 headdac8de8 fixes long asset YAML scalar wrapping and uses native Project
 readers in actual Production-parent-Project tests. Standalone588 PASS; final
