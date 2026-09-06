@@ -79,16 +79,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T06:51:53.410902+00:00`.
+Source updated at: `2026-09-06T06:53:22.468114+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 0 | 2 | 146 | 153 |
+| 5 | 1 | 0 | 2 | 146 | 154 |
 
 Current task: `null`; repository: `null`; checkpoint: `ISSUE-189-PIN-QUALIFICATION`.
-Next action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
-Ready: none.
-Next task: `null`.
+Next action: Claim the registered Issue203 task on the isolated stacked branch; implement explicit profile-root forwarding and missing-profile blocking.
+Ready: `PROFILE-ROOT-FORWARD-001`.
+Next task: `PROFILE-ROOT-FORWARD-001`.
 Blocked:
 - `AAK-05`: Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd. Registration PR only; functional acceptance NOT_RUN.
 - `AAK-07`: Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass.

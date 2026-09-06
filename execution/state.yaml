@@ -1,5 +1,5 @@
-version: 216
-updated_at: '2026-09-06T06:51:53.410902+00:00'
+version: 217
+updated_at: '2026-09-06T06:53:22.468114+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -52,9 +52,10 @@ aak04_checkpoint:
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
 last_completed_task: ISSUE-189-PIN-QUALIFICATION
 resume_from:
-  task: ISSUE-189-PIN-QUALIFICATION
-  action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
-  command: .venv/bin/python tools/project_status.py --format json
+  task: PROFILE-ROOT-FORWARD-001
+  action: Claim the registered Issue203 task on the isolated stacked branch; implement explicit profile-root forwarding
+    and missing-profile blocking.
+  command: .venv/bin/python tools/validate.py --check
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

@@ -1,6 +1,8 @@
 # Execution Plans
 
-Active prerequisite: [Issue189 pin qualification and takeover](docs/issue-189-execution.md).
+Active prerequisite: [Issue203 profile-root forwarding](docs/issue-203-execution.md).
+
+[Issue189 pin qualification](docs/issue-189-execution.md) is CODE_VERIFIED in draft PR204; main integration remains pending.
 
 Issue193 code candidate is preserved in [its execution evidence](docs/issue-193-execution.md); main integration and live AAK-02 acceptance remain separate.
 

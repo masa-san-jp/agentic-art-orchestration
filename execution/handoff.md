@@ -1,3 +1,12 @@
+# Issue203 registered — next parent prerequisite (2026-09-06)
+
+Task `PROFILE-ROOT-FORWARD-001` is READY on isolated branch
+`codex/issue-203-profile-root-20260906`, based on published PR204 head
+`c81d14f` (Issue189 code `7110c1f`). Claim before editing implementation.
+Use Issue203's existing acceptance and `docs/issue-203-execution.md`.
+Other session's dirty planning worktree remains untouched; no Issue203 PR or
+active code claim was found. No real profile has been selected or consent changed.
+
 # Interrupted AAK takeover — Issue189 qualified (2026-09-06)
 
 The authorized isolated continuation is `codex/aak-takeover-issue-189-20260906`,
