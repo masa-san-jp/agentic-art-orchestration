@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T06:51:01.553081+00:00`.
+Source updated at: `2026-09-06T06:51:53.410902+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 5 | 0 | 0 | 2 | 146 | 153 |
 
 Current task: `null`; repository: `null`; checkpoint: `ISSUE-189-PIN-QUALIFICATION`.
-Next action: Publish completed Issue189 SSOT, verify remote, release this lease; register existing Issue203 profile-root forwarding next.
+Next action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
 Ready: none.
 Next task: `null`.
 Blocked:

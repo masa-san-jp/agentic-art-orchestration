@@ -1,7 +1,7 @@
 # Interrupted AAK takeover — Issue189 qualified (2026-09-06)
 
 The authorized isolated continuation is `codex/aak-takeover-issue-189-20260906`,
-stacked draft PR204 on PR202. The original shared checkout and original branch
+stacked draft PR204 on PR202. Code/evidence commit `7110c1f07d0196a679d4aa6af17e5c75b1270839` was verified on remote before lease release. The original shared checkout and original branch
 lease remain unchanged. Runtime qualification and restart metadata are repaired:
 16 native child gates and synthetic exchange PASS; four stale pins adopted;
 actual six-repository guard PASSED. Parent 588 tests PASS (2 environment skips,

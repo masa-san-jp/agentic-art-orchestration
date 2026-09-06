@@ -353,5 +353,14 @@
       "freshness"
     ],
     "meaning": "Pre-publication state and deliberately stale synthetic signal; neither is converted to a normal production value."
+  },
+  "post_publication_audit": {
+    "status": "FINDINGS",
+    "codes": [
+      "PARENT_SSOT_UNPUSHED",
+      "freshness"
+    ],
+    "mode": "offline-fixture",
+    "parent_ssot": "local tracking ref MATCHED after exact remote verification"
   }
 }

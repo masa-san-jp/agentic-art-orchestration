@@ -1,9 +1,9 @@
-version: 215
-updated_at: '2026-09-06T06:51:01.553081+00:00'
+version: 216
+updated_at: '2026-09-06T06:51:53.410902+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
+  status: available
   owner: codex-aak-takeover-20260906
   acquired_at: '2026-09-06T06:19:31+00:00'
   expires_at: '2026-09-06T07:32:17.897652+00:00'
@@ -21,6 +21,9 @@ lease:
     - PLANS.md
     - docs/issue-189-execution.md
     child_repositories: []
+  released_at: '2026-09-06T06:51:53.410902+00:00'
+  published_commit: 7110c1f07d0196a679d4aa6af17e5c75b1270839
+  publication_verification: git ls-remote exact SHA; normal branch push, no merge
 checkpoint:
   task: ISSUE-189-PIN-QUALIFICATION
   repository: agentic-art-orchestration
@@ -32,6 +35,7 @@ checkpoint:
     PASS with 2 environment skips; isolated boundary tests cover those paths.
   evidence: execution/issue-189-qualification.json
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/204
+  code_candidate: 7110c1f07d0196a679d4aa6af17e5c75b1270839
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -49,9 +53,8 @@ aak04_checkpoint:
 last_completed_task: ISSUE-189-PIN-QUALIFICATION
 resume_from:
   task: ISSUE-189-PIN-QUALIFICATION
-  action: Publish completed Issue189 SSOT, verify remote, release this lease; register existing Issue203 profile-root forwarding
-    next.
-  command: git diff --check
+  action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
+  command: .venv/bin/python tools/project_status.py --format json
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

@@ -19,7 +19,7 @@ at `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`.
 - [x] Parent repaired baseline: 588 tests PASS, 1 existing sibling-path skip (364.824s); the unchanged Research dry-run test also passed with an explicit real checkout.
 - [x] Actual Production -> parent -> Project synthetic boundary PASS with canonical temporary paths.
 - [x] Verify adopted real-workspace guards and final pin-sensitive regression (588 PASS, 2 environment skips; explicit owner checks run separately).
-- [ ] Publish implementation/evidence as a stacked draft PR, then record remaining gates.
+- [x] Publish implementation/evidence as stacked draft PR204; remote verified at 7110c1f07d0196a679d4aa6af17e5c75b1270839 before lease release.
 
 ## Surprises & Discoveries
 
