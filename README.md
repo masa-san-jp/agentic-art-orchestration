@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T07:09:45.863470+00:00`.
+Source updated at: `2026-09-06T07:42:54.354523+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 4 | 0 | 1 | 2 | 147 | 154 |
+| 4 | 0 | 0 | 2 | 148 | 154 |
 
-Current task: `AAK-13`; repository: `agentic-art-project`; checkpoint: `AAK-13`.
-Next action: Read owner Issue10 and pinned specification; implement within the separate Project12-based branch, using synthetic fixtures and preserving current P4 body/unknown author.
+Current task: `null`; repository: `null`; checkpoint: `AAK-13`.
+Next action: Await explicit human review/merge authorization for self-model-notes PR94 registration. After merge, fetch owner main, run native validate/next, then claim SM-036 using its trusted base. AAK07 also requires reviewed parent196 completion; no closed-label override.
 Ready: none.
 Next task: `null`.
 Blocked:

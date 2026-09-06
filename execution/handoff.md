@@ -1,3 +1,35 @@
+# AAK13 delivered; implementation paused at native human/dependency gates (2026-09-06)
+
+Owner Project PR13: code `d3347e3177cf23c58a415c301760e9452246e965`,
+published evidence head `2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da`,
+base PR12 `8e4c90b701c82bfe14964dbbe6a0aba62342fcef`.
+AC1..5 synthetic PASS; native full32, validator/catalog, schema/examples and
+actual Production-parent-Project boundary PASS. Parent full595 PASS with one
+sibling-Research environment skip, independently covered with the actual owner.
+Evidence: `execution/aak-13-owner-verification.json`; full13 status and exact refs:
+`execution/aak-takeover-report.json`. P0004 canonical bytes/unknown artist unchanged.
+
+Next task AAK05 is BLOCKED: registration-only Self Model PR94 is still OPEN,
+draft and mergeable; user approval to merge has been asked and is still pending.
+Do not infer consent from elapsed time. After authorized merge, fetch owner main
+in the isolated Self Model checkout and run
+`python3 tools/agent_runtime.py tools/task_harness.py next --json`, then use the
+native trusted-base claim for SM-036. Read owner AGENTS §9 before claim.
+AAK07 remains blocked by native upstream CLOSED check (parent196 OPEN).
+AAK09/10/11 depend on those tasks; AAK02 live 3 modes × 2 runs is NOT_RUN.
+Do not close upstream or apply agent-ready to bypass its acceptance gate.
+
+Parent branch `codex/aak-13-owner-checkpoint-20260906` is stacked on PR206;
+PR206 on PR204; PR204 preserves the previous PR202 candidate. Separate PR205 is
+another session's main-based replacement; no integration/rebase was performed.
+Owner PR13 is independently stacked on Project12. Preserve all original/shared
+worktrees and previous leases. No merge, release, real-data migration, real profile,
+Drive artifact or inferred preference was performed. Only synthetic local data
+and metadata evidence were used. Main integration and live artistic acceptance
+must be reported separately from these qualified candidates.
+
+Earlier sections below are historical checkpoints.
+
 # AAK13 claimed on isolated owner candidate (2026-09-06)
 
 Parent branch `codex/aak-13-owner-checkpoint-20260906`; child branch

@@ -1,6 +1,6 @@
 # Execution Plans
 
-Active task: AAK-13 / agentic-art-project#10, qualified Project12 candidate. Parent owns only checkpoint/evidence; owner execution plan is docs/aak-13-execution.md on the Project branch.
+AAK-13 is CODE_VERIFIED in [Project PR13](https://github.com/masa-san-jp/agentic-art-project/pull/13). No eligible AAK implementation remains before the AAK-05 trusted-base registration and AAK-07 native dependency gates are resolved. Current resume point and evidence are in execution/state.yaml and execution/aak-takeover-report.json.
 
 [Issue203 profile-root forwarding](docs/issue-203-execution.md) is CODE_VERIFIED in draft PR206.
 

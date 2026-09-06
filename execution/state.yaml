@@ -1,7 +1,7 @@
-version: 221
-updated_at: '2026-09-06T07:09:45.863470+00:00'
-active_task: AAK-13
-active_repository: agentic-art-project
+version: 222
+updated_at: '2026-09-06T07:42:54.354523+00:00'
+active_task: null
+active_repository: null
 lease:
   status: held
   owner: codex-aak-takeover-20260906
@@ -35,11 +35,15 @@ checkpoint:
   task: AAK-13
   repository: agentic-art-project
   start_point: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
-  status: IN_PROGRESS
+  status: CODE_VERIFIED
   expected_changes: Add origin/creator/revision lineage, conservative migration dry-run, and separate read-only catalog-reference/v1;
     preserve canonical bodies and unknown attribution.
-  result: Project12 20 native tests/validator/catalog PASS; actual owner boundary PASS; AAK04 qualified instance-profile/v1
-    candidate retained. No overlapping AAK13 PR observed.
+  result: AAK13 AC1..5 synthetic PASS; owner full32 PASS; parent full595 PASS/1 environment skip separately covered; remote
+    owner SHA verified. Awaiting parent SSOT publication before lease release.
+  code_candidate: d3347e3177cf23c58a415c301760e9452246e965
+  owner_published_head: 2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/13
+  evidence: execution/aak-13-owner-verification.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -54,12 +58,15 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: PROFILE-ROOT-FORWARD-001
+last_completed_task: AAK-13
 resume_from:
-  task: AAK-13
-  action: Read owner Issue10 and pinned specification; implement within the separate Project12-based branch, using synthetic
-    fixtures and preserving current P4 body/unknown author.
-  command: python3 tools/validate.py --check
+  task: AAK-05
+  action: Await explicit human review/merge authorization for self-model-notes PR94 registration. After merge, fetch owner
+    main, run native validate/next, then claim SM-036 using its trusted base. AAK07 also requires reviewed parent196 completion;
+    no closed-label override.
+  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
+  repository: self-model-notes
+  blocked_on: PR94 registration absent from trusted base; human merge authorization pending.
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

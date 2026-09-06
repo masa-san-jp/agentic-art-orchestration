@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-06T07:07:09.302565+00:00",
+  "observed_at": "2026-09-06T07:42:54.354523+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -537,27 +537,47 @@
       "task": "AAK-13",
       "issue": "https://github.com/masa-san-jp/agentic-art-project/issues/10",
       "owner": "agentic-art-project",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-13-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         }
       },
-      "pull_request": null,
-      "observed_pr": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+      "observed_pr": {
+        "head": "2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
       "blocker": null,
@@ -601,6 +621,12 @@
       "evidence": "execution/issue-203-verification.json",
       "code_commit": "4f4b82226f4da828bf5f7051723658eeab2c1231",
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/206"
+    },
+    "aak13": {
+      "status": "CODE_VERIFIED",
+      "code_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+      "evidence": "execution/aak-13-owner-verification.json"
     }
   },
   "aak02_live_acceptance": {
@@ -682,7 +708,7 @@
     "full_tests": "20 PASS in 0.033s",
     "actual_parent_production_project_boundary": "PASS in 4.356s",
     "integration": "qualified unmerged candidate; old PR11 migration failure is historical, not the current prerequisite blocker",
-    "next_task": "AAK-13"
+    "next_task": "AAK-13 now CODE_VERIFIED in Project PR13"
   },
   "separate_plan_observation": {
     "source": "parallel owner Project PR12, not an AAK02 run by this continuation",
@@ -690,5 +716,31 @@
     "body_sha256": "b6d103079c84ab1b6e9f6a12fe00346ca1f17300a38bda2ee201a4f792ffdc5f",
     "byte_length": 28216,
     "aak02_acceptance": "NOT_COUNTED"
-  }
+  },
+  "remaining_gates": [
+    {
+      "task": "AAK-05",
+      "issue": "self-model-notes#93",
+      "cause": "SM-036 registration absent from trusted base; PR94 is open/draft/mergeable at 9b5e8875fb983ddabdea81fd9992e9ca42b16150",
+      "required_action": "Human review and explicit merge authorization for registration-only PR94; then native claim",
+      "status": "AWAITING_HUMAN_GATE"
+    },
+    {
+      "task": "AAK-07",
+      "issue": "marketing-trends-notes#86",
+      "cause": "Native claim requires CLOSED upstream; parent196 remains OPEN",
+      "required_action": "Review and integrate the AAK04 candidate and record proper upstream acceptance/completion; do not manually bypass ready/closed gates",
+      "status": "AWAITING_NATIVE_DEPENDENCY"
+    },
+    {
+      "task": "AAK-09/10/11",
+      "cause": "DAG depends on unfinished AAK05/07",
+      "status": "NOT_RUN"
+    },
+    {
+      "task": "AAK-02",
+      "cause": "Final owner implementations and live three-mode/two-run evidence remain incomplete",
+      "status": "NOT_RUN"
+    }
+  ]
 }
