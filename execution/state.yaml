@@ -1,9 +1,9 @@
-version: 219
-updated_at: '2026-09-06T07:07:09.302565+00:00'
+version: 220
+updated_at: '2026-09-06T07:07:35.697488+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
+  status: available
   owner: codex-aak-takeover-20260906
   acquired_at: '2026-09-06T06:53:50.993195+00:00'
   expires_at: '2026-09-06T07:38:50.993195+00:00'
@@ -24,6 +24,9 @@ lease:
     - PLANS.md
     - tests/test_auto_plan.py
     child_repositories: []
+  released_at: '2026-09-06T07:07:35.697488+00:00'
+  published_commit: 786a797
+  publication_verification: Exact remote SHA confirmed by git ls-remote before release; normal branch push.
 checkpoint:
   task: PROFILE-ROOT-FORWARD-001
   repository: agentic-art-orchestration
@@ -53,8 +56,8 @@ aak04_checkpoint:
 last_completed_task: PROFILE-ROOT-FORWARD-001
 resume_from:
   task: AAK-13
-  action: Publish and release Issue203 lease, then record newly qualified Project6 PR12 dependency and claim AAK13 on isolated
-    parent/child branches. AAK05 merge approval remains pending.
+  action: Promote AAK13 with verified Project6 PR12 evidence and claim isolated parent/child branches; AAK05 approval remains
+    pending.
   command: .venv/bin/python tools/project_status.py --format json
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
