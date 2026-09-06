@@ -1,99 +1,122 @@
-# Issue193 execution checkpoint
+# Issue 193 execution checkpoint
 
 ## Purpose / Big Picture
 
-Require Production attestation/v1 and its pinned owner validator for automatic
-projection/v2. Preserve exact Markdown/attestation/assets and stable ID/revision.
-No Production headings or semantic schema is copied into the parent.
+Automatic publication must expose the complete Production-owned plan, not an
+Orchestration summary. `canonical-plan-projection/v2` therefore accepts only a
+Production `production-public-plan-attestation/v1`, validates it with the pinned
+owner implementation, and projects the exact plan, attestation, and public asset
+bytes into the Project receiver.
 
 ## Progress
 
-IN_PROGRESS: PUBLIC-PROJECTION-ATTESTATION-001, branch
-agent/issue-193-attested-projection, parent candidate ecfa00f71957c4c04e052ea3a7574f042c8ab6f0.
-Native intake qualified the actual Issue after mechanical heading synchronization;
-registration was committed separately. Production PR63 code
-d323b92ffef34fc80b2e0c47daa1b8acff40368a is fixed in an exact isolated checkout,
-with 104 full tests, 11 focused tests and validator/evaluation PASS.
+`PUBLIC-PROJECTION-ATTESTATION-001` is implemented on the main-based branch
+`agent/issue-193-attested-projection-v2`, Draft PR #205. This PR supersedes the
+stacked PR #202 and contains no AAK branch work unrelated to Issue #193.
+
+The owner candidate is Production PR #63 at
+`69567e88131e3f033d010791fb5849e1b2ebff8d`. The receiver and real catalog
+migration are Project PR #12 at `8e4c90b`.
 
 ## Surprises & Discoveries
 
-Project #6 PR11 passes six synthetic receiver tests but its existing public
-records require authorized migration; it is not fully qualified. Current run and
-batch producers do not expose owner attestation refs. Missing clearance must
-block projection while retaining the internal plan, not synthesize approval.
+Project's receiver uses a deliberately small flat-YAML parser. A JSON-encoded
+asset manifest long enough for a real plan was wrapped by PyYAML even though all
+synthetic fixtures passed. The emitter now disables scalar wrapping and a
+regression test covers the real-length case.
+
+The repository history also contains non-UTF-8 bytes. The release safety scan
+previously crashed while decoding them. Command capture now replaces undecodable
+bytes while continuing the credential-pattern scan; the result remains sanitized
+and is covered by a regression test.
+
+GitHub Actions did not start because of the account billing gate. This is an
+external CI availability condition, not a reported test failure. Local clean
+checkout evidence is recorded below.
 
 ## Decision Log
 
-Use existing automatic producer authority and destination resolution. Reuse target
-transaction/CAS rollback code. Keep private output and code checkout paths out of
-public records. Owner validation executes only from explicit qualified checkout.
-Actual Project records, public writes, merge and release remain gated.
+Production owns the source schema, canonical renderer, attestation, public review,
+and asset manifest. Orchestration owns transport, identity/revision conflict
+semantics, ordering, and the atomic transaction. Project owns receiver validation,
+ID allocation, migration reservations, and catalog rendering. Neither downstream
+repository copies Production headings or reinterprets the body.
+
+Canonical/publication state is independent of permission for physical production,
+purchases, installation, or other external effects. Publication never grants those
+permissions.
+
+No summary, translation, partial-plan, or missing-review fallback is allowed.
+Failure returns a blocking terminal result and leaves the internal plan intact.
 
 ## Outcomes & Retrospective
 
-Issue193 synthetic acceptance: owner validation and Project receiver boundary PASS;
-34 focused tests PASS (6.539s), including actual Production CLI and Project code,
-eight negative owner-source cases, byte equality, replay, revision conflict,
-stable IDs, reserved IDs, 100-record ordering and transactional rollback.
-Final code: local 8bcbbb78475fa4ac03896839c48395aaacc53721, remote
-2b1787a3bfd995582075a4723747528781a18df2, identical full tree
-9b41d0797e957388a81331ef22d3d4dced7a6c24. Draft PR202.
-Final full suite: 587 PASS, zero skips, 126.520s; validator/diff PASS.
-Full log SHA256 b2c53cfc1d11d9cb1a097c34c27b42c969ea2ce9f16cb18ae796d35446c23245.
-Actual owner fixture input: Production local f904c70 (remote evidence tree alias
-69567e88131e3f033d010791fb5849e1b2ebff8d), Project local 70ccaa6 (remote
-939411c72aa8cdc77a4831170f2d049126e24b4f). Both were clean dedicated checkouts.
-The 100-record transaction regression explicitly uses a synthetic owner boundary;
-it is not live agent acceptance. Full prequalification: 587 tests PASS, one skip,
-123.518s after the README networkless fixture setup. No real public projection,
-migration or AAK-02 live run performed.
+The actual retained `necessary-retreat-v4#PL001` source bundle was regenerated by
+Production and received by Project as P0004:
+
+- complete plan: 28,216 bytes, SHA-256
+  `b6d103079c84ab1b6e9f6a12fe00346ca1f17300a38bda2ee201a4f792ffdc5f`
+- canonical attestation: SHA-256
+  `cc7da4d1e4a5315dbbfe0360c62c3a67de944fe8d0639787ea3151d7a471f3fa`
+- public assets: two SVG files whose paths, media types, byte counts, hashes, and
+  rights references are bound by the attestation
+- replay through this Orchestration implementation: `ALREADY_PROJECTED`, with no
+  changed paths and no findings
+
+Full Orchestration verification on the main-based branch: 552 tests PASS, one
+existing environment skip for an unavailable sibling Research checkout, 235.962s.
+The Production and Project code roots were supplied explicitly. Validator and
+`git diff --check` PASS. Production separately reports 104 tests PASS and its
+validator/evaluation PASS; Project reports 20 tests and catalog validation PASS.
 
 ## Context and Orientation
 
-The source schema and renderer remain Production-owned. Project's receiver checks
-the attestation envelope, public metadata and assets without copying headings.
+The request carries stable source identity separately from revision and content
+hash. It binds the owner repository/commit, source run, canonical body path/hash,
+canonical attestation path/hash, and every public asset. Public metadata and the
+index repeat the closed provenance fields without storing private checkout paths.
 
 ## Plan of Work
 
-Extend tools/public_projection.py, canonical run/batch reports, owner invocation
-and closed v2 metadata. Test summary/tamper/rights, revision, replay and transaction
-failure against synthetic temporary targets and owner-verified source fixtures.
+Implementation is complete. Merge order is Production PR #63, Project PR #12 and
+Orchestration PR #205 after dependency review. Hosted CI must either be restored
+or the recorded local evidence accepted by the owner.
 
 ## Concrete Steps
 
-python3 tools/validate.py --check; python3 -m unittest discover -s tests -v;
-git diff --check. Use the repository's existing runtime preflight. Preserve failed
-checks and per-acceptance evidence; no fake qualifies as live AAK-02 acceptance.
+Fresh-clone verification uses the README networkless setup, followed by:
+
+```text
+AAK_PRODUCTION_CODE_ROOT=<clean Production checkout> \
+AAK_PROJECT_CODE_ROOT=<clean Project checkout> \
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python tools/validate.py --check
+git diff --check
+```
 
 ## Validation and Acceptance
 
-Run `AAK_PRODUCTION_CODE_ROOT=<clean qualified owner checkout>
-AAK_PROJECT_CODE_ROOT=<receiver checkout> .venv/bin/python -m unittest
-tests.test_canonical_plan_projection tests.test_public_projection -v` for the
-owner/receiver integration fixture. The separate 3-mode, 2-run real-agent
-acceptance belongs to AAK-02 and remains NOT_RUN.
+Request `contract_version=v2` requires `mode=AUTOMATIC_PLAN`,
+`canonical_artifact=production-plan.md`, and `body_transform=none`. The owner
+validator must return an attested current plan. Exact plan, attestation, and asset
+bytes are checked again by the Project receiver before any transaction is applied.
 
-Request requires contract_version=v2, mode=AUTOMATIC_PLAN,
-canonical_artifact=production-plan.md, body_transform=none, and source refs binding
-identity, revision, owner repository/commit, run ID, body/attestation hashes and
-asset path/hash/MIME/rights. Metadata/index repeat these values; their assets field
-is a JSON string for the receiver's native flat YAML parser. Result refs retain
-the same provenance. No path to an internal checkout is stored publicly.
-
-The full owner project for batch validation is retained in internal
-canonical-production, separately from the batch reporting aggregate. No public
-review is synthesized. Missing review/attestation returns BLOCKED_POLICY while
-keeping the internal plan. Higher revisions remove only previously attested,
-unchanged assets within the same rollback transaction; unrelated files block.
+The 100-record test uses a synthetic owner boundary to test allocation, order, and
+transaction semantics. The real P0004 replay proves actual Production/Project
+compatibility. A three-mode/two-run live autonomous-agent acceptance remains part
+of AAK-02 and is not claimed here.
 
 ## Idempotence and Recovery
 
-Same identity/revision/hash replays; same revision/different content conflicts;
-higher revision updates the same P ID; rollback is rejected without migration.
-Preflight all files, apply one target transaction and restore only its changes.
+The same identity, revision, and hashes replay without writes. Different content
+at the same revision conflicts. A higher revision updates the same public ID.
+Rollback restores only transaction-owned files. Reserved migration IDs and
+unrelated files are never reused or removed.
 
 ## Interfaces and Dependencies
 
-Owner attestation: Production63. Receiver: Project11 (synthetic code only; real
-migration incomplete). AAK-02 live integration remains NOT_RUN. No circular
-dependency is added; source/receiver implementation precedes combined acceptance.
+- Production owner: Issue #60, Draft PR #63
+- Project receiver/catalog: Issue #6, Draft PR #12
+- Orchestration transport: Issue #193, Draft PR #205
+- superseded implementation: PR #202
+- live AAK-02 acceptance: `NOT_RUN`
