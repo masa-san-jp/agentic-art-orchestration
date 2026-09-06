@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T15:56:39.751719+00:00`.
+Source updated at: `2026-09-06T16:00:41.909589+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 4 | 0 | 0 | 2 | 148 | 154 |
 
-Current task: `null`; repository: `null`; checkpoint: `AAK-13`.
-Next action: Await explicit human review/merge authorization for self-model-notes PR94 registration. After merge, fetch owner main, run native validate/next, then claim SM-036 using its trusted base. AAK07 also requires reviewed parent196 completion; no closed-label override.
+Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECTION-ATTESTATION-001`.
+Next action: Explicit approval is pending for registration-only PR94. After approved merge, fetch clean main and use native validate/next/claim SM-036. Other PR preparation is complete; do not bypass TASK_NOT_FOUND or manufacture CLOSED for AAK07.
 Ready: none.
 Next task: `null`.
 Blocked:

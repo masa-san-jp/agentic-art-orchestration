@@ -1,0 +1,166 @@
+{
+  "kind": "integration execution evidence; not a requirements SSOT",
+  "observed_at": "2026-09-06T16:00:41.909589+00:00",
+  "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
+  "parent_chain": [
+    {
+      "pr": 198,
+      "head": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d"
+    },
+    {
+      "pr": 199,
+      "head": "d34aa120392de2c92530193d30009364d5ca37d6"
+    },
+    {
+      "pr": 200,
+      "head": "6383bee0d50dcd8c4ccaccc488c1840bac093c61"
+    },
+    {
+      "pr": 201,
+      "head": "3e56c96c562f91318c44f8d70ff9924c2533a71d"
+    },
+    {
+      "pr": 202,
+      "head": "dac8de8e475875979d19cdf0a74c247a2fdec6cb"
+    },
+    {
+      "pr": 204,
+      "base": "c81d14f1876e85e476128e3180808ef5808287a6",
+      "head": "956867afebd68b7be45b3873556f6a7ce8f0132e",
+      "upstream": "dac8de8e475875979d19cdf0a74c247a2fdec6cb",
+      "remote_branch": "codex/aak-takeover-issue-189-20260906",
+      "validation": "validator, status/docs19, diff PASS"
+    },
+    {
+      "pr": 206,
+      "base": "d55423ccc6da449a8efaa9fb3ca350b28a3239bd",
+      "head": "6501108a42b46eb1354bf034fcc6890c6a6ae2a8",
+      "upstream": "956867afebd68b7be45b3873556f6a7ce8f0132e",
+      "remote_branch": "codex/issue-203-profile-root-20260906",
+      "validation": "validator, status/docs19, diff PASS"
+    },
+    {
+      "pr": 207,
+      "base": "b52067085fa2a49a6fe1f0c78648cbfb06a6b910",
+      "head": "08d7a46090156027b66379ccc9552b1b1a3b10d4",
+      "upstream": "6501108a42b46eb1354bf034fcc6890c6a6ae2a8",
+      "remote_branch": "codex/aak-13-owner-checkpoint-20260906",
+      "validation": "validator, status/docs19, diff PASS"
+    }
+  ],
+  "superseded_prs": [
+    {
+      "repository": "agentic-art-orchestration",
+      "pr": 191,
+      "replacement": [
+        201,
+        202
+      ],
+      "state": "CLOSED",
+      "branch": "PRESERVED"
+    },
+    {
+      "repository": "agentic-art-orchestration",
+      "pr": 205,
+      "replacement": [
+        202
+      ],
+      "state": "CLOSED",
+      "branch": "PRESERVED"
+    },
+    {
+      "repository": "agentic-art-project",
+      "pr": 9,
+      "replacement": [
+        12
+      ],
+      "state": "CLOSED",
+      "branch": "PRESERVED"
+    },
+    {
+      "repository": "agentic-art-project",
+      "pr": 11,
+      "replacement": [
+        12
+      ],
+      "state": "CLOSED",
+      "branch": "PRESERVED"
+    }
+  ],
+  "verification": {
+    "aak04_state_repair": "33 PASS; feature code unchanged",
+    "issue193_standalone": "588 PASS in 249.741s; one independently covered Research skip",
+    "combined_candidate": "595 PASS in 253.338s; same Research skip",
+    "native_owner_boundary": "Real Production attestation and Project native metadata/index readers PASS; pre-fix failure reproduced",
+    "focused_projection_and_history": "50 PASS in 28.444s",
+    "downstream_status_docs": "19 PASS per PR204/206/207",
+    "code_identity": {
+      "tested_commit": "6e09971bee2bc11482dadcf258fe5f4b29bb75e9",
+      "equal_final_paths": [
+        "tools",
+        "tests",
+        "schemas",
+        "config"
+      ],
+      "final_precheckpoint_head": "08d7a46090156027b66379ccc9552b1b1a3b10d4"
+    },
+    "logs": {
+      "aak-integration-before-20260907.log": "a51bf821232f25734364fb406d66736078fddb3cb570724d00eed7a815adfb6b",
+      "aak-integration-focused-20260907.log": "76a4256ce10f445fff334c4193e7c787ce3d96c4b1023bdc2768e563e0a89480",
+      "aak-integration-full-20260907.log": "d992f3561024f77b8b23dbf35571c83f4db17a5d253539ad283231f96cf93f6d",
+      "aak-193-ready-full-20260907.log": "4bfc12671f765e2381d54712cd851a3be239792ac7f17e09cfb0e7663cb41a6f",
+      "aak-04-ready-focused-20260907.log": "39927432f54dcc6098e49d82694866fad98b1cdd16d9c8afa8ca86a442c7d945"
+    }
+  },
+  "remaining": [
+    {
+      "task": "AAK-05",
+      "gate": "Self Model PR94 human registration merge",
+      "status": "EXPLICIT_APPROVAL_PENDING",
+      "detail": "Full161 PASS. Native claim requires main registration; trusted-base verify-pr TASK_NOT_FOUND is a manual registration review boundary, not a passing feature policy."
+    },
+    {
+      "task": "AAK-07",
+      "gate": "AAK04 reviewed integration and Issue196 completion",
+      "status": "PENDING",
+      "detail": "PR201 contains Closes196 after acceptance; do not manually label ready before native dependency passes."
+    },
+    {
+      "task": "AAK-09/10/11",
+      "gate": "AAK05/07 functional candidates",
+      "status": "NOT_RUN"
+    },
+    {
+      "task": "AAK-02",
+      "gate": "3 modes x2 live runs after owner implementations",
+      "status": "NOT_RUN"
+    },
+    {
+      "gate": "GitHub Actions",
+      "status": "FAILED_BEFORE_STEPS",
+      "detail": "Account payment/spending-limit errors; local PASS is not remote CI PASS."
+    },
+    {
+      "gate": "Project12 actual catalog migration",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "detail": "Review P0004 replacement and six metadata-only reserved old IDs separately from parent code."
+    }
+  ],
+  "safety": {
+    "default_branch_merge": false,
+    "force_push": false,
+    "branch_deleted": false,
+    "issue_closed_without_acceptance": false,
+    "real_data_migration": false,
+    "public_projection": false,
+    "billing_changed": false,
+    "private_raw": "NONE",
+    "external_artifacts": "NONE",
+    "explicit_feedback": "User requested completing preparation and implementation",
+    "inferred_feedback": "NONE"
+  },
+  "all13_complete": false,
+  "aak02_plan_status": "NOT_RUN",
+  "aak02_knowledge_status": "NOT_RUN",
+  "aak02_projection_status": "NOT_RUN"
+}

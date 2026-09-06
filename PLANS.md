@@ -1,3 +1,5 @@
+Integration preparation evidence: [execution/aak-integration-readiness.json](execution/aak-integration-readiness.json). PR201/202 repaired and propagated through204/206/207; duplicate alternatives closed with branch history retained. Native AAK05 registration approval remains pending.
+
 # Execution Plans
 
 AAK-13 is CODE_VERIFIED in [Project PR13](https://github.com/masa-san-jp/agentic-art-project/pull/13). No eligible AAK implementation remains before the AAK-05 trusted-base registration and AAK-07 native dependency gates are resolved. Current resume point and evidence are in execution/state.yaml and execution/aak-takeover-report.json.

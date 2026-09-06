@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-06T07:43:54.531728+00:00",
+  "observed_at": "2026-09-06T16:00:41.909589+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -163,7 +163,12 @@
         }
       },
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/201",
-      "observed_pr": null,
+      "observed_pr": {
+        "head": "3e56c96c562f91318c44f8d70ff9924c2533a71d",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
       "blocker": null,
@@ -628,6 +633,12 @@
       "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
       "evidence": "execution/aak-13-owner-verification.json",
       "parent_checkpoint_pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207"
+    },
+    "issue193_repair": {
+      "status": "CODE_VERIFIED",
+      "code_commit": "4b41f6da2b73e23de1c0a439aebc77f8d78c8247",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/202",
+      "evidence": "execution/issue-193-integration-verification.json"
     }
   },
   "aak02_live_acceptance": {
@@ -692,12 +703,14 @@
       "number": 205,
       "title": "fix: project only owner-attested complete production plans",
       "url": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/205",
-      "state": "open",
+      "state": "closed",
       "draft": true,
       "head": "be600cc00bfb787a9e525b1976d1898144d2e158",
       "branch": "agent/issue-193-attested-projection-v2",
       "base": "main",
-      "merged": false
+      "merged": false,
+      "superseded_by": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/202",
+      "resolution": "Flat scalar delta integrated with native reader regression; branch preserved"
     }
   ],
   "project6_updated_qualification": {
@@ -749,5 +762,6 @@
     "reason": "GitHub account payments/spending-limit blocker; no catalog job step started",
     "job_url": "https://github.com/masa-san-jp/agentic-art-project/actions/runs/34019734720/job/101449966437",
     "local_validation": "PASS; not a remote CI pass"
-  }
+  },
+  "integration_preparation": "execution/aak-integration-readiness.json"
 }

@@ -1,54 +1,36 @@
-version: 224
-updated_at: '2026-09-06T15:56:39.751719+00:00'
+version: 225
+updated_at: '2026-09-06T16:00:41.909589+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: available
-  owner: codex-aak-takeover-20260906
-  acquired_at: '2026-09-06T07:09:45.863470+00:00'
-  expires_at: '2026-09-06T07:54:45.863470+00:00'
-  lane: AAK_IMPLEMENTATION
-  execution_id: AAK-13:20260906
+  status: held
+  owner: codex-aak-integration-20260907
+  acquired_at: '2026-09-06T15:16:47.363885+00:00'
+  expires_at: '2026-09-06T17:16:47.363885+00:00'
+  lane: AAK_INTEGRATION
+  execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260907
   scope:
     repository: agentic-art-orchestration
     branch: codex/aak-13-owner-checkpoint-20260906
     paths:
-    - README.md
-    - PLANS.md
+    - tools/public_projection.py
+    - tests/test_canonical_plan_projection.py
+    - tests/test_release_check.py
+    - docs/issue-193-execution.md
     - execution/**
-    child_repositories:
-    - repository: agentic-art-project
-      branch: codex/aak-13-catalog-lineage-20260906
-      candidate_base: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
-      paths:
-      - AGENTS.md
-      - README.md
-      - docs/**
-      - config/**
-      - schemas/**
-      - tools/**
-      - tests/**
-      - public-project.yaml
-      - plans/**
-      - works/**
-  released_at: '2026-09-06T07:43:54.531728+00:00'
-  published_commit: 590a7ec6d3e4fd585a1d7c6a0dff0fd0cb6f620e
-  publication_verification: Exact remote SHA confirmed with git ls-remote after normal branch push, before release; post-publication
-    audit no parent-SSOT finding.
+    - PLANS.md
+    - README.md
+    child_repositories: []
+  source_claim_branch: codex/aak-integration-20260907
 checkpoint:
-  task: AAK-13
-  repository: agentic-art-project
-  start_point: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
+  task: PUBLIC-PROJECTION-ATTESTATION-001
+  repository: agentic-art-orchestration
   status: CODE_VERIFIED
-  expected_changes: Add origin/creator/revision lineage, conservative migration dry-run, and separate read-only catalog-reference/v1;
-    preserve canonical bodies and unknown attribution.
-  result: AAK13 AC1..5 synthetic PASS, owner32 and parent595 PASS/1 separately covered skip. Owner PR13 and parent PR207 published;
-    lease released after exact remote confirmation. Native AAK05/07 gates remain; no eligible next task.
-  code_candidate: d3347e3177cf23c58a415c301760e9452246e965
-  owner_published_head: 2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da
-  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/13
-  evidence: execution/aak-13-owner-verification.json
-  parent_pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/207
+  code_candidate: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+  result: Standalone projection588 and combined595 PASS; native Project-reader defect fixed; PR201/202 state repaired; normal
+    merges propagated through204/206/207; duplicate PRs closed with branches retained. Publish this final integration checkpoint
+    before lease release.
+  evidence: execution/aak-integration-readiness.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -63,15 +45,13 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-13
+last_completed_task: PUBLIC-PROJECTION-ATTESTATION-001
 resume_from:
   task: AAK-05
-  action: Await explicit human review/merge authorization for self-model-notes PR94 registration. After merge, fetch owner
-    main, run native validate/next, then claim SM-036 using its trusted base. AAK07 also requires reviewed parent196 completion;
-    no closed-label override.
-  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
   repository: self-model-notes
-  blocked_on: PR94 registration absent from trusted base; human merge authorization pending.
+  action: Explicit approval is pending for registration-only PR94. After approved merge, fetch clean main and use native validate/next/claim
+    SM-036. Other PR preparation is complete; do not bypass TASK_NOT_FOUND or manufacture CLOSED for AAK07.
+  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection
@@ -107,6 +87,20 @@ integration_preparation:
   native_project_reader: PASS after wrapped-scalar regression repair
   scope: normal merge of qualified upstream; original task checkpoint retained
   main_integration: NOT_RUN
+previous_aak13_checkpoint:
+  task: AAK-13
+  repository: agentic-art-project
+  start_point: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
+  status: CODE_VERIFIED
+  expected_changes: Add origin/creator/revision lineage, conservative migration dry-run, and separate read-only catalog-reference/v1;
+    preserve canonical bodies and unknown attribution.
+  result: AAK13 AC1..5 synthetic PASS, owner32 and parent595 PASS/1 separately covered skip. Owner PR13 and parent PR207 published;
+    lease released after exact remote confirmation. Native AAK05/07 gates remain; no eligible next task.
+  code_candidate: d3347e3177cf23c58a415c301760e9452246e965
+  owner_published_head: 2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/13
+  evidence: execution/aak-13-owner-verification.json
+  parent_pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/207
 
 workspace_bootstrap_apply:
   status: complete

@@ -1,3 +1,25 @@
+# Integration preparation completed (2026-09-07)
+
+PR201 head3e56c96 repairs missing blocker reasons and obsolete active lease.
+PR202 headdac8de8 fixes long asset YAML scalar wrapping and uses native Project
+readers in actual Production-parent-Project tests. Standalone588 PASS; final
+combined595 PASS. PR204/206/207 now inherit the exact tested code via normal merges.
+Parent191/205 and Project9/11 are closed as superseded; all branches are preserved.
+No default branch was merged. Exact heads, logs, replacement mapping and human
+boundaries: execution/aak-integration-readiness.json.
+
+Next executable task requires explicit human approval of registration-only Self
+Model PR94; a concrete asynchronous approval request is pending. Its full161 tests
+pass, but native claim requires main registration and trusted-base verify-pr
+currently returns TASK_NOT_FOUND. Do not fake main, edit gates or infer approval.
+After approved merge, fetch clean owner main and run native validate/next/claim
+SM-036. Parent201 reviewed merge completes Issue196 for Marketing's native gate;
+AAK09/10/11 depend on unfinished05/07. AAK02 live six runs remain NOT_RUN.
+
+Earlier checkpoint text below is history. Keep parent code integration, actual
+Project12 catalog migration, main merges and AAK02 artistic acceptance separate.
+GitHub Actions is blocked before steps by account billing; settings unchanged.
+
 # PR207 upstream integration prepared (2026-09-07)
 
 Qualified upstream `6501108a42b46eb1354bf034fcc6890c6a6ae2a8` is merged normally into this
