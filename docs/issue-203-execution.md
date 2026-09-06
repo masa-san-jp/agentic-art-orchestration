@@ -15,7 +15,7 @@ or fabricate one when the option is missing.
 - [x] Claim this branch's lease before implementation.
 - [x] Implement forwarding and stable BLOCKED before any real exporter when missing.
 - [x] Verify literal argument boundaries, no side effects on blocked reads, offline regression, and actual synthetic owner export.
-- [ ] Run parent validator/full suite and publish a separate stacked draft PR.
+- [x] Parent full595 PASS/1 environment skip (explicit Research dry-run PASS), validator/diff PASS; draft PR206, code 4f4b82226f4da828bf5f7051723658eeab2c1231.
 
 ## Surprises & Discoveries
 
@@ -36,7 +36,7 @@ fixtures. Do not pass personal configuration to other owners or store it in Git.
 
 ## Outcomes & Retrospective
 
-FOCUSED_CODE_VERIFIED: 38 focused tests PASS (2.388s). Actual owner synthetic profile exports 2 valid signals; alias/repository roots are rejected. Actual six-owner preflight reaches BLOCKED/exit2 without creating run state when profile is missing. First full suite: 595 tests, 1 error / 1 environment skip. The legacy automatic-theme fixture lacked the newly explicit profile root; supply its synthetic root without changing the guard or theme behavior. Final full verification is pending. Issue189's six-owner pin guard
+FOCUSED_CODE_VERIFIED: 38 focused tests PASS (2.388s). Actual owner synthetic profile exports 2 valid signals; alias/repository roots are rejected. Actual six-owner preflight reaches BLOCKED/exit2 without creating run state when profile is missing. First full suite: 595 tests, 1 error / 1 environment skip. The legacy automatic-theme fixture lacked the newly explicit profile root; supply its synthetic root without changing the guard or theme behavior. Final full verification PASS: 595 tests in 258.189s, 1 environment skip separately covered. Code 4f4b82226f4da828bf5f7051723658eeab2c1231 is in draft PR206. All four Issue203 ACs PASS; main/AAK02 integration remain NOT_RUN. Issue189's six-owner pin guard
 passes. The existing AAK candidate PRs and human gates remain unchanged.
 
 ## Context and Orientation
@@ -86,3 +86,7 @@ push, real profile migration or public projection is authorized here.
 Depends on qualified Issue189 runtime pins. Self Model owns external profile
 validation; parent owns argument forwarding and early blocking. No Drive artifact
 is created. Explicit feedback: authorized takeover. Inferred feedback: none.
+
+## Updated next dependency observation
+
+Parallel Project PR12 (`8e4c90b701c82bfe14964dbbe6a0aba62342fcef`) supersedes the old PR11 migration blocker. Native validator/catalog and 20 tests PASS, independently repeated here; actual parent/Production/Project boundary PASS (4.356s). Parent PR205 is a new main-based alternative to PR202, not an automatic replacement of this pinned AAK stack. After publication and lease release, promote/claim AAK13 using the exact qualified Project12 candidate. No migration or merge was performed by this continuation.

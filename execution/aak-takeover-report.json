@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-06T06:58:39.875485+00:00",
+  "observed_at": "2026-09-06T07:07:09.302565+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -597,8 +597,10 @@
       "evidence": "execution/issue-189-qualification.json"
     },
     "issue203": {
-      "status": "IN_PROGRESS",
-      "evidence": "execution/issue-203-verification.json"
+      "status": "CODE_VERIFIED",
+      "evidence": "execution/issue-203-verification.json",
+      "code_commit": "4f4b82226f4da828bf5f7051723658eeab2c1231",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/206"
     }
   },
   "aak02_live_acceptance": {
@@ -642,5 +644,51 @@
     "external_artifact": "NONE",
     "explicit_feedback": "User-authorized takeover",
     "inferred_feedback": "NONE"
+  },
+  "new_parallel_candidates": [
+    {
+      "repo": "agentic-art-project",
+      "type": "pulls",
+      "number": 12,
+      "title": "fix: publish only attested complete Production plans",
+      "url": "https://github.com/masa-san-jp/agentic-art-project/pull/12",
+      "state": "open",
+      "draft": true,
+      "head": "8e4c90b701c82bfe14964dbbe6a0aba62342fcef",
+      "branch": "agent/project-6-canonical-public-plans-v2",
+      "base": "main",
+      "merged": false
+    },
+    {
+      "repo": "agentic-art-orchestration",
+      "type": "pulls",
+      "number": 205,
+      "title": "fix: project only owner-attested complete production plans",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/205",
+      "state": "open",
+      "draft": true,
+      "head": "be600cc00bfb787a9e525b1976d1898144d2e158",
+      "branch": "agent/issue-193-attested-projection-v2",
+      "base": "main",
+      "merged": false
+    }
+  ],
+  "project6_updated_qualification": {
+    "candidate_commit": "8e4c90b701c82bfe14964dbbe6a0aba62342fcef",
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/12",
+    "contract_version": "canonical-plan-projection/v2 + production-public-plan-attestation/v1",
+    "native_validation": "PASS",
+    "catalog_sync": "PASS",
+    "full_tests": "20 PASS in 0.033s",
+    "actual_parent_production_project_boundary": "PASS in 4.356s",
+    "integration": "qualified unmerged candidate; old PR11 migration failure is historical, not the current prerequisite blocker",
+    "next_task": "AAK-13"
+  },
+  "separate_plan_observation": {
+    "source": "parallel owner Project PR12, not an AAK02 run by this continuation",
+    "plan": "https://github.com/masa-san-jp/agentic-art-project/blob/8e4c90b701c82bfe14964dbbe6a0aba62342fcef/plans/P0004-necessary-retreat/plan.md",
+    "body_sha256": "b6d103079c84ab1b6e9f6a12fe00346ca1f17300a38bda2ee201a4f792ffdc5f",
+    "byte_length": 28216,
+    "aak02_acceptance": "NOT_COUNTED"
   }
 }

@@ -1,7 +1,7 @@
-version: 218
-updated_at: '2026-09-06T06:53:50.993195+00:00'
-active_task: PROFILE-ROOT-FORWARD-001
-active_repository: agentic-art-orchestration
+version: 219
+updated_at: '2026-09-06T07:07:09.302565+00:00'
+active_task: null
+active_repository: null
 lease:
   status: held
   owner: codex-aak-takeover-20260906
@@ -28,11 +28,14 @@ checkpoint:
   task: PROFILE-ROOT-FORWARD-001
   repository: agentic-art-orchestration
   start_point: 6b18b9e
-  status: IN_PROGRESS
+  status: CODE_VERIFIED
   expected_changes: Explicit external profile-root argument forwarding to Self Model only; no-export BLOCKED when absent;
     unchanged offline fixture path.
-  result: 38 focused and actual synthetic owner export PASS; first full suite found one legacy theme fixture missing explicit
-    profile_root; update that fixture while preserving fail-closed runtime.
+  result: AC1..4 PASS; focused45, full595 PASS/1 environment skip separately covered; actual synthetic owner export and
+    real missing-profile blocking verified.
+  code_candidate: 4f4b82226f4da828bf5f7051723658eeab2c1231
+  evidence: execution/issue-203-verification.json
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/206
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -47,12 +50,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: ISSUE-189-PIN-QUALIFICATION
+last_completed_task: PROFILE-ROOT-FORWARD-001
 resume_from:
-  task: PROFILE-ROOT-FORWARD-001
-  action: Implement Issue203 CLI forwarding and missing-profile preflight, then run positive/negative and actual synthetic
-    owner checks.
-  command: .venv/bin/python -m unittest tests.test_ingest_signals tests.test_run -v
+  task: AAK-13
+  action: Publish and release Issue203 lease, then record newly qualified Project6 PR12 dependency and claim AAK13 on isolated
+    parent/child branches. AAK05 merge approval remains pending.
+  command: .venv/bin/python tools/project_status.py --format json
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

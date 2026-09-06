@@ -1,7 +1,7 @@
 {
   "task": "PROFILE-ROOT-FORWARD-001",
   "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/203",
-  "status": "IN_PROGRESS",
+  "status": "CODE_VERIFIED",
   "acceptance": {
     "ISSUE-203-AC1": "PASS",
     "ISSUE-203-AC2": "PASS",
@@ -9,7 +9,7 @@
     "ISSUE-203-AC4": "PASS"
   },
   "focused_tests": "45 PASS in 2.973 seconds, including the updated existing automatic-theme fixture",
-  "full_suite": "Final retry pending",
+  "full_suite": "595 tests PASS; 1 environment skip, separately covered by actual Research dry-run",
   "actual_owner_export": {
     "status": "PASS",
     "fixture_kind": "owner synthetic E2E profile; not real Masa",
@@ -60,5 +60,12 @@
     "reason": "Legacy automatic-theme fixture omitted new explicit profile root; fixed by supplying its synthetic profile, no guard weakened.",
     "log_sha256": "b0eed3432a38868faa3d09c4d29771eed0c511c9a855afd6e9b86dc484aa6924"
   },
-  "source_hash_algorithm": "sha256"
+  "source_hash_algorithm": "sha256",
+  "code_candidate": "4f4b82226f4da828bf5f7051723658eeab2c1231",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/206",
+  "full_duration_seconds": 258.189,
+  "full_log_sha256": "52f1b0f7d36a51ecd9a7d7292b2d11aea8bf07e7f56df92361ee3136126186de",
+  "validation": "PASS",
+  "diff_check": "PASS",
+  "main_integration": "NOT_RUN"
 }

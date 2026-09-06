@@ -1,3 +1,20 @@
+# Issue203 code verified; AAK13 prerequisite updated (2026-09-06)
+
+Code `4f4b82226f4da828bf5f7051723658eeab2c1231`, draft PR206, based on PR204. AC1..4 PASS;
+45 focused and 595 full tests PASS (1 environment skip independently covered).
+Real Self Model code exported 2 synthetic signals; no root yields BLOCKED before
+export/state. Canonical owner path/consent gates remain intact.
+
+Next: AAK13. While this task ran, parallel Project PR12 supplied a replacement
+for the old Project6 migration candidate. Exact `8e4c90b701c82bfe14964dbbe6a0aba62342fcef`
+passes native validator/catalog/20 tests and our actual three-owner boundary.
+Record this dependency evidence and claim AAK13 after publishing/releasing this
+lease. Preserve other session branches. AAK05 PR94 approval is still pending.
+
+Current reports: `execution/issue-203-verification.json`,
+`execution/aak-takeover-report.json`. Earlier migration blockers below are
+historical; no AAK02 live run or overall completion is claimed.
+
 # Issue203 registered — next parent prerequisite (2026-09-06)
 
 Task `PROFILE-ROOT-FORWARD-001` is READY on isolated branch
