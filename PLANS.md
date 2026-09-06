@@ -1,6 +1,8 @@
 # Execution Plans
 
-Active prerequisite: [Issue203 profile-root forwarding](docs/issue-203-execution.md).
+Active task: AAK-13 / agentic-art-project#10, qualified Project12 candidate. Parent owns only checkpoint/evidence; owner execution plan is docs/aak-13-execution.md on the Project branch.
+
+[Issue203 profile-root forwarding](docs/issue-203-execution.md) is CODE_VERIFIED in draft PR206.
 
 [Issue189 pin qualification](docs/issue-189-execution.md) is CODE_VERIFIED in draft PR204; main integration remains pending.
 

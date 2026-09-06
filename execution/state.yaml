@@ -1,44 +1,45 @@
-version: 220
-updated_at: '2026-09-06T07:07:35.697488+00:00'
-active_task: null
-active_repository: null
+version: 221
+updated_at: '2026-09-06T07:09:45.863470+00:00'
+active_task: AAK-13
+active_repository: agentic-art-project
 lease:
-  status: available
+  status: held
   owner: codex-aak-takeover-20260906
-  acquired_at: '2026-09-06T06:53:50.993195+00:00'
-  expires_at: '2026-09-06T07:38:50.993195+00:00'
-  lane: AAK_PREREQUISITE
-  execution_id: PROFILE-ROOT-FORWARD-001:20260906
+  acquired_at: '2026-09-06T07:09:45.863470+00:00'
+  expires_at: '2026-09-06T07:54:45.863470+00:00'
+  lane: AAK_IMPLEMENTATION
+  execution_id: AAK-13:20260906
   scope:
     repository: agentic-art-orchestration
-    branch: codex/issue-203-profile-root-20260906
+    branch: codex/aak-13-owner-checkpoint-20260906
     paths:
-    - tools/ingest_signals.py
-    - tools/run.py
-    - tests/test_ingest_signals.py
-    - tests/test_run.py
     - README.md
-    - docs/agent-runtime-guide.md
-    - docs/issue-203-execution.md
-    - execution/**
     - PLANS.md
-    - tests/test_auto_plan.py
-    child_repositories: []
-  released_at: '2026-09-06T07:07:35.697488+00:00'
-  published_commit: 786a797
-  publication_verification: Exact remote SHA confirmed by git ls-remote before release; normal branch push.
+    - execution/**
+    child_repositories:
+    - repository: agentic-art-project
+      branch: codex/aak-13-catalog-lineage-20260906
+      candidate_base: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
+      paths:
+      - AGENTS.md
+      - README.md
+      - docs/**
+      - config/**
+      - schemas/**
+      - tools/**
+      - tests/**
+      - public-project.yaml
+      - plans/**
+      - works/**
 checkpoint:
-  task: PROFILE-ROOT-FORWARD-001
-  repository: agentic-art-orchestration
-  start_point: 6b18b9e
-  status: CODE_VERIFIED
-  expected_changes: Explicit external profile-root argument forwarding to Self Model only; no-export BLOCKED when absent;
-    unchanged offline fixture path.
-  result: AC1..4 PASS; focused45, full595 PASS/1 environment skip separately covered; actual synthetic owner export and
-    real missing-profile blocking verified.
-  code_candidate: 4f4b82226f4da828bf5f7051723658eeab2c1231
-  evidence: execution/issue-203-verification.json
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/206
+  task: AAK-13
+  repository: agentic-art-project
+  start_point: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
+  status: IN_PROGRESS
+  expected_changes: Add origin/creator/revision lineage, conservative migration dry-run, and separate read-only catalog-reference/v1;
+    preserve canonical bodies and unknown attribution.
+  result: Project12 20 native tests/validator/catalog PASS; actual owner boundary PASS; AAK04 qualified instance-profile/v1
+    candidate retained. No overlapping AAK13 PR observed.
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -56,9 +57,9 @@ aak04_checkpoint:
 last_completed_task: PROFILE-ROOT-FORWARD-001
 resume_from:
   task: AAK-13
-  action: Promote AAK13 with verified Project6 PR12 evidence and claim isolated parent/child branches; AAK05 approval remains
-    pending.
-  command: .venv/bin/python tools/project_status.py --format json
+  action: Read owner Issue10 and pinned specification; implement within the separate Project12-based branch, using synthetic
+    fixtures and preserving current P4 body/unknown author.
+  command: python3 tools/validate.py --check
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

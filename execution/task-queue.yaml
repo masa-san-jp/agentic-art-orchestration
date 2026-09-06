@@ -2104,11 +2104,18 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: IN_PROGRESS
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-13
     target_repositories:
     - agentic-art-project
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
-    dependency_evidence: {}
+    dependency_evidence:
+      https://github.com/masa-san-jp/agentic-art-project/issues/6:
+        status: PASS
+        candidate_commit: 8e4c90b701c82bfe14964dbbe6a0aba62342fcef
+        contract_version: canonical-plan-projection/v2
+        acceptance_evidence: Project PR12 native validator/catalog/20 tests PASS; actual Production-parent-Project boundary PASS; complete immutable candidate, unmerged.
+        reference: https://github.com/masa-san-jp/agentic-art-project/pull/12
+
     acceptance_evidence: {}

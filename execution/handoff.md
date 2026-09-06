@@ -1,3 +1,16 @@
+# AAK13 claimed on isolated owner candidate (2026-09-06)
+
+Parent branch `codex/aak-13-owner-checkpoint-20260906`; child branch
+`codex/aak-13-catalog-lineage-20260906`, base Project12
+`8e4c90b701c82bfe14964dbbe6a0aba62342fcef`. Issue10 and pinned AAK13 specification
+are the requirements. Parent state owns this isolated lease; Project has no native
+queue/claim CLI. No other AAK13 PR is observed. Validate canonical metadata/body,
+add attribution/index/read-only references with synthetic fixtures, and preserve
+unknown authors and existing IDs. Do not edit actual canonical plan bytes.
+
+AAK05 registration approval remains pending. Other session's PR205/Project12
+work is preserved; main integration and AAK02 live acceptance remain separate.
+
 # Issue203 code verified; AAK13 prerequisite updated (2026-09-06)
 
 Code `4f4b82226f4da828bf5f7051723658eeab2c1231`, draft PR206, based on PR204. AC1..4 PASS;

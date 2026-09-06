@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T07:07:35.697488+00:00`.
+Source updated at: `2026-09-06T07:09:45.863470+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 0 | 2 | 147 | 154 |
+| 4 | 0 | 1 | 2 | 147 | 154 |
 
-Current task: `null`; repository: `null`; checkpoint: `PROFILE-ROOT-FORWARD-001`.
-Next action: Promote AAK13 with verified Project6 PR12 evidence and claim isolated parent/child branches; AAK05 approval remains pending.
+Current task: `AAK-13`; repository: `agentic-art-project`; checkpoint: `AAK-13`.
+Next action: Read owner Issue10 and pinned specification; implement within the separate Project12-based branch, using synthetic fixtures and preserving current P4 body/unknown author.
 Ready: none.
 Next task: `null`.
 Blocked:
