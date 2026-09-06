@@ -62,10 +62,20 @@ finally:
         record=next((self.target/'plans').glob('P0001-*'))
         receiver=os.environ.get('AAK_PROJECT_CODE_ROOT')
         if receiver:
-            metadata=yaml.safe_load((record/'metadata.yaml').read_text())
-            entry=yaml.safe_load((self.target/'plans/index.yaml').read_text())['records'][0]
-            script='from pathlib import Path; import json,sys; from tools.attestation_receiver import check_envelope; check_envelope(Path(sys.argv[1]),json.loads(sys.argv[2]),json.loads(sys.argv[3]))'
-            subprocess.run(['python3','-c',script,str(record),json.dumps(metadata),json.dumps(entry)],cwd=receiver,capture_output=True,check=True)
+            # Exercise the receiver's native flat YAML readers, not PyYAML,
+            # which accepts continuation lines the public catalog cannot read.
+            script='''from pathlib import Path
+import sys
+from tools.attestation_receiver import check_envelope
+from tools.validate import mapping_fields
+from tools.catalog_sync import _parse_list_records
+record=Path(sys.argv[1])
+metadata=mapping_fields(record/'metadata.yaml')
+entry=_parse_list_records(record.parent/'index.yaml', 'records')[0]
+check_envelope(record, metadata, entry)
+'''
+            received = subprocess.run(['python3','-c',script,str(record)],cwd=receiver,capture_output=True,text=True)
+            self.assertEqual(0, received.returncode, received.stderr)
         for path in (destination/'03_plan').rglob('*'):
             if path.is_file() and (path.name in {'production-plan.md','public-plan-attestation.json'} or 'media' in path.parts):
                 relative='plan.md' if path.name=='production-plan.md' else path.relative_to(destination/'03_plan')
