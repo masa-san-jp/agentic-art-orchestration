@@ -1,12 +1,12 @@
-version: 68
-updated_at: "2026-09-05T04:40:36+00:00"
+version: 69
+updated_at: "2026-09-06T06:51:01.549726+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
   - id: ISSUE-189-PIN-QUALIFICATION
     milestone: AAK
     title: Qualify current Research main and restore real workspace pin compatibility
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/189
     target_repositories:
     - agentic-art-orchestration
@@ -19,6 +19,10 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - .venv/bin/python tools/project_status.py --check-readme
     - git diff --check
+    completion: "AC1..3 PASS; exact six-owner candidate with four pin updates qualified by 16 native gates and synthetic exchange. Parent full 588 PASS with 2 environment skips; both owner-boundary checks run separately with explicit checkouts. Actual six-repository run pin guard PASSED. Evidence execution/issue-189-qualification.json. Draft PR204; main integration NOT_RUN. Next real runtime blocker is existing Issue203 PROFILE_ROOT_REQUIRED."
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/204
   - id: PUBLIC-PROJECTION-ATTESTATION-001
     milestone: M29
     title: Require owner attestation for exact canonical plan projection

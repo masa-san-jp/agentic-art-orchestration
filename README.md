@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T06:19:31+00:00`.
+Source updated at: `2026-09-06T06:51:01.553081+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 1 | 2 | 145 | 153 |
+| 5 | 0 | 0 | 2 | 146 | 153 |
 
-Current task: `ISSUE-189-PIN-QUALIFICATION`; repository: `agentic-art-orchestration`; checkpoint: `ISSUE-189-PIN-QUALIFICATION`.
-Next action: Run Research immutable candidate quality gates before changing its runtime pin.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-189-PIN-QUALIFICATION`.
+Next action: Publish completed Issue189 SSOT, verify remote, release this lease; register existing Issue203 profile-root forwarding next.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -147,6 +147,13 @@ Startup update check + audit -> findings / Issue candidate
 ## ブートストラップ検証
 
 Fresh cloneに必要なのはGitと`python3`だけです。依存関係はシステムPythonへ入れず、repo内の`.venv`へ入れます。実repoの子repo操作には`gh auth login`済みのGitHub認証が必要です。認証がない環境では、実repo操作をせず`--offline-fixture`付きのnetworkless経路を使ってください。
+
+macOSなどで一時ディレクトリの親がシンボリックリンクの場合は、検証前に実パスを選択します。
+これは合成fixtureの配置先だけを変え、profile・knowledge storeのsymlink拒否は維持します。
+
+~~~bash
+export TMPDIR="$(python3 -c 'from pathlib import Path; import tempfile; print(Path(tempfile.gettempdir()).resolve())')"
+~~~
 
 ~~~bash
 python3 -m venv .venv

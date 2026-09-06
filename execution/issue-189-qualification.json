@@ -1,0 +1,357 @@
+{
+  "applied": true,
+  "candidate_manifest_hash": "56a6ff6349042b882ecbc322373f2bc6e40a4f3bed447eb59c30396479583af1",
+  "changes": [
+    {
+      "new_commit": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "old_commit": "e8424f0877d9c08c908fa0a9e44a98b9813f7af5",
+      "repository": "self-model"
+    },
+    {
+      "new_commit": "71bfec77ea0d189186b8248565d340c124b81eab",
+      "old_commit": "9a35dd74d53c756e5b509e1b0d8d217c53a71e37",
+      "repository": "agentic-art-research"
+    },
+    {
+      "new_commit": "9d125fb87be133f5e73e61e04e23c0a3bfafb462",
+      "old_commit": "e1bb0deb4c28489a881ef663a3d2a8d974c5b295",
+      "repository": "agentic-art-production"
+    },
+    {
+      "new_commit": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+      "old_commit": "205eeeb8dd03e29e2b4628e00bcf69738b77f973",
+      "repository": "viewer-response-notes"
+    }
+  ],
+  "child_quality_gates": {
+    "repositories": [
+      {
+        "environment_mode": "per-child",
+        "execution_mode": "immutable-archive",
+        "gates": [
+          {
+            "command": "python3 tools/validate.py --check",
+            "status": "PASSED",
+            "exit_code": 0
+          },
+          {
+            "command": "python3 -m unittest discover -s tests -v",
+            "status": "PASSED",
+            "exit_code": 0
+          },
+          {
+            "command": "python3 tools/run_evaluation.py --format json",
+            "status": "PASSED",
+            "exit_code": 0
+          }
+        ],
+        "repository": "agentic-art-production",
+        "status": "PASSED"
+      },
+      {
+        "environment_mode": "per-child",
+        "execution_mode": "immutable-archive",
+        "gates": [
+          {
+            "command": "python3 -m compileall -q tools tests",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 tools/validate.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 -m unittest discover -s tests -v",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 tools/build_graph.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          }
+        ],
+        "repository": "agentic-art-research",
+        "status": "PASSED"
+      },
+      {
+        "environment_mode": "per-child",
+        "execution_mode": "immutable-archive",
+        "gates": [
+          {
+            "command": "python3 tools/build_graph.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 tools/build_context_vectors.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 -m unittest discover -s tests -p \"test*.py\"",
+            "exit_code": 0,
+            "status": "PASSED"
+          }
+        ],
+        "repository": "art-history",
+        "status": "PASSED"
+      },
+      {
+        "environment_mode": "per-child",
+        "execution_mode": "immutable-archive",
+        "gates": [
+          {
+            "command": "python3 tools/build_graph.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 tools/audit.py --dry-run",
+            "exit_code": 0,
+            "status": "PASSED"
+          }
+        ],
+        "repository": "marketing-trends",
+        "status": "PASSED"
+      },
+      {
+        "environment_mode": "per-child",
+        "execution_mode": "immutable-archive",
+        "gates": [
+          {
+            "command": "python3 tools/build_graph.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 -m unittest discover -s tests -p \"test_*.py\"",
+            "exit_code": 0,
+            "status": "PASSED"
+          }
+        ],
+        "repository": "self-model",
+        "status": "PASSED"
+      },
+      {
+        "environment_mode": "per-child",
+        "execution_mode": "immutable-archive",
+        "gates": [
+          {
+            "command": "python3 tools/validate.py --check",
+            "exit_code": 0,
+            "status": "PASSED"
+          },
+          {
+            "command": "python3 -m unittest discover -s tests -v",
+            "exit_code": 0,
+            "status": "PASSED"
+          }
+        ],
+        "repository": "viewer-response-notes",
+        "status": "PASSED"
+      }
+    ],
+    "repository_count": 6,
+    "status": "PASSED"
+  },
+  "contract_version": "pin-update-qualification/v1",
+  "manifest_hash": "e393d0f85c5cd95ef4949287de7255e3027457ced8cc1bb9a59d95610c718f2f",
+  "production_exchange": {
+    "status": "PASSED",
+    "contract_version": "production-exchange-e2e/v1",
+    "acceptance": {
+      "clean_exchange": true,
+      "external_validation_unperformed": true,
+      "research_result_dry_run": true,
+      "research_feedback_applied": true,
+      "viewer_record_appended": true,
+      "viewer_replay_idempotent": true,
+      "viewer_contract_validated": true,
+      "viewer_signal_exported": true,
+      "research_signal_exported": true,
+      "tamper_terminal": true,
+      "stale_terminal": true,
+      "incompatible_terminal": true,
+      "dirty_source_terminal": true,
+      "replay_idempotent": true,
+      "no_child_mutation": true,
+      "no_remote_mutation": true
+    },
+    "network": "disabled",
+    "remote_operations": [],
+    "child_mutations": []
+  },
+  "status": "PASSED",
+  "manifest_hash_after": "56a6ff6349042b882ecbc322373f2bc6e40a4f3bed447eb59c30396479583af1",
+  "resumed_evidence": {
+    "initial": "938894d52e08e88d4cfa7516a1dfb8cb9d3ba18e78236b33c3284c64481896dd",
+    "production_retry": "61472f52d1f7d68e786e7db6c32adbd00c66b6fbc43b7962c252e9a3f50842d4",
+    "exchange": "090dfccbb1b4a367c51dc5624f76aa547eef7174b673cba8aadba138f02857f1",
+    "method": "Reuse five successful owner results; replace only Production with exact-commit native retry; require separate full exchange PASS and unchanged candidate before canonical adoption.",
+    "production_timeout_seconds": 600,
+    "prior_timeout_seconds": 300,
+    "production_gates": [
+      {
+        "command": "python3 tools/validate.py --check",
+        "status": "PASSED",
+        "exit_code": 0,
+        "duration_ms": 947,
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "python3 -m unittest discover -s tests -v",
+        "status": "PASSED",
+        "exit_code": 0,
+        "duration_ms": 520295,
+        "output_sha256": "14c4ae918b9ed04e133db6848a5c828b417957c29adee7a06cfcfc0920f87c19"
+      },
+      {
+        "command": "python3 tools/run_evaluation.py --format json",
+        "status": "PASSED",
+        "exit_code": 0,
+        "duration_ms": 103055,
+        "output_sha256": "ba2e1d4c78669d6f0947007000ce291e436daf42448c8805520587fe9c2b003b"
+      }
+    ]
+  },
+  "candidate_repositories": [
+    {
+      "repository": "self-model",
+      "source_commit": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "branch": "main"
+    },
+    {
+      "repository": "art-history",
+      "source_commit": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+      "branch": "main"
+    },
+    {
+      "repository": "marketing-trends",
+      "source_commit": "de1f77730d3856e7e81d591de48da5aed79a983a",
+      "branch": "main"
+    },
+    {
+      "repository": "agentic-art-research",
+      "source_commit": "71bfec77ea0d189186b8248565d340c124b81eab",
+      "branch": "main"
+    },
+    {
+      "repository": "agentic-art-production",
+      "source_commit": "9d125fb87be133f5e73e61e04e23c0a3bfafb462",
+      "branch": "main"
+    },
+    {
+      "repository": "viewer-response-notes",
+      "source_commit": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+      "branch": "feat/viewer-response-contracts"
+    }
+  ],
+  "actual_workspace_preflight": {
+    "status": "PASSED",
+    "repository_count": 6,
+    "pin_status": "MATCHED",
+    "mutation": "NONE"
+  },
+  "next_runtime_boundary": {
+    "status": "FAILED",
+    "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/203",
+    "code": "PROFILE_ROOT_REQUIRED",
+    "reason": "Parent run reaches ingest after real pin guard but cannot forward an external profile root."
+  },
+  "parent_verification": {
+    "full_suite": "588 tests; PASS; 2 environment-dependent skips",
+    "duration_seconds": 252.583,
+    "full_log_sha256": "48b32b9e78e7be28fb16368ed587771e6c0af89c8e0855361cdb8ae1c89722ae",
+    "validation": "PASS",
+    "canonical_offline_bootstrap": "PASS",
+    "research_dry_run": "PASS with explicit actual checkout; unchanged test body",
+    "fixture_kind": "SYNTHETIC",
+    "main_integration": "NOT_RUN",
+    "AAK-02": "NOT_RUN",
+    "actual_owner_boundary": {
+      "status": "PASS",
+      "production_code": "69567e88131e3f033d010791fb5849e1b2ebff8d",
+      "project_code": "41fcb1712700e531be392ff7cfff89d11f5aaf85",
+      "kind": "synthetic exact-byte/tamper boundary",
+      "log_sha256": "5dcd2386490e5039bc47d2f931684c6c3f3fa24357147acbf83ac6958857ad86"
+    }
+  },
+  "source_blobs": {
+    "tools/release_check.py": "1cfea23940d59ab0989f9015e190ba797edad15ba25181cc27e0bad063726dbe",
+    "tests/test_release_check.py": "23a38edbf70ece6608fa51dfa9a0e52c11e093cba10c27baa7107da30edd0d26",
+    "config/repositories.yaml": "94ff7657fb85becf70bbe60c5c41e71f4a3f16503133a674f7ccd1c5a53e5af1"
+  },
+  "acceptance": {
+    "ISSUE-189-AC1": "PASS",
+    "ISSUE-189-AC2": "PASS",
+    "ISSUE-189-AC3": "PASS"
+  },
+  "workspace_status": [
+    {
+      "id": "self-model",
+      "head": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "branch": "main",
+      "dirty": false,
+      "ahead": 0,
+      "behind": 0,
+      "state": "clean"
+    },
+    {
+      "id": "art-history",
+      "head": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+      "branch": "main",
+      "dirty": false,
+      "ahead": 0,
+      "behind": 0,
+      "state": "clean"
+    },
+    {
+      "id": "marketing-trends",
+      "head": "de1f77730d3856e7e81d591de48da5aed79a983a",
+      "branch": "main",
+      "dirty": false,
+      "ahead": 0,
+      "behind": 0,
+      "state": "clean"
+    },
+    {
+      "id": "agentic-art-research",
+      "head": "71bfec77ea0d189186b8248565d340c124b81eab",
+      "branch": "main",
+      "dirty": false,
+      "ahead": 0,
+      "behind": 0,
+      "state": "clean"
+    },
+    {
+      "id": "agentic-art-production",
+      "head": "9d125fb87be133f5e73e61e04e23c0a3bfafb462",
+      "branch": "main",
+      "dirty": false,
+      "ahead": 0,
+      "behind": 0,
+      "state": "clean"
+    },
+    {
+      "id": "viewer-response-notes",
+      "head": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+      "branch": "feat/viewer-response-contracts",
+      "dirty": false,
+      "ahead": 0,
+      "behind": 0,
+      "state": "clean"
+    }
+  ],
+  "audit_observation": {
+    "mode": "offline-fixture",
+    "status": "FINDINGS",
+    "codes": [
+      "PARENT_SSOT_UNPUSHED",
+      "freshness"
+    ],
+    "meaning": "Pre-publication state and deliberately stale synthetic signal; neither is converted to a normal production value."
+  }
+}

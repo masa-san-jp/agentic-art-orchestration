@@ -1,3 +1,22 @@
+# Interrupted AAK takeover — Issue189 qualified (2026-09-06)
+
+The authorized isolated continuation is `codex/aak-takeover-issue-189-20260906`,
+stacked draft PR204 on PR202. The original shared checkout and original branch
+lease remain unchanged. Runtime qualification and restart metadata are repaired:
+16 native child gates and synthetic exchange PASS; four stale pins adopted;
+actual six-repository guard PASSED. Parent 588 tests PASS (2 environment skips,
+covered separately with explicit owner checkouts). Canonical temp paths and
+binary-safe history scanning retain the existing safety gates.
+
+Evidence: `execution/issue-189-qualification.json`, `docs/issue-189-execution.md`.
+This is code qualification, not AAK-02 live acceptance. Real run now reaches
+Issue203: parent cannot forward the external Self Model profile root. Register
+and claim existing #203 after publishing this task and releasing its lease.
+AAK-05 still requires human-approved registration PR94 merge; AAK-07 has its
+native dependency gate; Project6 actual migration remains human-gated. No real
+profile, public artifact, child domain data, inferred preference or secret changed.
+Earlier entries below are historical evidence, not the current resume point.
+
 # AAK owner implementation checkpoint (2026-09-05)
 
 AAK-01/03/04の検証済みcandidateとdraft PR199/200/201は維持。AAK-06はart-history-notes PR387、AAK-08はagentic-art-research PR95、AAK-12はviewer-response-notes PR7へ提出済み。全体の統合・マージ・AAK-02実エージェント3モード各2runはNOT_RUN。制作可能な統合プランの実受入はまだない。
