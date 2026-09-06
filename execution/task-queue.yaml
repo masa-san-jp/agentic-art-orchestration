@@ -21,7 +21,7 @@ tasks:
     acceptance: Issue193 canonical-plan-projection/v2; qualified owner validator, exact body/attestation/assets, stable identity/revision, atomic replay/update/rollback and 100-record order, Project6 synthetic receiver compatibility.
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
     intake_evidence: Actual Issue body passes native intake after mechanical heading synchronization; all four SSOT criteria true. No acceptance or human-gate semantics changed.
-    completion: Issue193 synthetic acceptance1..7 PASS; qualified candidate 2b1787a3bfd995582075a4723747528781a18df2, exact tree 9b41d0797e957388a81331ef22d3d4dced7a6c24, draft PR202. Full587 PASS zero skips; validator/diff PASS. Actual Production CLI and Project receiver synthetic fixture PASS; 100-record transaction uses explicit boundary double. Real migration, main integration, AAK02 live NOT_RUN.
+    completion: "Code 4b41f6da2b73e23de1c0a439aebc77f8d78c8247 requalified with native Project parser; standalone588 PASS/1 independently covered Research skip, downstream595 PASS. PR205 serialization delta retained. Current Production63/Project13 candidates verified; evidence execution/issue-193-integration-verification.json. Main integration, live AAK02 and real migration NOT_RUN."
   - id: BOOTSTRAP-001
     milestone: M0
     title: Bootstrap orchestration repository
