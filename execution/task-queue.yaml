@@ -1,8 +1,24 @@
-version: 67
+version: 68
 updated_at: "2026-09-05T04:40:36+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
+  - id: ISSUE-189-PIN-QUALIFICATION
+    milestone: AAK
+    title: Qualify current Research main and restore real workspace pin compatibility
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/189
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: DRAFT_PR_READY
+    depends_on: []
+    acceptance: Research pin equals observed main; real Research checkout passes run pin guard; immutable owner gates and parent
+      full suite pass. Merge remains human-gated.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - .venv/bin/python tools/project_status.py --check-readme
+    - git diff --check
   - id: PUBLIC-PROJECTION-ATTESTATION-001
     milestone: M29
     title: Require owner attestation for exact canonical plan projection
@@ -1780,6 +1796,8 @@ tasks:
     - git diff --check
     milestone: AAK
     status: BLOCKED
+    blocker: "Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd.\
+  \ Registration PR only; functional acceptance NOT_RUN."
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-05
     target_repositories:
     - self-model-notes
@@ -1856,6 +1874,9 @@ tasks:
     - git diff --check
     milestone: AAK
     status: BLOCKED
+    blocker: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite\
+  \ repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label\
+  \ or gate bypass."
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-07
     target_repositories:
     - marketing-trends-notes

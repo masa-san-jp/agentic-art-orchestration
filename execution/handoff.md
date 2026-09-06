@@ -2243,3 +2243,10 @@ AAK-04の旧PR #201はまだ完全受入未達であり、AAK-05へ先行しな�
 ### Next exact action
 
 1. 人間がdraft PR #188のauthority境界、公開target transaction、local snapshot prerequisiteを確認し、merge可否を判断する。
+
+
+## 2026-09-06 — authorized isolated takeover / Issue #189
+
+The user requested takeover of the interrupted AAK implementation. The full remote history at b107b6db84c58e2fed4a952b7cf693211c7cf377 was cloned without changing the prior branch. Its held lease is retained in takeover.previous_lease, not treated as expired. A separate branch owns only this isolated continuation. No assertion is made about the old agent process being terminated.
+
+Git network/keyring access and canonical repository-local pip setup work. project_status rejected the saved state: unknown resume task, active task already DONE, and two BLOCKED tasks missing reasons. The existing #189 prerequisite is registered, current ownership is recorded, and native blocker reasons are restored. No acceptance is promoted. Next: qualify Research main with immutable owner gates. No child data, private content, external artifact, merge or publication changed. Explicit feedback: take over implementation; inferred feedback: none.
