@@ -290,32 +290,32 @@
       "task": "AAK-07",
       "issue": "https://github.com/masa-san-jp/marketing-trends-notes/issues/86",
       "owner": "marketing-trends-notes",
-      "queue_status": "BLOCKED",
-      "code_status": "PREREQUISITE_ONLY",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-07-AC1": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC2": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC3": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC4": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC5": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         }
       },
@@ -331,7 +331,7 @@
       },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
-      "blocker": "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass.",
+      "blocker": null,
       "dependencies": [
         "AAK-04"
       ],

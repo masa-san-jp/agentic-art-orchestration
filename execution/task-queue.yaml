@@ -1910,39 +1910,44 @@ tasks:
     - make agent-verify ISSUE_BODY=tests/fixtures/issues/valid.md NOW=2026-09-05
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-07
     target_repositories:
     - marketing-trends-notes
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
-    dependency_evidence: {}
+    dependency_evidence:
+      AAK-04:
+        candidate_commit: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
+        contract_version: instance-profile/v1
+        reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
+        status: PASS
     acceptance_evidence:
       AAK-07-AC1:
-        status: NOT_RUN
-        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        status: PASS
+        candidate_commit: 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
         reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
       AAK-07-AC2:
-        status: NOT_RUN
-        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        status: PASS
+        candidate_commit: 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
         reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
       AAK-07-AC3:
-        status: NOT_RUN
-        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        status: PASS
+        candidate_commit: 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
         reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
       AAK-07-AC4:
-        status: NOT_RUN
-        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        status: PASS
+        candidate_commit: 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
         reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
       AAK-07-AC5:
-        status: NOT_RUN
-        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        status: PASS
+        candidate_commit: 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
         reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
-    code_status: PREREQUISITE_ONLY
+    code_status: CODE_VERIFIED
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
-    completion: Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44
-      tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass.
+    completion: 5 synthetic AC PASS, 57 full tests PASS, actual Issue validator and native agent-verify/completion PASS; code
+      7be3d5ff495a91f3ce75159c96e9fc0ec383aa57 in PR87. Main and AAK02 live integration NOT_RUN.
   - id: AAK-08
     owner: agentic-art-research
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/93

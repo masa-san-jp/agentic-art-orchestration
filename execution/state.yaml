@@ -1,7 +1,7 @@
-version: 232
-updated_at: '2026-09-07T22:05:14.251691+00:00'
-active_task: AAK-07
-active_repository: marketing-trends-notes
+version: 233
+updated_at: '2026-09-07T22:13:58.922724+00:00'
+active_task: null
+active_repository: null
 lease:
   status: held
   owner: codex-aak07-resume-20260908
@@ -24,10 +24,10 @@ lease:
 checkpoint:
   task: AAK-07
   repository: marketing-trends-notes
-  status: IN_PROGRESS
-  result: Issue196 completion evidence and closure authorized and applied. Actual Issue86 contract/dependency validation PASS;
-    native claim persisted and idempotent retry PASS. Implementing owner intake, history, freshness and export.
-  evidence: execution/aak-07-resume.json
+  status: CODE_VERIFIED
+  result: 5 synthetic AC PASS, 57 full tests PASS, actual Issue validator and native agent-verify/completion PASS; code 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
+    in PR87. Main and AAK02 live integration NOT_RUN.
+  evidence: execution/aak-07-owner-verification.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -42,12 +42,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-05
+last_completed_task: AAK-07
 resume_from:
-  task: AAK-07
-  repository: marketing-trends-notes
-  action: Continue claimed AAK07 owner implementation and specified acceptance checks
-  command: .venv/bin/python -m unittest tests.test_research_knowledge_intake -v
+  task: AAK-09
+  repository: agentic-art-research
+  action: Register and claim AAK09 using qualified AAK05/06/07/08 candidate pins in isolated owner branch
+  command: git switch -c agent/aak-09-cumulative-specificity
 previous_checkpoint:
   task: AAK-05
   repository: self-model-notes

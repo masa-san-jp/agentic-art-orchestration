@@ -1,0 +1,73 @@
+{
+  "task": "AAK-07",
+  "issue": "https://github.com/masa-san-jp/marketing-trends-notes/issues/86",
+  "code_candidate": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
+  "contract": "market-observation/v1",
+  "specification_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
+  "acceptance": {
+    "AAK-07-AC1": "PASS",
+    "AAK-07-AC2": "PASS",
+    "AAK-07-AC3": "PASS",
+    "AAK-07-AC4": "PASS",
+    "AAK-07-AC5": "PASS"
+  },
+  "evidence_kind": "synthetic",
+  "full_tests": "57 PASS; 73.580s; no skips",
+  "focused_tests": "10 PASS",
+  "native_verify": "8 required checks PASS; nested regression 57 tests with 6 existing recursion skips",
+  "common_contracts": "actual parent artifact-record/v1 and knowledge-write-receipt/v1 PASS",
+  "receipts": [
+    {
+      "accepted_ids": [
+        "synthetic-observation"
+      ],
+      "collection": "synthetic-collection",
+      "contract_version": "knowledge-write-receipt/v1",
+      "index_commit": "bdc385dcabcdb087cadfc1251a882b25a6e5ca5b",
+      "index_hash": "ac6e2c949b40cebb4d68f415f4c70d1d52e5714f175b2eb313ff61375d830922",
+      "operation_id": "run-1",
+      "owner": "marketing-trends-notes",
+      "policy_version": "market-observation-policy/v1",
+      "reason": "VALIDATED",
+      "rejected_ids": [],
+      "run_id": "synthetic-run-1",
+      "schema_version": "market-observation/v1",
+      "status": "COMMITTED",
+      "target_commit": "bdc385dcabcdb087cadfc1251a882b25a6e5ca5b",
+      "target_parent": "9849bb27712c8bdfa1a38ca321bbe8df1e1aa23e"
+    },
+    {
+      "accepted_ids": [
+        "synthetic-observation"
+      ],
+      "collection": "synthetic-collection",
+      "contract_version": "knowledge-write-receipt/v1",
+      "index_commit": "bc146abbf7f40451fcc5b51a3ba5a8922910a68b",
+      "index_hash": "1cc56820eff1a9ebced0eeee8d3e456d3eabbf5efb10603fd1750fb205fce078",
+      "operation_id": "run-2",
+      "owner": "marketing-trends-notes",
+      "policy_version": "market-observation-policy/v1",
+      "reason": "VALIDATED",
+      "rejected_ids": [],
+      "run_id": "synthetic-run-2",
+      "schema_version": "market-observation/v1",
+      "status": "COMMITTED",
+      "target_commit": "bc146abbf7f40451fcc5b51a3ba5a8922910a68b",
+      "target_parent": "bdc385dcabcdb087cadfc1251a882b25a6e5ca5b"
+    }
+  ],
+  "fixture_hashes": {
+    "exchange.json": "cfc1342846b0756f05b95304c9b1af4d952e47240a96cecb3fb09facdf9a6df7",
+    "input-2.json": "f9ba378e1629942b8235a76ef4f0b847afbbfee26dd320d8296806afccf1b480",
+    "second-export.json": "23ec7f2ec8b5ef6eee85789953c85a1b0fab6aa9f944fb0ee69f85e12cba4a0c",
+    "receipts.json": "e2a562238dcd5e9d66434c10003bf0969e88d558a1d4b1e8137c807189358413",
+    "input-1.json": "6d5dc465ba432bcf07b7a04084df0a5fce1a548a5a8a77c179be405003cb8332"
+  },
+  "integration": "AAK-02 real-agent acceptance NOT_RUN",
+  "merge": "NOT_MERGED",
+  "source_access": "Synthetic fixtures only; no external source access asserted",
+  "initial_failure": "Concurrent documentation edit caused worktree-preservation failure during initial full suite; edits frozen and final full suite and native verify passed without weakening gate",
+  "pull_request": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87",
+  "head_commit": "25fa0cb7bd383ea9bb00af3d6c789e611e327805",
+  "evidence_locator": "docs/aak-07-evidence.json"
+}
