@@ -1,3 +1,7 @@
+# AAK-07 resumed — 2026-09-08
+
+Issue196の証跡同期とClosed処理は承認・完了済み。Marketing86は実契約と依存確認後に正規claim済み（actor masa-san-jp）。AAK07の取込・履歴・鮮度・exportを実装中。以下の承認待ち記録は過去の履歴で、現在のblockerではない。
+
 # Parent198–201 merged; AAK07 issue-state synchronization pending (2026-09-08)
 
 All four user-approved merges completed. Exact merge commits: execution/aak-07-resume.json.

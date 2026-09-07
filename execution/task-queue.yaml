@@ -1910,10 +1910,7 @@ tasks:
     - make agent-verify ISSUE_BODY=tests/fixtures/issues/valid.md NOW=2026-09-05
     - git diff --check
     milestone: AAK
-    status: BLOCKED
-    blocker: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite\
-  \ repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label\
-  \ or gate bypass."
+    status: IN_PROGRESS
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-07
     target_repositories:
     - marketing-trends-notes
@@ -1921,19 +1918,31 @@ tasks:
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
     acceptance_evidence:
-      AAK-07-AC1: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
-      AAK-07-AC2: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
-      AAK-07-AC3: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
-      AAK-07-AC4: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
-      AAK-07-AC5: {status: NOT_RUN, candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84, reference: "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"}
+      AAK-07-AC1:
+        status: NOT_RUN
+        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
+      AAK-07-AC2:
+        status: NOT_RUN
+        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
+      AAK-07-AC3:
+        status: NOT_RUN
+        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
+      AAK-07-AC4:
+        status: NOT_RUN
+        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
+      AAK-07-AC5:
+        status: NOT_RUN
+        candidate_commit: 26684f9f433f4616a31258cdeabc422151b5ae84
+        reference: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
     code_status: PREREQUISITE_ONLY
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/87
-    completion: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass."
-    blocker: "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite\
-  \ repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label\
-  \ or gate bypass."
-
+    completion: Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44
+      tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass.
   - id: AAK-08
     owner: agentic-art-research
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/93

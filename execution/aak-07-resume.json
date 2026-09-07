@@ -7,10 +7,25 @@
     "200": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6",
     "201": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
   },
-  "issue196": "OPEN; PR201 had Refs rather than Closes; main contains qualified candidate 3e56c96",
-  "blocked_action": "Update five verified acceptance checkboxes, append merge evidence and close only Issue196",
+  "issue196": "CLOSED; qualified candidate merged in main f3dbc46d49861dd3c77b8cb387e25ff4414e974c",
+  "blocked_action": null,
   "automatic_review": "Rejected: issue update/close was considered outside the four-PR merge authorization",
-  "approval": "Explicit Issue196 update/close approval requested; pending",
+  "approval": "Issue196 completion authorized and automatic review approved; applied successfully",
   "marketing": "PR87 isolated branch prepared; native preflight PASS; Issue86 pending and no claim/ready label was changed",
-  "next_operation": "After explicit Issue196 approval, apply prepared evidence and close it; validate actual Issue86 and upstream state before agent-ready/native claim"
+  "next_operation": "Finish native AAK07 intake/export checks and publish qualified candidate PR87",
+  "current_status": "IN_PROGRESS",
+  "resolved_dependency": {
+    "issue": 196,
+    "state": "CLOSED",
+    "merge_commit": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c",
+    "completion_authorization": "User reiterated completion instruction after concrete evidence/closure approval request; automatic review approved retry."
+  },
+  "claim": {
+    "issue": 86,
+    "status": "in-progress",
+    "actor": "masa-san-jp",
+    "native_retry": "exit 0; same actor already claimed",
+    "branch": "agent/aak-07-research-intake",
+    "base_commit": "26684f9f433f4616a31258cdeabc422151b5ae84"
+  }
 }

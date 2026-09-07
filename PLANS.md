@@ -1,8 +1,8 @@
-Integration preparation evidence: [execution/aak-integration-readiness.json](execution/aak-integration-readiness.json). PR201/202 repaired and propagated through204/206/207; duplicate alternatives closed with branch history retained. Native AAK05 registration approval remains pending.
+Integration preparation evidence: [execution/aak-integration-readiness.json](execution/aak-integration-readiness.json). PR201/202 repaired and propagated through204/206/207; duplicate alternatives closed with branch history retained. Native AAK05 registration PR94 is merged; feature PR95 is code verified.
 
 # Execution Plans
 
-AAK-05 is CODE_VERIFIED in [Self Model PR95](https://github.com/masa-san-jp/self-model-notes/pull/95): 5 synthetic acceptance conditions, 173 tests, native lifecycle and trusted-base policy pass. AAK-13 remains qualified in Project PR13. Parent PR198–201 have now merged with user approval. Next is AAK-07 after Issue196 completion synchronization (specific approval pending after auto-review rejection); AAK-02 live six-run integration remains NOT_RUN. Current evidence and resume point are in execution/state.yaml and execution/aak-05-owner-verification.json.
+AAK-05 is CODE_VERIFIED in [Self Model PR95](https://github.com/masa-san-jp/self-model-notes/pull/95): 5 synthetic acceptance conditions, 173 tests, native lifecycle and trusted-base policy pass. AAK-13 remains qualified in Project PR13. Parent PR198–201 have now merged with user approval. AAK-07 is now claimed and in progress after authorized Issue196 completion synchronization; AAK-02 live six-run integration remains NOT_RUN. Current evidence and resume point are in execution/state.yaml and execution/aak-05-owner-verification.json.
 
 [Issue203 profile-root forwarding](docs/issue-203-execution.md) is CODE_VERIFIED in draft PR206.
 
