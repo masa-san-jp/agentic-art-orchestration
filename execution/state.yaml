@@ -1,9 +1,9 @@
-version: 230
-updated_at: '2026-09-07T21:34:49.360638+00:00'
+version: 231
+updated_at: '2026-09-07T21:35:39.513529+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
+  status: available
   owner: codex-aak07-resume-20260908
   acquired_at: '2026-09-07T21:34:49.360638+00:00'
   expires_at: '2026-09-07T23:34:49.360638+00:00'
@@ -17,6 +17,10 @@ lease:
     - README.md
     - PLANS.md
     child_repositories: []
+  released_at: '2026-09-07T21:35:39.513529+00:00'
+  published_commit: 37b4547170e0f48bcc52bd94ddd029b055e46c62
+  publication_verification: Normal push and exact git ls-remote SHA verified before release. Four approved PR merges recorded;
+    Issue196 update/close remains approval-pending after auto-review rejection.
 checkpoint:
   task: AAK-07
   repository: marketing-trends-notes
