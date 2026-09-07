@@ -1,0 +1,16 @@
+{
+  "observed_at": "2026-09-07T21:34:49.360638+00:00",
+  "authorization": "User approved the assistant merging parent198 through201: お任せします",
+  "merged": {
+    "198": "a4540c2eec482c09ac3b893418470495296a0244",
+    "199": "cb020f54b9218f5103024a3b4ee8077ebff2c490",
+    "200": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6",
+    "201": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
+  },
+  "issue196": "OPEN; PR201 had Refs rather than Closes; main contains qualified candidate 3e56c96",
+  "blocked_action": "Update five verified acceptance checkboxes, append merge evidence and close only Issue196",
+  "automatic_review": "Rejected: issue update/close was considered outside the four-PR merge authorization",
+  "approval": "Explicit Issue196 update/close approval requested; pending",
+  "marketing": "PR87 isolated branch prepared; native preflight PASS; Issue86 pending and no claim/ready label was changed",
+  "next_operation": "After explicit Issue196 approval, apply prepared evidence and close it; validate actual Issue86 and upstream state before agent-ready/native claim"
+}

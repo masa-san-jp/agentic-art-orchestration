@@ -1,3 +1,14 @@
+# Parent198–201 merged; AAK07 issue-state synchronization pending (2026-09-08)
+
+All four user-approved merges completed. Exact merge commits: execution/aak-07-resume.json.
+PR201 had no Closes keyword, so Issue196 remains OPEN despite verified code on main.
+Automatic approval review rejected checking its five accepted AC items, adding
+merge evidence and closing it as outside the explicit four-merge authorization.
+A specific user approval request is pending; do not work around this rejection.
+The prepared issue body is in local aak04-issue196-completion.md. Marketing PR87
+is isolated and preflight passes; native Issue86 remains pending without writes.
+After approval, synchronize196 then validate real86/dependency before ready/claim.
+
 # AAK05 checkpoint published and parent lease released
 
 Parent checkpoint b59859cd1a3ff7953b67f932c3ade0add6bfee71 and owner PR95

@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-07T14:17:41.552248+00:00",
+  "observed_at": "2026-09-07T21:34:49.360638+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -35,10 +35,11 @@
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/199",
       "observed_pr": null,
       "integration_status": "NOT_RUN",
-      "merge_status": "NOT_MERGED",
+      "merge_status": "MERGED",
       "blocker": null,
       "dependencies": [],
-      "external_dependencies": []
+      "external_dependencies": [],
+      "merge_commit": "cb020f54b9218f5103024a3b4ee8077ebff2c490"
     },
     {
       "task": "AAK-02",
@@ -122,12 +123,13 @@
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/200",
       "observed_pr": null,
       "integration_status": "NOT_RUN",
-      "merge_status": "NOT_MERGED",
+      "merge_status": "MERGED",
       "blocker": null,
       "dependencies": [
         "AAK-01"
       ],
-      "external_dependencies": []
+      "external_dependencies": [],
+      "merge_commit": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6"
     },
     {
       "task": "AAK-04",
@@ -170,14 +172,15 @@
         "merged": false
       },
       "integration_status": "NOT_RUN",
-      "merge_status": "NOT_MERGED",
+      "merge_status": "MERGED",
       "blocker": null,
       "dependencies": [
         "AAK-03"
       ],
       "external_dependencies": [
         "https://github.com/masa-san-jp/agentic-art-orchestration/issues/190"
-      ]
+      ],
+      "merge_commit": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
     },
     {
       "task": "AAK-05",
@@ -744,9 +747,9 @@
     {
       "task": "AAK-07",
       "issue": "marketing-trends-notes#86",
-      "cause": "Native claim requires CLOSED upstream; parent196 remains OPEN",
-      "required_action": "Review and integrate the AAK04 candidate and record proper upstream acceptance/completion; do not manually bypass ready/closed gates",
-      "status": "AWAITING_NATIVE_DEPENDENCY"
+      "cause": "AAK04 merged; Issue196 still OPEN; auto-review rejected evidence/close synchronization as outside merge approval",
+      "required_action": "Approve specific Issue196 evidence update and close; assistant performs operations",
+      "status": "AWAITING_EXPLICIT_ISSUE_COMPLETION_APPROVAL"
     },
     {
       "task": "AAK-09/10/11",
@@ -766,5 +769,11 @@
     "local_validation": "Standalone588 and combined595 PASS; not remote CI PASS"
   },
   "integration_preparation": "execution/aak-integration-readiness.json",
-  "aak05_qualification": "execution/aak-05-owner-verification.json"
+  "aak05_qualification": "execution/aak-05-owner-verification.json",
+  "approved_parent_merges": {
+    "198": "a4540c2eec482c09ac3b893418470495296a0244",
+    "199": "cb020f54b9218f5103024a3b4ee8077ebff2c490",
+    "200": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6",
+    "201": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
+  }
 }

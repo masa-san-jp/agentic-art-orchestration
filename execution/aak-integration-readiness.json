@@ -5,19 +5,27 @@
   "parent_chain": [
     {
       "pr": 198,
-      "head": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d"
+      "head": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
+      "state": "MERGED",
+      "merge_commit": "a4540c2eec482c09ac3b893418470495296a0244"
     },
     {
       "pr": 199,
-      "head": "d34aa120392de2c92530193d30009364d5ca37d6"
+      "head": "d34aa120392de2c92530193d30009364d5ca37d6",
+      "state": "MERGED",
+      "merge_commit": "cb020f54b9218f5103024a3b4ee8077ebff2c490"
     },
     {
       "pr": 200,
-      "head": "6383bee0d50dcd8c4ccaccc488c1840bac093c61"
+      "head": "6383bee0d50dcd8c4ccaccc488c1840bac093c61",
+      "state": "MERGED",
+      "merge_commit": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6"
     },
     {
       "pr": 201,
-      "head": "3e56c96c562f91318c44f8d70ff9924c2533a71d"
+      "head": "3e56c96c562f91318c44f8d70ff9924c2533a71d",
+      "state": "MERGED",
+      "merge_commit": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
     },
     {
       "pr": 202,
@@ -184,5 +192,6 @@
     "remote_exact_sha": "CONFIRMED_BEFORE_LEASE_RELEASE",
     "normal_push": true
   },
-  "aak05_qualification": "execution/aak-05-owner-verification.json"
+  "aak05_qualification": "execution/aak-05-owner-verification.json",
+  "aak07_resume": "execution/aak-07-resume.json"
 }

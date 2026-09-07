@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-07T14:21:25.330040+00:00`.
+Source updated at: `2026-09-07T21:34:49.360638+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 4 | 0 | 0 | 1 | 149 | 154 |
 
-Current task: `null`; repository: `null`; checkpoint: `AAK-05`.
-Next action: Parent196 remains OPEN. Human approval is pending for the agent to merge verified parent198/199/200/201 in order; then validate real Marketing issue86 and native claim. Do not manually close or label upstream.
+Current task: `null`; repository: `null`; checkpoint: `AAK-07`.
+Next action: After explicit Issue196 approval, apply prepared evidence and close it; validate actual Issue86 and upstream state before agent-ready/native claim
 Ready: none.
 Next task: `null`.
 Blocked:

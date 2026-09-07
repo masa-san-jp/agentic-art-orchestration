@@ -1,14 +1,14 @@
-version: 229
-updated_at: '2026-09-07T14:21:25.330040+00:00'
+version: 230
+updated_at: '2026-09-07T21:34:49.360638+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: available
-  owner: codex-aak05-parent-20260907
-  acquired_at: '2026-09-07T14:13:17.762121+00:00'
-  expires_at: '2026-09-07T16:13:17.762121+00:00'
+  status: held
+  owner: codex-aak07-resume-20260908
+  acquired_at: '2026-09-07T21:34:49.360638+00:00'
+  expires_at: '2026-09-07T23:34:49.360638+00:00'
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-05:20260907
+  execution_id: AAK-07:20260908
   scope:
     repository: agentic-art-orchestration
     branch: codex/aak-13-owner-checkpoint-20260906
@@ -16,21 +16,14 @@ lease:
     - execution/**
     - README.md
     - PLANS.md
-    child_repositories:
-    - self-model-notes
-  released_at: '2026-09-07T14:21:25.330040+00:00'
-  published_commit: b59859cd1a3ff7953b67f932c3ade0add6bfee71
-  publication_verification: Exact remote SHA verified by git ls-remote after normal fast-forward push; Self Model PR95 head
-    c158f7e also remotely verified. Owner native lock remains pending feature merge.
+    child_repositories: []
 checkpoint:
-  task: AAK-05
-  repository: self-model-notes
-  status: CODE_VERIFIED
-  code_candidate: 765b1a3833602c8d9740dd584211e4ae88795f3d
-  pull_request: https://github.com/masa-san-jp/self-model-notes/pull/95
-  result: 5 synthetic AC PASS, 173 full tests PASS, native complete/trusted-base policy PASS. Shared artifact/receipt schemas
-    checked with actual parent. Main integration and AAK02 live acceptance NOT_RUN.
-  evidence: execution/aak-05-owner-verification.json
+  task: AAK-07
+  repository: marketing-trends-notes
+  status: BLOCKED
+  result: Approved parent198/199/200/201 merges completed. Issue196 remains open; auto-review rejected updating/closing it
+    outside explicit merge scope. Specific approval requested. Marketing preflight PASS; no gate bypass or claim.
+  evidence: execution/aak-07-resume.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -49,18 +42,18 @@ last_completed_task: AAK-05
 resume_from:
   task: AAK-07
   repository: marketing-trends-notes
-  action: Parent196 remains OPEN. Human approval is pending for the agent to merge verified parent198/199/200/201 in order;
-    then validate real Marketing issue86 and native claim. Do not manually close or label upstream.
+  action: After explicit Issue196 approval, apply prepared evidence and close it; validate actual Issue86 and upstream state
+    before agent-ready/native claim
   command: gh issue view 196 --repo masa-san-jp/agentic-art-orchestration --json state
 previous_checkpoint:
-  task: PUBLIC-PROJECTION-ATTESTATION-001
-  repository: agentic-art-orchestration
+  task: AAK-05
+  repository: self-model-notes
   status: CODE_VERIFIED
-  code_candidate: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
-  result: Standalone projection588 and combined595 PASS; native Project-reader defect fixed; PR201/202 state repaired; normal
-    merges propagated through204/206/207; duplicate PRs closed with branches retained. Final integration checkpoint published
-    and remotely verified before lease release. Approval request for Self Model registration PR94 remains pending.
-  evidence: execution/aak-integration-readiness.json
+  code_candidate: 765b1a3833602c8d9740dd584211e4ae88795f3d
+  pull_request: https://github.com/masa-san-jp/self-model-notes/pull/95
+  result: 5 synthetic AC PASS, 173 full tests PASS, native complete/trusted-base policy PASS. Shared artifact/receipt schemas
+    checked with actual parent. Main integration and AAK02 live acceptance NOT_RUN.
+  evidence: execution/aak-05-owner-verification.json
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection
