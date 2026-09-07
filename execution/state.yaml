@@ -1,14 +1,56 @@
-version: 212
-updated_at: '2026-09-05T04:40:36+00:00'
-active_task: AAK-04
-active_repository: agentic-art-orchestration
+version: 213
+updated_at: '2026-09-06T15:52:17.203991+00:00'
+active_task: null
+active_repository: null
 lease:
+  status: available
+  owner: null
+  published_takeover_release: b52067085fa2a49a6fe1f0c78648cbfb06a6b910
+  reason: Historical lease already superseded and released by published PR207 takeover; current integration claim remains
+    in its isolated parent branch.
+checkpoint:
+  task: AAK-04
+  repository: agentic-art-orchestration
+  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  expected_changes: AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination
+    adapter and CLI
+  result: AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.
+  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
+  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
+  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
+  focused_tests: 14 PASS
+  full_tests: 580 tests, 1 existing skip, PASS
+  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
+  delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
+  status: CODE_VERIFIED
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
+aak04_checkpoint:
+  task: AAK-04
+  repository: agentic-art-orchestration
+  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
+  expected_changes: AAK-04 identity/store/collection preflight, isolated code pin, per-run knowledge snapshot, destination
+    adapter and CLI
+  result: AAK-04 synthetic AC1..5 PASS; exact code tree saved to draft PR 201. AAK-05 owner inspection starts next.
+  code_candidate: 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685
+  code_tree: 41de5ae446b64d53847e39f4ce4959b6317ba321
+  local_verification_commit: 1852c5e4a52da42a26c808eec3337bfb2390ddb0
+  focused_tests: 14 PASS
+  full_tests: 580 tests, 1 existing skip, PASS
+  full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
+  delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
+last_completed_task: AAK-04
+resume_from:
+  task: AAK-05
+  action: Registration-only Self Model PR94 requires human-approved trusted-base integration before native claim. This PR201
+    snapshot no longer holds an obsolete AAK13 claim; later qualified owner results are in PR207.
+  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
+historical_takeover_lease:
   status: held
   owner: codex-aak-repair
   acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-04:20260905
+  execution_id: AAK-13:production-60:20260905
   scope:
     repository: agentic-art-orchestration
     paths:
@@ -21,25 +63,9 @@ lease:
     - tools/**
     - tests/**
     - execution/**
-    child_repositories: []
-checkpoint:
-  task: AAK-04
-  repository: agentic-art-orchestration
-  start_point: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
-  expected_changes: 'Qualify #190 dependency and repair instance-profile bootstrap before AAK-05'
-  result: 'AAK-03 synthetic-owner acceptance repaired and verified; AAK-04 full acceptance remains pending.'
-  code_candidate: e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb
-  code_tree: c81e80fa54950c2cddf493be2df068f6d0694d1e
-  local_verification_commit: 03e58a50436376977e6bb483d74eb68e3febafbc
-  focused_tests: 23 PASS
-  full_tests: 566 tests, 1 existing skip, PASS
-  full_log_sha256: b90c5ffec15e49dfcb4107bc37af5cc6a38e321d911999c7dccd6b610f8daef4
-  delivery: 'User-authorized non-force API branch update plus complete tree verification; no merge/publication'
-last_completed_task: AAK-03
-resume_from:
-  task: AAK-04
-  action: Verify #190 owner candidate registry/schema/validator, then repair identity, permissions, isolated code checkouts and resume.
-  command: .venv/bin/python -m unittest tests.test_instance_profiles -v
+    child_repositories:
+    - agentic-art-production
+    - agentic-art-project
 
 workspace_bootstrap_apply:
   status: complete

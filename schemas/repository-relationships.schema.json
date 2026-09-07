@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/repository-relationships.schema.json",
+  "title": "Agentic Art repository relationships v1",
+  "description": "Closed registry for canonical repositories that participate in orchestration without becoming manifest-pinned input repositories.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "control_plane", "relationships"],
+  "properties": {
+    "contract_version": {"const": "repository-relationships/v1"},
+    "control_plane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "full_name"],
+      "properties": {
+        "id": {"$ref": "#/$defs/repository_id"},
+        "full_name": {"$ref": "#/$defs/full_name"}
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/relationship"}
+    }
+  },
+  "$defs": {
+    "repository_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "full_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source_repository",
+        "repository",
+        "role",
+        "direction",
+        "destination_role",
+        "authority",
+        "contracts",
+        "projection_policy",
+        "lifecycle",
+        "input_isolation",
+        "forbidden_data"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/repository_id"},
+        "source_repository": {"$ref": "#/$defs/repository_id"},
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "full_name", "url", "default_branch"],
+          "properties": {
+            "id": {"$ref": "#/$defs/repository_id"},
+            "full_name": {"$ref": "#/$defs/full_name"},
+            "url": {
+              "type": "string",
+              "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\\.git$"
+            },
+            "default_branch": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._/-]+$"
+            }
+          }
+        },
+        "role": {"const": "public-output-catalog"},
+        "direction": {"const": "export-only"},
+        "destination_role": {"const": "public_projection_root"},
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "destination"],
+          "properties": {
+            "source": {"const": "orchestration-run-and-publication-boundary"},
+            "destination": {"const": "public-catalog-layout-and-records"}
+          }
+        },
+        "contracts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["layout", "result"],
+          "properties": {
+            "layout": {"const": "public-project-layout/v1"},
+            "result": {"const": "public-projection-result/v1"}
+          }
+        },
+        "projection_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["automatic_records", "human_approved_records", "git_remote_operations", "canonical_plan"],
+          "properties": {
+            "automatic_records": {
+              "type": "array",
+              "prefixItems": [{"const": "plan"}],
+              "items": false
+            },
+            "human_approved_records": {
+              "type": "array",
+              "minItems": 2,
+              "uniqueItems": true,
+              "items": {"enum": ["work", "manual-projection"]}
+            },
+            "git_remote_operations": {"const": "human-gated"},
+            "canonical_plan": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source_repository", "source_artifact", "target_artifact", "body_transform", "transfer", "receiver_validation", "unsafe_source", "summary_target"],
+              "properties": {
+                "source_repository": {"const": "agentic-art-production"},
+                "source_artifact": {"const": "03_plan/production-plan.md"},
+                "target_artifact": {"const": "plan.md"},
+                "body_transform": {"const": "none"},
+                "transfer": {"const": "byte-for-byte"},
+                "receiver_validation": {"const": "required"},
+                "unsafe_source": {"const": "blocked-policy"},
+                "summary_target": {"const": "README.md"}
+              }
+            }
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["current", "intended", "visibility_change"],
+          "properties": {
+            "current": {"const": "private-staging"},
+            "intended": {"const": "public-catalog"},
+            "visibility_change": {"const": "human-gated"}
+          }
+        },
+        "input_isolation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository_manifest", "qualified_snapshot", "knowledge_retrieval", "source_pin"],
+          "properties": {
+            "repository_manifest": {"const": "excluded"},
+            "qualified_snapshot": {"const": "excluded"},
+            "knowledge_retrieval": {"const": "excluded"},
+            "source_pin": {"const": "excluded"}
+          }
+        },
+        "forbidden_data": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "internal-log",
+              "raw-conversation",
+              "prompt",
+              "handoff",
+              "credential",
+              "private-data",
+              "restricted-data",
+              "local-path"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

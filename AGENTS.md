@@ -124,3 +124,9 @@ interaction実装後はnetworkless fake Drive、append-only artifact、feedback 
 - explicit/inferred feedbackの区別
 - 未解決
 - 次taskと最初の1操作
+# Instance identity boundary
+
+- `instance-profile/v1` のinstance/creator/modeと全8 owner mappingを検証し、個人identityをremote名、clone元、cwdから推測しない。
+- code checkoutとknowledge storeを別refとして扱い、dirty/divergedな既存worktreeをresetしない。
+- forkのupstream write、remote push、公開projectionは明示設定と既存human gateなしに行わない。
+- `public-seed-only` を個人固有性の合格証拠にしない。

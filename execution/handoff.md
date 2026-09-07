@@ -1,4 +1,52 @@
-# AAK-03修復済み、AAK-04再開（2026-09-05）
+# AAK04 candidate ready-state repair (2026-09-07)
+
+AAK04 code 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685 is unchanged.
+Explicit AAK05/07 blocker reasons restore status validation; the historical
+AAK13 claim is no longer active in this earlier PR snapshot. Its takeover was
+already published/released in PR207 at b52067085fa2a49a6fe1f0c78648cbfb06a6b910.
+AAK13 remains BACKLOG here; later owner results remain in downstream PR207.
+Next native task is AAK05 after registration-only PR94 human approval/merge.
+Verification after state repair: validator and diff check PASS; 33 instance/profile,
+status and documentation tests PASS (30.698s). Feature code is unchanged from the
+previous qualified AAK04 candidate (580 full tests PASS, one environment skip).
+No feature gate, schema, user data or default branch was changed.
+
+# AAK owner implementation checkpoint (2026-09-05)
+
+AAK-01/03/04の検証済みcandidateとdraft PR199/200/201は維持。AAK-06はart-history-notes PR387、AAK-08はagentic-art-research PR95、AAK-12はviewer-response-notes PR7へ提出済み。全体の統合・マージ・AAK-02実エージェント3モード各2runはNOT_RUN。制作可能な統合プランの実受入はまだない。
+
+| Task | Candidate / PR | Acceptance | Resume |
+| --- | --- | --- | --- |
+| AAK-05 | self-model-notes 3eae099917bffa7b816d5cac296b98f3c736a4bc / PR94 | NOT_RUN; registration only | trusted-base SM-036 registration TASK_NOT_FOUND; native registration review/merge is required before claim |
+| AAK-06 | art-history-notes f10a4f187966d1d2602a03410e8b3c9aa31fb22e / PR387 | AC1..5 synthetic PASS; 11 focused + native verification PASS | real-owner integration AAK-02 |
+| AAK-07 | marketing-trends-notes 26684f9f433f4616a31258cdeabc422151b5ae84 / PR87 | intake AC1..4 NOT_RUN; 44 prerequisite tests PASS | native claim requires closed dependency; parent196 is open. No agent-ready/gate override |
+| AAK-08 | agentic-art-research 13c819eb34e91198c3584b8cfd75c81494ab148c / PR95 | AC1..5 synthetic PASS; 7 focused, 298 full PASS | explicit second-decision common reuse-trace retained in owner Git; AAK-09 awaits 05/07 |
+| AAK-12 | viewer-response-notes ca2fbe2cb66ed771486e60159431a670721be3e7 / PR7 | AC1..5 synthetic PASS; 19 tests, validator, README export PASS | scoped aggregate reload/correction/empty evidence; real integration remains NOT_RUN |
+
+Active prerequisite: Production #60 on agent/production-60-public-attestation from 9d125fb87be133f5e73e61e04e23c0a3bfafb462. Project #6 PR9 candidate 55615f985d3376cafd5c9c08ecdc579be1c8641d still implements old projection/v1 with heading checks and lacks the current attestation/v1 contract. Finish Production owner verification first. Actual public-record migration is not performed under this instruction.
+
+Owner evidence and receipts stay in owner Git/stores. Parent records only refs and statuses. Synthetic research second knowledge commit 7188bc56daa900455d4cf757b91d901611703238 uses first 74e3518df8e2c69d281b80a5dc07b72f2194f3cd to change DC001. Viewer receipt df0c1156b097ac08440dfef9c7d930b2a34d47f3 preserves aggregate conditions. These are synthetic owner tests, not live-agent artistic acceptance. No merge, release, publication, real n=1 migration, private raw or inferred personal preference was performed.
+
+## Earlier AAK-04 qualification
+
+AAK-04 draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/201
+検証済みcode candidate: `83f7e9e8d1c6e25b39351aebb6eb15cb12da4685`。
+local commit `1852c5e4a52da42a26c808eec3337bfb2390ddb0` と同一tree
+`41de5ae446b64d53847e39f4ce4959b6317ba321` をblob単位と全treeで照合済み。
+focused 14 PASS、full 580 tests・既存1 skip・PASS、validator/diff PASS。
+full log SHA-256: `be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546`。
+合成本人A/B、全8store、ローカル実Gitと隔離code checkout、CLI再実行を検証。
+旧candidate a5717f0の不十分な受入を置き換える。実owner/実Masa/実agent統合はNOT_RUN。
+各ownerのdomain保存は後続taskで実装し、最終制作プラン・次回再利用はAAK-02で確認する。
+
+次は最小の着手可能task AAK-05 / self-model-notes#93。
+owner main観測: `a61460d4f9add36b256b2db9a860c53a98bd5fcd`。
+owner AGENTS/Issue93読取済み。Issue1/schema/native task registrationとclaimを確認し、
+専用branchで着手する。本人rawの実移設#82は別human gateのまま保持する。
+APIによる非force branch更新と全tree照合は今回のユーザー許可済み。
+以下の旧再開点は履歴であり、この節が現在位置である。
+
+# AAK-03修復済み、AAK-04再開（履歴）
 
 Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/200
 Candidate: `e11635ce0f0ad37ca1817d3cfa0f1901f1b8dbdb`。

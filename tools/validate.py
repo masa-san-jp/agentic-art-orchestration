@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 MANIFEST_PATH = ROOT / "config/repositories.yaml"
+REPOSITORY_RELATIONSHIPS_PATH = ROOT / "config/repository-relationships.yaml"
+REPOSITORY_RELATIONSHIPS_SCHEMA_PATH = ROOT / "schemas/repository-relationships.schema.json"
 MANIFEST_SCHEMA_PATH = ROOT / "schemas/repository-manifest.schema.json"
 SIGNAL_SCHEMA_PATH = ROOT / "schemas/normalized-research-signal.schema.json"
 SIGNAL_EXPORT_SCHEMA_PATH = ROOT / "schemas/research-signal-export.schema.json"
@@ -64,6 +66,8 @@ BATCH_REPORT_EVENT_SCHEMA_PATH = ROOT / "schemas/batch-report-event.schema.json"
 OUTPUT_DESTINATIONS_SCHEMA_PATH = ROOT / "schemas/output-destinations.schema.json"
 DESTINATION_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/destination-resolution.schema.json"
 OUTPUT_DESTINATIONS_EXAMPLE_PATH = ROOT / "config/output-destinations.example.yaml"
+INSTANCE_PROFILE_SCHEMA_PATH = ROOT / "schemas/instance-profile.schema.json"
+INSTANCE_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/instance-resolution.schema.json"
 WORKSPACE_BOOTSTRAP_SCHEMA_PATH = ROOT / "schemas/workspace-bootstrap.schema.json"
 PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH = ROOT / "schemas/public-project-layout.schema.json"
 PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH = ROOT / "schemas/public-projection-request.schema.json"
@@ -130,6 +134,8 @@ REQUIRED_FILES = [
     "schemas/batch-report-event.schema.json",
     "schemas/batch-run.schema.json",
     "schemas/output-destinations.schema.json",
+    "schemas/instance-profile.schema.json",
+    "schemas/instance-resolution.schema.json",
     "schemas/destination-resolution.schema.json",
     "schemas/workspace-bootstrap.schema.json",
     "schemas/public-project-layout.schema.json",
@@ -146,6 +152,7 @@ REQUIRED_FILES = [
     "tools/batch_status.py",
     "tools/batch_run.py",
     "tools/output_destinations.py",
+    "tools/instance_profiles.py",
     "tools/inspiration.py",
     "tools/research_request.py",
     "tools/research_start.py",
@@ -765,6 +772,138 @@ def validate_knowledge_cycle_contracts() -> list[str]:
     project = next((item for item in owners if item.get("id") == "agentic-art-project"), {})
     if project.get("write") is not False or project.get("catalog_reference") is not True:
         errors.append("knowledge owner registry: Project must remain write-disabled with separate catalog-reference capability")
+    return errors
+
+
+def validate_repository_relationships_contract(
+    registry: dict | None = None,
+    schema: dict | None = None,
+    manifest: dict | None = None,
+    source: str = "config/repository-relationships.yaml",
+) -> list[str]:
+    """Keep the canonical public repository explicit and outside input qualification."""
+    registry = registry if registry is not None else load_yaml(REPOSITORY_RELATIONSHIPS_PATH)
+    schema = schema if schema is not None else load_json(REPOSITORY_RELATIONSHIPS_SCHEMA_PATH)
+    manifest = manifest if manifest is not None else load_yaml(MANIFEST_PATH)
+    errors: list[str] = []
+
+    if not isinstance(schema, dict):
+        return [f"{source}: relationship schema must be an object; remediation: restore the closed v1 schema"]
+    if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        errors.append(f"{source}: relationship schema must be Draft 2020-12; remediation: restore the closed v1 schema")
+    if schema.get("additionalProperties") is not False:
+        errors.append(f"{source}: relationship schema must reject unknown fields; remediation: set additionalProperties to false")
+    version = schema.get("properties", {}).get("contract_version", {})
+    if not isinstance(version, dict) or version.get("const") != "repository-relationships/v1":
+        errors.append(f"{source}: relationship schema has the wrong version; remediation: preserve repository-relationships/v1")
+
+    if isinstance(registry, dict):
+        for schema_error in _schema_errors(registry, schema, source):
+            errors.append(f"{schema_error}; remediation: restore the canonical closed relationship registry")
+    else:
+        return errors + [f"{source}: registry must be an object; remediation: restore repository-relationships/v1"]
+
+    expected_control_plane = {
+        "id": "agentic-art-orchestration",
+        "full_name": "masa-san-jp/agentic-art-orchestration",
+    }
+    if registry.get("control_plane") != expected_control_plane:
+        errors.append(
+            f"{source}: control_plane must identify masa-san-jp/agentic-art-orchestration; "
+            "remediation: restore the parent control-plane identity"
+        )
+
+    relationships = registry.get("relationships")
+    canonical = []
+    if isinstance(relationships, list):
+        canonical = [item for item in relationships if isinstance(item, dict) and item.get("id") == "canonical-public-project"]
+    if len(canonical) != 1:
+        errors.append(
+            f"{source}: exactly one canonical-public-project relationship is required; "
+            "remediation: declare the canonical export target once"
+        )
+        return errors
+
+    relationship = canonical[0]
+    expected_repository = {
+        "id": "agentic-art-project",
+        "full_name": "masa-san-jp/agentic-art-project",
+        "url": "https://github.com/masa-san-jp/agentic-art-project.git",
+        "default_branch": "main",
+    }
+    if relationship.get("source_repository") != "agentic-art-orchestration":
+        errors.append(
+            f"{source}: canonical source_repository is incorrect; "
+            "remediation: use agentic-art-orchestration"
+        )
+    if relationship.get("repository") != expected_repository:
+        errors.append(
+            f"{source}: canonical public repository identity is incorrect; "
+            "remediation: restore masa-san-jp/agentic-art-project on main"
+        )
+    if relationship.get("projection_policy") != {
+        "automatic_records": ["plan"],
+        "human_approved_records": ["work", "manual-projection"],
+        "git_remote_operations": "human-gated",
+        "canonical_plan": {
+            "source_repository": "agentic-art-production",
+            "source_artifact": "03_plan/production-plan.md",
+            "target_artifact": "plan.md",
+            "body_transform": "none",
+            "transfer": "byte-for-byte",
+            "receiver_validation": "required",
+            "unsafe_source": "blocked-policy",
+            "summary_target": "README.md",
+        },
+    }:
+        errors.append(
+            f"{source}: projection policy weakens the plan/work/Git boundary; "
+            "remediation: keep plan-only automation and human-gated work/manual/remote operations"
+        )
+    if relationship.get("lifecycle") != {
+        "current": "private-staging",
+        "intended": "public-catalog",
+        "visibility_change": "human-gated",
+    }:
+        errors.append(
+            f"{source}: lifecycle must preserve private-staging until human-gated publication; "
+            "remediation: restore the pre-completion lifecycle"
+        )
+    if relationship.get("input_isolation") != {
+        "repository_manifest": "excluded",
+        "qualified_snapshot": "excluded",
+        "knowledge_retrieval": "excluded",
+        "source_pin": "excluded",
+    }:
+        errors.append(
+            f"{source}: public output repository entered an input plane; "
+            "remediation: exclude it from manifest, snapshot, retrieval, and source pins"
+        )
+    required_forbidden = {
+        "internal-log",
+        "raw-conversation",
+        "prompt",
+        "handoff",
+        "credential",
+        "private-data",
+        "restricted-data",
+        "local-path",
+    }
+    forbidden = relationship.get("forbidden_data")
+    if not isinstance(forbidden, list) or set(forbidden) != required_forbidden:
+        errors.append(
+            f"{source}: forbidden_data boundary is incomplete; "
+            "remediation: preserve all internal, private, credential, and local-path exclusions"
+        )
+
+    repositories = manifest.get("repositories", []) if isinstance(manifest, dict) else []
+    manifest_ids = {item.get("id") for item in repositories if isinstance(item, dict)}
+    manifest_names = {item.get("full_name") for item in repositories if isinstance(item, dict)}
+    if "agentic-art-project" in manifest_ids or "masa-san-jp/agentic-art-project" in manifest_names:
+        errors.append(
+            f"{source}: agentic-art-project must not be an input manifest repository; "
+            "remediation: keep it in the export-only relationship registry"
+        )
     return errors
 
 
@@ -4083,6 +4222,7 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
         state = load_yaml(ROOT / "execution/state.yaml")
         errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
         errors.extend(validate_knowledge_cycle_contracts())
+        errors.extend(validate_repository_relationships_contract())
         if state.get("last_completed_task") is None:
             errors.append("execution/state.yaml: last_completed_task is required")
     except ValueError as exc:

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/instance-profile.schema.json",
+  "title": "Agentic Art instance profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "instance_id", "creator_id", "mode", "delivery_mode", "personalization_mode", "repositories", "permissions"],
+  "properties": {
+    "contract_version": {"const": "instance-profile/v1"},
+    "instance_id": {"$ref": "#/$defs/id"},
+    "creator_id": {"$ref": "#/$defs/id"},
+    "mode": {"enum": ["resume", "new-clone", "fork"]},
+    "delivery_mode": {"enum": ["internal", "public-catalog"]},
+    "personalization_mode": {"enum": ["explicit-profile", "public-seed-only"]},
+    "origin_instance_id": {"$ref": "#/$defs/id"},
+    "fork_remote": {"type": "string", "pattern": "^https://github[.]com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+([.]git)?$"},
+    "repositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["self-model-notes", "art-history-notes", "marketing-trends-notes", "agentic-art-research", "agentic-art-production", "viewer-response-notes", "agentic-art-project", "agentic-art-orchestration"],
+      "properties": {
+        "self-model-notes": {"$ref": "#/$defs/repository"},
+        "art-history-notes": {"$ref": "#/$defs/repository"},
+        "marketing-trends-notes": {"$ref": "#/$defs/repository"},
+        "agentic-art-research": {"$ref": "#/$defs/repository"},
+        "agentic-art-production": {"$ref": "#/$defs/repository"},
+        "viewer-response-notes": {"$ref": "#/$defs/repository"},
+        "agentic-art-project": {"$ref": "#/$defs/repository"},
+        "agentic-art-orchestration": {"$ref": "#/$defs/repository"}
+      }
+    },
+    "permissions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["local_knowledge_write", "local_git_commit", "remote_write", "public_projection"],
+      "properties": {
+        "local_knowledge_write": {"type": "boolean"}, "local_git_commit": {"type": "boolean"},
+        "remote_write": {"type": "boolean"}, "public_projection": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "repository": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code_repository", "code_commit", "knowledge_store_id", "knowledge_ref", "source_collections"],
+      "properties": {
+        "code_repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
+        "code_commit": {"$ref": "#/$defs/sha"}, "knowledge_store_id": {"$ref": "#/$defs/id"},
+        "knowledge_ref": {"type": "string", "pattern": "^knowledge/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+        "source_collections": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    }
+  }
+}
