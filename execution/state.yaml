@@ -1,9 +1,9 @@
-version: 228
-updated_at: '2026-09-07T14:17:41.552248+00:00'
+version: 229
+updated_at: '2026-09-07T14:21:25.330040+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
+  status: available
   owner: codex-aak05-parent-20260907
   acquired_at: '2026-09-07T14:13:17.762121+00:00'
   expires_at: '2026-09-07T16:13:17.762121+00:00'
@@ -18,6 +18,10 @@ lease:
     - PLANS.md
     child_repositories:
     - self-model-notes
+  released_at: '2026-09-07T14:21:25.330040+00:00'
+  published_commit: b59859cd1a3ff7953b67f932c3ade0add6bfee71
+  publication_verification: Exact remote SHA verified by git ls-remote after normal fast-forward push; Self Model PR95 head
+    c158f7e also remotely verified. Owner native lock remains pending feature merge.
 checkpoint:
   task: AAK-05
   repository: self-model-notes

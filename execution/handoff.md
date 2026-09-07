@@ -1,3 +1,11 @@
+# AAK05 checkpoint published and parent lease released
+
+Parent checkpoint b59859cd1a3ff7953b67f932c3ade0add6bfee71 and owner PR95
+head c158f7edec3e79833f1dfe876bd62be9d2405317 were verified on remote.
+Parent validator and status/docs19 PASS. Parent lease is available; the Self
+Model native remote lock is retained until accepted feature merge and release.
+AAK07 is next, subject to the already-requested parent integration approval.
+
 # AAK05 qualified (2026-09-07)
 
 Owner PR95 code 765b1a3833602c8d9740dd584211e4ae88795f3d has 5 synthetic AC PASS, 12 focused/173 full
