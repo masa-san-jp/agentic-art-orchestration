@@ -1,5 +1,16 @@
 # Repository instructions
 
+## AAK：自律制作と累積知識の追加系列
+
+今回の追加要件は[仕様SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のprinciples/authority/compatibility、実装順・検証・再開は[実装計画SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)を読む。Issue参照版は `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`。既存機能全体の仕様を置き換えない。
+
+芸術の契機を「精霊や風が運び、人間が受け取って具象化する」と捉えるプロジェクトの精神を維持する。外部エージェントが既存の半決定論的ハーネスを動かす。LLM/daemonの内蔵を必須にしない。
+
+次taskは[queue](execution/task-queue.yaml)と[state](execution/state.yaml)、`.venv/bin/python tools/project_status.py --format json`から確認する。AAK-01 → AAK-03 → AAK-04以降は計画DAGの依存を満たす最小ID、AAK-02は最後。既存Issueの前提はownerのcandidate commit・contract version・受入証拠を確認し、CLOSEDだけで通過させない。
+
+機械契約 `config/aak-task-projection.json` とqueue参照は2つのMarkdownからの実行用投影であり、第三の仕様ではない。初回は `.venv/bin/python tools/issue_intake.py --register-aak` で冪等登録する。validatorは投影・参照hash・owner・DAGを照合する。子のschema/本文を親へ複製しない。merge/release/公開/実n=1移設のhuman gateを維持する。
+
+
 ## Mission
 
 **エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。**

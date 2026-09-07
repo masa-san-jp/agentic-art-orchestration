@@ -1,3 +1,12 @@
+# AAK-01 再開点（2026-09-05）
+
+Draft PR: https://github.com/masa-san-jp/agentic-art-orchestration/pull/199
+Candidate: `382742015557b93d4f4133fda4a48de51e324524`。詳細は[aak-01-evidence.md](aak-01-evidence.md)。
+
+AAK-01はCODE_VERIFIED / BLOCKED。551 tests（既存1 skip）PASS。通常Git認証とREADMEのpip bootstrap未完了のため、AGENTS Work protocol 8に従ってleaseを保持。API force=false更新の保存を通常Git pushの証拠に代用していない。次のagentは認証済みcheckoutでstate/leaseを観測し、canonical bootstrap・candidate検証・正規pushの後だけleaseを解放してAAK-03へ進む。AAK-02〜13の機能実装・実制作runは未実施。
+
+以下は既存の履歴であり、今回の再開点に優先しない。
+
 # Handoff
 
 ## HARNESS-BOOTSTRAP-001 completed

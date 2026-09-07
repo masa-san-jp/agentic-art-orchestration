@@ -1,5 +1,7 @@
 # Agentic Art Orchestration システム設計仕様書
 
+AAK-01〜13の追加範囲は[仕様SSOT](20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のauthority/compatibilityを上位要件とし、[実装計画SSOT](20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)のDAG・検証・再開へ接続する。本書の既存範囲・子ownerのschema・human gateは維持する。
+
 作成日: 2026-08-11  
 最終更新: 2026-08-12
 対象: masa-san-jp/agentic-art-orchestration  

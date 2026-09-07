@@ -1,30 +1,46 @@
-version: 206
-updated_at: "2026-09-04T23:21:43+09:00"
-active_task: null
-active_repository: null
+version: 208
+updated_at: '2026-09-05T04:40:36+00:00'
+active_task: AAK-01
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: null
-  acquired_at: "2026-09-04T21:07:32+09:00"
+  status: held
+  owner: codex-aak-01
+  acquired_at: '2026-09-05T04:27:59+00:00'
   expires_at: null
-  lane: PUBLIC_PROJECTION
-  execution_id: PUBLIC-PROJECTION-AUTO-PLAN-001:20260904-210732
-  released_at: "2026-09-04T23:21:43+09:00"
+  lane: AAK_IMPLEMENTATION
+  execution_id: AAK-01:20260905
   scope:
     repository: agentic-art-orchestration
-    paths: [tools/public_projection.py, tools/run.py, tools/batch_run.py, tools/output_destinations.py, tools/security.py, tools/validate.py, schemas/batch-run.schema.json, schemas/public-projection-result.schema.json, config/human-gates.yaml, config/output-destinations.example.yaml, README.md, docs/20260811-agentic-art-orchestration-repository-execution-plan.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, docs/operator-runbook.md, docs/agent-runtime-guide.md, tests/fixtures/public-projection/result.json, tests/test_public_projection.py, tests/test_run.py, tests/test_batch_run.py, tests/test_docs.py, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
+    paths:
+    - README.md
+    - AGENTS.md
+    - PLANS.md
+    - docs/**
+    - config/**
+    - schemas/**
+    - tools/issue_intake.py
+    - tools/validate.py
+    - tools/project_status.py
+    - tests/**
+    - execution/**
     child_repositories: []
 checkpoint:
-  task: PUBLIC-PROJECTION-AUTO-PLAN-001
+  task: AAK-01
   repository: agentic-art-orchestration
-  start_point: 5de256017df862001721729f8b2f390753c15b02
-  expected_changes: Project only a canonical PLAN_READY run or PASSED batch into the configured public project plans collection through a closed automatic plan mode; keep internal data separate, preserve work/manual and Git human gates, and prove atomic idempotent 100+ behavior.
-  result: completed; implementation commit c3f62e6; draft PR #188; automatic plan projection is implemented and locally verified.
+  start_point: 02153dde6304ec4457cf41113a73a83c7f67d361
+  expected_changes: 'Issue #194: SSOT-derived queue projection, entrypoint links,
+    integrity validation'
+  result: 'BLOCKED_NATIVE_BOOTSTRAP: local Git authentication unavailable; required
+    pip installation cancelled by network approval; native fast-forward push required
+    by AGENTS Work protocol 8 remains unverified. API candidate and draft PR #199
+    are saved; lease retained.'
 last_completed_task: PUBLIC-PROJECTION-AUTO-PLAN-001
 resume_from:
-  task: null
-  action: "Human-review draft PR #188; merge only after reviewing the automatic plan authority and the remaining local snapshot prerequisite."
-  command: gh pr view 188 --repo masa-san-jp/agentic-art-orchestration
+  task: AAK-01
+  action: In an authenticated Git checkout of codex/aak-01-ssot-entrypoint, finish
+    README bootstrap and verify candidate; publish execution state with native fast-forward
+    push before releasing the retained lease. See execution/aak-01-evidence.md.
+  command: .venv/bin/python -m unittest tests.test_knowledge_cycle_contracts -v
 
 workspace_bootstrap_apply:
   status: complete
@@ -1672,3 +1688,35 @@ research_evaluation_docs:
     inferred: none
   unresolved:
     - "GitHub Actions billing remains an external environment blocker; local gates are the observable evidence."
+
+aak_01_implementation:
+  task: AAK-01
+  run_id: AAK-01:20260905
+  branch: codex/aak-01-ssot-entrypoint
+  base_commit: b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d
+  candidate_commit: 382742015557b93d4f4133fda4a48de51e324524
+  candidate_tree: 8a98ed24c2b8c216ecad46a850f05d90dda92ab3
+  local_verification_commit: eef3fb9dc246ff30b90ea65955d45c1a946c3ad7
+  code_status: CODE_VERIFIED
+  task_status: BLOCKED
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/199
+  full_suite:
+    tests: 551
+    skipped: 1
+    status: PASS
+    seconds: 126.28
+    log_sha256: 2dffebd919e94f2186ca3535adbb8a69bafac60123bddbfcf85c86414f96b805
+  focused:
+    tests: 22
+    status: PASS
+  validator: PASS
+  diff_check: PASS
+  native_git_push: NOT_RUN
+  api_ref_update: PASS; force=false
+  canonical_pip_install: NOT_COMPLETED; network approval cancelled
+  integration: NOT_RUN
+  next_task: AAK-03 only after AAK-01 completion and lease release
+  blocker: 'BLOCKED_NATIVE_BOOTSTRAP: local Git authentication unavailable; required
+    pip installation cancelled by network approval; native fast-forward push required
+    by AGENTS Work protocol 8 remains unverified. API candidate and draft PR #199 are
+    saved; lease retained.'
