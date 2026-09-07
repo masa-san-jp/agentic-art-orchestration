@@ -1,3 +1,16 @@
+# AAK05 qualified (2026-09-07)
+
+Owner PR95 code 765b1a3833602c8d9740dd584211e4ae88795f3d has 5 synthetic AC PASS, 12 focused/173 full
+tests PASS, native complete and trusted-base policy PASS. Actual parent artifact/receipt
+schema validation PASS. Existing legacy/raw profile is untouched; real migration #82
+and AAK02 live six-run acceptance remain NOT_RUN. Owner remote lock remains until
+accepted feature merge and native release. Evidence: execution/aak-05-owner-verification.json.
+
+Next: AAK07. The approval request is for the agent to merge verified parent
+198 → 199 → 200 → 201, not for the user to operate GitHub. Until approval arrives,
+do not infer consent or manually mark parent196 closed/Marketing agent-ready.
+Older registration blockers below are historical.
+
 # AAK05 implementation resumed (2026-09-07)
 
 PR94 was merged by the user at 68267f39d79b75d8a5ac64d5892b258b2588dc08.

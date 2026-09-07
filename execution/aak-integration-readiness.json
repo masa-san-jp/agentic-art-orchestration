@@ -130,9 +130,9 @@
   "remaining": [
     {
       "task": "AAK-05",
-      "gate": "Self Model PR94 human registration merge",
-      "status": "EXPLICIT_APPROVAL_PENDING",
-      "detail": "Full161 PASS. Native claim requires main registration; trusted-base verify-pr TASK_NOT_FOUND is a manual registration review boundary, not a passing feature policy."
+      "gate": "Feature PR95 human merge after code qualification",
+      "status": "CODE_VERIFIED",
+      "detail": "Registration PR94 merged at68267f3 by user. Native claim/complete/trusted-base policy PASS; focused12/full173 and actual exchange schema PASS. See execution/aak-05-owner-verification.json."
     },
     {
       "task": "AAK-07",
@@ -183,5 +183,6 @@
     "pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207",
     "remote_exact_sha": "CONFIRMED_BEFORE_LEASE_RELEASE",
     "normal_push": true
-  }
+  },
+  "aak05_qualification": "execution/aak-05-owner-verification.json"
 }

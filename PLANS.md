@@ -2,7 +2,7 @@ Integration preparation evidence: [execution/aak-integration-readiness.json](exe
 
 # Execution Plans
 
-AAK-13 is CODE_VERIFIED in [Project PR13](https://github.com/masa-san-jp/agentic-art-project/pull/13). No eligible AAK implementation remains before the AAK-05 trusted-base registration and AAK-07 native dependency gates are resolved. Current resume point and evidence are in execution/state.yaml and execution/aak-takeover-report.json.
+AAK-05 is CODE_VERIFIED in [Self Model PR95](https://github.com/masa-san-jp/self-model-notes/pull/95): 5 synthetic acceptance conditions, 173 tests, native lifecycle and trusted-base policy pass. AAK-13 remains qualified in Project PR13. Next is AAK-07 after its native upstream completion gate; AAK-02 live six-run integration remains NOT_RUN. Current evidence and resume point are in execution/state.yaml and execution/aak-05-owner-verification.json.
 
 [Issue203 profile-root forwarding](docs/issue-203-execution.md) is CODE_VERIFIED in draft PR206.
 

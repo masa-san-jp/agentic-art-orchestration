@@ -1813,7 +1813,7 @@ tasks:
     - python3 tools/agent_runtime.py -m unittest discover -s tests -p 'test_*.py'
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-05
     target_repositories:
     - self-model-notes
@@ -1822,29 +1822,35 @@ tasks:
     dependency_evidence: {}
     acceptance_evidence:
       AAK-05-AC1:
-        status: NOT_RUN
-        candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc
-        reference: https://github.com/masa-san-jp/self-model-notes/pull/94
+        status: PASS
+        mode: synthetic
+        reference: https://github.com/masa-san-jp/self-model-notes/pull/95
+        candidate_commit: 765b1a3833602c8d9740dd584211e4ae88795f3d
       AAK-05-AC2:
-        status: NOT_RUN
-        candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc
-        reference: https://github.com/masa-san-jp/self-model-notes/pull/94
+        status: PASS
+        mode: synthetic
+        reference: https://github.com/masa-san-jp/self-model-notes/pull/95
+        candidate_commit: 765b1a3833602c8d9740dd584211e4ae88795f3d
       AAK-05-AC3:
-        status: NOT_RUN
-        candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc
-        reference: https://github.com/masa-san-jp/self-model-notes/pull/94
+        status: PASS
+        mode: synthetic
+        reference: https://github.com/masa-san-jp/self-model-notes/pull/95
+        candidate_commit: 765b1a3833602c8d9740dd584211e4ae88795f3d
       AAK-05-AC4:
-        status: NOT_RUN
-        candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc
-        reference: https://github.com/masa-san-jp/self-model-notes/pull/94
+        status: PASS
+        mode: synthetic
+        reference: https://github.com/masa-san-jp/self-model-notes/pull/95
+        candidate_commit: 765b1a3833602c8d9740dd584211e4ae88795f3d
       AAK-05-AC5:
-        status: NOT_RUN
-        candidate_commit: 3eae099917bffa7b816d5cac296b98f3c736a4bc
-        reference: https://github.com/masa-san-jp/self-model-notes/pull/94
+        status: PASS
+        mode: synthetic
+        reference: https://github.com/masa-san-jp/self-model-notes/pull/95
+        candidate_commit: 765b1a3833602c8d9740dd584211e4ae88795f3d
     code_status: CODE_VERIFIED
     integration_status: NOT_RUN
     pull_request: https://github.com/masa-san-jp/self-model-notes/pull/95
-    completion: Native claim succeeded; 5 AC synthetic PASS, completing verification and publication.
+    completion: AC1..5 synthetic PASS; focused12/full173, native lifecycle/trusted-base policy and actual parent exchange schema
+      PASS. Feature merge and AAK02 live integration remain separate.
   - id: AAK-06
     owner: art-history-notes
     issue_ssot: https://github.com/masa-san-jp/art-history-notes/issues/386

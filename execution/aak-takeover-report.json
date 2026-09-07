@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-06T16:00:41.909589+00:00",
+  "observed_at": "2026-09-07T14:17:41.552248+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -183,48 +183,50 @@
       "task": "AAK-05",
       "issue": "https://github.com/masa-san-jp/self-model-notes/issues/93",
       "owner": "self-model-notes",
-      "queue_status": "BLOCKED",
-      "code_status": "PREREQUISITE_ONLY",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-05-AC1": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC2": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC3": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC4": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC5": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         }
       },
-      "pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/94",
+      "pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/95",
       "observed_pr": {
-        "repo": "self-model-notes",
-        "number": 94,
-        "url": "https://github.com/masa-san-jp/self-model-notes/pull/94",
-        "state": "open",
+        "number": 95,
+        "state": "OPEN",
         "draft": true,
-        "merged": false,
-        "head": "9b5e8875fb983ddabdea81fd9992e9ca42b16150"
+        "head": "c158f7edec3e79833f1dfe876bd62be9d2405317"
       },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
-      "blocker": "Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd. Registration PR only; functional acceptance NOT_RUN.",
+      "blocker": null,
       "dependencies": [
         "AAK-04"
       ],
@@ -735,9 +737,9 @@
     {
       "task": "AAK-05",
       "issue": "self-model-notes#93",
-      "cause": "SM-036 registration absent from trusted base; PR94 is open/draft/mergeable at 9b5e8875fb983ddabdea81fd9992e9ca42b16150",
-      "required_action": "Human review and explicit merge authorization for registration-only PR94; then native claim",
-      "status": "AWAITING_HUMAN_GATE"
+      "cause": "Feature PR95 is locally qualified; no longer an implementation blocker",
+      "required_action": "Human-approved feature merge then native lock release; code candidate usable under owner dependency rules",
+      "status": "CODE_VERIFIED_AWAITING_MERGE"
     },
     {
       "task": "AAK-07",
@@ -748,7 +750,7 @@
     },
     {
       "task": "AAK-09/10/11",
-      "cause": "DAG depends on unfinished AAK05/07",
+      "cause": "AAK05 now qualified; AAK07 remains unimplemented, then AAK09/10/11 in DAG order",
       "status": "NOT_RUN"
     },
     {
@@ -763,5 +765,6 @@
     "reason": "Repaired PR202 job has zero steps due to account payment/spending-limit restrictions",
     "local_validation": "Standalone588 and combined595 PASS; not remote CI PASS"
   },
-  "integration_preparation": "execution/aak-integration-readiness.json"
+  "integration_preparation": "execution/aak-integration-readiness.json",
+  "aak05_qualification": "execution/aak-05-owner-verification.json"
 }
