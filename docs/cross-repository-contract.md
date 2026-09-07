@@ -127,3 +127,13 @@ signal の書き出しは、封筒だけを検証して**レコードの中身�
 | 受入試験の `result` | `NOT_RUN` / `PASS` / `FAIL` / `EXTERNAL_VALIDATION_REQUIRED` / `BLOCKED` | production `schemas/planning.schema.json` の `$defs.acceptanceTest.result` | research `config/vocabularies.yaml` の `test_results` |
 
 **この表に載る語を増やすときは、消費側の schema を先に変える。** 受理は後の工程が要求する語彙をその場で検査し、計画生成が拒む値を含む bundle を ACCEPTED にしない。
+# AAK累積知識境界
+
+AAK-03は子repoのdomain schemaを置換せず、`artifact-record/v1`、`knowledge-write-receipt/v1`、`reuse-trace/v1`だけを横断境界として所有する。正準registryは`config/knowledge-owners.yaml`、adapterは`tools/knowledge_cycle.py`である。
+
+- `prepare`は候補bundleを作るだけで正本を変更しない。
+- `validate`はowner、collection、lifecycle、path、hashをfail-closedで確認する。
+- `commit`は期待knowledge parentをCAS検査し、operation IDによる再送を二重適用しない。
+- `index`失敗はcommitを残して`INDEX_PENDING`とし、失敗ownerだけ再開する。
+- `retrieve`はactive、許可scopeの参照だけを返し、利用判断を`reuse-trace/v1`に記録する。
+- code commitとknowledge commitは別snapshotである。Projectのcatalog参照はread-onlyで、公開projectionとは別能力である。

@@ -1,0 +1,10 @@
+contract_version: knowledge-owner-registry/v1
+owners:
+  - {id: self-model-notes, read: true, write: true, catalog_reference: false}
+  - {id: art-history-notes, read: true, write: true, catalog_reference: false}
+  - {id: marketing-trends-notes, read: true, write: true, catalog_reference: false}
+  - {id: agentic-art-research, read: true, write: true, catalog_reference: false}
+  - {id: agentic-art-production, read: true, write: true, catalog_reference: false}
+  - {id: viewer-response-notes, read: true, write: true, catalog_reference: false}
+  - {id: agentic-art-project, read: true, write: false, catalog_reference: true}
+  - {id: agentic-art-orchestration, read: true, write: true, catalog_reference: false}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "operational-knowledge/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "failure_kind", "observation", "recovery_proposal", "verification_refs", "changes_authority"],
+  "properties": {
+    "contract_version": {"const": "operational-knowledge/v1"},
+    "failure_kind": {"enum": ["validation", "dependency", "interruption", "persistence", "environment"]},
+    "observation": {"type": "string", "minLength": 1},
+    "recovery_proposal": {"type": "string", "minLength": 1},
+    "verification_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "changes_authority": {"const": false}
+  }
+}
