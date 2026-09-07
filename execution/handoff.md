@@ -1,3 +1,10 @@
+# AAK05 implementation resumed (2026-09-07)
+
+PR94 was merged by the user at 68267f39d79b75d8a5ac64d5892b258b2588dc08.
+SM-036 native remote claim succeeded. Owner PR95 implements five synthetic AC;
+173 full tests PASS. Finish native completion/policy and publish owner evidence.
+The previous registration blocker below is historical, not current.
+
 # Integration preparation completed (2026-09-07)
 
 Published checkpoint9c87e23 was verified on remote before lease release.
