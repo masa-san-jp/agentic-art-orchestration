@@ -2010,7 +2010,7 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: IN_PROGRESS
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-09
     target_repositories:
     - agentic-art-research

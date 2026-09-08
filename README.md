@@ -79,16 +79,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-07T22:13:58.922724+00:00`.
+Source updated at: `2026-09-07T22:15:35.211333+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 4 | 0 | 0 | 0 | 150 | 154 |
+| 3 | 0 | 1 | 0 | 150 | 154 |
 
-Current task: `null`; repository: `null`; checkpoint: `AAK-07`.
+Current task: `AAK-09`; repository: `agentic-art-research`; checkpoint: `AAK-09`.
 Next action: Register and claim AAK09 using qualified AAK05/06/07/08 candidate pins in isolated owner branch
 Ready: none.
-Next task: `AAK-09`.
+Next task: `null`.
 Blocked:
 - none
 

@@ -1,15 +1,15 @@
-version: 233
-updated_at: '2026-09-07T22:13:58.922724+00:00'
-active_task: null
-active_repository: null
+version: 234
+updated_at: '2026-09-07T22:15:35.211333+00:00'
+active_task: AAK-09
+active_repository: agentic-art-research
 lease:
   status: held
-  owner: codex-aak07-resume-20260908
-  acquired_at: '2026-09-07T22:05:14.251691+00:00'
-  expires_at: '2026-09-08T00:05:14.251691+00:00'
+  owner: codex-aak09-resume-20260908
+  acquired_at: '2026-09-07T22:15:35.211333+00:00'
+  expires_at: '2026-09-08T00:15:35.211333+00:00'
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-07:20260908
-  scope:
+  execution_id: AAK-09:20260908
+  scope: &id001
     repository: agentic-art-orchestration
     branch: codex/aak-13-owner-checkpoint-20260906
     paths:
@@ -17,17 +17,15 @@ lease:
     - README.md
     - PLANS.md
     child_repositories:
-    - marketing-trends-notes
-  published_commit: 37b4547170e0f48bcc52bd94ddd029b055e46c62
-  publication_verification: Normal push and exact git ls-remote SHA verified before release. Four approved PR merges recorded;
-    Issue196 update/close remains approval-pending after auto-review rejection.
+    - agentic-art-research
+  published_commit: 885b57d95dde493568e6f662fbdcf18bf8dcce4f
+  publication_verification: Previous AAK07 lease released after exact remote SHA verification; AAK09 claimed.
 checkpoint:
-  task: AAK-07
-  repository: marketing-trends-notes
-  status: CODE_VERIFIED
-  result: 5 synthetic AC PASS, 57 full tests PASS, actual Issue validator and native agent-verify/completion PASS; code 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
-    in PR87. Main and AAK02 live integration NOT_RUN.
-  evidence: execution/aak-07-owner-verification.json
+  task: AAK-09
+  repository: agentic-art-research
+  status: IN_PROGRESS
+  result: Qualified AAK05/06/07/08 dependencies fixed; registered native maintenance task on isolated agent/aak-09-cumulative-specificity,
+    base c3e25347b3f36d96e903690ff0274838333f5132.
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -49,14 +47,23 @@ resume_from:
   action: Register and claim AAK09 using qualified AAK05/06/07/08 candidate pins in isolated owner branch
   command: git switch -c agent/aak-09-cumulative-specificity
 previous_checkpoint:
-  task: AAK-05
-  repository: self-model-notes
+  task: AAK-07
+  repository: marketing-trends-notes
   status: CODE_VERIFIED
-  code_candidate: 765b1a3833602c8d9740dd584211e4ae88795f3d
-  pull_request: https://github.com/masa-san-jp/self-model-notes/pull/95
-  result: 5 synthetic AC PASS, 173 full tests PASS, native complete/trusted-base policy PASS. Shared artifact/receipt schemas
-    checked with actual parent. Main integration and AAK02 live acceptance NOT_RUN.
-  evidence: execution/aak-05-owner-verification.json
+  result: 5 synthetic AC PASS, 57 full tests PASS, actual Issue validator and native agent-verify/completion PASS; code 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
+    in PR87. Main and AAK02 live integration NOT_RUN.
+  evidence: execution/aak-07-owner-verification.json
+  released_lease:
+    status: released
+    owner: codex-aak07-resume-20260908
+    acquired_at: '2026-09-07T22:05:14.251691+00:00'
+    expires_at: '2026-09-08T00:05:14.251691+00:00'
+    lane: AAK_IMPLEMENTATION
+    execution_id: AAK-07:20260908
+    scope: *id001
+    published_commit: 885b57d95dde493568e6f662fbdcf18bf8dcce4f
+    publication_verification: Normal push and exact git ls-remote SHA verified before release.
+    released_at: '2026-09-07T22:15:35.211333+00:00'
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection
