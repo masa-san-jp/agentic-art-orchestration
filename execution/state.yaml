@@ -1,14 +1,14 @@
-version: 235
-updated_at: '2026-09-08T00:15:28.847513+00:00'
-active_task: null
-active_repository: null
+version: 236
+updated_at: '2026-09-08T00:18:10.731273+00:00'
+active_task: AAK-10
+active_repository: agentic-art-production
 lease:
   status: held
-  owner: codex-aak09-resume-20260908
-  acquired_at: '2026-09-07T22:15:35.211333+00:00'
-  expires_at: '2026-09-08T00:15:35.211333+00:00'
+  owner: codex-aak10-resume-20260908
+  acquired_at: '2026-09-08T00:18:10.731273+00:00'
+  expires_at: '2026-09-08T02:18:10.731273+00:00'
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-09:20260908
+  execution_id: AAK-10:20260908
   scope: &id001
     repository: agentic-art-orchestration
     branch: codex/aak-13-owner-checkpoint-20260906
@@ -17,16 +17,15 @@ lease:
     - README.md
     - PLANS.md
     child_repositories:
-    - agentic-art-research
-  published_commit: 885b57d95dde493568e6f662fbdcf18bf8dcce4f
-  publication_verification: Previous AAK07 lease released after exact remote SHA verification; AAK09 claimed.
+    - agentic-art-production
+  published_commit: f208c8a7f15a3e66d41554371561005d2e12a7cf
+  publication_verification: AAK09 published and released; native AAK10 maintenance task registered and claimed.
 checkpoint:
-  task: AAK-09
-  repository: agentic-art-research
-  status: CODE_VERIFIED
-  result: 5 synthetic AC PASS, 9 focused / 307 full tests and native gates PASS. Native Marketing07 artifact and Research
-    memory continuation verified. Main and AAK02 live NOT_RUN.
-  evidence: execution/aak-09-owner-verification.json
+  task: AAK-10
+  repository: agentic-art-production
+  status: IN_PROGRESS
+  result: Registered and claimed AAK10 on isolated agent/aak-10-plan-actionability from Production60 PR63 69567e88131e3f033d010791fb5849e1b2ebff8d.
+    AAK09 qualified code 046c2380310d208ca52cbca461c95c798328b599.
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -48,23 +47,23 @@ resume_from:
   action: Register and claim AAK10 on qualified Production60 candidate; reuse attestation and add media-specific actionability
   command: git switch -c agent/aak-10-plan-actionability
 previous_checkpoint:
-  task: AAK-07
-  repository: marketing-trends-notes
+  task: AAK-09
+  repository: agentic-art-research
   status: CODE_VERIFIED
-  result: 5 synthetic AC PASS, 57 full tests PASS, actual Issue validator and native agent-verify/completion PASS; code 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
-    in PR87. Main and AAK02 live integration NOT_RUN.
-  evidence: execution/aak-07-owner-verification.json
+  result: 5 synthetic AC PASS, 9 focused / 307 full tests and native gates PASS. Native Marketing07 artifact and Research
+    memory continuation verified. Main and AAK02 live NOT_RUN.
+  evidence: execution/aak-09-owner-verification.json
   released_lease:
     status: released
-    owner: codex-aak07-resume-20260908
-    acquired_at: '2026-09-07T22:05:14.251691+00:00'
-    expires_at: '2026-09-08T00:05:14.251691+00:00'
+    owner: codex-aak09-resume-20260908
+    acquired_at: '2026-09-07T22:15:35.211333+00:00'
+    expires_at: '2026-09-08T00:15:35.211333+00:00'
     lane: AAK_IMPLEMENTATION
-    execution_id: AAK-07:20260908
+    execution_id: AAK-09:20260908
     scope: *id001
-    published_commit: 885b57d95dde493568e6f662fbdcf18bf8dcce4f
-    publication_verification: Normal push and exact git ls-remote SHA verified before release.
-    released_at: '2026-09-07T22:15:35.211333+00:00'
+    published_commit: f208c8a7f15a3e66d41554371561005d2e12a7cf
+    publication_verification: Normal push and exact remote SHA confirmed before AAK09 release.
+    released_at: '2026-09-08T00:18:10.731273+00:00'
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection
