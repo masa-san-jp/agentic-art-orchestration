@@ -1,3 +1,11 @@
+# AAK02 code qualified; actual-agent acceptance active — 2026-09-08
+
+Code f940b561dec92cb4f4757010bfce5e30fe34f5bd: 602 tests PASS (one Research environment skip independently passed). Draft PR208. Three actual agents independently execute synthetic continuation / new clone / local fork pairs under /private/tmp/aak02-live-20260908. Their clean runtime is /private/tmp/aak02-qualified-runtime-20260908, frozen at f940. Do not replace that runtime while runs are active. Read execution/aak-02-owner-verification.json; inspect native plan/receipt/adoption evidence before qualifying AC1/2. No live completion or main merge claimed. Lease remains held for this active task.
+
+# AAK02 claimed — 2026-09-08
+
+All owner candidates qualified; final integration active on codex/aak-02-live-knowledge-cycle-20260908. Read docs/aak-02-execution.md and execution/state.yaml. Live acceptance remains NOT_RUN.
+
 # AAK11 qualified — 2026-09-08
 
 Production PR65 code `2e2d702d671fcbd822b9c0b6188b3bad9f099771`: five synthetic AC, 8 focused / 120 full tests, validator and six native evaluation checks PASS. Native knowledge reuse and retraction affected-target proof passed. AAK02 live / main integration remain NOT_RUN. Publish this checkpoint before lease release, then claim AAK02 in its prepared isolated clone.
@@ -2438,3 +2446,18 @@ AAK-04の旧PR #201はまだ完全受入未達であり、AAK-05へ先行しな�
 The user requested takeover of the interrupted AAK implementation. The full remote history at b107b6db84c58e2fed4a952b7cf693211c7cf377 was cloned without changing the prior branch. Its held lease is retained in takeover.previous_lease, not treated as expired. A separate branch owns only this isolated continuation. No assertion is made about the old agent process being terminated.
 
 Git network/keyring access and canonical repository-local pip setup work. project_status rejected the saved state: unknown resume task, active task already DONE, and two BLOCKED tasks missing reasons. The existing #189 prerequisite is registered, current ownership is recorded, and native blocker reasons are restored. No acceptance is promoted. Next: qualify Research main with immutable owner gates. No child data, private content, external artifact, merge or publication changed. Explicit feedback: take over implementation; inferred feedback: none.
+
+
+## 2026-09-08 — AAK-02 native acceptance complete
+
+- Task: `AAK-02`; parent candidate `f940b561dec92cb4f4757010bfce5e30fe34f5bd`; draft PR [#208](https://github.com/masa-san-jp/agentic-art-orchestration/pull/208).
+- The actual-agent acceptance matrix completed six native runs: `resume-final-one/two`, `new-clone-final-one/two`, and `fork-final-one/two`. All six independently revalidated as `COMPLETED`, `PLAN_READY`, and `COMMITTED`; each has a content-bearing Production plan, Research/Production native receipt pair, and `projection_status=SKIPPED`.
+- AC1 and AC2 are PASS. The second run in each mode re-read a persisted first-run Research/Production record and recorded an adopted decision or changed production step. The evidence records the query snapshot, knowledge commit, receipt target/parent, plan artifact hashes, creator/origin attribution and changed method.
+- AC3/AC4 regression checks remain PASS from the f940 suite (602 full, 13 focused); AC5 status separation is PASS; AC6 is PASS because the runs are actual LLM-agent execution under an explicitly synthetic profile. The real Masa profile was not used.
+- Repaired owner pins used by the accepted runs: Research `2304261b0c009b9f8690f2d5afbd76a53304c8a9` (PR97, 313 full PASS) and Production `cd1af443821e826e7f41b6effd608767dea4366e` (PR66, 121 full PASS). Earlier failed/incomplete attempts remain preserved and are excluded from the accepted matrix.
+- Evidence: [`execution/aak-02-live-acceptance.json`](execution/aak-02-live-acceptance.json); per-mode evidence and generated plans remain in `/private/tmp/aak02-live-20260908`. Real physical execution, viewer observations, Drive artifact creation, publication, remote fork writes and merge were not performed.
+- Parent queue marks AAK-02 `DONE` for code/native acceptance. `integration_status` is `NATIVE_ACCEPTANCE_COMPLETE`; `main_integration` remains `NOT_MERGED`.
+
+### Next exact action
+
+1. Review the draft PRs and merge only through the existing human gate. Do not infer real-person acceptance, physical completion or public projection from this evidence.

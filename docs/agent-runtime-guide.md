@@ -336,7 +336,7 @@ workerはSDKではなく、絶対パスの実行ファイルをargvで次の形�
 ~~~
 
 workerのrequestは`agent-action/v1`、responseは`agent-result/v1`のclosed metadata-only JSONである。
-responseのCOMPLETEDと全check PASSだけが`PLAN_READY`へ進み、同じrun-idの再実行はaccepted resultを
+responseのCOMPLETEDと全check PASSは`RESEARCH_COMPLETE`を記録する。next_actionから正規handoff、Productionの内容検証、knowledge保存へ続ける。worker自己申告では`PLAN_READY`にしない。同じrun-idの再実行はaccepted resultを
 再利用する。human gate対象の要求は実行せず`BLOCKED_HUMAN`、外部境界違反は`BLOCKED_EXTERNAL`、
 同一stage・error fingerprintの失敗は3回まで再試行して4回目を`FAILED_RETRY_EXHAUSTED`とする。
 会話全文、credential、PRIVATE_RAW、RESTRICTED、worker stdout/stderrはstateへ保存しない。
@@ -357,3 +357,7 @@ python3 tools/batch_status.py --report <state-root>/<run-id>/batch-report.jsonl
 batch driverが作成するJSONLは`batch-report-event/v1`のmetadata-only closed eventをappendする。
 集計器は起動、完了、失敗、再試行、所要時間、token数をまとめ、未提供の時間・tokenは`未計測`として
 表示する。reportの読み取りも書き込みもGit外の入力を変更しない。
+
+## 知識を次回へ残す統合実行
+
+`tools/run.py --cycle-context <external-context.json> --state-root <external-state-root>` は、AAK04 profileの隔離code/knowledge pin、全owner検索、Production正本検証、owner別保存・索引・再開を接続する。返された`next_action`をエージェントが処理し、`resume_command`で継続する。構成と状態の意味は [knowledge-cycle-runtime.md](knowledge-cycle-runtime.md) を読む。実エージェント受入とfake回帰を区別する。

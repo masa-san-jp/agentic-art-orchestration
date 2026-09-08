@@ -46,6 +46,8 @@ stateの `<run-id>/public-projection-result.json` に保存します。metadata/
 
 Self Model × Art History × Marketing Trends → Agentic Art Research → Agentic Art Production を、独立したリポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
 
+自律制作と次回への知識再利用は [knowledge cycle runtime](docs/knowledge-cycle-runtime.md) の `tools/run.py --cycle-context` 入口を使う。外部エージェントが `next_action` と正確な `resume_command` を処理し、plan・knowledge・projectionを独立に検証する。
+
 ## 利用者向けの最短ルート
 
 このrepoは各ドメインのデータを一つへコピーする場所ではなく、会話から安全に調査・制作計画へ進むためのcontrol planeです。目的に応じて次の入口を使います。
@@ -79,14 +81,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-08T01:17:37.682382+00:00`.
+Source updated at: `2026-09-08T03:28:01.234396+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 0 | 0 | 0 | 153 | 154 |
+| 0 | 0 | 0 | 0 | 154 | 154 |
 
-Current task: `null`; repository: `agentic-art-production`; checkpoint: `AAK-11`.
-Next action: Claim final native-owner integration and live six-run acceptance
+Current task: `null`; repository: `null`; checkpoint: `AAK-02`.
+Next action: Review native acceptance evidence, then review/merge draft PRs under existing human gates; do not perform merge automatically.
 Ready: none.
 Next task: `null`.
 Blocked:

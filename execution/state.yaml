@@ -1,33 +1,37 @@
-version: 240
-updated_at: '2026-09-08T01:17:37.682382+00:00'
+version: 245
+updated_at: '2026-09-08T03:28:01.234396+00:00'
 active_task: null
-active_repository: agentic-art-production
+active_repository: null
 lease:
-  status: released
-  owner: codex-aak11-resume-20260908
-  acquired_at: '2026-09-08T00:47:29.786047+00:00'
-  expires_at: '2026-09-08T02:47:29.786047+00:00'
+  status: available
+  owner: unassigned
+  acquired_at: '2026-09-08T01:18:21.132169+00:00'
+  expires_at: null
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-11:20260908
-  scope: &id001
+  execution_id: AAK-02:20260908
+  scope:
     repository: agentic-art-orchestration
-    branch: codex/aak-13-owner-checkpoint-20260906
+    branch: codex/aak-02-live-knowledge-cycle-20260908
     paths:
+    - tools/**
+    - schemas/**
+    - config/**
+    - tests/**
+    - docs/**
     - execution/**
     - README.md
+    - AGENTS.md
     - PLANS.md
-    child_repositories:
-    - agentic-art-production
-  published_commit: d185ad34c1ee53c9fb4f910a966a1dd065530093
-  publication_verification: Exact remote head verified after AAK11 qualification checkpoint
-  released_at: '2026-09-08T01:17:37.682382+00:00'
+    child_repositories: []
 checkpoint:
-  task: AAK-11
-  repository: agentic-art-production
-  status: CODE_VERIFIED
-  result: Five synthetic AC; 8 focused / 120 full tests and six native evaluation checks PASS. PR65 exact remote verified.
-    AAK02 live and main integration NOT_RUN.
-  evidence: execution/aak-11-owner-verification.json
+  task: AAK-02
+  repository: agentic-art-orchestration
+  status: NATIVE_ACCEPTANCE_COMPLETE
+  result: 'Six actual LLM-agent runs under a synthetic profile completed: resume/new-clone/fork x2, all PLAN_READY and COMMITTED with second-run knowledge adoption. Real Masa profile, physical work, viewer observations and public projection remain NOT_RUN.'
+  code_candidate: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/208
+  evidence: execution/aak-02-live-acceptance.json
+  evidence_sha256: ffeecc500b2cc3d71af975ed145b6656d6bb84a35030a14979e653210e04acfd
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -42,30 +46,19 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-11
+last_completed_task: AAK-02
 resume_from:
   task: AAK-02
   repository: agentic-art-orchestration
-  action: Claim final native-owner integration and live six-run acceptance
-  command: git switch -c codex/aak-02-live-knowledge-cycle-20260908
+  action: Review native acceptance evidence, then review/merge draft PRs under existing human gates; do not perform merge automatically.
+  command: cat execution/aak-02-live-acceptance.json
 previous_checkpoint:
-  task: AAK-10
+  task: AAK-11
   repository: agentic-art-production
   status: CODE_VERIFIED
-  result: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical
-    plans and native attestation verified. AAK02 live and main integration NOT_RUN.
-  evidence: execution/aak-10-owner-verification.json
-  released_lease:
-    status: released
-    owner: codex-aak10-resume-20260908
-    acquired_at: '2026-09-08T00:18:10.731273+00:00'
-    expires_at: '2026-09-08T02:18:10.731273+00:00'
-    lane: AAK_IMPLEMENTATION
-    execution_id: AAK-10:20260908
-    scope: *id001
-    published_commit: 898222fe2f01ef2b71511efc4d69ff15102a171c
-    publication_verification: AAK09 published and released; native AAK10 maintenance task registered and claimed.
-    released_at: '2026-09-08T00:47:29.786047+00:00'
+  result: Five synthetic AC; 8 focused / 120 full tests and six native evaluation checks PASS. PR65 exact remote verified.
+    AAK02 live and main integration NOT_RUN.
+  evidence: execution/aak-11-owner-verification.json
 
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377

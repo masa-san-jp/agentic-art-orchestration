@@ -9,7 +9,7 @@
   "properties": {
     "contract_version": {"const": "autonomous-run/v1"},
     "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
-    "status": {"enum": ["RESEARCH_PENDING", "RUNNING", "RESEARCH_WORKER_RUNNING", "PLAN_READY", "BLOCKED_HUMAN", "BLOCKED_EXTERNAL", "FAILED_RETRY_EXHAUSTED"]},
+    "status": {"enum": ["RESEARCH_PENDING", "RUNNING", "RESEARCH_WORKER_RUNNING", "RESEARCH_COMPLETE", "PLAN_READY", "BLOCKED_HUMAN", "BLOCKED_EXTERNAL", "FAILED_RETRY_EXHAUSTED"]},
     "stage": {"enum": ["research", "plan"]},
     "child_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},

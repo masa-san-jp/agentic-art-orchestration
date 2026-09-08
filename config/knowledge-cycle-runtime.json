@@ -1,0 +1,8 @@
+{
+  "contract_version": "knowledge-cycle-runtime/v1",
+  "max_owner_attempts": 3,
+  "max_no_progress": 8,
+  "lease_seconds": 180,
+  "step_timeout_seconds": 120,
+  "max_checkpoint_seconds": 60
+}

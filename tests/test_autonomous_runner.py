@@ -90,13 +90,13 @@ class AutonomousRunnerTests(unittest.TestCase):
             once=once,
         )
 
-    def test_networkless_worker_reaches_plan_ready_and_resume_is_idempotent(self):
+    def test_worker_completion_is_research_only_and_resume_is_idempotent(self):
         with tempfile.TemporaryDirectory(prefix="autonomous-runner-") as directory:
             temporary = Path(directory)
             worker, count = self.worker(temporary, "complete")
             first = self.call(temporary, worker, once=True)
             second = self.call(temporary, worker, once=True)
-            self.assertEqual("PLAN_READY", first["status"])
+            self.assertEqual("RESEARCH_COMPLETE", first["status"])
             self.assertEqual(first, second)
             self.assertEqual("1", count.read_text())
             self.assertEqual([], validate_autonomous_state(second))
@@ -126,7 +126,7 @@ class AutonomousRunnerTests(unittest.TestCase):
                 allowed_paths=("project",),
                 once=True,
             )
-            self.assertEqual("PLAN_READY", state["status"])
+            self.assertEqual("RESEARCH_COMPLETE", state["status"])
             self.assertEqual("destination-resolution/v1", state["destination_resolution"]["contract_version"])
             evidence = temporary / "profile-state" / "profiled-runner" / "destination-resolution.json"
             self.assertTrue(evidence.is_file())

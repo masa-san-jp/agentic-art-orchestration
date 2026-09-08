@@ -158,7 +158,8 @@ class LocalOwner:
 
     def __init__(self, root: Path, owner: str, collection: str, code_commit: str,
                  knowledge_commit: str | None = None, *, creator: str,
-                 payload_validator: Callable[[Mapping, bytes], bool]):
+                 payload_validator: Callable[[Mapping, bytes], bool],
+                 initializer: Callable[[Path], None] | None = None):
         if owner not in registry() or not callable(payload_validator):
             raise KnowledgeCycleError("owner and payload validator must be explicit")
         for value in (owner, collection, creator):
@@ -181,11 +182,24 @@ class LocalOwner:
         if not marker.exists():
             if any(self.root.iterdir()):
                 raise KnowledgeCycleError("refuse adoption of populated unregistered store")
-            subprocess.run(["git", "init", "--bare", "--quiet", str(self.git_dir)], check=True,
-                           capture_output=True)
-            tree = self._git(["mktree"], b"").strip().decode()
-            commit = self._git(["commit-tree", tree], canonical(identity)).strip().decode()
-            self._git(["update-ref", self.ref, commit, "0" * 40])
+            if initializer is None:
+                subprocess.run(["git", "init", "--bare", "--quiet", str(self.git_dir)], check=True,
+                               capture_output=True)
+                tree = self._git(["mktree"], b"").strip().decode()
+                commit = self._git(["commit-tree", tree], canonical(identity)).strip().decode()
+                self._git(["update-ref", self.ref, commit, "0" * 40])
+            else:
+                # Native owner initialization happens off to the side. A failed
+                # initializer leaves the final store empty and retryable.
+                with tempfile.TemporaryDirectory(prefix="owner-init-", dir=self.root.parent) as temporary:
+                    staging = Path(temporary) / "objects.git"
+                    initializer(staging)
+                    if staging.is_symlink() or subprocess.check_output(
+                        ["git", "--git-dir", str(staging), "rev-parse", "--is-bare-repository"], text=True).strip() != "true":
+                        raise KnowledgeCycleError("native initializer did not create a bare owner store")
+                    subprocess.run(["git", "--git-dir", str(staging), "rev-parse", "--verify", self.ref + "^{commit}"],
+                                   check=True, capture_output=True)
+                    staging.rename(self.git_dir)
             self._atomic(marker, canonical(identity))
         elif marker.is_symlink() or json.loads(marker.read_bytes()) != identity:
             raise KnowledgeCycleError("store identity mismatch")

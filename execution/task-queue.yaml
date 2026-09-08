@@ -1,5 +1,5 @@
-version: 71
-updated_at: "2026-09-06T07:07:09.302565+00:00"
+version: 72
+updated_at: "2026-09-08T03:24:18.113729+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1701,14 +1701,118 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: BACKLOG
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-02
     target_repositories:
     - agentic-art-orchestration
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
-    dependency_evidence: {}
-    acceptance_evidence: {}
+    dependency_evidence:
+      AAK-05:
+        status: PASS
+        candidate_commit: 765b1a3833602c8d9740dd584211e4ae88795f3d
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-05-owner-verification.json
+        reference: https://github.com/masa-san-jp/self-model-notes/issues/93
+      AAK-06:
+        status: PASS
+        candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-takeover-report.json
+        reference: https://github.com/masa-san-jp/art-history-notes/issues/386
+      AAK-07:
+        status: PASS
+        candidate_commit: 7be3d5ff495a91f3ce75159c96e9fc0ec383aa57
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-07-owner-verification.json
+        reference: https://github.com/masa-san-jp/marketing-trends-notes/issues/86
+      AAK-09:
+        status: PASS
+        candidate_commit: 046c2380310d208ca52cbca461c95c798328b599
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-09-owner-verification.json
+        reference: https://github.com/masa-san-jp/agentic-art-research/issues/94
+      AAK-11:
+        status: PASS
+        candidate_commit: 2e2d702d671fcbd822b9c0b6188b3bad9f099771
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-11-owner-verification.json
+        reference: https://github.com/masa-san-jp/agentic-art-production/issues/62
+      AAK-12:
+        status: PASS
+        candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-takeover-report.json
+        reference: https://github.com/masa-san-jp/viewer-response-notes/issues/6
+      AAK-13:
+        status: PASS
+        candidate_commit: d3347e3177cf23c58a415c301760e9452246e965
+        contract_version: artifact-record/v1
+        acceptance_evidence: execution/aak-13-owner-verification.json
+        reference: https://github.com/masa-san-jp/agentic-art-project/issues/10
+      https://github.com/masa-san-jp/agentic-art-orchestration/issues/189:
+        status: PASS
+        candidate_commit: 956867afebd68b7be45b3873556f6a7ce8f0132e
+        contract_version: pin-qualification
+        acceptance_evidence: execution/issue-189-qualification.json
+        reference: https://github.com/masa-san-jp/agentic-art-orchestration/issues/189
+      https://github.com/masa-san-jp/agentic-art-orchestration/issues/193:
+        status: PASS
+        candidate_commit: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+        contract_version: canonical-plan-projection/v2
+        acceptance_evidence: execution/issue-193-integration-verification.json
+        reference: https://github.com/masa-san-jp/agentic-art-orchestration/issues/193
+      https://github.com/masa-san-jp/agentic-art-orchestration/issues/187:
+        status: PASS
+        candidate_commit: c3f62e69abf407e921dd49ecafc753e0b6e518b8
+        contract_version: automatic-plan-authority/v1
+        acceptance_evidence: execution/aak-integration-readiness.json; downstream combined
+          595 tests PASS
+        reference: https://github.com/masa-san-jp/agentic-art-orchestration/issues/187
+    acceptance_evidence:
+      AAK-02-AC1:
+        status: PASS
+        mode: actual LLM agent with synthetic profile
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; six native runs, six PLAN_READY
+          plans and six committed Research/Production receipt pairs
+      AAK-02-AC2:
+        status: PASS
+        mode: actual LLM agent with synthetic profile
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; resume/new-clone/fork second-run
+          adoption traces
+      AAK-02-AC3:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: tests.test_knowledge_cycle_e2e; 13 focused PASS and parent full 602
+          PASS
+        evidence_type: REGRESSION
+      AAK-02-AC4:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: tests.test_knowledge_cycle_e2e; partial-write/restart receipt retention
+          PASS; native cycle receipts independently revalidated
+        evidence_type: REGRESSION
+      AAK-02-AC5:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; plan/knowledge/projection statuses
+          kept distinct
+      AAK-02-AC6:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; evidence classified actual LLM
+          agent with synthetic profile, real Masa profile explicitly NOT_RUN
+    code_status: CODE_VERIFIED
+    integration_status: NATIVE_ACCEPTANCE_COMPLETE
+    completion: AAK-02 AC1/AC2 PASS from six actual LLM-agent runs under a synthetic profile;
+      AC3/AC4 regression PASS; AC5 status separation PASS; AC6 PASS with real Masa profile
+      explicitly NOT_RUN. All six runs are COMPLETED, PLAN_READY, COMMITTED, projection
+      SKIPPED; the second run in each mode adopts persisted first-run knowledge. Evidence
+      execution/aak-02-live-acceptance.json. Parent f940b561dec92cb4f4757010bfce5e30fe34f5bd;
+      Research 2304261b0c009b9f8690f2d5afbd76a53304c8a9; Production cd1af443821e826e7f41b6effd608767dea4366e.
+      Merge, public projection, physical work and real-person migration remain human-gated.
   - id: AAK-03
     owner: agentic-art-orchestration
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/195

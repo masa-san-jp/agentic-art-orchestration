@@ -34,6 +34,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from tools.plan_completion import PlanCompletionError, verify_plan
+
 from tools.output_destinations import (
     DestinationError,
     destinations_profile_selected,
@@ -441,7 +443,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         limit: int = 1, offline_fixture: bool = False,
         destination_resolution: Mapping[str, object] | None = None,
         internal_output_root: Path | None = None,
-        profile_root: Path | None = None) -> dict:
+        profile_root: Path | None = None, research_work_root: Path | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if (research_root is None) != (production_root is None):
         # Carrying on with one of the two would run a child tool in whatever directory
@@ -459,6 +461,10 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     )
     if not offline_fixture and profile_root is None:
         raise BlockedPrecondition("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+    research_data_root = research_work_root or research_root
+    if research_work_root is not None:
+        if research_root is None or not research_work_root.is_absolute() or research_work_root.resolve() != research_work_root or research_root.resolve() in research_work_root.parents:
+            raise StepFailure("external Research work root must be separate from pinned code")
     work = state_root / run_id
     work.mkdir(parents=True, exist_ok=True)
     if destination_resolution is not None:
@@ -527,7 +533,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         for path in requests:
             outcome = _run_child(
                 research_root,
-                ["tools/accept_research_request.py", str(path), "--apply", "--root", ".",
+                ["tools/accept_research_request.py", str(path), "--apply", "--root", str(research_data_root) if research_work_root else ".",
                  "--accepted-at", requested_at],
                 python, allow_conflict=True)
             accepted.append({"request": path.name, "status": outcome.get("status"),
@@ -547,26 +553,27 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
 
     if research_root is not None:
         record("accept", _run_child(
-            research_root, ["tools/accept_research_request.py", str(request), "--apply", "--root", ".",
+            research_root, ["tools/accept_research_request.py", str(request), "--apply", "--root", str(research_data_root) if research_work_root else ".",
                             "--accepted-at", requested_at], python, allow_conflict=True))
 
-        complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}"], python, allow_failure=True)
+        complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}", *(["--root", str(research_data_root)] if research_work_root else [])], python, allow_failure=True)
         record("research-complete", complete)
         if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
             return _at_research(
-                work, run_id, intent, steps, research_root, project_slug, theme_proposal,
+                work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
                 destination_resolution,
             )
 
         handoff_args = _handoff_arguments(
-            research_root, project_slug, requested_at, _head(research_root)
+            research_data_root, project_slug, requested_at, _head(research_root)
         )
+        roots = ["--work-root", str(research_data_root), "--protocol-root", str(research_root)] if research_work_root else ["--root", "."]
         record("handoff", _run_child(
-            research_root, ["tools/build_handoff.py", f"projects/{project_slug}", "--root", ".",
+            research_root, ["tools/build_handoff.py", f"projects/{project_slug}", *roots,
                             *handoff_args], python, allow_conflict=True))
         record("export", _run_child(
-            research_root, ["tools/export_handoff.py", f"projects/{project_slug}", "--root", ".",
+            research_root, ["tools/export_handoff.py", f"projects/{project_slug}", *roots,
                             "--output", str(work / "bundle")], python))
         persistent_production_root = (
             internal_output_root.resolve()
@@ -593,7 +600,26 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                                             str(persistent_production_root / "production" / project_slug)], python)
         record("plan", plan)
         plan_path = persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"
+        production_source_commit = _head(production_root)
+        try:
+            plan_verification = verify_plan(code_root=production_root, code_commit=production_source_commit,
+                project_root=plan_path.parent.parent, python=python, research_commit=_head(research_root))
+        except (PlanCompletionError, OSError, subprocess.SubprocessError) as exc:
+            report = {"run_id": run_id, "status": "AT_PRODUCTION", "plan_status": "PLAN_BUILDING",
+                "knowledge_status": "PENDING", "projection_status": "SKIPPED", "run_status": "RUNNING",
+                "steps": steps, "plan": str(plan_path), "stop_reason": type(exc).__name__,
+                "next_action": {"actor": "agent", "stage": "production",
+                    "project_root": str(plan_path.parent.parent), "code_root": str(production_root),
+                    "do": ["Read the pinned Production docs/plan-actionability.md and native validator findings.",
+                           "Complete 02_specification/production-method.yaml using the actual handoff, source conditions and explicit unknowns.",
+                           "Run the native builder and plan_actionability validator, then resume this same run ID."],
+                    "validation_command": [python, str(production_root / "tools/plan_actionability.py"),
+                                           "--project-root", str(plan_path.parent.parent)]}}
+            (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            return report
         report = {
+            "plan_status": "PLAN_READY", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
+            "projection_status": "SKIPPED", "plan_verification": plan_verification,
             "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
             "generated_at": requested_at,
             "project_slug": project_slug,
@@ -772,6 +798,7 @@ def run(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cycle-context", type=Path, help="external knowledge-cycle-context/v1; advance the same profile/run checkpoint")
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--project-id")
     parser.add_argument("--seed-input")
@@ -791,6 +818,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--destinations-file", type=Path,
                         help="explicit external output-destinations/v1 profile")
     parser.add_argument("--research-root", type=Path, help="指定すると調査の受理から制作プランまで進む")
+    parser.add_argument("--research-work-root", type=Path, help="external native Research work tree; keep qualified code clean")
     parser.add_argument("--production-root", type=Path)
     parser.add_argument("--profile-root", type=Path,
                         help="explicit external Self Model profile root for real signal ingestion")
@@ -803,6 +831,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.cycle_context is not None:
+            if args.state_root is None:
+                raise StepFailure("--cycle-context requires --state-root")
+            from tools.knowledge_cycle_run import advance, read
+            report = advance(read(args.cycle_context), args.state_root)
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0 if report['run_status'] == 'COMPLETED' else 1
         run_now = datetime.now(timezone.utc)
         run_id = args.run_id or f"AUTO-PLAN-{run_now.strftime('%Y%m%dT%H%M%SZ')}"
         requested_at = args.requested_at or run_now.isoformat()
@@ -883,7 +918,7 @@ def main(argv: list[str] | None = None) -> int:
                                     args.research_root, args.production_root, args.limit, args.offline_fixture,
                                     destination_resolution=destination_resolution,
                                     internal_output_root=internal_output_root,
-                                    profile_root=args.profile_root)
+                                    profile_root=args.profile_root, research_work_root=args.research_work_root)
     except BlockedPrecondition as exc:
         print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
