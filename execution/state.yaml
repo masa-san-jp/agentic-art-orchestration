@@ -1,5 +1,5 @@
-version: 246
-updated_at: '2026-09-08T04:32:06.440312+00:00'
+version: 247
+updated_at: '2026-09-08T04:54:43.407951+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -50,9 +50,9 @@ aak04_checkpoint:
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
 last_completed_task: AAK-02
 resume_from:
-  task: AAK-02
-  repository: agentic-art-orchestration
-  action: Post-merge verification of AAK-02 evidence; keep public projection, physical work and real-person migration gates separate.
+  task: null
+  repository: null
+  action: No pending AAK implementation; retain explicit public-projection, physical-work and real-person migration gates.
   command: .venv/bin/python tools/project_status.py --format json
 previous_checkpoint:
   task: AAK-11
