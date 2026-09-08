@@ -81,13 +81,13 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-08T04:54:43.407951+00:00`.
+Source updated at: `2026-09-09T00:00:00+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 154 | 154 |
+| 0 | 0 | 1 | 0 | 154 | 155 |
 
-Current task: `null`; repository: `null`; checkpoint: `AAK-02`.
+Current task: `PRODUCTION-STARTUP-RECOVERY-001`; repository: `agentic-art-orchestration`; checkpoint: `PRODUCTION-STARTUP-RECOVERY-001`.
 Next action: No pending AAK implementation; retain explicit public-projection, physical-work and real-person migration gates.
 Ready: none.
 Next task: `null`.
@@ -193,7 +193,7 @@ renameで配置します。既存checkoutのfetch、pull、checkout、reset、re
 | status | exit | agentの扱い |
 | --- | ---: | --- |
 | `READY` | 0 | 全entryが`cloned`または`reused`、guard PASS、pin MATCHED。通常の次工程へ進む |
-| `BLOCKED_PIN_DRIFT` | 2 | clean checkoutは保持するがpin不一致。自動checkoutせず、`tools/pin_adopt.py --dry-run`またはqualification用`tools/pinned_workspace.py`へ進む |
+| `BLOCKED_PIN_DRIFT` | 2 | 既存checkoutは変更しない。制作runはcleanな不足・pin driftだけを検査してGit外の専用pin workspaceを自動展開し、dirty等は停止する。直接bootstrapを再実行する場合は`tools/pin_adopt.py --dry-run`、資格済みpinの手動展開は`tools/pinned_workspace.py`を使う |
 | `BLOCKED_EXISTING_WORKSPACE` | 2 | dirty/untracked/detached/remote/upstream/ahead/behind/diverged等を人間が解消し、再実行する。新規cloneなし |
 | `BLOCKED_REMOTE_ACCESS` | 2 | credential/network/remoteを人間が解消し、再実行する。workspaceへ部分配置しない |
 | `BLOCKED_RACE` | 2 | lockまたはstagingの所有状態を確認し、同時実行完了後に再実行する。lock/stagingを盲目的に削除しない |
