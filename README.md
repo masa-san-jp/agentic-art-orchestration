@@ -58,6 +58,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 | テーマ未指定で制作計画を始める | [`docs/agent-runtime-guide.md`](docs/agent-runtime-guide.md)、[`tools/run.py`](tools/run.py) |
 | 新しいテーマを指定して調査する | [`docs/agent-ui-runbook.md`](docs/agent-ui-runbook.md)、[`docs/input-pipeline-runbook.md`](docs/input-pipeline-runbook.md) |
 | 制作計画へ引き渡す | [`docs/interaction-improvement-runbook.md`](docs/interaction-improvement-runbook.md)、`agentic-art-research` / `agentic-art-production` |
+| 8リポジトリの関係と使い分けを確認する | [`docs/repository-map.md`](docs/repository-map.md) |
 | viewer反応を保守的に扱う | `viewer-response-notes` の集計・assessment contract |
 | エージェントとして再開する | [`AGENTS.md`](AGENTS.md)、[`execution/state.yaml`](execution/state.yaml)、[`execution/task-queue.yaml`](execution/task-queue.yaml) |
 
@@ -74,6 +75,7 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 - v1.1 interaction/improvement runbook: [interaction-improvement-runbook.md](docs/interaction-improvement-runbook.md)
 - 初期Codex / Claude Code UI: [agent-ui-runbook.md](docs/agent-ui-runbook.md)
 - 入力KB→Research開始 / pin採用: [input-pipeline-runbook.md](docs/input-pipeline-runbook.md)
+- 8リポジトリの関係と利用方法: [repository-map.md](docs/repository-map.md)
 - 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
 - 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 
@@ -121,6 +123,7 @@ Startup update check + audit -> findings / Issue candidate
 - [agentic-art-research](https://github.com/masa-san-jp/agentic-art-research) — 制作リサーチ実行・成果物repo
 - [agentic-art-production](https://github.com/masa-san-jp/agentic-art-production) — 制作引き渡し受領、制作実行、結果還流repo（要件SSOT: Issue #10）
 - [viewer-response-notes](https://github.com/masa-san-jp/viewer-response-notes) — 集計viewer反応と保守的な制作要件評価の正本
+- [agentic-art-project](https://github.com/masa-san-jp/agentic-art-project) — 検証済みの公開プラン、作品、制作記録を収録するexport-onlyカタログ
 
 ## 重要な境界
 
