@@ -1,9 +1,35 @@
-# PR204 upstream integration prepared (2026-09-07)
+# PR206 upstream integration prepared (2026-09-07)
 
-Qualified upstream `dac8de8e475875979d19cdf0a74c247a2fdec6cb` is merged normally into this
+Qualified upstream `956867afebd68b7be45b3873556f6a7ce8f0132e` is merged normally into this
 candidate branch. Issue193 native Project parser correction and binary history
 verification are retained. Original task checkpoint follows; main integration
 and AAK02 live acceptance remain NOT_RUN. No force push or default-branch change.
+
+# Issue203 code verified; AAK13 prerequisite updated (2026-09-06)
+
+Code `4f4b82226f4da828bf5f7051723658eeab2c1231`, draft PR206, based on PR204. AC1..4 PASS;
+45 focused and 595 full tests PASS (1 environment skip independently covered).
+Real Self Model code exported 2 synthetic signals; no root yields BLOCKED before
+export/state. Canonical owner path/consent gates remain intact.
+
+Next: AAK13. While this task ran, parallel Project PR12 supplied a replacement
+for the old Project6 migration candidate. Exact `8e4c90b701c82bfe14964dbbe6a0aba62342fcef`
+passes native validator/catalog/20 tests and our actual three-owner boundary.
+Record this dependency evidence and claim AAK13 after publishing/releasing this
+lease. Preserve other session branches. AAK05 PR94 approval is still pending.
+
+Current reports: `execution/issue-203-verification.json`,
+`execution/aak-takeover-report.json`. Earlier migration blockers below are
+historical; no AAK02 live run or overall completion is claimed.
+
+# Issue203 registered — next parent prerequisite (2026-09-06)
+
+Task `PROFILE-ROOT-FORWARD-001` is READY on isolated branch
+`codex/issue-203-profile-root-20260906`, based on published PR204 head
+`c81d14f` (Issue189 code `7110c1f`). Claim before editing implementation.
+Use Issue203's existing acceptance and `docs/issue-203-execution.md`.
+Other session's dirty planning worktree remains untouched; no Issue203 PR or
+active code claim was found. No real profile has been selected or consent changed.
 
 # Interrupted AAK takeover — Issue189 qualified (2026-09-06)
 

@@ -1,0 +1,71 @@
+{
+  "task": "PROFILE-ROOT-FORWARD-001",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/203",
+  "status": "CODE_VERIFIED",
+  "acceptance": {
+    "ISSUE-203-AC1": "PASS",
+    "ISSUE-203-AC2": "PASS",
+    "ISSUE-203-AC3": "PASS",
+    "ISSUE-203-AC4": "PASS"
+  },
+  "focused_tests": "45 PASS in 2.973 seconds, including the updated existing automatic-theme fixture",
+  "full_suite": "595 tests PASS; 1 environment skip, separately covered by actual Research dry-run",
+  "actual_owner_export": {
+    "status": "PASS",
+    "fixture_kind": "owner synthetic E2E profile; not real Masa",
+    "owner_code_commit": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+    "owner_contract": "self-model-profile/v1",
+    "export_contract": "research-signal-export/v1",
+    "signal_count": 2,
+    "parent_envelope_and_adapter_validation": "PASS",
+    "profile_mutation": "NONE",
+    "owner_git_mutation": "NONE",
+    "negative_cases": [
+      {
+        "case": "PROFILE_ROOT_INVALID",
+        "status": "PASS"
+      },
+      {
+        "case": "PROFILE_ROOT_REPOSITORY_OVERLAP",
+        "status": "PASS"
+      }
+    ],
+    "profile_input_sha256": "1780276b63b357fa5bd4259f1c603d37f7c76fac60a5738e3c030571de2eb213"
+  },
+  "actual_missing_profile_preflight": {
+    "status": "PASS",
+    "test": "actual six-repository pin guard then missing-profile BLOCKED",
+    "exit_code": 2,
+    "result": {
+      "status": "BLOCKED",
+      "detail": "PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports"
+    },
+    "run_state_created": false,
+    "source": "qualified manifest pins; no actual profile read"
+  },
+  "source_blobs": {
+    "tools/run.py": "fb0e8ac1df4a9fd9827e728f3361050e489d94d0a0f941b3876119595ee68f22",
+    "tools/ingest_signals.py": "b3c0db79d306021a5c203d724d473e38d6884e8227568538ef8d576b58c4b6a9",
+    "tests/test_run.py": "a78f823a2da4d7c56f6ac5e0ed9bd163f36a975e562ba83b1028addd4d0c5b1a",
+    "tests/test_ingest_signals.py": "33a9486de5b2f2fc9364fdd49c7d7188215f99315ec942380ba2083e0dafbd46",
+    "tests/test_auto_plan.py": "e9e7576b491cd2c1040c1c95177e0b7a9eba01cefd59d28a7ad27f81651706fc"
+  },
+  "aak02_integration": "NOT_RUN",
+  "real_profile": "NOT_USED",
+  "child_code_changes": [],
+  "external_artifacts": [],
+  "previous_full_suite": {
+    "result": "595 tests; 1 ERROR; 1 environment skip",
+    "duration_seconds": 252.247,
+    "reason": "Legacy automatic-theme fixture omitted new explicit profile root; fixed by supplying its synthetic profile, no guard weakened.",
+    "log_sha256": "b0eed3432a38868faa3d09c4d29771eed0c511c9a855afd6e9b86dc484aa6924"
+  },
+  "source_hash_algorithm": "sha256",
+  "code_candidate": "4f4b82226f4da828bf5f7051723658eeab2c1231",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/206",
+  "full_duration_seconds": 258.189,
+  "full_log_sha256": "52f1b0f7d36a51ecd9a7d7292b2d11aea8bf07e7f56df92361ee3136126186de",
+  "validation": "PASS",
+  "diff_check": "PASS",
+  "main_integration": "NOT_RUN"
+}

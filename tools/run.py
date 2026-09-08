@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Carry a repository-derived theme all the way to a production plan, without asking anyone.
 
-    python3 tools/run.py --workspace-root <実クローン>
+    python3 tools/run.py --workspace-root <実クローン> --profile-root <外部profile>
 
 An explicit --intent may rank candidates, but it is optional. Without it, the
 repository snapshot supplies the first gate-passing candidate and its derived
@@ -440,7 +440,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         research_root: Path | None = None, production_root: Path | None = None,
         limit: int = 1, offline_fixture: bool = False,
         destination_resolution: Mapping[str, object] | None = None,
-        internal_output_root: Path | None = None) -> dict:
+        internal_output_root: Path | None = None,
+        profile_root: Path | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if (research_root is None) != (production_root is None):
         # Carrying on with one of the two would run a child tool in whatever directory
@@ -456,6 +457,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         }
         if offline_fixture else _guard_pinned_workspace(workspace_root)
     )
+    if not offline_fixture and profile_root is None:
+        raise BlockedPrecondition("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
     work = state_root / run_id
     work.mkdir(parents=True, exist_ok=True)
     if destination_resolution is not None:
@@ -476,6 +479,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         record("ingest", _run_tool([
             "tools/ingest_signals.py", "--purpose", purpose,
             "--workspace-root", str(workspace_root), "--output", str(signals),
+            "--profile-root", str(profile_root),
         ], python))
 
     record("candidates", _run_tool([
@@ -788,6 +792,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="explicit external output-destinations/v1 profile")
     parser.add_argument("--research-root", type=Path, help="指定すると調査の受理から制作プランまで進む")
     parser.add_argument("--production-root", type=Path)
+    parser.add_argument("--profile-root", type=Path,
+                        help="explicit external Self Model profile root for real signal ingestion")
     parser.add_argument("--offline-fixture", action="store_true",
                         help="use the checked-in synthetic signal fixture; do not read child checkouts")
     parser.add_argument("--limit", type=int, default=1,
@@ -876,7 +882,8 @@ def main(argv: list[str] | None = None) -> int:
                                     args.purpose, args.slug, args.title, requested_at, args.child_python,
                                     args.research_root, args.production_root, args.limit, args.offline_fixture,
                                     destination_resolution=destination_resolution,
-                                    internal_output_root=internal_output_root)
+                                    internal_output_root=internal_output_root,
+                                    profile_root=args.profile_root)
     except BlockedPrecondition as exc:
         print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

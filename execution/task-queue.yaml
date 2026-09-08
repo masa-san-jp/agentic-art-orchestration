@@ -1,8 +1,23 @@
-version: 69
-updated_at: "2026-09-06T06:51:01.549726+00:00"
+version: 71
+updated_at: "2026-09-06T07:07:09.302565+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
+  - id: PROFILE-ROOT-FORWARD-001
+    milestone: AAK
+    title: Forward explicit Self Model profile root through the real run entry
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/203
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [ISSUE-189-PIN-QUALIFICATION]
+    acceptance: Forward explicit profile root only to Self Model export; missing root blocks before real export; run CLI forwards the option; offline fixture behavior remains unchanged. Parent-only code; merge remains human-gated.
+    checks: [.venv/bin/python tools/validate.py --check, .venv/bin/python -m unittest discover -s tests -v, git diff --check]
+    intake_evidence: Actual Issue203 body has observable acceptance, parent repository scope, verification commands and explicit no human gate for code changes. Existing issue reused; no duplicate or remote comment.
+    completion: "AC1..4 PASS at 4f4b82226f4da828bf5f7051723658eeab2c1231; 45 focused, 595 full PASS with 1 environment skip separately covered. Actual synthetic Self Model export yields 2 validated signals; symlink/repository rejection and real six-owner missing-profile BLOCKED preserve boundaries. Draft PR206; evidence execution/issue-203-verification.json. Main integration and AAK02 live NOT_RUN."
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/206
   - id: ISSUE-189-PIN-QUALIFICATION
     milestone: AAK
     title: Qualify current Research main and restore real workspace pin compatibility

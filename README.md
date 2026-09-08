@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T15:56:37.493251+00:00`.
+Source updated at: `2026-09-06T15:56:38.626477+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 0 | 2 | 146 | 153 |
+| 5 | 0 | 0 | 2 | 147 | 154 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-189-PIN-QUALIFICATION`.
-Next action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
+Current task: `null`; repository: `null`; checkpoint: `PROFILE-ROOT-FORWARD-001`.
+Next action: Promote AAK13 with verified Project6 PR12 evidence and claim isolated parent/child branches; AAK05 approval remains pending.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -226,6 +226,12 @@ test "$BOOTSTRAP_EXIT" -eq 2
 挙動を暗黙に置き換えません。
 
 ## Git外の出力先を設定する
+
+実Self Modelを使う制作計画では、`tools/run.py --profile-root <external-self-model-profile>`で
+利用を認められた外部profileの絶対パスを指定します。`tools/ingest_signals.py`も同じ引数を受け取り、
+Self Modelだけへ渡します。未指定時は実export前に`BLOCKED / PROFILE_ROOT_REQUIRED`となります。
+下記の出力先profileとは別の入力です。合成検証の`--offline-fixture`では不要です。
+手順は[テーマ未指定の制作計画](docs/agent-runtime-guide.md#テーマ未指定の制作計画)を参照してください。
 
 新しいagentが会話履歴なしで実行を再開できるよう、実行stateと内部成果物はGit外の
 `output-destinations/v1`プロファイルへ分離します。プロファイルはrepoへ追加せず、

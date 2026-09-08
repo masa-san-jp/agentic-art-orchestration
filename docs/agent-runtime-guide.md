@@ -77,10 +77,17 @@ test "$BOOTSTRAP_EXIT" -eq 2
 ~~~bash
 .venv/bin/python tools/run.py \
   --workspace-root <verified-child-workspace> \
+  --profile-root <external-self-model-profile> \
   --state-root <external-state-root>
 ~~~
 
 この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
+
+実Self Modelを読む場合、`--profile-root`には利用が認められた外部profileの絶対パスを明示する。
+これは出力先の`--destinations-file`とは別の入力であり、Self Modelのexportだけへ渡される。
+profileの内容・同意・外部保存境界はSelf Model自身が検証する。親はパスを補完せず、未指定なら
+実exportやrun stateの作成前に`BLOCKED`（`PROFILE_ROOT_REQUIRED`、exit 2）を返す。
+既存のprofileが使えない場合にrepository内の自己モデルを採用したり、本人データを生成したりしない。
 
 Productionまで進んだ後の再開では、`<state-root>/production/production/<slug>/`がrun-idをまたぐ同一プロジェクトの出力rootになる。各runの`<state-root>/<run-id>/`は実行ごとのcheckpointであり、`<state-root>/production-history.jsonl`はrun-idとproject-idだけを結ぶGit外の追記型メタデータ台帳である。既存プロジェクトを別run-idで続けるときは、初回と同じ`--slug`を明示する。handoffが変わった場合はProduction childのrevision受理へ進み、過去のexecution、quality、resultを新しいrunの空ディレクトリへリセットしない。
 
@@ -93,6 +100,7 @@ Productionまで進んだ後の再開では、`<state-root>/production/productio
 ~~~
 
 `--offline-fixture`は実child checkoutや外部サービスを読まず、checked-in fixtureのsource commitがmanifestとsnapshotのpinに一致する場合だけ進む。実repoの制作計画と取り違えないため、この結果のsourceはfixtureとして扱う。
+この経路には`--profile-root`は不要で、指定されてもprofileを読み込まない。
 
 実行開始時には、入口自身がmanifestの全repoについてread-only guardを行い、clean・通常branch・upstream有り・`observed_commit`一致を確認する。いずれかが満たされなければchild exportを実行せず、`BLOCKED`と解除条件を返す。既存checkoutを自動checkout、reset、fetch、pin更新してはならない。`<verified-child-workspace>`はこの検査とchild quality gateを通過したGit外workspaceを指定する。
 

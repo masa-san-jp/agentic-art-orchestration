@@ -1,41 +1,44 @@
-version: 217
-updated_at: '2026-09-06T15:56:37.493251+00:00'
+version: 221
+updated_at: '2026-09-06T15:56:38.626477+00:00'
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: codex-aak-takeover-20260906
-  acquired_at: '2026-09-06T06:19:31+00:00'
-  expires_at: '2026-09-06T07:32:17.897652+00:00'
+  acquired_at: '2026-09-06T06:53:50.993195+00:00'
+  expires_at: '2026-09-06T07:38:50.993195+00:00'
   lane: AAK_PREREQUISITE
-  execution_id: ISSUE-189-PIN-QUALIFICATION:20260906
+  execution_id: PROFILE-ROOT-FORWARD-001:20260906
   scope:
     repository: agentic-art-orchestration
-    branch: codex/aak-takeover-issue-189-20260906
+    branch: codex/issue-203-profile-root-20260906
     paths:
-    - config/repositories.yaml
-    - tests/**
-    - tools/release_check.py
-    - execution/**
+    - tools/ingest_signals.py
+    - tools/run.py
+    - tests/test_ingest_signals.py
+    - tests/test_run.py
     - README.md
+    - docs/agent-runtime-guide.md
+    - docs/issue-203-execution.md
+    - execution/**
     - PLANS.md
-    - docs/issue-189-execution.md
+    - tests/test_auto_plan.py
     child_repositories: []
-  released_at: '2026-09-06T06:51:53.410902+00:00'
-  published_commit: 7110c1f07d0196a679d4aa6af17e5c75b1270839
-  publication_verification: git ls-remote exact SHA; normal branch push, no merge
+  released_at: '2026-09-06T07:07:35.697488+00:00'
+  published_commit: 786a797
+  publication_verification: Exact remote SHA confirmed by git ls-remote before release; normal branch push.
 checkpoint:
-  task: ISSUE-189-PIN-QUALIFICATION
+  task: PROFILE-ROOT-FORWARD-001
   repository: agentic-art-orchestration
-  start_point: b107b6db84c58e2fed4a952b7cf693211c7cf377
+  start_point: 6b18b9e
   status: CODE_VERIFIED
-  expected_changes: Qualify four stale runtime pins in the configured six-repository workspace; preserve historical provenance;
-    repair restart metadata and binary-history scan.
-  result: AC1..3 PASS; qualified four pin updates, 16 child gates, synthetic exchange, actual 6-repo guard and full 588 PASS
-    with 2 environment skips; isolated boundary tests cover those paths.
-  evidence: execution/issue-189-qualification.json
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/204
-  code_candidate: 7110c1f07d0196a679d4aa6af17e5c75b1270839
+  expected_changes: Explicit external profile-root argument forwarding to Self Model only; no-export BLOCKED when absent;
+    unchanged offline fixture path.
+  result: AC1..4 PASS; focused45, full595 PASS/1 environment skip separately covered; actual synthetic owner export and real
+    missing-profile blocking verified.
+  code_candidate: 4f4b82226f4da828bf5f7051723658eeab2c1231
+  evidence: execution/issue-203-verification.json
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/206
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -50,10 +53,11 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: ISSUE-189-PIN-QUALIFICATION
+last_completed_task: PROFILE-ROOT-FORWARD-001
 resume_from:
-  task: ISSUE-189-PIN-QUALIFICATION
-  action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
+  task: AAK-13
+  action: Promote AAK13 with verified Project6 PR12 evidence and claim isolated parent/child branches; AAK05 approval remains
+    pending.
   command: .venv/bin/python tools/project_status.py --format json
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
@@ -85,7 +89,7 @@ takeover:
     be observed from GitHub.
   branch: codex/aak-takeover-issue-189-20260906
 integration_preparation:
-  upstream_candidate: dac8de8e475875979d19cdf0a74c247a2fdec6cb
+  upstream_candidate: 956867afebd68b7be45b3873556f6a7ce8f0132e
   issue193_code: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
   native_project_reader: PASS after wrapped-scalar regression repair
   scope: normal merge of qualified upstream; original task checkpoint retained
