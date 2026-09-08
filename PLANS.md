@@ -1,6 +1,8 @@
 # Execution Plans
 
-Active prerequisite: [Issue193 attested projection](docs/issue-193-execution.md).
+Active prerequisite: [Issue189 pin qualification and takeover](docs/issue-189-execution.md).
+
+Issue193 code candidate is preserved in [its execution evidence](docs/issue-193-execution.md); main integration and live AAK-02 acceptance remain separate.
 
 ## AAK：自律制作と累積知識の追加系列
 

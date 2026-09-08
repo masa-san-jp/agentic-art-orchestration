@@ -1,43 +1,41 @@
-version: 215
-updated_at: '2026-09-06T15:55:43.091639+00:00'
+version: 217
+updated_at: '2026-09-06T15:56:37.493251+00:00'
 active_task: null
 active_repository: null
 lease:
   status: available
-  owner: codex-aak-integration-20260907
-  acquired_at: '2026-09-06T15:49:57.108420+00:00'
-  expires_at: null
-  lane: AAK_INTEGRATION
-  execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260907
+  owner: codex-aak-takeover-20260906
+  acquired_at: '2026-09-06T06:19:31+00:00'
+  expires_at: '2026-09-06T07:32:17.897652+00:00'
+  lane: AAK_PREREQUISITE
+  execution_id: ISSUE-189-PIN-QUALIFICATION:20260906
   scope:
     repository: agentic-art-orchestration
-    branch: agent/issue-193-attested-projection
+    branch: codex/aak-takeover-issue-189-20260906
     paths:
-    - tools/public_projection.py
+    - config/repositories.yaml
+    - tests/**
     - tools/release_check.py
-    - tests/test_canonical_plan_projection.py
-    - tests/test_release_check.py
-    - docs/issue-193-execution.md
+    - execution/**
     - README.md
     - PLANS.md
-    - execution/**
+    - docs/issue-189-execution.md
     child_repositories: []
-  released_at: '2026-09-06T15:55:43.091639+00:00'
-  published_commit: 20173b6c378fb876308a619ca13b90891297f2a8
-  publication_verification: Exact remote SHA confirmed by git ls-remote after normal fast-forward push, before release.
+  released_at: '2026-09-06T06:51:53.410902+00:00'
+  published_commit: 7110c1f07d0196a679d4aa6af17e5c75b1270839
+  publication_verification: git ls-remote exact SHA; normal branch push, no merge
 checkpoint:
-  task: PUBLIC-PROJECTION-ATTESTATION-001
-  prerequisite: agentic-art-production#60
+  task: ISSUE-189-PIN-QUALIFICATION
   repository: agentic-art-orchestration
-  branch: agent/issue-193-attested-projection
-  start_point: ecfa00f71957c4c04e052ea3a7574f042c8ab6f0
+  start_point: b107b6db84c58e2fed4a952b7cf693211c7cf377
   status: CODE_VERIFIED
-  result: Native Project parser failure reproduced and repaired. PR205 serialization delta integrated; binary history scan
-    retained. Standalone full588 PASS/1 environment skip, independently covered by actual Research dry-run. Project13/Production63
-    real-code synthetic boundary PASS. Published checkpoint verified before lease release.
-  integration_status: NOT_RUN
-  code_candidate: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
-  evidence: execution/issue-193-integration-verification.json
+  expected_changes: Qualify four stale runtime pins in the configured six-repository workspace; preserve historical provenance;
+    repair restart metadata and binary-history scan.
+  result: AC1..3 PASS; qualified four pin updates, 16 child gates, synthetic exchange, actual 6-repo guard and full 588 PASS
+    with 2 environment skips; isolated boundary tests cover those paths.
+  evidence: execution/issue-189-qualification.json
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/204
+  code_candidate: 7110c1f07d0196a679d4aa6af17e5c75b1270839
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -52,34 +50,46 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: PUBLIC-PROJECTION-ATTESTATION-001
+last_completed_task: ISSUE-189-PIN-QUALIFICATION
 resume_from:
-  task: AAK-05
-  action: Await human approval for registration-only Self Model PR94; final downstream integration checkpoint is recorded
-    separately in PR207. Do not claim from an unregistered trusted base.
-  command: python3 tools/agent_runtime.py tools/task_harness.py next --json
-previous_projection_lease:
-  status: held
-  owner: codex-aak-repair
-  acquired_at: '2026-09-05T04:27:59+00:00'
-  expires_at: null
-  lane: AAK_IMPLEMENTATION
-  execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260905
-  scope:
-    repository: agentic-art-orchestration
-    paths:
-    - README.md
-    - AGENTS.md
-    - PLANS.md
-    - docs/**
-    - config/**
-    - schemas/**
-    - tools/**
-    - tests/**
-    - execution/**
-    child_repositories:
-    - agentic-art-production
-    - agentic-art-project
+  task: ISSUE-189-PIN-QUALIFICATION
+  action: Register and claim existing Issue203 profile-root forwarding on a separate stacked branch.
+  command: .venv/bin/python tools/project_status.py --format json
+takeover:
+  source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
+  source_branch: agent/issue-193-attested-projection
+  previous_lease:
+    status: held
+    owner: codex-aak-repair
+    acquired_at: '2026-09-05T04:27:59+00:00'
+    expires_at: null
+    lane: AAK_IMPLEMENTATION
+    execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260905
+    scope:
+      repository: agentic-art-orchestration
+      paths:
+      - README.md
+      - AGENTS.md
+      - PLANS.md
+      - docs/**
+      - config/**
+      - schemas/**
+      - tools/**
+      - tests/**
+      - execution/**
+      child_repositories:
+      - agentic-art-production
+      - agentic-art-project
+  authority: Explicit user request to take over interrupted implementation, 2026-09-06
+  isolation: New clone and separate branch; original branch and lease record unchanged. Remote agent process liveness cannot
+    be observed from GitHub.
+  branch: codex/aak-takeover-issue-189-20260906
+integration_preparation:
+  upstream_candidate: dac8de8e475875979d19cdf0a74c247a2fdec6cb
+  issue193_code: 4b41f6da2b73e23de1c0a439aebc77f8d78c8247
+  native_project_reader: PASS after wrapped-scalar regression repair
+  scope: normal merge of qualified upstream; original task checkpoint retained
+  main_integration: NOT_RUN
 
 workspace_bootstrap_apply:
   status: complete

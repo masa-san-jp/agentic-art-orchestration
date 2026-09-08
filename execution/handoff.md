@@ -1,25 +1,28 @@
-# Issue193 candidate requalified (2026-09-07)
+# PR204 upstream integration prepared (2026-09-07)
 
-Code 4b41f6da2b73e23de1c0a439aebc77f8d78c8247 incorporates the PR205
-flat-scalar correction and validates with Project native readers instead of
-PyYAML. Standalone588 PASS (1 independently covered Research skip); combined
-downstream595 PASS. Evidence: execution/issue-193-integration-verification.json.
-Production63/Project13 are qualified unmerged candidates. Old Project11 failure
-is historical. Publish checkpoint before lease release; propagate through the
-existing PR204/206/207 chain. No main merge or actual catalog migration occurred.
+Qualified upstream `dac8de8e475875979d19cdf0a74c247a2fdec6cb` is merged normally into this
+candidate branch. Issue193 native Project parser correction and binary history
+verification are retained. Original task checkpoint follows; main integration
+and AAK02 live acceptance remain NOT_RUN. No force push or default-branch change.
 
-# AAK04 candidate ready-state repair (2026-09-07)
+# Interrupted AAK takeover — Issue189 qualified (2026-09-06)
 
-AAK04 code 83f7e9e8d1c6e25b39351aebb6eb15cb12da4685 is unchanged.
-Explicit AAK05/07 blocker reasons restore status validation; the historical
-AAK13 claim is no longer active in this earlier PR snapshot. Its takeover was
-already published/released in PR207 at b52067085fa2a49a6fe1f0c78648cbfb06a6b910.
-AAK13 remains BACKLOG here; later owner results remain in downstream PR207.
-Next native task is AAK05 after registration-only PR94 human approval/merge.
-Verification after state repair: validator and diff check PASS; 33 instance/profile,
-status and documentation tests PASS (30.698s). Feature code is unchanged from the
-previous qualified AAK04 candidate (580 full tests PASS, one environment skip).
-No feature gate, schema, user data or default branch was changed.
+The authorized isolated continuation is `codex/aak-takeover-issue-189-20260906`,
+stacked draft PR204 on PR202. Code/evidence commit `7110c1f07d0196a679d4aa6af17e5c75b1270839` was verified on remote before lease release. The original shared checkout and original branch
+lease remain unchanged. Runtime qualification and restart metadata are repaired:
+16 native child gates and synthetic exchange PASS; four stale pins adopted;
+actual six-repository guard PASSED. Parent 588 tests PASS (2 environment skips,
+covered separately with explicit owner checkouts). Canonical temp paths and
+binary-safe history scanning retain the existing safety gates.
+
+Evidence: `execution/issue-189-qualification.json`, `docs/issue-189-execution.md`.
+This is code qualification, not AAK-02 live acceptance. Real run now reaches
+Issue203: parent cannot forward the external Self Model profile root. Register
+and claim existing #203 after publishing this task and releasing its lease.
+AAK-05 still requires human-approved registration PR94 merge; AAK-07 has its
+native dependency gate; Project6 actual migration remains human-gated. No real
+profile, public artifact, child domain data, inferred preference or secret changed.
+Earlier entries below are historical evidence, not the current resume point.
 
 # AAK owner implementation checkpoint (2026-09-05)
 
@@ -2266,3 +2269,10 @@ AAK-04の旧PR #201はまだ完全受入未達であり、AAK-05へ先行しな�
 ### Next exact action
 
 1. 人間がdraft PR #188のauthority境界、公開target transaction、local snapshot prerequisiteを確認し、merge可否を判断する。
+
+
+## 2026-09-06 — authorized isolated takeover / Issue #189
+
+The user requested takeover of the interrupted AAK implementation. The full remote history at b107b6db84c58e2fed4a952b7cf693211c7cf377 was cloned without changing the prior branch. Its held lease is retained in takeover.previous_lease, not treated as expired. A separate branch owns only this isolated continuation. No assertion is made about the old agent process being terminated.
+
+Git network/keyring access and canonical repository-local pip setup work. project_status rejected the saved state: unknown resume task, active task already DONE, and two BLOCKED tasks missing reasons. The existing #189 prerequisite is registered, current ownership is recorded, and native blocker reasons are restored. No acceptance is promoted. Next: qualify Research main with immutable owner gates. No child data, private content, external artifact, merge or publication changed. Explicit feedback: take over implementation; inferred feedback: none.
