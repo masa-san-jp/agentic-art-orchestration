@@ -1,9 +1,145 @@
-# PR206 upstream integration prepared (2026-09-07)
+# AAK11 qualified — 2026-09-08
 
-Qualified upstream `956867afebd68b7be45b3873556f6a7ce8f0132e` is merged normally into this
+Production PR65 code `2e2d702d671fcbd822b9c0b6188b3bad9f099771`: five synthetic AC, 8 focused / 120 full tests, validator and six native evaluation checks PASS. Native knowledge reuse and retraction affected-target proof passed. AAK02 live / main integration remain NOT_RUN. Publish this checkpoint before lease release, then claim AAK02 in its prepared isolated clone.
+
+# AAK10 qualified — 2026-09-08
+
+Production PR64 code `5095fb3c4b8836848979acfe51891295501d127f`: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical plans and native attestation verified. AAK02 live and main integration NOT_RUN. 次はAAK11。専用cloneを準備済み、ネイティブ登録・claim後に実装する。
+
+# AAK09 qualified — 2026-09-08
+
+Research PR96 code `046c2380310d208ca52cbca461c95c798328b599`: 5 synthetic AC / 9 focused / 307 full tests / native gates PASS。親の次工程はProduction AAK10。Production60 PR63 `69567e88131e3f033d010791fb5849e1b2ebff8d`のattestationを再利用し、媒体別の制作可能性を追加する。AAK02 liveとmain統合は未実施。
+
+# AAK-07 qualification — 2026-09-08
+
+AAK07の5 synthetic AC / 57 full tests / native agent-verifyとcompletion validatorはPASS。PR87 code `7be3d5ff495a91f3ce75159c96e9fc0ec383aa57`、証跡はexecution/aak-07-owner-verification.json。次はAAK09のResearch候補branchへ登録・claimして固有性と累積知識を接続する。main統合とAAK02 liveは未実施。
+
+# AAK-07 resumed — 2026-09-08
+
+Issue196の証跡同期とClosed処理は承認・完了済み。Marketing86は実契約と依存確認後に正規claim済み（actor masa-san-jp）。AAK07の取込・履歴・鮮度・exportを実装中。以下の承認待ち記録は過去の履歴で、現在のblockerではない。
+
+# Parent198–201 merged; AAK07 issue-state synchronization pending (2026-09-08)
+
+All four user-approved merges completed. Exact merge commits: execution/aak-07-resume.json.
+PR201 had no Closes keyword, so Issue196 remains OPEN despite verified code on main.
+Automatic approval review rejected checking its five accepted AC items, adding
+merge evidence and closing it as outside the explicit four-merge authorization.
+A specific user approval request is pending; do not work around this rejection.
+The prepared issue body is in local aak04-issue196-completion.md. Marketing PR87
+is isolated and preflight passes; native Issue86 remains pending without writes.
+After approval, synchronize196 then validate real86/dependency before ready/claim.
+
+# AAK05 checkpoint published and parent lease released
+
+Parent checkpoint b59859cd1a3ff7953b67f932c3ade0add6bfee71 and owner PR95
+head c158f7edec3e79833f1dfe876bd62be9d2405317 were verified on remote.
+Parent validator and status/docs19 PASS. Parent lease is available; the Self
+Model native remote lock is retained until accepted feature merge and release.
+AAK07 is next, subject to the already-requested parent integration approval.
+
+# AAK05 qualified (2026-09-07)
+
+Owner PR95 code 765b1a3833602c8d9740dd584211e4ae88795f3d has 5 synthetic AC PASS, 12 focused/173 full
+tests PASS, native complete and trusted-base policy PASS. Actual parent artifact/receipt
+schema validation PASS. Existing legacy/raw profile is untouched; real migration #82
+and AAK02 live six-run acceptance remain NOT_RUN. Owner remote lock remains until
+accepted feature merge and native release. Evidence: execution/aak-05-owner-verification.json.
+
+Next: AAK07. The approval request is for the agent to merge verified parent
+198 → 199 → 200 → 201, not for the user to operate GitHub. Until approval arrives,
+do not infer consent or manually mark parent196 closed/Marketing agent-ready.
+Older registration blockers below are historical.
+
+# AAK05 implementation resumed (2026-09-07)
+
+PR94 was merged by the user at 68267f39d79b75d8a5ac64d5892b258b2588dc08.
+SM-036 native remote claim succeeded. Owner PR95 implements five synthetic AC;
+173 full tests PASS. Finish native completion/policy and publish owner evidence.
+The previous registration blocker below is historical, not current.
+
+# Integration preparation completed (2026-09-07)
+
+Published checkpoint9c87e23 was verified on remote before lease release.
+Post-publication audit: zero errors, only intentionally stale synthetic Marketing.
+Current PR202 CI has zero steps (account payment/spending-limit restriction).
+
+PR201 head3e56c96 repairs missing blocker reasons and obsolete active lease.
+PR202 headdac8de8 fixes long asset YAML scalar wrapping and uses native Project
+readers in actual Production-parent-Project tests. Standalone588 PASS; final
+combined595 PASS. PR204/206/207 now inherit the exact tested code via normal merges.
+Parent191/205 and Project9/11 are closed as superseded; all branches are preserved.
+No default branch was merged. Exact heads, logs, replacement mapping and human
+boundaries: execution/aak-integration-readiness.json.
+
+Next executable task requires explicit human approval of registration-only Self
+Model PR94; a concrete asynchronous approval request is pending. Its full161 tests
+pass, but native claim requires main registration and trusted-base verify-pr
+currently returns TASK_NOT_FOUND. Do not fake main, edit gates or infer approval.
+After approved merge, fetch clean owner main and run native validate/next/claim
+SM-036. Parent201 reviewed merge completes Issue196 for Marketing's native gate;
+AAK09/10/11 depend on unfinished05/07. AAK02 live six runs remain NOT_RUN.
+
+Earlier checkpoint text below is history. Keep parent code integration, actual
+Project12 catalog migration, main merges and AAK02 artistic acceptance separate.
+GitHub Actions is blocked before steps by account billing; settings unchanged.
+
+# PR207 upstream integration prepared (2026-09-07)
+
+Qualified upstream `6501108a42b46eb1354bf034fcc6890c6a6ae2a8` is merged normally into this
 candidate branch. Issue193 native Project parser correction and binary history
 verification are retained. Original task checkpoint follows; main integration
 and AAK02 live acceptance remain NOT_RUN. No force push or default-branch change.
+
+# AAK13 delivered; implementation paused at native human/dependency gates (2026-09-06)
+
+Parent checkpoint [PR207](https://github.com/masa-san-jp/agentic-art-orchestration/pull/207)
+was normally pushed and its exact remote SHA verified before lease release.
+Post-publication audit has only the intentionally stale synthetic Marketing fixture
+warning, zero errors and no parent-SSOT finding. GitHub catalog CI is blocked
+before steps by account payments/spending limits; local PASS is not remote CI PASS.
+
+Owner Project PR13: code `d3347e3177cf23c58a415c301760e9452246e965`,
+published evidence head `2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da`,
+base PR12 `8e4c90b701c82bfe14964dbbe6a0aba62342fcef`.
+AC1..5 synthetic PASS; native full32, validator/catalog, schema/examples and
+actual Production-parent-Project boundary PASS. Parent full595 PASS with one
+sibling-Research environment skip, independently covered with the actual owner.
+Evidence: `execution/aak-13-owner-verification.json`; full13 status and exact refs:
+`execution/aak-takeover-report.json`. P0004 canonical bytes/unknown artist unchanged.
+
+Next task AAK05 is BLOCKED: registration-only Self Model PR94 is still OPEN,
+draft and mergeable; user approval to merge has been asked and is still pending.
+Do not infer consent from elapsed time. After authorized merge, fetch owner main
+in the isolated Self Model checkout and run
+`python3 tools/agent_runtime.py tools/task_harness.py next --json`, then use the
+native trusted-base claim for SM-036. Read owner AGENTS §9 before claim.
+AAK07 remains blocked by native upstream CLOSED check (parent196 OPEN).
+AAK09/10/11 depend on those tasks; AAK02 live 3 modes × 2 runs is NOT_RUN.
+Do not close upstream or apply agent-ready to bypass its acceptance gate.
+
+Parent branch `codex/aak-13-owner-checkpoint-20260906` is stacked on PR206;
+PR206 on PR204; PR204 preserves the previous PR202 candidate. Separate PR205 is
+another session's main-based replacement; no integration/rebase was performed.
+Owner PR13 is independently stacked on Project12. Preserve all original/shared
+worktrees and previous leases. No merge, release, real-data migration, real profile,
+Drive artifact or inferred preference was performed. Only synthetic local data
+and metadata evidence were used. Main integration and live artistic acceptance
+must be reported separately from these qualified candidates.
+
+Earlier sections below are historical checkpoints.
+
+# AAK13 claimed on isolated owner candidate (2026-09-06)
+
+Parent branch `codex/aak-13-owner-checkpoint-20260906`; child branch
+`codex/aak-13-catalog-lineage-20260906`, base Project12
+`8e4c90b701c82bfe14964dbbe6a0aba62342fcef`. Issue10 and pinned AAK13 specification
+are the requirements. Parent state owns this isolated lease; Project has no native
+queue/claim CLI. No other AAK13 PR is observed. Validate canonical metadata/body,
+add attribution/index/read-only references with synthetic fixtures, and preserve
+unknown authors and existing IDs. Do not edit actual canonical plan bytes.
+
+AAK05 registration approval remains pending. Other session's PR205/Project12
+work is preserved; main integration and AAK02 live acceptance remain separate.
 
 # Issue203 code verified; AAK13 prerequisite updated (2026-09-06)
 

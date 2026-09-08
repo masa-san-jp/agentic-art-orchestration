@@ -1,0 +1,77 @@
+{
+  "task": "AAK-13",
+  "observed_at": "2026-09-06T07:42:54.354523+00:00",
+  "owner": "agentic-art-project",
+  "code_candidate": "d3347e3177cf23c58a415c301760e9452246e965",
+  "owner_published_head": "2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+  "owner_evidence": "https://github.com/masa-san-jp/agentic-art-project/blob/2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da/docs/aak-13-evidence.json",
+  "acceptance": {
+    "AAK-13-AC1": "PASS_SYNTHETIC",
+    "AAK-13-AC2": "PASS_SYNTHETIC",
+    "AAK-13-AC3": "PASS_SYNTHETIC",
+    "AAK-13-AC4": "PASS_SYNTHETIC",
+    "AAK-13-AC5": "PASS_SYNTHETIC"
+  },
+  "owner_verification": {
+    "actual_production_parent_project_boundary": "1 PASS in 4.289s",
+    "catalog_sync": "PASS",
+    "diff_check": "PASS",
+    "focused": "12 PASS",
+    "full": "32 PASS in 5.221s",
+    "native_validator": "PASS",
+    "schemas_and_examples": "3 PASS"
+  },
+  "parent_verification": {
+    "full_suite": "595 tests PASS in 244.664s; 1 sibling-Research environment skip independently covered with actual owner dry-run",
+    "native_validator": "PASS",
+    "project_status_and_docs": "19 PASS after final state/docs update",
+    "workspace_status": "6/6 clean, ahead=behind=0; qualified manifest pins",
+    "audit": {
+      "status": "FINDINGS",
+      "error_count": 0,
+      "findings": [
+        "freshness: intentionally stale synthetic marketing:trend-001 fixture"
+      ],
+      "parent_ssot_unpushed_finding": false,
+      "observed_commit": "590a7ec6d3e4fd585a1d7c6a0dff0fd0cb6f620e"
+    }
+  },
+  "full_log_sha256": "ed4d9f01b45851250a0a3cf5a555a10234146e139613b8aef01933000372aa05",
+  "synthetic_git_reference_proof": {
+    "first_knowledge_commit": "e32bbc1a9b386ec607a48434dde814d5b5d4e51e",
+    "fork_knowledge_commit": "5c938770cac4c0cb43b9aad4afa9fd7cb45e9355",
+    "repeat_export": "IDENTICAL_NO_WRITES",
+    "git_object_hash_resolution": "PASS",
+    "storage": "local retained temporary Git stores, not remotely durable knowledge stores"
+  },
+  "current_catalog": {
+    "blocked": [
+      {
+        "record_id": "P0004",
+        "status": "UNKNOWN_ATTRIBUTION"
+      }
+    ],
+    "canonical_plan_body_unchanged": true,
+    "status": "BLOCKED"
+  },
+  "main_integration": "NOT_RUN",
+  "aak02_live_acceptance": "NOT_RUN",
+  "safety": {
+    "real_data_migration": false,
+    "merge": false,
+    "external_artifact": "NONE",
+    "public_projection_write": false,
+    "private_raw": "NONE",
+    "explicit_feedback": "user-authorized takeover",
+    "inferred_feedback": "NONE"
+  },
+  "remote_ci": {
+    "status": "FAILED_BEFORE_STEPS",
+    "job_url": "https://github.com/masa-san-jp/agentic-art-project/actions/runs/34019734720/job/101449966437",
+    "steps": [],
+    "reason": "GitHub account payments/spending-limit blocker; no job started",
+    "counted_as_quality_gate": false
+  },
+  "parent_checkpoint_pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207"
+}

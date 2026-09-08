@@ -1,6 +1,6 @@
 {
   "kind": "takeover evidence summary; not a requirements SSOT",
-  "observed_at": "2026-09-06T07:07:09.302565+00:00",
+  "observed_at": "2026-09-07T21:34:49.360638+00:00",
   "specification_and_plan_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "prior_evidence_policy": "Retain owner-qualified synthetic acceptance and candidate commits from queue/owner PRs. Do not claim all owner AAK suites were newly rerun during this takeover. Main qualification covers manifest pins, not these unmerged feature candidates.",
   "tasks": [
@@ -35,10 +35,11 @@
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/199",
       "observed_pr": null,
       "integration_status": "NOT_RUN",
-      "merge_status": "NOT_MERGED",
+      "merge_status": "MERGED",
       "blocker": null,
       "dependencies": [],
-      "external_dependencies": []
+      "external_dependencies": [],
+      "merge_commit": "cb020f54b9218f5103024a3b4ee8077ebff2c490"
     },
     {
       "task": "AAK-02",
@@ -122,12 +123,13 @@
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/200",
       "observed_pr": null,
       "integration_status": "NOT_RUN",
-      "merge_status": "NOT_MERGED",
+      "merge_status": "MERGED",
       "blocker": null,
       "dependencies": [
         "AAK-01"
       ],
-      "external_dependencies": []
+      "external_dependencies": [],
+      "merge_commit": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6"
     },
     {
       "task": "AAK-04",
@@ -163,63 +165,71 @@
         }
       },
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/201",
-      "observed_pr": null,
+      "observed_pr": {
+        "head": "3e56c96c562f91318c44f8d70ff9924c2533a71d",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
-      "merge_status": "NOT_MERGED",
+      "merge_status": "MERGED",
       "blocker": null,
       "dependencies": [
         "AAK-03"
       ],
       "external_dependencies": [
         "https://github.com/masa-san-jp/agentic-art-orchestration/issues/190"
-      ]
+      ],
+      "merge_commit": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
     },
     {
       "task": "AAK-05",
       "issue": "https://github.com/masa-san-jp/self-model-notes/issues/93",
       "owner": "self-model-notes",
-      "queue_status": "BLOCKED",
-      "code_status": "PREREQUISITE_ONLY",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-05-AC1": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC2": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC3": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC4": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         },
         "AAK-05-AC5": {
-          "status": "NOT_RUN",
-          "candidate_commit": "3eae099917bffa7b816d5cac296b98f3c736a4bc",
-          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/94"
+          "status": "PASS",
+          "mode": "synthetic",
+          "reference": "https://github.com/masa-san-jp/self-model-notes/pull/95",
+          "candidate_commit": "765b1a3833602c8d9740dd584211e4ae88795f3d"
         }
       },
-      "pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/94",
+      "pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/95",
       "observed_pr": {
-        "repo": "self-model-notes",
-        "number": 94,
-        "url": "https://github.com/masa-san-jp/self-model-notes/pull/94",
-        "state": "open",
+        "number": 95,
+        "state": "OPEN",
         "draft": true,
-        "merged": false,
-        "head": "9b5e8875fb983ddabdea81fd9992e9ca42b16150"
+        "head": "c158f7edec3e79833f1dfe876bd62be9d2405317"
       },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
-      "blocker": "Native trusted-base registration gate: SM-036 TASK_NOT_FOUND at main a61460d4f9add36b256b2db9a860c53a98bd5fcd. Registration PR only; functional acceptance NOT_RUN.",
+      "blocker": null,
       "dependencies": [
         "AAK-04"
       ],
@@ -280,32 +290,32 @@
       "task": "AAK-07",
       "issue": "https://github.com/masa-san-jp/marketing-trends-notes/issues/86",
       "owner": "marketing-trends-notes",
-      "queue_status": "BLOCKED",
-      "code_status": "PREREQUISITE_ONLY",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-07-AC1": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC2": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC3": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC4": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         },
         "AAK-07-AC5": {
-          "status": "NOT_RUN",
-          "candidate_commit": "26684f9f433f4616a31258cdeabc422151b5ae84",
+          "status": "PASS",
+          "candidate_commit": "7be3d5ff495a91f3ce75159c96e9fc0ec383aa57",
           "reference": "https://github.com/masa-san-jp/marketing-trends-notes/pull/87"
         }
       },
@@ -321,7 +331,7 @@
       },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
-      "blocker": "Native claim requires closed dependencies; parent196 remains open. URL identity prerequisite repaired and 44 tests PASS; actual intake AC1..4 NOT_RUN. No agent-ready label or gate bypass.",
+      "blocker": null,
       "dependencies": [
         "AAK-04"
       ],
@@ -382,26 +392,36 @@
       "task": "AAK-09",
       "issue": "https://github.com/masa-san-jp/agentic-art-research/issues/94",
       "owner": "agentic-art-research",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-09-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         }
       },
-      "pull_request": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/96",
       "observed_pr": null,
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
@@ -418,27 +438,42 @@
       "task": "AAK-10",
       "issue": "https://github.com/masa-san-jp/agentic-art-production/issues/61",
       "owner": "agentic-art-production",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-10-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         }
       },
-      "pull_request": null,
-      "observed_pr": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/64",
+      "observed_pr": {
+        "head": "ee1c86d3977a29e2b388d0f1a0201defa0088664",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
       "blocker": null,
@@ -453,27 +488,42 @@
       "task": "AAK-11",
       "issue": "https://github.com/masa-san-jp/agentic-art-production/issues/62",
       "owner": "agentic-art-production",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-11-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "2e2d702d671fcbd822b9c0b6188b3bad9f099771",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/65"
         },
         "AAK-11-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "2e2d702d671fcbd822b9c0b6188b3bad9f099771",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/65"
         },
         "AAK-11-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "2e2d702d671fcbd822b9c0b6188b3bad9f099771",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/65"
         },
         "AAK-11-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "2e2d702d671fcbd822b9c0b6188b3bad9f099771",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/65"
         },
         "AAK-11-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "2e2d702d671fcbd822b9c0b6188b3bad9f099771",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/65"
         }
       },
-      "pull_request": null,
-      "observed_pr": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/65",
+      "observed_pr": {
+        "head": "75e793c8ec968da5cd5bec7bfa6aa988dcfeaf6f",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
       "blocker": null,
@@ -537,27 +587,47 @@
       "task": "AAK-13",
       "issue": "https://github.com/masa-san-jp/agentic-art-project/issues/10",
       "owner": "agentic-art-project",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-13-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         },
         "AAK-13-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+          "reference": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+          "evidence_kind": "synthetic real-Git fixtures; docs/aak-13-evidence.json"
         }
       },
-      "pull_request": null,
-      "observed_pr": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+      "observed_pr": {
+        "head": "2a25872cc9446ce499d3d59b3c01aa6d2cb3e9da",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
       "blocker": null,
@@ -601,6 +671,19 @@
       "evidence": "execution/issue-203-verification.json",
       "code_commit": "4f4b82226f4da828bf5f7051723658eeab2c1231",
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/206"
+    },
+    "aak13": {
+      "status": "CODE_VERIFIED",
+      "code_commit": "d3347e3177cf23c58a415c301760e9452246e965",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/13",
+      "evidence": "execution/aak-13-owner-verification.json",
+      "parent_checkpoint_pr": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/207"
+    },
+    "issue193_repair": {
+      "status": "CODE_VERIFIED",
+      "code_commit": "4b41f6da2b73e23de1c0a439aebc77f8d78c8247",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/202",
+      "evidence": "execution/issue-193-integration-verification.json"
     }
   },
   "aak02_live_acceptance": {
@@ -635,7 +718,7 @@
   },
   "safety": {
     "original_worktree": "UNCHANGED",
-    "previous_remote_branch_and_lease": "PRESERVED",
+    "previous_remote_branch_and_lease": "Original history preserved; existing PR branches advanced by normal fast-forward pushes during integration preparation.",
     "real_profile_read": false,
     "real_data_migration": false,
     "merge": false,
@@ -665,12 +748,14 @@
       "number": 205,
       "title": "fix: project only owner-attested complete production plans",
       "url": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/205",
-      "state": "open",
+      "state": "closed",
       "draft": true,
       "head": "be600cc00bfb787a9e525b1976d1898144d2e158",
       "branch": "agent/issue-193-attested-projection-v2",
       "base": "main",
-      "merged": false
+      "merged": false,
+      "superseded_by": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/202",
+      "resolution": "Flat scalar delta integrated with native reader regression; branch preserved"
     }
   ],
   "project6_updated_qualification": {
@@ -682,7 +767,7 @@
     "full_tests": "20 PASS in 0.033s",
     "actual_parent_production_project_boundary": "PASS in 4.356s",
     "integration": "qualified unmerged candidate; old PR11 migration failure is historical, not the current prerequisite blocker",
-    "next_task": "AAK-13"
+    "next_task": "AAK-13 now CODE_VERIFIED in Project PR13"
   },
   "separate_plan_observation": {
     "source": "parallel owner Project PR12, not an AAK02 run by this continuation",
@@ -690,5 +775,45 @@
     "body_sha256": "b6d103079c84ab1b6e9f6a12fe00346ca1f17300a38bda2ee201a4f792ffdc5f",
     "byte_length": 28216,
     "aak02_acceptance": "NOT_COUNTED"
+  },
+  "remaining_gates": [
+    {
+      "task": "AAK-05",
+      "issue": "self-model-notes#93",
+      "cause": "Feature PR95 is locally qualified; no longer an implementation blocker",
+      "required_action": "Human-approved feature merge then native lock release; code candidate usable under owner dependency rules",
+      "status": "CODE_VERIFIED_AWAITING_MERGE"
+    },
+    {
+      "task": "AAK-07",
+      "issue": "marketing-trends-notes#86",
+      "cause": "AAK04 merged; Issue196 still OPEN; auto-review rejected evidence/close synchronization as outside merge approval",
+      "required_action": "Approve specific Issue196 evidence update and close; assistant performs operations",
+      "status": "AWAITING_EXPLICIT_ISSUE_COMPLETION_APPROVAL"
+    },
+    {
+      "task": "AAK-09/10/11",
+      "cause": "AAK05 now qualified; AAK07 remains unimplemented, then AAK09/10/11 in DAG order",
+      "status": "NOT_RUN"
+    },
+    {
+      "task": "AAK-02",
+      "cause": "Final owner implementations and live three-mode/two-run evidence remain incomplete",
+      "status": "NOT_RUN"
+    }
+  ],
+  "remote_ci": {
+    "status": "FAILED_BEFORE_STEPS",
+    "job_url": "https://github.com/masa-san-jp/agentic-art-orchestration/actions/runs/34043839485/job/101515244028",
+    "reason": "Repaired PR202 job has zero steps due to account payment/spending-limit restrictions",
+    "local_validation": "Standalone588 and combined595 PASS; not remote CI PASS"
+  },
+  "integration_preparation": "execution/aak-integration-readiness.json",
+  "aak05_qualification": "execution/aak-05-owner-verification.json",
+  "approved_parent_merges": {
+    "198": "a4540c2eec482c09ac3b893418470495296a0244",
+    "199": "cb020f54b9218f5103024a3b4ee8077ebff2c490",
+    "200": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6",
+    "201": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
   }
 }

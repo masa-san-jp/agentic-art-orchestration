@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-09-07T21:34:49.360638+00:00",
+  "authorization": "User approved the assistant merging parent198 through201: お任せします",
+  "merged": {
+    "198": "a4540c2eec482c09ac3b893418470495296a0244",
+    "199": "cb020f54b9218f5103024a3b4ee8077ebff2c490",
+    "200": "4d3e897eb6e48ea6d323fbaef3bff7213fc939e6",
+    "201": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c"
+  },
+  "issue196": "CLOSED; qualified candidate merged in main f3dbc46d49861dd3c77b8cb387e25ff4414e974c",
+  "blocked_action": null,
+  "automatic_review": "Rejected: issue update/close was considered outside the four-PR merge authorization",
+  "approval": "Issue196 completion authorized and automatic review approved; applied successfully",
+  "marketing": "PR87 isolated branch prepared; native preflight PASS; Issue86 pending and no claim/ready label was changed",
+  "next_operation": "Finish native AAK07 intake/export checks and publish qualified candidate PR87",
+  "current_status": "IN_PROGRESS",
+  "resolved_dependency": {
+    "issue": 196,
+    "state": "CLOSED",
+    "merge_commit": "f3dbc46d49861dd3c77b8cb387e25ff4414e974c",
+    "completion_authorization": "User reiterated completion instruction after concrete evidence/closure approval request; automatic review approved retry."
+  },
+  "claim": {
+    "issue": 86,
+    "status": "in-progress",
+    "actor": "masa-san-jp",
+    "native_retry": "exit 0; same actor already claimed",
+    "branch": "agent/aak-07-research-intake",
+    "base_commit": "26684f9f433f4616a31258cdeabc422151b5ae84"
+  }
+}
