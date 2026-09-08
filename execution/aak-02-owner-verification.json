@@ -57,28 +57,31 @@
         "agent": "/root/live_resume",
         "workspace": "/private/tmp/aak02-live-20260908/resume",
         "run_ids": [
-          "resume-one",
-          "resume-two"
+          "resume-qualified-one",
+          "resume-qualified-two"
         ],
-        "status": "IN_PROGRESS"
+        "status": "IN_PROGRESS",
+        "superseded_run_id": "resume-one"
       },
       "new-clone": {
         "agent": "/root/live_new_clone",
         "workspace": "/private/tmp/aak02-live-20260908/new-clone",
         "run_ids": [
-          "new-clone-one",
-          "new-clone-two"
+          "new-clone-qualified-one",
+          "new-clone-qualified-two"
         ],
-        "status": "IN_PROGRESS"
+        "status": "IN_PROGRESS",
+        "superseded_run_id": "new-clone-one"
       },
       "fork": {
         "agent": "/root/live_fork",
         "workspace": "/private/tmp/aak02-live-20260908/fork",
         "run_ids": [
-          "fork-one",
-          "fork-two"
+          "fork-qualified-one",
+          "fork-qualified-two"
         ],
-        "status": "IN_PROGRESS"
+        "status": "IN_PROGRESS",
+        "superseded_run_id": "fork-one"
       }
     }
   },
@@ -94,5 +97,32 @@
     "aak02-write-clock-tests.log": "1df7fa048c13737187f55a784df8ae6fc023c430c9f0598aa3dd5457878db4ce",
     "aak02-research-boundary.json": "0b70539ea215bcb5320f941ace95188dcfa7bfd9b53a5f1bef9cebc1610587f7"
   },
-  "updated_at": "2026-09-08T01:59:00.435038+00:00"
+  "updated_at": "2026-09-08T01:59:00.435038+00:00",
+  "native_research_repair": {
+    "code_candidate": "465aa4c940aa93912739d22de2c994a4ba342f4b",
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/97",
+    "base_candidate": "c221d59f23cfcc15a3fa22e8ca98292f17409373",
+    "observed_failure": "Role write targets omitted required brief/categories; cumulative local input paths rejected; derived output changed input snapshot.",
+    "verification": {
+      "focused": "55 PASS",
+      "full": "311 PASS;257.998s",
+      "validator": "PASS",
+      "security": "PASS",
+      "docs": "PASS",
+      "chaos": "PASS",
+      "graph": "PASS",
+      "harness": "11 scenarios PASS",
+      "release": "PASS; historical CI evidence is not new CI attestation",
+      "handoff": "PASS"
+    },
+    "log_sha256": {
+      "aak02-research-authoring-full.log": "bfcc13bd4fbdb59f72e6afd77d9c4ab0e41b39b90690437079e6bdc76699321c",
+      "aak02-research-authoring-handoff.json": "7649f8f1536c028cffd6afffd0af7aba66a98197791599b3e26a02d5c8a9a012",
+      "aak02-research-authoring-focused.log": "b732582e88d4a6adb85ec860e97543baa3666478d485b911234a38fb3183a27d",
+      "aak02-research-authoring-harness.log": "9b48bb68cc143a348c5b3f389d4609714a261a29e3517ccb5191978e96ce5b99",
+      "aak02-research-authoring-focused-final.log": "a480edfdae36c34b71e22ed8ce380d9a6486a699eb433952d6d46988c0a2c0d6",
+      "aak02-research-authoring-release.log": "16019b9410127a4df02efcbb204d5b087dfa0da15e389253d221f44fe6304926"
+    },
+    "migration": "Original incomplete runs retained; new qualified-one/two runs use repaired Research pin and native accepted actual-source setup snapshots."
+  }
 }

@@ -1718,7 +1718,7 @@ tasks:
         status: PASS
         candidate_commit: f10a4f187966d1d2602a03410e8b3c9aa31fb22e
         contract_version: artifact-record/v1
-        acceptance_evidence: execution/aak-06-owner-verification.json
+        acceptance_evidence: execution/aak-takeover-report.json
         reference: https://github.com/masa-san-jp/art-history-notes/issues/386
       AAK-07:
         status: PASS
@@ -1742,7 +1742,7 @@ tasks:
         status: PASS
         candidate_commit: ca2fbe2cb66ed771486e60159431a670721be3e7
         contract_version: artifact-record/v1
-        acceptance_evidence: execution/aak-12-owner-verification.json
+        acceptance_evidence: execution/aak-takeover-report.json
         reference: https://github.com/masa-san-jp/viewer-response-notes/issues/6
       AAK-13:
         status: PASS
