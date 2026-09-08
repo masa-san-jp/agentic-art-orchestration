@@ -1,14 +1,14 @@
-version: 237
-updated_at: '2026-09-08T00:46:41.825799+00:00'
-active_task: null
+version: 238
+updated_at: '2026-09-08T00:47:29.786047+00:00'
+active_task: AAK-11
 active_repository: agentic-art-production
 lease:
   status: held
-  owner: codex-aak10-resume-20260908
-  acquired_at: '2026-09-08T00:18:10.731273+00:00'
-  expires_at: '2026-09-08T02:18:10.731273+00:00'
+  owner: codex-aak11-resume-20260908
+  acquired_at: '2026-09-08T00:47:29.786047+00:00'
+  expires_at: '2026-09-08T02:47:29.786047+00:00'
   lane: AAK_IMPLEMENTATION
-  execution_id: AAK-10:20260908
+  execution_id: AAK-11:20260908
   scope: &id001
     repository: agentic-art-orchestration
     branch: codex/aak-13-owner-checkpoint-20260906
@@ -18,15 +18,14 @@ lease:
     - PLANS.md
     child_repositories:
     - agentic-art-production
-  published_commit: f208c8a7f15a3e66d41554371561005d2e12a7cf
-  publication_verification: AAK09 published and released; native AAK10 maintenance task registered and claimed.
+  published_commit: 898222fe2f01ef2b71511efc4d69ff15102a171c
+  publication_verification: AAK10 exact remote verified before release; AAK11 native queue registered.
 checkpoint:
-  task: AAK-10
+  task: AAK-11
   repository: agentic-art-production
-  status: CODE_VERIFIED
-  result: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical
-    plans and native attestation verified. AAK02 live and main integration NOT_RUN.
-  evidence: execution/aak-10-owner-verification.json
+  status: IN_PROGRESS
+  result: Native queue/ExecPlan claim on agent/aak-11-production-memory; base ee1c86d3977a29e2b388d0f1a0201defa0088664; implement
+    conditional native knowledge capture/reuse.
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -48,23 +47,23 @@ resume_from:
   action: Register and claim native AAK11; connect observations/result to owner Git and conditional plan reuse
   command: git switch -c agent/aak-11-production-memory
 previous_checkpoint:
-  task: AAK-09
-  repository: agentic-art-research
+  task: AAK-10
+  repository: agentic-art-production
   status: CODE_VERIFIED
-  result: 5 synthetic AC PASS, 9 focused / 307 full tests and native gates PASS. Native Marketing07 artifact and Research
-    memory continuation verified. Main and AAK02 live NOT_RUN.
-  evidence: execution/aak-09-owner-verification.json
+  result: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical
+    plans and native attestation verified. AAK02 live and main integration NOT_RUN.
+  evidence: execution/aak-10-owner-verification.json
   released_lease:
     status: released
-    owner: codex-aak09-resume-20260908
-    acquired_at: '2026-09-07T22:15:35.211333+00:00'
-    expires_at: '2026-09-08T00:15:35.211333+00:00'
+    owner: codex-aak10-resume-20260908
+    acquired_at: '2026-09-08T00:18:10.731273+00:00'
+    expires_at: '2026-09-08T02:18:10.731273+00:00'
     lane: AAK_IMPLEMENTATION
-    execution_id: AAK-09:20260908
+    execution_id: AAK-10:20260908
     scope: *id001
-    published_commit: f208c8a7f15a3e66d41554371561005d2e12a7cf
-    publication_verification: Normal push and exact remote SHA confirmed before AAK09 release.
-    released_at: '2026-09-08T00:18:10.731273+00:00'
+    published_commit: 898222fe2f01ef2b71511efc4d69ff15102a171c
+    publication_verification: AAK09 published and released; native AAK10 maintenance task registered and claimed.
+    released_at: '2026-09-08T00:47:29.786047+00:00'
 
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
