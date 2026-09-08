@@ -5,8 +5,8 @@
   "code_candidate": "f940b561dec92cb4f4757010bfce5e30fe34f5bd",
   "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/208",
   "code_status": "CODE_VERIFIED",
-  "integration_status": "NATIVE_ACCEPTANCE_COMPLETE",
-  "main_integration": "NOT_MERGED",
+  "integration_status": "MERGED",
+  "main_integration": "MERGED",
   "acceptance": {
     "AAK-02-AC1": "PASS",
     "AAK-02-AC2": "PASS",
@@ -122,7 +122,7 @@
     "aak02-write-clock-tests.log": "1df7fa048c13737187f55a784df8ae6fc023c430c9f0598aa3dd5457878db4ce",
     "aak02-research-boundary.json": "0b70539ea215bcb5320f941ace95188dcfa7bfd9b53a5f1bef9cebc1610587f7"
   },
-  "updated_at": "2026-09-08T03:22:33.407410+00:00",
+  "updated_at": "2026-09-08T04:32:06.440312+00:00",
   "native_research_repair": {
     "code_candidate": "2304261b0c009b9f8690f2d5afbd76a53304c8a9",
     "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/97",
@@ -163,5 +163,8 @@
       "actual_plan_copy": "Six native plans independently revalidated PASS with the repaired pin; all six are PLAN_READY with findings=[]"
     },
     "preserved_policy": "Required CONCEPT/VISUAL/METHOD categories remain available; nonblocking reference gaps need method checks; unsafe URLs and hashes still validated."
-  }
+  },
+  "main_merge_commit": "ad5d2699b3d6066d1b455cdefdd40e5d47ad2566",
+  "main_merge_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/208",
+  "main_merged_at": "2026-09-08T04:28:53Z"
 }

@@ -35,7 +35,7 @@ AC1 and AC2 are PASS from the six-run matrix. AC3, AC4 and AC5 remain PASS from 
 Run/profile/snapshot binding, stage hash verification, atomic state, finite lease and retry policy. Preserve native successful commits on index/other-owner failure.
 
 ## Interfaces and Dependencies
-AAK05/06/07/09/11/12/13 and parent189/193/187 qualified candidates; current native commands remain authoritative. Public delivery and merge retain human gates.
+AAK05/06/07/09/11/12/13 and parent189/193/187 qualified candidates; current native commands remain authoritative. Implementation merge is complete in parent PR208; public delivery retains human gates.
 
 ## Integration observations (2026-09-08)
 
@@ -43,6 +43,10 @@ Native bootstrap/query passed all eight real owner CLIs with explicit synthetic 
 
 Parent candidate 2057ccca19a6bc9ae5ce86863abaf0aad811f211 passed 602 full tests (one Research environment skip independently passed against the actual candidate). A native Marketing prepare probe reproduced FUTURE_OBSERVATION with the initial run clock and VALID with the actual write clock. The integration now records immutable per-operation write clocks separately from the initial search clock; requalify this delta before final acceptance.
 
-Frozen f940 runtime executed three actual LLM-agent pairs under `/private/tmp/aak02-live-20260908`. Independent revalidation reports six of six native runs PASS, with six `PLAN_READY` plans and six committed Research/Production receipt pairs. PR208 preserves the implementation. The run evidence records resume, new-clone and fork attribution separately; the fork did not contact its upstream remote, and no physical work, viewer observation, Drive artifact or public projection occurred.
+Frozen f940 runtime executed three actual LLM-agent pairs under `/private/tmp/aak02-live-20260908`. Independent revalidation reports six of six native runs PASS, with six `PLAN_READY` plans and six committed Research/Production receipt pairs. PR208 merged the implementation to parent main as `ad5d2699b3d6066d1b455cdefdd40e5d47ad2566`. The run evidence records resume, new-clone and fork attribution separately; the fork did not contact its upstream remote, and no physical work, viewer observation, Drive artifact or public projection occurred.
 
 Actual agents found a Research role-authoring dead end, local locator conflict and derived-output snapshot cycle. Separate owner PR97 at `2304261b0c009b9f8690f2d5afbd76a53304c8a9` repairs only those contracts; Research full `313 PASS`, focused/export and native gates PASS. Production PR66 at `cd1af443821e826e7f41b6effd608767dea4366e` repairs the internal-reference actionability boundary; Production full `121 PASS`, focused and native gates PASS. All original attempts remain preserved and excluded from the accepted matrix. Parent runtime remains frozen at f940.
+
+## Main integration (2026-09-08)
+
+The accepted child changes and the parent dependency chain are integrated. Viewer AAK-12 used replacement PR8 because the original feature history had no common ancestor with viewer `main`; PR8 passed the full local suite (18 tests) and merged as `0c198ec38629fb032f778071e35f265286f6566f`. Parent PR202, 204, 206, 207 and 208 merged in order; parent main is `ad5d2699b3d6066d1b455cdefdd40e5d47ad2566`.

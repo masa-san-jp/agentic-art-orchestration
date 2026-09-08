@@ -1003,8 +1003,12 @@
     "plan_status": "PASS: six PLAN_READY plans",
     "knowledge_status": "PASS: six COMMITTED cycles with Research/Production receipts; five other owners explicitly NO_NEW_EVIDENCE per run",
     "projection_status": "SKIPPED: no public projection authorized",
-    "integration_status": "NATIVE_ACCEPTANCE_COMPLETE",
-    "main_integration": "NOT_MERGED"
+    "integration_status": "MERGED",
+    "main_integration": "MERGED",
+    "main_merge_commit": "ad5d2699b3d6066d1b455cdefdd40e5d47ad2566",
+    "main_merge_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/208",
+    "main_merged_at": "2026-09-08T04:28:53Z"
   },
-  "unresolved": []
+  "unresolved": [],
+  "updated_at": "2026-09-08T04:32:06.440312+00:00"
 }
