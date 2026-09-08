@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: e8424f0877d9c08c908fa0a9e44a98b9813f7af5
+    observed_commit: a61460d4f9add36b256b2db9a860c53a98bd5fcd
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:
@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: 9a35dd74d53c756e5b509e1b0d8d217c53a71e37
+    observed_commit: 71bfec77ea0d189186b8248565d340c124b81eab
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
@@ -159,7 +159,7 @@ repositories:
     role: control-plane-extension
     authority: production handoff acceptance, planning, prototype, execution, installation, acceptance, and production result feedback
     default_branch: main
-    observed_commit: e1bb0deb4c28489a881ef663a3d2a8d974c5b295
+    observed_commit: 9d125fb87be133f5e73e61e04e23c0a3bfafb462
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/10
     quality_gates:
@@ -199,7 +199,7 @@ repositories:
     role: input-kb
     authority: aggregate viewer response records, privacy boundary, and conservative requirement assessments
     default_branch: feat/viewer-response-contracts
-    observed_commit: 205eeeb8dd03e29e2b4628e00bcf69738b77f973
+    observed_commit: 78b6e9a87831eca5a5c20993374b61b8cc61bd0d
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/2
     quality_gates:

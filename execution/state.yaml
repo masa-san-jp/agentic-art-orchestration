@@ -1,29 +1,29 @@
-version: 204
-updated_at: "2026-09-04T18:34:08+09:00"
+version: 205
+updated_at: "2026-09-06T00:00:00+09:00"
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: null
-  acquired_at: "2026-09-04T18:24:48+09:00"
-  expires_at: "2026-09-04T20:00:00+09:00"
+  acquired_at: "2026-09-06T00:00:00+09:00"
+  expires_at: "2026-09-06T00:00:00+09:00"
   lane: AUTONOMY_READINESS
-  execution_id: PARENT-ENTRYPOINT-HARDENING-001:20260904-182448
-  released_at: "2026-09-04T18:34:08+09:00"
+  execution_id: PIN-REQUALIFICATION-20260905-001:20260906-000000
+  released_at: "2026-09-06T00:00:00+09:00"
   scope:
     repository: agentic-art-orchestration
-    paths: [.gitignore, AGENTS.md, README.md, docs/20260811-agentic-art-orchestration-system-design-specification.md, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md, PLANS.md]
+    paths: [config/repositories.yaml, execution/state.yaml, execution/task-queue.yaml, execution/handoff.md]
     child_repositories: []
 checkpoint:
-  task: PARENT-ENTRYPOINT-HARDENING-001
+  task: PIN-REQUALIFICATION-20260905-001
   repository: agentic-art-orchestration
-  start_point: 07cbbe0b6ba83d7b8638d9e86b732db40198222c
-  expected_changes: State the exact agent-harness purpose and observable production-plan requirements in the parent entrypoints, and keep generated run state from dirtying a shared checkout.
-  result: completed; parent purpose, requirements, and generated run-state boundary were hardened by implementation commit ccdf897756c6a2d630e9687362071cb1d7ef94ed and merged by PR #184 as df76b2f4826c3621f2b0fccabe4a6fc249179a52; lease released.
-last_completed_task: PARENT-ENTRYPOINT-HARDENING-001
+  start_point: 5de256017df862001721729f8b2f390753c15b02
+  expected_changes: Re-qualify drifted manifest pins against real child mains in an isolated worktree/branch, adopt only if all child quality gates and Production exchange pass, and drive a real tools/run.py attempt to find and record the next real blocker toward a production plan.
+  result: "completed; requested via user goal to produce a new production plan following the harness. Isolated git worktree/branch was used because another agent session held an active (later expired) lease with uncommitted changes on agent/issue-187-auto-plan-projection-20260904 in the shared checkout; this task never edited that branch or working tree. qualify_pin_update.py PASSED with per-child provisioned venvs (6/6 repositories, 16 gates PASSED; Production exchange PASSED) and was applied, adopting self-model, agentic-art-research, agentic-art-production, and viewer-response-notes observed_commit. A real tools/run.py --workspace-root run then reached self-model signal ingest and stopped: self-model-notes has migrated to an external --profile-root contract (self-model-profile/v1) that tools/ingest_signals.py does not forward, so real self-model export was correctly refused rather than fabricated. Filed as agentic-art-orchestration#203 and PROFILE-ROOT-FORWARD-001 (BACKLOG). A new production plan was produced instead via the documented --offline-fixture path (PLAN_READY, fixture-labeled per docs/agent-runtime-guide.md)."
+last_completed_task: PIN-REQUALIFICATION-20260905-001
 resume_from:
-  task: null
-  action: "Verify the final parent main and issue/PR state before handoff."
+  task: PROFILE-ROOT-FORWARD-001
+  action: "Claim PROFILE-ROOT-FORWARD-001 and add --profile-root forwarding in tools/ingest_signals.py without fabricating any self-model profile content."
   command: python3 tools/validate.py --check
 
 workspace_bootstrap_apply:

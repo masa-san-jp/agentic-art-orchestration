@@ -1552,3 +1552,18 @@ tasks:
     checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, python3 tools/project_status.py --check-readme, python3 -m py_compile tools/*.py tests/*.py, git diff --check]
     completion: "Implementation commit ccdf897756c6a2d630e9687362071cb1d7ef94ed was merged to parent main by PR #184 as df76b2f4826c3621f2b0fccabe4a6fc249179a52. AGENTS.md now makes the exact harness purpose and README requirements authoritative; README.md states usable production-plan, multi-plan, autonomous-continuation, and art-versus-AI requirements; the system design specification records the same purpose boundary; .gitignore excludes generated data/runs/. Parent validator, full unittest 535 tests with 1 skipped, project-status README check, py_compile, and git diff --check PASS. Remote run 33858927901 failed before steps with steps=[] because of the account billing limit and is not counted as a quality-gate pass. No child repository, schema/data/pin, credential, private data, raw conversation, or external artifact changed. Acceptance 1/1."
     stop_if: [The purpose or production-plan acceptance must be weakened, generated run state must be committed as canonical evidence, a child/schema/data/pin/credential/external artifact change is required]
+
+  - id: PROFILE-ROOT-FORWARD-001
+    milestone: M31
+    title: Forward an explicit self-model profile root through parent signal ingest
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/203
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    lane: AUTONOMY_READINESS
+    interaction_blocking: false
+    user_artifact_policy: READ_ONLY
+    depends_on: []
+    acceptance: tools/ingest_signals.py accepts an optional --profile-root and forwards it to the self-model export call; without it, real self-model export is not attempted and a stable BLOCKED/fixture path is returned instead of fabricated data; tools/run.py can pass --profile-root through unchanged; the offline-fixture path is unaffected.
+    checks: [python3 tools/validate.py --check, python3 -m unittest discover -s tests -v, git diff --check]
+    stop_if: [A self-model profile root path or content must be guessed or fabricated, A child schema/data/pin must change]
