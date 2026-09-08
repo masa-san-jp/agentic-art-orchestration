@@ -1,7 +1,7 @@
-version: 242
-updated_at: '2026-09-08T01:59:00.435038+00:00'
-active_task: AAK-02
-active_repository: agentic-art-orchestration
+version: 244
+updated_at: '2026-09-08T03:25:37.546758+00:00'
+active_task: null
+active_repository: null
 lease:
   status: held
   owner: codex-aak02-resume-20260908
@@ -26,12 +26,12 @@ lease:
 checkpoint:
   task: AAK-02
   repository: agentic-art-orchestration
-  status: IN_PROGRESS
-  result: 'AAK02 f940 code qualified: 602 tests PASS, one environment skip independently passed. PR208 saved. Actual synthetic-profile
-    resume/new-clone/fork agents are executing two runs each.'
+  status: NATIVE_ACCEPTANCE_COMPLETE
+  result: 'Six actual LLM-agent runs under a synthetic profile completed: resume/new-clone/fork x2, all PLAN_READY and COMMITTED with second-run knowledge adoption. Real Masa profile, physical work, viewer observations and public projection remain NOT_RUN.'
   code_candidate: f940b561dec92cb4f4757010bfce5e30fe34f5bd
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/208
-  evidence: execution/aak-02-owner-verification.json
+  evidence: execution/aak-02-live-acceptance.json
+  evidence_sha256: ffeecc500b2cc3d71af975ed145b6656d6bb84a35030a14979e653210e04acfd
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -46,13 +46,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-11
+last_completed_task: AAK-02
 resume_from:
   task: AAK-02
   repository: agentic-art-orchestration
-  action: Read actual-agent cycle checkpoints and finish six live runs; inspect plan hashes, native receipts and adopted second-run
-    decisions
-  command: .venv/bin/python tools/run.py --cycle-context "$AAK_CYCLE_CONTEXT" --state-root "$AAK_CYCLE_STATE_ROOT"
+  action: Review native acceptance evidence, then review/merge draft PRs under existing human gates; do not perform merge automatically.
+  command: cat execution/aak-02-live-acceptance.json
 previous_checkpoint:
   task: AAK-11
   repository: agentic-art-production

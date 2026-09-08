@@ -1,10 +1,10 @@
-AAK-02 execution: [docs/aak-02-execution.md](docs/aak-02-execution.md). All owner candidates are qualified; final live integration is in progress.
+AAK-02 execution: [docs/aak-02-execution.md](docs/aak-02-execution.md). All owner candidates are qualified; the six-run native integration acceptance is complete under the synthetic profile, with merge and public projection still human-gated.
 
 Integration preparation evidence: [execution/aak-integration-readiness.json](execution/aak-integration-readiness.json). PR201/202 repaired and propagated through204/206/207; duplicate alternatives closed with branch history retained. Native AAK05 registration PR94 is merged; feature PR95 is code verified.
 
 # Execution Plans
 
-AAK-05 is CODE_VERIFIED in [Self Model PR95](https://github.com/masa-san-jp/self-model-notes/pull/95): 5 synthetic acceptance conditions, 173 tests, native lifecycle and trusted-base policy pass. AAK-13 remains qualified in Project PR13. Parent PR198–201 have now merged with user approval. AAK-07 is CODE_VERIFIED in Marketing PR87 (5 synthetic AC, 57 full tests, native completion PASS); AAK-09 is CODE_VERIFIED in Research PR96 (5 synthetic AC, 307 full tests, native gates PASS); AAK-10 and AAK-11 are CODE_VERIFIED in Production PR64/65; AAK-02 is active; AAK-02 live six-run integration remains NOT_RUN. Current evidence and resume point are in execution/state.yaml and execution/aak-05-owner-verification.json.
+AAK-05 is CODE_VERIFIED in [Self Model PR95](https://github.com/masa-san-jp/self-model-notes/pull/95): 5 synthetic acceptance conditions, 173 tests, native lifecycle and trusted-base policy pass. AAK-13 remains qualified in Project PR13. Parent PR198–201 have now merged with user approval. AAK-07 is CODE_VERIFIED in Marketing PR87 (5 synthetic AC, 57 full tests, native completion PASS); AAK-09 is CODE_VERIFIED in Research PR96 (5 synthetic AC, 307 full tests, native gates PASS); AAK-10 and AAK-11 are CODE_VERIFIED in Production PR64/65; AAK-02 native acceptance is complete: resume, new-clone and fork each have two actual LLM-agent runs with `PLAN_READY` plans, committed Research/Production receipts and second-run adoption traces. The real Masa profile, physical work, viewer observations and public projection remain NOT_RUN. Evidence is in [execution/aak-02-live-acceptance.json](execution/aak-02-live-acceptance.json); merge state remains separate in execution/state.yaml and the owner verification report.
 
 [Issue203 profile-root forwarding](docs/issue-203-execution.md) is CODE_VERIFIED in draft PR206.
 

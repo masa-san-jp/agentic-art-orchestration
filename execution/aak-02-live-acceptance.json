@@ -1,0 +1,1010 @@
+{
+  "task": "AAK-02",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/197",
+  "specification_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
+  "code_candidate": "f940b561dec92cb4f4757010bfce5e30fe34f5bd",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/208",
+  "classification": "ACTUAL_LLM_AGENT_WITH_SYNTHETIC_PROFILE",
+  "generated_at": "2026-09-08T03:22:06.635370+00:00",
+  "acceptance": {
+    "AAK-02-AC1": "PASS",
+    "AAK-02-AC2": "PASS",
+    "AAK-02-AC3": "PASS_REGRESSION",
+    "AAK-02-AC4": "PASS_REGRESSION",
+    "AAK-02-AC5": "PASS",
+    "AAK-02-AC6": "PASS"
+  },
+  "matrix": {
+    "required_modes": [
+      "resume",
+      "new-clone",
+      "fork"
+    ],
+    "runs_per_mode": 2,
+    "completed_native_runs": 6,
+    "status": "PASS_NATIVE_REVALIDATION",
+    "independent_inspection": "/private/tmp/aak02-live-native-inspection.json"
+  },
+  "code_pins": {
+    "agentic-art-orchestration": "f940b561dec92cb4f4757010bfce5e30fe34f5bd",
+    "agentic-art-research": "2304261b0c009b9f8690f2d5afbd76a53304c8a9",
+    "agentic-art-production": "cd1af443821e826e7f41b6effd608767dea4366e"
+  },
+  "run_evidence_files": {
+    "resume": {
+      "path": "/private/tmp/aak02-live-20260908/resume/acceptance-evidence.json",
+      "sha256": "2ef8fc39d2e016b8922f282cb96a6d2997b5533602c70e36b9f3715283704517"
+    },
+    "new-clone": {
+      "path": "/private/tmp/aak02-live-20260908/new-clone/acceptance-evidence.json",
+      "sha256": "7429e91508eeba98427e4df9ff9a5bb1a051375c517b3467ffc91001963a282e"
+    },
+    "fork": {
+      "path": "/private/tmp/aak02-live-20260908/fork/acceptance-evidence.json",
+      "sha256": "c73f4bacaf0406336e4b107879dedab9cdf2b035cbd6f5b2ffd43be7b15ee5d5"
+    }
+  },
+  "runs": [
+    {
+      "mode": "resume",
+      "run_id": "resume-final-one",
+      "status": "COMPLETED",
+      "native_revalidation": "PASS_NATIVE_REVALIDATION",
+      "creator_id": "synthetic-resume-creator",
+      "origin_instance_id": "synthetic-resume-instance",
+      "plan_status": "PLAN_READY",
+      "knowledge_status": "COMMITTED",
+      "projection_status": "SKIPPED",
+      "stop_reason": null,
+      "plan": "/private/tmp/aak02-live-20260908/resume/internal/production/resume-final-one/03_plan/production-plan.md",
+      "artifacts": {
+        "03_plan/production-plan.md": "bb2ea8121279d120afc47d925c55a8232d4a39e17292d1d3e0597ed9afca7bac",
+        "03_plan/production-plan.yaml": "4d6b52ac24ab1f29e7e50a4ae3bffbc67bf292c2606e6fce30becebedf1dd817",
+        "02_specification/production-method.yaml": "d2e2256771175bdbd7ce21cc6d7ca25649a19dca56db8800cb6ea09233a4f7fa",
+        "00_handoff/production-handoff.yaml": "0b218ad8b950dea365f72fb0729577355e12ff4086e60b9c7a2ef901bfe84888",
+        "03_plan/media/concept-mockup.svg": "5ebe35c68fb08b81ba2ce8b2ac37f23b5c6177ccc84c11359ca9e22cbf62b276",
+        "03_plan/media/visual-reference-board.svg": "9b966f634f5e0e78e167503f80ce93d422bbf8e93edea60861d5e9fe69a87e0f"
+      },
+      "owner_verification": {
+        "contract_version": "plan-actionability/v1",
+        "method_sha256": "sha256:990fdafe6dd789d0d32ae7cb268516bbcfad7921097287ff7ac5414b90af52db",
+        "plan_status": "PLAN_READY",
+        "findings": [],
+        "first_task_id": "TK001",
+        "external_effects_authorized": false
+      },
+      "cycle_state": {
+        "path": "/private/tmp/aak02-live-20260908/resume/state/knowledge-cycles/resume-final-one/cycle.json",
+        "sha256": "2dc6ea76f951a9f29cc86fe7d7dd2603b3452df0df77bc21c161657b409db66a"
+      },
+      "receipts": {
+        "agentic-art-production": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "production-memory/v1",
+          "policy_version": "production-memory-policy/v1",
+          "run_id": "resume-final-one",
+          "accepted_ids": [
+            "resume-final-one-omission-procedure"
+          ],
+          "rejected_ids": [],
+          "target_parent": "c519484a82c9b4563e8a00ae7d9ff4e081789d2c",
+          "target_commit": "ac47938bdc84338a4e8faab1b94848d289d7ee07",
+          "index_commit": "ac47938bdc84338a4e8faab1b94848d289d7ee07",
+          "index_hash": "ab439009213fd7b1ad84867583002a01d4f99c5bd869ead08ba9a2724adbd2fe",
+          "operation_id": "resume-final-one-agentic-art-production"
+        },
+        "agentic-art-research": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "research-memory/v1",
+          "policy_version": "research-memory/v1",
+          "run_id": "resume-final-one",
+          "accepted_ids": [
+            "resume-final-one-research"
+          ],
+          "rejected_ids": [],
+          "target_parent": "a5703a4c33c6bb3de2e0f7220f0c85dea1d80af5",
+          "target_commit": "04b232359ac89dcbda9c003e4fe39c47491477cd",
+          "index_commit": "04b232359ac89dcbda9c003e4fe39c47491477cd",
+          "index_hash": "5ea3b38706abf3b7c35dba56935c678d28a7ffaebe73cdc29b8f80620abece0f",
+          "operation_id": "resume-final-one-agentic-art-research"
+        }
+      },
+      "query_refs": {
+        "agentic-art-orchestration": {
+          "owner": "agentic-art-orchestration",
+          "snapshot": "4aaea43e0eb84eca8c3bba0377619961b1de90b0",
+          "query_hash": "3cf8f74d707c650ece8558efa364f15258ad525e6fc72065c963a26715c876a2",
+          "result_hash": "2541671e29a6f60e07168083c81a142dd587469c2a419d638a826fd27db52fa3",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-orchestration/cycle-queries/resume-final-one-4aaea43e0eb84eca8c3bba0377619961b1de90b0-e837e844011a.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "agentic-art-production": {
+          "owner": "agentic-art-production",
+          "snapshot": "c519484a82c9b4563e8a00ae7d9ff4e081789d2c",
+          "query_hash": "91112dc5189dc05ef7dcb4c5f89aaff58e16a8a3d28f871aa2212c3869216ae3",
+          "result_hash": "bc83e6ef0a73b4ec9511f549959accde9835efe098901cf5f0b002fae1c85026",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-production/cycle-queries/resume-final-one-c519484a82c9b4563e8a00ae7d9ff4e081789d2c-7d9c19f0c5a1.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "agentic-art-project": {
+          "owner": "agentic-art-project",
+          "snapshot": "e32bbc1a9b386ec607a48434dde814d5b5d4e51e",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "e8a664c9751b40ab9adb406b5d1ca84ac518a68f737721264f7475837d282f7a",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-project/cycle-queries/resume-final-one-e32bbc1a9b386ec607a48434dde814d5b5d4e51e-00b4e10d6743.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "agentic-art-research": {
+          "owner": "agentic-art-research",
+          "snapshot": "a5703a4c33c6bb3de2e0f7220f0c85dea1d80af5",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "b98ba3b0b95b9702278a4c6998d79d40fc1835c465dd412e25eeda72bbb53a8d",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-research/cycle-queries/resume-final-one-a5703a4c33c6bb3de2e0f7220f0c85dea1d80af5-00b4e10d6743.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "art-history-notes": {
+          "owner": "art-history-notes",
+          "snapshot": "c9ae701bf080e8d4bcb11c16532c50b00f497fa6",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "a9c7ae18ad3ab71a1515cbb24f2931cf8f36b626c8187ba06b337d9a2ecaf651",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/art-history-notes/cycle-queries/resume-final-one-c9ae701bf080e8d4bcb11c16532c50b00f497fa6-00b4e10d6743.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "marketing-trends-notes": {
+          "owner": "marketing-trends-notes",
+          "snapshot": "c5020fbf6252ab64aa5f3fe0e2b46aec2620cab5",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "b5a85688828f1b8e10d6022dabf7c0637f885075d1597fdab0403457e07efc40",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/marketing-trends-notes/cycle-queries/resume-final-one-c5020fbf6252ab64aa5f3fe0e2b46aec2620cab5-00b4e10d6743.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "self-model-notes": {
+          "owner": "self-model-notes",
+          "snapshot": "c912d81109a43be144f2075ed1284591600b1a80",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "0a0b41209033df16ee76c6150f5b6adb65a8be80bd059f57d3963d819079e17a",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/self-model-notes/cycle-queries/resume-final-one-c912d81109a43be144f2075ed1284591600b1a80-00b4e10d6743.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        },
+        "viewer-response-notes": {
+          "owner": "viewer-response-notes",
+          "snapshot": "496c26592ff4a6f7fe18e25372df44786b7bbe11",
+          "query_hash": "7ff2255aa12151f10753b91844dd13716bdcf00be65b004aee905a03a011ce00",
+          "result_hash": "80ff42bde6b596b530412d2cdc883b6bd267de2fb92d69fd7a45eb351f199270",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/viewer-response-notes/cycle-queries/resume-final-one-496c26592ff4a6f7fe18e25372df44786b7bbe11-fecde6dd557a.json",
+          "evaluated_at": "2026-09-08T02:27:32.101265+00:00"
+        }
+      },
+      "adoption": {
+        "research": [],
+        "production": [],
+        "continuation_accepted": false
+      },
+      "source_payload_re_read": true
+    },
+    {
+      "mode": "resume",
+      "run_id": "resume-final-two",
+      "status": "COMPLETED",
+      "native_revalidation": "PASS_NATIVE_REVALIDATION",
+      "creator_id": "synthetic-resume-creator",
+      "origin_instance_id": "synthetic-resume-instance",
+      "plan_status": "PLAN_READY",
+      "knowledge_status": "COMMITTED",
+      "projection_status": "SKIPPED",
+      "stop_reason": null,
+      "plan": "/private/tmp/aak02-live-20260908/resume/internal/production/resume-final-two/03_plan/production-plan.md",
+      "artifacts": {
+        "03_plan/production-plan.md": "66e30546394d14301dd993d37464212791db49fd7204647ed8c786dd84afe20a",
+        "03_plan/production-plan.yaml": "93b155c300dcd9aa04b3d859429f34eb5215d9567b9ef774b7f92e3de387d4f3",
+        "02_specification/production-method.yaml": "03ebae25b85a04f4c46b7f592caa307f53cd8a417116cb618a07ff06c14e2ae0",
+        "00_handoff/production-handoff.yaml": "85aafb34cc5865b97058d6d49f6e1dc95d330fafbe5f14e099f002e884c1664f",
+        "03_plan/media/concept-mockup.svg": "f84ba2bcb69fbda8a02bc4d60a51e8f1ab3853d5ce1ba383da5078254ee609db",
+        "03_plan/media/visual-reference-board.svg": "2fa11b9151e7bbe0798de6590b9858a0cc3f580e877badcaa895b9413205288d"
+      },
+      "owner_verification": {
+        "contract_version": "plan-actionability/v1",
+        "method_sha256": "sha256:d652a742abf29c13a18b434a6115145d760b02a823fb6cadc522e1da828a4711",
+        "plan_status": "PLAN_READY",
+        "findings": [],
+        "first_task_id": "TK001",
+        "external_effects_authorized": false
+      },
+      "cycle_state": {
+        "path": "/private/tmp/aak02-live-20260908/resume/state/knowledge-cycles/resume-final-two/cycle.json",
+        "sha256": "9bb78355c622e805a13bb5dcb666d3304d5cc5077d46380d13be762dc3b7b6ea"
+      },
+      "receipts": {
+        "agentic-art-production": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "production-memory/v1",
+          "policy_version": "production-memory-policy/v1",
+          "run_id": "resume-final-two",
+          "accepted_ids": [
+            "resume-final-two-omission-procedure"
+          ],
+          "rejected_ids": [],
+          "target_parent": "ac47938bdc84338a4e8faab1b94848d289d7ee07",
+          "target_commit": "147666032508ff299d7d7f7e84ceade1771dcc67",
+          "index_commit": "147666032508ff299d7d7f7e84ceade1771dcc67",
+          "index_hash": "947564549e5100ec593700f3e3e3498619fe085b761b32aa4a94d2bbce114ba0",
+          "operation_id": "resume-final-two-agentic-art-production"
+        },
+        "agentic-art-research": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "research-memory/v1",
+          "policy_version": "research-memory/v1",
+          "run_id": "resume-final-two",
+          "accepted_ids": [
+            "resume-final-two-research"
+          ],
+          "rejected_ids": [],
+          "target_parent": "04b232359ac89dcbda9c003e4fe39c47491477cd",
+          "target_commit": "caaf7b406c049e721767974ca374dd2df4cdedce",
+          "index_commit": "caaf7b406c049e721767974ca374dd2df4cdedce",
+          "index_hash": "13f52b493f301dcf783f9a8a40ddea5e89c66667d3a420a031b5ffcc01c539aa",
+          "operation_id": "resume-final-two-agentic-art-research"
+        }
+      },
+      "query_refs": {
+        "agentic-art-orchestration": {
+          "owner": "agentic-art-orchestration",
+          "snapshot": "4aaea43e0eb84eca8c3bba0377619961b1de90b0",
+          "query_hash": "3cf8f74d707c650ece8558efa364f15258ad525e6fc72065c963a26715c876a2",
+          "result_hash": "2541671e29a6f60e07168083c81a142dd587469c2a419d638a826fd27db52fa3",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-orchestration/cycle-queries/resume-final-two-4aaea43e0eb84eca8c3bba0377619961b1de90b0-7c5c46799657.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "agentic-art-production": {
+          "owner": "agentic-art-production",
+          "snapshot": "ac47938bdc84338a4e8faab1b94848d289d7ee07",
+          "query_hash": "891abbb64cfd1a7b548db82cc54143fb215f6482753b69a12e474929c95fcfc8",
+          "result_hash": "036cf2947f7c64f575b15c1c57a640582dcba22f305dffdca8514ec08235369f",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-production/cycle-queries/resume-final-two-ac47938bdc84338a4e8faab1b94848d289d7ee07-cb6e11e0e31b.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "agentic-art-project": {
+          "owner": "agentic-art-project",
+          "snapshot": "e32bbc1a9b386ec607a48434dde814d5b5d4e51e",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "e8a664c9751b40ab9adb406b5d1ca84ac518a68f737721264f7475837d282f7a",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-project/cycle-queries/resume-final-two-e32bbc1a9b386ec607a48434dde814d5b5d4e51e-805d1df4d596.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "agentic-art-research": {
+          "owner": "agentic-art-research",
+          "snapshot": "04b232359ac89dcbda9c003e4fe39c47491477cd",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "815fa4d428cb2c98a8433e6cbffbf01ef589bc638bbb8dab268f59bb7c1445e6",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/agentic-art-research/cycle-queries/resume-final-two-04b232359ac89dcbda9c003e4fe39c47491477cd-805d1df4d596.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "art-history-notes": {
+          "owner": "art-history-notes",
+          "snapshot": "c9ae701bf080e8d4bcb11c16532c50b00f497fa6",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "a9c7ae18ad3ab71a1515cbb24f2931cf8f36b626c8187ba06b337d9a2ecaf651",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/art-history-notes/cycle-queries/resume-final-two-c9ae701bf080e8d4bcb11c16532c50b00f497fa6-805d1df4d596.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "marketing-trends-notes": {
+          "owner": "marketing-trends-notes",
+          "snapshot": "c5020fbf6252ab64aa5f3fe0e2b46aec2620cab5",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "b5a85688828f1b8e10d6022dabf7c0637f885075d1597fdab0403457e07efc40",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/marketing-trends-notes/cycle-queries/resume-final-two-c5020fbf6252ab64aa5f3fe0e2b46aec2620cab5-805d1df4d596.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "self-model-notes": {
+          "owner": "self-model-notes",
+          "snapshot": "c912d81109a43be144f2075ed1284591600b1a80",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "0a0b41209033df16ee76c6150f5b6adb65a8be80bd059f57d3963d819079e17a",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/self-model-notes/cycle-queries/resume-final-two-c912d81109a43be144f2075ed1284591600b1a80-805d1df4d596.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        },
+        "viewer-response-notes": {
+          "owner": "viewer-response-notes",
+          "snapshot": "496c26592ff4a6f7fe18e25372df44786b7bbe11",
+          "query_hash": "0e4651ad5028f2731e58646ecd283b6565ebac9a1929329c3f1a40c6ec6fbe93",
+          "result_hash": "517bbf6e2428b4246f4c413af0bb94ac5a455ec6474d9f777400a49f98f091ea",
+          "result_ref": "/private/tmp/aak02-live-20260908/resume/stores/viewer-response-notes/cycle-queries/resume-final-two-496c26592ff4a6f7fe18e25372df44786b7bbe11-48fd4f7fd743.json",
+          "evaluated_at": "2026-09-08T02:30:43.792181+00:00"
+        }
+      },
+      "adoption": {
+        "research": [
+          {
+            "owner": "agentic-art-research",
+            "record_id": "resume-final-one-research",
+            "knowledge_commit": "04b232359ac89dcbda9c003e4fe39c47491477cd",
+            "decision_id": "DC001",
+            "disposition": "accepted",
+            "effect": "DC001 and RQ001 retain original actual states while adding an aligned counterfactual array and mismatch test; VT001 mechanism and PH001 are changed concretely.",
+            "trace_status": "REUSED"
+          }
+        ],
+        "production": [
+          {
+            "owner": "agentic-art-production",
+            "record_id": "resume-final-one-omission-procedure",
+            "knowledge_commit": "ac47938bdc84338a4e8faab1b94848d289d7ee07",
+            "target_task_id": "TK001",
+            "status": "ADOPTED",
+            "reason": "Adopt actual prior planned no-backfill procedure as the preserved actual lane. The new counterfactual lane is computed separately and cannot overwrite original states; the prior tab-switch test remains mandatory. This is reuse of a proposal, not observed success.",
+            "use_proposal": "For a local browser time ledger, preallocate fixed one-second slots, derive the current index from performance.now, and never backfill skipped indices. Keep hidden and unrecorded distinct, label visibility as document state rather than attention, and test a delayed callback plus a twenty-second tab switch before claiming the implementation works.",
+            "effect": "For a local browser time ledger, preallocate fixed one-second slots, derive the current index from performance.now, and never backfill skipped indices. Keep hidden and unrecorded distinct, label visibility as document state rather than attention, and test a delayed callback plus a twenty-second tab switch before claiming the implementation works."
+          }
+        ],
+        "continuation_accepted": true
+      },
+      "source_payload_re_read": true
+    },
+    {
+      "mode": "new-clone",
+      "run_id": "new-clone-final-one",
+      "status": "COMPLETED",
+      "native_revalidation": "PASS_NATIVE_REVALIDATION",
+      "creator_id": "synthetic-new-clone-creator",
+      "origin_instance_id": "synthetic-new-clone-instance",
+      "plan_status": "PLAN_READY",
+      "knowledge_status": "COMMITTED",
+      "projection_status": "SKIPPED",
+      "stop_reason": null,
+      "plan": "/private/tmp/aak02-live-20260908/new-clone/internal/production/new-clone-final-one/03_plan/production-plan.md",
+      "artifacts": {
+        "03_plan/production-plan.md": "77aa5cb7906339a60835f07d2034303e287f1db434c939c72489f4337f047c7f",
+        "03_plan/production-plan.yaml": "1c74f08afed431b58035cd09a85f120653556b79667a21d8961bef51e7f3b756",
+        "02_specification/production-method.yaml": "cb895c96f539ead8ce766f7164e1a7351c69c7102fbfefff701f595c2d59907c",
+        "00_handoff/production-handoff.yaml": "af39b8ce1ed558a8466b6082ea58c7631a5454ce7e108e62574054bc84447bdc",
+        "03_plan/media/concept-mockup.svg": "a22b7ca2340327bb2b2aadbfdcdeb8eebcfcccd48cd33e2aaf451b04c4422404",
+        "03_plan/media/interval-study-proposed.svg": "9f3b800e83d4bab0fee10272c40634f1739e71e75e6c2f4004559c0b79597070",
+        "03_plan/media/visual-reference-board.svg": "b75323590ae6c5914f63455a0e7f5a29cd3f4433b7c710f8e7ad7742259f63f7"
+      },
+      "owner_verification": {
+        "contract_version": "plan-actionability/v1",
+        "method_sha256": "sha256:9af06e42e2a73b23cdb190f0610677ebb88c60bf9a0ad969f069c557bb61edce",
+        "plan_status": "PLAN_READY",
+        "findings": [],
+        "first_task_id": "TK001",
+        "external_effects_authorized": false
+      },
+      "cycle_state": {
+        "path": "/private/tmp/aak02-live-20260908/new-clone/final-one-cycle-result.json",
+        "sha256": "cb75183be578ddc66c0d67bab37208d13c941250fe1467924f380eae8bca5913"
+      },
+      "receipts": {
+        "agentic-art-production": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "production-memory/v1",
+          "policy_version": "production-memory-policy/v1",
+          "run_id": "new-clone-final-one",
+          "accepted_ids": [
+            "butt-cap-gap-proof"
+          ],
+          "rejected_ids": [],
+          "target_parent": "9b7d4cec97cf048b97c64e70f9e06b70be30b456",
+          "target_commit": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+          "index_commit": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+          "index_hash": "80ea4b20a05d1ca34edac98724347a501b14bde9b2d358f0c6e18a8ea8ee2943",
+          "operation_id": "new-clone-final-one-agentic-art-production"
+        },
+        "agentic-art-research": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "research-memory/v1",
+          "policy_version": "research-memory/v1",
+          "run_id": "new-clone-final-one",
+          "accepted_ids": [
+            "measured-interruption-research"
+          ],
+          "rejected_ids": [],
+          "target_parent": "bf2b01c23e1621b479fd3fe914b215ed0f5104c8",
+          "target_commit": "697824658dbcc88104b321e06bc219190ad00686",
+          "index_commit": "697824658dbcc88104b321e06bc219190ad00686",
+          "index_hash": "d5c7102a8979a91fcc666b533b7faa88d3e281efe7da965385dcb609e1e62462",
+          "operation_id": "new-clone-final-one-agentic-art-research"
+        }
+      },
+      "query_refs": {},
+      "adoption": {
+        "evidence_ref": {
+          "path": "/private/tmp/aak02-live-20260908/new-clone/adoption-trace.json",
+          "sha256": "d059d59bae049d4df03b25814394a150d6a81709d0d2a9f067537eb1d806f8c0"
+        },
+        "research": [
+          {
+            "reference": {
+              "origin_instance_id": "synthetic-new-clone-instance",
+              "owner_repository": "agentic-art-research",
+              "record_id": "measured-interruption-research",
+              "revision": 1
+            },
+            "knowledge_commit": "697824658dbcc88104b321e06bc219190ad00686",
+            "item_id": "VT001",
+            "decision_id": "DC002",
+            "disposition": "accepted",
+            "reason": "Retain the actual retrieved endpoint/cap mechanism while replacing single12mm field with equal74mm panels comparing6 and12mm.",
+            "effect": "DC002 and VT001 now select96segments across two equal panels; RQ001/RQ002 and AT001/AT004 prescribe separate gap checks. No physical superiority inferred.",
+            "common_trace": {
+              "contract_version": "reuse-trace/v1",
+              "query": "",
+              "selection_policy_version": "research-memory/v1",
+              "input_snapshot": {
+                "project_id": "project/new-clone-final-two",
+                "source_snapshot_sha256": "d8cf22c2e8ba8b02e1db7b83f78ab035eeca19c52c213666705cc10c8a2f6e30",
+                "knowledge_commit": "697824658dbcc88104b321e06bc219190ad00686"
+              },
+              "seen_scope": [
+                "VT001"
+              ],
+              "status": "REUSED",
+              "records": [
+                {
+                  "record_id": "measured-interruption-research",
+                  "revision": 1,
+                  "owner": "agentic-art-research",
+                  "origin_instance_id": "synthetic-new-clone-instance",
+                  "payload_ref": "knowledge/payloads/87fb895a22b4305907abdeef0c7470d180a2e89ba2a4dfde68363b5c2f80813d.json",
+                  "content_sha256": "90abbbd32e53fa2d16b4527b0ee100115fc5259451a65b0560179d2af0d60b47",
+                  "decision": "adopted",
+                  "reason": "Retain the actual retrieved endpoint/cap mechanism while replacing single12mm field with equal74mm panels comparing6 and12mm.",
+                  "affected": [
+                    "DC002"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "production": {
+          "contract_version": "production-plan-reuse/v1",
+          "query_sha256": "sha256:5a0833e7fe5f345c1729970427c3f67cad20297c057854f197b1398921178fbe",
+          "creator_id": "synthetic-new-clone-creator",
+          "collection_id": "agentic-art-production-native",
+          "knowledge_commit": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+          "at": "2026-09-08T03:16:44.464373+00:00",
+          "environment": {
+            "equipment": "Proposed A4 printer, computer with local SVG editor, millimeter ruler",
+            "skill": "Synthetic operator able to inspect coordinates and measure a print",
+            "size": "A4 210x297 mm",
+            "safety": "Indoor tabletop paper proof; no solvents or cutting",
+            "currency": "JPY",
+            "as_of": "2026-09-08"
+          },
+          "history_status": "FOUND",
+          "choices": [
+            {
+              "record_id": "butt-cap-gap-proof",
+              "target_task_id": "TK002",
+              "reason": "Adopt actual run-one proposal: replace single12mm sheet by equal74mm panels comparing6 and12mm while retaining butt caps,100% scale and top/middle/bottom ruler controls; six measurements now required.",
+              "revision": 1,
+              "origin_instance_id": "synthetic-new-clone-instance",
+              "code_commit": "cd1af443821e826e7f41b6effd608767dea4366e",
+              "knowledge_commit": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+              "content_sha256": "0a6bdce629fee87e5989da1c84c3fabb46aae04a775e560a202d3f2c6629159c",
+              "source_project_id": "production/new-clone-final-one",
+              "relationship": "CROSS_PROJECT_REUSE",
+              "phase": "planned",
+              "status": "ADOPTED",
+              "reasons": [],
+              "source_conditions": {
+                "as_of": "2026-09-08",
+                "currency": "JPY",
+                "equipment": "Proposed A4 printer, computer with local SVG editor, millimeter ruler",
+                "safety": "Indoor tabletop paper proof; no solvents or cutting",
+                "size": "A4 210x297 mm",
+                "skill": "Synthetic operator able to inspect coordinates and measure a print"
+              },
+              "source_procedure": "After explicit physical-task approval, open the original SVG in a local editor; set paper A4 portrait and print at 100% actual size with fit-to-page disabled. Use one 120 gsm white sheet. Lay it flat, count 24 row pairs, measure center gap at top/middle/bottom with a millimeter ruler; require 12 mm within 0.5 mm. Log measured values and any merged/disappearing lines; if outside tolerance, stop and request a scale correction before further copies.",
+              "use_proposal": "For the next study, retain butt-capped endpoint construction and actual-size print control; compare at least two gap widths on the same sheet instead of assuming one width is perceptually sufficient. Record top/middle/bottom ruler measurements after authorization.",
+              "interpretation": {
+                "epistemic_status": "inferred",
+                "statement": "Explicit SVG endpoints and disabled fit-to-page should make a 12 mm gap reproducible; printing and visibility are not observed."
+              },
+              "affected_projects": []
+            }
+          ],
+          "knowledge_status": "READABLE",
+          "plan_completion_blocked": false
+        },
+        "continuation_accepted": false
+      },
+      "source_payload_re_read": true
+    },
+    {
+      "mode": "new-clone",
+      "run_id": "new-clone-final-two",
+      "status": "COMPLETED",
+      "native_revalidation": "PASS_NATIVE_REVALIDATION",
+      "creator_id": "synthetic-new-clone-creator",
+      "origin_instance_id": "synthetic-new-clone-instance",
+      "plan_status": "PLAN_READY",
+      "knowledge_status": "COMMITTED",
+      "projection_status": "SKIPPED",
+      "stop_reason": null,
+      "plan": "/private/tmp/aak02-live-20260908/new-clone/internal/production/new-clone-final-two/03_plan/production-plan.md",
+      "artifacts": {
+        "03_plan/production-plan.md": "39ff3094690405099d2bc4f3389b4a9b1a90d6beb4de26ac3718f787034de7b3",
+        "03_plan/production-plan.yaml": "2902d62bbb81ed583a193b777b205994fe1365fcfa971875a8b32b29372cd4bb",
+        "02_specification/production-method.yaml": "161971178c51290e34a794b97ea515b037d2e1fe76bcc3e3e4f9683fb4f2de9c",
+        "00_handoff/production-handoff.yaml": "54a8ef524536be8843d773b5eb6cdfc3b7cf4f645023bf539ad1a7eb8897bc1c",
+        "03_plan/media/concept-mockup.svg": "3b4d3d1af7176da2516d084c9aed139c48577d4d325e70de26dce4cc5d990763",
+        "03_plan/media/paired-interval-proposed.svg": "163efa3aa58e2490d598bbfd17b6748136797362f4c1eb3064d6b59c7f63c4a7",
+        "03_plan/media/visual-reference-board.svg": "4af82b7134c084cd12654aa011aec15a3fad0c520b117212da648199ca4b9a58"
+      },
+      "owner_verification": {
+        "contract_version": "plan-actionability/v1",
+        "method_sha256": "sha256:6215d590586a8f480a0f6eb85195defad170771a325a3013482b8cc739b73421",
+        "plan_status": "PLAN_READY",
+        "findings": [],
+        "first_task_id": "TK001",
+        "external_effects_authorized": false
+      },
+      "cycle_state": {
+        "path": "/private/tmp/aak02-live-20260908/new-clone/final-two-cycle-result.json",
+        "sha256": "7ca5d39fd6bd81f1c18798544952736081ff5ab6ea835e3073b0e49a07da6489"
+      },
+      "receipts": {
+        "agentic-art-production": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "production-memory/v1",
+          "policy_version": "production-memory-policy/v1",
+          "run_id": "new-clone-final-two",
+          "accepted_ids": [
+            "paired-gap-comparison-proof"
+          ],
+          "rejected_ids": [],
+          "target_parent": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+          "target_commit": "5e2434504666f1f5666907c3bee18acc6706d932",
+          "index_commit": "5e2434504666f1f5666907c3bee18acc6706d932",
+          "index_hash": "6694ae26a42b88d2be1b0c8b40742c01ecb53b90aadf3e14c15516e7842de31c",
+          "operation_id": "new-clone-final-two-agentic-art-production"
+        },
+        "agentic-art-research": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "research-memory/v1",
+          "policy_version": "research-memory/v1",
+          "run_id": "new-clone-final-two",
+          "accepted_ids": [
+            "paired-interval-comparison-research"
+          ],
+          "rejected_ids": [],
+          "target_parent": "697824658dbcc88104b321e06bc219190ad00686",
+          "target_commit": "90bc3be6bc76de8025c753fe954b1ebca59db72f",
+          "index_commit": "90bc3be6bc76de8025c753fe954b1ebca59db72f",
+          "index_hash": "fc2e6e423b078af35ee1ff976c1be47b4023693bd40e239cf0af597d279ecd53",
+          "operation_id": "new-clone-final-two-agentic-art-research"
+        }
+      },
+      "query_refs": {},
+      "adoption": {
+        "evidence_ref": {
+          "path": "/private/tmp/aak02-live-20260908/new-clone/adoption-trace.json",
+          "sha256": "d059d59bae049d4df03b25814394a150d6a81709d0d2a9f067537eb1d806f8c0"
+        },
+        "research": [
+          {
+            "reference": {
+              "origin_instance_id": "synthetic-new-clone-instance",
+              "owner_repository": "agentic-art-research",
+              "record_id": "measured-interruption-research",
+              "revision": 1
+            },
+            "knowledge_commit": "697824658dbcc88104b321e06bc219190ad00686",
+            "item_id": "VT001",
+            "decision_id": "DC002",
+            "disposition": "accepted",
+            "reason": "Retain the actual retrieved endpoint/cap mechanism while replacing single12mm field with equal74mm panels comparing6 and12mm.",
+            "effect": "DC002 and VT001 now select96segments across two equal panels; RQ001/RQ002 and AT001/AT004 prescribe separate gap checks. No physical superiority inferred.",
+            "common_trace": {
+              "contract_version": "reuse-trace/v1",
+              "query": "",
+              "selection_policy_version": "research-memory/v1",
+              "input_snapshot": {
+                "project_id": "project/new-clone-final-two",
+                "source_snapshot_sha256": "d8cf22c2e8ba8b02e1db7b83f78ab035eeca19c52c213666705cc10c8a2f6e30",
+                "knowledge_commit": "697824658dbcc88104b321e06bc219190ad00686"
+              },
+              "seen_scope": [
+                "VT001"
+              ],
+              "status": "REUSED",
+              "records": [
+                {
+                  "record_id": "measured-interruption-research",
+                  "revision": 1,
+                  "owner": "agentic-art-research",
+                  "origin_instance_id": "synthetic-new-clone-instance",
+                  "payload_ref": "knowledge/payloads/87fb895a22b4305907abdeef0c7470d180a2e89ba2a4dfde68363b5c2f80813d.json",
+                  "content_sha256": "90abbbd32e53fa2d16b4527b0ee100115fc5259451a65b0560179d2af0d60b47",
+                  "decision": "adopted",
+                  "reason": "Retain the actual retrieved endpoint/cap mechanism while replacing single12mm field with equal74mm panels comparing6 and12mm.",
+                  "affected": [
+                    "DC002"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "production": {
+          "contract_version": "production-plan-reuse/v1",
+          "query_sha256": "sha256:5a0833e7fe5f345c1729970427c3f67cad20297c057854f197b1398921178fbe",
+          "creator_id": "synthetic-new-clone-creator",
+          "collection_id": "agentic-art-production-native",
+          "knowledge_commit": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+          "at": "2026-09-08T03:16:44.464373+00:00",
+          "environment": {
+            "equipment": "Proposed A4 printer, computer with local SVG editor, millimeter ruler",
+            "skill": "Synthetic operator able to inspect coordinates and measure a print",
+            "size": "A4 210x297 mm",
+            "safety": "Indoor tabletop paper proof; no solvents or cutting",
+            "currency": "JPY",
+            "as_of": "2026-09-08"
+          },
+          "history_status": "FOUND",
+          "choices": [
+            {
+              "record_id": "butt-cap-gap-proof",
+              "target_task_id": "TK002",
+              "reason": "Adopt actual run-one proposal: replace single12mm sheet by equal74mm panels comparing6 and12mm while retaining butt caps,100% scale and top/middle/bottom ruler controls; six measurements now required.",
+              "revision": 1,
+              "origin_instance_id": "synthetic-new-clone-instance",
+              "code_commit": "cd1af443821e826e7f41b6effd608767dea4366e",
+              "knowledge_commit": "90b7293ddf908567d2eab0e43e1248f98ad67f6b",
+              "content_sha256": "0a6bdce629fee87e5989da1c84c3fabb46aae04a775e560a202d3f2c6629159c",
+              "source_project_id": "production/new-clone-final-one",
+              "relationship": "CROSS_PROJECT_REUSE",
+              "phase": "planned",
+              "status": "ADOPTED",
+              "reasons": [],
+              "source_conditions": {
+                "as_of": "2026-09-08",
+                "currency": "JPY",
+                "equipment": "Proposed A4 printer, computer with local SVG editor, millimeter ruler",
+                "safety": "Indoor tabletop paper proof; no solvents or cutting",
+                "size": "A4 210x297 mm",
+                "skill": "Synthetic operator able to inspect coordinates and measure a print"
+              },
+              "source_procedure": "After explicit physical-task approval, open the original SVG in a local editor; set paper A4 portrait and print at 100% actual size with fit-to-page disabled. Use one 120 gsm white sheet. Lay it flat, count 24 row pairs, measure center gap at top/middle/bottom with a millimeter ruler; require 12 mm within 0.5 mm. Log measured values and any merged/disappearing lines; if outside tolerance, stop and request a scale correction before further copies.",
+              "use_proposal": "For the next study, retain butt-capped endpoint construction and actual-size print control; compare at least two gap widths on the same sheet instead of assuming one width is perceptually sufficient. Record top/middle/bottom ruler measurements after authorization.",
+              "interpretation": {
+                "epistemic_status": "inferred",
+                "statement": "Explicit SVG endpoints and disabled fit-to-page should make a 12 mm gap reproducible; printing and visibility are not observed."
+              },
+              "affected_projects": []
+            }
+          ],
+          "knowledge_status": "READABLE",
+          "plan_completion_blocked": false
+        },
+        "continuation_accepted": true
+      },
+      "source_payload_re_read": true
+    },
+    {
+      "mode": "fork",
+      "run_id": "fork-final-one",
+      "status": "COMPLETED",
+      "native_revalidation": "PASS_NATIVE_REVALIDATION",
+      "creator_id": "synthetic-fork-creator",
+      "origin_instance_id": "synthetic-fork-instance",
+      "plan_status": "PLAN_READY",
+      "knowledge_status": "COMMITTED",
+      "projection_status": "SKIPPED",
+      "stop_reason": null,
+      "plan": "/private/tmp/aak02-live-20260908/fork/internal/production/fork-final-one/03_plan/production-plan.md",
+      "artifacts": {
+        "03_plan/production-plan.md": "8c93f492fff304a1341df0e58617094a6af8c3bdc5c512752218c662cab563c3",
+        "03_plan/production-plan.yaml": "1832280691501290fd00b12ee2d06acedcc160f44dd4f4baa3a26979e01220cc",
+        "02_specification/production-method.yaml": "742a2de924d2385e2f9c17c584435e4bb320b52fdb6258342d865fd1cf73fa97",
+        "00_handoff/production-handoff.yaml": "9f026fc79cb266dfd2140441fd56910686b71d99703a46b117a77cfeb33ef66a",
+        "03_plan/media/concept-mockup.svg": "0b4c26f442836d34f927e6b65911bca78d0f8a3fd9455dc1e2791adfea756f9d",
+        "03_plan/media/visual-reference-board.svg": "08f663fcb4fb5aaedf41c638721fb2ee16e82204f417b713027eb9e0a9911509"
+      },
+      "owner_verification": {
+        "contract_version": "plan-actionability/v1",
+        "method_sha256": "sha256:1903501f74fcdbd3f3d1a18697736371ce4fddf7144c83afbba00a1a2ad047b7",
+        "plan_status": "PLAN_READY",
+        "findings": [],
+        "first_task_id": "TK001",
+        "external_effects_authorized": false
+      },
+      "cycle_state": {
+        "path": "/private/tmp/aak02-live-20260908/fork/final-one-resume.json",
+        "sha256": "a8df1d25bf359a24847279b71ff570fdcbdc56a94c73dc242c70dea6fbf1bb0f"
+      },
+      "receipts": {
+        "agentic-art-production": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "production-memory/v1",
+          "policy_version": "production-memory-policy/v1",
+          "run_id": "fork-final-one",
+          "accepted_ids": [
+            "fork-coordinate-audit-one"
+          ],
+          "rejected_ids": [],
+          "target_parent": "c7fc084088b68e783f552a5f3bad0537c86ca0e9",
+          "target_commit": "80e0e17c261f501984eb559ebb931d0bf7f3bbc0",
+          "index_commit": "80e0e17c261f501984eb559ebb931d0bf7f3bbc0",
+          "index_hash": "5dc035a6d0ded8518856788641ffabe66a3bed0e0911e8b53bc218b68700d370",
+          "operation_id": "fork-final-one-agentic-art-production"
+        },
+        "agentic-art-research": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "research-memory/v1",
+          "policy_version": "research-memory/v1",
+          "run_id": "fork-final-one",
+          "accepted_ids": [
+            "fork-measured-interval-one"
+          ],
+          "rejected_ids": [],
+          "target_parent": "4591c81384ee0d0b0349817016adf068b51096cb",
+          "target_commit": "acf3a813ac88128b4260e729c78585e282f931c0",
+          "index_commit": "acf3a813ac88128b4260e729c78585e282f931c0",
+          "index_hash": "f51666df1411d17b5c3d366be506e68e192a74ba973b0a98a9276c617b72f2bb",
+          "operation_id": "fork-final-one-agentic-art-research"
+        }
+      },
+      "query_refs": {
+        "agentic-art-orchestration": {
+          "owner": "agentic-art-orchestration",
+          "snapshot": "9c65a6b649fac2f215a96e1ce05d5b6a1e7ddeda",
+          "query_hash": "3cf8f74d707c650ece8558efa364f15258ad525e6fc72065c963a26715c876a2",
+          "result_hash": "a30bd36ce66e85bb9ba9edf4ade63cc8f6186ac223b9b688098dafaec21532a5",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-orchestration/cycle-queries/fork-final-one-9c65a6b649fac2f215a96e1ce05d5b6a1e7ddeda-e7e0ba40faa1.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "agentic-art-production": {
+          "owner": "agentic-art-production",
+          "snapshot": "c7fc084088b68e783f552a5f3bad0537c86ca0e9",
+          "query_hash": "800a0d48021eca736f1d15304ba89ff4c688178bcfe320d4dfeb85c255ebb756",
+          "result_hash": "2fce605a5e3c2771f80f75fc6acf64e171343ba11476654efc1bbf3e04ca42f9",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-production/cycle-queries/fork-final-one-c7fc084088b68e783f552a5f3bad0537c86ca0e9-bc2a2274c56b.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "agentic-art-project": {
+          "owner": "agentic-art-project",
+          "snapshot": "e32bbc1a9b386ec607a48434dde814d5b5d4e51e",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "e8a664c9751b40ab9adb406b5d1ca84ac518a68f737721264f7475837d282f7a",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-project/cycle-queries/fork-final-one-e32bbc1a9b386ec607a48434dde814d5b5d4e51e-ffb41b312630.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "agentic-art-research": {
+          "owner": "agentic-art-research",
+          "snapshot": "4591c81384ee0d0b0349817016adf068b51096cb",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "b98ba3b0b95b9702278a4c6998d79d40fc1835c465dd412e25eeda72bbb53a8d",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-research/cycle-queries/fork-final-one-4591c81384ee0d0b0349817016adf068b51096cb-ffb41b312630.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "art-history-notes": {
+          "owner": "art-history-notes",
+          "snapshot": "abd54eb9971d136a6505f191c7dcfa34c730af89",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "9106add3218fc07316e51f02629e9a26808f9fb1dd7e3797b6f42a43c20fc5aa",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/art-history-notes/cycle-queries/fork-final-one-abd54eb9971d136a6505f191c7dcfa34c730af89-ffb41b312630.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "marketing-trends-notes": {
+          "owner": "marketing-trends-notes",
+          "snapshot": "6cc7912b67909eda6dfa167c995f5ff93e0d81f0",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "b2dce43c758e059aa76feb863dd531b552da5574d2d02aca06a3b74d389ddb4e",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/marketing-trends-notes/cycle-queries/fork-final-one-6cc7912b67909eda6dfa167c995f5ff93e0d81f0-ffb41b312630.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "self-model-notes": {
+          "owner": "self-model-notes",
+          "snapshot": "42fba1c95b53695270258a4ef90330ad86abeb47",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "c7381c3d81c297f1f8ea466782d7ab2451b005e45a53e81392754c5e799a2ddc",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/self-model-notes/cycle-queries/fork-final-one-42fba1c95b53695270258a4ef90330ad86abeb47-ffb41b312630.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        },
+        "viewer-response-notes": {
+          "owner": "viewer-response-notes",
+          "snapshot": "bfcd6da6156c8c17cd7f078d2e3df815d8988391",
+          "query_hash": "45e6f347d9ab422681c5c1ee2ee78a2e2d1a3609844e7f5ca6ac6f408b3facc2",
+          "result_hash": "32cfa2623eb7e2ed186a59b8e370bba24458de33821b591d95a69c494916f130",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/viewer-response-notes/cycle-queries/fork-final-one-bfcd6da6156c8c17cd7f078d2e3df815d8988391-634bd3eb9b72.json",
+          "evaluated_at": "2026-09-08T02:27:53.706306+00:00"
+        }
+      },
+      "adoption": {
+        "research": [],
+        "production": [],
+        "continuation_accepted": false
+      },
+      "source_payload_re_read": true
+    },
+    {
+      "mode": "fork",
+      "run_id": "fork-final-two",
+      "status": "COMPLETED",
+      "native_revalidation": "PASS_NATIVE_REVALIDATION",
+      "creator_id": "synthetic-fork-creator",
+      "origin_instance_id": "synthetic-fork-instance",
+      "plan_status": "PLAN_READY",
+      "knowledge_status": "COMMITTED",
+      "projection_status": "SKIPPED",
+      "stop_reason": null,
+      "plan": "/private/tmp/aak02-live-20260908/fork/internal/production/fork-final-two/03_plan/production-plan.md",
+      "artifacts": {
+        "03_plan/production-plan.md": "add2b7d07b313bfe4c382b828d5bb2f59e274d549e4dd3936691000fe6ad6c82",
+        "03_plan/production-plan.yaml": "d833146e35fec9c0eb98ff0b5502c68e545803d046f5587fd44b7c94544e635c",
+        "02_specification/production-method.yaml": "9234a4d0e52b04f1fdc07fe8095a59e79fb4dd8fcb7090279ec100bbc511f034",
+        "00_handoff/production-handoff.yaml": "c27dca96a33fa1eba8c1a5a9a3787699f9a675ca0a30cd051ab4f34a9cca70ec",
+        "03_plan/media/concept-mockup.svg": "736b32f124a07a6bc001c6c043826a9082e7766330e6e4c8a83e815033884e0e",
+        "03_plan/media/visual-reference-board.svg": "ff24cac3aa5f9a269e3e0b64348fb715eb66dce89d4974a9f9a2314bb37b8b6e"
+      },
+      "owner_verification": {
+        "contract_version": "plan-actionability/v1",
+        "method_sha256": "sha256:1d958105809b508e04eb564cfdc011ead59befb359db6a1bfacd09c2d54bc2a2",
+        "plan_status": "PLAN_READY",
+        "findings": [],
+        "first_task_id": "TK001",
+        "external_effects_authorized": false
+      },
+      "cycle_state": {
+        "path": "/private/tmp/aak02-live-20260908/fork/final-two-resume.json",
+        "sha256": "3d3866f2d46d534ef66bb0ea86ebf0f566187da5b54202876608b77217be8f5f"
+      },
+      "receipts": {
+        "agentic-art-production": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "production-memory/v1",
+          "policy_version": "production-memory-policy/v1",
+          "run_id": "fork-final-two",
+          "accepted_ids": [
+            "fork-coordinate-audit-two"
+          ],
+          "rejected_ids": [],
+          "target_parent": "80e0e17c261f501984eb559ebb931d0bf7f3bbc0",
+          "target_commit": "dcb5ff0c581fcd3fbcef4ce8edcfb1912f1e6f7b",
+          "index_commit": "dcb5ff0c581fcd3fbcef4ce8edcfb1912f1e6f7b",
+          "index_hash": "1413d193fdead7832dd1c96aee120eeb6b66410372c297e2caef6fe2df89d6d3",
+          "operation_id": "fork-final-two-agentic-art-production"
+        },
+        "agentic-art-research": {
+          "status": "COMMITTED",
+          "contract_version": "knowledge-write-receipt/v1",
+          "schema_version": "research-memory/v1",
+          "policy_version": "research-memory/v1",
+          "run_id": "fork-final-two",
+          "accepted_ids": [
+            "fork-calibrated-interval-two"
+          ],
+          "rejected_ids": [],
+          "target_parent": "acf3a813ac88128b4260e729c78585e282f931c0",
+          "target_commit": "6bd9cc2dfbb0034b2da7022be89af0c3308f8b63",
+          "index_commit": "6bd9cc2dfbb0034b2da7022be89af0c3308f8b63",
+          "index_hash": "d092c4d8f324a79f66cdd7d09f8d806faf0cb9c9c831fbaf2d843933402490a1",
+          "operation_id": "fork-final-two-agentic-art-research"
+        }
+      },
+      "query_refs": {
+        "agentic-art-orchestration": {
+          "owner": "agentic-art-orchestration",
+          "snapshot": "9c65a6b649fac2f215a96e1ce05d5b6a1e7ddeda",
+          "query_hash": "3cf8f74d707c650ece8558efa364f15258ad525e6fc72065c963a26715c876a2",
+          "result_hash": "a30bd36ce66e85bb9ba9edf4ade63cc8f6186ac223b9b688098dafaec21532a5",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-orchestration/cycle-queries/fork-final-two-9c65a6b649fac2f215a96e1ce05d5b6a1e7ddeda-e5877e3c61a5.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "agentic-art-production": {
+          "owner": "agentic-art-production",
+          "snapshot": "80e0e17c261f501984eb559ebb931d0bf7f3bbc0",
+          "query_hash": "401f0512f549f417c8d62a6a6b088322750172b811ef9c2caa764751135b9591",
+          "result_hash": "2d3881845cf25ed1af185ded75f2d8f6717c9f5d62d77374ef8cc2f34417ccd9",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-production/cycle-queries/fork-final-two-80e0e17c261f501984eb559ebb931d0bf7f3bbc0-1e23d22d306a.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "agentic-art-project": {
+          "owner": "agentic-art-project",
+          "snapshot": "e32bbc1a9b386ec607a48434dde814d5b5d4e51e",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "e8a664c9751b40ab9adb406b5d1ca84ac518a68f737721264f7475837d282f7a",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-project/cycle-queries/fork-final-two-e32bbc1a9b386ec607a48434dde814d5b5d4e51e-ebfe73b3c9de.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "agentic-art-research": {
+          "owner": "agentic-art-research",
+          "snapshot": "acf3a813ac88128b4260e729c78585e282f931c0",
+          "query_hash": "b3b69b9f28893cd8b927b3174395db44cad5b5d5e1e6e72186275262bd913da8",
+          "result_hash": "8666645295fc0229f61d0b473462c400a84afa5c6618eeac859e885100fdc549",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/agentic-art-research/cycle-queries/fork-final-two-acf3a813ac88128b4260e729c78585e282f931c0-1ed286365ff9.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "art-history-notes": {
+          "owner": "art-history-notes",
+          "snapshot": "abd54eb9971d136a6505f191c7dcfa34c730af89",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "9106add3218fc07316e51f02629e9a26808f9fb1dd7e3797b6f42a43c20fc5aa",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/art-history-notes/cycle-queries/fork-final-two-abd54eb9971d136a6505f191c7dcfa34c730af89-ebfe73b3c9de.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "marketing-trends-notes": {
+          "owner": "marketing-trends-notes",
+          "snapshot": "6cc7912b67909eda6dfa167c995f5ff93e0d81f0",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "b2dce43c758e059aa76feb863dd531b552da5574d2d02aca06a3b74d389ddb4e",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/marketing-trends-notes/cycle-queries/fork-final-two-6cc7912b67909eda6dfa167c995f5ff93e0d81f0-ebfe73b3c9de.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "self-model-notes": {
+          "owner": "self-model-notes",
+          "snapshot": "42fba1c95b53695270258a4ef90330ad86abeb47",
+          "query_hash": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+          "result_hash": "c7381c3d81c297f1f8ea466782d7ab2451b005e45a53e81392754c5e799a2ddc",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/self-model-notes/cycle-queries/fork-final-two-42fba1c95b53695270258a4ef90330ad86abeb47-ebfe73b3c9de.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        },
+        "viewer-response-notes": {
+          "owner": "viewer-response-notes",
+          "snapshot": "bfcd6da6156c8c17cd7f078d2e3df815d8988391",
+          "query_hash": "f056b0a78620193b9a3a532a347ac9e176e2df6e0d615a63a14dae05ebf4ce26",
+          "result_hash": "9a095ee7b2fdf9147a659cee1e5d93c38c18f5260ea166633e023c5f24de4f84",
+          "result_ref": "/private/tmp/aak02-live-20260908/fork/stores/viewer-response-notes/cycle-queries/fork-final-two-bfcd6da6156c8c17cd7f078d2e3df815d8988391-c7da749b14fb.json",
+          "evaluated_at": "2026-09-08T02:30:51.833424+00:00"
+        }
+      },
+      "adoption": {
+        "research": [
+          {
+            "owner": "agentic-art-research",
+            "record_id": "synthetic-fork-instance:agentic-art-research:fork-measured-interval-one:1:VT001",
+            "knowledge_commit": "acf3a813ac88128b4260e729c78585e282f931c0",
+            "decision_id": "DC003",
+            "disposition": "accepted",
+            "effect": "Three fixed twelve-line inventories compare seventh-line offsets of0,+3,+6px against one common rule. The prior +3px displacement becomes a calibration anchor; adding a zero control and a doubled6px condition makes magnitude, rather than only presence, the explicit comparison."
+          }
+        ],
+        "production": [
+          {
+            "owner": "agentic-art-production",
+            "record_id": "fork-coordinate-audit-one",
+            "knowledge_commit": "80e0e17c261f501984eb559ebb931d0bf7f3bbc0",
+            "target_task_id": "TK001",
+            "status": "ADOPTED",
+            "reason": "Three fixed twelve-line inventories compare seventh-line offsets of0,+3,+6px against one common rule. The prior +3px displacement becomes a calibration anchor; adding a zero control and a doubled6px condition makes magnitude, rather than only presence, the explicit comparison."
+          }
+        ],
+        "continuation_accepted": true
+      },
+      "source_payload_re_read": true
+    }
+  ],
+  "boundaries": {
+    "real_masa_profile": "NOT_RUN",
+    "real_masa_facts_inferred": false,
+    "physical_execution": "NOT_RUN",
+    "viewer_observations": "NOT_RUN",
+    "public_projection": "NOT_RUN",
+    "drive_artifact": "NONE",
+    "remote_write": false,
+    "code_edits_by_live_agents": false,
+    "external_effects_authorized": false
+  },
+  "preserved_attempts": "Earlier failed/incomplete runs remain in each mode workspace and are excluded from the accepted six-run matrix; they are referenced by each mode evidence file.",
+  "status_separation": {
+    "plan_status": "PASS: six PLAN_READY plans",
+    "knowledge_status": "PASS: six COMMITTED cycles with Research/Production receipts; five other owners explicitly NO_NEW_EVIDENCE per run",
+    "projection_status": "SKIPPED: no public projection authorized",
+    "integration_status": "NATIVE_ACCEPTANCE_COMPLETE",
+    "main_integration": "NOT_MERGED"
+  },
+  "unresolved": []
+}

@@ -81,14 +81,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-08T01:59:00.435038+00:00`.
+Source updated at: `2026-09-08T03:25:37.546758+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 1 | 0 | 153 | 154 |
+| 0 | 0 | 0 | 0 | 154 | 154 |
 
-Current task: `AAK-02`; repository: `agentic-art-orchestration`; checkpoint: `AAK-02`.
-Next action: Read actual-agent cycle checkpoints and finish six live runs; inspect plan hashes, native receipts and adopted second-run decisions
+Current task: `null`; repository: `null`; checkpoint: `AAK-02`.
+Next action: Review native acceptance evidence, then review/merge draft PRs under existing human gates; do not perform merge automatically.
 Ready: none.
 Next task: `null`.
 Blocked:

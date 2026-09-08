@@ -6,9 +6,9 @@ Implement the pinned AAK specification/plan without creating a new requirements 
 ## Progress
 - [x] Qualified all prerequisite owner candidates; AAK11 PR65 eight focused / 120 full / six evaluation checks PASS.
 - [x] Isolated branch and canonical offline bootstrap prepared.
-- [x] Shared completion checks and bounded resumable native-owner dispatch implemented; final qualification in progress.
+- [x] Shared completion checks and bounded resumable native-owner dispatch implemented; native integration acceptance complete.
 - [x] Required regression gates: f940 full602 PASS, one Research environment skip independently PASS; focused13 and validator PASS.
-- [ ] Three modes, two real-agent runs each; synthetic continuation explicitly labelled.
+- [x] Three modes, two actual LLM-agent runs each; synthetic profile and all limitations are explicitly labelled.
 
 ## Surprises & Discoveries
 The legacy worker path promotes Research COMPLETED directly to PLAN_READY. Three native stores use a bare Git root while the common profile uses a container. Preserve owner contracts through adapters.
@@ -17,7 +17,7 @@ The legacy worker path promotes Research COMPLETED directly to PLAN_READY. Three
 Use owner validators and immutable code/knowledge pins. No child schema or knowledge body is vendored into parent history. Keep completed stages and receipts after partial failure.
 
 ## Outcomes & Retrospective
-Pending; live acceptance remains NOT_RUN.
+The six-run acceptance matrix is complete under the repaired Research `2304261b` and Production `cd1af443` pins. Every run produced a content-bearing `PLAN_READY` production plan, committed native Research/Production receipts, and a distinct `projection_status=SKIPPED`. Each second run re-read a persisted first-run record and recorded an adopted decision or changed production step. The aggregate evidence is `execution/aak-02-live-acceptance.json`; the per-mode evidence and independent native revalidation remain in `/private/tmp/aak02-live-20260908`.
 
 ## Context and Orientation
 See pinned specification and implementation plan at b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d, Issue197, owner verification reports and execution state.
@@ -29,7 +29,7 @@ Connect direct/worker completion, native store bootstrap/dispatch, and finite ex
 Run tests.test_knowledge_cycle_e2e, validator, full suite and diff check. Record each real agent run with source snapshots, validated plans, receipts and adopted reuse references.
 
 ## Validation and Acceptance
-AC1/2 require live evidence; AC3/4/5 cover forged success, restart and independent statuses; AC6 forbids treating fake regression as live acceptance.
+AC1 and AC2 are PASS from the six-run matrix. AC3, AC4 and AC5 remain PASS from the f940 regression suite and the observed native cycle receipts. AC6 is PASS because the evidence is classified as actual external LLM-agent execution with a synthetic profile, while the real Masa profile is explicitly NOT_RUN; synthetic regressions are not used as a substitute.
 
 ## Idempotence and Recovery
 Run/profile/snapshot binding, stage hash verification, atomic state, finite lease and retry policy. Preserve native successful commits on index/other-owner failure.
@@ -43,6 +43,6 @@ Native bootstrap/query passed all eight real owner CLIs with explicit synthetic 
 
 Parent candidate 2057ccca19a6bc9ae5ce86863abaf0aad811f211 passed 602 full tests (one Research environment skip independently passed against the actual candidate). A native Marketing prepare probe reproduced FUTURE_OBSERVATION with the initial run clock and VALID with the actual write clock. The integration now records immutable per-operation write clocks separately from the initial search clock; requalify this delta before final acceptance.
 
-Frozen f940 runtime is executing three actual LLM-agent pairs under `/private/tmp/aak02-live-20260908`. PR208 preserves the implementation. AC1/2 remain unqualified until the six native plans and knowledge-adoption traces are inspected.
+Frozen f940 runtime executed three actual LLM-agent pairs under `/private/tmp/aak02-live-20260908`. Independent revalidation reports six of six native runs PASS, with six `PLAN_READY` plans and six committed Research/Production receipt pairs. PR208 preserves the implementation. The run evidence records resume, new-clone and fork attribution separately; the fork did not contact its upstream remote, and no physical work, viewer observation, Drive artifact or public projection occurred.
 
-Actual agents found a Research role-authoring dead end, local locator conflict and derived-output snapshot cycle. Separate owner PR97 at465aa4c940aa93912739d22de2c994a4ba342f4b repairs only those contracts. Owner full311/55focused and native gates PASS. All original attempts are retained; qualified-one/two runs start with actual-source Art History setup knowledge and the explicit repaired pin. Parent runtime remains frozen atf940.
+Actual agents found a Research role-authoring dead end, local locator conflict and derived-output snapshot cycle. Separate owner PR97 at `2304261b0c009b9f8690f2d5afbd76a53304c8a9` repairs only those contracts; Research full `313 PASS`, focused/export and native gates PASS. Production PR66 at `cd1af443821e826e7f41b6effd608767dea4366e` repairs the internal-reference actionability boundary; Production full `121 PASS`, focused and native gates PASS. All original attempts remain preserved and excluded from the accepted matrix. Parent runtime remains frozen at f940.

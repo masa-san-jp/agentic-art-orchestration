@@ -1,5 +1,5 @@
-version: 71
-updated_at: "2026-09-06T07:07:09.302565+00:00"
+version: 72
+updated_at: "2026-09-08T03:24:18.113729+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -1701,7 +1701,7 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-02
     target_repositories:
     - agentic-art-orchestration
@@ -1766,9 +1766,53 @@ tasks:
         status: PASS
         candidate_commit: c3f62e69abf407e921dd49ecafc753e0b6e518b8
         contract_version: automatic-plan-authority/v1
-        acceptance_evidence: execution/aak-integration-readiness.json; downstream combined 595 tests PASS
+        acceptance_evidence: execution/aak-integration-readiness.json; downstream combined
+          595 tests PASS
         reference: https://github.com/masa-san-jp/agentic-art-orchestration/issues/187
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-02-AC1:
+        status: PASS
+        mode: actual LLM agent with synthetic profile
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; six native runs, six PLAN_READY
+          plans and six committed Research/Production receipt pairs
+      AAK-02-AC2:
+        status: PASS
+        mode: actual LLM agent with synthetic profile
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; resume/new-clone/fork second-run
+          adoption traces
+      AAK-02-AC3:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: tests.test_knowledge_cycle_e2e; 13 focused PASS and parent full 602
+          PASS
+        evidence_type: REGRESSION
+      AAK-02-AC4:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: tests.test_knowledge_cycle_e2e; partial-write/restart receipt retention
+          PASS; native cycle receipts independently revalidated
+        evidence_type: REGRESSION
+      AAK-02-AC5:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; plan/knowledge/projection statuses
+          kept distinct
+      AAK-02-AC6:
+        status: PASS
+        candidate_commit: f940b561dec92cb4f4757010bfce5e30fe34f5bd
+        reference: execution/aak-02-live-acceptance.json; evidence classified actual LLM
+          agent with synthetic profile, real Masa profile explicitly NOT_RUN
+    code_status: CODE_VERIFIED
+    integration_status: NATIVE_ACCEPTANCE_COMPLETE
+    completion: AAK-02 AC1/AC2 PASS from six actual LLM-agent runs under a synthetic profile;
+      AC3/AC4 regression PASS; AC5 status separation PASS; AC6 PASS with real Masa profile
+      explicitly NOT_RUN. All six runs are COMPLETED, PLAN_READY, COMMITTED, projection
+      SKIPPED; the second run in each mode adopts persisted first-run knowledge. Evidence
+      execution/aak-02-live-acceptance.json. Parent f940b561dec92cb4f4757010bfce5e30fe34f5bd;
+      Research 2304261b0c009b9f8690f2d5afbd76a53304c8a9; Production cd1af443821e826e7f41b6effd608767dea4366e.
+      Merge, public projection, physical work and real-person migration remain human-gated.
   - id: AAK-03
     owner: agentic-art-orchestration
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/195
