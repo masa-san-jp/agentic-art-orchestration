@@ -1,9 +1,9 @@
-version: 239
-updated_at: '2026-09-08T01:16:52.056524+00:00'
+version: 240
+updated_at: '2026-09-08T01:17:37.682382+00:00'
 active_task: null
 active_repository: agentic-art-production
 lease:
-  status: held
+  status: released
   owner: codex-aak11-resume-20260908
   acquired_at: '2026-09-08T00:47:29.786047+00:00'
   expires_at: '2026-09-08T02:47:29.786047+00:00'
@@ -18,8 +18,9 @@ lease:
     - PLANS.md
     child_repositories:
     - agentic-art-production
-  published_commit: 898222fe2f01ef2b71511efc4d69ff15102a171c
-  publication_verification: AAK10 exact remote verified before release; AAK11 native queue registered.
+  published_commit: d185ad34c1ee53c9fb4f910a966a1dd065530093
+  publication_verification: Exact remote head verified after AAK11 qualification checkpoint
+  released_at: '2026-09-08T01:17:37.682382+00:00'
 checkpoint:
   task: AAK-11
   repository: agentic-art-production
