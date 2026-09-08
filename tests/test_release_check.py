@@ -53,6 +53,28 @@ def make_pinned_fixture(root: Path) -> tuple[dict, str, str]:
 
 
 class ReleaseCheckTests(unittest.TestCase):
+    def test_history_scan_handles_binary_blobs_without_hiding_assignments(self):
+        with tempfile.TemporaryDirectory(prefix="release-history-") as temporary:
+            root = Path(temporary)
+            git(root, "init", "-q", "-b", "main")
+            git(root, "config", "user.email", "fixture@example.invalid")
+            git(root, "config", "user.name", "Fixture")
+            blob = root / "asset.bin"
+            blob.write_bytes(b"\x89\xff\x00opaque binary data\n")
+            git(root, "add", "asset.bin")
+            git(root, "commit", "-q", "-m", "binary fixture")
+            with patch("tools.release_check.ROOT", root):
+                self.assertEqual("PASSED", _history_forbidden_findings()["status"])
+                value = b"fixture-detection-marker"
+                blob.write_bytes(b"\xff\x00\npassword=" + value + b"\n")
+                git(root, "add", "asset.bin")
+                git(root, "commit", "-q", "-m", "synthetic negative fixture")
+                result = _history_forbidden_findings()
+            self.assertEqual("FAILED", result["status"])
+            self.assertEqual(1, result["finding_count"])
+            self.assertEqual("asset.bin", result["findings"][0]["path"])
+            self.assertNotIn(value.decode(), str(result))
+
     def test_qualification_observation_provenance_preserves_pin_and_unknown_remote(self):
         result = _observation_provenance(
             {

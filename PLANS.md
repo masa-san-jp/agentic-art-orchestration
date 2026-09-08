@@ -1,5 +1,7 @@
 # Execution Plans
 
+Active prerequisite: [Issue193 attested projection](docs/issue-193-execution.md).
+
 ## AAK：自律制作と累積知識の追加系列
 
 今回の追加要件は[仕様SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のprinciples/authority/compatibility、実装順・検証・再開は[実装計画SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)を読む。Issue参照版は `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`。既存機能全体の仕様を置き換えない。

@@ -77,6 +77,7 @@ PROJECT_STATUSES = {
 INIT_STATUSES = {"DRY_RUN_READY", "APPLIED", "BLOCKED_CONFLICT", "FAILED"}
 DEFAULT_LAYOUT = {
     "contract_version": "public-project-layout/v1",
+    "canonical_plan": {"source_repository": "agentic-art-production", "source_artifact": "03_plan/production-plan.md", "target_artifact": "plan.md", "projection_contract": "canonical-plan-projection/v2", "body_transform": "none", "receiver_validator": "python3 tools/validate.py --check", "migration_registry": "plans/migration.yaml"},
     "collections": {"plans": "plans", "works": "works"},
     "catalog_markers": {
         "start": "<!-- agentic-art:catalog:start -->",
@@ -642,6 +643,9 @@ def _request_yaml_bytes(request: Mapping[str, object]) -> bytes:
         sort_keys=False,
         allow_unicode=True,
         default_flow_style=False,
+        # Project's native flat YAML readers require each scalar on one line.
+        # Wrapping the JSON asset manifest produces an unreadable catalog.
+        width=2_147_483_647,
     ).encode("utf-8")
 
 
@@ -1856,9 +1860,18 @@ def _rollback_projection_transaction(
     created_paths: list[str],
     replaced_originals: Mapping[str, tuple[bytes, bytes]],
     created_directories: set[Path],
+    removed_originals: Mapping[str, bytes] | None = None,
 ) -> tuple[list[str], list[dict[str, str]], str]:
     """Restore only this transaction's exact paths and return residual evidence."""
     rollback_findings: list[dict[str, str]] = []
+    for relative, original in (removed_originals or {}).items():
+        try:
+            if not _write_target_create_only(target, relative, original):
+                current, _ = _target_regular(_target_locator(target, relative, relative)[1], relative)
+                if current != original:
+                    raise _prepare_error("TARGET_CONFLICT", relative, "removed asset was recreated concurrently")
+        except (PreparationError, OSError):
+            rollback_findings.append(_projection_finding("ROLLBACK_FAILED", relative, "preserve concurrent data and restore the removed asset manually"))
     for relative, (original, replacement) in reversed(list(replaced_originals.items())):
         try:
             current, _ = _target_regular(_target_locator(target, relative, relative)[1], relative)
@@ -1916,6 +1929,7 @@ def _apply_projection_transaction(
     before: str,
     planned_files: Mapping[str, bytes],
     target_updates: Mapping[str, tuple[bytes, bytes]],
+    target_removals: Mapping[str, bytes] | None = None,
     fail_after: int | None = None,
 ) -> dict[str, object]:
     """Stage and apply only new record files plus index/catalog replacements."""
@@ -1923,6 +1937,10 @@ def _apply_projection_transaction(
     changed_paths: list[str] = []
     created_paths: list[str] = []
     replaced_originals: dict[str, tuple[bytes, bytes]] = {}
+    removed_originals: dict[str, bytes] = {}
+    removals = target_removals or {}
+    if set(removals) & (set(planned_files) | set(target_updates)):
+        raise _prepare_error("LAYOUT_INVALID", "transaction", "removal and replacement paths overlap")
     parent_paths: set[Path] = set()
     for relative in planned_files:
         _target_locator(target, relative, relative)
@@ -1945,6 +1963,9 @@ def _apply_projection_transaction(
             current, _ = _target_regular(_target_locator(target, relative, relative)[1], relative)
             if current != expected:
                 raise _prepare_error("TARGET_CONFLICT", relative, "the target index or catalog changed after planning")
+        for relative, expected in removals.items():
+            if _target_regular(_target_locator(target, relative, relative)[1], relative)[0] != expected:
+                raise _prepare_error("TARGET_CONFLICT", relative, "obsolete attested asset changed after planning")
 
         with tempfile.TemporaryDirectory(prefix="public-projection-stage-") as staging_name:
             staging = Path(staging_name)
@@ -1960,6 +1981,18 @@ def _apply_projection_transaction(
 
             if fail_after == 0:
                 raise _prepare_error("FAILED", "transaction", "injected transaction failure before the first mutation")
+            for relative, expected in sorted(removals.items()):
+                path = _target_locator(target, relative, relative)[1]
+                if _target_regular(path, relative)[0] != expected:
+                    raise _prepare_error("TARGET_CONFLICT", relative, "obsolete attested asset changed during transaction")
+                try:
+                    path.unlink()
+                except OSError as exc:
+                    raise _prepare_error("FAILED", relative, "cannot remove obsolete attested asset") from exc
+                removed_originals[relative] = expected
+                changed_paths.append(relative)
+                if fail_after is not None and len(changed_paths) >= fail_after:
+                    raise _prepare_error("FAILED", relative, "injected failure after obsolete asset removal")
             for relative in sorted(planned_files):
                 staged_bytes = (staging / relative).read_bytes()
                 if not _write_target_create_only(target, relative, staged_bytes):
@@ -1987,6 +2020,7 @@ def _apply_projection_transaction(
             created_paths=created_paths,
             replaced_originals=replaced_originals,
             created_directories=created_directories,
+            removed_originals=removed_originals,
         )
         findings: list[dict[str, str]] = []
         if exc.code in PUBLIC_PROJECTION_FINDING_CODES:
@@ -3237,65 +3271,10 @@ def project_plan_automatic(
     fail_after: int | None = None,
 ) -> dict[str, object]:
     """Project one canonical PLAN_READY production plan to its configured target."""
-    if not isinstance(report, Mapping):
-        raise _prepare_error("AUTHORITY_INVALID", "run-report", "automatic projection requires the canonical run report mapping")
-    run_id, configured_public = _automatic_report_resolution(
-        report,
-        internal_output_root=internal_output_root,
-        public_projection_root=public_projection_root,
-        state_root=state_root,
-        expected_status="PLAN_READY",
-    )
-    projection_id = projection_id or run_id
-    if projection_id != run_id or STABLE_ID.fullmatch(projection_id) is None:
-        raise _prepare_error("AUTHORITY_INVALID", "projection_id", "automatic projection ID must equal the source run ID")
-    try:
-        prepared = prepare_run_report(
-            report,
-            internal_output_root=internal_output_root.expanduser().resolve(strict=False),
-            projection_id=projection_id,
-            automatic_plan=True,
-        )
-    except PreparationError as exc:
-        result = _automatic_preparation_failure(
-            report,
-            projection_id=projection_id,
-            error=exc,
-            public_projection_root=configured_public,
-        )
-        _write_projection_result(state_root, projection_id, result, allow_transition=True)
-        return _automatic_summary(result, request_locator=None)
-    request_locator = prepared.get("request_locator")
-    if not isinstance(request_locator, str):
-        raise _prepare_error("AUTHORITY_INVALID", "request_locator", "the canonical PLAN_READY producer must create an automatic plan request")
-    request_path = internal_output_root.expanduser().resolve(strict=False) / request_locator
-    request = _load_document(request_path)
-    if not isinstance(request, Mapping):
-        raise _prepare_error("AUTHORITY_INVALID", "request", "the automatic plan request must be a mapping")
-    authority_findings = _automatic_request_guard(request, projection_id=projection_id, expected_record_count=1)
-    target = configured_public
-    if target is None:
-        result = _automatic_terminal_result(
-            projection_id=projection_id,
-            generated_at=str(request.get("generated_at")),
-            request_hash=request_sha256(request),
-            source_refs=_request_source_refs(request),
-            status="BLOCKED_CONFIGURATION",
-            findings=[_projection_finding("CONFIGURATION_MISSING", "destination_resolution.public_projection_root", "set public_projection_root in the selected external destination profile")],
-        )
-        _write_projection_result(state_root, projection_id, result, allow_transition=True)
-        return _automatic_summary(result, request_locator=request_locator)
-    result = _project_automatic_request(
-        request,
-        request_locator=request_locator,
-        internal_output_root=internal_output_root,
-        public_projection_root=target,
-        state_root=state_root,
-        authority_findings=authority_findings,
-        authority_validated=True,
-        fail_after=fail_after,
-    )
-    return _automatic_summary(result, request_locator=request_locator)
+    from tools.canonical_plan_projection import project_attested
+    if projection_id is not None and projection_id != report.get("run_id"):
+        raise _prepare_error("AUTHORITY_INVALID", "projection_id", "projection ID must match the canonical source run")
+    return project_attested(report, internal_output_root=internal_output_root, public_projection_root=public_projection_root, state_root=state_root, fail_after=fail_after)
 
 
 def project_batch_automatic(
@@ -3308,70 +3287,10 @@ def project_batch_automatic(
     fail_after: int | None = None,
 ) -> dict[str, object]:
     """Project every plan in one canonical PASSED batch as one transaction."""
-    if not isinstance(summary, Mapping):
-        raise _prepare_error("AUTHORITY_INVALID", "batch-summary", "automatic projection requires the canonical batch summary mapping")
-    run_id, configured_public = _automatic_report_resolution(
-        summary,
-        internal_output_root=internal_output_root,
-        public_projection_root=public_projection_root,
-        state_root=state_root,
-        expected_status="PASSED",
-    )
-    projection_id = projection_id or run_id
-    if projection_id != run_id or STABLE_ID.fullmatch(projection_id) is None:
-        raise _prepare_error("AUTHORITY_INVALID", "projection_id", "automatic projection ID must equal the source batch run ID")
-    projects = summary.get("projects")
-    completed_count = summary.get("completed_count")
-    expected_count = completed_count if isinstance(completed_count, int) else None
-    if not isinstance(projects, list) or not projects or any(not isinstance(item, Mapping) or item.get("status") != "PASSED" for item in projects):
-        raise _prepare_error("AUTHORITY_INVALID", "batch.projects", "automatic batch projection requires every project to be PASSED")
-    try:
-        prepared = prepare_batch_summary(
-            summary,
-            internal_output_root=internal_output_root.expanduser().resolve(strict=False),
-            projection_id=projection_id,
-            automatic_plan=True,
-        )
-    except PreparationError as exc:
-        result = _automatic_preparation_failure(
-            summary,
-            projection_id=projection_id,
-            error=exc,
-            public_projection_root=configured_public,
-        )
-        _write_projection_result(state_root, projection_id, result, allow_transition=True)
-        return _automatic_summary(result, request_locator=None)
-    request_locator = prepared.get("request_locator")
-    if not isinstance(request_locator, str):
-        raise _prepare_error("AUTHORITY_INVALID", "request_locator", "the canonical PASSED batch producer must create an automatic plan request")
-    request_path = internal_output_root.expanduser().resolve(strict=False) / request_locator
-    request = _load_document(request_path)
-    if not isinstance(request, Mapping):
-        raise _prepare_error("AUTHORITY_INVALID", "request", "the automatic batch request must be a mapping")
-    authority_findings = _automatic_request_guard(request, projection_id=projection_id, expected_record_count=expected_count)
-    target = configured_public
-    if target is None:
-        result = _automatic_terminal_result(
-            projection_id=projection_id,
-            generated_at=str(request.get("generated_at")),
-            request_hash=request_sha256(request),
-            source_refs=_request_source_refs(request),
-            status="BLOCKED_CONFIGURATION",
-            findings=[_projection_finding("CONFIGURATION_MISSING", "destination_resolution.public_projection_root", "set public_projection_root in the selected external destination profile")],
-        )
-        _write_projection_result(state_root, projection_id, result, allow_transition=True)
-        return _automatic_summary(result, request_locator=request_locator)
-    result = _project_automatic_request(
-        request,
-        request_locator=request_locator,
-        internal_output_root=internal_output_root,
-        public_projection_root=target,
-        state_root=state_root,
-        authority_findings=authority_findings,
-        authority_validated=True,
-        fail_after=fail_after,
-    )
-    return _automatic_summary(result, request_locator=request_locator)
+    from tools.canonical_plan_projection import project_attested
+    if projection_id is not None and projection_id != summary.get("run_id"):
+        raise _prepare_error("AUTHORITY_INVALID", "projection_id", "projection ID must match the canonical batch")
+    return project_attested(summary, internal_output_root=internal_output_root, public_projection_root=public_projection_root, state_root=state_root, batch=True, fail_after=fail_after)
 
 
 def _load_document(path: Path) -> object:

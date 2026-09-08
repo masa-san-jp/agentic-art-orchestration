@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -20,6 +21,17 @@ from tools.security import PUBLIC_PROJECTION_FINDING_CODES, scan_public_projecti
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = ROOT / "tests/fixtures/public-projection"
+
+
+def synthetic_owner_boundary(item, internal):
+    """Transaction-only test double; never Production or live acceptance evidence."""
+    slug = item.get("project_slug", item.get("project_id"))
+    path = Path(item["plan"]) if "plan" in item else next(internal.glob("batch/*/production/" + slug + "/03_plan/production-plan.md"))
+    body = path.read_bytes(); attestation = b'{"synthetic_boundary_only":true}\n'
+    return {"identity": "production/" + slug + "#PL001", "revision": item.get("plan_revision", 1),
+        "body_hash": hashlib.sha256(body).hexdigest(), "attestation_hash": hashlib.sha256(attestation).hexdigest(),
+        "production_commit": item["production_source_commit"], "production_state": "PLANNING", "assets": [],
+        "files": {"plan.md": body, "public-plan-attestation.json": attestation}}
 
 
 class PublicProjectionContractTests(unittest.TestCase):
@@ -313,6 +325,7 @@ class PublicProjectionContractTests(unittest.TestCase):
         )
         return summary
 
+    @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
     def test_automatic_plan_projection_applies_without_public_share_approval_and_replays_idempotently(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-plan-automatic-") as temporary:
             root = Path(temporary)
@@ -340,13 +353,11 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertTrue((target / "plans/P0001-automatic-plan/metadata.yaml").is_file())
             metadata = yaml.safe_load((target / "plans/P0001-automatic-plan/metadata.yaml").read_text(encoding="utf-8"))
             self.assertEqual("public", metadata["visibility"])
-            self.assertNotIn("RUN-AUTO-001", json.dumps(metadata, ensure_ascii=False))
+            self.assertEqual("RUN-AUTO-001", metadata["source_run_id"])
             self.assertNotIn(str(root), json.dumps(metadata, ensure_ascii=False))
 
-            request = yaml.safe_load((root / "internal" / applied["request_locator"]).read_text(encoding="utf-8"))
-            self.assertEqual("plan", request["records"][0]["record_kind"])
-            self.assertEqual("public", request["records"][0]["publication"]["visibility"])
-            self.assertEqual("cleared", request["records"][0]["files"][0]["rights_status"])
+            self.assertEqual("canonical-plan-projection/v2", metadata["projection_contract"])
+            self.assertTrue((target / "plans/P0001-automatic-plan/public-plan-attestation.json").is_file())
             evidence = json.loads((root / "state" / "RUN-AUTO-001" / "public-projection-result.json").read_text(encoding="utf-8"))
             self.assertEqual([], projection.validate_result(evidence))
             self.assertEqual("AUTOMATIC_PLAN", evidence["projection_mode"])
@@ -362,6 +373,7 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual([], replay["changed_paths"])
             self.assertEqual("NOT_REQUIRED", replay["human_gate"])
 
+    @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
     def test_automatic_plan_projection_updates_opt_in_root_catalog(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-plan-root-catalog-") as temporary:
             root = Path(temporary)
@@ -413,7 +425,7 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual("NOT_REQUIRED", result["human_gate"])
             self.assertEqual([], result["changed_paths"])
             self.assertIn("CONFIGURATION_MISSING", set(result["finding_codes"]))
-            self.assertTrue((root / "internal" / "public-projection-candidates" / "RUN-AUTO-CONFIG-001" / "request.yaml").is_file())
+            self.assertIsNone(result["request_locator"])
             evidence = json.loads((root / "state" / "RUN-AUTO-CONFIG-001" / "public-projection-result.json").read_text(encoding="utf-8"))
             self.assertEqual([], projection.validate_result(evidence))
 
@@ -449,6 +461,7 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual("AUTHORITY_INVALID", raised.exception.code)
             self.assertEqual(before, projection._tree_fingerprint(target))
 
+    @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
     def test_automatic_batch_projects_one_hundred_plans_deterministically_without_git_mutation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-batch-automatic-") as temporary:
             root = Path(temporary)
@@ -481,6 +494,7 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual("AUTOMATIC_PLAN", evidence["projection_mode"])
             self.assertIsNone(evidence["approval_sha256"])
 
+    @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
     def test_automatic_batch_policy_failure_is_all_or_nothing(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-batch-policy-") as temporary:
             root = Path(temporary)
@@ -527,6 +541,7 @@ class PublicProjectionContractTests(unittest.TestCase):
             evidence = json.loads((root / "state" / "BATCH-AUTO-POLICY-001" / "public-projection-result.json").read_text(encoding="utf-8"))
             self.assertEqual([], projection.validate_result(evidence))
 
+    @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
     def test_automatic_batch_failure_rolls_back_staged_files(self) -> None:
         with tempfile.TemporaryDirectory(prefix="public-batch-rollback-") as temporary:
             root = Path(temporary)

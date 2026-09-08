@@ -1,5 +1,14 @@
 # Agentic Art Orchestration
 
+自動公開投影は `canonical-plan-projection/v2` を使います。run/batchが記録した
+Production code pin、stable identity/revision、本文とattestationのlocator/hashを
+pin済みowner CLIで検証し、本文・attestation・許諾済み画像を無変換で投影します。
+公開reviewが無い場合は内部プランを保持して `BLOCKED_POLICY` を返します。
+requestは内部出力の `public-projection/<run-id>/canonical-request.json`、resultは
+stateの `<run-id>/public-projection-result.json` に保存します。metadata/indexの
+`assets` はowner manifestをJSON文字列として保持し、flat YAML受信契約と整合します。
+詳細・検証・再開は [Issue193 execution](docs/issue-193-execution.md) を参照してください。
+
 ## AAK：自律制作と累積知識の追加系列
 
 今回の追加要件は[仕様SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のprinciples/authority/compatibility、実装順・検証・再開は[実装計画SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)を読む。Issue参照版は `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`。既存機能全体の仕様を置き換えない。
@@ -70,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-06T15:52:17.203991+00:00`.
+Source updated at: `2026-09-06T15:55:43.091639+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 0 | 2 | 144 | 151 |
+| 5 | 0 | 0 | 2 | 145 | 152 |
 
-Current task: `null`; repository: `null`; checkpoint: `AAK-04`.
-Next action: Registration-only Self Model PR94 requires human-approved trusted-base integration before native claim. This PR201 snapshot no longer holds an obsolete AAK13 claim; later qualified owner results are in PR207.
+Current task: `null`; repository: `null`; checkpoint: `PUBLIC-PROJECTION-ATTESTATION-001`.
+Next action: Await human approval for registration-only Self Model PR94; final downstream integration checkpoint is recorded separately in PR207. Do not claim from an unregistered trusted base.
 Ready: none.
 Next task: `null`.
 Blocked:

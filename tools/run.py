@@ -606,6 +606,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             report["production_source_commit"] = production_source_commit
         if plan_path.is_file():
             report["production_plan_sha256"] = _sha256_file(plan_path)
+            from tools.canonical_plan_projection import source_fields
+            report.update(source_fields(plan_path, production_root))
         if destination_resolution is not None:
             report["destination_resolution"] = dict(destination_resolution)
             if internal_output_root is None:
