@@ -1,3 +1,7 @@
+# AAK02 code qualified; actual-agent acceptance active — 2026-09-08
+
+Code f940b561dec92cb4f4757010bfce5e30fe34f5bd: 602 tests PASS (one Research environment skip independently passed). Draft PR208. Three actual agents independently execute synthetic continuation / new clone / local fork pairs under /private/tmp/aak02-live-20260908. Their clean runtime is /private/tmp/aak02-qualified-runtime-20260908, frozen at f940. Do not replace that runtime while runs are active. Read execution/aak-02-owner-verification.json; inspect native plan/receipt/adoption evidence before qualifying AC1/2. No live completion or main merge claimed. Lease remains held for this active task.
+
 # AAK02 claimed — 2026-09-08
 
 All owner candidates qualified; final integration active on codex/aak-02-live-knowledge-cycle-20260908. Read docs/aak-02-execution.md and execution/state.yaml. Live acceptance remains NOT_RUN.

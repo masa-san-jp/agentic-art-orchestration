@@ -1,0 +1,98 @@
+{
+  "task": "AAK-02",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/197",
+  "specification_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
+  "code_candidate": "f940b561dec92cb4f4757010bfce5e30fe34f5bd",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/208",
+  "code_status": "CODE_VERIFIED",
+  "integration_status": "IN_PROGRESS",
+  "main_integration": "NOT_MERGED",
+  "acceptance": {
+    "AAK-02-AC1": "NOT_RUN",
+    "AAK-02-AC2": "NOT_RUN",
+    "AAK-02-AC3": "PASS",
+    "AAK-02-AC4": "PASS_REGRESSION",
+    "AAK-02-AC5": "PASS_REGRESSION",
+    "AAK-02-AC6": "PASS"
+  },
+  "verification": {
+    "full": "602 tests PASS; 250.491s; one Research sibling-path environment skip independently passed against actual qualified candidate",
+    "focused": "13 PASS; includes knowledge-cycle and canonical plan completion",
+    "research_boundary": {
+      "test": "test_generated_request_reaches_research_dry_run",
+      "status": "PASS",
+      "mode": "actual qualified child checkout; same test assertions; only sibling-path environment condition supplied",
+      "code_commit": "c221d59f23cfcc15a3fa22e8ca98292f17409373"
+    },
+    "validator": "PASS",
+    "diff": "PASS",
+    "workspace_status": "all six canonical offline fixture repositories clean",
+    "audit": "no error; stale synthetic marketing signal retained; normal branch push resolved unpublished code checkpoint"
+  },
+  "test_mapping": {
+    "AAK-02-AC3": [
+      "test_ac3_success_json_empty_summary_tamper_and_dirty_code_fail_closed",
+      "test_ac3_worker_report_never_attests_production_and_old_false_success_is_rejected"
+    ],
+    "AAK-02-AC4": [
+      "test_ac4_ac5_partial_write_resume_retains_plan_and_successful_owner_receipt"
+    ],
+    "AAK-02-AC5": [
+      "test_ac4_ac5_partial_write_resume_retains_plan_and_successful_owner_receipt",
+      "test_ac5_public_projection_requires_native_receiver_attribution"
+    ],
+    "AAK-02-AC6": [
+      "actual-agent acceptance explicitly separate from synthetic regression; Issue remains OPEN"
+    ]
+  },
+  "live_acceptance": {
+    "status": "IN_PROGRESS",
+    "kind": "ACTUAL_LLM_AGENT_WITH_SYNTHETIC_PROFILE",
+    "actual_masa_data": "NOT_RUN",
+    "remote_publication": "NOT_RUN",
+    "human_step_interventions": [],
+    "provider": "current Codex LLM agents via collaboration; no daemon or paid CI dependency",
+    "modes": {
+      "resume": {
+        "agent": "/root/live_resume",
+        "workspace": "/private/tmp/aak02-live-20260908/resume",
+        "run_ids": [
+          "resume-one",
+          "resume-two"
+        ],
+        "status": "IN_PROGRESS"
+      },
+      "new-clone": {
+        "agent": "/root/live_new_clone",
+        "workspace": "/private/tmp/aak02-live-20260908/new-clone",
+        "run_ids": [
+          "new-clone-one",
+          "new-clone-two"
+        ],
+        "status": "IN_PROGRESS"
+      },
+      "fork": {
+        "agent": "/root/live_fork",
+        "workspace": "/private/tmp/aak02-live-20260908/fork",
+        "run_ids": [
+          "fork-one",
+          "fork-two"
+        ],
+        "status": "IN_PROGRESS"
+      }
+    }
+  },
+  "boundaries": {
+    "private_raw": "not copied to parent",
+    "domain_knowledge": "owner Git only; parent stores metadata references",
+    "physical_work": "NOT_RUN",
+    "drive_artifact": "NONE",
+    "feedback": "explicit task authorization only; no inferred personal preference"
+  },
+  "log_sha256": {
+    "aak02-clock-full.log": "b69988e3c304b687057a6b89f5d69bc2d81b0b113c1abd59d017e9ff2d2b63bd",
+    "aak02-write-clock-tests.log": "1df7fa048c13737187f55a784df8ae6fc023c430c9f0598aa3dd5457878db4ce",
+    "aak02-research-boundary.json": "0b70539ea215bcb5320f941ace95188dcfa7bfd9b53a5f1bef9cebc1610587f7"
+  },
+  "updated_at": "2026-09-08T01:59:00.435038+00:00"
+}
