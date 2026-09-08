@@ -1,3 +1,7 @@
+# AAK09 qualified — 2026-09-08
+
+Research PR96 code `046c2380310d208ca52cbca461c95c798328b599`: 5 synthetic AC / 9 focused / 307 full tests / native gates PASS。親の次工程はProduction AAK10。Production60 PR63 `69567e88131e3f033d010791fb5849e1b2ebff8d`のattestationを再利用し、媒体別の制作可能性を追加する。AAK02 liveとmain統合は未実施。
+
 # AAK-07 qualification — 2026-09-08
 
 AAK07の5 synthetic AC / 57 full tests / native agent-verifyとcompletion validatorはPASS。PR87 code `7be3d5ff495a91f3ce75159c96e9fc0ec383aa57`、証跡はexecution/aak-07-owner-verification.json。次はAAK09のResearch候補branchへ登録・claimして固有性と累積知識を接続する。main統合とAAK02 liveは未実施。

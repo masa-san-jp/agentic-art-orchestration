@@ -1,7 +1,7 @@
-version: 234
-updated_at: '2026-09-07T22:15:35.211333+00:00'
-active_task: AAK-09
-active_repository: agentic-art-research
+version: 235
+updated_at: '2026-09-08T00:15:28.847513+00:00'
+active_task: null
+active_repository: null
 lease:
   status: held
   owner: codex-aak09-resume-20260908
@@ -23,9 +23,10 @@ lease:
 checkpoint:
   task: AAK-09
   repository: agentic-art-research
-  status: IN_PROGRESS
-  result: Qualified AAK05/06/07/08 dependencies fixed; registered native maintenance task on isolated agent/aak-09-cumulative-specificity,
-    base c3e25347b3f36d96e903690ff0274838333f5132.
+  status: CODE_VERIFIED
+  result: 5 synthetic AC PASS, 9 focused / 307 full tests and native gates PASS. Native Marketing07 artifact and Research
+    memory continuation verified. Main and AAK02 live NOT_RUN.
+  evidence: execution/aak-09-owner-verification.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -40,12 +41,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-07
+last_completed_task: AAK-09
 resume_from:
-  task: AAK-09
-  repository: agentic-art-research
-  action: Register and claim AAK09 using qualified AAK05/06/07/08 candidate pins in isolated owner branch
-  command: git switch -c agent/aak-09-cumulative-specificity
+  task: AAK-10
+  repository: agentic-art-production
+  action: Register and claim AAK10 on qualified Production60 candidate; reuse attestation and add media-specific actionability
+  command: git switch -c agent/aak-10-plan-actionability
 previous_checkpoint:
   task: AAK-07
   repository: marketing-trends-notes

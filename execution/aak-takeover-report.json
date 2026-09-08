@@ -392,26 +392,36 @@
       "task": "AAK-09",
       "issue": "https://github.com/masa-san-jp/agentic-art-research/issues/94",
       "owner": "agentic-art-research",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-09-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         },
         "AAK-09-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "046c2380310d208ca52cbca461c95c798328b599",
+          "reference": "https://github.com/masa-san-jp/agentic-art-research/pull/96"
         }
       },
-      "pull_request": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/96",
       "observed_pr": null,
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
