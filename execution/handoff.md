@@ -1,3 +1,9 @@
+# AAK series integrated — 2026-09-08
+
+The authorized merge sequence is complete. Child main branches now contain the accepted implementation: self-model PR95 `96aaf6e`, art-history PR387 `97b5325`, marketing PR87 `9b9bf5d`, Research PR95/96/97 `7da03d5`, `f9aeb7c`, `04929b2`, Production PR63/64/65/66 `10eda60`, `37e4d97`, `08e7b35`, `6b35dbc`, Project PR12/13 `a8debd5`, `b42daa9`, and Viewer replacement PR8 `0c198ec`. Parent PR202/204/206/207/208 are merged in dependency order; parent main is `ad5d2699b3d6066d1b455cdefdd40e5d47ad2566`.
+
+AAK-02 acceptance remains classified as six actual LLM-agent runs under a synthetic profile: resume/new-clone/fork ×2, all plans `PLAN_READY`, Research/Production receipts committed, and second-run adoption recorded. The real Masa profile, physical work, viewer observations, public projection, Drive artifact creation and physical execution remain `NOT_RUN` or unauthorized. Resume from `execution/aak-02-live-acceptance.json`, `execution/aak-02-owner-verification.json`, and `execution/state.yaml`; no draft PR remains for this series.
+
 # AAK02 code qualified; actual-agent acceptance active — 2026-09-08
 
 Code f940b561dec92cb4f4757010bfce5e30fe34f5bd: 602 tests PASS (one Research environment skip independently passed). Draft PR208. Three actual agents independently execute synthetic continuation / new clone / local fork pairs under /private/tmp/aak02-live-20260908. Their clean runtime is /private/tmp/aak02-qualified-runtime-20260908, frozen at f940. Do not replace that runtime while runs are active. Read execution/aak-02-owner-verification.json; inspect native plan/receipt/adoption evidence before qualifying AC1/2. No live completion or main merge claimed. Lease remains held for this active task.

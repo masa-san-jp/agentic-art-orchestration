@@ -81,14 +81,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-08T03:28:01.234396+00:00`.
+Source updated at: `2026-09-08T04:32:06.440312+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | 0 | 0 | 0 | 154 | 154 |
 
 Current task: `null`; repository: `null`; checkpoint: `AAK-02`.
-Next action: Review native acceptance evidence, then review/merge draft PRs under existing human gates; do not perform merge automatically.
+Next action: Post-merge verification of AAK-02 evidence; keep public projection, physical work and real-person migration gates separate.
 Ready: none.
 Next task: `null`.
 Blocked:
