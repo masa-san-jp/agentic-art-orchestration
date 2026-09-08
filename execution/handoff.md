@@ -1,3 +1,7 @@
+# AAK02 claimed — 2026-09-08
+
+All owner candidates qualified; final integration active on codex/aak-02-live-knowledge-cycle-20260908. Read docs/aak-02-execution.md and execution/state.yaml. Live acceptance remains NOT_RUN.
+
 # AAK11 qualified — 2026-09-08
 
 Production PR65 code `2e2d702d671fcbd822b9c0b6188b3bad9f099771`: five synthetic AC, 8 focused / 120 full tests, validator and six native evaluation checks PASS. Native knowledge reuse and retraction affected-target proof passed. AAK02 live / main integration remain NOT_RUN. Publish this checkpoint before lease release, then claim AAK02 in its prepared isolated clone.

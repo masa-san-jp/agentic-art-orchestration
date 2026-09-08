@@ -79,14 +79,14 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-08T01:17:37.682382+00:00`.
+Source updated at: `2026-09-08T01:18:21.132169+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 0 | 0 | 0 | 153 | 154 |
+| 0 | 0 | 1 | 0 | 153 | 154 |
 
-Current task: `null`; repository: `agentic-art-production`; checkpoint: `AAK-11`.
-Next action: Claim final native-owner integration and live six-run acceptance
+Current task: `AAK-02`; repository: `agentic-art-orchestration`; checkpoint: `AAK-02`.
+Next action: Implement shared native completion, owner dispatch and bounded checkpoint continuation
 Ready: none.
 Next task: `null`.
 Blocked:
