@@ -74,7 +74,7 @@
     "live_agent_acceptance": "NOT_RUN",
     "merge_release_publication": "HUMAN_GATE"
   },
-  "code_candidate": null,
-  "pull_request": null,
-  "merge_commit": null
+  "code_candidate": "21a187d58aab714e13f1250510b285f2d8bd0373",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/215",
+  "merge_commit": "61f132f521e321c93652af9d80b543e5e8b682a2"
 }
