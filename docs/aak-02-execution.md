@@ -40,3 +40,5 @@ AAK05/06/07/09/11/12/13 and parent189/193/187 qualified candidates; current nati
 ## Integration observations (2026-09-08)
 
 Native bootstrap/query passed all eight real owner CLIs with explicit synthetic profile/catalog inputs. Fixed code-source vs destination boundary and exact single-repo staging. The parent native index must be rebuilt before querying an empty store. First parent full run: 600 tests, four old worker-status assumptions failed and two environment skips. Those status assumptions now preserve Research completion separately, and real private plan validation joins the owner verifier. No live-agent acceptance is claimed by these regressions.
+
+Parent candidate 2057ccca19a6bc9ae5ce86863abaf0aad811f211 passed 602 full tests (one Research environment skip independently passed against the actual candidate). A native Marketing prepare probe reproduced FUTURE_OBSERVATION with the initial run clock and VALID with the actual write clock. The integration now records immutable per-operation write clocks separately from the initial search clock; requalify this delta before final acceptance.

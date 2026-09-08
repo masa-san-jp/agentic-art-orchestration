@@ -1,5 +1,6 @@
 """Synthetic boundary/failure regressions; these do not stand in for live agents."""
 import copy
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -144,10 +145,12 @@ raise SystemExit(0 if ok else 1)
             if owner != 'agentic-art-project':
                 job = {'action':'write' if owner in {'agentic-art-research','agentic-art-production'} else 'no-new-evidence', 'inputs':{}, 'reason':'synthetic evidence decision'}
                 p = self.root / (owner+'-write.json'); p.write_text(json.dumps(job)); context['write_inputs'][owner] = str(p)
+        observed_at = datetime.now(timezone.utc)
         failed = [False]
         def native(owner,binding,action,inputs,**kwargs):
-            if action == 'query': return {'snapshot':kwargs['snapshot'],'records':[]}
+            if action == 'query': return {'snapshot':kwargs['snapshot'],'clock':kwargs['clock'],'records':[]}
             if action == 'index': return {'index_commit':kwargs['snapshot'],'index_hash':'c'*64}
+            self.assertGreaterEqual(datetime.fromisoformat(kwargs['clock'].replace('Z','+00:00')), observed_at)
             writes[owner] = writes.get(owner,0)+1
             if owner == 'agentic-art-production' and not failed[0]:
                 failed[0] = True
@@ -164,6 +167,7 @@ raise SystemExit(0 if ok else 1)
             prior = copy.deepcopy(state['owners']['agentic-art-research'])
             cycle._advance(*arguments)
             self.assertEqual(prior,state['owners']['agentic-art-research'])
+            self.assertNotEqual(context['clock'], prior['write_clock'])
             self.assertEqual(2,writes['agentic-art-research'])
             self.assertEqual(2,writes['agentic-art-production'])
             self.assertEqual('COMPLETED',state['run_status'])

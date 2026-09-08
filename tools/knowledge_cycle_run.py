@@ -89,12 +89,12 @@ def _query(owner, binding, inputs, snapshot, context):
     result = invoke(owner, binding, 'query', inputs, snapshot=snapshot,
         run_id=context['run_id'], operation_id=context['run_id'] + '-' + owner, clock=context['clock'])
     # Curated domain output stays in that owner's external cache, never parent Git/state.
-    path = Path(binding['store_root']) / 'cycle-queries' / (context['run_id'] + '-' + snapshot + '.json')
+    path = Path(binding['store_root']) / 'cycle-queries' / (context['run_id'] + '-' + snapshot + '-' + hashed([inputs, context['clock']])[:12] + '.json')
     if path.exists() and read(path) != result:
         raise ValueError('PINNED_QUERY_CHANGED')
     save(path, result)
     return {'owner': owner, 'snapshot': snapshot, 'query_hash': hashed(inputs),
-            'result_hash': hashed(result), 'result_ref': str(path)}
+            'result_hash': hashed(result), 'result_ref': str(path), 'evaluated_at': context['clock']}
 
 
 def advance(context, state_root):
@@ -233,13 +233,13 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
                 # path verifies the original payload/operation and Git commit.
                 replay = invoke(owner, b, 'write', job['inputs'],
                     snapshot=resolution['knowledge_refs'][owner]['commit'], run_id=run_id,
-                    operation_id=op, clock=context['clock'])
+                    operation_id=op, clock=saved['write_clock'])
                 if replay.get('status') == 'NO_NEW_EVIDENCE':
                     replay.update(status='NO_CHANGE', reason='NO_NEW_EVIDENCE')
                 validate_receipt(replay, owner, b, run_id, op)
                 if any(replay[k] != saved['receipt'][k] for k in ('target_parent', 'target_commit', 'accepted_ids', 'rejected_ids')):
                     raise ValueError('COMPLETED_NATIVE_RECEIPT_CHANGED')
-                query = _query(owner, b, read(context['query_inputs'][owner]), replay['target_commit'], context)
+                query = _query(owner, b, read(context['query_inputs'][owner]), replay['target_commit'], {**context, 'clock': saved['write_clock']})
                 if query != saved['query']:
                     raise ValueError('COMPLETED_NATIVE_QUERY_CHANGED')
             continue
@@ -255,24 +255,33 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
         if state['attempts'].get(owner, 0) >= POLICY['max_owner_attempts']:
             state.update(knowledge_status='PARTIAL', run_status='INCOMPLETE', stop_reason='OWNER_RETRY_LIMIT', next_action={'actor': 'agent', 'owner': owner, 'do': 'Inspect the native failure; preserve successful owner receipts.'})
             return
+        operations = state.setdefault('operations', {})
+        operation = operations.get(owner)
+        if operation is None or operation['job_hash'] != job_hash:
+            if operation is not None and (run_root / (owner + '-receipt.json')).exists():
+                raise ValueError('COMMITTED_OPERATION_INPUT_CHANGED')
+            operation = {'job_hash': job_hash, 'clock': datetime.now(timezone.utc).isoformat()}
+            operations[owner] = operation
+        write_context = {**context, 'clock': operation['clock']}
+        save(run_root / 'cycle.json', state)
         try:
             receipt = invoke(owner, b, 'write', job['inputs'], snapshot=resolution['knowledge_refs'][owner]['commit'],
-                run_id=run_id, operation_id=op, clock=context['clock'])
+                run_id=run_id, operation_id=op, clock=operation['clock'])
             if receipt.get('status') == 'NO_NEW_EVIDENCE':
                 receipt.update(status='NO_CHANGE', reason='NO_NEW_EVIDENCE')
             validate_receipt(receipt, owner, b, run_id, op)
             save(run_root / (owner + '-receipt.json'), receipt)
             if owner in {'art-history-notes', 'agentic-art-research', 'agentic-art-orchestration'}:
                 inputs = {'receipt': str(run_root / (owner + '-receipt.json'))} if owner == 'agentic-art-orchestration' else {}
-                index = invoke(owner, b, 'index', inputs, snapshot=receipt['target_commit'], run_id=run_id, operation_id=op, clock=context['clock'])
+                index = invoke(owner, b, 'index', inputs, snapshot=receipt['target_commit'], run_id=run_id, operation_id=op, clock=operation['clock'])
                 receipt.update(index_commit=index['index_commit'], index_hash=index['index_hash'])
-            query = _query(owner, b, read(context['query_inputs'][owner]), receipt['target_commit'], context)
+            query = _query(owner, b, read(context['query_inputs'][owner]), receipt['target_commit'], write_context)
             if owner == 'viewer-response-notes':
                 receipt.update(index_commit=receipt['target_commit'], index_hash=query['result_hash'])
             if receipt['status'] == 'INDEX_PENDING' or not receipt['index_commit'] or not receipt['index_hash']:
                 raise NativeKnowledgeError('NATIVE_INDEX_PENDING')
             validate_receipt(receipt, owner, b, run_id, op)
-            state['owners'][owner] = {'job_hash': job_hash, 'knowledge_status': 'COMMITTED' if receipt['accepted_ids'] else 'NO_NEW_EVIDENCE', 'receipt': receipt, 'query': query}
+            state['owners'][owner] = {'job_hash': job_hash, 'write_clock': operation['clock'], 'knowledge_status': 'COMMITTED' if receipt['accepted_ids'] else 'NO_NEW_EVIDENCE', 'receipt': receipt, 'query': query}
             save(run_root / (owner + '-receipt.json'), receipt)
         except (NativeKnowledgeError, OSError, ValueError, subprocess.SubprocessError) as exc:
             state['attempts'][owner] = state['attempts'].get(owner, 0) + 1
