@@ -46,6 +46,8 @@ stateの `<run-id>/public-projection-result.json` に保存します。metadata/
 
 Self Model × Art History × Marketing Trends → Agentic Art Research → Agentic Art Production を、独立したリポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
 
+自律制作と次回への知識再利用は [knowledge cycle runtime](docs/knowledge-cycle-runtime.md) の `tools/run.py --cycle-context` 入口を使う。外部エージェントが `next_action` と正確な `resume_command` を処理し、plan・knowledge・projectionを独立に検証する。
+
 ## 利用者向けの最短ルート
 
 このrepoは各ドメインのデータを一つへコピーする場所ではなく、会話から安全に調査・制作計画へ進むためのcontrol planeです。目的に応じて次の入口を使います。

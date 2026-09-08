@@ -522,6 +522,7 @@ class ProductionHistoryTests(unittest.TestCase):
                     patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
                     patch.object(MODULE, "_run_child", side_effect=fake_child), \
                     patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                    patch.object(MODULE, "verify_plan", return_value={"plan_status": "PLAN_READY"}), \
                     patch.object(MODULE, "_handoff_arguments", return_value=[
                         "--generated-at", "2026-08-20T00:00:00+09:00",
                         "--research-commit", "a" * 40,
@@ -599,6 +600,7 @@ class ProductionHistoryTests(unittest.TestCase):
                     patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
                     patch.object(MODULE, "_run_child", side_effect=fake_child), \
                     patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                    patch.object(MODULE, "verify_plan", return_value={"plan_status": "PLAN_READY"}), \
                     patch.object(MODULE, "_head", return_value="d" * 40):
                 report = MODULE._run_orchestration(
                     "調和", root / "workspace", root / "state", "RUN-PROJECTION-001", "artistic-research",

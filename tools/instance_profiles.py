@@ -94,7 +94,7 @@ def _save(path: Path, value: Mapping) -> None:
 
 
 def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root: Path,
-              *, run_id: str = "setup", dry_run: bool = False) -> dict:
+              *, run_id: str = "setup", dry_run: bool = False, owner_initializers=None) -> dict:
     """Resolve a recorded setup and pin each run without modifying user checkouts.
 
     Local config is external and explicit: stores are keyed by knowledge_store_id,
@@ -162,7 +162,11 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
         code = local_config.get("code_sources", {}).get(entry["code_repository"])
         if not isinstance(code, Mapping) or entry["code_commit"] not in code.get("qualified_commits", []):
             raise InstanceProfileError("qualified code pin evidence missing")
-        source = _external(code.get("path"))
+        # Code sources are read-only inputs; the running protocol checkout is
+        # valid here. Only state/store destinations must be outside it.
+        source = Path(str(code.get("path")))
+        if not source.is_absolute() or source.resolve() != source:
+            raise InstanceProfileError("explicit nonsymlink code source required")
         if _git(source, "rev-parse", "--show-toplevel") != str(source):
             raise InstanceProfileError("code source must be an explicit repository root")
         _git(source, "cat-file", "-e", entry["code_commit"] + "^{commit}")
@@ -209,9 +213,6 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
     knowledge_refs, code_refs = {}, {}
     for owner in OWNERS:
         entry = profile["repositories"][owner]
-        provider = LocalOwner(stores[owner], owner, entry["knowledge_store_id"], entry["code_commit"],
-                              creator=str(profile["creator_id"]), payload_validator=lambda *_: False)
-        knowledge_refs[owner] = {"store_id": entry["knowledge_store_id"], "ref": entry["knowledge_ref"], "commit": provider.knowledge_commit}
         code_refs[owner] = {"repository": entry["code_repository"], "commit": entry["code_commit"]}
         checkout = marker.parent / "code" / owner
         if checkout.exists():
@@ -219,11 +220,16 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
                 raise InstanceProfileError("interrupted code checkout requires inspection")
         else:
             # Existing canonical helper isolates dirty/diverged sources at qualified pins.
-            materialize_pinned_workspace({"repositories": [{"id": owner, "path": sources[owner].name,
-                "observed_commit": entry["code_commit"]}]}, sources[owner].parent,
+            materialize_pinned_workspace({"repositories": [{"id": owner, "path": ".",
+                "observed_commit": entry["code_commit"]}]}, sources[owner],
                 marker.parent / "staging" / owner)
             checkout.parent.mkdir(parents=True, exist_ok=True)
-            (marker.parent / "staging" / owner / sources[owner].name).rename(checkout)
+            (marker.parent / "staging" / owner).rename(checkout)
+        initializer = (owner_initializers or {}).get(owner)
+        provider = LocalOwner(stores[owner], owner, entry["knowledge_store_id"], entry["code_commit"],
+            creator=str(profile["creator_id"]), payload_validator=lambda *_: False,
+            initializer=(lambda path, init=initializer, pin=checkout: init(path, pin)) if initializer else None)
+        knowledge_refs[owner] = {"store_id": entry["knowledge_store_id"], "ref": entry["knowledge_ref"], "commit": provider.knowledge_commit}
     result = {"contract_version":"instance-resolution/v1", "profile_fingerprint":fingerprint(profile), "instance_id":profile["instance_id"], "creator_id":profile["creator_id"], "mode":profile["mode"], "personalization_status":"UNMET_PUBLIC_SEED_ONLY" if profile["personalization_mode"] == "public-seed-only" else "SATISFIED", "code_refs":code_refs, "knowledge_refs":knowledge_refs}
     result["projection_status"] = "SKIPPED" if profile["delivery_mode"] == "internal" else "NOT_RUN"
     result["destination_resolution"] = destination_evidence
@@ -236,10 +242,10 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
 
 
 def bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root: Path,
-              *, run_id: str = "setup", dry_run: bool = False) -> dict:
+              *, run_id: str = "setup", dry_run: bool = False, owner_initializers=None) -> dict:
     """Preflight without writes, then serialize bootstrap and recheck under the lock."""
     import fcntl
-    preview = _bootstrap(profile, local_config, state_root, run_id=run_id, dry_run=True)
+    preview = _bootstrap(profile, local_config, state_root, run_id=run_id, dry_run=True, owner_initializers=owner_initializers)
     if dry_run:
         return preview
     root = _external(state_root)
@@ -252,7 +258,7 @@ def bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root: 
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise InstanceProfileError("another instance bootstrap holds the state lock") from exc
-        return _bootstrap(profile, local_config, root, run_id=run_id)
+        return _bootstrap(profile, local_config, root, run_id=run_id, owner_initializers=owner_initializers)
 
 def migration_plan(saved: Mapping[str, object], candidate: Mapping[str, object]) -> dict:
     """Return a non-mutating split of code and knowledge changes."""

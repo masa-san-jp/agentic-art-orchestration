@@ -354,8 +354,8 @@ def _run_supervisor(state_root: Path, project_root: Path, run_id: str, research_
     _fake_worker(worker, count, research_commit)
     first = run_autonomous(run_id=run_id, worker_command=str(worker), state_root=state_root, child_repository="agentic-art-research", source_commit=research_commit, project_path=str(project_root), allowed_paths=("project",))
     second = run_autonomous(run_id=run_id, worker_command=str(worker), state_root=state_root, child_repository="agentic-art-research", source_commit=research_commit, project_path=str(project_root), allowed_paths=("project",))
-    if first.get("status") != "PLAN_READY" or second != first:
-        raise PurposeE2EError("autonomous runner did not reach an idempotent PLAN_READY")
+    if first.get("status") != "RESEARCH_COMPLETE" or second != first:
+        raise PurposeE2EError("autonomous runner did not reach an idempotent RESEARCH_COMPLETE")
     if count.read_text(encoding="utf-8") != "1":
         raise PurposeE2EError("same-run resume invoked the accepted worker more than once")
     state_path = state_root / run_id / "supervisor.json"
@@ -366,7 +366,7 @@ def _run_supervisor(state_root: Path, project_root: Path, run_id: str, research_
         "run_id": run_id,
         "status": state["status"],
         "stage": state["stage"],
-        "transition": ["RESEARCH_PENDING", "RESEARCH_WORKER_RUNNING", "PLAN_READY"],
+        "transition": ["RESEARCH_PENDING", "RESEARCH_WORKER_RUNNING", "RESEARCH_COMPLETE"],
         "attempts": state["attempts"],
         "retry_count": sum(state["retry_counts"].values()),
         "human_prompt_count": 0,
@@ -620,7 +620,7 @@ def _build_evidence(
         "project_id": f"project/{_project_slug(attempt_id)}",
         "lane": lane,
         "generated_at": generated_at,
-        "terminal_status": "PLAN_READY" if supervisor["status"] == "PLAN_READY" and production.get("plan_builder_status") == "PASSED" else "BLOCKED",
+        "terminal_status": "PLAN_READY" if supervisor["status"] == "RESEARCH_COMPLETE" and production.get("plan_builder_status") == "PASSED" else "BLOCKED",
         "source_observations": observations,
         "intent": {"sha256": pipeline["intent_sha256"], "algorithm": pipeline["intent_algorithm"]},
         "self_diversity": {"status": pipeline["diversity"]["status"], "report_sha256": _digest(pipeline["diversity"]), "eligible_anchor_count": pipeline["diversity"]["eligible_anchor_count"], "selected_anchor_count": pipeline["diversity"]["selected_count"], "fixture_only": lane == "networkless"},
@@ -660,7 +660,7 @@ def _build_evidence(
         "privacy": privacy,
         "acceptance": {
             "networkless_or_private_lane": lane in {"networkless", "live-private"},
-            "plan_ready": supervisor["status"] == "PLAN_READY",
+            "plan_ready": supervisor["status"] == "RESEARCH_COMPLETE",
             "zero_human_prompts_after_input": supervisor["human_prompt_count"] == 0,
             "intent_reached_selection": all("intent_score" in candidate for candidate in pipeline["selection"]["selected_candidates"]),
             "self_diversity_pass": pipeline["diversity"]["status"] in {"PASS", "PASS_LIMITED_DIVERSITY"},
@@ -733,6 +733,11 @@ def _run_lane(
         production_commit=str(_manifest_map(manifest)["agentic-art-production"]["observed_commit"]),
         run_id=_run_id(attempt_id),
     )
+    from tools.plan_completion import verify_plan
+    production_entry = _manifest_map(manifest)['agentic-art-production']
+    verify_plan(code_root=workspace_root / production_entry['path'],
+        code_commit=production_entry['observed_commit'], project_root=production['plan_path'].parent.parent,
+        python=child_python, research_commit=research_commit)
     exchange_dir = exchange_output / re.sub(r"[^A-Za-z0-9._-]+", "-", _run_id(attempt_id))
     production["handoff_path"] = exchange_dir / "handoff" / "production-handoff.yaml"
     return _build_evidence(manifest, pipeline, supervisor, production, observations, attempt_id=attempt_id, lane=lane, generated_at=generated_at, quality_gate_report=quality_gate_report)

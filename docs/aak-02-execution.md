@@ -6,7 +6,7 @@ Implement the pinned AAK specification/plan without creating a new requirements 
 ## Progress
 - [x] Qualified all prerequisite owner candidates; AAK11 PR65 eight focused / 120 full / six evaluation checks PASS.
 - [x] Isolated branch and canonical offline bootstrap prepared.
-- [ ] Shared completion checks and bounded resumable native-owner dispatch.
+- [x] Shared completion checks and bounded resumable native-owner dispatch implemented; final qualification in progress.
 - [ ] Required regression gates.
 - [ ] Three modes, two real-agent runs each; synthetic continuation explicitly labelled.
 
@@ -36,3 +36,7 @@ Run/profile/snapshot binding, stage hash verification, atomic state, finite leas
 
 ## Interfaces and Dependencies
 AAK05/06/07/09/11/12/13 and parent189/193/187 qualified candidates; current native commands remain authoritative. Public delivery and merge retain human gates.
+
+## Integration observations (2026-09-08)
+
+Native bootstrap/query passed all eight real owner CLIs with explicit synthetic profile/catalog inputs. Fixed code-source vs destination boundary and exact single-repo staging. The parent native index must be rebuilt before querying an empty store. First parent full run: 600 tests, four old worker-status assumptions failed and two environment skips. Those status assumptions now preserve Research completion separately, and real private plan validation joins the owner verifier. No live-agent acceptance is claimed by these regressions.

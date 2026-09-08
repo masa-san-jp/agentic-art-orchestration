@@ -50,6 +50,7 @@ HUMAN_OPERATIONS = (
     "physical_action",
 )
 TERMINAL_STATUSES = {
+    "RESEARCH_COMPLETE",
     "PLAN_READY",
     "BLOCKED_HUMAN",
     "BLOCKED_EXTERNAL",
@@ -193,6 +194,8 @@ def validate_autonomous_state(state: dict[str, Any], source: str = "autonomous-r
     if sensitive and not sensitive.startswith("$.privacy."):
         errors.append(f"{source}: sensitive field at {sensitive}; remediation: keep supervisor state metadata-only")
     status = state.get("status")
+    if status == "PLAN_READY":
+        errors.append(f"{source}.status: legacy worker-only PLAN_READY requires canonical Production revalidation; remediation: resume through the knowledge cycle")
     if status == "PLAN_READY" and state.get("stage") != "plan":
         errors.append(f"{source}.stage: PLAN_READY must be in plan stage; remediation: advance the stage atomically")
     if status != "PLAN_READY" and state.get("stage") == "plan":
@@ -396,8 +399,8 @@ def _apply_result(state: dict[str, Any], result: dict[str, Any], result_digest: 
             return
         _record_result(state, result, result_digest)
         state["accepted_result_digest"] = result_digest
-        _set_released(state, "PLAN_READY", "PLAN_READY", "none", result_digest)
-        state["stage"] = "plan"
+        _set_released(state, "RESEARCH_COMPLETE", "RESEARCH_COMPLETE",
+                      "resume the same run through the canonical Research handoff, Production builder and knowledge-cycle completion verifier", result_digest)
         return
     if result.get("status") == "BLOCKED":
         _record_result(state, result, result_digest)
@@ -599,6 +602,7 @@ def run_autonomous(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cycle-context", type=Path, help="continue through the same canonical plan and native knowledge verifier")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--state-root", type=Path)
     parser.add_argument("--destinations-file", type=Path,
@@ -631,6 +635,14 @@ def main() -> int:
     except (OSError, TypeError, ValueError, KeyError, subprocess.SubprocessError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
+    if args.cycle_context is not None and state['status'] == 'RESEARCH_COMPLETE':
+        from tools.knowledge_cycle_run import advance, read
+        context = read(args.cycle_context)
+        if context['run_id'] != args.run_id or args.state_root is None:
+            raise ValueError('worker/cycle run binding and explicit state root required')
+        report = advance(context, args.state_root)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report['run_status'] == 'COMPLETED' else 1
     print(json.dumps({"command": "autonomous-runner", "run_id": state["run_id"], "status": state["status"], "attempts": state["attempts"], "history_count": len(state["history"])}, ensure_ascii=False, sort_keys=True))
     return 0
 
