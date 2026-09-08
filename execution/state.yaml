@@ -1,12 +1,12 @@
-version: 244
-updated_at: '2026-09-08T03:25:37.546758+00:00'
+version: 245
+updated_at: '2026-09-08T03:28:01.234396+00:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
-  owner: codex-aak02-resume-20260908
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-08T01:18:21.132169+00:00'
-  expires_at: '2026-09-08T03:59:00.435038+00:00'
+  expires_at: null
   lane: AAK_IMPLEMENTATION
   execution_id: AAK-02:20260908
   scope:
