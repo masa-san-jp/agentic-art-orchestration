@@ -1,3 +1,7 @@
+# AAK11 qualified — 2026-09-08
+
+Production PR65 code `2e2d702d671fcbd822b9c0b6188b3bad9f099771`: five synthetic AC, 8 focused / 120 full tests, validator and six native evaluation checks PASS. Native knowledge reuse and retraction affected-target proof passed. AAK02 live / main integration remain NOT_RUN. Publish this checkpoint before lease release, then claim AAK02 in its prepared isolated clone.
+
 # AAK10 qualified — 2026-09-08
 
 Production PR64 code `5095fb3c4b8836848979acfe51891295501d127f`: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical plans and native attestation verified. AAK02 live and main integration NOT_RUN. 次はAAK11。専用cloneを準備済み、ネイティブ登録・claim後に実装する。

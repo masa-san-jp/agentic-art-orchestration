@@ -1,6 +1,6 @@
-version: 238
-updated_at: '2026-09-08T00:47:29.786047+00:00'
-active_task: AAK-11
+version: 239
+updated_at: '2026-09-08T01:16:52.056524+00:00'
+active_task: null
 active_repository: agentic-art-production
 lease:
   status: held
@@ -23,9 +23,10 @@ lease:
 checkpoint:
   task: AAK-11
   repository: agentic-art-production
-  status: IN_PROGRESS
-  result: Native queue/ExecPlan claim on agent/aak-11-production-memory; base ee1c86d3977a29e2b388d0f1a0201defa0088664; implement
-    conditional native knowledge capture/reuse.
+  status: CODE_VERIFIED
+  result: Five synthetic AC; 8 focused / 120 full tests and six native evaluation checks PASS. PR65 exact remote verified.
+    AAK02 live and main integration NOT_RUN.
+  evidence: execution/aak-11-owner-verification.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -40,12 +41,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-10
+last_completed_task: AAK-11
 resume_from:
-  task: AAK-11
-  repository: agentic-art-production
-  action: Register and claim native AAK11; connect observations/result to owner Git and conditional plan reuse
-  command: git switch -c agent/aak-11-production-memory
+  task: AAK-02
+  repository: agentic-art-orchestration
+  action: Claim final native-owner integration and live six-run acceptance
+  command: git switch -c codex/aak-02-live-knowledge-cycle-20260908
 previous_checkpoint:
   task: AAK-10
   repository: agentic-art-production

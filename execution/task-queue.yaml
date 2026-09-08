@@ -2148,14 +2148,36 @@ tasks:
     - .venv/bin/python tools/run_evaluation.py --format json
     - git diff --check
     milestone: AAK
-    status: IN_PROGRESS
+    status: DONE
     acceptance: https://github.com/masa-san-jp/agentic-art-orchestration/blob/b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d/docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md#aak-11
     target_repositories:
     - agentic-art-production
     agent_terminal: DRAFT_PR_READY
     contract_sha256: 8bcb0673145b46b5a9e6b25f2c541953d8c69c560dc5c66a19d2fc22141c9a74
     dependency_evidence: {}
-    acceptance_evidence: {}
+    acceptance_evidence:
+      AAK-11-AC1:
+        status: PASS
+        candidate_commit: 2e2d702d671fcbd822b9c0b6188b3bad9f099771
+        reference: https://github.com/masa-san-jp/agentic-art-production/pull/65
+      AAK-11-AC2:
+        status: PASS
+        candidate_commit: 2e2d702d671fcbd822b9c0b6188b3bad9f099771
+        reference: https://github.com/masa-san-jp/agentic-art-production/pull/65
+      AAK-11-AC3:
+        status: PASS
+        candidate_commit: 2e2d702d671fcbd822b9c0b6188b3bad9f099771
+        reference: https://github.com/masa-san-jp/agentic-art-production/pull/65
+      AAK-11-AC4:
+        status: PASS
+        candidate_commit: 2e2d702d671fcbd822b9c0b6188b3bad9f099771
+        reference: https://github.com/masa-san-jp/agentic-art-production/pull/65
+      AAK-11-AC5:
+        status: PASS
+        candidate_commit: 2e2d702d671fcbd822b9c0b6188b3bad9f099771
+        reference: https://github.com/masa-san-jp/agentic-art-production/pull/65
+    code_status: CODE_VERIFIED
+    integration_status: NOT_RUN
   - id: AAK-12
     owner: viewer-response-notes
     issue_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/6
