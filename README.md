@@ -79,16 +79,16 @@ Self Model × Art History × Marketing Trends → Agentic Art Research → Agent
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-08T00:18:10.731273+00:00`.
+Source updated at: `2026-09-08T00:46:41.825799+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 0 | 1 | 0 | 151 | 154 |
+| 2 | 0 | 0 | 0 | 152 | 154 |
 
-Current task: `AAK-10`; repository: `agentic-art-production`; checkpoint: `AAK-10`.
-Next action: Register and claim AAK10 on qualified Production60 candidate; reuse attestation and add media-specific actionability
+Current task: `null`; repository: `agentic-art-production`; checkpoint: `AAK-10`.
+Next action: Register and claim native AAK11; connect observations/result to owner Git and conditional plan reuse
 Ready: none.
-Next task: `null`.
+Next task: `AAK-11`.
 Blocked:
 - none
 

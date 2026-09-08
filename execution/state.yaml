@@ -1,6 +1,6 @@
-version: 236
-updated_at: '2026-09-08T00:18:10.731273+00:00'
-active_task: AAK-10
+version: 237
+updated_at: '2026-09-08T00:46:41.825799+00:00'
+active_task: null
 active_repository: agentic-art-production
 lease:
   status: held
@@ -23,9 +23,10 @@ lease:
 checkpoint:
   task: AAK-10
   repository: agentic-art-production
-  status: IN_PROGRESS
-  result: Registered and claimed AAK10 on isolated agent/aak-10-plan-actionability from Production60 PR63 69567e88131e3f033d010791fb5849e1b2ebff8d.
-    AAK09 qualified code 046c2380310d208ca52cbca461c95c798328b599.
+  status: CODE_VERIFIED
+  result: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical
+    plans and native attestation verified. AAK02 live and main integration NOT_RUN.
+  evidence: execution/aak-10-owner-verification.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -40,12 +41,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: AAK-09
+last_completed_task: AAK-10
 resume_from:
-  task: AAK-10
+  task: AAK-11
   repository: agentic-art-production
-  action: Register and claim AAK10 on qualified Production60 candidate; reuse attestation and add media-specific actionability
-  command: git switch -c agent/aak-10-plan-actionability
+  action: Register and claim native AAK11; connect observations/result to owner Git and conditional plan reuse
+  command: git switch -c agent/aak-11-production-memory
 previous_checkpoint:
   task: AAK-09
   repository: agentic-art-research
@@ -64,6 +65,7 @@ previous_checkpoint:
     published_commit: f208c8a7f15a3e66d41554371561005d2e12a7cf
     publication_verification: Normal push and exact remote SHA confirmed before AAK09 release.
     released_at: '2026-09-08T00:18:10.731273+00:00'
+
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection

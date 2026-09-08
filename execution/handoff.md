@@ -1,3 +1,7 @@
+# AAK10 qualified — 2026-09-08
+
+Production PR64 code `5095fb3c4b8836848979acfe51891295501d127f`: 5 synthetic AC, 8 focused / 112 full tests, validator and six evaluation checks PASS; physical/digital canonical plans and native attestation verified. AAK02 live and main integration NOT_RUN. 次はAAK11。専用cloneを準備済み、ネイティブ登録・claim後に実装する。
+
 # AAK09 qualified — 2026-09-08
 
 Research PR96 code `046c2380310d208ca52cbca461c95c798328b599`: 5 synthetic AC / 9 focused / 307 full tests / native gates PASS。親の次工程はProduction AAK10。Production60 PR63 `69567e88131e3f033d010791fb5849e1b2ebff8d`のattestationを再利用し、媒体別の制作可能性を追加する。AAK02 liveとmain統合は未実施。

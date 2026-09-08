@@ -438,27 +438,42 @@
       "task": "AAK-10",
       "issue": "https://github.com/masa-san-jp/agentic-art-production/issues/61",
       "owner": "agentic-art-production",
-      "queue_status": "BACKLOG",
-      "code_status": "NOT_IMPLEMENTED",
+      "queue_status": "DONE",
+      "code_status": "CODE_VERIFIED",
       "acceptance": {
         "AAK-10-AC1": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC2": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC3": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC4": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         },
         "AAK-10-AC5": {
-          "status": "NOT_RUN"
+          "status": "PASS",
+          "candidate_commit": "5095fb3c4b8836848979acfe51891295501d127f",
+          "reference": "https://github.com/masa-san-jp/agentic-art-production/pull/64"
         }
       },
-      "pull_request": null,
-      "observed_pr": null,
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/64",
+      "observed_pr": {
+        "head": "ee1c86d3977a29e2b388d0f1a0201defa0088664",
+        "state": "open",
+        "draft": true,
+        "merged": false
+      },
       "integration_status": "NOT_RUN",
       "merge_status": "NOT_MERGED",
       "blocker": null,
