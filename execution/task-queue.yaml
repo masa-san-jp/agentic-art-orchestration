@@ -1,5 +1,5 @@
-version: 74
-updated_at: "2026-09-09T00:00:00+00:00"
+version: 75
+updated_at: "2026-09-08T22:28:00+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2414,7 +2414,7 @@ tasks:
   - id: PRODUCTION-STARTUP-RECOVERY-001
     milestone: AUTONOMY
     title: 制作起動のpin復旧とResearch/Production継続を接続する
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/214
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -2426,3 +2426,19 @@ tasks:
       - .venv/bin/python -m unittest discover -s tests -v
       - git diff --check
     human_gate: merge/release/publication and new pin adoption remain human-gated; implementation and isolated fixture work are allowed.
+    acceptance_evidence:
+      AC1: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC2: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC3: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC4: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC5: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC6: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC7: {status: PASS, reference: execution/production-startup-recovery-001.json}
+      AC8: {status: NOT_RUN, reference: execution/production-startup-recovery-001.json}
+      AC9: {status: PASS, reference: execution/production-startup-recovery-001.json}
+    code_status: CODE_VERIFIED
+    integration_status: MERGED
+    code_candidate: 21a187d58aab714e13f1250510b285f2d8bd0373
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/215
+    merge_commit: 61f132f521e321c93652af9d80b543e5e8b682a2
+    completion: 'AC1..7 and AC9 code/evidence PASS; AC8 live provider-backed external-agent acceptance NOT_RUN. Focused 86 tests, parent validator and README status check PASS. Full 607-test discovery retains 30 pre-existing macOS /var symlink errors and one unrelated instance-profile fixture failure.'

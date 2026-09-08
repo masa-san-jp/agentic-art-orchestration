@@ -2468,15 +2468,15 @@ Git network/keyring access and canonical repository-local pip setup work. projec
 
 1. Review the draft PRs and merge only through the existing human gate. Do not infer real-person acceptance, physical completion or public projection from this evidence.
 
-## 2026-09-09 — PRODUCTION-STARTUP-RECOVERY-001 in progress
+## 2026-09-09 — PRODUCTION-STARTUP-RECOVERY-001 complete
 
 - Issue [#214](https://github.com/masa-san-jp/agentic-art-orchestration/issues/214) was registered as the native task for the reported incomplete `BLOCKED_PIN_DRIFT` → `AT_EDGE` → manual-plan judgment path.
 - Root causes observed in the current code: standard run did not derive Research/Production roots from the manifest; Research defaulted to the read-only code checkout; `pinned_workspace.py` produced detached exact-pin clones that the normal guard rejected; and intermediate states lacked an explicit incomplete completion status and exact resume command.
-- Implementation branch: `fix/production-startup-recovery-214`; base `origin/main` at `e9d2940`. No child repository, existing checkout, manifest pin, remote ref, external artifact, credential, raw conversation, or public target was changed.
+- Implementation branch: `fix/production-startup-recovery-214`; base `origin/main` at `e9d2940`; candidate `21a187d58aab714e13f1250510b285f2d8bd0373`; merged to `origin/main` as `61f132f521e321c93652af9d80b543e5e8b682a2` via PR [#215](https://github.com/masa-san-jp/agentic-art-orchestration/pull/215). No child repository, existing checkout, manifest pin, remote ref, external artifact, credential, raw conversation, or public target was changed.
 - Current changes: tool-owned `manifest-pinned-workspace/v1` marker and exact-pin revalidation; safe new-workspace recovery for missing/clean pin drift; manifest-derived Research/Production roots; external default Research work root; structured incomplete/resume/manual-fallback-forbidden fields; regression tests and synchronized AGENTS/README/runtime/design docs. Acceptance evidence is `execution/production-startup-recovery-001.json`.
 - Focused verification so far: 86 tests across startup recovery, workspace bootstrap, pinned workspace, run, runtime recovery, autonomous runner, and docs PASS; `py_compile`, `git diff --check`, parent validator, and generated README check PASS. Full parent suite was run separately and remains limited by 30 pre-existing macOS `/var` symlink errors plus one unrelated instance-profile fixture failure.
-- Human gate: merge/release/publication and any new pin adoption or existing-checkout repair remain outside this task. GitHub Actions and account billing are not a prerequisite.
+- Human gate: release/publication and any new pin adoption or existing-checkout repair remain outside this task. GitHub Actions and account billing are not a prerequisite. Live provider-backed external-agent acceptance is `NOT_RUN` and remains explicitly recorded.
 
 ### Next exact action
 
-1. Record the focused evidence and the full-suite limitation, then commit and publish the implementation branch for Issue #214.
+1. Re-run `.venv/bin/python tools/project_status.py --format json` from `origin/main` when beginning the next task; Issue #214 implementation and merge are recorded in `execution/state.yaml` and `execution/production-startup-recovery-001.json`.
