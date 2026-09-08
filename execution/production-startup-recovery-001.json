@@ -1,0 +1,80 @@
+{
+  "contract_version": "production-startup-recovery-evidence/v1",
+  "task": "PRODUCTION-STARTUP-RECOVERY-001",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/214",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "tests/test_production_startup_recovery.py: exact-pin local materialization and recovery fixture"
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "manifest-pinned-workspace/v1 marker, exact HEAD, clean state and real Git root are revalidated; unmarked detached checkout is rejected"
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "manifest-derived Research/Production roots and external Research work root are covered by focused run tests"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "AT_EDGE, RESEARCH_PENDING and batch reports carry completion_status INCOMPLETE and an exact resume_command"
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": "startup and Production-block reports preserve incomplete plan/knowledge/projection states and forbid manual fallback"
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": "startup recovery failure is persisted to the same run state with sanitized detail and resume command"
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": "recovery writes only a new state-root workspace; existing checkout, manifest pins, remote refs and profile boundaries remain unchanged"
+    },
+    "AC8": {
+      "status": "NOT_RUN",
+      "evidence": "live external Research/Production agent and provider-backed profile were unavailable; synthetic and code-level checks are not substituted"
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": "this evidence, execution state/handoff, focused commands and candidate/PR fields provide replay metadata"
+    }
+  },
+  "checks": {
+    "focused": {
+      "status": "PASS",
+      "command": ".venv/bin/python -m unittest tests.test_production_startup_recovery tests.test_workspace_bootstrap tests.test_pinned_workspace tests.test_run tests.test_runtime_recovery tests.test_autonomous_runner tests.test_docs -v",
+      "tests": 86
+    },
+    "validator": {
+      "status": "PASS",
+      "command": ".venv/bin/python tools/validate.py --check"
+    },
+    "project_status": {
+      "status": "PASS",
+      "command": ".venv/bin/python tools/project_status.py --check-readme"
+    },
+    "diff": {
+      "status": "PASS",
+      "command": "git diff --check"
+    },
+    "full_suite": {
+      "status": "FAIL",
+      "command": ".venv/bin/python -m unittest discover -s tests -v",
+      "tests": 607,
+      "failures": 1,
+      "errors": 30,
+      "skipped": 1,
+      "classification": "pre-existing macOS /var symlink and instance-profile fixture incompatibility; no changed Issue #214 file is in the failing stack"
+    }
+  },
+  "boundaries": {
+    "github_actions_or_billing_required": false,
+    "child_repository_changes": false,
+    "live_agent_acceptance": "NOT_RUN",
+    "merge_release_publication": "HUMAN_GATE"
+  },
+  "code_candidate": null,
+  "pull_request": null,
+  "merge_commit": null
+}

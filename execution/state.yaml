@@ -1,17 +1,17 @@
-version: 247
-updated_at: '2026-09-08T04:54:43.407951+00:00'
-active_task: null
-active_repository: null
+version: 248
+updated_at: '2026-09-09T00:00:00+00:00'
+active_task: PRODUCTION-STARTUP-RECOVERY-001
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-08T01:18:21.132169+00:00'
-  expires_at: null
-  lane: AAK_IMPLEMENTATION
-  execution_id: AAK-02:20260908
+  status: held
+  owner: codex-production-startup-recovery
+  acquired_at: '2026-09-09T00:00:00+00:00'
+  expires_at: '2026-09-09T01:00:00+00:00'
+  lane: AUTONOMY
+  execution_id: PRODUCTION-STARTUP-RECOVERY-001:20260909
   scope:
     repository: agentic-art-orchestration
-    branch: codex/aak-02-live-knowledge-cycle-20260908
+    branch: fix/production-startup-recovery-214
     paths:
     - tools/**
     - schemas/**
@@ -24,16 +24,14 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: AAK-02
+  task: PRODUCTION-STARTUP-RECOVERY-001
   repository: agentic-art-orchestration
-  status: MERGED
-  result: 'Six actual LLM-agent runs under a synthetic profile completed: resume/new-clone/fork x2, all PLAN_READY and COMMITTED with second-run knowledge adoption. Parent PR208 is merged to main as ad5d2699b3d6066d1b455cdefdd40e5d47ad2566. Real Masa profile, physical work, viewer observations and public projection remain NOT_RUN.'
-  code_candidate: f940b561dec92cb4f4757010bfce5e30fe34f5bd
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/208
-  merge_commit: ad5d2699b3d6066d1b455cdefdd40e5d47ad2566
-  merged_at: '2026-09-08T04:28:53Z'
-  evidence: execution/aak-02-live-acceptance.json
-  evidence_sha256: ffeecc500b2cc3d71af975ed145b6656d6bb84a35030a14979e653210e04acfd
+  status: IN_PROGRESS
+  result: 'Implement exact-pin recovery, manifest child-root resolution, external Research work state, and incomplete-state resume reporting for Issue #214.'
+  code_candidate: 3a2e2cb2530cecdd91a3548477665088d4336c35
+  pull_request: null
+  merge_commit: null
+  evidence: execution/production-startup-recovery-001.json
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration

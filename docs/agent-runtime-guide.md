@@ -83,6 +83,8 @@ test "$BOOTSTRAP_EXIT" -eq 2
 
 この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
 
+ResearchとProductionの`--research-root`/`--production-root`はmanifestから自動解決される。引数を省略した通常runでも、workspaceがmissingまたはcleanなpin driftだけなら、run state配下に`pinned-workspace`を新規作成し、全manifest entryを宣言済みのqualified commitへ展開してから同じrunを継続する。元のcheckout、manifest、remote refは変更しない。展開されたworkspaceには`manifest-pinned-workspace/v1`マーカーが付き、detached checkoutでも各commit、clean state、workspace所有証拠を再検証する。dirty、symlink、破損、権限不足、既存tree修復が必要な場合はBLOCKEDのまま停止する。
+
 実Self Modelを読む場合、`--profile-root`には利用が認められた外部profileの絶対パスを明示する。
 これは出力先の`--destinations-file`とは別の入力であり、Self Modelのexportだけへ渡される。
 profileの内容・同意・外部保存境界はSelf Model自身が検証する。親はパスを補完せず、未指定なら
@@ -110,7 +112,7 @@ Productionまで進んだ後の再開では、`<state-root>/production/productio
 このrepoのAGENTS.mdとREADME.mdに従い、テーマ・slug・titleを質問せず、pin済みworkspaceで`tools/run.py`を実行してPLAN_READYまで自律的に進める。
 ~~~
 
-startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テーマやPLAN_READYを捏造せず、startup reportの解除条件を返す。外部CREATE、merge、releaseなどのhuman gateは別途必要である。
+startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テーマやPLAN_READYを捏造せず、`<state-root>/<run-id>/run.json`へ未完了状態・観測済み解除条件・保存済みの`resume_command`を記録して返す。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`はすべて`completion_status: INCOMPLETE`であり、手動制作案へ自動fallbackしてはならない。外部CREATE、merge、releaseなどのhuman gateは別途必要である。
 
 ## 出力先プロファイルと決定的な復旧
 

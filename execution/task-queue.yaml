@@ -1,5 +1,5 @@
-version: 73
-updated_at: "2026-09-08T04:32:06.440312+00:00"
+version: 74
+updated_at: "2026-09-09T00:00:00+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2411,3 +2411,18 @@ tasks:
     pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/13
     completion: AC1..5 synthetic PASS; 12 focused, 32 native full tests, validator/catalog/schema examples and actual Production-parent-Project
       boundary PASS. Exact owner branch published; P0004 attribution remains unknown, canonical bytes unchanged. Live AAK02 remains NOT_RUN; main PR13 merge is recorded.
+  - id: PRODUCTION-STARTUP-RECOVERY-001
+    milestone: AUTONOMY
+    title: 制作起動のpin復旧とResearch/Production継続を接続する
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/214
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: []
+    acceptance: Issue #214 AC1..AC9; recover only missing or clean pin-drifted workspaces in a new qualified workspace, resolve Research/Production from the manifest, preserve incomplete status and exact resume command, and never fallback to a manual plan.
+    checks:
+      - .venv/bin/python -m unittest tests.test_production_startup_recovery tests.test_workspace_bootstrap tests.test_pinned_workspace tests.test_run tests.test_runtime_recovery tests.test_autonomous_runner tests.test_docs -v
+      - .venv/bin/python tools/validate.py --check
+      - .venv/bin/python -m unittest discover -s tests -v
+      - git diff --check
+    human_gate: merge/release/publication and new pin adoption remain human-gated; implementation and isolated fixture work are allowed.

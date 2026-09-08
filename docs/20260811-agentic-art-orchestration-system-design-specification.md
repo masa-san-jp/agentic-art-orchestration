@@ -99,6 +99,8 @@ Self Model、芸術史、マーケティングは同じ型へ押し込めない�
 
 dirty tree、未push commit、divergence、schema mismatchを自動修正しない。状態と解除条件を可視化する。
 
+既存checkoutを変更しない範囲では、最後に資格確認されたmanifest pinを新しいGit外の専用workspaceへ展開して実行を継続できる。専用workspaceは機械マーカー、全repoのexact commit、clean stateを再検証してから入力として扱う。pinの採用、manifest変更、既存checkoutの修復は別のhuman gateであり、`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`は完了ではない。
+
 ### 3.5 Repository-local quality
 
 親のtestだけで子変更を完了にしない。変更した子repoの定義するquality gateが完了条件である。

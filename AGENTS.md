@@ -46,7 +46,7 @@ Issue SSOTの最低要件は、(1)観測可能な受入条件、(2)対象reposit
 
 ## Production planning mode
 
-このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件を返す。
+このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。起動時にworkspaceがmissingまたはcleanなpin driftだけなら、既存checkoutを変更せずGit外の専用qualified workspaceを作ってResearch/Productionへ継続する。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件と保存済みresume commandを処理する。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`は未完了であり、手動制作案へ置換して完走扱いにしない。
 
 ## Work protocol
 

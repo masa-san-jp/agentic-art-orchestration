@@ -17,6 +17,7 @@ The token is injected per invocation and never written to disk or logged.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -30,6 +31,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/repositories.yaml"
+PINNED_WORKSPACE_MARKER = ".agentic-art-pinned-workspace.json"
 COMMIT_LENGTH = 40
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 
@@ -126,6 +128,22 @@ def _selected_repositories(manifest: dict[str, Any], repository_ids: list[str] |
     return [repository for repository in repositories if repository.get("id") in requested]
 
 
+def _write_pinned_marker(destination_root: Path, repositories: list[dict[str, Any]]) -> None:
+    """Record the exact manifest pins that a tool-owned workspace contains."""
+    marker = destination_root / PINNED_WORKSPACE_MARKER
+    marker.write_text(
+        json.dumps(
+            {
+                "contract_version": "manifest-pinned-workspace/v1",
+                "repositories": [
+                    {"id": str(repository["id"]), "path": str(repository["path"]), "commit": str(repository["observed_commit"])}
+                    for repository in sorted(repositories, key=lambda item: str(item.get("id", "")))
+                ],
+            }, ensure_ascii=False, indent=2, sort_keys=True,
+        ) + "\n", encoding="utf-8"
+    )
+
+
 def materialize(
     output: Path,
     token: str | None,
@@ -153,6 +171,7 @@ def materialize(
         # Drop the tokenized remote so no later command can leak it.
         _run(["git", "remote", "set-url", "origin", repository["url"]], cwd=destination)
         materialized.append((repository["id"], commit))
+    _write_pinned_marker(output, selected)
     return materialized
 
 
@@ -290,6 +309,10 @@ def materialize_pinned_workspace(
             by_id[repository_id]["materialized_state"] = "FAILED"
             by_id[repository_id]["reason"] = str(exc)
             raise PinnedWorkspaceError(str(exc), findings) from exc
+    # The detached clones produced here are immutable code inputs.  A marker at
+    # the workspace root lets consumers distinguish them from a user's detached
+    # checkout without weakening the normal workspace guard.
+    _write_pinned_marker(destination_root, repositories)
     return findings
 
 

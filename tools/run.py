@@ -22,9 +22,11 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -106,9 +108,62 @@ def _guard_pinned_workspace(workspace_root: Path) -> dict[str, Any]:
     from tools.workspace import guard_workspace, load_manifest
 
     manifest = load_manifest()
-    guard = guard_workspace(manifest, workspace_root.resolve(), False, workspace_root.parent / ".unused-fixture")
+    resolved_workspace = workspace_root.resolve()
+    guard = guard_workspace(manifest, resolved_workspace, False, resolved_workspace.parent / ".unused-fixture")
     blocked = [repository for repository in guard["repositories"] if repository.get("blocked")]
     if blocked:
+        # ``pinned_workspace.py`` intentionally creates detached clones at an
+        # exact qualified commit.  They are safe immutable code inputs, but the
+        # ordinary user-checkout guard quite correctly rejects detached/upstream
+        # states.  Accept only the tool's own marker and recheck every byte that
+        # matters; never treat an arbitrary detached checkout as qualified.
+        from tools.pinned_workspace import PINNED_WORKSPACE_MARKER
+
+        marker_path = resolved_workspace / PINNED_WORKSPACE_MARKER
+        try:
+            marker = json.loads(marker_path.read_text(encoding="utf-8")) if marker_path.is_file() and not marker_path.is_symlink() else None
+        except (OSError, json.JSONDecodeError):
+            marker = None
+        expected = {
+            str(repository["id"]): {"path": str(repository["path"]), "commit": str(repository["observed_commit"])}
+            for repository in manifest["repositories"]
+        }
+        entries = marker.get("repositories") if isinstance(marker, Mapping) else None
+        observed = {
+            str(item.get("id")): {"path": str(item.get("path")), "commit": str(item.get("commit"))}
+            for item in entries
+            if isinstance(item, Mapping) and item.get("id") is not None
+        } if isinstance(entries, list) else {}
+        unique_entries = isinstance(entries, list) and len(entries) == len(observed) == len(expected)
+        if (isinstance(marker, Mapping)
+                and marker.get("contract_version") == "manifest-pinned-workspace/v1"
+                and unique_entries and observed == expected):
+            immutable_records: list[dict[str, Any]] = []
+            for repository in manifest["repositories"]:
+                child = resolved_workspace / str(repository["path"])
+                if child.is_symlink() or not child.is_dir():
+                    break
+                head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=child, capture_output=True, text=True)
+                dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=child, capture_output=True, text=True)
+                top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=child, capture_output=True, text=True)
+                if head.returncode or dirty.returncode or dirty.stdout.strip() or top.returncode or Path(top.stdout.strip()).resolve() != child.resolve() or head.stdout.strip() != str(repository["observed_commit"]):
+                    break
+                immutable_records.append({
+                    "id": repository["id"],
+                    "path": str(child),
+                    "blocked": False,
+                    "guard_status": "PASS",
+                    "observed": {"head": head.stdout.strip(), "branch": None, "upstream": None, "dirty": False},
+                })
+            else:
+                return {
+                    "status": "PASSED",
+                    "repository_count": len(immutable_records),
+                    "pin_status": "MATCHED",
+                    "mutation": "NONE",
+                    "mode": "MANIFEST_PINNED_IMMUTABLE",
+                    "repositories": immutable_records,
+                }
         first = blocked[0]
         reason = first.get("reasons", [{}])[0]
         raise BlockedPrecondition(
@@ -136,6 +191,120 @@ def _guard_pinned_workspace(workspace_root: Path) -> dict[str, Any]:
         "pin_status": "MATCHED",
         "mutation": "NONE",
     }
+
+
+def _manifest_runtime_roots(workspace_root: Path) -> tuple[Path, Path]:
+    """Resolve Research and Production code roots from the manifest once."""
+    from tools.workspace import load_manifest
+
+    manifest = load_manifest()
+    by_id = {str(item.get("id")): item for item in manifest.get("repositories", []) if isinstance(item, Mapping)}
+    missing = [identifier for identifier in ("agentic-art-research", "agentic-art-production") if identifier not in by_id]
+    if missing:
+        raise BlockedPrecondition(
+            "runtime roots BLOCKED: manifest is missing " + ", ".join(missing) +
+            "; remediation: restore both consumer-runtime entries before starting a plan"
+        )
+    roots = tuple(workspace_root / str(by_id[identifier]["path"])
+                  for identifier in ("agentic-art-research", "agentic-art-production"))
+    return roots[0], roots[1]
+
+
+def _resume_command(
+    *, python: str, run_id: str, workspace_root: Path, state_root: Path,
+    research_root: Path | None, production_root: Path | None, research_work_root: Path | None,
+    profile_root: Path | None, purpose: str, intent: str | None, slug: str | None,
+    title: str | None, offline_fixture: bool,
+) -> list[str]:
+    """Build the exact same-run invocation for a checkpoint report."""
+    command = [python, str(ROOT / "tools/run.py"), "--run-id", run_id,
+               "--workspace-root", str(workspace_root), "--state-root", str(state_root)]
+    if research_root is not None and production_root is not None:
+        command += ["--research-root", str(research_root), "--production-root", str(production_root)]
+    if research_work_root is not None:
+        command += ["--research-work-root", str(research_work_root)]
+    if profile_root is not None and not offline_fixture:
+        command += ["--profile-root", str(profile_root)]
+    if purpose != "artistic-research":
+        command += ["--purpose", purpose]
+    if intent is not None:
+        command += ["--intent", intent]
+    if slug is not None:
+        command += ["--slug", slug]
+    if title is not None:
+        command += ["--title", title]
+    if offline_fixture:
+        command += ["--offline-fixture"]
+    return command
+
+
+def _can_materialize_qualified_workspace(workspace_root: Path) -> bool:
+    """Allow automatic recovery only for missing or clean pin-drifted entries."""
+    from tools.workspace import load_manifest
+
+    manifest = load_manifest()
+    for repository in manifest["repositories"]:
+        path = workspace_root / str(repository["path"])
+        if not path.exists():
+            continue
+        if path.is_symlink() or not path.is_dir():
+            return False
+        status = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=path, capture_output=True, text=True)
+        if status.returncode != 0 or status.stdout.strip():
+            return False
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=path, capture_output=True, text=True)
+        if head.returncode != 0:
+            return False
+    return True
+
+
+def _materialize_qualified_workspace(state_root: Path) -> Path:
+    """Create an exact-pin workspace in a new tool-owned sibling directory."""
+    from tools.pinned_workspace import PINNED_WORKSPACE_MARKER, materialize
+
+    root = state_root.resolve()
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise BlockedPrecondition(
+            "qualified workspace BLOCKED: run state directory is unavailable; "
+            "remediation: choose a writable external state root and retry"
+        ) from exc
+    destination = root / "pinned-workspace"
+    if destination.is_dir() and (destination / PINNED_WORKSPACE_MARKER).is_file():
+        return destination
+    if destination.exists():
+        raise BlockedPrecondition(
+            f"qualified workspace BLOCKED: {destination} exists without a valid marker; "
+            "remediation: preserve it and choose a new empty state root"
+        )
+    staging = Path(tempfile.mkdtemp(prefix=".pinned-workspace-", dir=str(root)))
+    try:
+        materialize(staging, os.environ.get("CHILD_REPOS_TOKEN"))
+    except Exception as exc:
+        raise BlockedPrecondition(
+            "qualified workspace BLOCKED: declared pins could not be materialized; "
+            "remediation: inspect read-only remote access and retry with the same run"
+        ) from exc
+    try:
+        os.replace(staging, destination)
+    except OSError as exc:
+        raise BlockedPrecondition(
+            "qualified workspace BLOCKED: recovered workspace could not be installed; "
+            "remediation: preserve the staging directory and retry the same run"
+        ) from exc
+    return destination
+
+
+def _prepare_runtime_workspace(workspace_root: Path, state_root: Path) -> tuple[dict[str, Any], Path]:
+    """Use the requested workspace, or safely recover into a new exact-pin one."""
+    try:
+        return _guard_pinned_workspace(workspace_root), workspace_root
+    except BlockedPrecondition:
+        if not _can_materialize_qualified_workspace(workspace_root):
+            raise
+        recovered = _materialize_qualified_workspace(state_root)
+        return _guard_pinned_workspace(recovered), recovered
 
 
 def _materialize_offline_signals(output: Path) -> dict[str, Any]:
@@ -402,6 +571,7 @@ def _at_research(
     slug: str,
     theme_proposal: dict[str, str] | None = None,
     destination_resolution: Mapping[str, object] | None = None,
+    resume_command: list[str] | None = None,
 ) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
@@ -415,6 +585,11 @@ def _at_research(
             "request": "",
         },
         "status": "RESEARCH_PENDING",
+        "completion_status": "INCOMPLETE",
+        "plan_status": "NOT_READY",
+        "knowledge_status": "PENDING",
+        "projection_status": "NOT_RUN",
+        "run_status": "INCOMPLETE",
         "steps": steps,
         "next_action": {
             "actor": "agent",
@@ -427,10 +602,13 @@ def _at_research(
                 "05_production に要件・受入試験・試作計画・創作指針を書く",
             ],
             "acceptance": "tools/complete.py が COMPLETE を返し、tools/validate.py --root . が通ること",
-            "resume": "同じ run-id でこの入口をもう一度呼ぶと、受け渡しから制作プランまで進む",
+            "resume": "同じrun-idで、保存されたresume_commandを実行して受け渡しから制作プランまで進む",
+            "resume_command": resume_command or [],
+            "manual_fallback": "FORBIDDEN: 未完了の研究から手動制作案を正規成果物として作成しない",
         },
         "state": str(work),
     }
+    work.mkdir(parents=True, exist_ok=True)
     if destination_resolution is not None:
         report["destination_resolution"] = dict(destination_resolution)
     (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -449,18 +627,67 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         # Carrying on with one of the two would run a child tool in whatever directory
         # happens to be current, and report a step it did not take.
         raise StepFailure("--research-root and --production-root are given together or not at all")
-    preflight = (
-        {
+    if offline_fixture:
+        preflight = {
             "status": "PASSED",
             "repository_count": 3,
             "pin_status": "MATCHED",
             "mutation": "NONE",
             "mode": "OFFLINE_FIXTURE",
         }
-        if offline_fixture else _guard_pinned_workspace(workspace_root)
-    )
+    else:
+        try:
+            preflight, workspace_root = _prepare_runtime_workspace(workspace_root, state_root)
+        except BlockedPrecondition as exc:
+            # Startup failures are part of the resumable run, not an opaque
+            # stderr-only result.  Persist only sanitized metadata and the
+            # exact same-run command; never fabricate a theme or plan.
+            blocked_work = state_root / run_id
+            blocked_work.mkdir(parents=True, exist_ok=True)
+            blocked_resume = _resume_command(
+                python=python, run_id=run_id, workspace_root=workspace_root,
+                state_root=state_root, research_root=research_root,
+                production_root=production_root, research_work_root=research_work_root,
+                profile_root=profile_root, purpose=purpose, intent=intent,
+                slug=slug, title=title, offline_fixture=False,
+            )
+            blocked_report = {
+                "run_id": run_id,
+                "status": "BLOCKED",
+                "completion_status": "INCOMPLETE",
+                "plan_status": "NOT_READY",
+                "knowledge_status": "NOT_STARTED",
+                "projection_status": "NOT_RUN",
+                "run_status": "BLOCKED",
+                "steps": [{"step": "workspace-preflight", "status": "BLOCKED"}],
+                "stop_reason": "STARTUP_PRECONDITION",
+                "detail": str(exc),
+                "state": str(blocked_work),
+                "next_action": {
+                    "actor": "agent",
+                    "stage": "startup",
+                    "acceptance": "workspace-preflight returns PASSED with MATCHED qualified pins",
+                    "resume_command": blocked_resume,
+                    "manual_fallback": "FORBIDDEN: startup BLOCKED is incomplete; do not substitute a manual production plan",
+                },
+            }
+            (blocked_work / "run.json").write_text(
+                json.dumps(blocked_report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            raise
+    if (not offline_fixture and research_root is None and production_root is None
+            and workspace_root.is_dir()):
+        # Resolve after recovery so child tools use the newly materialized
+        # qualified workspace, never the drifted source checkout.
+        research_root, production_root = _manifest_runtime_roots(workspace_root)
     if not offline_fixture and profile_root is None:
         raise BlockedPrecondition("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+    # Keep native Research project files outside the read-only code checkout.
+    # The default is deterministic and run-scoped, so a caller need not invent
+    # a second path just to use the standard entrypoint.
+    if research_root is not None and research_work_root is None:
+        research_work_root = (state_root / "research-work").resolve()
     research_data_root = research_work_root or research_root
     if research_work_root is not None:
         if research_root is None or not research_work_root.is_absolute() or research_work_root.resolve() != research_work_root or research_root.resolve() in research_work_root.parents:
@@ -472,6 +699,13 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     signals = work / "signals"
     steps: list[dict] = []
     project_slug, project_title = _project_identity(run_id, slug, title)
+    resume_command = _resume_command(
+        python=python, run_id=run_id, workspace_root=workspace_root, state_root=state_root,
+        research_root=research_root, production_root=production_root,
+        research_work_root=research_work_root, profile_root=profile_root,
+        purpose=purpose, intent=intent, slug=slug, title=title,
+        offline_fixture=offline_fixture,
+    )
 
     def record(name: str, detail: dict) -> None:
         steps.append({"step": name, **detail})
@@ -540,12 +774,15 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                              "project_id": outcome.get("project_id")})
         record("accept-batch", {"status": "PASSED", "accepted_count": len(accepted)})
         report = {
-            "run_id": run_id, "intent": intent, "status": "BATCH_AT_RESEARCH",
+            "run_id": run_id, "intent": intent, "status": "BATCH_AT_RESEARCH", "completion_status": "INCOMPLETE",
+            "plan_status": "NOT_READY", "knowledge_status": "PENDING", "projection_status": "NOT_RUN", "run_status": "INCOMPLETE",
             "steps": steps, "accepted": accepted, "state": str(work),
             "next_action": {
                 "actor": "agent",
                 "do": ["各プロジェクトで tools/next_action.py を回して調査を進める"],
                 "acceptance": "各プロジェクトで tools/complete.py が COMPLETE を返すこと",
+                "resume_command": resume_command,
+                "manual_fallback": "FORBIDDEN: 未完了の研究から手動制作案を正規成果物として作成しない",
             },
         }
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -562,7 +799,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
             return _at_research(
                 work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
-                destination_resolution,
+                destination_resolution, resume_command,
             )
 
         handoff_args = _handoff_arguments(
@@ -606,19 +843,21 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 project_root=plan_path.parent.parent, python=python, research_commit=_head(research_root))
         except (PlanCompletionError, OSError, subprocess.SubprocessError) as exc:
             report = {"run_id": run_id, "status": "AT_PRODUCTION", "plan_status": "PLAN_BUILDING",
-                "knowledge_status": "PENDING", "projection_status": "SKIPPED", "run_status": "RUNNING",
+                "completion_status": "INCOMPLETE", "knowledge_status": "PENDING", "projection_status": "SKIPPED", "run_status": "RUNNING",
                 "steps": steps, "plan": str(plan_path), "stop_reason": type(exc).__name__,
                 "next_action": {"actor": "agent", "stage": "production",
                     "project_root": str(plan_path.parent.parent), "code_root": str(production_root),
                     "do": ["Read the pinned Production docs/plan-actionability.md and native validator findings.",
                            "Complete 02_specification/production-method.yaml using the actual handoff, source conditions and explicit unknowns.",
-                           "Run the native builder and plan_actionability validator, then resume this same run ID."],
+                           "Run the native builder and plan_actionability validator, then resume this same run ID.",
+                           "Do not report PLAN_READY or substitute a manual plan while this state remains incomplete."],
+                    "resume_command": resume_command,
                     "validation_command": [python, str(production_root / "tools/plan_actionability.py"),
                                            "--project-root", str(plan_path.parent.parent)]}}
             (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             return report
         report = {
-            "plan_status": "PLAN_READY", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
+            "plan_status": "PLAN_READY", "completion_status": "PLAN_READY", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
             "projection_status": "SKIPPED", "plan_verification": plan_verification,
             "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
             "generated_at": requested_at,
@@ -689,12 +928,19 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         "then": "`python3 tools/export_handoff.py` で束を出し、制作リポジトリの `tools/new_production.py` と "
                 "`tools/build_plan.py` を実行すると制作プランが出る",
         "request": str(request),
+        "resume_command": resume_command,
+        "manual_fallback": "FORBIDDEN: AT_EDGE is incomplete; do not create or report a manual production plan",
     }
 
     report = {
         "run_id": run_id,
         "intent": intent,
         "status": "AT_EDGE",
+        "completion_status": "INCOMPLETE",
+        "plan_status": "NOT_READY",
+        "knowledge_status": "PENDING",
+        "projection_status": "NOT_RUN",
+        "run_status": "INCOMPLETE",
         "steps": steps,
         "theme_proposal": theme_proposal,
         "next_action": next_action,
