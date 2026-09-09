@@ -1,0 +1,24 @@
+{
+  "contract_version": "research-production-projection-regression/v1",
+  "recorded_at": "2026-09-10T08:01:16+09:00",
+  "parent_repository": "masa-san-jp/agentic-art-orchestration",
+  "parent_merge_commit": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3",
+  "parent_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
+  "research_repository": "masa-san-jp/agentic-art-research",
+  "research_merge_commit": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+  "research_pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/106",
+  "local_regression": {
+    "status": "PASS",
+    "run_status": "PLAN_READY",
+    "automatic_authority": "verified",
+    "canonical_projection": "APPLIED",
+    "fixture": "isolated synthetic Research/Production/Project repositories",
+    "note": "Regression proves the code path and status propagation; it is not the AC07 provider-backed live acceptance."
+  },
+  "live_acceptance": {
+    "AC07": "NOT_RUN",
+    "reason": "No completed provider-backed external-agent run from a new clone is recorded.",
+    "billing_or_actions_required": false,
+    "resume": "Run the saved DELIVERY-05 cycle context with a local or otherwise configured provider and retain the new plan, owner receipts, Project receive receipt, hashes, and resume evidence."
+  }
+}

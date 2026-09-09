@@ -3,27 +3,73 @@
   "task": "DELIVERY-05",
   "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/217",
   "candidate": {
-    "parent_merge": "b13f84b056ff4721ee4f90e4ddb65362535dcefc",
-    "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/224",
-    "merge_commit": "b13f84b056ff4721ee4f90e4ddb65362535dcefc"
+    "parent_merge": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3",
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
+    "merge_commit": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3"
   },
   "acceptance": {
-    "AC01-AC06": {"status": "PASS", "evidence": "execution/repo-local-v2-evidence.json and merged parent delivery verifier/owner gates"},
-    "AC07": {"status": "NOT_RUN", "evidence": "No provider-backed external-agent execution or new content/rights/consent decision is available; synthetic tests are not substituted"},
-    "AC08": {"status": "PASS", "evidence": "README.md, AGENTS.md, docs/agent-runtime-guide.md and docs/knowledge-cycle-runtime.md agree on stage versus delivery status and v2 entrypoint"},
-    "AC09": {"status": "PASS", "evidence": "tests/test_delivery_entrypoints.py binds --project-root through run.py cycle-context and rejects project-local delivery without it"},
-    "AC10": {"status": "PASS", "evidence": "cycle context is saved with project_root and exact resume state; instance bootstrap uses external temporary pin staging and preserves ignored Project runtime roots"},
-    "AC11": {"status": "PASS", "evidence": "tests/test_instance_profiles.py verifies public-catalog profile, Project code source pin and repo-local v2 bootstrap compatibility"},
-    "AC12": {"status": "PASS", "evidence": "delivery verifier consumes owner-verified plan/receipt state; v2 destination and completion statuses are persisted without worker-success substitution"},
-    "AC13": {"status": "PASS", "evidence": "local receiver, Project code commit and remote publication remain separate statuses; no remote write is performed by the v2 cycle path"}
+    "AC01-AC06": {
+      "status": "PASS",
+      "evidence": "execution/repo-local-v2-evidence.json and merged parent delivery verifier/owner gates"
+    },
+    "AC07": {
+      "status": "NOT_RUN",
+      "evidence": "No provider-backed external-agent execution or new content/rights/consent decision is available; synthetic tests are not substituted"
+    },
+    "AC08": {
+      "status": "PASS",
+      "evidence": "README.md, AGENTS.md, docs/agent-runtime-guide.md and docs/knowledge-cycle-runtime.md agree on stage versus delivery status and v2 entrypoint"
+    },
+    "AC09": {
+      "status": "PASS",
+      "evidence": "tests/test_delivery_entrypoints.py binds --project-root through run.py cycle-context and rejects project-local delivery without it"
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": "cycle context is saved with project_root and exact resume state; instance bootstrap uses external temporary pin staging and preserves ignored Project runtime roots"
+    },
+    "AC11": {
+      "status": "PASS",
+      "evidence": "tests/test_instance_profiles.py verifies public-catalog profile, Project code source pin and repo-local v2 bootstrap compatibility"
+    },
+    "AC12": {
+      "status": "PASS",
+      "evidence": "delivery verifier consumes owner-verified plan/receipt state; v2 destination and completion statuses are persisted without worker-success substitution"
+    },
+    "AC13": {
+      "status": "PASS",
+      "evidence": "local receiver, Project code commit and remote publication remain separate statuses; no remote write is performed by the v2 cycle path"
+    }
   },
   "checks": {
-    "validator": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python tools/validate.py --check"},
-    "focused": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest tests.test_delivery_entrypoints tests.test_instance_profiles tests.test_repo_local_destinations tests.test_knowledge_cycle_e2e tests.test_delivery_completion tests.test_run -q", "tests": 61},
-    "docs": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest tests.test_docs tests.test_project_status tests.test_repo_local_destinations tests.test_output_destinations -q", "tests": 31},
-    "full_suite": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest discover -s tests -q", "tests": 618, "skipped": 1},
-    "compile": {"status": "PASS", "command": ".venv/bin/python -m py_compile tools/instance_profiles.py tools/knowledge_cycle_run.py tools/run.py tools/autonomous_runner.py tests/test_instance_profiles.py tests/test_delivery_entrypoints.py"},
-    "diff": {"status": "PASS", "command": "git diff --check"}
+    "validator": {
+      "status": "PASS",
+      "command": "TMPDIR=/private/tmp .venv/bin/python tools/validate.py --check"
+    },
+    "focused": {
+      "status": "PASS",
+      "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest tests.test_delivery_entrypoints tests.test_instance_profiles tests.test_repo_local_destinations tests.test_knowledge_cycle_e2e tests.test_delivery_completion tests.test_run -q",
+      "tests": 61
+    },
+    "docs": {
+      "status": "PASS",
+      "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest tests.test_docs tests.test_project_status tests.test_repo_local_destinations tests.test_output_destinations -q",
+      "tests": 31
+    },
+    "full_suite": {
+      "status": "PASS",
+      "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest discover -s tests -q",
+      "tests": 621,
+      "skipped": 1
+    },
+    "compile": {
+      "status": "PASS",
+      "command": ".venv/bin/python -m py_compile tools/instance_profiles.py tools/knowledge_cycle_run.py tools/run.py tools/autonomous_runner.py tests/test_instance_profiles.py tests/test_delivery_entrypoints.py"
+    },
+    "diff": {
+      "status": "PASS",
+      "command": "git diff --check"
+    }
   },
   "boundaries": {
     "github_actions_or_billing_required": false,
@@ -31,5 +77,21 @@
     "human_public_review": "required only when native Production review decisions are missing",
     "live_agent_acceptance": "NOT_RUN (provider-backed execution unavailable)"
   },
-  "next_action": "Keep AC07 explicitly NOT_RUN and resume DELIVERY-05 with the same context when a provider-backed external agent and required content/rights/consent decisions are available."
+  "next_action": "Keep AC07 explicitly NOT_RUN and resume DELIVERY-05 from the saved cycle context for a new-clone provider-backed external-agent Research→Production→Project run; no account billing or GitHub Actions is required.",
+  "implementation_fix": {
+    "parent": {
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
+      "merge_commit": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3",
+      "evidence": "Research handoff promotion, external protocol-root forwarding, selected child interpreter attestation, and Project automatic projection status propagation"
+    },
+    "research_child": {
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/106",
+      "merge_commit": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+      "evidence": "External work-root entrypoint forwards protocol_root and passes child regression/full quality gates"
+    },
+    "local_projection_regression": {
+      "status": "PASS",
+      "result": "PLAN_READY with automatic authority and canonical Project projection APPLIED in an isolated synthetic fixture; synthetic evidence is not counted as AC07 live acceptance"
+    }
+  }
 }

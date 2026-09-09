@@ -1,5 +1,5 @@
-version: 255
-updated_at: '2026-09-10T02:06:44+09:00'
+version: 256
+updated_at: '2026-09-10T08:01:16+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -11,7 +11,7 @@ lease:
   execution_id: DELIVERY-05-CYCLE-V2:20260910
   scope:
     repository: agentic-art-orchestration
-    branch: docs/delivery-cycle-v2-evidence-20260910
+    branch: chore/record-research-projection-20260910
     paths:
     - tools/**
     - schemas/**
@@ -27,13 +27,13 @@ checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
   status: BLOCKED
-  result: 'Cycle-context repo-local v2 delivery is implemented and locally verified through parent merge b13f84b056ff4721ee4f90e4ddb65362535dcefc; live provider-backed external-agent acceptance remains NOT_RUN.'
-  code_candidate: b13f84b056ff4721ee4f90e4ddb65362535dcefc
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/224
-  merge_commit: b13f84b056ff4721ee4f90e4ddb65362535dcefc
-  merged_at: '2026-09-10T01:49:35+09:00'
+  result: 'Cycle-context repo-local v2 delivery plus Research external-work-root/projection fixes are implemented and locally verified through parent merge 1d5754f04bd5fba8ec1173f7b84f07b0945266b3 (PR228); live provider-backed external-agent acceptance remains NOT_RUN.'
+  code_candidate: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/228
+  merge_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
+  merged_at: '2026-09-10T07:49:54+09:00'
   evidence: execution/delivery-cycle-v2-evidence.json
-  blocker: 'Provider-backed external-agent execution and required content/rights/consent decisions are unavailable; no fake evidence or account billing is used.'
+  blocker: 'AC07 remains NOT_RUN because no completed provider-backed external-agent Research→Production→Project run is recorded; local Ollama availability does not substitute for that evidence, and account billing/GitHub Actions are not required.'
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -52,7 +52,7 @@ last_completed_task: RESEARCH-100-QUALIFY-001
 resume_from:
   task: DELIVERY-05
   repository: agentic-art-orchestration
-  action: Provider-backed external-agent acceptance is blocked; preserve code evidence and resume DELIVERY-05 only when the provider and consent boundary are available.
+  action: Code and local projection fixes are merged; resume DELIVERY-05 only for AC07 provider-backed actual-agent acceptance. Account billing and GitHub Actions are not prerequisites.
   command: .venv/bin/python tools/run.py --cycle-context <context> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local
 previous_checkpoint:
   task: AAK-11
@@ -61,6 +61,20 @@ previous_checkpoint:
   result: Five synthetic AC; 8 focused / 120 full tests and six native evaluation checks PASS. PR65 exact remote verified.
     AAK02 live and main integration NOT_RUN.
   evidence: execution/aak-11-owner-verification.json
+
+research_106_checkpoint:
+  task: RESEARCH-WORK-ROOT-PROTOCOL-001
+  repository: agentic-art-research
+  issue: https://github.com/masa-san-jp/agentic-art-research/issues/106
+  candidate_commit: 0054365
+  merge_commit: a4df0e5b4c4f93d01b7f5f403b214469526206c0
+  pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/106
+  status: CODE_VERIFIED
+  checks:
+    focused: 'protocol-root forwarding and external-work-root regression PASS'
+    full: '317 tests PASS'
+    validator: PASS
+  result: 'Merged child fix forwards protocol_root through the real Research entrypoint and preserves external work-root isolation.'
 
 research_100_checkpoint:
   task: RESEARCH-100-QUALIFY-001
@@ -1811,8 +1825,8 @@ aak_01_implementation:
 current_delivery_checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
-  branch: docs/delivery-cycle-v2-evidence-20260910
-  base_commit: b13f84b056ff4721ee4f90e4ddb65362535dcefc
+  branch: chore/record-research-projection-20260910
+  base_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
   status: CODE_VERIFIED
   evidence: execution/delivery-cycle-v2-evidence.json
   completed:
@@ -1823,7 +1837,8 @@ current_delivery_checkpoint:
     - Project README reconciliation PR21 merged as 17767752630282f0ab6e9f75077a8ba6c86740f6
     - focused v2/runtime/instance-profile checks and full 615-test suite passed
     - PR224 merged: cycle-context now carries repo-local v2 Project root through bootstrap and autonomous resume
-    - post-merge full suite 618 tests, 1 skip, validator, docs checks and diff check passed
+    - PR228 merged: Research external work-root/protocol forwarding, Production handoff promotion, and canonical Project projection path
+    - post-merge full suite 621 tests, 1 skip, validator, docs checks and diff check passed
   remaining:
     - live provider-backed acceptance remains NOT_RUN
   next_operation: Lease released after execution SSOT push; resume DELIVERY-05 only when a provider-backed agent and the required consent are available.

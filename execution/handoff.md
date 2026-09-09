@@ -2493,3 +2493,15 @@ Task `REPO-LOCAL-E2E-001` is active on branch `chore/delivery-evidence-20260910`
 ## 2026-09-10 — release checkpoint
 
 Parent merge `b1ecafd13d65798f4958a9595b83a8869c31f481` contains the repo-local v2 E2E fix and evidence. Project PR21 is merged as `17767752630282f0ab6e9f75077a8ba6c86740f6`. `execution/state.yaml` now releases the lease and resumes at DELIVERY-05. Code and local acceptance are complete; the only blocked item is the issue's explicit real external-agent run (AC07) and its dependent live matrix, which cannot be replaced by fake evidence or account billing.
+
+
+## 2026-09-10 — Research external work-root and projection path merged
+
+- Parent PR [#228](https://github.com/masa-san-jp/agentic-art-orchestration/pull/228) is merged as `1d5754f04bd5fba8ec1173f7b84f07b0945266b3`. It promotes a completed Research handoff to the Production handoff, forwards `--protocol-root` for an external Research work root, uses the selected child interpreter for Production attestation, and propagates canonical Project projection status to the top-level run record.
+- Research PR [#106](https://github.com/masa-san-jp/agentic-art-research/pull/106) is merged as `a4df0e5b4c4f93d01b7f5f403b214469526206c0`. The child entrypoint now forwards `protocol_root` through runtime initialization and passes its validator/full quality gates (`317 tests PASS`).
+- Parent validator, focused delivery/projection/run checks, py_compile, diff check, and the full parent suite (`621 tests, 1 skipped`) pass with the current merged pins. An isolated synthetic end-to-end regression reached `PLAN_READY` and canonical projection `APPLIED`; this is code-path evidence only.
+- DELIVERY-05 remains `BLOCKED` solely because AC07 requires a new-clone, provider-backed external-agent Research→Production→Project run with persisted receipts and resume evidence. A local Ollama provider was available without account billing, but the attempted agent tool-call probe did not complete the required flow; no fake evidence was promoted. GitHub Actions and account billing are not prerequisites.
+
+### Next exact action
+
+Run the saved DELIVERY-05 cycle context through a configured provider from a clean new clone, then record the actual Production plan, authority/attestation, Project receive receipt, hashes, and second-run reuse evidence. Keep AC07 `NOT_RUN` until those artifacts exist.
