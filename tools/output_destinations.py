@@ -24,6 +24,7 @@ from tools.validate import _schema_errors, load_json
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DESTINATIONS_SCHEMA = ROOT / "schemas/output-destinations.schema.json"
 DESTINATION_RESOLUTION_SCHEMA = ROOT / "schemas/destination-resolution.schema.json"
+DESTINATION_RESOLUTION_V2_SCHEMA = ROOT / "schemas/destination-resolution-v2.schema.json"
 CONTRACT_VERSION = "output-destinations/v1"
 RESOLUTION_VERSION = "destination-resolution/v1"
 ENVIRONMENT_FILE = "AGENTIC_ART_DESTINATIONS_FILE"
@@ -343,6 +344,9 @@ def write_resolution_evidence(
     resolution: Mapping[str, object],
 ) -> Path:
     """Create one stable resolution file without replacing an existing result."""
+    if isinstance(resolution, Mapping) and resolution.get("contract_version") == "destination-resolution/v2":
+        from tools.repo_local_destinations import write_resolution_evidence as write_repo_local_resolution
+        return write_repo_local_resolution(resolution["project_root"], run_id, resolution)
     errors = validate_destination_resolution(resolution)
     if errors:
         raise _error("resolution evidence is invalid: " + " | ".join(errors), "pass destination-resolution/v1 from this resolver")
@@ -403,6 +407,9 @@ def validate_destination_profile(value: object, source: str = "output-destinatio
 
 
 def validate_destination_resolution(value: object, source: str = "destination-resolution") -> list[str]:
+    if isinstance(value, Mapping) and value.get("contract_version") == "destination-resolution/v2":
+        from tools.repo_local_destinations import validate_resolution
+        return validate_resolution(value)
     try:
         schema = load_json(DESTINATION_RESOLUTION_SCHEMA)
     except ValueError as exc:

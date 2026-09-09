@@ -1,14 +1,14 @@
-version: 250
-updated_at: '2026-09-08T22:28:00+00:00'
-active_task: DELIVERY-01
+version: 251
+updated_at: '2026-09-10T00:00:00+00:00'
+active_task: DELIVERY-04
 active_repository: agentic-art-orchestration
 lease:
   status: held
   owner: codex-delivery-217
-  acquired_at: '2026-09-09T00:00:00+00:00'
-  expires_at: '2026-09-09T01:00:00+00:00'
+  acquired_at: '2026-09-10T00:00:00+00:00'
+  expires_at: '2026-09-10T04:00:00+00:00'
   lane: AUTONOMY
-  execution_id: PRODUCTION-STARTUP-RECOVERY-001:20260909
+  execution_id: DELIVERY-04:20260910
   scope:
     repository: agentic-art-orchestration
     branch: fix/delivery-completion-217
@@ -50,7 +50,7 @@ aak04_checkpoint:
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
 last_completed_task: PRODUCTION-STARTUP-RECOVERY-001
 resume_from:
-  task: DELIVERY-01
+  task: DELIVERY-04
   repository: agentic-art-orchestration
   action: Implement Issue 217 delivery contracts, then owner 69 and 18, completion integration and real-agent acceptance.
   command: .venv/bin/python tools/project_status.py --format json

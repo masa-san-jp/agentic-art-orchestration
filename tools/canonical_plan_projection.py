@@ -46,6 +46,8 @@ def _owner_bundle(item, internal):
         raise ValueError("source body/attestation hash mismatch")
     project = source.parent.parent
     command=[str(code/".venv/bin/python"),"tools/public_plan_attestation.py","--project-root",str(project),"--check"]
+    if item.get("require_native_review") is True:
+        command.append("--require-native-review")
     checked=subprocess.run(command,cwd=code,capture_output=True,text=True,timeout=120)
     response=json.loads(checked.stdout) if checked.returncode==0 else {}
     if checked.returncode or response.get("status")!="VERIFIED" or not isinstance(response.get("production_state"),str) or not response["production_state"]:
@@ -70,6 +72,12 @@ def _owner_bundle(item, internal):
     if source.read_bytes()!=body or attestation_path.read_bytes()!=raw:
         raise ValueError("canonical source changed during validation")
     return {"identity":identity,"revision":a["plan_revision"],"body_hash":digest(body),"attestation_hash":digest(raw),"production_commit":sha,"production_state":response["production_state"],"assets":a["assets"],"files":files}
+
+
+def _unbound_preflight(result):
+    return (result.get('status') in {'BLOCKED_CONFIGURATION', 'BLOCKED_POLICY'}
+            and result.get('source_refs') == [] and result.get('changed_paths') == []
+            and result.get('public_ids') == [])
 
 
 def project_attested(source, *, internal_output_root, public_projection_root, state_root, batch=False, fail_after=None):
@@ -108,7 +116,7 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
         previous_result=state_root/run_id/"public-projection-result.json"
         if previous_result.exists():
             previous=json.loads(previous_result.read_text())
-            if previous.get("request_sha256")!=p.sha256_hex(request):
+            if previous.get("request_sha256")!=p.sha256_hex(request) and not _unbound_preflight(previous):
                 status="BLOCKED_CONFLICT";raise ValueError("run ID already belongs to a different projection request")
         request_locator=f'public-projection/{run_id}/canonical-request.json'
         p._write_create_only(internal,request_locator,(json.dumps(request,sort_keys=True,ensure_ascii=False,indent=2)+'\n').encode())
@@ -204,6 +212,18 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
     # A different request may not overwrite successful receipts. Return the
     # conflict for the caller's run report, retaining the original evidence.
     if previous_path.exists() and json.loads(previous_path.read_text()).get('request_sha256')!=result['request_sha256']:
-        return p._automatic_summary(result,request_locator=request_locator)
+        previous_bytes = previous_path.read_bytes()
+        if not _unbound_preflight(json.loads(previous_bytes)):
+            return p._automatic_summary(result,request_locator=request_locator)
+        # A failed preflight bound no source and wrote no catalog bytes. Retain
+        # that evidence before binding the first validated request on resume.
+        archive = previous_path.with_name('unbound-preflight-' + digest(previous_bytes) + '.json')
+        if archive.is_symlink() or (archive.exists() and archive.read_bytes() != previous_bytes):
+            raise ValueError('PREFLIGHT_EVIDENCE_CONFLICT')
+        if not archive.exists():
+            with archive.open('xb') as stream: stream.write(previous_bytes)
+        if previous_path.is_symlink() or previous_path.read_bytes() != previous_bytes:
+            raise ValueError('PREFLIGHT_EVIDENCE_CHANGED')
+        previous_path.unlink()
     p._write_projection_result(state_root,run_id,result,allow_transition=True)
     return p._automatic_summary(result,request_locator=request_locator)

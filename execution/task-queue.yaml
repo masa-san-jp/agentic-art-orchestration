@@ -1,5 +1,5 @@
-version: 76
-updated_at: "2026-09-08T22:28:00+00:00"
+version: 77
+updated_at: "2026-09-10T00:00:00+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2462,7 +2462,7 @@ tasks:
   - id: DELIVERY-02
     milestone: AUTONOMY
     title: Production reviewの既存許可解決と再開
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/69
     target_repositories:
     - agentic-art-production
@@ -2476,10 +2476,15 @@ tasks:
     - git diff --check
     human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
       external publication, or migration. Branch/commit/draft PR authorized.
+    acceptance_evidence:
+      AC1-AC5: {status: PASS, candidate_commit: 7fc0bc7b19fa1626d1b0b8ba7eeaa818d6f37aca, reference: https://github.com/masa-san-jp/agentic-art-production/pull/70, evidence: tests/test_public_plan_review.py and tests/test_public_plan_attestation.py}
+    code_status: CODE_VERIFIED
+    integration_status: DRAFT_PR
+    completion: Existing native HUMAN approval is resolved exactly by target hash; missing review remains HUMAN_REQUIRED and is never fabricated.
   - id: DELIVERY-03
     milestone: AUTONOMY
     title: Projectローカル受取のowner検証
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/18
     target_repositories:
     - agentic-art-project
@@ -2493,10 +2498,15 @@ tasks:
     - git diff --check
     human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
       external publication, or migration. Branch/commit/draft PR authorized.
+    acceptance_evidence:
+      AC1-AC5: {status: PASS, candidate_commit: 55c7a33cb00d532464b743524abea2b8e890d58e, reference: https://github.com/masa-san-jp/agentic-art-project/pull/19, evidence: tests/test_local_delivery.py and native validator/catalog checks}
+    code_status: CODE_VERIFIED
+    integration_status: DRAFT_PR
+    completion: Local receiver verifies exact records and leaves Git commit/remote sync as separate statuses.
   - id: DELIVERY-04
     milestone: AUTONOMY
     title: 納品契約と完了verifierを全入口へ接続
-    status: BACKLOG
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
     target_repositories:
     - agentic-art-orchestration
@@ -2528,29 +2538,93 @@ tasks:
     - git diff --check
     human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
       external publication, or migration. Branch/commit/draft PR authorized.
-  - id: ISSUE-190
+  - id: REPO-LOCAL-PROJECT-QUALIFY-001
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
     milestone: AUTONOMY
-    title: 'docs: agentic-art-projectを正規の公開成果物repoとして定義する'
-    status: BACKLOG
-    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/190
-    depends_on: []
-    acceptance: Observe Issue 190 acceptance and owner evidence before implementation.
-    checks:
-    - .venv/bin/python tools/validate.py --check
-    - git diff --check
-    human_gate: Existing user authorization and owner gates apply.
-  - id: ISSUE-213
-    target_repositories: [agentic-art-orchestration]
-    agent_terminal: EVIDENCE_READY
-    milestone: AUTONOMY
-    title: 'feat: clone/fork向けrepo-local .agentic-art出力境界へ移行する'
-    status: BACKLOG
+    title: 'Project #16 candidateをrepo-local ownerとして資格確認する'
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/213
     depends_on: []
-    acceptance: Observe Issue 213 acceptance and owner evidence before implementation.
+    acceptance: Project #16 merged candidate 4ab9a85681e744592b0e02b701a20437cd7a5349 is pinned; validator and local-workspace contract are available.
     checks:
     - .venv/bin/python tools/validate.py --check
     - git diff --check
     human_gate: Existing user authorization and owner gates apply.
+    acceptance_evidence:
+      AC1: {status: PASS, candidate_commit: 4ab9a85681e744592b0e02b701a20437cd7a5349, reference: https://github.com/masa-san-jp/agentic-art-project/pull/17}
+    code_status: CODE_VERIFIED
+    integration_status: MERGED
+  - id: REPO-LOCAL-CONTRACT-001
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'repo-local v2 schemaとProject境界resolverを実装する'
+    status: IN_PROGRESS
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/213
+    depends_on: [REPO-LOCAL-PROJECT-QUALIFY-001]
+    acceptance: Issue 213 REPO-LOCAL-CONTRACT-001; closed v2 schemas, preflight, evidence and negative fixtures.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: Existing user authorization and owner gates apply.
+  - id: REPO-LOCAL-RUNTIME-001
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'repo-local v2を全実行入口へ接続する'
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/213
+    depends_on: [REPO-LOCAL-CONTRACT-001]
+    acceptance: Issue 213 runtime wiring; run, batch, exchange, autonomous runner and projection share one resolver.
+    checks:
+    - .venv/bin/python -m unittest tests.test_repo_local_destinations tests.test_output_destinations tests.test_run tests.test_batch_run -v
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: Existing user authorization and owner gates apply.
+  - id: REPO-LOCAL-E2E-001
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'repo-local v2投影と復旧のcross-repository E2E'
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/213
+    depends_on: [REPO-LOCAL-RUNTIME-001]
+    acceptance: Issue 213 AC5-AC13; temporary Project clones, projection rollback/replay, privacy and remote-neutral proof.
+    checks:
+    - .venv/bin/python -m unittest tests.test_repo_local_destinations tests.test_public_projection -v
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: Existing user authorization and owner gates apply.
+  - id: REPO-LOCAL-DOCS-001
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'repo-local v2 quickstartと復旧文書を同期する'
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/213
+    depends_on: [REPO-LOCAL-E2E-001]
+    acceptance: Issue 213 AC12-AC13; README/runbook/AGENTS and execution evidence are synchronized.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest tests.test_docs tests.test_repo_local_destinations -v
+    - git diff --check
+    human_gate: Existing user authorization and owner gates apply.
+  - id: RELATIONSHIP-REGISTRY-190
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: '公開成果物Projectとのrelationship registryと案内を同期する'
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/190
+    depends_on: []
+    acceptance: Issue 190 registry, validator, negative tests and reader-facing docs.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest tests.test_validate tests.test_docs -v
+    - git diff --check
+    human_gate: merge/release/visibility changes remain human-gated.
+    acceptance_evidence:
+      AC1-AC5: {status: PASS, candidate_commit: 5b8392f, evidence: config/repository-relationships.yaml, schemas/repository-relationships.schema.json, tests/test_validate.py, tests/test_docs.py, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/219}
+    code_status: CODE_VERIFIED
+    integration_status: DRAFT_PR

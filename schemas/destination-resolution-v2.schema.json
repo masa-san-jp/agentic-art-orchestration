@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/destination-resolution-v2.schema.json",
+  "title": "Resolved repo-local Project destinations v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "mode", "project_root", "source", "project_code_commit", "project_layout_contract", "destinations", "checks", "run_id", "project_id", "classification", "config_sha256"],
+  "properties": {
+    "contract_version": {"const": "destination-resolution/v2"},
+    "mode": {"const": "repo-local-project"},
+    "project_root": {"$ref": "#/$defs/absolute_path"},
+    "source": {"enum": ["direct-cli", "environment"]},
+    "project_code_commit": {"$ref": "#/$defs/sha40"},
+    "project_layout_contract": {"const": "repo-local-project-workspace/v1"},
+    "destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_root", "internal_output_root", "staging_root", "public_projection_root"],
+      "properties": {
+        "state_root": {"$ref": "#/$defs/destination"},
+        "internal_output_root": {"$ref": "#/$defs/destination"},
+        "staging_root": {"$ref": "#/$defs/destination"},
+        "public_projection_root": {"$ref": "#/$defs/destination"}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_git_root", "ignore", "tracked_private", "symlinks", "tracked_status"],
+      "properties": {
+        "project_git_root": {"const": "PASS"},
+        "ignore": {"const": "PASS"},
+        "tracked_private": {"const": "PASS"},
+        "symlinks": {"const": "PASS"},
+        "tracked_status": {"const": "CLEAN"}
+      }
+    },
+    "run_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+    "project_id": {"oneOf": [{"$ref": "#/$defs/project_id"}, {"type": "null"}]},
+    "classification": {"const": "PROJECT_INTERNAL"},
+    "config_sha256": {"$ref": "#/$defs/sha64"}
+  },
+  "$defs": {
+    "absolute_path": {"type": "string", "minLength": 2, "pattern": "^/(?:[^\\u0000]*)$"},
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sha64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "project_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}){0,3}$"},
+    "destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "relative", "source"],
+      "properties": {
+        "path": {"$ref": "#/$defs/absolute_path"},
+        "relative": {"type": "string", "pattern": "^(?:\\.|\\.agentic-art/(?:state|internal|staging))$"},
+        "source": {"const": "repo-local-derived"}
+      }
+    }
+  }
+}

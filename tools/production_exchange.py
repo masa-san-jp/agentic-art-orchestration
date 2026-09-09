@@ -7,6 +7,7 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -29,6 +30,7 @@ from tools.output_destinations import (
     validate_destination_resolution,
     write_resolution_evidence,
 )
+from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
 
 SCHEMA_PATH = ROOT / "schemas/production-exchange-evidence.schema.json"
 E2E_SCHEMA_PATH = ROOT / "schemas/production-exchange-e2e.schema.json"
@@ -1033,6 +1035,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-root", type=Path)
     parser.add_argument("--destinations-file", type=Path,
                         help="explicit external output-destinations/v1 profile")
+    parser.add_argument("--project-root", type=Path,
+                        help="explicit agentic-art-project checkout for output-destinations/v2")
     parser.add_argument("--run-id", default="PRODUCTION-E2E-001:offline-fixture")
     parser.add_argument("--generated-at", default="2026-08-13T08:00:00+09:00")
     parser.add_argument("--manifest", type=Path, default=ROOT / "config/repositories.yaml")
@@ -1067,9 +1071,15 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"status": "PASSED", "evidence": str(args.evidence.name)}, ensure_ascii=False, sort_keys=True))
             return 0
         manifest = _load_yaml(args.manifest)
+        project_root_selected = args.project_root is not None or PROJECT_ROOT_ENV in os.environ
+        if project_root_selected and (args.destinations_file is not None or args.output_root is not None):
+            raise ExchangeError("AMBIGUOUS_DESTINATION_MODE: repo-local --project-root cannot be combined with v1 roots/profile")
         profile_selected = destinations_profile_selected(args.destinations_file)
         destination_resolution = None
-        if profile_selected:
+        if project_root_selected:
+            destination_resolution = resolve_project_root(args.project_root, run_id=args.run_id)
+            args.output_root = resolve_run_destination(destination_resolution["destinations"]["internal_output_root"]["path"], "production-exchange", args.run_id)
+        elif profile_selected:
             direct = {"internal_output_root": args.output_root} if args.output_root is not None else None
             destination_resolution = resolve_destinations(
                 args.destinations_file,

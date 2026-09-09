@@ -150,6 +150,19 @@ profile・run-idで再開するか新しいrun-id／空rootを使い、既存デ
 復旧はエラーのremediationに従う。`must be absolute`は絶対パスへ、`overlap`は分離したrootへ、
 `inside ... repository/child checkout`はGit外へ、`not empty`は新しい空rootへ直す。profileを外す
 rollbackでは`--destinations-file`を外し、環境変数を`unset`し、legacy入口の明示引数へ戻す。
+
+### Project repo-local方式（output-destinations/v2）
+
+利用者が自分の`agentic-art-project` checkoutだけを納品先にする場合は、全入口で`--project-root /absolute/path/to/agentic-art-project`を指定できます。`AGENTIC_ART_PROJECT_ROOT`でも選択できます。v2はProject ownerの`repo-local-project-workspace/v1`を読み、固定相対pathから次を導出します。
+
+```text
+.agentic-art/state
+.agentic-art/internal
+.agentic-art/staging
+Project root（tracked公開コレクション）
+```
+
+Project validator、`/.agentic-art/` ignore、tracked-private、symlink、tracked変更のpreflightがすべてPASSするまで作成・投影は行いません。v1 profile、個別root、`--target-root`との混在は`AMBIGUOUS_DESTINATION_MODE`です。resolution evidenceは`.agentic-art/state/<run-id>/destination-resolution.json`だけにcreate-onlyで保存し、公開metadataへ絶対pathをコピーしません。Git add/commit/pushやremote visibility変更は別の人間gateです。
 profile、evidence、ログへcredential、会話本文、PRIVATE_RAW、RESTRICTED、個人識別情報を入れない。
 
 ### 公開projection（自動plan投影と手動projection）

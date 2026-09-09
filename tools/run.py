@@ -46,6 +46,7 @@ from tools.output_destinations import (
     resolve_run_destination,
     write_resolution_evidence,
 )
+from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
 
 DEFAULT_STATE = ROOT / "data/runs"
 DEFAULT_RULES_PATH = ROOT / "config/transformation-rules.yaml"
@@ -857,7 +858,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             return report
         report = {
-            "plan_status": "PLAN_READY", "completion_status": "PLAN_READY", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
+            "plan_status": "PLAN_READY", "completion_status": "INCOMPLETE", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
             "projection_status": "SKIPPED", "plan_verification": plan_verification,
             "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
             "generated_at": requested_at,
@@ -1045,6 +1046,8 @@ def run(*args: Any, **kwargs: Any) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cycle-context", type=Path, help="external knowledge-cycle-context/v1; advance the same profile/run checkpoint")
+    parser.add_argument("--project-root", type=Path, help="explicit agentic-art-project checkout for output-destinations/v2")
+    parser.add_argument("--delivery-target", choices=("internal", "project-local", "project-committed"), help="Bind the requested delivery goal to --cycle-context; never silently downgrade")
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--project-id")
     parser.add_argument("--seed-input")
@@ -1078,18 +1081,36 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.cycle_context is not None:
+            if args.project_root is not None:
+                raise StepFailure("--project-root cannot be combined with --cycle-context; put the v2 resolution in the context")
             if args.state_root is None:
                 raise StepFailure("--cycle-context requires --state-root")
             from tools.knowledge_cycle_run import advance, read
-            report = advance(read(args.cycle_context), args.state_root)
+            context = read(args.cycle_context)
+            if args.delivery_target:
+                requested = {'contract_version':'delivery-contract/v1', 'target':args.delivery_target}
+                if context.get('delivery_contract', requested) != requested:
+                    raise StepFailure('DELIVERY_CONTRACT_CONFLICT')
+                context['delivery_contract'] = requested
+            report = advance(context, args.state_root)
             print(json.dumps(report, ensure_ascii=False, indent=2))
             return 0 if report['run_status'] == 'COMPLETED' else 1
+        if args.delivery_target:
+            raise StepFailure("--delivery-target requires --cycle-context so profile, owner receipts and destination are verified")
+        project_root_selected = args.project_root is not None or PROJECT_ROOT_ENV in os.environ
+        if project_root_selected and (args.destinations_file is not None or args.state_root is not None or args.output is not None):
+            raise StepFailure("AMBIGUOUS_DESTINATION_MODE: repo-local --project-root cannot be combined with v1 roots/profile")
         run_now = datetime.now(timezone.utc)
         run_id = args.run_id or f"AUTO-PLAN-{run_now.strftime('%Y%m%dT%H%M%SZ')}"
         requested_at = args.requested_at or run_now.isoformat()
         destination_resolution = None
         internal_output_root = None
-        if destinations_profile_selected(args.destinations_file):
+        if project_root_selected:
+            destination_resolution = resolve_project_root(args.project_root, run_id=run_id, project_id=args.project_id)
+            destination_roots = destination_resolution["destinations"]
+            state_root = Path(destination_roots["state_root"]["path"])
+            internal_output_root = Path(destination_roots["internal_output_root"]["path"])
+        elif destinations_profile_selected(args.destinations_file):
             from tools.workspace import load_manifest
 
             direct = {"state_root": args.state_root} if args.state_root is not None else None

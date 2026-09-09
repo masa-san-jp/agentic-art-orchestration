@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/output-destinations-v2.schema.json",
+  "title": "Repo-local Project output destinations v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "mode", "project_root", "destinations"],
+  "properties": {
+    "contract_version": {"const": "output-destinations/v2"},
+    "mode": {"const": "repo-local-project"},
+    "project_root": {"$ref": "#/$defs/absolute_path"},
+    "destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_root", "internal_output_root", "staging_root", "public_projection_root"],
+      "properties": {
+        "state_root": {"const": ".agentic-art/state"},
+        "internal_output_root": {"const": ".agentic-art/internal"},
+        "staging_root": {"const": ".agentic-art/staging"},
+        "public_projection_root": {"const": "."}
+      }
+    }
+  },
+  "$defs": {
+    "absolute_path": {"type": "string", "minLength": 2, "pattern": "^/(?:[^\\u0000]*)$"}
+  }
+}

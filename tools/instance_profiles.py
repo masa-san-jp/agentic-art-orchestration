@@ -73,6 +73,16 @@ def _git(cwd: Path, *args: str) -> str:
     if result.returncode: raise InstanceProfileError("local git operation failed: " + args[0])
     return result.stdout.strip()
 
+
+PINNED_MARKER = ".agentic-art-pinned-workspace.json"
+
+
+def _pinned_checkout_dirty(path: Path) -> bool:
+    """Treat only the tool-owned immutable workspace marker as clean metadata."""
+    status = _git(path, "status", "--porcelain", "--untracked-files=all")
+    unexpected = [line for line in status.splitlines() if line and line not in {f"?? {PINNED_MARKER}"}]
+    return bool(unexpected)
+
 def _external(value: object) -> Path:
     if not isinstance(value, (str, Path)) or not str(value):
         raise InstanceProfileError("SETUP_REQUIRED: explicit absolute local path required")
@@ -200,7 +210,7 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
             LocalOwner(stores[owner], owner, ref["store_id"], existing["code_refs"][owner]["commit"],
                        ref["commit"], creator=str(profile["creator_id"]), payload_validator=lambda *_: False)
             checkout = marker.parent / "code" / owner
-            if _git(checkout, "rev-parse", "HEAD") != existing["code_refs"][owner]["commit"] or _git(checkout, "status", "--porcelain"):
+            if _git(checkout, "rev-parse", "HEAD") != existing["code_refs"][owner]["commit"] or _pinned_checkout_dirty(checkout):
                 raise InstanceProfileError("saved isolated code checkout changed")
         return existing
     if dry_run:
@@ -216,7 +226,7 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
         code_refs[owner] = {"repository": entry["code_repository"], "commit": entry["code_commit"]}
         checkout = marker.parent / "code" / owner
         if checkout.exists():
-            if _git(checkout, "rev-parse", "HEAD") != entry["code_commit"] or _git(checkout, "status", "--porcelain"):
+            if _git(checkout, "rev-parse", "HEAD") != entry["code_commit"] or _pinned_checkout_dirty(checkout):
                 raise InstanceProfileError("interrupted code checkout requires inspection")
         else:
             # Existing canonical helper isolates dirty/diverged sources at qualified pins.
