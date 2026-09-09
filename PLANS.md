@@ -1023,3 +1023,11 @@ Validation: parent validator and contract projection checks before commit.
 Next: implement native owner review and receiver APIs, then integrate common completion verification.
 
 DELIVERY-01 validation: parent validator PASS; 35 contract/docs tests PASS with canonical TMPDIR=/private/tmp. Initial default macOS temporary path failed symlink guards; fixture location corrected without weakening guards. Implementation and live DELIVERY-05 remain pending.
+
+## 2026-09-10 — DELIVERY-04 / repo-local v2 integration checkpoint
+
+- Parent PR [#221](https://github.com/masa-san-jp/agentic-art-orchestration/pull/221) merged as `9b8db8de79ceeb6a219d0ee5b3e5ecef6bfadb33`. The completion verifier now requires a validated Production plan, knowledge commit, and the correct local/committed/project delivery receipt; it cannot convert a missing projection or review into `PLAN_READY`.
+- Production PR [#70](https://github.com/masa-san-jp/agentic-art-production/pull/70) merged as `68d7ec971a1e61878464a3d004ed7421e5306f52`. Native public-plan review prepares an exact target and reuses only current HUMAN approval records. Missing content-safety, rights, or consent decisions remain `HUMAN_REQUIRED`; the tool never fabricates them or publishes.
+- Project PR [#19](https://github.com/masa-san-jp/agentic-art-project/pull/19) merged as `b87ac488d0c8f7ea155d98fe0d638bdd5187b96a`. Local delivery is a read-only owner receipt that verifies canonical bytes, lineage and attribution while leaving `git_saved=false` and `remote_synced=false`.
+- Repo-local `destination-resolution/v2` is covered by `execution/repo-local-v2-evidence.json`, with CLI/env ambiguity, arbitrary clone paths, symlink/forced-track/dirty guards, parent-boundary rejection, remote-neutral behavior and focused runtime wiring recorded as PASS. The parent validator, py_compile, diff check and 80 focused tests passed.
+- Issue 213 code acceptance is complete; live provider-backed acceptance for Issue 217 DELIVERY-05 remains `NOT_RUN`; the 100-plan v2 projection/replay, rollback and remote-neutral fixture now pass on arbitrary temporary Project clones. The active task is `REPO-LOCAL-E2E-001`; next operation is the parent full suite, followed by a queue/state/evidence update.

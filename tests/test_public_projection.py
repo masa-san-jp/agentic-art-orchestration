@@ -5,6 +5,7 @@ import contextlib
 import hashlib
 import io
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -16,6 +17,7 @@ import yaml
 
 from tools import public_projection as projection
 from tools.output_destinations import resolve_destinations
+from tools.repo_local_destinations import resolve_project_root
 from tools.security import PUBLIC_PROJECTION_FINDING_CODES, scan_public_projection
 
 
@@ -493,6 +495,93 @@ class PublicProjectionContractTests(unittest.TestCase):
             self.assertEqual([], projection.validate_result(evidence))
             self.assertEqual("AUTOMATIC_PLAN", evidence["projection_mode"])
             self.assertIsNone(evidence["approval_sha256"])
+
+    @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
+    def test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays(self) -> None:
+        source = Path(os.environ.get("AAK_PROJECT_SOURCE", "/private/tmp/aa217-project"))
+        if not (source / ".git").exists():
+            self.skipTest("qualified Project checkout is unavailable")
+        with tempfile.TemporaryDirectory(prefix="public-batch-repo-local-v2-") as temporary:
+            root = Path(temporary)
+            project = root / "project"
+            subprocess.run(["git", "clone", "-q", str(source), str(project)], check=True)
+            run_id = "BATCH-V2-001"
+            (project / ".agentic-art").mkdir()
+            resolution = resolve_project_root(project, run_id=run_id, project_id=run_id)
+            internal = project / ".agentic-art" / "internal"
+            state = project / ".agentic-art" / "state"
+            summary = self._automatic_batch_summary(project / ".agentic-art", count=100, run_id=run_id)
+            summary["destination_resolution"] = resolution
+            authority_plans = [
+                {
+                    "project_id": item["project_id"],
+                    "production_plan_markdown_sha256": item["production_plan_markdown_sha256"],
+                }
+                for item in summary["projects"]
+            ]
+            summary["automatic_plan_authority"] = projection.build_automatic_plan_authority(
+                producer="tools/batch_run.py",
+                source_status="PASSED",
+                source_id=run_id,
+                source_sha256=projection.sha256_hex({"projects": sorted(authority_plans, key=lambda item: item["project_id"])}),
+                destination_resolution=resolution,
+            )
+            before_head = self._git(project, "rev-parse", "HEAD")
+            result = projection.project_batch_automatic(
+                summary,
+                internal_output_root=internal,
+                public_projection_root=project,
+                state_root=state,
+            )
+            self.assertEqual("APPLIED", result["status"])
+            self.assertEqual(100, result["record_count"])
+            self.assertEqual(before_head, self._git(project, "rev-parse", "HEAD"))
+            self.assertEqual(101, len(list((project / "plans").glob("P[0-9][0-9][0-9][0-9]-*/plan.md"))))
+            replay = projection.project_batch_automatic(
+                summary,
+                internal_output_root=internal,
+                public_projection_root=project,
+                state_root=state,
+            )
+            self.assertEqual("ALREADY_PROJECTED", replay["status"])
+            self.assertEqual([], replay["changed_paths"])
+            self.assertEqual(before_head, self._git(project, "rev-parse", "HEAD"))
+            evidence = json.loads((state / run_id / "public-projection-result.json").read_text(encoding="utf-8"))
+            self.assertEqual("AUTOMATIC_PLAN", evidence["projection_mode"])
+            self.assertEqual(100, len(evidence["source_refs"]))
+
+            rollback_project = root / "rollback-project"
+            subprocess.run(["git", "clone", "-q", str(source), str(rollback_project)], check=True)
+            (rollback_project / ".agentic-art").mkdir()
+            rollback_id = "BATCH-V2-ROLLBACK-001"
+            rollback_resolution = resolve_project_root(rollback_project, run_id=rollback_id, project_id=rollback_id)
+            rollback_summary = self._automatic_batch_summary(rollback_project / ".agentic-art", count=3, run_id=rollback_id)
+            rollback_summary["destination_resolution"] = rollback_resolution
+            rollback_plans = [
+                {
+                    "project_id": item["project_id"],
+                    "production_plan_markdown_sha256": item["production_plan_markdown_sha256"],
+                }
+                for item in rollback_summary["projects"]
+            ]
+            rollback_summary["automatic_plan_authority"] = projection.build_automatic_plan_authority(
+                producer="tools/batch_run.py",
+                source_status="PASSED",
+                source_id=rollback_id,
+                source_sha256=projection.sha256_hex({"projects": sorted(rollback_plans, key=lambda item: item["project_id"])}),
+                destination_resolution=rollback_resolution,
+            )
+            rollback_before = projection._tree_fingerprint(rollback_project)
+            rollback_result = projection.project_batch_automatic(
+                rollback_summary,
+                internal_output_root=rollback_project / ".agentic-art" / "internal",
+                public_projection_root=rollback_project,
+                state_root=rollback_project / ".agentic-art" / "state",
+                fail_after=1,
+            )
+            self.assertEqual("FAILED", rollback_result["status"])
+            self.assertEqual(rollback_before, projection._tree_fingerprint(rollback_project))
+            self.assertEqual(1, len(list((rollback_project / "plans").glob("P[0-9][0-9][0-9][0-9]-*/plan.md"))))
 
     @patch("tools.canonical_plan_projection._owner_bundle", synthetic_owner_boundary)
     def test_automatic_batch_policy_failure_is_all_or_nothing(self) -> None:

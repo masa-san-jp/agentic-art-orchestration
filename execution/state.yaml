@@ -1,17 +1,17 @@
-version: 251
-updated_at: '2026-09-10T00:00:00+00:00'
-active_task: DELIVERY-04
+version: 252
+updated_at: '2026-09-10T01:20:51+09:00'
+active_task: REPO-LOCAL-E2E-001
 active_repository: agentic-art-orchestration
 lease:
   status: held
-  owner: codex-delivery-217
-  acquired_at: '2026-09-10T00:00:00+00:00'
-  expires_at: '2026-09-10T04:00:00+00:00'
+  owner: codex-repo-local-213
+  acquired_at: '2026-09-10T01:20:51+09:00'
+  expires_at: '2026-09-10T05:20:51+09:00'
   lane: AUTONOMY
-  execution_id: DELIVERY-04:20260910
+  execution_id: REPO-LOCAL-E2E-001:20260910
   scope:
     repository: agentic-art-orchestration
-    branch: fix/delivery-completion-217
+    branch: chore/delivery-evidence-20260910
     paths:
     - tools/**
     - schemas/**
@@ -48,12 +48,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: PRODUCTION-STARTUP-RECOVERY-001
+last_completed_task: DELIVERY-04
 resume_from:
-  task: DELIVERY-04
+  task: REPO-LOCAL-E2E-001
   repository: agentic-art-orchestration
-  action: Implement Issue 217 delivery contracts, then owner 69 and 18, completion integration and real-agent acceptance.
-  command: .venv/bin/python tools/project_status.py --format json
+  action: Run the v2 cross-repository projection/replay fixture and record AC6/AC7/AC9/AC13 without claiming live acceptance.
+  command: .venv/bin/python -m unittest tests.test_repo_local_destinations tests.test_public_projection -v
 previous_checkpoint:
   task: AAK-11
   repository: agentic-art-production
@@ -1791,3 +1791,20 @@ aak_01_implementation:
     pip installation cancelled by network approval; native fast-forward push required
     by AGENTS Work protocol 8 remains unverified. API candidate and draft PR #199 are
     saved; lease retained.'
+
+
+current_delivery_checkpoint:
+  task: REPO-LOCAL-E2E-001
+  repository: agentic-art-orchestration
+  branch: chore/delivery-evidence-20260910
+  base_commit: 9b8db8de79ceeb6a219d0ee5b3e5ecef6bfadb33
+  status: CODE_VERIFIED
+  evidence: execution/repo-local-v2-evidence.json
+  completed:
+    - parent delivery verifier and v2 resolver merged to main
+    - Production PR70 merged as 68d7ec971a1e61878464a3d004ed7421e5306f52
+    - Project PR19 merged as b87ac488d0c8f7ea155d98fe0d638bdd5187b96a
+    - focused v2/runtime/instance-profile checks passed
+  remaining:
+    - live provider-backed acceptance remains NOT_RUN
+  next_operation: Commit and push the execution SSOT, then keep the live acceptance boundary explicit until a provider and consent are available.
