@@ -220,11 +220,11 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
                 raise InstanceProfileError("interrupted code checkout requires inspection")
         else:
             # Existing canonical helper isolates dirty/diverged sources at qualified pins.
-            materialize_pinned_workspace({"repositories": [{"id": owner, "path": ".",
-                "observed_commit": entry["code_commit"]}]}, sources[owner],
+            materialize_pinned_workspace({"repositories": [{"id": owner, "path": sources[owner].name,
+                "observed_commit": entry["code_commit"]}]}, sources[owner].parent,
                 marker.parent / "staging" / owner)
             checkout.parent.mkdir(parents=True, exist_ok=True)
-            (marker.parent / "staging" / owner).rename(checkout)
+            (marker.parent / "staging" / owner / sources[owner].name).rename(checkout)
         initializer = (owner_initializers or {}).get(owner)
         provider = LocalOwner(stores[owner], owner, entry["knowledge_store_id"], entry["code_commit"],
             creator=str(profile["creator_id"]), payload_validator=lambda *_: False,
