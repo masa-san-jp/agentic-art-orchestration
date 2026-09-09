@@ -154,7 +154,6 @@ For a request to output to Project, run `tools/run.py --cycle-context <external-
 Continue the returned agent actions through Production plan generation, native review/attestation, canonical projection, native Project lineage initialization and local receiver validation. Reuse existing native approvals; missing approvals return the prepared target and precise remaining review decisions. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
 
 `PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
-
 ## Project checkoutだけで使う（output-destinations/v2）
 
 clone/fork利用者は、自分の`agentic-art-project` checkoutを明示して、内部state・中間出力・公開投影先を一つの所有境界へまとめられます。
