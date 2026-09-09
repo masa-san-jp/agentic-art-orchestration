@@ -2488,3 +2488,8 @@ Git network/keyring access and canonical repository-local pip setup work. projec
 ## 2026-09-10 — current continuation
 
 Task `REPO-LOCAL-E2E-001` is active on branch `chore/delivery-evidence-20260910`, based on parent main merge `9b8db8de79ceeb6a219d0ee5b3e5ecef6bfadb33`. Production PR70 (`68d7ec971a1e61878464a3d004ed7421e5306f52`) and Project PR19 (`b87ac488d0c8f7ea155d98fe0d638bdd5187b96a`) are merged. The implementation and focused checks are complete, but evidence deliberately leaves repo-local live Issue 217 DELIVERY-05 `NOT_RUN`; the v2 100-plan projection/replay and rollback fixture passes. Run the parent full suite, update `execution/repo-local-v2-evidence.json` with the final result, then commit and push the execution SSOT before releasing the lease. Do not close Issue #213 or #217 while those acceptance gaps remain.
+
+
+## 2026-09-10 — release checkpoint
+
+Parent merge `b1ecafd13d65798f4958a9595b83a8869c31f481` contains the repo-local v2 E2E fix and evidence. Project PR21 is merged as `17767752630282f0ab6e9f75077a8ba6c86740f6`. `execution/state.yaml` now releases the lease and resumes at DELIVERY-05. Code and local acceptance are complete; the only blocked item is the issue's explicit real external-agent run (AC07) and its dependent live matrix, which cannot be replaced by fake evidence or account billing.

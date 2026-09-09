@@ -1031,3 +1031,10 @@ DELIVERY-01 validation: parent validator PASS; 35 contract/docs tests PASS with 
 - Project PR [#19](https://github.com/masa-san-jp/agentic-art-project/pull/19) merged as `b87ac488d0c8f7ea155d98fe0d638bdd5187b96a`. Local delivery is a read-only owner receipt that verifies canonical bytes, lineage and attribution while leaving `git_saved=false` and `remote_synced=false`.
 - Repo-local `destination-resolution/v2` is covered by `execution/repo-local-v2-evidence.json`, with CLI/env ambiguity, arbitrary clone paths, symlink/forced-track/dirty guards, parent-boundary rejection, remote-neutral behavior and focused runtime wiring recorded as PASS. The parent validator, py_compile, diff check and 80 focused tests passed.
 - Issue 213 code acceptance is complete; live provider-backed acceptance for Issue 217 DELIVERY-05 remains `NOT_RUN`; the 100-plan v2 projection/replay, rollback and remote-neutral fixture now pass on arbitrary temporary Project clones. The active task is `REPO-LOCAL-E2E-001`; next operation is the parent full suite, followed by a queue/state/evidence update.
+
+
+## 2026-09-10 — delivery code merged; live acceptance boundary recorded
+
+- Parent evidence PR [#222](https://github.com/masa-san-jp/agentic-art-orchestration/pull/222) merged to main as `b1ecafd13d65798f4958a9595b83a8869c31f481`. The repo-local v2 issue #213 is code-complete with AC1–AC13 PASS in `execution/repo-local-v2-evidence.json`; the parent suite is 615 tests with 1 skip under `TMPDIR=/private/tmp`.
+- Project reader-facing README/local-delivery reconciliation merged as PR [#21](https://github.com/masa-san-jp/agentic-art-project/pull/21), merge `17767752630282f0ab6e9f75077a8ba6c86740f6`.
+- DELIVERY-05 remains BLOCKED only at the explicitly declared provider-backed external-agent acceptance. No account billing, GitHub Actions, new rights, or consent is required for the code and local test completion. The lease is released; resume from the recorded context when that external boundary is genuinely available.
