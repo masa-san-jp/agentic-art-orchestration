@@ -3282,12 +3282,13 @@ def project_plan_automatic(
     state_root: Path,
     projection_id: str | None = None,
     fail_after: int | None = None,
+    child_python: str | None = None,
 ) -> dict[str, object]:
     """Project one canonical PLAN_READY production plan to its configured target."""
     from tools.canonical_plan_projection import project_attested
     if projection_id is not None and projection_id != report.get("run_id"):
         raise _prepare_error("AUTHORITY_INVALID", "projection_id", "projection ID must match the canonical source run")
-    return project_attested(report, internal_output_root=internal_output_root, public_projection_root=public_projection_root, state_root=state_root, fail_after=fail_after)
+    return project_attested(report, internal_output_root=internal_output_root, public_projection_root=public_projection_root, state_root=state_root, fail_after=fail_after, child_python=child_python)
 
 
 def project_batch_automatic(
@@ -3298,12 +3299,13 @@ def project_batch_automatic(
     state_root: Path,
     projection_id: str | None = None,
     fail_after: int | None = None,
+    child_python: str | None = None,
 ) -> dict[str, object]:
     """Project every plan in one canonical PASSED batch as one transaction."""
     from tools.canonical_plan_projection import project_attested
     if projection_id is not None and projection_id != summary.get("run_id"):
         raise _prepare_error("AUTHORITY_INVALID", "projection_id", "projection ID must match the canonical batch")
-    return project_attested(summary, internal_output_root=internal_output_root, public_projection_root=public_projection_root, state_root=state_root, batch=True, fail_after=fail_after)
+    return project_attested(summary, internal_output_root=internal_output_root, public_projection_root=public_projection_root, state_root=state_root, batch=True, fail_after=fail_after, child_python=child_python)
 
 
 def _load_document(path: Path) -> object:

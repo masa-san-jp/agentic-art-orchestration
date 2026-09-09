@@ -1,5 +1,6 @@
 """Projection transaction regression tests; owner-boundary stubs are not live proof."""
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -25,6 +26,53 @@ class CanonicalPlanProjectionTests(unittest.TestCase):
 
     def project(self, **kwargs):
         return p.project_plan_automatic(self.report,internal_output_root=self.root/'internal',public_projection_root=self.target,state_root=self.root/'state',**kwargs)
+
+    def test_owner_validator_uses_selected_child_interpreter(self):
+        """A pinned child checkout may have no repo-local .venv."""
+        with tempfile.TemporaryDirectory(prefix="owner-python-") as temporary:
+            root = Path(temporary).resolve()
+            code = root / "production-code"
+            code.mkdir()
+            internal = root / "internal"
+            project = internal / "production" / "demo"
+            plan = project / "03_plan" / "production-plan.md"
+            plan.parent.mkdir(parents=True)
+            body = b"# Demo plan\n"
+            plan.write_bytes(body)
+            commit = "a" * 40
+            attestation = {
+                "project_id": "demo",
+                "plan_id": "PL001",
+                "plan_revision": 1,
+                "producer": {"commit": commit, "repository": "masa-san-jp/agentic-art-production"},
+                "human_plan": {"sha256": "sha256:" + hashlib.sha256(body).hexdigest()},
+                "assets": [],
+            }
+            attestation_path = plan.with_name("public-plan-attestation.json")
+            attestation_path.write_text(json.dumps(attestation), encoding="utf-8")
+            item = {
+                "plan": str(plan),
+                "production_code_root": str(code),
+                "production_source_commit": commit,
+                "production_plan_markdown_sha256": hashlib.sha256(body).hexdigest(),
+                "public_plan_attestation": str(attestation_path),
+                "public_plan_attestation_sha256": hashlib.sha256(attestation_path.read_bytes()).hexdigest(),
+                "source_identity": "demo#PL001",
+                "plan_revision": 1,
+            }
+            with patch("tools.canonical_plan_projection.subprocess.check_output", side_effect=[commit + "\n", ""]), \
+                    patch("tools.canonical_plan_projection.subprocess.run") as run:
+                run.return_value = subprocess.CompletedProcess(
+                    ["selected-python"], 0,
+                    stdout=json.dumps({"status": "VERIFIED", "production_state": "PLANNING"}),
+                    stderr="",
+                )
+                result = _owner_bundle(item, internal, child_python="selected-python")
+
+        self.assertEqual("demo#PL001", result["identity"])
+        command = run.call_args.args[0]
+        self.assertEqual("selected-python", command[0])
+        self.assertEqual("tools/public_plan_attestation.py", command[1])
 
     def next_run(self, suffix):
         self.report['run_id']='RUN-REVISION-'+suffix
