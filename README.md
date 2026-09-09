@@ -89,12 +89,12 @@ Source updated at: `2026-09-08T22:28:00+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 0 | 1 | 0 | 156 | 162 |
+| 0 | 0 | 0 | 0 | 155 | 155 |
 
-Current task: `DELIVERY-02`; repository: `agentic-art-production`; checkpoint: `PRODUCTION-STARTUP-RECOVERY-001`.
-Next action: Implement Issue 217 delivery contracts, then owner 69 and 18, completion integration and real-agent acceptance.
+Current task: `null`; repository: `null`; checkpoint: `PRODUCTION-STARTUP-RECOVERY-001`.
+Next action: No pending AAK implementation; retain explicit public-projection, physical-work and real-person migration gates.
 Ready: none.
-Next task: `DELIVERY-03`.
+Next task: `null`.
 Blocked:
 - none
 
@@ -146,3 +146,11 @@ python3 -m venv .venv
 - repo関係図：[`docs/repository-map.md`](docs/repository-map.md)
 
 READMEは入口です。実装の正本、子repoのschema、個別taskの完了条件は、上記の正本文書と各repoのIssue・AGENTS・テストに従います。
+
+## Requested delivery completion (Issue 217)
+
+For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --state-root <external-state> --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}` and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+
+Continue the returned agent actions through Production plan generation, native review/attestation, canonical projection, native Project lineage initialization and local receiver validation. Reuse existing native approvals; missing approvals return the prepared target and precise remaining review decisions. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
+
+`PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
