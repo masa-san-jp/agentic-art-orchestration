@@ -653,6 +653,11 @@ def main() -> int:
         context = read(args.cycle_context)
         if context['run_id'] != args.run_id or args.state_root is None:
             raise ValueError('worker/cycle run binding and explicit state root required')
+        if args.project_root is not None:
+            selected = str(args.project_root.expanduser().resolve())
+            if context.get('project_root') is not None and str(Path(context['project_root']).expanduser().resolve()) != selected:
+                raise ValueError('PROJECT_ROOT_DESTINATION_CONFLICT')
+            context['project_root'] = selected
         report = advance(context, args.state_root)
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report['run_status'] == 'COMPLETED' else 1

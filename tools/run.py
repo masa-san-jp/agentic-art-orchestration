@@ -1081,12 +1081,15 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.cycle_context is not None:
-            if args.project_root is not None:
-                raise StepFailure("--project-root cannot be combined with --cycle-context; put the v2 resolution in the context")
             if args.state_root is None:
                 raise StepFailure("--cycle-context requires --state-root")
             from tools.knowledge_cycle_run import advance, read
             context = read(args.cycle_context)
+            if args.project_root is not None:
+                selected = str(args.project_root.expanduser().resolve())
+                if context.get("project_root") is not None and str(Path(context["project_root"]).expanduser().resolve()) != selected:
+                    raise StepFailure("PROJECT_ROOT_DESTINATION_CONFLICT")
+                context["project_root"] = selected
             if args.delivery_target:
                 requested = {'contract_version':'delivery-contract/v1', 'target':args.delivery_target}
                 if context.get('delivery_contract', requested) != requested:

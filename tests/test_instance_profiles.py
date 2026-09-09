@@ -204,6 +204,39 @@ class InstanceProfileTests(unittest.TestCase):
         self.assertNotIn("public_projection_root", adapted["destinations"])
         self.assertIn("public_projection_root", destinations["destinations"])
 
+    def test_repo_local_v2_destination_adapter_and_bootstrap_keep_state_inside_project(self):
+        """The v2 checkout boundary must reach instance bootstrap, not stop at run.py."""
+        source_project = Path("/private/tmp/aa217-project")
+        if not (source_project / ".git").exists() or not (source_project / "public-project.yaml").is_file():
+            self.skipTest("qualified Project checkout is unavailable")
+        project = self.root / "project"
+        subprocess.run(["git", "clone", "-q", str(source_project), str(project)], check=True)
+        profile = copy.deepcopy(self.profile)
+        profile["delivery_mode"] = "public-catalog"
+        profile["permissions"]["public_projection"] = True
+        config = copy.deepcopy(self.config)
+        state = project / ".agentic-art" / "state"
+        config["output_destinations"] = {
+            "contract_version": "output-destinations/v2",
+            "mode": "repo-local-project",
+            "project_root": str(project),
+            "destinations": {
+                "state_root": ".agentic-art/state",
+                "internal_output_root": ".agentic-art/internal",
+                "staging_root": ".agentic-art/staging",
+                "public_projection_root": ".",
+            },
+        }
+        project_sha = git(project, "rev-parse", "HEAD")
+        profile["repositories"]["agentic-art-project"]["code_commit"] = project_sha
+        config["code_sources"]["example/agentic-art-project"]["path"] = str(project)
+        config["code_sources"]["example/agentic-art-project"]["qualified_commits"] = [project_sha]
+        adapted = adapt_output_destinations(profile, config["output_destinations"])
+        self.assertEqual("output-destinations/v2", adapted["contract_version"])
+        result = bootstrap(profile, config, state, run_id="V2TEST")
+        self.assertEqual("destination-resolution/v2", result["destination_resolution"]["contract_version"])
+        self.assertEqual(str(state.resolve()), result["destination_resolution"]["destinations"]["state_root"]["path"])
+
     def test_dependency_190_registry_rejects_extra_authority(self):
         from tools.validate import load_yaml, REPOSITORY_RELATIONSHIPS_PATH
         self.assertEqual([], validate_repository_relationships_contract())
