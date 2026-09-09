@@ -1,83 +1,85 @@
 # Agentic Art Orchestration
 
-自動公開投影は `canonical-plan-projection/v2` を使います。run/batchが記録した
-Production code pin、stable identity/revision、本文とattestationのlocator/hashを
-pin済みowner CLIで検証し、本文・attestation・許諾済み画像を無変換で投影します。
-公開reviewが無い場合は内部プランを保持して `BLOCKED_POLICY` を返します。
-requestは内部出力の `public-projection/<run-id>/canonical-request.json`、resultは
-stateの `<run-id>/public-projection-result.json` に保存します。metadata/indexの
-`assets` はowner manifestをJSON文字列として保持し、flat YAML受信契約と整合します。
-詳細・検証・再開は [Issue193 execution](docs/issue-193-execution.md) を参照してください。
+`agentic-art-orchestration` は、Agentic Art の制作を進めるための制御面（control plane）です。テーマや条件を受け取り、入力知識・調査・制作をつなぎ、制作プランを出力します。
 
-## AAK：自律制作と累積知識の追加系列
+ここは作品を展示するカタログではありません。公開されたプランや作品を読む場合は [`agentic-art-project`](https://github.com/masa-san-jp/agentic-art-project) を開いてください。
 
-今回の追加要件は[仕様SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)のprinciples/authority/compatibility、実装順・検証・再開は[実装計画SSOT](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)を読む。Issue参照版は `b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d`。既存機能全体の仕様を置き換えない。
+## 30秒で分かるこのrepo
 
-芸術の契機を「精霊や風が運び、人間が受け取って具象化する」と捉えるプロジェクトの精神を維持する。外部エージェントが既存の半決定論的ハーネスを動かす。LLM/daemonの内蔵を必須にしない。
+このrepoが担当するのは、次の流れです。
 
-次taskは[queue](execution/task-queue.yaml)と[state](execution/state.yaml)、`.venv/bin/python tools/project_status.py --format json`から確認する。AAK-01 → AAK-03 → AAK-04以降は計画DAGの依存を満たす最小ID、AAK-02は最後。既存Issueの前提はownerのcandidate commit・contract version・受入証拠を確認し、CLOSEDだけで通過させない。
+```text
+テーマ・条件
+    ↓
+入力知識・鑑賞者の反応を読む
+    ↓
+Researchで調査・仮説・制作要件を整理
+    ↓
+Productionで実際に作れる制作プランへまとめる
+    ↓
+公開可能性を確認
+    ↓
+agentic-art-projectへ公開用レコードをexport
+```
 
-機械契約 `config/aak-task-projection.json` とqueue参照は2つのMarkdownからの実行用投影であり、第三の仕様ではない。初回は `.venv/bin/python tools/issue_intake.py --register-aak` で冪等登録する。validatorは投影・参照hash・owner・DAGを照合する。子のschema/本文を親へ複製しない。merge/release/公開/実n=1移設のhuman gateを維持する。
-
+一つの案だけを出すのではなく、複数の制作プランを比較し、完了するまで自律的に次の処理へ進めることが、このハーネスの目的です。LLMやdaemonをこのrepoへ内蔵するのではなく、外部の実行エージェントが既存のハーネスを動かします。
 
 ## 目的
 
 **エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。**
 
-（2026-08-25 マサさんの言葉のまま。要約・言い換えをしない。）
+芸術の契機を「精霊や風が運び、人間が受け取って具象化する」と捉えます。AIを使うこと自体ではなく、コンセプトとメッセージを持つアートを制作することが目的です。
 
 ## 要件
 
-制作プランに、人間が実際にどうやって製作するのかが書かれていること。読んで手を動かせないプランは、この要件を満たしていない。
+- 制作プランを読んだ人が、実際にどう作るか分かること。
+- プランの冒頭で、アートコンセプト、メッセージ、表現手法、調査の要点が分かること。
+- 一つだけでなく、複数の制作プランを生成できること。
+- 人間の判断が必要になるまで、エージェントが自分で次の処理を続けられること。
+- 技術がなくても作品が成立するかを問い、AIを主役にしないこと。
 
-制作プランの冒頭に、アートコンセプト、メッセージ、表現手法、どんな調査を行なったかのサマリーが書かれていること。
+基盤、契約、品質ゲートはすべてこの目的のための手段です。状態やファイル数が増えただけでは、制作プランを出力できたことにはなりません。
 
-他の制作プランも作れること。1本出せることは、この要件を満たしたことにならない。
+## 利用者向けの入口
 
-**エージェントが自律的に動くこと。** 意図を受け取ったら、完了するか、人にしか決められないことに当たるまで、自分で次を呼び続ける。止まったら自分で原因を見て、直せるものは直して、再開する。誰かがコマンドを打ちに来るのを待たない。
+| したいこと | 最初に読む場所 |
+|---|---|
+| 制作の全体像を知る | [`docs/repository-map.md`](docs/repository-map.md) |
+| テーマ未指定で制作計画を始める | [`docs/agent-runtime-guide.md`](docs/agent-runtime-guide.md) |
+| テーマを指定して調査を始める | [`docs/input-pipeline-runbook.md`](docs/input-pipeline-runbook.md) |
+| 実行を再開する | [`AGENTS.md`](AGENTS.md)、[`execution/state.yaml`](execution/state.yaml) |
+| 公開された成果を見る | [`agentic-art-project`](https://github.com/masa-san-jp/agentic-art-project) |
 
-作品の側の要件（この仕組みが保証するのは「判定を持ち、満たさないものを止められること」までである）:
+利用者は通常、8つのrepoを手で順番に操作しません。目的に合う入口からこのrepoを起動し、必要なrepoを固定された参照として読みます。
 
-> 「作品」じゃなくて「アート」を出さないといけない。ようはコンセプチュアルでメッセージ性が無いとダメなんだ
-> 大事なのは「AI」の部分じゃなく「アート」の部分
-> その技術を外したとき、作品は「地味になる」のか「成立しなくなる」のか
+## 8つのrepoの役割
 
-以下に書かれている基盤・契約・ゲートは、すべてこの目的のための手段である。手段の完成を目的と読み替えない。
+| repo | 役割 |
+|---|---|
+| [`self-model-notes`](https://github.com/masa-san-jp/self-model-notes) | 自己モデルの入力知識 |
+| [`art-history-notes`](https://github.com/masa-san-jp/art-history-notes) | 美術史の入力知識 |
+| [`marketing-trends-notes`](https://github.com/masa-san-jp/marketing-trends-notes) | 市場・トレンドの入力知識 |
+| [`viewer-response-notes`](https://github.com/masa-san-jp/viewer-response-notes) | 鑑賞者反応の集計と評価 |
+| [`agentic-art-research`](https://github.com/masa-san-jp/agentic-art-research) | 調査、仮説、要件、判断 |
+| [`agentic-art-production`](https://github.com/masa-san-jp/agentic-art-production) | 制作実行、結果、制作プラン |
+| [`agentic-art-orchestration`](https://github.com/masa-san-jp/agentic-art-orchestration) | 全体の制御、実行状態、横断契約 |
+| [`agentic-art-project`](https://github.com/masa-san-jp/agentic-art-project) | 公開プラン、作品、制作記録のカタログ |
 
-Self Model × Art History × Marketing Trends → Agentic Art Research → Agentic Art Production を、独立したリポジトリの正本性を壊さず横断利用し、会話から継続改善するためのメタ・リポジトリ。
+各repoのデータ、schema、Issue、検証器は各repoが所有します。このrepoは子repoの内部データをコピーして一つにまとめません。
 
-自律制作と次回への知識再利用は [knowledge cycle runtime](docs/knowledge-cycle-runtime.md) の `tools/run.py --cycle-context` 入口を使う。外部エージェントが `next_action` と正確な `resume_command` を処理し、plan・knowledge・projectionを独立に検証する。
+## 重要な境界
 
-## 利用者向けの最短ルート
+- 内部ログ、会話全文、prompt、handoff、credential、PRIVATE_RAW、RESTRICTEDをGitへ保存しません。
+- ResearchとProductionの正本をこのrepoへ複製せず、source commit、hash、locatorなど必要な参照だけを保持します。
+- Projectへの公開projectionはexport-onlyです。Projectから入力知識や実行状態を書き戻しません。
+- 物理制作、展示、公開、merge、release、同意や権利範囲の変更は、人間のgateを越えて自動実行しません。
+- 公開reviewがない成果は、成功したことにせずBLOCKEDとして扱います。
 
-このrepoは各ドメインのデータを一つへコピーする場所ではなく、会話から安全に調査・制作計画へ進むためのcontrol planeです。目的に応じて次の入口を使います。
+## 公開projection
 
-| したいこと | 入口 |
-| --- | --- |
-| 利用可能なrepoと固定pinを確認する | [`config/repositories.yaml`](config/repositories.yaml)、[`tools/workspace.py`](tools/workspace.py) |
-| テーマ未指定で制作計画を始める | [`docs/agent-runtime-guide.md`](docs/agent-runtime-guide.md)、[`tools/run.py`](tools/run.py) |
-| 新しいテーマを指定して調査する | [`docs/agent-ui-runbook.md`](docs/agent-ui-runbook.md)、[`docs/input-pipeline-runbook.md`](docs/input-pipeline-runbook.md) |
-| 制作計画へ引き渡す | [`docs/interaction-improvement-runbook.md`](docs/interaction-improvement-runbook.md)、`agentic-art-research` / `agentic-art-production` |
-| 8リポジトリの関係と使い分けを確認する | [`docs/repository-map.md`](docs/repository-map.md) |
-| viewer反応を保守的に扱う | `viewer-response-notes` の集計・assessment contract |
-| エージェントとして再開する | [`AGENTS.md`](AGENTS.md)、[`execution/state.yaml`](execution/state.yaml)、[`execution/task-queue.yaml`](execution/task-queue.yaml) |
-
-実際の会話全文、PRIVATE_RAW、RESTRICTED、credential、Drive artifact本文は親Gitへ保存しません。各repoの正本とsource commitを固定し、外部artifactはopaque参照だけで追跡します。
+Productionで検証された正規の制作プランだけを、本文を変換せず `agentic-art-project` へ投影します。公開の受入条件、attestation、移行、rollbackの詳細は [`docs/issue-193-execution.md`](docs/issue-193-execution.md) と [`docs/operator-runbook.md`](docs/operator-runbook.md) を参照してください。
 
 ## 現在地
-
-- システム設計: [設計仕様書](docs/20260811-agentic-art-orchestration-system-design-specification.md)
-- 構想・要求の起点: [先行リポジトリ設計仕様書](docs/20260811-agentic-art-orchestration-repository-design-specification.md)
-- 完成実行計画: [実行計画](docs/20260811-agentic-art-orchestration-repository-execution-plan.md)
-- エージェント規則: [AGENTS.md](AGENTS.md)
-- 運用runbook: [operator-runbook.md](docs/operator-runbook.md)
-- 障害・復旧runbook: [incident-runbook.md](docs/incident-runbook.md)
-- v1.1 interaction/improvement runbook: [interaction-improvement-runbook.md](docs/interaction-improvement-runbook.md)
-- 初期Codex / Claude Code UI: [agent-ui-runbook.md](docs/agent-ui-runbook.md)
-- 入力KB→Research開始 / pin採用: [input-pipeline-runbook.md](docs/input-pipeline-runbook.md)
-- 8リポジトリの関係と利用方法: [repository-map.md](docs/repository-map.md)
-- 機械可読タスクキュー: [task-queue.yaml](execution/task-queue.yaml)
-- 統合対象の正本: [repositories.yaml](config/repositories.yaml)
 
 <!-- project-status:start -->
 ## Project status
@@ -99,363 +101,56 @@ Blocked:
 Generated by `python3 tools/project_status.py --update-readme`.
 <!-- project-status:end -->
 
-初期ブートストラップからM10のv1.2.0 qualification、M11のProduction追加、v1.2.1 five-repository baseline、v1.3.0 Production exchangeのqualification/releaseまでを完了した。v1.4.0ではCodex/Claude Code向けstartup、retrieval、Drive/Issueのcreate-only境界、interaction E2E、offline aggregate、専用GitHub sandbox evidence、検証済みmanifest-pinned workspaceによる3-run総合qualification、human gateを経たreleaseまで完了している。v1.0は、4つのcore repoと追加repoを再現可能に展開し、互換性・鮮度・依存関係・品質ゲート・出典commitを検査するcontrol-plane基盤である。
+進行状況はqueueとstateから生成されます。README本文へ手で状態を書き写さず、[`tools/project_status.py`](tools/project_status.py)で更新・確認してください。
 
-親Issue #2と`agentic-art-research` Issue #2の半決定論的な制作研究実行は、v1.1のrelease acceptanceから切り離し、v1.2で実装・qualification済みである。v1.2はrule engine、再現可能なcandidate生成、seeded selection、specificity/genericness gate、provenance、固定commit child quality gateを含む。qualificationはread-onlyで実施し、merge・tag・GitHub Releaseはhuman gateを経て公開済みである。
+## 実行を始める
 
-v1.1では、利用エージェントを人間の会話型ユーザーインターフェースとし、追加可能なrepository-aware retrieval、Google Driveへの追記型成果物保存、明示・推定feedbackのIssue化、自律的なissue-to-draft-PR改善、ユーザー応答と分離した非同期監査を追加した。既存4repoはcore setとして維持し、`agentic-art-production`を追加runtimeとしてmanifestへappendした。追加repoにも同一repo Issue SSOT、明示的な境界契約、snapshot、個別品質ゲートを要求する。
+Fresh cloneで、まず次を実行します。
 
-進捗は`execution/task-queue.yaml`と`execution/state.yaml`から [project status](tools/project_status.py) として生成する。初期UIは、初期改善をIssue作成で止め、Issue後の実装・PR・merge・releaseを自動開始しない。
-
-~~~text
-User <-> Codex / Claude Code -> Child Knowledge Repositories
-                    |          -> Append-only Google Drive Artifacts
-                    +--------- -> Feedback -> create-only GitHub Issue
-
-Startup update check + audit -> findings / Issue candidate
-~~~
-
-## 統合対象
-
-- [self-model-notes](https://github.com/masa-san-jp/self-model-notes) — Self Model入力KB
-- [art-history-notes](https://github.com/masa-san-jp/art-history-notes) — 芸術史入力KB
-- [marketing-trends-notes](https://github.com/masa-san-jp/marketing-trends-notes) — マーケティング変化入力KB
-- [agentic-art-research](https://github.com/masa-san-jp/agentic-art-research) — 制作リサーチ実行・成果物repo
-- [agentic-art-production](https://github.com/masa-san-jp/agentic-art-production) — 制作引き渡し受領、制作実行、結果還流repo（要件SSOT: Issue #10）
-- [viewer-response-notes](https://github.com/masa-san-jp/viewer-response-notes) — 集計viewer反応と保守的な制作要件評価の正本
-- [agentic-art-project](https://github.com/masa-san-jp/agentic-art-project) — 検証済みの公開プラン、作品、制作記録を収録するexport-onlyカタログ
-
-## 重要な境界
-
-- 子repoのデータ・schema・Issueを親へ複製しない。
-- 子の内部形式を共通化せず、境界で normalized research signals に翻訳する。
-- 親は横断契約、workspace再現、依存DAG、実行状態、監査結果だけを正本として持つ。
-- 子の変更は子repoのbranch/PRで行い、親のcommitへ混ぜない。
-- repos/ はローカル生成物でありGit管理しない。
-- 会話全文とDrive成果物本文を親Gitへ保存せず、opaque参照・hash・source commitだけを保持する。
-- Drive成果物は上書き・削除せず、修正版を新規作成してderived_from/supersedesで結ぶ。
-- 推定された不満や欲求はfeedback仮説であり、明示要求やユーザー属性として扱わない。
-- 改善・監査は会話応答と非同期に進め、merge・release・公開・同意拡張は人間gateを維持する。
-- 起動時は全manifest repoのremote headをread-only確認し、最後のqualified pinと差分を区別する。自動checkout、pin更新、子repo変更は行わない。
-- 初期UIは既定でoffline planを実行し、外部CREATEはstartupがREADYで明示確認された単一laneに限定する。DriveとIssueのlive CREATEを同時に実行しない。
-
-## エージェントの開始手順
-
-1. AGENTS.mdを読む。
-2. システム設計と実行計画を全文読む。
-3. task-queue.yamlから、依存がDONEの最小IDのREADYタスクを選ぶ。
-4. 受入条件と検証コマンドを満たすまで実装する。
-5. queue、state、handoff、実行計画を更新する。
-6. 定義済み停止条件以外では、人間へ次工程を質問せず次のREADYタスクへ進む。
-
-## ブートストラップ検証
-
-Fresh cloneに必要なのはGitと`python3`だけです。依存関係はシステムPythonへ入れず、repo内の`.venv`へ入れます。実repoの子repo操作には`gh auth login`済みのGitHub認証が必要です。認証がない環境では、実repo操作をせず`--offline-fixture`付きのnetworkless経路を使ってください。
-
-macOSなどで一時ディレクトリの親がシンボリックリンクの場合は、検証前に実パスを選択します。
-これは合成fixtureの配置先だけを変え、profile・knowledge storeのsymlink拒否は維持します。
-
-~~~bash
-export TMPDIR="$(python3 -c 'from pathlib import Path; import tempfile; print(Path(tempfile.gettempdir()).resolve())')"
-~~~
-
-~~~bash
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python tools/validate.py --check
 .venv/bin/python -m unittest discover -s tests -v
-~~~
+```
 
-この4行が親repoの正準bootstrapです。AGENTS.mdと[operator runbook](docs/operator-runbook.md)からもこの手順を参照します。
+実repoを使わない環境では、次のoffline fixture経路を使ってください。システムPythonへ依存関係をインストールしません。
 
-## 関連repositoryのworkspace bootstrap
+```bash
+.venv/bin/python tools/workspace.py init --offline-fixture --fixture-root <fixture-root>
+.venv/bin/python tools/interaction_e2e.py --check
+```
 
-manifestに記載された全repositoryを、作業agentが一回のCLI呼出しで安全に展開する正準入口は
-`tools/workspace.py bootstrap`です。通常は親repoの外側に専用の絶対workspaceを指定します。
-manifestの`repositories`が対象集合なので、repo名や件数をコマンドへ複製しません。
+詳細なworkspace bootstrap、公開projection、interaction E2Eは、それぞれのrunbookを正本とします。
 
-実repoを使う場合は、credential本文をコマンド、URL、ログ、resultへ書かず、GitHubのambient
-credential helperだけを使います。認証状態を確認してから、対話promptを許可しないbootstrapを実行します。
+通常のエージェント実行は、次の順で行います。
 
-~~~bash
-gh auth status --hostname github.com
-gh auth setup-git
-WORKSPACE_ROOT="/absolute/path/outside/agentic-art-orchestration"
-.venv/bin/python tools/workspace.py bootstrap \
-  --workspace-root "$WORKSPACE_ROOT" --json
-~~~
+1. [`AGENTS.md`](AGENTS.md)と入口のrunbookを読む。
+2. `execution/task-queue.yaml`から依存関係を満たすtaskを選ぶ。
+3. `tools/run.py`またはtaskが指定する入口を実行する。
+4. 検証、handoff、stateを更新し、再開可能な状態を残す。
 
-`bootstrap`は最初にmanifest、path、既存checkout、全missing remoteをread-onlyで検査し、missing
-checkoutはmarker付きのtool-owned temporary siblingへcloneしてから、origin、default branch、
-upstream、local `orchestration.repo-id`、clean stateを検証します。全件PASS後だけ同一filesystemの
-renameで配置します。既存checkoutのfetch、pull、checkout、reset、rebase、merge、clean、pin更新は
-行いません。途中失敗・配置競合ではこのrunが作ったstagingだけを扱い、既存pathへpartial cloneを残しません。
+テーマ未指定で制作計画を始める場合も、`--intent`、`--slug`、`--title`を付けずにこの入口を実行します。入力済みのknowledge signalからテーマを自動提案し、必要な検査に失敗した場合はBLOCKEDで停止します。
 
-`--json`のresultはclosedな`workspace-bootstrap/v1`です。終了codeと次の扱いは次の通りです。
+## 詳細文書
 
-| status | exit | agentの扱い |
-| --- | ---: | --- |
-| `READY` | 0 | 全entryが`cloned`または`reused`、guard PASS、pin MATCHED。通常の次工程へ進む |
-| `BLOCKED_PIN_DRIFT` | 2 | 既存checkoutは変更しない。制作runはcleanな不足・pin driftだけを検査してGit外の専用pin workspaceを自動展開し、dirty等は停止する。直接bootstrapを再実行する場合は`tools/pin_adopt.py --dry-run`、資格済みpinの手動展開は`tools/pinned_workspace.py`を使う |
-| `BLOCKED_EXISTING_WORKSPACE` | 2 | dirty/untracked/detached/remote/upstream/ahead/behind/diverged等を人間が解消し、再実行する。新規cloneなし |
-| `BLOCKED_REMOTE_ACCESS` | 2 | credential/network/remoteを人間が解消し、再実行する。workspaceへ部分配置しない |
-| `BLOCKED_RACE` | 2 | lockまたはstagingの所有状態を確認し、同時実行完了後に再実行する。lock/stagingを盲目的に削除しない |
-| `FAILED` | 1 | `CLONE_FAILED`などのsanitized findingとremediationを読み、tool-owned stagingだけを対象に再試行する。既存pathを削除・修復しない |
+- 自律制作・累積知識の仕様：[`docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md`](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)
+- 自律制作・累積知識の実装計画：[`docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md`](docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)
+- システムの設計：[`docs/20260811-agentic-art-orchestration-system-design-specification.md`](docs/20260811-agentic-art-orchestration-system-design-specification.md)
+- 実装計画：[`docs/20260811-agentic-art-orchestration-repository-execution-plan.md`](docs/20260811-agentic-art-orchestration-repository-execution-plan.md)
+- 実行手順：[`docs/operator-runbook.md`](docs/operator-runbook.md)
+- 障害・復旧：[`docs/incident-runbook.md`](docs/incident-runbook.md)
+- interaction改善：[`docs/interaction-improvement-runbook.md`](docs/interaction-improvement-runbook.md)
+- 自律制作の実行入口：[`docs/agent-runtime-guide.md`](docs/agent-runtime-guide.md)
+- repo間の契約：[`docs/cross-repository-contract.md`](docs/cross-repository-contract.md)
+- repo関係図：[`docs/repository-map.md`](docs/repository-map.md)
 
-`workspace_root`に残った`.agentic-art-bootstrap.lock`やmarker付きstagingは、前回runの中断を示す
-可能性があります。所有者・manifest hash・pathを確認できるまで自動採用・自動削除せず、復旧不能なら
-`BLOCKED_RACE`として止めます。resultはcredential、token、remote応答本文、child repository内容を
-保持しません。pin driftの採用、既存checkoutの修復、Git commit/push/merge/release、公開は別human gateです。
+READMEは入口です。実装の正本、子repoのschema、個別taskの完了条件は、上記の正本文書と各repoのIssue・AGENTS・テストに従います。
 
-networklessで適用経路を証明する場合は、毎回新しいfixture rootを使います。checked-in manifestのpinと
-合成bare remoteのHEADが異なるため、CLIの初回結果は`BLOCKED_PIN_DRIFT`/exit 2になる場合があります。
-これはclone後のpin gateが働いた結果であり、pin採用を意味しません。`READY`、idempotent reuse、
-clone failure、placement race、rollbackの証拠はfocused testで確認できます。
+## Requested delivery completion (Issue 217)
 
-~~~bash
-BOOTSTRAP_ROOT="$(mktemp -d /tmp/agentic-art-bootstrap.XXXXXX)"
-set +e
-.venv/bin/python tools/workspace.py bootstrap \
-  --offline-fixture \
-  --workspace-root "$BOOTSTRAP_ROOT/workspace" \
-  --fixture-root "$BOOTSTRAP_ROOT/fixture" --json
-BOOTSTRAP_EXIT=$?
-set -e
-test "$BOOTSTRAP_EXIT" -eq 2
-.venv/bin/python -m unittest tests.test_workspace_bootstrap tests.test_workspace tests.test_workspace_guards -v
-~~~
+For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --state-root <external-state> --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}` and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
 
-既存の`init`、`fetch`、`status`、`guard`、`snapshot` subcommandは後方互換のため残ります。
-全manifest entryを一括し、全件検証後に配置する必要があるときは`bootstrap`を使い、legacy commandの
-挙動を暗黙に置き換えません。
+Continue the returned agent actions through Production plan generation, native review/attestation, canonical projection, native Project lineage initialization and local receiver validation. Reuse existing native approvals; missing approvals return the prepared target and precise remaining review decisions. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
 
-## Git外の出力先を設定する
-
-実Self Modelを使う制作計画では、`tools/run.py --profile-root <external-self-model-profile>`で
-利用を認められた外部profileの絶対パスを指定します。`tools/ingest_signals.py`も同じ引数を受け取り、
-Self Modelだけへ渡します。未指定時は実export前に`BLOCKED / PROFILE_ROOT_REQUIRED`となります。
-下記の出力先profileとは別の入力です。合成検証の`--offline-fixture`では不要です。
-手順は[テーマ未指定の制作計画](docs/agent-runtime-guide.md#テーマ未指定の制作計画)を参照してください。
-
-新しいagentが会話履歴なしで実行を再開できるよう、実行stateと内部成果物はGit外の
-`output-destinations/v1`プロファイルへ分離します。プロファイルはrepoへ追加せず、
-`config/output-destinations.example.yaml`を外部ディレクトリへコピーして、3つの絶対パスを
-置き換えます。`state_root`と`internal_output_root`は必須です。`public_projection_root`は
-設定した場合に、正規runの`PLAN_READY`およびbatchの`PASSED`で完成制作プランを書き込む
-local public-project worktreeです。未設定のままその終端へ到達したrun/batchは、内部成果物を
-保持したまま`BLOCKED_CONFIGURATION`で終了します。work recordや手動requestの
-`project --apply`は別のhuman gateを必要とし、いずれもremote公開・Git操作までは行いません。
-
-~~~bash
-DESTINATIONS_DIR="$(mktemp -d /tmp/agentic-art-destinations.XXXXXX)"
-DESTINATIONS_FILE="$DESTINATIONS_DIR/profile.yaml"
-cp config/output-destinations.example.yaml "$DESTINATIONS_FILE"
-$EDITOR "$DESTINATIONS_FILE"
-~~~
-
-次の値はrepo外で、互いに重ならない専用ディレクトリにします。
-
-~~~yaml
-destinations:
-  state_root: /tmp/agentic-art-destinations.XXXXXX/state
-  internal_output_root: /tmp/agentic-art-destinations.XXXXXX/internal
-  public_projection_root: /tmp/agentic-art-destinations.XXXXXX/public
-~~~
-
-プロファイルを選択した実行では、直接指定したCLI値がそのroleについて最優先され、
-次に`--destinations-file`、`AGENTIC_ART_DESTINATIONS_FILE`、legacy既定値の順になります。
-環境変数を使う場合は次のようにし、CLIと環境変数を混在させません。
-
-~~~bash
-export AGENTIC_ART_DESTINATIONS_FILE="$DESTINATIONS_FILE"
-~~~
-
-テーマ・slug・titleを指定しないnetworkless dry runは、profileだけで再現できます。
-run-scopedな出力と`$DESTINATIONS_DIR/state/DEST-DOCS-001/destination-resolution.json`が
-外部へcreate-onlyで作られます。
-
-~~~bash
-.venv/bin/python tools/run.py \
-  --offline-fixture --run-id DEST-DOCS-001 \
-  --destinations-file "$DESTINATIONS_FILE"
-~~~
-
-同じrun-idを再実行する場合は同じprofileの同じ内容を使います。resolution evidenceや既存の
-run outputと内容が衝突した場合は、既存ファイルを削除・上書きせず、同じprofileで再開するか
-新しいrun-idを使います。`absolute`、`overlap`、`inside the orchestration repository`、
-`inside a child checkout`、`not empty`などのエラーは入力または出力先の安全境界を示すため、
-エラーメッセージのremediationに従って外部の新しいディレクトリを指定します。
-
-profileを一時的に外すときは`--destinations-file`を外し、環境変数をunsetします。legacy互換
-では`run.py`は従来の`--state-root`、`batch_run.py`は`--output-root`と`--state-root`、
-`autonomous_runner.py`は`--state-root`を明示します。profile由来のresolution evidenceは
-Gitやpublic projectionへコピーせず、state rootのrun単位にだけ保持します。既存の成果物を
-移動・削除してrollbackしないでください。
-
-### 公開projection（自動plan投影 / 手動projection）
-
-`run.py`と`batch_run.py`は、選択したprofileに`public_projection_root`がある場合だけ、正規の
-完了結果から制作プランをlocal public-project worktreeへ投影します。単一runは`PLAN_READY`、
-batchは全件`PASSED`が発火条件です。これは内部出力のrecursive copyではなく、正規report/summary
-から構築された`record_kind: plan`だけを対象にする専用laneです。report/summaryの
-`automatic_plan_authority`（producer、source status/id/hash、destination resolution hash）も完全一致
-しなければ実行しません。実際のGitHub repository、
-Drive、remote visibilityには接続しません。
-
-#### 正規run/batchの自動plan投影
-
-自動経路はレコード単位の`public_share`承認を要求しません。オーケストレーターが検証した
-production planだけを、公開境界・source hash・path safety・target layout/index/markerの
-preflight後に`plans/Pxxxx-<slug>/`へ反映します。各recordには`README.md`、`plan.md`、
-`metadata.yaml`を作り、`plans/index.yaml`とcollection READMEの管理対象markerを更新します。公開targetのルート`README.md`にも同じ`catalog_markers`のペアがある場合は、そこにルートからの`plans/.../README.md`リンク一覧を同じtransactionで更新します。ルートmarkerがない旧targetでは従来どおりcollection READMEだけを更新します。
-plan固有の素材が正規のrequestに含まれる場合だけ、既存のlayout contractで定める`media/`
-配下のallowlist pathを使います（Issueでいう`assets`相当の領域です）。
-
-batchは全planを先にmemory/stagingで検証し、100件以上でもsource hash順のIDとbyte列を決定的に
-した一つのtransactionとして反映します。policy違反、target conflict、dirty worktree、I/Oまたは
-rollback不全では公開targetに部分結果を残さず、state rootの
-`<projection-id>/public-projection-result.json`に`projection_mode: AUTOMATIC_PLAN`と診断を残します。
-不足する`public_projection_root`は`BLOCKED_CONFIGURATION`です。自動経路は`git add`、commit、
-branch操作、push、PR、merge、release、visibility変更を行いません。local投影後のGit操作と
-remoteでの公開確定は人間が別ゲートで行います。
-
-自動経路の再現証拠は、実targetではなく合成temporary Git worktreeで次のテストから確認します。
-
-~~~bash
-.venv/bin/python -m unittest tests.test_public_projection tests.test_run tests.test_batch_run -v
-~~~
-
-手動projectionを行う場合は、同じprofileの`internal_output_root`でcandidateを作り、利用者が
-指定したlocal public-project worktreeへ明示的に投影します。以下はwork recordまたは任意の
-requestを対象とする既存のhuman-gated laneです。
-
-1. PLAN_READYのrunまたはPASSEDのbatchから、唯一のproducerでcandidate requestを作ります。
-   `prepare`は内部candidateと`request.yaml`だけをcreate-onlyで出し、canonical source hashを
-   保持します。clearance evidenceがないdraftのvisibility、rights、consentは`unknown`です。
-
-~~~bash
-.venv/bin/python tools/public_projection.py prepare \
-  --run-report <run.json> --projection-id <stable-id> \
-  --destinations-file "$DESTINATIONS_FILE"
-
-.venv/bin/python tools/public_projection.py prepare \
-  --batch-summary <batch-run.json> --projection-id <stable-id> \
-  --destinations-file "$DESTINATIONS_FILE"
-
-# candidateを人間が確認・更新した後に、source hashを再計算する場合
-.venv/bin/python tools/public_projection.py prepare \
-  --refresh <draft-request.yaml> --destinations-file "$DESTINATIONS_FILE"
-~~~
-
-2. 空の、または互換layoutを持つlocal Git worktreeをtargetとして用意し、scaffoldをdry-runで
-   確認してから不足するlayoutだけを`--apply`します。`init-target --apply`は公開contentを
-   扱わないため`public_share` approval不要ですが、local書込みなので明示指定が必要です。
-
-~~~bash
-.venv/bin/python tools/public_projection.py init-target \
-  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
-.venv/bin/python tools/public_projection.py init-target \
-  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
-~~~
-
-3. requestのbytes、source hash、security、rights、targetのclean/layout/index/markerを検査し、
-   まず`project --dry-run`を実行します。dry-runはapprovalなしで行え、結果は
-   `<state_root>/<projection-id>/public-projection-result.json`へhashとmetadataだけを
-   create-onlyで記録します。`unknown` clearanceは`BLOCKED_POLICY`となり、agentが`cleared`へ
-   昇格させたりapprovalを生成したりしません。
-
-~~~bash
-.venv/bin/python tools/public_projection.py project \
-  --request <public-projection-request.yaml> \
-  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --dry-run
-~~~
-
-4. 利用者がcandidate bytesと公開範囲・権利・同意を確認し、requestのcanonical SHA-256に一致
-   する別ファイルの`public-projection-approval/v1`を作成した場合だけapplyします。approvalは
-   `operation: public_share`、`status: APPROVED`、`authority: HUMAN`、scope
-   `local-public-project-projection`、有効な`approved_at`/`expires_at`を持つ必要があります。
-   agentは`approved_by`を補完せず、hash不一致・期限切れ・欠落を`BLOCKED_HUMAN`として返します。
-
-~~~bash
-.venv/bin/python tools/public_projection.py project \
-  --request <public-projection-request.yaml> \
-  --approval <public-projection-approval.yaml> \
-  --destinations-file "$DESTINATIONS_FILE" --target-root <local-public-worktree> --apply
-~~~
-
-applyが変更できるのは新規record directory、対応する`plans/index.yaml`または`works/index.yaml`、
-collection READMEのcatalog marker内、および自動plan投影で明示的にmarkerを置いたroot READMEのcatalog marker内だけです。既存record、marker外、Git ref、remote、
-branch、commit、push、merge、release、repository visibilityは変更しません。同じsource/contentの
-再実行は`ALREADY_PROJECTED`、既存内容・dirty target・layout/index競合は`BLOCKED_CONFLICT`、
-policy違反は`BLOCKED_POLICY`、途中I/Oまたはrollback不全は`FAILED`です。失敗時はtransactionが
-作ったpathだけを復元し、既存データを削除・resetしません。apply後のGit commitや公開は人間が
-別ゲートで判断します。
-
-合成temporary Git worktreeだけを使う再現証拠は次で確認できます。実target、Drive、GitHubへは
-書き込みません。
-
-~~~bash
-.venv/bin/python -m unittest tests.test_public_projection tests.test_security_boundary -v
-~~~
-
-full suiteは、実行時に参照する`data/snapshot.json`や`data/audit.json`などのnetworkless生成物を必要とします。fresh cloneからfull suiteまで確認する場合は、共有tempに残った古いoffline remoteを再利用しないよう、一時fixture rootを作り、次を上から実行してください。実repo・GitHub・Driveへの操作は発生しません。
-
-通常のauditは`data/runs/<run-id>/signals/portfolio.json`を対象にし、引数なしではrun IDを決定的に並べた最新runを選びます。再現対象を固定する場合は`tools/audit.py --portfolio-root <signals-directory>`を使います。`tests/fixtures`を読むのは`--offline-fixture`を明示したnetworkless検証だけです。
-
-制作まで進めたrunは、実行stateの`<state-root>/production/production/<slug>/`を同じプロジェクトの永続的な出力先として使います。`<state-root>/<run-id>/`にはそのrunの記録を残し、`production-history.jsonl`にはrun-idとproject-idのメタデータ対応だけを追記します。別run-idで同じプロジェクトを再開する場合は同じ`--slug`を渡してください。生成物と履歴はGit外に置き、過去の制作台帳・品質・結果を新しいrunの空ディレクトリで隠さないようにします。
-
-~~~bash
-FIXTURE_ROOT="$(mktemp -d /tmp/agentic-art-orchestration-offline.XXXXXX)"
-.venv/bin/python tools/workspace.py init --offline-fixture --fixture-root "$FIXTURE_ROOT"
-.venv/bin/python tools/workspace.py snapshot --fixture-root "$FIXTURE_ROOT"
-.venv/bin/python tools/status.py --offline-fixture
-.venv/bin/python tools/audit.py --offline-fixture
-.venv/bin/python tools/startup.py --offline-fixture --fixture-root "$FIXTURE_ROOT"
-.venv/bin/python tools/startup.py --offline-fixture --fixture-root "$FIXTURE_ROOT" --check
-.venv/bin/python tools/retrieval.py
-.venv/bin/python tools/issue_router.py
-.venv/bin/python tools/github_issue_adapter.py --fixture
-.venv/bin/python tools/github_issue_adapter.py --fixture --check
-.venv/bin/python tools/drive_live_check.py --plan
-.venv/bin/python tools/drive_live_check.py --plan --check
-.venv/bin/python tools/improvement_loop.py
-.venv/bin/python tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml
-.venv/bin/python tools/interaction_e2e.py
-.venv/bin/python tools/security.py --offline-fixture
-.venv/bin/python tools/validate.py --check
-.venv/bin/python -m unittest discover -s tests -v
-~~~
-
-## 構造
-
-~~~text
-config/       リポジトリ一覧、横断ポリシー、品質ゲート
-schemas/      manifest・signal・work item・retrieval・interaction・artifact・feedback・routing・improvement・agent UI・E2E・async auditの契約
-docs/         設計、実行計画、横断契約、実行ガイド
-execution/    task queue、状態、判断、引継ぎ
-tools/        workspace、検証、status、audit、retrieval、agent UI、issue router、improvement、interaction E2E、async auditor、dispatcher、public projection
-tests/        offline fixtureと障害試験
-data/         生成されたstatus・audit・retrieval-result・feedback-routing・improvement-loop・interaction-e2e・async-audit・trace。手編集禁止
-repos/        ローカルの子repo展開先。Git管理外
-~~~
-
-## 累積知識の共通境界
-
-AAK-SPEC/v1の交換契約は `artifact-record/v1`、`knowledge-write-receipt/v1`、`reuse-trace/v1` である。`config/knowledge-owners.yaml` が8 ownerの能力registry、`tools/knowledge_cycle.py` がowner-localのprepare/validate/commit/index/retrieve境界を提供する。Projectは公開投影のwrite ownerにせず、read-only catalog referenceを別能力として保持する。code commitとknowledge commitは別snapshotとして記録し、子ownerのpayload本文を親へ複製しない。
-# 利用者別 instance profile
-
-`instance-profile/v1` は本人継続、new clone、forkを明示的に分離し、全8 ownerのcode refとknowledge refを別々に固定します。個人設定や絶対pathを共有Gitへ保存せず、外部local mappingからknowledge storeを解決します。未設定時にMasaや現在ディレクトリへfallbackしません。`public-seed-only` は制作開始に使えますが、本人固有性は未充足として記録されます。既存の `output-destinations/v1` は互換adapterを通して維持されます。
-
-初回setupと再開の正準入口は次です。設定形式・更新方法は
-[instance setup](docs/instance-setup.md)を参照してください。
-
-~~~bash
-.venv/bin/python tools/workspace.py bootstrap \
-  --instance-profile /absolute/external/instance.yaml \
-  --local-config /absolute/external/local.yaml \
-  --state-root /absolute/external/state --run-id first
-~~~
-
-`--dry-run` は設定・保存先・資格済みcode pinを検査し、知識の初期化や移設を行いません。
-同じrun IDは保存済みsnapshotを再利用します。code更新は新run IDで隔離checkoutへ
-反映し、knowledgeの更新とは独立に記録します。既存worktreeをresetしません。
+`PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
