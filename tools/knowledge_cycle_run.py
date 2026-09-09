@@ -101,7 +101,8 @@ def advance(context, state_root):
     """One bounded checkpoint. The external agent consumes returned next_action."""
     required = {'contract_version', 'run_id', 'instance_profile', 'local_config', 'clock',
                 'production_project_root', 'query_inputs', 'write_inputs'}
-    if not isinstance(context, dict) or set(context) - (required | {'owner_options', 'delivery_contract'}) or not required <= set(context) or context['contract_version'] != 'knowledge-cycle-context/v1':
+    optional = {'owner_options', 'delivery_contract', 'project_root', 'project_id'}
+    if not isinstance(context, dict) or set(context) - (required | optional) or not required <= set(context) or context['contract_version'] != 'knowledge-cycle-context/v1':
         raise ValueError('CYCLE_CONTEXT_CONTRACT')
     if not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]{0,100}', context['run_id']):
         raise ValueError('RUN_ID_INVALID')
@@ -113,12 +114,41 @@ def advance(context, state_root):
     profile, local = load_profile(external_path(context['instance_profile'])), read(context['local_config'])
     from tools.delivery_completion import resolve_contract
     delivery_contract = resolve_contract(context.get('delivery_contract'), profile)
+    project_resolution = None
+    if context.get('project_root') is not None:
+        from tools.repo_local_destinations import resolve_project_root
+        if not delivery_contract['target'].startswith('project-'):
+            raise ValueError('PROJECT_ROOT_REQUIRES_PROJECT_DELIVERY')
+        project_resolution = resolve_project_root(
+            context['project_root'], run_id=context['run_id'], project_id=context.get('project_id'))
+        derived_state = external_path(project_resolution['destinations']['state_root']['path'])
+        if state_root != derived_state:
+            raise ValueError('STATE_ROOT_DESTINATION_CONFLICT')
+        configured = local.get('output_destinations', {})
+        if configured.get('contract_version') == 'output-destinations/v2' and configured.get('project_root') != project_resolution['project_root']:
+            raise ValueError('PROJECT_ROOT_DESTINATION_CONFLICT')
+        # The v2 resolver is authoritative for all repo-local paths.  Keep the
+        # external knowledge-store config, but replace only its destination
+        # adapter so bootstrap cannot fall back to v1 or an arbitrary public
+        # directory.
+        local = dict(local)
+        local['output_destinations'] = {
+            'contract_version': 'output-destinations/v2',
+            'mode': 'repo-local-project',
+            'project_root': project_resolution['project_root'],
+            'destinations': {key: value['relative'] for key, value in project_resolution['destinations'].items()},
+        }
+    elif delivery_contract['target'] == 'project-local':
+        raise ValueError('PROJECT_ROOT_REQUIRED')
+    if project_resolution is not None and delivery_contract['target'] == 'project-committed':
+        raise ValueError('REPO_LOCAL_PROJECT_COMMITTED_REQUIRES_EXPLICIT_COMMIT')
     checked_code(ROOT, profile['repositories']['agentic-art-orchestration']['code_commit'])
     binding = _bindings(context, profile, local, state_root)
     factories = {o: f for o in OWNERS if (f := initializer(o, binding[o], profile['instance_id'], context['clock']))}
     resolution = bootstrap(profile, local, state_root, run_id=context['run_id'], owner_initializers=factories)
     project = external_path(context['production_project_root'])
-    internal = external_path(local['output_destinations']['destinations']['internal_output_root'])
+    destination_evidence = resolution['destination_resolution']
+    internal = external_path(destination_evidence['destinations']['internal_output_root']['path'])
     if internal not in project.parents:
         raise ValueError('PLAN_OUTSIDE_INTERNAL_DESTINATION')
     run_root = state_root / 'knowledge-cycles' / context['run_id']

@@ -7,6 +7,7 @@ import json
 import subprocess
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Mapping
 
@@ -56,6 +57,21 @@ def load_profile(path: Path) -> dict:
 def adapt_output_destinations(profile: Mapping[str, object], destinations: Mapping[str, object]) -> dict:
     """Preserve output-destinations/v1 while applying the explicit instance delivery policy."""
     from tools.output_destinations import validate_destination_profile
+    # Repo-local Project delivery deliberately allows the state and internal
+    # roots to live below the Project checkout.  That overlap is forbidden by
+    # output-destinations/v1, so v2 is validated by its own closed schema and
+    # handled by the repo-local resolver in _bootstrap below.
+    if isinstance(destinations, Mapping) and destinations.get("contract_version") == "output-destinations/v2":
+        errors = validate_profile(profile) + _schema_errors(
+            destinations,
+            load_json(ROOT / "schemas/output-destinations-v2.schema.json"),
+            "output-destinations/v2",
+        )
+        if profile.get("delivery_mode") != "public-catalog" or not profile.get("permissions", {}).get("public_projection"):
+            errors.append("output-destinations/v2 requires public-catalog with public_projection permission")
+        if errors:
+            raise InstanceProfileError("\n".join(errors))
+        return dict(destinations)
     errors = validate_profile(profile) + validate_destination_profile(destinations)
     if errors:
         raise InstanceProfileError("\n".join(errors))
@@ -181,17 +197,36 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
             raise InstanceProfileError("code source must be an explicit repository root")
         _git(source, "cat-file", "-e", entry["code_commit"] + "^{commit}")
         sources[owner] = source
+    repo_local_project_root = None
+    if local_config.get("output_destinations", {}).get("contract_version") == "output-destinations/v2":
+        repo_local_project_root = _external(local_config["output_destinations"]["project_root"])
     for index, path in enumerate(paths):
         if any(path == other or path in other.parents or other in path.parents for other in paths[index + 1:]):
             raise InstanceProfileError("local store/state paths overlap")
-        if any(path == source or path in source.parents or source in path.parents for source in sources.values()):
+        overlapping_sources = [source for source in sources.values()
+            if path == source or path in source.parents or source in path.parents]
+        if repo_local_project_root is not None and path == state_root and any(source == repo_local_project_root for source in overlapping_sources):
+            # v2 intentionally keeps ignored runtime state under the selected
+            # Project checkout.  The pinned code checkout is still materialized
+            # separately below, so the tracked Project tree is never modified.
+            overlapping_sources = [source for source in overlapping_sources if source != repo_local_project_root]
+        if overlapping_sources:
             raise InstanceProfileError("knowledge/state and code paths overlap")
     from tools.output_destinations import resolve_destinations
     destinations = adapt_output_destinations(profile, local_config.get("output_destinations", {}))
-    if destinations["destinations"].get("state_root") != str(state_root):
-        raise InstanceProfileError("output state root must match explicit instance state root")
-    destination_evidence = resolve_destinations(direct=destinations["destinations"], environment={},
-        repository_root=ROOT, child_roots=list(stores.values()) + list(sources.values()), run_id=run_id)
+    if destinations.get("contract_version") == "output-destinations/v2":
+        from tools.repo_local_destinations import resolve_project_root
+        project_root = _external(destinations["project_root"])
+        relative_state = destinations["destinations"]["state_root"]
+        resolved_state = (project_root / relative_state).resolve()
+        if resolved_state != state_root.resolve():
+            raise InstanceProfileError("repo-local output state root must match explicit instance state root")
+        destination_evidence = resolve_project_root(project_root, run_id=run_id)
+    else:
+        if destinations["destinations"].get("state_root") != str(state_root):
+            raise InstanceProfileError("output state root must match explicit instance state root")
+        destination_evidence = resolve_destinations(direct=destinations["destinations"], environment={},
+            repository_root=ROOT, child_roots=list(stores.values()) + list(sources.values()), run_id=run_id)
     bindings = {owner: str(path) for owner, path in stores.items()}
     bindings["output_destinations"] = destinations
     if saved_setup and saved_setup["bindings"] != bindings:
@@ -230,11 +265,35 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
                 raise InstanceProfileError("interrupted code checkout requires inspection")
         else:
             # Existing canonical helper isolates dirty/diverged sources at qualified pins.
+            staging_destination = marker.parent / "staging" / owner
+            temporary_staging = None
+            if repo_local_project_root is not None and sources[owner] == repo_local_project_root:
+                # The Project checkout is both a code source and the v2 output
+                # root.  Clone its pinned code through an external temporary
+                # directory so the pinned-workspace overlap guard remains
+                # intact and no recursive copy enters .agentic-art/.
+                staging_parent = repo_local_project_root.parent.parent
+                try:
+                    temporary_staging = Path(tempfile.mkdtemp(
+                        prefix=f".agentic-art-bootstrap-{profile['instance_id']}-", dir=str(staging_parent)))
+                except OSError:
+                    # A checkout directly below a protected filesystem root
+                    # may not permit a sibling there; the default temp dir is
+                    # safe as long as it is not an ancestor of the source.
+                    temporary_staging = Path(tempfile.mkdtemp(
+                        prefix=f".agentic-art-bootstrap-{profile['instance_id']}-"))
+                source_parent = sources[owner].parent.resolve()
+                if source_parent == temporary_staging or source_parent in temporary_staging.parents or temporary_staging in source_parent.parents:
+                    raise InstanceProfileError("cannot allocate non-overlapping code staging workspace")
+                staging_destination = temporary_staging
             materialize_pinned_workspace({"repositories": [{"id": owner, "path": sources[owner].name,
                 "observed_commit": entry["code_commit"]}]}, sources[owner].parent,
-                marker.parent / "staging" / owner)
+                staging_destination)
             checkout.parent.mkdir(parents=True, exist_ok=True)
-            (marker.parent / "staging" / owner / sources[owner].name).rename(checkout)
+            (staging_destination / sources[owner].name).rename(checkout)
+            if temporary_staging is not None:
+                (staging_destination / PINNED_MARKER).unlink(missing_ok=True)
+                staging_destination.rmdir()
         initializer = (owner_initializers or {}).get(owner)
         provider = LocalOwner(stores[owner], owner, entry["knowledge_store_id"], entry["code_commit"],
             creator=str(profile["creator_id"]), payload_validator=lambda *_: False,
