@@ -1,5 +1,5 @@
-version: 80
-updated_at: "2026-09-10T02:06:44+09:00"
+version: 81
+updated_at: "2026-09-10T08:01:16+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2548,6 +2548,7 @@ tasks:
     acceptance_evidence:
       AC01-AC06: {status: PASS, evidence: execution/repo-local-v2-evidence.json, parent delivery verifier and owner focused/full tests}
       AC07: {status: NOT_RUN, evidence: no provider-backed external agent and no new consent was available; synthetic runs are not substituted}
+      code_regression: {status: PASS, candidate_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/228, evidence: Research external-work-root forwarding, Production handoff promotion, selected child interpreter attestation, and canonical Project projection regressions}
       AC08: {status: PASS, evidence: README/AGENTS/runtime/state status separation and execution SSOT}
       AC09: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and tests/test_delivery_entrypoints.py}
       AC10: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and cycle resume/instance bootstrap tests}
@@ -2556,8 +2557,9 @@ tasks:
       AC13: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json; remote publication remains separate and NOT_RUN}
     code_status: CODE_VERIFIED
     integration_status: MERGED
-    completion: Code and local acceptance are complete through parent merge b13f84b056ff4721ee4f90e4ddb65362535dcefc (PR224); BLOCKED only at the declared live-agent acceptance boundary. Resume the same DELIVERY-05 context when the configured provider and required consent are available.
-    blocker: Provider-backed external-agent execution and the required content/rights/consent decisions are unavailable; local code gates do not substitute for AC07.
+    merge_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
+    completion: Code and local acceptance are complete through parent PR228 (merge 1d5754f04bd5fba8ec1173f7b84f07b0945266b3); Research child protocol fix is merged as a4df0e5b4c4f93d01b7f5f403b214469526206c0 (PR106). BLOCKED only at the declared live-agent acceptance boundary.
+    blocker: AC07 remains NOT_RUN because no completed provider-backed external-agent Research→Production→Project run is recorded; local Ollama availability does not substitute for that evidence, and account billing/GitHub Actions are not required.
   - id: REPO-LOCAL-PROJECT-QUALIFY-001
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
