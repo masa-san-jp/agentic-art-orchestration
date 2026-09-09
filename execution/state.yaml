@@ -1,5 +1,5 @@
-version: 253
-updated_at: '2026-09-10T01:42:00+09:00'
+version: 254
+updated_at: '2026-09-10T01:56:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -8,10 +8,10 @@ lease:
   acquired_at: '2026-09-10T01:20:51+09:00'
   expires_at: null
   lane: AUTONOMY
-  execution_id: REPO-LOCAL-E2E-001:20260910
+  execution_id: DELIVERY-05-CYCLE-V2:20260910
   scope:
     repository: agentic-art-orchestration
-    branch: chore/delivery-evidence-20260910
+    branch: docs/delivery-cycle-v2-evidence-20260910
     paths:
     - tools/**
     - schemas/**
@@ -27,12 +27,12 @@ checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
   status: BLOCKED
-  result: 'Code and local acceptance are complete through parent merge b1ecafd13d65798f4958a9595b83a8869c31f481; live provider-backed external-agent acceptance remains NOT_RUN.'
-  code_candidate: b1ecafd13d65798f4958a9595b83a8869c31f481
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/222
-  merge_commit: b1ecafd13d65798f4958a9595b83a8869c31f481
-  merged_at: '2026-09-10T01:40:00+09:00'
-  evidence: execution/repo-local-v2-evidence.json
+  result: 'Cycle-context repo-local v2 delivery is implemented and locally verified through parent merge b13f84b056ff4721ee4f90e4ddb65362535dcefc; live provider-backed external-agent acceptance remains NOT_RUN.'
+  code_candidate: b13f84b056ff4721ee4f90e4ddb65362535dcefc
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/224
+  merge_commit: b13f84b056ff4721ee4f90e4ddb65362535dcefc
+  merged_at: '2026-09-10T01:49:35+09:00'
+  evidence: execution/delivery-cycle-v2-evidence.json
   blocker: 'Provider-backed external-agent execution and required content/rights/consent decisions are unavailable; no fake evidence or account billing is used.'
 aak04_checkpoint:
   task: AAK-04
@@ -53,7 +53,7 @@ resume_from:
   task: DELIVERY-05
   repository: agentic-art-orchestration
   action: Provider-backed external-agent acceptance is blocked; preserve code evidence and resume DELIVERY-05 only when the provider and consent boundary are available.
-  command: .venv/bin/python tools/run.py --cycle-context <context> --state-root <project-local-state>
+  command: .venv/bin/python tools/run.py --cycle-context <context> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local
 previous_checkpoint:
   task: AAK-11
   repository: agentic-art-production
@@ -1794,12 +1794,12 @@ aak_01_implementation:
 
 
 current_delivery_checkpoint:
-  task: REPO-LOCAL-E2E-001
+  task: DELIVERY-05
   repository: agentic-art-orchestration
-  branch: chore/release-delivery-20260910
-  base_commit: b1ecafd13d65798f4958a9595b83a8869c31f481
+  branch: docs/delivery-cycle-v2-evidence-20260910
+  base_commit: b13f84b056ff4721ee4f90e4ddb65362535dcefc
   status: CODE_VERIFIED
-  evidence: execution/repo-local-v2-evidence.json
+  evidence: execution/delivery-cycle-v2-evidence.json
   completed:
     - parent delivery verifier and v2 resolver merged to main
     - parent evidence PR222 merged as b1ecafd13d65798f4958a9595b83a8869c31f481
@@ -1807,6 +1807,8 @@ current_delivery_checkpoint:
     - Project PR19 merged as b87ac488d0c8f7ea155d98fe0d638bdd5187b96a
     - Project README reconciliation PR21 merged as 17767752630282f0ab6e9f75077a8ba6c86740f6
     - focused v2/runtime/instance-profile checks and full 615-test suite passed
+    - PR224 merged: cycle-context now carries repo-local v2 Project root through bootstrap and autonomous resume
+    - post-merge full suite 618 tests, 1 skip, validator, docs checks and diff check passed
   remaining:
     - live provider-backed acceptance remains NOT_RUN
   next_operation: Lease released after execution SSOT push; resume DELIVERY-05 only when a provider-backed agent and the required consent are available.
