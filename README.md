@@ -85,11 +85,11 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-10T01:56:00+09:00`.
+Source updated at: `2026-09-10T02:06:44+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 1 | 165 | 166 |
+| 0 | 0 | 0 | 1 | 166 | 167 |
 
 Current task: `null`; repository: `null`; checkpoint: `DELIVERY-05`.
 Next action: Provider-backed external-agent acceptance is blocked; preserve code evidence and resume DELIVERY-05 only when the provider and consent boundary are available.

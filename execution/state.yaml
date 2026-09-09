@@ -1,5 +1,5 @@
-version: 254
-updated_at: '2026-09-10T01:56:00+09:00'
+version: 255
+updated_at: '2026-09-10T02:06:44+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -48,7 +48,7 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: REPO-LOCAL-E2E-001
+last_completed_task: RESEARCH-100-QUALIFY-001
 resume_from:
   task: DELIVERY-05
   repository: agentic-art-orchestration
@@ -61,6 +61,21 @@ previous_checkpoint:
   result: Five synthetic AC; 8 focused / 120 full tests and six native evaluation checks PASS. PR65 exact remote verified.
     AAK02 live and main integration NOT_RUN.
   evidence: execution/aak-11-owner-verification.json
+
+research_100_checkpoint:
+  task: RESEARCH-100-QUALIFY-001
+  repository: agentic-art-research
+  candidate_commit: 76d325fca8c66d06b3b1d4c3694512038f545ef7
+  merge_commit: 7b497dee368d470364ce89198affb26c7658d27a
+  pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/102
+  status: CODE_VERIFIED
+  checks:
+    focused: '19 tests PASS (attempt workspace 11, research memory 8)'
+    full: '314 tests PASS'
+    validator: PASS
+    graph: PASS
+    diff: PASS
+  result: 'Issue #100 closed after merged owner fix; parent manifest pin updated to the merged Research main.'
 
 takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377

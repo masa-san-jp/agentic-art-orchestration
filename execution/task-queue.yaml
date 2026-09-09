@@ -1,5 +1,5 @@
 version: 80
-updated_at: "2026-09-10T01:56:00+09:00"
+updated_at: "2026-09-10T02:06:44+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2674,3 +2674,27 @@ tasks:
       AC1-AC5: {status: PASS, candidate_commit: 5b8392f, evidence: config/repository-relationships.yaml, schemas/repository-relationships.schema.json, tests/test_validate.py, tests/test_docs.py, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/219}
     code_status: CODE_VERIFIED
     integration_status: DRAFT_PR
+  - id: RESEARCH-100-QUALIFY-001
+    target_repositories: [agentic-art-research]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'Research外部parent aliasの品質ゲート誤検出を修復する'
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/100
+    depends_on: []
+    acceptance: Issue 100 macOS-style and canonical external path aliases pass while locator/store symlinks and protocol-root escapes remain rejected; updated Research main passes its full owner gate.
+    checks:
+    - .venv/bin/python -m unittest discover -s tests -v
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: Existing owner rules apply; no human content, consent, publication or migration gate is entered.
+    acceptance_evidence:
+      AC1: {status: PASS, candidate_commit: 76d325fca8c66d06b3b1d4c3694512038f545ef7, reference: https://github.com/masa-san-jp/agentic-art-research/pull/102, evidence: tests/test_attempt_workspace.py and tests/test_research_memory.py}
+      AC2: {status: PASS, evidence: Research full suite 314 tests, validator and build_graph --check}
+      AC3: {status: PASS, evidence: merged owner main 7b497dee368d470364ce89198affb26c7658d27a is the candidate pin}
+    code_status: CODE_VERIFIED
+    integration_status: MERGED
+    code_candidate: 76d325fca8c66d06b3b1d4c3694512038f545ef7
+    merge_commit: 7b497dee368d470364ce89198affb26c7658d27a
+    pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/102
+    completion: Parent aliases are accepted only when the resolved external path remains outside the protocol root; final-component symlinks, traversal and unsafe stores continue to fail closed. No raw/private data or external artifacts were added.
