@@ -337,3 +337,13 @@ M12以降はさらに、Production交換の子owned schemaを親へ複製しな�
 ## Agent continuation rule
 
 task完了後に「次に何をしますか」と質問しない。queue上の次taskをREADYにし、state/handoffを更新して継続する。Stop conditionsに該当した場合のみBLOCKEDとし、必要な決定、選択肢、推奨、影響、解除条件を残す。
+
+## Issue 217 delivery correction execution
+
+- DELIVERY-01: specification `delivery-completion` and owner Issue authority/compatibility; no runtime completion claim.
+- DELIVERY-02: Production [69](https://github.com/masa-san-jp/agentic-art-production/issues/69), after DELIVERY-01; native review preparation and attestation evidence.
+- DELIVERY-03: Project [18](https://github.com/masa-san-jp/agentic-art-project/issues/18), after DELIVERY-01; native read-only local receipt; immutable export unchanged.
+- DELIVERY-04: parent [217](https://github.com/masa-san-jp/agentic-art-orchestration/issues/217), after verified DELIVERY-02/03 candidates; requested delivery contract, common verifier, all entrypoints and resume.
+- DELIVERY-05: after DELIVERY-04; Issue217 AC01–08, actual external-agent new-clone Project delivery and recovery, docs/evidence synchronization. Required NOT_RUN/FAIL prevents completion.
+
+Use each owner Issue's verification commands and native task/lease protocol. Keep parent/child commits and PRs separate. No Actions requirement. Pin reviewed child candidates in isolated workspaces for integration; record code refs separately from knowledge and destination refs. Preserve past internal-only evidence. Migration of old public-catalog semantics needs an explicit contract version, not a silent default change.

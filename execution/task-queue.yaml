@@ -2445,7 +2445,7 @@ tasks:
   - id: DELIVERY-01
     milestone: AUTONOMY
     title: 納品契約とowner authorityを既存SSOTへ定義する
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
     target_repositories:
     - agentic-art-orchestration

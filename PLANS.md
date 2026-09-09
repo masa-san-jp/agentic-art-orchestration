@@ -1013,3 +1013,13 @@ focused最終22 tests PASS、full suite最終551 tests / 1 skip PASS。初回の
 
 ### Interfaces and Dependencies
 2文書→config/aak-task-projection.json→execution/task-queue.yaml。既存Issue依存のowner証拠がないtaskはproject_statusから選択しない。次はAAK-03だが、AAK-01受入完了が前提。
+
+## DELIVERY-01 — completed
+
+Purpose: Issue217 delivery correction, Production69 and Project18.
+Progress: registered owner Issues and parent DAG; clarified delivery/review/receiver authority in existing system-design / execution-plan SSOT; pinned AAK contracts unchanged. Runtime implementation and live acceptance are not complete.
+Decision: keep internal and legacy semantics; new local receipt does not imply committed/remote delivery. Preserve owner schemas and rights/consent evidence.
+Validation: parent validator and contract projection checks before commit.
+Next: implement native owner review and receiver APIs, then integrate common completion verification.
+
+DELIVERY-01 validation: parent validator PASS; 35 contract/docs tests PASS with canonical TMPDIR=/private/tmp. Initial default macOS temporary path failed symlink guards; fixture location corrected without weakening guards. Implementation and live DELIVERY-05 remain pending.

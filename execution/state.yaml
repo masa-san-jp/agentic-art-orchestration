@@ -1,17 +1,17 @@
 version: 250
 updated_at: '2026-09-08T22:28:00+00:00'
-active_task: null
-active_repository: null
+active_task: DELIVERY-01
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: unassigned
+  status: held
+  owner: codex-delivery-217
   acquired_at: '2026-09-09T00:00:00+00:00'
   expires_at: '2026-09-09T01:00:00+00:00'
   lane: AUTONOMY
   execution_id: PRODUCTION-STARTUP-RECOVERY-001:20260909
   scope:
     repository: agentic-art-orchestration
-    branch: fix/production-startup-recovery-214
+    branch: fix/delivery-completion-217
     paths:
     - tools/**
     - schemas/**
