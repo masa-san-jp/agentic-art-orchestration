@@ -1297,7 +1297,11 @@ def _tree_fingerprint(root: Path) -> str:
         paths = sorted(root.rglob("*"), key=lambda path: path.relative_to(root).as_posix())
         for path in paths:
             relative = path.relative_to(root)
-            if ".git" in relative.parts:
+            # Repo-local v2 keeps runtime state, staging and resolution evidence
+            # under the ignored root .agentic-art/. Those private bytes are not
+            # public catalog content and must not make a projection transaction
+            # appear to mutate or fail rollback against the public tree.
+            if ".git" in relative.parts or (relative.parts and relative.parts[0] == ".agentic-art"):
                 continue
             metadata = path.lstat()
             if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode) and not stat.S_ISDIR(metadata.st_mode):

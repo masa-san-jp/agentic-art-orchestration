@@ -1,0 +1,40 @@
+{
+  "contract_version": "repo-local-delivery-evidence/v1",
+  "task": "REPO-LOCAL-E2E-001",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/213",
+  "candidate": {
+    "parent_merge": "9b8db8de79ceeb6a219d0ee5b3e5ecef6bfadb33",
+    "project_qualified": "4ab9a85681e744592b0e02b701a20437cd7a5349",
+    "project_local_delivery_merge": "b87ac488d0c8f7ea155d98fe0d638bdd5187b96a",
+    "production_public_review_merge": "68d7ec971a1e61878464a3d004ed7421e5306f52"
+  },
+  "acceptance": {
+    "AC1": {"status": "PASS", "evidence": "tests/test_repo_local_destinations.py: two arbitrary temporary Project clone paths resolve the same role layout"},
+    "AC2": {"status": "PASS", "evidence": "resolver rejects CLI/environment ambiguity before writing; destination-resolution/v2 evidence is create-only and conflict checked"},
+    "AC3": {"status": "PASS", "evidence": "v2 schemas, absolute non-symlink Project root, Git root, ignore/tracking/dirty guards and Project validator are enforced"},
+    "AC4": {"status": "PASS", "evidence": "run, batch, exchange, autonomous runner and projection share repo_local_destinations resolver; focused runtime tests pass"},
+    "AC5": {"status": "PASS", "evidence": "public_projection accepts explicit --project-root and uses the derived project-local destination roles without parent data paths"},
+    "AC6": {"status": "PASS", "evidence": "tests/test_public_projection.py:test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays projects 100 plans on an arbitrary clone without Git mutation"},
+    "AC7": {"status": "PASS", "evidence": "the same v2 E2E projects exactly 100 source refs, verifies deterministic public IDs and replays as ALREADY_PROJECTED"},
+    "AC8": {"status": "PASS", "evidence": "forced tracking, symlink/unsafe root, dirty tracked state and existing fixed-workspace conflicts are rejected by resolver tests"},
+    "AC9": {"status": "PASS", "evidence": "the same v2 E2E injects fail_after=1, verifies FAILED with unchanged target fingerprint and no residual plan"},
+    "AC10": {"status": "PASS", "evidence": "state/internal/staging are derived below the external Project .agentic-art boundary; parent-root and fixed symlink escape are rejected"},
+    "AC11": {"status": "PASS", "evidence": "resolver is remote-neutral and never performs Git push, commit or publication; tests assert no preflight write"},
+    "AC12": {"status": "PASS", "evidence": "README, AGENTS, runtime guide and repository-map docs describe the v2 project-local quickstart and boundaries"},
+    "AC13": {"status": "PASS", "evidence": "Project 46-test suite, Orchestration 615-test suite (1 skip), focused v2 suite and arbitrary-clone 100-plan E2E all pass; live-agent acceptance is owned by Issue 217 DELIVERY-05"}
+  },
+  "checks": {
+    "focused": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest tests.test_delivery_completion tests.test_repo_local_destinations tests.test_knowledge_cycle_e2e tests.test_canonical_plan_projection tests.test_public_projection tests.test_run tests.test_batch_run tests.test_instance_profiles -v", "tests": 80},
+    "validator": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python tools/validate.py --check"},
+    "compile": {"status": "PASS", "command": "python3 -m py_compile tools/*.py tests/*.py"},
+    "diff": {"status": "PASS", "command": "git diff --check"},
+    "full_suite": {"status": "PASS", "command": "TMPDIR=/private/tmp .venv/bin/python -m unittest discover -s tests -q", "tests": 615, "skipped": 1}
+  },
+  "boundaries": {
+    "github_actions_or_billing_required": false,
+    "remote_git_push_or_publication": false,
+    "human_public_review": "required only when native Production review decisions are missing",
+    "live_agent_acceptance": "NOT_RUN (owned by Issue 217 DELIVERY-05)"
+  },
+  "next_action": "Code acceptance is complete. Keep live provider-backed acceptance explicitly NOT_RUN until a provider and consent are available; do not convert that boundary into synthetic evidence."
+}
