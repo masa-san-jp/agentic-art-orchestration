@@ -258,6 +258,22 @@ class ResearchPendingTests(unittest.TestCase):
 
 
 class HandoverArgumentTests(unittest.TestCase):
+    def test_completed_research_project_is_promoted_before_handoff(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            project = root / "projects" / "harmony"
+            project.mkdir(parents=True)
+            manifest = {
+                "project": {"id": "project/harmony", "status": "COMPLETE"},
+                "entry_points": {},
+            }
+            (project / "manifest.yaml").write_text(yaml.safe_dump(manifest), encoding="utf-8")
+            MODULE._promote_research_handoff(root, "harmony")
+            updated = yaml.safe_load((project / "manifest.yaml").read_text(encoding="utf-8"))
+
+        self.assertEqual("PRODUCTION_HANDOFF", updated["workflow_mode"])
+        self.assertEqual("05_production/production-handoff.yaml", updated["entry_points"]["production_handoff"])
+
     def test_naming_only_one_of_the_two_repositories_stops_the_run(self):
         """With one root missing, the production step would run in whatever directory is current."""
         with tempfile.TemporaryDirectory() as tmp:
@@ -288,6 +304,24 @@ class HandoverArgumentTests(unittest.TestCase):
             args = MODULE._handoff_arguments(
                 Path(temporary), "harmony", "2026-08-20T00:00:00+09:00", "a" * 40
             )
+
+        self.assertEqual(
+            [
+                "--generated-at", "2026-08-20T00:00:00+09:00",
+                "--research-commit", "a" * 40,
+                "--handoff-id", "HO001",
+                "--revision", "1",
+            ],
+            args,
+        )
+
+    def test_empty_template_handoff_is_generated_as_first_handoff(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_handoff(root, "harmony", "HO000", 0, "0" * 40, "")
+            path = root / "projects" / "harmony" / "05_production" / "production-handoff.yaml"
+            path.write_text("{}\n", encoding="utf-8")
+            args = MODULE._handoff_arguments(root, "harmony", "2026-08-20T00:00:00+09:00", "a" * 40)
 
         self.assertEqual(
             [
@@ -396,6 +430,7 @@ class RequestForwardingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             captured: list[list[str]] = []
+            child_captured: list[list[str]] = []
 
             def fake_tool(args: list[str], python: str) -> dict:
                 captured.append(args)
@@ -406,6 +441,7 @@ class RequestForwardingTests(unittest.TestCase):
                 return {"status": "PASSED"}
 
             def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
+                child_captured.append(args)
                 if args[0] == "tools/complete.py":
                     return {"status": "NOT_READY"}
                 return {"status": "PASSED"}
@@ -418,12 +454,14 @@ class RequestForwardingTests(unittest.TestCase):
                     "調和", root / "workspace", root / "state", "RUN001", "artistic-research",
                     None, None, "2026-08-20T00:00:00+09:00", sys.executable,
                     research_root=root / "research", production_root=root / "production",
-                    offline_fixture=True,
+                    research_work_root=(root / "research-work").resolve(), offline_fixture=True,
                 )
 
             request_calls = [args for args in captured if args[0] == "tools/build_research_request.py"]
             self.assertEqual(1, len(request_calls))
             self.assertEqual(str(root / "research"), request_calls[0][request_calls[0].index("--research-root") + 1])
+            self.assertTrue(any(args[0] == "tools/accept_research_request.py" and args[args.index("--protocol-root") + 1] == str(root / "research") for args in child_captured))
+            self.assertTrue(any(args[0] == "tools/complete.py" and args[args.index("--protocol-root") + 1] == str(root / "research") for args in child_captured))
             self.assertEqual("RESEARCH_PENDING", report["status"])
 
 
@@ -611,6 +649,7 @@ class ProductionHistoryTests(unittest.TestCase):
                 )
 
             self.assertEqual("PLAN_READY", report["status"])
+            self.assertEqual("BLOCKED_POLICY", report["projection_status"])
             self.assertEqual("automatic-plan-projection-authority/v1", report["automatic_plan_authority"]["contract_version"])
             self.assertEqual("tools/run.py", report["automatic_plan_authority"]["producer"])
             self.assertEqual("BLOCKED_POLICY", report["public_projection"]["status"])

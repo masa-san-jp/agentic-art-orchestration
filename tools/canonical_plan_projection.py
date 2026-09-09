@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import yaml
 
 
@@ -27,7 +28,7 @@ def source_fields(plan, code):
     return result
 
 
-def _owner_bundle(item, internal):
+def _owner_bundle(item, internal, child_python=None):
     from tools import public_projection as p
     code = Path(str(item.get("production_code_root", "")))
     sha = item.get("production_source_commit")
@@ -45,7 +46,14 @@ def _owner_bundle(item, internal):
     if digest(body)!=item.get("production_plan_markdown_sha256", item.get("production_plan_sha256")) or digest(raw)!=item.get("public_plan_attestation_sha256"):
         raise ValueError("source body/attestation hash mismatch")
     project = source.parent.parent
-    command=[str(code/".venv/bin/python"),"tools/public_plan_attestation.py","--project-root",str(project),"--check"]
+    # A pinned child checkout is not required to carry a virtualenv.  The
+    # orchestrator already selected the qualified interpreter for every child
+    # command, so reuse it for the owner-side attestation check.  Keep the
+    # legacy fallback for direct callers and existing fixture tests.
+    validator_python = str(child_python) if child_python else str(code / ".venv/bin/python")
+    if child_python is None and not Path(validator_python).is_file():
+        validator_python = sys.executable
+    command=[validator_python,"tools/public_plan_attestation.py","--project-root",str(project),"--check"]
     if item.get("require_native_review") is True:
         command.append("--require-native-review")
     checked=subprocess.run(command,cwd=code,capture_output=True,text=True,timeout=120)
@@ -80,7 +88,7 @@ def _unbound_preflight(result):
             and result.get('public_ids') == [])
 
 
-def project_attested(source, *, internal_output_root, public_projection_root, state_root, batch=False, fail_after=None):
+def project_attested(source, *, internal_output_root, public_projection_root, state_root, batch=False, fail_after=None, child_python=None):
     from tools import public_projection as p
     expected="PASSED" if batch else "PLAN_READY"
     run_id,target=p._automatic_report_resolution(source,internal_output_root=internal_output_root,public_projection_root=public_projection_root,state_root=state_root,expected_status=expected)
@@ -100,7 +108,8 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
             raise ValueError("all batch projects must be PASSED")
         bundles=[]
         for item in items:
-            bundle=_owner_bundle(item,internal)
+            bundle = (_owner_bundle(item, internal, child_python)
+                      if child_python is not None else _owner_bundle(item, internal))
             slug=item.get("project_slug",item.get("project_id"));title=item.get("project_title",item.get("title",slug))
             if not isinstance(slug,str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*",slug) or not isinstance(title,str) or not title.strip():raise ValueError("explicit safe project slug/title required")
             if p.scan_public_projection({"title":title,"body":bundle["files"]["plan.md"].decode()},"canonical-plan"):

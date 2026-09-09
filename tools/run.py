@@ -504,6 +504,16 @@ def _handoff_arguments(
         raise StepFailure(f"existing handoff cannot be read: {handoff_path}") from exc
     if not isinstance(existing, Mapping):
         raise StepFailure(f"existing handoff is not a mapping: {handoff_path}")
+    # The canonical Research template contains an empty placeholder until the
+    # child-owned handoff builder runs. Treat that placeholder like a missing
+    # handoff so the first production handoff can be generated normally.
+    if not existing:
+        return [
+            "--generated-at", requested_at,
+            "--research-commit", research_commit,
+            "--handoff-id", "HO001",
+            "--revision", "1",
+        ]
 
     existing_id = existing.get("handoff_id")
     existing_revision = existing.get("revision")
@@ -543,6 +553,41 @@ def _handoff_arguments(
         "--revision", str(existing_revision + 1),
         "--supersedes", str(existing_id),
     ]
+
+
+def _promote_research_handoff(research_data_root: Path, project_slug: str) -> None:
+    """Promote a completed Research project through its owner workflow boundary."""
+    project = research_data_root.resolve() / "projects" / project_slug
+    manifest_path = project / "manifest.yaml"
+    # Test doubles and legacy callers may report a child completion without
+    # materializing a project; the owner handoff step will still fail closed
+    # if a real project is missing.
+    if not manifest_path.exists():
+        return
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise StepFailure(f"research manifest cannot be read: {manifest_path}") from exc
+    if not isinstance(manifest, Mapping) or not isinstance(manifest.get("project"), Mapping):
+        raise StepFailure(f"research manifest is invalid: {manifest_path}")
+    if manifest.get("workflow_mode", "RESEARCH_ONLY") == "PRODUCTION_HANDOFF":
+        return
+    status = manifest["project"].get("status")
+    if status not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
+        raise StepFailure(f"research project is not complete for handoff: {status or 'unknown'}")
+    updated = dict(manifest)
+    updated["workflow_mode"] = "PRODUCTION_HANDOFF"
+    entry_points = dict(updated.get("entry_points") or {})
+    entry_points.update({
+        "production_hypotheses": "04_decisions/production-hypotheses.yaml",
+        "hypothesis_comparison": "04_decisions/hypothesis-comparison.yaml",
+        "prototype_plans": "05_production/prototype-plans.yaml",
+        "production_handoff": "05_production/production-handoff.yaml",
+        "production_change_requests": "06_governance/production-change-requests.yaml",
+        "production_feedback_imports": "07_runtime/production-feedback-imports.jsonl",
+    })
+    updated["entry_points"] = entry_points
+    manifest_path.write_text(yaml.safe_dump(updated, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
 
 def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool = False,
@@ -760,6 +805,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     requests = sorted((work / "requests").glob("RR*.yaml"))
     request = requests[-1]
     theme_proposal = _theme_proposal(request, explicit_intent=intent is not None)
+    research_protocol_args = ["--protocol-root", str(research_root)] if research_work_root else []
 
     if research_root is not None and limit > 1:
         # 100件を人が100回叩かないための入口。受理まで進めて、どのプロジェクトが
@@ -769,7 +815,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             outcome = _run_child(
                 research_root,
                 ["tools/accept_research_request.py", str(path), "--apply", "--root", str(research_data_root) if research_work_root else ".",
-                 "--accepted-at", requested_at],
+                 *research_protocol_args, "--accepted-at", requested_at],
                 python, allow_conflict=True)
             accepted.append({"request": path.name, "status": outcome.get("status"),
                              "project_id": outcome.get("project_id")})
@@ -792,9 +838,9 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     if research_root is not None:
         record("accept", _run_child(
             research_root, ["tools/accept_research_request.py", str(request), "--apply", "--root", str(research_data_root) if research_work_root else ".",
-                            "--accepted-at", requested_at], python, allow_conflict=True))
+                            *research_protocol_args, "--accepted-at", requested_at], python, allow_conflict=True))
 
-        complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}", *(["--root", str(research_data_root)] if research_work_root else [])], python, allow_failure=True)
+        complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}", *(["--root", str(research_data_root)] if research_work_root else []), *research_protocol_args], python, allow_failure=True)
         record("research-complete", complete)
         if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
@@ -802,6 +848,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
                 destination_resolution, resume_command,
             )
+
+        _promote_research_handoff(research_data_root, project_slug)
 
         handoff_args = _handoff_arguments(
             research_data_root, project_slug, requested_at, _head(research_root)
@@ -812,7 +860,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                             *handoff_args], python, allow_conflict=True))
         record("export", _run_child(
             research_root, ["tools/export_handoff.py", f"projects/{project_slug}", *roots,
-                            "--output", str(work / "bundle")], python))
+                            "--output", str(work / "bundle"),
+                            *( ["--allow-dirty"] if research_work_root else [])], python))
         persistent_production_root = (
             internal_output_root.resolve()
             if internal_output_root is not None
@@ -897,13 +946,26 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 destination_items = destination_resolution.get("destinations", {})
                 public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
                 public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
-                report["public_projection"] = project_plan_automatic(
+                projection = project_plan_automatic(
                     report,
                     internal_output_root=internal_output_root,
                     public_projection_root=Path(public_root) if isinstance(public_root, str) else None,
                     state_root=state_root,
                     projection_id=run_id,
+                    child_python=python,
                 )
+                report["public_projection"] = projection
+                # Keep the top-level stage status aligned with the nested
+                # owner receipt.  PLAN_READY remains a stage (and the run is
+                # still incomplete until knowledge/delivery completion), but
+                # a successful projection must never be displayed as SKIPPED.
+                projection_status = projection.get("status") if isinstance(projection, Mapping) else None
+                if projection_status in {"APPLIED", "ALREADY_PROJECTED"}:
+                    report["projection_status"] = "PROJECTED"
+                elif projection_status == "FAILED":
+                    report["projection_status"] = "FAILED"
+                elif isinstance(projection_status, str) and projection_status:
+                    report["projection_status"] = projection_status
             except (OSError, TypeError, ValueError, KeyError) as exc:
                 raise StepFailure("automatic public plan projection failed") from exc
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
