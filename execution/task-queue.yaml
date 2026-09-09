@@ -1,5 +1,5 @@
-version: 79
-updated_at: "2026-09-10T00:00:00+00:00"
+version: 80
+updated_at: "2026-09-10T01:56:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2539,7 +2539,7 @@ tasks:
     agent_terminal: EVIDENCE_READY
     depends_on:
     - DELIVERY-04
-    acceptance: Issue 217 AC01-08; no required NOT_RUN or FAIL remains.
+    acceptance: Issue 217 AC01-13; local code and owner gates are verified, while provider-backed AC07 remains a separate live boundary.
     checks:
     - .venv/bin/python tools/validate.py --check
     - .venv/bin/python -m unittest discover -s tests -v
@@ -2549,10 +2549,14 @@ tasks:
       AC01-AC06: {status: PASS, evidence: execution/repo-local-v2-evidence.json, parent delivery verifier and owner focused/full tests}
       AC07: {status: NOT_RUN, evidence: no provider-backed external agent and no new consent was available; synthetic runs are not substituted}
       AC08: {status: PASS, evidence: README/AGENTS/runtime/state status separation and execution SSOT}
-      AC09-AC13: {status: NOT_RUN, evidence: final live integration matrix requires the AC07 external-agent run and requested delivery mode}
+      AC09: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and tests/test_delivery_entrypoints.py}
+      AC10: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and cycle resume/instance bootstrap tests}
+      AC11: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and tests/test_instance_profiles.py}
+      AC12: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and delivery completion verifier tests}
+      AC13: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json; remote publication remains separate and NOT_RUN}
     code_status: CODE_VERIFIED
     integration_status: MERGED
-    completion: BLOCKED at the declared live-agent acceptance boundary; unblock by providing the configured provider and required consent, then resume the same DELIVERY-05 context without redoing completed code work.
+    completion: Code and local acceptance are complete through parent merge b13f84b056ff4721ee4f90e4ddb65362535dcefc (PR224); BLOCKED only at the declared live-agent acceptance boundary. Resume the same DELIVERY-05 context when the configured provider and required consent are available.
     blocker: Provider-backed external-agent execution and the required content/rights/consent decisions are unavailable; local code gates do not substitute for AC07.
   - id: REPO-LOCAL-PROJECT-QUALIFY-001
     target_repositories: [agentic-art-orchestration]
