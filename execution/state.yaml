@@ -1,4 +1,4 @@
-version: 249
+version: 250
 updated_at: '2026-09-08T22:28:00+00:00'
 active_task: null
 active_repository: null
@@ -50,9 +50,9 @@ aak04_checkpoint:
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
 last_completed_task: PRODUCTION-STARTUP-RECOVERY-001
 resume_from:
-  task: null
-  repository: null
-  action: No pending AAK implementation; retain explicit public-projection, physical-work and real-person migration gates.
+  task: DELIVERY-01
+  repository: agentic-art-orchestration
+  action: Implement Issue 217 delivery contracts, then owner 69 and 18, completion integration and real-agent acceptance.
   command: .venv/bin/python tools/project_status.py --format json
 previous_checkpoint:
   task: AAK-11

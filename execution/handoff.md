@@ -1,3 +1,7 @@
+# Delivery correction registered — 2026-09-10
+
+Issue217 is NOT complete. DELIVERY-01 → Production69/Project18 → DELIVERY-04 → DELIVERY-05. Branch fix/delivery-completion-217; base f248056. Existing lease available; claim DELIVERY-01 next. Prior internal AAK acceptance is not Project delivery evidence. Registration only; no new code acceptance yet.
+
 # AAK series integrated — 2026-09-08
 
 The authorized merge sequence is complete. Child main branches now contain the accepted implementation: self-model PR95 `96aaf6e`, art-history PR387 `97b5325`, marketing PR87 `9b9bf5d`, Research PR95/96/97 `7da03d5`, `f9aeb7c`, `04929b2`, Production PR63/64/65/66 `10eda60`, `37e4d97`, `08e7b35`, `6b35dbc`, Project PR12/13 `a8debd5`, `b42daa9`, and Viewer replacement PR8 `0c198ec`. Parent PR202/204/206/207/208 are merged in dependency order; parent main is `ad5d2699b3d6066d1b455cdefdd40e5d47ad2566`.

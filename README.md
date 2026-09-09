@@ -87,12 +87,12 @@ Source updated at: `2026-09-08T22:28:00+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 155 | 155 |
+| 6 | 1 | 0 | 0 | 155 | 162 |
 
 Current task: `null`; repository: `null`; checkpoint: `PRODUCTION-STARTUP-RECOVERY-001`.
-Next action: No pending AAK implementation; retain explicit public-projection, physical-work and real-person migration gates.
-Ready: none.
-Next task: `null`.
+Next action: Implement Issue 217 delivery contracts, then owner 69 and 18, completion integration and real-agent acceptance.
+Ready: `DELIVERY-01`.
+Next task: `DELIVERY-01`.
 Blocked:
 - none
 

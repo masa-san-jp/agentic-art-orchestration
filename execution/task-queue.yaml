@@ -1,4 +1,4 @@
-version: 75
+version: 76
 updated_at: "2026-09-08T22:28:00+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
@@ -2442,3 +2442,115 @@ tasks:
     pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/215
     merge_commit: 61f132f521e321c93652af9d80b543e5e8b682a2
     completion: 'AC1..7 and AC9 code/evidence PASS; AC8 live provider-backed external-agent acceptance NOT_RUN. Focused 86 tests, parent validator and README status check PASS. Full 607-test discovery retains 30 pre-existing macOS /var symlink errors and one unrelated instance-profile fixture failure.'
+  - id: DELIVERY-01
+    milestone: AUTONOMY
+    title: 納品契約とowner authorityを既存SSOTへ定義する
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: EVIDENCE_READY
+    depends_on: []
+    acceptance: Issue 217 A-E contracts and owner DAG are explicit; no implementation
+      completion claim.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
+      external publication, or migration. Branch/commit/draft PR authorized.
+  - id: DELIVERY-02
+    milestone: AUTONOMY
+    title: Production reviewの既存許可解決と再開
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/69
+    target_repositories:
+    - agentic-art-production
+    agent_terminal: EVIDENCE_READY
+    depends_on:
+    - DELIVERY-01
+    acceptance: Production issue 69 acceptance 1-5.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
+      external publication, or migration. Branch/commit/draft PR authorized.
+  - id: DELIVERY-03
+    milestone: AUTONOMY
+    title: Projectローカル受取のowner検証
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/18
+    target_repositories:
+    - agentic-art-project
+    agent_terminal: EVIDENCE_READY
+    depends_on:
+    - DELIVERY-01
+    acceptance: Project issue 18 acceptance 1-5.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
+      external publication, or migration. Branch/commit/draft PR authorized.
+  - id: DELIVERY-04
+    milestone: AUTONOMY
+    title: 納品契約と完了verifierを全入口へ接続
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: EVIDENCE_READY
+    depends_on:
+    - DELIVERY-02
+    - DELIVERY-03
+    acceptance: Issue 217 AC01-06 with native owner candidates.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
+      external publication, or migration. Branch/commit/draft PR authorized.
+  - id: DELIVERY-05
+    milestone: AUTONOMY
+    title: 実エージェント納品受入と文書同期
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: EVIDENCE_READY
+    depends_on:
+    - DELIVERY-04
+    acceptance: Issue 217 AC01-08; no required NOT_RUN or FAIL remains.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
+      external publication, or migration. Branch/commit/draft PR authorized.
+  - id: ISSUE-190
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'docs: agentic-art-projectを正規の公開成果物repoとして定義する'
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/190
+    depends_on: []
+    acceptance: Observe Issue 190 acceptance and owner evidence before implementation.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: Existing user authorization and owner gates apply.
+  - id: ISSUE-213
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    milestone: AUTONOMY
+    title: 'feat: clone/fork向けrepo-local .agentic-art出力境界へ移行する'
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/213
+    depends_on: []
+    acceptance: Observe Issue 213 acceptance and owner evidence before implementation.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: Existing user authorization and owner gates apply.
