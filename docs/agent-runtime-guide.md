@@ -363,3 +363,22 @@ batch driverが作成するJSONLは`batch-report-event/v1`のmetadata-only close
 ## 知識を次回へ残す統合実行
 
 `tools/run.py --cycle-context <external-context.json> --state-root <external-state-root>` は、AAK04 profileの隔離code/knowledge pin、全owner検索、Production正本検証、owner別保存・索引・再開を接続する。返された`next_action`をエージェントが処理し、`resume_command`で継続する。構成と状態の意味は [knowledge-cycle-runtime.md](knowledge-cycle-runtime.md) を読む。実エージェント受入とfake回帰を区別する。
+
+## Requested delivery completion (Issue 217)
+
+For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --state-root <external-state> --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}` and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+
+Continue the returned agent actions through Production plan generation, native review/attestation, canonical projection, native Project lineage initialization and local receiver validation. Reuse existing native approvals; missing approvals return the prepared target and precise remaining review decisions. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
+
+`PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
+
+## Project checkoutだけで動かす（output-destinations/v2）
+
+clone/fork利用者は、明示した`agentic-art-project` checkoutを次のように指定できます。
+
+```bash
+.venv/bin/python tools/run.py --project-root /path/to/agentic-art-project \
+  --workspace-root /path/to/pinned-workspace --profile-root /path/to/profile
+```
+
+または`AGENTIC_ART_PROJECT_ROOT=/path/to/agentic-art-project`を設定します。v2は`.agentic-art/state`、`.agentic-art/internal`、`.agentic-art/staging`を導出し、公開rootはProject checkout自身です。既存の`--destinations-file`や個別rootと同時に指定すると`AMBIGUOUS_DESTINATION_MODE`で書込み前に停止します。Projectのvalidator、ignore、tracked-private、symlink、tracked変更を先に検査し、失敗時にworkspaceを作成しません。v1のGit外profile方式はそのまま利用できます。

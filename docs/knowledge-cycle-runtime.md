@@ -19,3 +19,11 @@ Reports separate plan, knowledge, projection and run statuses. Internal delivery
 The legacy purpose E2E `live-private` name describes data access, not proof of an actual LLM worker. Its historical evidence remains readable; new supervisor records say RESEARCH_COMPLETE. Only the separately recorded AAK02 actual-agent matrix can satisfy live acceptance.
 
 Initial searches retain the supplied snapshot clock. Each native write captures its own actual clock before invocation and retains it with the operation/job hash; retries and post-write queries reuse that clock. This permits observations obtained during Research without falsely treating them as future observations or changing the original read snapshot.
+
+## Requested delivery completion (Issue 217)
+
+For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --state-root <external-state> --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}` and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+
+Continue the returned agent actions through Production plan generation, native review/attestation, canonical projection, native Project lineage initialization and local receiver validation. Reuse existing native approvals; missing approvals return the prepared target and precise remaining review decisions. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
+
+`PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.

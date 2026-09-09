@@ -101,7 +101,7 @@ def advance(context, state_root):
     """One bounded checkpoint. The external agent consumes returned next_action."""
     required = {'contract_version', 'run_id', 'instance_profile', 'local_config', 'clock',
                 'production_project_root', 'query_inputs', 'write_inputs'}
-    if not isinstance(context, dict) or set(context) - (required | {'owner_options'}) or not required <= set(context) or context['contract_version'] != 'knowledge-cycle-context/v1':
+    if not isinstance(context, dict) or set(context) - (required | {'owner_options', 'delivery_contract'}) or not required <= set(context) or context['contract_version'] != 'knowledge-cycle-context/v1':
         raise ValueError('CYCLE_CONTEXT_CONTRACT')
     if not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]{0,100}', context['run_id']):
         raise ValueError('RUN_ID_INVALID')
@@ -111,6 +111,8 @@ def advance(context, state_root):
         raise ValueError('EXPLICIT_CLOCK_REQUIRED')
     state_root = external_path(state_root)
     profile, local = load_profile(external_path(context['instance_profile'])), read(context['local_config'])
+    from tools.delivery_completion import resolve_contract
+    delivery_contract = resolve_contract(context.get('delivery_contract'), profile)
     checked_code(ROOT, profile['repositories']['agentic-art-orchestration']['code_commit'])
     binding = _bindings(context, profile, local, state_root)
     factories = {o: f for o in OWNERS if (f := initializer(o, binding[o], profile['instance_id'], context['clock']))}
@@ -139,6 +141,7 @@ def advance(context, state_root):
             'plan': None, 'stop_reason': None, 'next_action': None}
         if state['input_fingerprint'] != identity:
             raise ValueError('RUN_PROFILE_OR_SNAPSHOT_CHANGED')
+        state['delivery_contract'] = delivery_contract
         old_progress = hashed([state['queries'], state['owners'], state['plan']])
         context_path = run_root / 'context.json'
         if context_path.exists() and read(context_path) != context:
@@ -156,8 +159,15 @@ def advance(context, state_root):
                 next_action={'actor': 'agent', 'do': 'Inspect the named boundary failure, preserve completed artifacts and receipts, and repair only the incomplete stage.'})
         finally:
             progress = hashed([state['queries'], state['owners'], state['plan']])
-            state['no_progress'] = state['no_progress'] + 1 if progress == old_progress and state['run_status'] != 'COMPLETED' else 0
-            if state['no_progress'] >= POLICY['max_no_progress']:
+            awaiting_human = isinstance(state.get('next_action'), dict) and state['next_action'].get('actor') == 'human'
+            if not awaiting_human:
+                state['no_progress'] = state['no_progress'] + 1 if progress == old_progress and state['run_status'] != 'COMPLETED' else 0
+            from tools.delivery_completion import completion
+            state['delivery_completion'] = completion(state, delivery_contract)
+            state['completion_status'] = state['delivery_completion']['status']
+            if state['run_status'] == 'COMPLETED' and state['completion_status'] != 'COMPLETED':
+                state['run_status'] = 'INCOMPLETE'
+            if not awaiting_human and state['no_progress'] >= POLICY['max_no_progress']:
                 state.update(run_status='INCOMPLETE', stop_reason='NO_PROGRESS_LIMIT', next_action={'actor': 'agent', 'do': 'Inspect the recorded failed stage before starting a new bounded execution.'})
             state['lease']['status'] = 'released'
             save(state_path, state)
@@ -301,6 +311,20 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
     from tools.canonical_plan_projection import source_fields
     from tools.public_projection import build_automatic_plan_authority, project_plan_automatic
     run_id = context['run_id']
+    strict = context.get('delivery_contract') is not None
+    if strict:
+        binding = bindings['agentic-art-production']
+        code = checked_code(binding['code_root'], binding['code_commit'])
+        command = [binding.get('python', sys.executable), str(code/'tools/public_plan_attestation.py'),
+            '--project-root', str(project), '--native-review', '--producer-commit', binding['code_commit'], '--generated-at', context['clock']]
+        result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
+        if result.returncode:
+            try: finding = json.loads(result.stdout)
+            except ValueError: finding = {'status':'BLOCKED_REVIEW','next_action':{'actor':'agent','do':'Inspect the pinned Production review CLI error.'}}
+            save(run_root/'review-packet.json', finding)
+            state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_REVIEW_PENDING',
+                next_action={**finding.get('next_action', {'actor':'agent'}), 'stage':'review', 'receipt':str(run_root/'review-packet.json'), 'command':command})
+            return
     destinations = resolution['destination_resolution']
     internal = Path(destinations['destinations']['internal_output_root']['path'])
     public = Path(destinations['destinations']['public_projection_root']['path'])
@@ -312,11 +336,15 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
         'production_plan_sha256': state['plan']['artifacts']['03_plan/production-plan.md'],
         'destination_resolution': destinations,
         **source_fields(project / '03_plan/production-plan.md', bindings['agentic-art-production']['code_root'])}
+    if strict:
+        source['require_native_review'] = True
     source['automatic_plan_authority'] = build_automatic_plan_authority(producer='tools/run.py',
         source_status='PLAN_READY', source_id=run_id, source_sha256=source['production_plan_sha256'],
         destination_resolution=destinations)
-    projected = project_plan_automatic(source, internal_output_root=internal, public_projection_root=public,
-        state_root=state_root, projection_id=run_id)
+    projected = state.get('projection_receipt') if strict else None
+    if not isinstance(projected, dict) or projected.get('status') not in {'APPLIED', 'ALREADY_PROJECTED'}:
+        projected = project_plan_automatic(source, internal_output_root=internal, public_projection_root=public,
+            state_root=state_root, projection_id=run_id)
     state['projection_receipt'] = projected
     state.update(projection_status='BLOCKED', run_status='INCOMPLETE', stop_reason='PUBLIC_PROJECTION_PENDING',
         next_action={'actor': 'agent', 'stage': 'projection', 'receipt': projected['result_locator'],
@@ -324,6 +352,30 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
     if projected['status'] not in {'APPLIED', 'ALREADY_PROJECTED'}:
         if projected['status'] == 'FAILED':
             state['projection_status'] = 'FAILED'
+        return
+    if strict and context['delivery_contract']['target'] == 'project-local':
+        binding = bindings['agentic-art-project']
+        code = checked_code(binding['code_root'], binding['code_commit'])
+        python = binding.get('python', sys.executable)
+        for identifier in projected['public_ids']:
+            subprocess.run([python, str(code/'tools/catalog_lineage.py'), 'annotate', '--root', str(public),
+                '--record-id', identifier, '--instance-profile', context['instance_profile'], '--mode', 'new', '--initialize-new', '--apply'],
+                cwd=code, check=True, capture_output=True, text=True, timeout=120)
+        subprocess.run([python, str(code/'tools/catalog_sync.py'), '--root', str(public), '--write'], cwd=code, check=True, capture_output=True, timeout=120)
+        expected = [{'record_id':identifier, 'content_sha256':source['production_plan_sha256'],
+            'creator_id':profile['creator_id'], 'origin_instance_id':profile['instance_id'], 'source_identity':source['source_identity']}
+            for identifier in projected['public_ids']]
+        expectation = run_root/'expected-delivery.json'
+        save(expectation, expected)
+        result = subprocess.run([python, str(code/'tools/local_delivery.py'), '--root', str(public), '--expected', str(expectation)],
+            cwd=code, capture_output=True, text=True, timeout=120)
+        receipt = json.loads(result.stdout)
+        save(run_root/'local-delivery.json', receipt)
+        if result.returncode or receipt.get('status') != 'VERIFIED' or receipt.get('contract_version') != 'local-plan-delivery-receipt/v1':
+            state.update(stop_reason='PROJECT_LOCAL_DELIVERY_INVALID', next_action={'actor':'agent','stage':'projection','receipt':str(run_root/'local-delivery.json')})
+            return
+        checked_code(code, binding['code_commit'])
+        state.update(projection_status='PROJECTED', run_status='COMPLETED', stop_reason=None, next_action=None, local_delivery_receipt=receipt)
         return
     # The Project owner verifies committed receiver bytes, attribution and lineage.
     # Do not turn a parent projection success JSON into catalog acceptance.

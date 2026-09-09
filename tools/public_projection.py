@@ -36,6 +36,7 @@ from tools.output_destinations import (  # noqa: E402
     resolve_run_destination,
     validate_destination_resolution,
 )
+from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
 from tools.validate import _schema_errors, load_json  # noqa: E402
 
 
@@ -663,8 +664,11 @@ def _resolution_root(resolution: object, run_id: str, location: str) -> Path:
     return Path(path).expanduser().resolve(strict=False)
 
 
-def _prepare_resolution(destinations_file: str | Path, run_id: str) -> tuple[dict[str, object], Path]:
+def _prepare_resolution(destinations_file: str | Path | None, run_id: str, *, project_root: Path | None = None) -> tuple[dict[str, object], Path]:
     try:
+        if project_root is not None:
+            resolution = resolve_project_root(project_root, run_id=run_id)
+            return resolution, _resolution_role(resolution, "internal_output_root")
         from tools.workspace import load_manifest
 
         manifest = load_manifest()
@@ -680,13 +684,18 @@ def _prepare_resolution(destinations_file: str | Path, run_id: str) -> tuple[dic
 
 
 def _projection_resolution(
-    destinations_file: str | Path,
+    destinations_file: str | Path | None,
     context_id: str,
     *,
     target_root: Path | None = None,
+    project_root: Path | None = None,
 ) -> dict[str, object]:
     """Resolve profile roles, allowing only the declared target-root override."""
     try:
+        if project_root is not None:
+            if target_root is not None:
+                raise ValueError("AMBIGUOUS_DESTINATION_MODE")
+            return resolve_project_root(project_root, run_id=context_id, project_id=context_id)
         from tools.workspace import load_manifest
 
         manifest = load_manifest()
@@ -3343,23 +3352,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--refresh", type=Path)
     parser.add_argument("--projection-id")
     parser.add_argument("--destinations-file", type=Path)
+    parser.add_argument("--project-root", type=Path,
+                        help="explicit agentic-art-project checkout for output-destinations/v2")
     parser.add_argument("--target-root", type=Path)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args(argv)
+    if args.project_root is None and PROJECT_ROOT_ENV in os.environ:
+        if args.destinations_file is not None:
+            parser.error("AMBIGUOUS_DESTINATION_MODE: choose v1 profile or AGENTIC_ART_PROJECT_ROOT")
+        args.project_root = Path(os.environ[PROJECT_ROOT_ENV])
     if args.command == "validate" and not any((args.layout, args.request, args.approval, args.result)):
         parser.error("validate requires at least one contract input")
     if args.command == "prepare":
         sources = [args.run_report, args.batch_summary, args.refresh]
         if sum(value is not None for value in sources) != 1:
             parser.error("prepare requires exactly one of --run-report, --batch-summary, or --refresh")
-        if args.destinations_file is None:
-            parser.error("prepare requires --destinations-file")
+        if args.destinations_file is None and args.project_root is None and PROJECT_ROOT_ENV not in os.environ:
+            parser.error("prepare requires --destinations-file or --project-root")
         if (args.run_report is not None or args.batch_summary is not None) and not args.projection_id:
             parser.error("prepare requires --projection-id for --run-report and --batch-summary")
     if args.command in {"init-target", "project"}:
-        if args.destinations_file is None:
-            parser.error(f"{args.command} requires --destinations-file")
+        if args.destinations_file is None and args.project_root is None and PROJECT_ROOT_ENV not in os.environ:
+            parser.error(f"{args.command} requires --destinations-file or --project-root")
+        if args.project_root is not None and (args.destinations_file is not None or args.target_root is not None):
+            parser.error("AMBIGUOUS_DESTINATION_MODE: choose v1 profile or --project-root")
         if args.dry_run == args.apply:
             parser.error(f"{args.command} requires exactly one of --dry-run or --apply")
     if args.command == "init-target" and args.request is not None:
@@ -3378,25 +3395,25 @@ def main(argv: list[str] | None = None) -> int:
                 report = _load_document(args.run_report)
                 if not isinstance(report, Mapping) or not isinstance(report.get("run_id"), str):
                     raise _prepare_error("SOURCE_INVALID", "run-report", "provide a run report with a stable run_id")
-                _resolution, root = _prepare_resolution(args.destinations_file, str(report["run_id"]))
+                _resolution, root = _prepare_resolution(args.destinations_file, str(report["run_id"]), project_root=args.project_root)
                 result = prepare_run_report(report, internal_output_root=root, projection_id=args.projection_id)
             elif args.batch_summary is not None:
                 summary = _load_document(args.batch_summary)
                 if not isinstance(summary, Mapping) or not isinstance(summary.get("run_id"), str):
                     raise _prepare_error("SOURCE_INVALID", "batch-summary", "provide a batch summary with a stable run_id")
-                _resolution, root = _prepare_resolution(args.destinations_file, str(summary["run_id"]))
+                _resolution, root = _prepare_resolution(args.destinations_file, str(summary["run_id"]), project_root=args.project_root)
                 result = prepare_batch_summary(summary, internal_output_root=root, projection_id=args.projection_id)
             else:
                 request_path = args.refresh.expanduser().resolve(strict=False)
                 request_document = _load_document(request_path)
                 if not isinstance(request_document, Mapping) or not isinstance(request_document.get("projection_id"), str):
                     raise _prepare_error("SOURCE_INVALID", "refresh.request", "provide a request with a stable projection_id")
-                _resolution, root = _prepare_resolution(args.destinations_file, str(request_document["projection_id"]))
+                _resolution, root = _prepare_resolution(args.destinations_file, str(request_document["projection_id"]), project_root=args.project_root)
                 result = refresh_request(request_path, internal_output_root=root)
             print(json.dumps(_prepare_stdout(result), ensure_ascii=False, sort_keys=True))
             return 0 if result.get("status") in PREPARE_STATUSES else 2
         if args.command == "init-target":
-            resolution = _projection_resolution(args.destinations_file, "INIT-TARGET", target_root=args.target_root)
+            resolution = _projection_resolution(args.destinations_file, "INIT-TARGET", target_root=args.target_root, project_root=args.project_root)
             result = init_target(_resolution_role(resolution, "public_projection_root"), apply=args.apply)
             print(json.dumps(_projection_stdout(result), ensure_ascii=False, sort_keys=True))
             return 0 if result.get("status") in INIT_STATUSES else 2
@@ -3406,7 +3423,7 @@ def main(argv: list[str] | None = None) -> int:
             if not isinstance(request_document, Mapping) or not isinstance(request_document.get("projection_id"), str):
                 raise _prepare_error("SOURCE_INVALID", "request", "provide a request with a stable projection_id")
             projection_id = str(request_document["projection_id"])
-            resolution = _projection_resolution(args.destinations_file, projection_id, target_root=args.target_root)
+            resolution = _projection_resolution(args.destinations_file, projection_id, target_root=args.target_root, project_root=args.project_root)
             if args.apply:
                 result = project_apply(
                     request_path,

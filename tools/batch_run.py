@@ -14,6 +14,7 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 import random
 import re
@@ -39,6 +40,7 @@ try:
         validate_destination_resolution,
         write_resolution_evidence,
     )
+    from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
     from tools.public_projection import build_automatic_plan_authority, project_batch_automatic
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
@@ -60,6 +62,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         validate_destination_resolution,
         write_resolution_evidence,
     )
+    from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
     from tools.public_projection import build_automatic_plan_authority, project_batch_automatic
     from tools.production_exchange import run_exchange
     from tools.qualify_pin_update import workspace_candidate
@@ -776,6 +779,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--state-root", type=Path)
     parser.add_argument("--destinations-file", type=Path,
                         help="explicit external output-destinations/v1 profile")
+    parser.add_argument("--project-root", type=Path,
+                        help="explicit agentic-art-project checkout for output-destinations/v2")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--generated-at", required=True)
     parser.add_argument("--child-python", required=True)
@@ -793,11 +798,19 @@ def main(argv: Iterable[str] | None = None) -> int:
             direct["internal_output_root"] = args.output_root
         if args.state_root is not None:
             direct["state_root"] = args.state_root
+        project_root_selected = args.project_root is not None or PROJECT_ROOT_ENV in os.environ
+        if project_root_selected and (args.destinations_file is not None or direct):
+            raise BatchRunError("AMBIGUOUS_DESTINATION_MODE: repo-local --project-root cannot be combined with v1 roots/profile")
         profile_selected = destinations_profile_selected(args.destinations_file)
-        if not profile_selected and set(direct) != {"state_root", "internal_output_root"}:
+        if not project_root_selected and not profile_selected and set(direct) != {"state_root", "internal_output_root"}:
             parser.error("batch-run requires --output-root and --state-root unless a destination profile is selected")
         destination_resolution = None
-        if profile_selected or direct:
+        if project_root_selected:
+            destination_resolution = resolve_project_root(args.project_root, run_id=args.run_id)
+            roots = destination_resolution["destinations"]
+            state_root = Path(roots["state_root"]["path"])
+            output_root = resolve_run_destination(roots["internal_output_root"]["path"], "batch", args.run_id)
+        elif profile_selected or direct:
             destination_resolution = resolve_destinations(
                 args.destinations_file,
                 direct=direct or None,
@@ -834,7 +847,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     except (BatchRunError, OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
-    output = {"command": "batch-run", "status": result["status"], "summary": str(result["summary_path"])}
+    output = {"command": "batch-run", "status": result["status"], "summary": str(result["summary_path"]),
+              "completion_status": "INCOMPLETE", "next_action": "Verify each plan delivery through tools/run.py --cycle-context and the requested --delivery-target."}
     projection = result.get("public_projection")
     projection_status = projection.get("status") if isinstance(projection, Mapping) else None
     if projection_status is not None:

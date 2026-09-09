@@ -553,3 +553,17 @@ Drive書込みは保存先、access scope、consentが確定した場合だけ�
 ## 20. 変更管理
 
 contract major、ownership、data boundary、human gateを変える場合は、Issueに観測事実、選択肢、推奨、migration、rollbackを記載し、人間決定後に設計・schema・fixture・testを同じ変更で更新する。実装都合で子repoのdomain schemaを変更しない。
+
+## delivery-completion — Issue 217
+
+通常の制作依頼はResearchの終了では完了しない。開始時に依頼された納品先と既存profileを照合し、Production計画、knowledge永続化、Projectローカル納品、Git保存・remote同期の必要性をrunに固定する。Project納品の明示依頼をinternalへ暗黙降格しない。未指定の旧profileは従来の意味を保ち、新しい要求はversion付きのdelivery contractで拘束する。
+
+PLAN_READYはProduction stageの成功であり総合成功ではない。総合完了は要求された成果物のowner検証、hash、帰属・系譜、必要な保存receiptがすべて揃った場合だけとする。SKIPPEDは要求されないstageに限る。Research-only、投影欠落、部分保存、必須検証NOT_RUNを完成へ変換しない。run/batch/cycleと人間向け表示は共通verifierの結果を使う。
+
+Productionはレビューの正本を所有する。既存approval policyからauthority・scope・対象hash・期限・失効を検証し、既存の有効な許可を再利用する。PASSED文字列と任意consent_refだけで許可を証明したことにしない。ローカル配置、コンテンツの利用権・同意、Git操作、外部公開は別の権限である。review schemaだけを根拠に毎回の人間承認を要求しない。判断が不足する場合も計画とreview packetを先に準備し、未充足項目・根拠・対象・再開操作を返す。権利・同意は捏造しない。
+
+Projectはread-onlyのローカル受取検証を所有する。新規投影の本文・asset・attestation・creator/origin・source identityを確認し、Git commit前のreceiptを返す。このreceiptはknowledge_commitやremote同期の証拠ではない。immutable catalog exportは引き続きcleanな固定Git snapshotから検索する。ローカル納品を完了するためだけのcommit/pushは要求しない。Git保存やremote同期を明示された場合は別途そのrefとbytesを確認する。既存public-catalogの完了条件を読み替える実装はversion移行を伴う。
+
+run ID、納品契約、設定hash、owner pin、成功成果物とreceiptを再開時に保持する。変更された本文/asset/許可は対応するreview・attestationを失効させる。人間判断待ちをretryで消費しない。外部エージェントは正準next_actionを処理し続け、自由文の「完走」だけで完了記録を更新しない。
+
+この変更は親#217、Production#69、Project#18の受入IDで検証する。既存AAK-02のinternal 6runはProject納品の実証へ流用しない。新規cloneからの実エージェント納品受入を別記録に残し、必須FAIL/NOT_RUNがある間は本系列をDONEにしない。GitHub Actions・課金・LLM/daemon内蔵は必須条件ではない。

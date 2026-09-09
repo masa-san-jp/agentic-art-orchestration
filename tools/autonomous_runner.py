@@ -21,6 +21,7 @@ try:
         validate_destination_resolution,
         write_resolution_evidence,
     )
+    from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from tools.validate import _schema_errors, load_json, load_yaml
@@ -30,6 +31,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         validate_destination_resolution,
         write_resolution_evidence,
     )
+    from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -449,6 +451,7 @@ def run_autonomous(
     lease_seconds: int = 60,
     once: bool = False,
     max_steps: int = 32,
+    project_root: Path | None = None,
 ) -> dict[str, Any]:
     """Run until a terminal state, or one checkpoint when ``once`` is true."""
     import re
@@ -469,7 +472,14 @@ def run_autonomous(
     if not child_repository or not isinstance(child_repository, str):
         raise _error("child_repository is missing", "identify the worker child repository")
     destination_resolution = None
-    if destinations_profile_selected(destinations_file):
+    project_root_selected = project_root is not None or PROJECT_ROOT_ENV in os.environ
+    if project_root_selected and destinations_file is not None:
+        raise _error("AMBIGUOUS_DESTINATION_MODE", "choose repo-local --project-root or output-destinations/v1")
+    if project_root_selected:
+        destination_resolution = resolve_project_root(project_root, run_id=run_id)
+        state_root = Path(destination_resolution["destinations"]["state_root"]["path"])
+        project_path = str(destination_resolution["project_root"])
+    elif destinations_profile_selected(destinations_file):
         direct = {"state_root": state_root} if state_root is not None else None
         child_roots = ()
         project_root = Path(project_path).expanduser()
@@ -607,6 +617,8 @@ def main() -> int:
     parser.add_argument("--state-root", type=Path)
     parser.add_argument("--destinations-file", type=Path,
                         help="explicit external output-destinations/v1 profile")
+    parser.add_argument("--project-root", type=Path,
+                        help="explicit agentic-art-project checkout for output-destinations/v2")
     parser.add_argument("--worker-command", required=True)
     parser.add_argument("--child-repository", default="agentic-art-research")
     parser.add_argument("--source-commit")
@@ -631,6 +643,7 @@ def main() -> int:
             lease_seconds=args.lease_seconds,
             once=args.once,
             max_steps=args.max_steps,
+            project_root=args.project_root,
         )
     except (OSError, TypeError, ValueError, KeyError, subprocess.SubprocessError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
