@@ -1,12 +1,12 @@
-version: 252
-updated_at: '2026-09-10T01:20:51+09:00'
-active_task: REPO-LOCAL-E2E-001
-active_repository: agentic-art-orchestration
+version: 253
+updated_at: '2026-09-10T01:42:00+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex-repo-local-213
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-10T01:20:51+09:00'
-  expires_at: '2026-09-10T05:20:51+09:00'
+  expires_at: null
   lane: AUTONOMY
   execution_id: REPO-LOCAL-E2E-001:20260910
   scope:
@@ -24,16 +24,16 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: PRODUCTION-STARTUP-RECOVERY-001
+  task: DELIVERY-05
   repository: agentic-art-orchestration
-  status: MERGED
-  result: 'Issue #214 implemented and merged. Exact-pin recovery, manifest Research/Production root resolution, external Research work state, and explicit incomplete/resume reporting are verified by focused tests. Live provider-backed agent acceptance remains NOT_RUN.'
-  code_candidate: 21a187d58aab714e13f1250510b285f2d8bd0373
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/215
-  merge_commit: 61f132f521e321c93652af9d80b543e5e8b682a2
-  merged_at: '2026-09-08T22:27:23Z'
-  evidence: execution/production-startup-recovery-001.json
-  evidence_sha256: b13889ef57cbab64f242fb857899d81075ee0ce0fc57eaceceed6d41790993e5
+  status: BLOCKED
+  result: 'Code and local acceptance are complete through parent merge b1ecafd13d65798f4958a9595b83a8869c31f481; live provider-backed external-agent acceptance remains NOT_RUN.'
+  code_candidate: b1ecafd13d65798f4958a9595b83a8869c31f481
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/222
+  merge_commit: b1ecafd13d65798f4958a9595b83a8869c31f481
+  merged_at: '2026-09-10T01:40:00+09:00'
+  evidence: execution/repo-local-v2-evidence.json
+  blocker: 'Provider-backed external-agent execution and required content/rights/consent decisions are unavailable; no fake evidence or account billing is used.'
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -48,12 +48,12 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: DELIVERY-04
+last_completed_task: REPO-LOCAL-E2E-001
 resume_from:
-  task: REPO-LOCAL-E2E-001
+  task: DELIVERY-05
   repository: agentic-art-orchestration
-  action: Run the v2 cross-repository projection/replay fixture and record AC6/AC7/AC9/AC13 without claiming live acceptance.
-  command: .venv/bin/python -m unittest tests.test_repo_local_destinations tests.test_public_projection -v
+  action: Provider-backed external-agent acceptance is blocked; preserve code evidence and resume DELIVERY-05 only when the provider and consent boundary are available.
+  command: .venv/bin/python tools/run.py --cycle-context <context> --state-root <project-local-state>
 previous_checkpoint:
   task: AAK-11
   repository: agentic-art-production
@@ -1796,15 +1796,17 @@ aak_01_implementation:
 current_delivery_checkpoint:
   task: REPO-LOCAL-E2E-001
   repository: agentic-art-orchestration
-  branch: chore/delivery-evidence-20260910
-  base_commit: 9b8db8de79ceeb6a219d0ee5b3e5ecef6bfadb33
+  branch: chore/release-delivery-20260910
+  base_commit: b1ecafd13d65798f4958a9595b83a8869c31f481
   status: CODE_VERIFIED
   evidence: execution/repo-local-v2-evidence.json
   completed:
     - parent delivery verifier and v2 resolver merged to main
+    - parent evidence PR222 merged as b1ecafd13d65798f4958a9595b83a8869c31f481
     - Production PR70 merged as 68d7ec971a1e61878464a3d004ed7421e5306f52
     - Project PR19 merged as b87ac488d0c8f7ea155d98fe0d638bdd5187b96a
-    - focused v2/runtime/instance-profile checks passed
+    - Project README reconciliation PR21 merged as 17767752630282f0ab6e9f75077a8ba6c86740f6
+    - focused v2/runtime/instance-profile checks and full 615-test suite passed
   remaining:
     - live provider-backed acceptance remains NOT_RUN
-  next_operation: Commit and push the execution SSOT, then keep the live acceptance boundary explicit until a provider and consent are available.
+  next_operation: Lease released after execution SSOT push; resume DELIVERY-05 only when a provider-backed agent and the required consent are available.

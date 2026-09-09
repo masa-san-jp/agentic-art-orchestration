@@ -1,4 +1,4 @@
-version: 78
+version: 79
 updated_at: "2026-09-10T00:00:00+00:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
@@ -2532,7 +2532,7 @@ tasks:
   - id: DELIVERY-05
     milestone: AUTONOMY
     title: 実エージェント納品受入と文書同期
-    status: BACKLOG
+    status: BLOCKED
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
     target_repositories:
     - agentic-art-orchestration
@@ -2544,8 +2544,16 @@ tasks:
     - .venv/bin/python tools/validate.py --check
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
-    human_gate: Reuse existing explicit authorization. Do not infer new rights, consent,
-      external publication, or migration. Branch/commit/draft PR authorized.
+    human_gate: Provider-backed external-agent run and any missing content/rights/consent decision remain human/provider-gated; code implementation, local tests and merge are complete.
+    acceptance_evidence:
+      AC01-AC06: {status: PASS, evidence: execution/repo-local-v2-evidence.json, parent delivery verifier and owner focused/full tests}
+      AC07: {status: NOT_RUN, evidence: no provider-backed external agent and no new consent was available; synthetic runs are not substituted}
+      AC08: {status: PASS, evidence: README/AGENTS/runtime/state status separation and execution SSOT}
+      AC09-AC13: {status: NOT_RUN, evidence: final live integration matrix requires the AC07 external-agent run and requested delivery mode}
+    code_status: CODE_VERIFIED
+    integration_status: MERGED
+    completion: BLOCKED at the declared live-agent acceptance boundary; unblock by providing the configured provider and required consent, then resume the same DELIVERY-05 context without redoing completed code work.
+    blocker: Provider-backed external-agent execution and the required content/rights/consent decisions are unavailable; local code gates do not substitute for AC07.
   - id: REPO-LOCAL-PROJECT-QUALIFY-001
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
