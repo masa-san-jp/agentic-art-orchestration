@@ -37,7 +37,7 @@
     {
       "evidence_id": "evidence:agentic-art-research:requirement-001",
       "repository": "agentic-art-research",
-      "source_commit": "71bfec77ea0d189186b8248565d340c124b81eab",
+      "source_commit": "7b497dee368d470364ce89198affb26c7658d27a",
       "locator": "requirements/requirement-001",
       "evidence_kind": "derived",
       "freshness_status": "current",
