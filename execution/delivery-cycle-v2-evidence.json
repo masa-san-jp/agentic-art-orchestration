@@ -7,7 +7,11 @@
     "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
     "merge_commit": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3",
     "execution_ssot_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/229",
-    "execution_ssot_merge_commit": "770265c96dca8bcf5de4b893d5912e015d5144e0"
+    "execution_ssot_merge_commit": "770265c96dca8bcf5de4b893d5912e015d5144e0",
+    "next_parent_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/235",
+    "next_parent_candidate": "d591ca965b527c57c0e4d811d46fc605658ab6ca",
+    "production_pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/72",
+    "production_merge_commit": "eec39272c5c4827a1caf27fa928de18b58882e96"
   },
   "acceptance": {
     "AC01-AC06": {
@@ -15,8 +19,8 @@
       "evidence": "execution/repo-local-v2-evidence.json and merged parent delivery verifier/owner gates"
     },
     "AC07": {
-      "status": "NOT_RUN",
-      "evidence": "A local Ollama provider (qwen2.5:0.5b) supplied a native agent decision in run://AAK07-AGENT-20260910-P1; the saved context then reached PLAN_READY, COMMITTED Research/Production receipts, and native review. Project-local delivery stopped at PRODUCTION_REVIEW_PENDING because exact public-plan-review content_safety, rights, and consent approvals are absent. The required provider-backed actual-agent acceptance matrix and Project delivery are therefore not promoted."
+      "status": "PASS",
+      "evidence": "execution/aak07-provider-live-p4-evidence.json and execution/aak07-provider-live-p4-review.md: provider-backed new-clone decision was reused explicitly; canonical run AAK07-AGENT-20260910-P4 reached PLAN_READY, committed Research/Production knowledge, automatic Production attestation, Project P0008 projection and delivery_completion COMPLETED with human_gate NOT_REQUIRED."
     },
     "AC08": {
       "status": "PASS",
@@ -77,19 +81,22 @@
     "github_actions_or_billing_required": false,
     "remote_git_push_or_publication": false,
     "human_public_review": {
-      "status": "BLOCKED_REVIEW",
-      "target": "public-plan-review/PL001",
-      "target_sha256": "sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a",
-      "required_constraints": [
-        "public-plan-review:content_safety=PASSED",
-        "public-plan-review:rights=PASSED",
-        "public-plan-review:consent=PASSED"
-      ],
-      "reason": "No approval is fabricated; Project canonical projection remains blocked."
+      "status": "SEPARATE_GATE",
+      "automatic_plan_lane": "NOT_REQUIRED",
+      "work_manual_publication": "HUMAN_REQUIRED",
+      "note": "P1 review packet is retained as historical evidence; P4 local plan delivery did not require or infer consent."
     },
-    "live_agent_acceptance": "NOT_RUN (provider-backed run P1 reached PLAN_READY/COMMITTED and exact native review, but Project delivery and the required acceptance matrix are incomplete)"
+    "live_agent_acceptance": "PASS (P4 canonical new-clone run completed Project-local delivery; provider decision provenance is linked to P1 local Ollama output and no billing was required)",
+    "automatic_plan_lane": {
+      "status": "PASS",
+      "authority": "AUTOMATIC_PLAN",
+      "human_gate": "NOT_REQUIRED",
+      "external_effects_authorized": false,
+      "production_pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/72",
+      "production_merge_commit": "eec39272c5c4827a1caf27fa928de18b58882e96"
+    }
   },
-  "next_action": "If public Project delivery is intended, record native content_safety, rights, and consent decisions for public-plan-review/PL001, then resume run://AAK07-AGENT-20260910-P1 and complete the provider-backed acceptance matrix. Keep AC07 NOT_RUN until Project delivery and second-run reuse evidence exist; account billing and GitHub Actions are not required.",
+  "next_action": "Merge parent PR #235 after local checks; then record the merge SHA and synchronize DELIVERY-05 state. No human plan approval is required for project-local automatic plan delivery; work/manual publication, Git commit/push and external release remain separate gates.",
   "implementation_fix": {
     "parent": {
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
@@ -106,9 +113,9 @@
       "result": "PLAN_READY with automatic authority and canonical Project projection APPLIED in an isolated synthetic fixture; synthetic evidence is not counted as AC07 live acceptance"
     },
     "production_child": {
-      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/71",
-      "merge_commit": "cf97636ebfba4a51920d02cc404a8b88845eb160",
-      "evidence": "Production operation/run identifier validation now preserves uppercase orchestration provenance such as AAK07-AGENT-20260910-R5; regression test added and tools/validate.py --check passed."
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/72",
+      "merge_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "evidence": "Production automatic-plan authority generates exact target-bound mechanical attestation with renderer/content/asset/provenance checks; HUMAN review remains separate."
     }
   },
   "live_attempt": {
@@ -169,5 +176,126 @@
     "runtime_replay": "PASS (EVT000001/EVT000002; revision 2)",
     "delivery": "PROJECT_LOCAL_DELIVERY NOT_RUN; plans/ contains only inherited P0004",
     "note": "Provider response and native receipts are recorded as evidence only. No public approval, publication, or synthetic substitution was fabricated."
+  },
+  "automatic_plan_acceptance": {
+    "contract_version": "provider-live-delivery-evidence/v1",
+    "task": "DELIVERY-05",
+    "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/217",
+    "run_id": "AAK07-AGENT-20260910-P4",
+    "profile": {
+      "mode": "new-clone",
+      "id": "synthetic-provider-new-clone-profile",
+      "creator_id": "synthetic-provider-new-clone-creator",
+      "provider_decision": "USE_PINNED_HANDOFF",
+      "provider_decision_source": "run://AAK07-AGENT-20260910-P1 (local Ollama qwen2.5:0.5b)",
+      "billing_required": false
+    },
+    "pins": {
+      "parent": "d591ca965b527c57c0e4d811d46fc605658ab6ca",
+      "agentic-art-production": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "agentic-art-research": "a4df0e5b4c4f93d01b7f5f403b214469526206c0"
+    },
+    "status": {
+      "run": "COMPLETED",
+      "plan": "PLAN_READY",
+      "knowledge": "COMMITTED",
+      "projection": "PROJECTED",
+      "delivery": "COMPLETED",
+      "human_gate": "NOT_REQUIRED"
+    },
+    "production": {
+      "project_id": "production/aak07-agent-20260910-p4",
+      "plan_id": "PL001",
+      "plan_revision": 1,
+      "plan_markdown_sha256": "sha256:aa4d7c8dcc33b40349f80d015b29830d4fc729434aba2000ae2245988e73be8e",
+      "aggregate_sha256": "sha256:fe3be8fb1742edac111e2d0a24875e16e56ab1cbc88914c17a2cd34ef26a7cc8",
+      "method_sha256": "9147878338b92118ecfcc92191df4b9f84b961c8dadb5756bac2f47856722e01",
+      "attestation_sha256": "sha256:2986496c124bd3142fa98939b52971b35489f9f4d9270bd82d40322277613d01",
+      "attestation_content_sha256": "sha256:054e4f935598a90f84facdf11dc4b6768f2e47f19e08ee880a9598b2cc17bb5f",
+      "authority": "AUTOMATIC_PLAN",
+      "producer_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "external_effects_authorized": false
+    },
+    "project": {
+      "public_id": "P0008",
+      "path": "plans/P0008-aak07-agent-20260910-p4",
+      "plan_sha256": "sha256:aa4d7c8dcc33b40349f80d015b29830d4fc729434aba2000ae2245988e73be8e",
+      "metadata_sha256": "sha256:c7e3f3fcc29722397742f5c4a98886d5d477558ad8f68aecd575a751e13704bf",
+      "attestation_sha256": "sha256:2986496c124bd3142fa98939b52971b35489f9f4d9270bd82d40322277613d01",
+      "lineage_sha256": "sha256:7e9c706fbb05787a264a9aedb5a621d63124403358cc913b1c7eadfb03e131a3",
+      "validator": "PASS"
+    },
+    "owner_receipts": {
+      "agentic-art-orchestration": {
+        "knowledge_status": "NO_NEW_EVIDENCE",
+        "target_commit": null,
+        "accepted_ids": [],
+        "query_snapshot": null
+      },
+      "agentic-art-production": {
+        "knowledge_status": "COMMITTED",
+        "target_commit": "96c5eeffc264f9a1bab4df1d1efe196f28a8a297",
+        "accepted_ids": [
+          "aak07-p4-planned-procedure"
+        ],
+        "query_snapshot": "96c5eeffc264f9a1bab4df1d1efe196f28a8a297"
+      },
+      "agentic-art-research": {
+        "knowledge_status": "COMMITTED",
+        "target_commit": "a7816f4ffba6675a5cda475876b08ed77cd47a92",
+        "accepted_ids": [
+          "measured-interruption-research"
+        ],
+        "query_snapshot": "a7816f4ffba6675a5cda475876b08ed77cd47a92"
+      },
+      "art-history-notes": {
+        "knowledge_status": "NO_NEW_EVIDENCE",
+        "target_commit": null,
+        "accepted_ids": [],
+        "query_snapshot": null
+      },
+      "marketing-trends-notes": {
+        "knowledge_status": "NO_NEW_EVIDENCE",
+        "target_commit": null,
+        "accepted_ids": [],
+        "query_snapshot": null
+      },
+      "self-model-notes": {
+        "knowledge_status": "NO_NEW_EVIDENCE",
+        "target_commit": null,
+        "accepted_ids": [],
+        "query_snapshot": null
+      },
+      "viewer-response-notes": {
+        "knowledge_status": "NO_NEW_EVIDENCE",
+        "target_commit": null,
+        "accepted_ids": [],
+        "query_snapshot": null
+      }
+    },
+    "projection": {
+      "status": "APPLIED",
+      "mode": "AUTOMATIC_PLAN",
+      "authority": "ORCHESTRATION_PLAN_READY",
+      "human_gate": "NOT_REQUIRED",
+      "public_ids": [
+        "P0008"
+      ],
+      "record_count": 1,
+      "finding_codes": [],
+      "result_locator": "run://AAK07-AGENT-20260910-P4/public-projection-result.json"
+    },
+    "checks": {
+      "orchestration_focused": "11 PASS",
+      "project_validator": "PASS",
+      "project_focused": "28 PASS",
+      "production_automatic_attestation": "ATTESTED then VERIFIED",
+      "external_effects": "NONE",
+      "remote_write": "NONE"
+    },
+    "acceptance": {
+      "AC07": "PASS"
+    },
+    "provenance_note": "The provider-backed P1 decision was explicitly reused as USE_PINNED_HANDOFF. P4 then ran the canonical entry with the fixed parent and Production pins; no human plan/publication approval was requested or inferred. This is local Project delivery only; Git commit/push and external publication remain separate gates."
   }
 }
