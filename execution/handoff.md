@@ -2,7 +2,42 @@
 
 Run `AAK07-AGENT-20260910-P1` used local Ollama `qwen2.5:0.5b` (no billing) and a fresh synthetic new-clone profile. The provider decision was `USE_PINNED_HANDOFF`; the saved context reached `PLAN_READY`, committed Research (`c19c851d896c5d289ce6032d0ce94abf67efc8ce`) and Production (`eac0debb4b728885445e74d1f3bc5ef78692f066`) knowledge, and runtime replay passed at revision 2. The native review packet is now blocked only by exact `public-plan-review/PL001` HUMAN approval for target `sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a` and constraints `content_safety=PASSED`, `rights=PASSED`, `consent=PASSED`. A user-readable review summary is at `execution/aak07-provider-live-p1-review.md`. No approval or public projection was fabricated. AC07 remains NOT_RUN until Project delivery and the required provider-backed acceptance matrix are complete. Evidence: `execution/delivery-cycle-v2-evidence.json` (`provider_attempt`).
 
-# Delivery correction registered — 2026-09-10
+# Legacy Project plan recovery completed — 2026-09-11
+
+The previously generated P0009-P0014 recovery outputs were rejected as
+insufficient because their bodies were nearly identical. They were replaced,
+not promoted, by six fresh Production plans derived from the historical
+candidate-specific constraints. Each plan passed the qualified Production
+attestation at `eec39272c5c4827a1caf27fa928de18b58882e96`, native Project
+projection, lineage initialization, catalog synchronization, and Project
+validation. Public IDs were restored to the historical sequence:
+P0001/P0002/P0003/P0005/P0006/P0007, leaving the catalog as P0001-P0008 with
+no gap. Final evidence is
+`execution/project-local-legacy-recovery-final-20260911.json`.
+
+The six recovered plans are materially distinct: P0001 uses three translation
+panels and adopt/hold/reject persistence; P0002 uses two distinct traditions,
+two approach directions, and a local non-contact gap; P0003 uses free
+repositioning and a detail/whole trade-off; P0005 places the frame on the
+viewer side; P0006 fixes a 1800x2100mm surface, 450mm stop line, and timed
+light rest; P0007 is a closed A3 6x6 box with 35 packets and one empty cell.
+The old template outputs remain in Git history via explicit reverts and the
+old internal copies are preserved under
+`.agentic-art/internal/production/recovery-superseded-20260911/`.
+
+Project branch `docs/ecosystem-readme-20260910` is at
+`b901e5edaf99d20fada2e7321b30160e9fd9f0e9`. Native checks pass. Existing
+`tests/test_local_workspace.py` is a pre-existing uncommitted Project change
+and was not touched. P0004 remains `UNKNOWN_ATTRIBUTION` by design; no creator
+was fabricated. Remote push/release was not performed.
+
+All legacy-recovery sections dated 2026-09-10 below are preserved as the
+initial read-only observations and are superseded by the 2026-09-11 final
+recovery record. Their `BLOCKED` wording describes the state before the
+regenerated Production inputs were created; it is not the current Project
+catalog status.
+
+# Historical delivery correction registered — 2026-09-10 (superseded)
 
 Issue217 is NOT complete. DELIVERY-01 → Production69/Project18 → DELIVERY-04 → DELIVERY-05. Branch fix/delivery-completion-217; base f248056. Existing lease available; claim DELIVERY-01 next. Prior internal AAK acceptance is not Project delivery evidence. Registration only; no new code acceptance yet.
 
@@ -2528,3 +2563,83 @@ Run the saved DELIVERY-05 cycle context through a configured provider from a cle
 ### Next exact action
 
 1. For a normal Project-local request, provide the explicit project checkout and delivery contract to `tools/run.py`; the automatic plan lane will continue to the Project receiver without requesting a plan approval. Use the separate human gate only for work/manual publication or external effects.
+
+## 2026-09-10 — Project-local destination correction
+
+- The earlier DELIVERY-05 evidence was produced in a temporary provider workspace. It did not prove delivery into the explicitly requested `/Users/masa/マイドライブ/Dev/agentic-art-project` checkout.
+- The corrected cycle `PROJECT-LOCAL-PLAN-20260910-04` used the explicit Project root and saved its state below the Project-local `.agentic-art/state/` boundary. The requested delivery contract is `delivery-contract/v1: project-local`.
+- Project received `P0008` at `plans/P0008-aak07-agent-20260910-p4`. Native lineage is `VALIDATED` with the explicit new-clone instance/creator, the Project validator and catalog sync pass, and the local receiver receipt is `VERIFIED`.
+- The corrected cycle state reports `run_status=COMPLETED`, `projection_status=PROJECTED`, and `delivery_completion.status=COMPLETED`. The inherited `P0004` `UNKNOWN_ATTRIBUTION` blocker remains preserved and was not relabeled.
+- The Project checkout remains intentionally uncommitted at its existing branch head; Git commit, remote synchronization, public release, and physical work are separate gates. Machine-readable correction evidence is [`execution/project-local-plan-20260910-04-evidence.json`](project-local-plan-20260910-04-evidence.json).
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0001 (superseded)
+
+- Task `LEGACY-RECOVERY-P0001` was assessed first by ID order against the local Project Git history, migration record, parent execution evidence, and available Production checkout.
+- The historical P0001 record at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` is a sanitized public summary (`sha256:525fcd31ff35c11603baac67d9adca86ac4b89baa533372dcf14510006aae8af`). It is not a current Production canonical plan and has no verifiable accepted handoff/source bundle or Production attestation in the available local evidence.
+- P0001 was initially recorded as `BLOCKED` in [`execution/project-local-legacy-recovery-20260910.json`](project-local-legacy-recovery-20260910.json); this initial observation is superseded by the final regenerated record. No provenance or approval was invented.
+
+### Next exact action
+
+1. Inspect P0002 (`run/auto-auto-plan-repository-202`) and apply the same read-only source recovery and canonical Production/Project gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0002 (superseded)
+
+- Task `LEGACY-RECOVERY-P0002` assessed the candidate `run/auto-auto-plan-repository-202` after P0001, in numeric order.
+- The historical record at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` has a detailed summary (`sha256:6968d922845591e47244b8af11f623a25ecf57414e807e2f28c48079ca030036`), but no matching accepted Research handoff/source bundle, current Production project, stable Production identity, or attestation was found in the local evidence.
+- P0002 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0002-20260910.json`](project-local-legacy-recovery-P0002-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0003 (`run/auto-run-yohaku-001`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0003 (superseded)
+
+- Task `LEGACY-RECOVERY-P0003` assessed `run/auto-run-yohaku-001` after P0002, in numeric order.
+- The historical P0003 summary at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` has hash `sha256:cb887f2b2771554083b0c54aed32ff276d64c473be364682bf896d3146e090c9`, but no matching accepted Research handoff/source bundle, current Production project, stable source identity, or attestation was found.
+- P0003 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0003-20260910.json`](project-local-legacy-recovery-P0003-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0005 (`production/close-but-cannot-reach`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0005 (superseded)
+
+- Task `LEGACY-RECOVERY-P0005` assessed `production/close-but-cannot-reach` after P0003, in migration order.
+- The historical summary at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` has hash `sha256:ba95efb8113cb1177033a9a9b8accf4e281fa52aaa8c53970cfc8e80cd5331135a`. A local old self-model fixture reference exists, but it is not an accepted current handoff or canonical Production source and has unknown freshness.
+- P0005 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0005-20260910.json`](project-local-legacy-recovery-P0005-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0006 (`run/boundary-distance-20260905`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0006 (superseded)
+
+- Task `LEGACY-RECOVERY-P0006` assessed `run/boundary-distance-20260905` after P0005.
+- A historical Project commit `dbfa65c33fc254ee4787a9e04cbfc0b5971a7e5a` temporarily labeled the record canonical and named Production commit `e1bb0deb4c28489a881ef663a3d2a8d974c5b295` and handoff `HO20260908`; however, the metadata still had `production_clearance: pending`, and no bound attestation or recoverable accepted Production project was found.
+- P0006 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0006-20260910.json`](project-local-legacy-recovery-P0006-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0007 (`run/auto-new-plan-20260904-001-d3fa82c0d944`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0007 (superseded)
+
+- Task `LEGACY-RECOVERY-P0007` assessed `run/auto-new-plan-20260904-001-d3fa82c0d944` after P0006.
+- The historical detailed plan at `d6928e5f7a33dbeb90c5e62ef3899fe65f17373d` has hash `sha256:e8a75a205892214ae8e6edd600e680cfd6593b493881e0589931d14adaa3f9ed`; its metadata still says `production_clearance: pending` and `projection: sanitized-public-plan`, with no bound Production attestation found.
+- P0007 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0007-20260910.json`](project-local-legacy-recovery-P0007-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Run aggregate validation of the six legacy recovery records and current Project-local P0008 output; preserve all legacy IDs in `plans/migration.yaml`.
+
+## Historical 2026-09-10 — Legacy recovery aggregate (superseded)
+
+- All six legacy candidates were initially checked individually in ID order and were then regenerated through the current Production/Project path. The initial missing-source findings are retained as historical evidence only.
+- Existing P0004 `UNKNOWN_ATTRIBUTION` was preserved. It was not relabeled or used as evidence for another candidate.
+- The corrected Project-local output P0008 remains `COMPLETED_PROJECT_LOCAL` and is verified by the native Project receiver. Parent and Project checks are recorded in [`execution/project-local-legacy-recovery-summary-20260910.json`](project-local-legacy-recovery-summary-20260910.json).
+- The parent full suite completed as `623 tests; 3 failures, 31 errors, 1 skipped`; the failures/errors are the known macOS `/var` → `/private/var` temporary-path symlink incompatibility with strict external-path guards. The focused delivery/cycle checks and all Project receiver checks pass.
+- No old summary, historical canonical label, inferred personal signal, approval, or consent was promoted into a new public record. The numeric gaps are therefore intentional preservation of unresolved migration IDs, not missing output paths.
+
+### Next exact action
+
+1. If a legacy handoff/source bundle becomes available, run that candidate alone through current Production attestation and the explicit Project root; otherwise retain the six recorded blockers and the verified P0008 output.

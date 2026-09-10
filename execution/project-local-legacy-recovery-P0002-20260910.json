@@ -1,0 +1,28 @@
+{
+  "contract_version": "legacy-plan-recovery/v1",
+  "task": "LEGACY-RECOVERY-P0002",
+  "target_repository": "agentic-art-project",
+  "target_delivery": "project-local",
+  "status": "BLOCKED",
+  "candidate": {
+    "record_id": "P0002",
+    "source_candidate": "run/auto-auto-plan-repository-202",
+    "historical_commit": "e5ff621769a9828ac867cf3fb55e859c79bb46fb",
+    "historical_path": "plans/P0002-moving-gap",
+    "historical_content_sha256": "sha256:6968d922845591e47244b8af11f623a25ecf57414e807e2f28c48079ca030036"
+  },
+  "observations": [
+    "The historical record contains a detailed public Markdown summary, but it is explicitly marked as a sanitized-public-plan projection.",
+    "No matching accepted Research handoff/source bundle, current Production project, or Production attestation for run/auto-auto-plan-repository-202 was found in the local parent, Research, Production, or Project evidence.",
+    "The observed facts match plans/migration.yaml: the old body is not enough to establish stable Production provenance."
+  ],
+  "blocked_reason": "Cannot claim P0002 recovery or project a canonical plan from the summary alone; the required Production source identity and attestation are absent.",
+  "unblock_condition": "Recover the corresponding Production project or accepted handoff, verify stable source identity and exact bytes with current Production attestation, then run native Project receiver and lineage checks.",
+  "actions_taken": [
+    "Read-only search completed across local parent, Research, Production, and Project workspaces and reachable Git history.",
+    "No Project catalog files were changed for P0002.",
+    "No approval, consent, source identity, or attestation was fabricated."
+  ],
+  "next_candidate": "P0003",
+  "next_operation": "Inspect P0003 (run/auto-run-yohaku-001) through the same source and canonical gates."
+}

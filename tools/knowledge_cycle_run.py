@@ -93,8 +93,17 @@ def _query(owner, binding, inputs, snapshot, context):
     if path.exists() and read(path) != result:
         raise ValueError('PINNED_QUERY_CHANGED')
     save(path, result)
-    return {'owner': owner, 'snapshot': snapshot, 'query_hash': hashed(inputs),
-            'result_hash': hashed(result), 'result_ref': str(path), 'evaluated_at': context['clock']}
+    metadata = {'owner': owner, 'snapshot': snapshot, 'query_hash': hashed(inputs),
+                'result_hash': hashed(result), 'result_ref': str(path), 'evaluated_at': context['clock']}
+    # Keep a pre-existing Project catalog blocker visible in the run evidence.
+    # It is never converted to a successful reference and never supplies
+    # lineage for the new record; native Project validation below remains the
+    # acceptance gate for the requested projection.
+    if owner == 'agentic-art-project' and result.get('status') == 'BLOCKED':
+        blocked = result.get('blocked', [])
+        metadata['result_status'] = 'BLOCKED'
+        metadata['blocked_record_count'] = len(blocked) if isinstance(blocked, list) else 0
+    return metadata
 
 
 def advance(context, state_root):
@@ -393,23 +402,25 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
         binding = bindings['agentic-art-project']
         code = checked_code(binding['code_root'], binding['code_commit'])
         python = binding.get('python', sys.executable)
+        from tools.project_local_delivery import prepare_lineage, sync_catalog, verify as verify_project_local
+        project_profile = run_root / 'project-instance-profile.yaml'
         for identifier in projected['public_ids']:
+            lineage_input = run_root / (identifier + '-lineage.json')
+            prepare_lineage(code, python, public, identifier, Path(context['instance_profile']),
+                            lineage_input, project_profile)
             subprocess.run([python, str(code/'tools/catalog_lineage.py'), 'annotate', '--root', str(public),
-                '--record-id', identifier, '--instance-profile', context['instance_profile'], '--mode', 'new', '--initialize-new', '--apply'],
+                '--record-id', identifier, '--input', str(lineage_input), '--instance-profile', str(project_profile),
+                '--mode', 'new', '--apply'],
                 cwd=code, check=True, capture_output=True, text=True, timeout=120)
-        subprocess.run([python, str(code/'tools/catalog_sync.py'), '--root', str(public), '--write'], cwd=code, check=True, capture_output=True, timeout=120)
+        sync_catalog(code, python, public)
         expected = [{'record_id':identifier, 'content_sha256':source['production_plan_sha256'],
             'creator_id':profile['creator_id'], 'origin_instance_id':profile['instance_id'], 'source_identity':source['source_identity']}
             for identifier in projected['public_ids']]
         expectation = run_root/'expected-delivery.json'
         save(expectation, expected)
-        result = subprocess.run([python, str(code/'tools/local_delivery.py'), '--root', str(public), '--expected', str(expectation)],
-            cwd=code, capture_output=True, text=True, timeout=120)
-        receipt = json.loads(result.stdout)
-        save(run_root/'local-delivery.json', receipt)
-        if result.returncode or receipt.get('status') != 'VERIFIED' or receipt.get('contract_version') != 'local-plan-delivery-receipt/v1':
-            state.update(stop_reason='PROJECT_LOCAL_DELIVERY_INVALID', next_action={'actor':'agent','stage':'projection','receipt':str(run_root/'local-delivery.json')})
-            return
+        projection_result = run_root.parent.parent / run_id / 'public-projection-result.json'
+        receipt = verify_project_local(public, code, python, expectation,
+            run_root/'local-delivery.json', run_id, projection_result)
         checked_code(code, binding['code_commit'])
         state.update(projection_status='PROJECTED', run_status='COMPLETED', stop_reason=None, next_action=None, local_delivery_receipt=receipt)
         return

@@ -1,5 +1,5 @@
-version: 259
-updated_at: '2026-09-10T15:12:00+09:00'
+version: 260
+updated_at: '2026-09-11T00:05:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -37,6 +37,27 @@ checkpoint:
   evidence: execution/aak07-provider-live-p4-evidence.json
   review_artifact: execution/aak07-provider-live-p4-review.md
   blocker: null
+
+legacy_recovery_checkpoint:
+  task: LEGACY-RECOVERY-20260910
+  repository: agentic-art-project
+  status: COMPLETED
+  target_branch: docs/ecosystem-readme-20260910
+  target_commit: b901e5edaf99d20fada2e7321b30160e9fd9f0e9
+  result: Six historical candidates were regenerated through qualified Production and Project-native delivery, replacing the near-identical template outputs. Public IDs were restored to P0001-P0008 with no gap.
+  records: [P0001, P0002, P0003, P0005, P0006, P0007]
+  source_production_commit: eec39272c5c4827a1caf27fa928de18b58882e96
+  evidence: execution/project-local-legacy-recovery-final-20260911.json
+  checks:
+    production_attestation: PASS
+    project_validator: PASS
+    catalog_sync: PASS
+    lineage: PASS for recovered records
+    distinct_content: PASS
+  private_old_output: .agentic-art/internal/production/recovery-superseded-20260911/
+  preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
+  remote_sync: NOT_RUN
+
 last_completed_task: DELIVERY-05
 resume_from:
   task: null

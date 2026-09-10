@@ -1,0 +1,35 @@
+{
+  "contract_version": "legacy-plan-recovery-summary/v1",
+  "task": "LEGACY-RECOVERY-20260910",
+  "target_repository": "agentic-art-project",
+  "target_root_role": "public_projection_root",
+  "requested_output": "agent-harness-valid Project-local production plans",
+  "status": "COMPLETED",
+  "superseded_by": "execution/project-local-legacy-recovery-final-20260911.json",
+  "candidate_results": [
+    {"record_id": "P0001", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0001-owner-of-choice", "evidence": "execution/project-local-legacy-recovery-final-20260911.json"},
+    {"record_id": "P0002", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0002-moving-gap", "evidence": "execution/project-local-legacy-recovery-final-20260911.json"},
+    {"record_id": "P0003", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0003-yohaku-breath", "evidence": "execution/project-local-legacy-recovery-final-20260911.json"},
+    {"record_id": "P0004", "status": "PRESERVED_UNKNOWN_ATTRIBUTION", "evidence": "agentic-art-project/.agentic-art/state/knowledge-cycles/PROJECT-LOCAL-PLAN-20260910-04/local-delivery.json"},
+    {"record_id": "P0005", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0005-close-but-cannot-reach", "evidence": "execution/project-local-legacy-recovery-final-20260911.json"},
+    {"record_id": "P0006", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0006-distance-selects-boundary", "evidence": "execution/project-local-legacy-recovery-final-20260911.json"},
+    {"record_id": "P0007", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0007-near-not-received", "evidence": "execution/project-local-legacy-recovery-final-20260911.json"},
+    {"record_id": "P0008", "status": "COMPLETED_PROJECT_LOCAL", "path": "plans/P0008-aak07-agent-20260910-p4", "evidence": "agentic-art-project/.agentic-art/state/knowledge-cycles/PROJECT-LOCAL-PLAN-20260910-04/local-delivery.json"}
+  ],
+  "legacy_recovery_rule": "Do not promote a historical summary or label to a canonical Project record without recoverable Production input, exact plan bytes, attestation, native validation, and lineage.",
+  "target_mutation": "P0001-P0003 and P0005-P0007 were regenerated through Production, projected with native attestation, restored to their historical IDs, and validated. Existing P0004 attribution was preserved.",
+  "verification": {
+    "parent_validator": "PASS",
+    "legacy_evidence_json": "PASS",
+    "project_validator": "PASS",
+    "project_catalog_sync": "PASS",
+    "project_lineage_catalog_tests": "PASS; recovered P0001-P0003/P0005-P0008 VALIDATED, existing P0004 UNKNOWN_ATTRIBUTION preserved",
+    "parent_focused_tests": "PASS; final recovery checks recorded in execution/project-local-legacy-recovery-final-20260911.json",
+    "parent_full_suite": "Not rerun after final recovery; prior 623-test result retained as historical environment evidence",
+    "parent_full_suite_environment_finding": "Prior failures/errors were the known macOS /var -> /private/var temporary-path symlink incompatibility with strict external-path guards; no legacy recovery or Project P0008 assertion failed.",
+    "project_target_working_tree": "PREEXISTING_UNCOMMITTED tests/test_local_workspace.py preserved",
+    "project_remote_sync": "NOT_RUN"
+  },
+  "remaining_unblock": "P0004 creator attribution remains unknown and is intentionally not invented. No recovery work remains for P0001-P0003/P0005-P0007.",
+  "next_operation": "No next recovery operation. Inspect the final evidence and Project branch; remote publication remains a separate human decision."
+}

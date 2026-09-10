@@ -1,0 +1,106 @@
+{
+  "contract_version": "legacy-plan-recovery-final/v1",
+  "task": "LEGACY-RECOVERY-20260910",
+  "target_repository": "agentic-art-project",
+  "target_root": "/Users/masa/マイドライブ/Dev/agentic-art-project",
+  "target_branch": "docs/ecosystem-readme-20260910",
+  "target_commit": "b901e5edaf99d20fada2e7321b30160e9fd9f0e9",
+  "status": "COMPLETED",
+  "public_sequence": ["P0001", "P0002", "P0003", "P0004", "P0005", "P0006", "P0007", "P0008"],
+  "records": [
+    {
+      "historical_id": "P0001",
+      "public_id": "P0001",
+      "path": "plans/P0001-owner-of-choice",
+      "source_identity": "production/owner-of-choice#PL001",
+      "source_run_id": "LEGACY-DISTINCT-P0001-BASE-20260910",
+      "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "plan_sha256": "01229cedd89fd6913b3e1ff494397d7cd93745dbc7b018fcb8f9376e8507d047",
+      "attestation_sha256": "cf3ebca0f26fcc2168db222a8374cc238acc76b9646fd154a8cee63986dcb4ab",
+      "distinctive_constraints": ["three translucent panels", "adopt/hold/reject", "hold and reject persist"]
+    },
+    {
+      "historical_id": "P0002",
+      "public_id": "P0002",
+      "path": "plans/P0002-moving-gap",
+      "source_identity": "production/moving-gap#PL001",
+      "source_run_id": "LEGACY-DISTINCT-P0002-BASE-20260910",
+      "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "plan_sha256": "f8b83474a772e7c54c9ad44189b295a19a9187afb84fac7283e7ac22bb904b9a",
+      "attestation_sha256": "ab90fb3f8166b16bf42e65d28cbe381dc4d2a06f201395fea31d0dccae99293c",
+      "distinctive_constraints": ["two distinct traditions", "two approach directions", "local non-contact gap"]
+    },
+    {
+      "historical_id": "P0003",
+      "public_id": "P0003",
+      "path": "plans/P0003-yohaku-breath",
+      "source_identity": "production/yohaku-breath#PL001",
+      "source_run_id": "LEGACY-DISTINCT-P0003-BASE-20260910",
+      "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "plan_sha256": "54658b11dbd1975cb367c7dd5b9cf502afb62dfb1a33e80071ce655a1a4fba5b",
+      "attestation_sha256": "a3f4360cbdd9b3d29a590537e6782c8be63893b42b1bfe4224355f469d4be367",
+      "distinctive_constraints": ["free repositioning", "detail/whole trade-off", "no fixed route"]
+    },
+    {
+      "historical_id": "P0005",
+      "public_id": "P0005",
+      "path": "plans/P0005-close-but-cannot-reach",
+      "source_identity": "production/close-but-cannot-reach#PL001",
+      "source_run_id": "LEGACY-DISTINCT-P0005-BASE-20260910",
+      "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "plan_sha256": "aabe64cd0bd506ffa4f79412c4b024bb258815fe641a5f19330d986be4a29ffa",
+      "attestation_sha256": "66f531bc5a073b041f7b4c314687074b893b07215db17530f731b13fc84dd399",
+      "distinctive_constraints": ["viewer-side frame", "anonymous distant figure", "no access device or borrowed image"]
+    },
+    {
+      "historical_id": "P0006",
+      "public_id": "P0006",
+      "path": "plans/P0006-distance-selects-boundary",
+      "source_identity": "production/distance-selects-boundary#PL001",
+      "source_run_id": "LEGACY-DISTINCT-P0006-BASE-20260910",
+      "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "plan_sha256": "a39298ccacd2688790e9955fca2eee6f31ac3817d23856219e71947f91422df2",
+      "attestation_sha256": "1ba8a0edd44a2d2e100c7cdb2d2acfa0d88a0cfc6021dbd7b412b76f78988079",
+      "distinctive_constraints": ["1800x2100mm transparent surface", "450mm stop line", "30-second warm-light cycle and 10-second still interval"]
+    },
+    {
+      "historical_id": "P0007",
+      "public_id": "P0007",
+      "path": "plans/P0007-near-not-received",
+      "source_identity": "production/near-not-received#PL001",
+      "source_run_id": "LEGACY-DISTINCT-P0007-BASE-20260910",
+      "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "plan_sha256": "f684433583621dc99c1cdb044baaf8d907d7a91001846df12a92d999d3c72ae5",
+      "attestation_sha256": "a98fba69b6f441d34e8c3bacfa33ba03493dec9a45b60fb55add923925962272",
+      "distinctive_constraints": ["A3 closed tabletop box", "6x6=36 cells", "35 packets plus one empty cell"]
+    }
+  ],
+  "checks": {
+    "production_attestation_all_six": "PASS",
+    "project_validator": "PASS",
+    "project_catalog_sync": "PASS",
+    "project_lineage": "PASS for recovered records; P0004 remains UNKNOWN_ATTRIBUTION as pre-existing",
+    "public_ids": "PASS: no gap in P0001-P0008",
+    "duplicate_template_check": "PASS: six plan hashes and six candidate-specific constraint sets differ",
+    "parent_validator": "PASS",
+    "remote_sync": "NOT_RUN; non-default Project branch remains local"
+  },
+  "old_template_outputs": {
+    "public_status": "SUPERSEDED_AND_REVERTED",
+    "reverted_commits": ["bc8ee32", "d3ca3d6", "3e57c8f", "a199040", "e5519ce", "daac511", "530b62b"],
+    "private_archive": ".agentic-art/internal/production/recovery-superseded-20260911/"
+  },
+  "privacy": {
+    "sensitive_data": "none",
+    "external_artifact": "none",
+    "real_person_or_recipient_data": "none"
+  },
+  "feedback": {
+    "explicit": "旧候補を復旧してP0001から連番にし、中身を候補ごとに別作品として完成させる",
+    "inferred": "none"
+  },
+  "unresolved": [
+    "P0004 has pre-existing UNKNOWN_ATTRIBUTION; no creator identity was invented.",
+    "Remote push/public release was not performed; local Project branch is complete and verifiable."
+  ]
+}

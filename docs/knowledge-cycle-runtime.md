@@ -16,6 +16,13 @@ Once the plan verifies, native writes and indexes run one owner at a time. Each 
 
 Reports separate plan, knowledge, projection and run statuses. Internal delivery can complete without publication. Public delivery invokes the existing canonical projection and remains incomplete until the Project owner verifies committed receiver bytes and new creator/origin lineage; no public review or permission is inferred. A completed production run is not proof of AAK02 live acceptance: qualification additionally requires three modes with two actual external-agent runs each and inspected knowledge-adoption evidence. Synthetic regressions never qualify as live acceptance.
 
+Project's read-only catalog query may return `BLOCKED` when a pre-existing
+record deliberately remains `UNKNOWN_ATTRIBUTION`. The cycle retains that
+status and blocker count in the query evidence; it never treats the record as
+validated, changes its attribution, or uses it as lineage. An unrelated new
+plan may continue only if its own automatic attestation, native Project
+lineage initialization, and local receiver validation all pass.
+
 The legacy purpose E2E `live-private` name describes data access, not proof of an actual LLM worker. Its historical evidence remains readable; new supervisor records say RESEARCH_COMPLETE. Only the separately recorded AAK02 actual-agent matrix can satisfy live acceptance.
 
 Initial searches retain the supplied snapshot clock. Each native write captures its own actual clock before invocation and retains it with the operation/job hash; retries and post-write queries reuse that clock. This permits observations obtained during Research without falsely treating them as future observations or changing the original read snapshot.

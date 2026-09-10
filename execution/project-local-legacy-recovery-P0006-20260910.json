@@ -1,0 +1,31 @@
+{
+  "contract_version": "legacy-plan-recovery/v1",
+  "task": "LEGACY-RECOVERY-P0006",
+  "target_repository": "agentic-art-project",
+  "target_delivery": "project-local",
+  "status": "BLOCKED",
+  "candidate": {
+    "record_id": "P0006",
+    "source_candidate": "run/boundary-distance-20260905",
+    "historical_commit": "dbfa65c33fc254ee4787a9e04cbfc0b5971a7e5a",
+    "historical_path": "plans/P0006-distance-selects-boundary",
+    "historical_content_sha256": "sha256:846bf1a3f8e213ebece2449c5c922623b3f9e6e9a77523be3b55d474cb25c624",
+    "claimed_production_commit": "e1bb0deb4c28489a881ef663a3d2a8d974c5b295",
+    "claimed_handoff": "HO20260908"
+  },
+  "observations": [
+    "A historical Project commit temporarily labeled P0006 as canonical and recorded a Production commit and handoff, but its metadata still said production_clearance=pending.",
+    "The historical record contains no verifiable Production attestation envelope bound to the exact plan bytes, and the current Project catalog intentionally excludes P0006.",
+    "The claimed Production commit exists as a code commit, not as a recoverable production project containing the accepted handoff and rendered plan.",
+    "The current migration record therefore correctly treats P0006 as lacking verifiable Production publication proof and stable source evidence."
+  ],
+  "blocked_reason": "The old canonical label is not sufficient: attestation and the recoverable accepted Production project/source bundle are missing, so P0006 cannot be re-projected safely.",
+  "unblock_condition": "Recover HO20260908/source bundle or the authoritative Production project, rerun current Production and its attestation against the exact bytes, then complete native Project validation and lineage.",
+  "actions_taken": [
+    "Inspected the historical migration commit and the claimed Production code commit read-only.",
+    "Confirmed no current Project catalog mutation for P0006.",
+    "Preserved the historical claim as evidence only; no approval or attestation was fabricated."
+  ],
+  "next_candidate": "P0007",
+  "next_operation": "Inspect P0007 (run/auto-new-plan-20260904-001-d3fa82c0d944) through the same canonical recovery gates."
+}

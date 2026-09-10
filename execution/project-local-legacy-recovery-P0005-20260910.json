@@ -1,0 +1,29 @@
+{
+  "contract_version": "legacy-plan-recovery/v1",
+  "task": "LEGACY-RECOVERY-P0005",
+  "target_repository": "agentic-art-project",
+  "target_delivery": "project-local",
+  "status": "BLOCKED",
+  "candidate": {
+    "record_id": "P0005",
+    "source_candidate": "production/close-but-cannot-reach",
+    "historical_commit": "e5ff621769a9828ac867cf3fb55e859c79bb46fb",
+    "historical_path": "plans/P0005-close-but-cannot-reach",
+    "historical_content_sha256": "sha256:ba95efb8113cb1177033a9a9b8accf4e281fa52aaa8c53970cfc8e80cd5331135a"
+  },
+  "observations": [
+    "The historical record is a sanitized public summary with production clearance pending.",
+    "The local material includes an old self-model fixture reference, but it is not an accepted current Research handoff or Production source and its freshness is unknown.",
+    "No authoritative Production project, accepted handoff/source bundle, or Production attestation for production/close-but-cannot-reach was found in the local evidence.",
+    "The observed facts match plans/migration.yaml, which identifies the available local material as a reference-only gap."
+  ],
+  "blocked_reason": "P0005 cannot be promoted from an old summary or inferred personal signal; doing so would expand consent and invent canonical Production provenance.",
+  "unblock_condition": "Recover an authoritative Production project or accepted handoff with valid consent/scope, re-run current Production, pass attestation and native Project validation, then project the exact verified bytes.",
+  "actions_taken": [
+    "Read-only search completed across local parent, Research, Production, and Project workspaces.",
+    "The old self-model reference was not used as current user fact or production input.",
+    "No Project catalog files were changed for P0005 and no approval was fabricated."
+  ],
+  "next_candidate": "P0006",
+  "next_operation": "Inspect P0006 (run/boundary-distance-20260905) through the same canonical recovery gates."
+}

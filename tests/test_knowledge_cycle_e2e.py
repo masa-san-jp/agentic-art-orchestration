@@ -130,6 +130,18 @@ raise SystemExit(0 if ok else 1)
         self.assertIn('b'*40, result)
         self.assertNotIn('shell', result)
 
+    def test_project_blocked_read_only_catalog_status_is_retained(self):
+        binding = {'code_root': str(self.root / 'code'), 'code_commit': 'a' * 40,
+                   'python': sys.executable}
+        blocked = {'status': 'BLOCKED', 'blocked': [{'record_id': 'P0004', 'status': 'UNKNOWN_ATTRIBUTION'}]}
+        process = subprocess.CompletedProcess(['catalog'], 2, json.dumps(blocked), '')
+        with patch.object(native_knowledge, 'checked_code', return_value=self.root / 'code'), \
+             patch.object(native_knowledge.subprocess, 'run', return_value=process):
+            result = native_knowledge._execute(binding, ['catalog'], accepted_failure_statuses={'BLOCKED'})
+            self.assertEqual(blocked, result)
+            with self.assertRaisesRegex(native_knowledge.NativeKnowledgeError, 'NATIVE_BLOCKED'):
+                native_knowledge._execute(binding, ['catalog'])
+
     def test_ac4_ac5_partial_write_resume_retains_plan_and_successful_owner_receipt(self):
         code, sha, project = self.plan()
         state = {'run_id':'run', 'queries':{}, 'owners':{}, 'attempts':{}, 'plan':None, 'plan_status':'RESEARCH_PENDING', 'knowledge_status':'PENDING', 'run_status':'RUNNING'}
