@@ -33,6 +33,7 @@ checkpoint:
   merge_commit: e226bf9a1318bd425d0aeced1bbbffaedfed065d
   merged_at: '2026-09-10T12:05:00+09:00'
   evidence: execution/delivery-cycle-v2-evidence.json
+  review_artifact: execution/aak07-provider-live-p1-review.md
   blocker: 'AC07 remains NOT_RUN: provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED owner receipts, but Project delivery stopped at PRODUCTION_REVIEW_PENDING because exact public-plan-review content_safety/rights/consent approvals are absent; the provider-backed acceptance matrix and Project delivery remain unrecorded. Account billing/GitHub Actions are not required.'
 aak04_checkpoint:
   task: AAK-04

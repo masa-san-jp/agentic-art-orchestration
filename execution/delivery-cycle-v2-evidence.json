@@ -79,7 +79,7 @@
     "human_public_review": {
       "status": "BLOCKED_REVIEW",
       "target": "public-plan-review/PL001",
-      "target_sha256": "sha256:9a3cd8388953819c127263de20273f28de101bd5e6b2c81a1a7c9ed7143d9ad2",
+      "target_sha256": "sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a",
       "required_constraints": [
         "public-plan-review:content_safety=PASSED",
         "public-plan-review:rights=PASSED",
@@ -160,6 +160,7 @@
     "aggregate_sha256": "sha256:43d0ca7dc1ee1175a3f5874f44ee2928f93ba4b6d6ae42b50fbfa6e990b21ec1",
     "handoff_sha256": "sha256:908ed32bae8407fd196007028a4cc2b47a312bb56888c344ed7c931ef18af321",
     "review_target_sha256": "sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a",
+    "review_artifact": "execution/aak07-provider-live-p1-review.md",
     "required_review_constraints": [
       "public-plan-review:content_safety=PASSED",
       "public-plan-review:rights=PASSED",
