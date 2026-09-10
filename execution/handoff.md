@@ -2505,3 +2505,10 @@ Parent merge `b1ecafd13d65798f4958a9595b83a8869c31f481` contains the repo-local 
 ### Next exact action
 
 Run the saved DELIVERY-05 cycle context through a configured provider from a clean new clone, then record the actual Production plan, authority/attestation, Project receive receipt, hashes, and second-run reuse evidence. Keep AC07 `NOT_RUN` until those artifacts exist.
+
+## 2026-09-10 — Production run-id fix and native cycle checkpoint
+
+- Production PR [#71](https://github.com/masa-san-jp/agentic-art-production/pull/71) is merged as `cf97636ebfba4a51920d02cc404a8b88845eb160`. The native memory contract now accepts uppercase orchestration identifiers such as `AAK07-AGENT-20260910-R5` while preserving lowercase store identity; the regression test and `tools/validate.py --check` pass.
+- The saved synthetic new-clone continuation `run://AAK07-AGENT-20260910-R5` reached `plan_status: PLAN_READY` and `knowledge_status: COMMITTED`. Research receipt commit is `92abc8944f2cbe1e7c29e3638fa036355e8902fa`; Production receipt commit is `a6e9a9aa1dd3ef94e15a7338c94f99e26ac5a910`; runtime replay of `EVT000001`/`EVT000002` passed.
+- Canonical Project delivery stopped at `PRODUCTION_REVIEW_PENDING`. The review target is `public-plan-review/PL001` (`sha256:9a3cd8388953819c127263de20273f28de101bd5e6b2c81a1a7c9ed7143d9ad2`) and requires native decisions `content_safety=PASSED`, `rights=PASSED`, and `consent=PASSED`. No approval or publication was fabricated. Because this was a native synthetic continuation and not the required provider-backed actual-agent matrix, DELIVERY-05 AC07 remains `NOT_RUN`.
+- Parent execution SSOT synchronization is recorded in `execution/delivery-cycle-v2-evidence.json`, `execution/state.yaml`, and `execution/task-queue.yaml`. Account billing and GitHub Actions are not prerequisites. The next operation is to record the native review decisions if public delivery is intended, then run the required provider-backed acceptance and its second-run reuse evidence.

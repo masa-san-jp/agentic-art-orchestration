@@ -1,5 +1,5 @@
-version: 256
-updated_at: '2026-09-10T08:01:16+09:00'
+version: 257
+updated_at: '2026-09-10T11:20:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -11,7 +11,7 @@ lease:
   execution_id: DELIVERY-05-CYCLE-V2:20260910
   scope:
     repository: agentic-art-orchestration
-    branch: chore/record-research-projection-20260910
+    branch: chore/record-live-cycle-20260910
     paths:
     - tools/**
     - schemas/**
@@ -27,13 +27,13 @@ checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
   status: BLOCKED
-  result: 'Cycle-context repo-local v2 delivery plus Research external-work-root/projection fixes are implemented and locally verified through parent merge 1d5754f04bd5fba8ec1173f7b84f07b0945266b3 (PR228); live provider-backed external-agent acceptance remains NOT_RUN.'
-  code_candidate: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/228
-  merge_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
-  merged_at: '2026-09-10T07:49:54+09:00'
+  result: 'Cycle-context repo-local v2 delivery plus Research and Production child fixes are merged and locally verified through parent execution-SSOT merge 770265c96dca8bcf5de4b893d5912e015d5144e0 (PR229); native synthetic run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts, while live provider-backed acceptance remains NOT_RUN.'
+  code_candidate: 770265c96dca8bcf5de4b893d5912e015d5144e0
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/229
+  merge_commit: 770265c96dca8bcf5de4b893d5912e015d5144e0
+  merged_at: '2026-09-10T11:20:00+09:00'
   evidence: execution/delivery-cycle-v2-evidence.json
-  blocker: 'AC07 remains NOT_RUN because no completed provider-backed external-agent Research→Production→Project run is recorded; local Ollama availability does not substitute for that evidence, and account billing/GitHub Actions are not required.'
+  blocker: 'AC07 remains NOT_RUN: native synthetic run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts, but Project delivery stopped at PRODUCTION_REVIEW_PENDING because public-plan-review content_safety/rights/consent approvals are absent; provider-backed actual-agent acceptance is still unrecorded. Account billing/GitHub Actions are not required.'
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -52,7 +52,7 @@ last_completed_task: RESEARCH-100-QUALIFY-001
 resume_from:
   task: DELIVERY-05
   repository: agentic-art-orchestration
-  action: Code and local projection fixes are merged; resume DELIVERY-05 only for AC07 provider-backed actual-agent acceptance. Account billing and GitHub Actions are not prerequisites.
+  action: Native synthetic run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts; AC07 remains NOT_RUN. Continue only after the required provider-backed actual-agent acceptance and explicit native public-plan-review decisions. Account billing and GitHub Actions are not prerequisites.
   command: .venv/bin/python tools/run.py --cycle-context <context> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local
 previous_checkpoint:
   task: AAK-11
@@ -1822,11 +1822,32 @@ aak_01_implementation:
     saved; lease retained.'
 
 
+latest_delivery_attempt:
+  run_id: AAK07-AGENT-20260910-R5
+  profile: synthetic-new-clone
+  status: PARTIAL_NOT_ACCEPTED
+  plan_status: PLAN_READY
+  knowledge_status: COMMITTED
+  projection_status: BLOCKED
+  stop_reason: PRODUCTION_REVIEW_PENDING
+  research_code_commit: a4df0e5b4c4f93d01b7f5f403b214469526206c0
+  production_code_commit: cf97636ebfba4a51920d02cc404a8b88845eb160
+  research_receipt_commit: 92abc8944f2cbe1e7c29e3638fa036355e8902fa
+  production_receipt_commit: a6e9a9aa1dd3ef94e15a7338c94f99e26ac5a910
+  production_plan_sha256: sha256:f0b0ec0d1e52ee8e6b8ce5615bee75b160f587f548fcf43e0a3f15962b5acb42
+  review_target_sha256: sha256:9a3cd8388953819c127263de20273f28de101bd5e6b2c81a1a7c9ed7143d9ad2
+  required_review_constraints:
+  - public-plan-review:content_safety=PASSED
+  - public-plan-review:rights=PASSED
+  - public-plan-review:consent=PASSED
+  evidence: execution/delivery-cycle-v2-evidence.json
+  note: Native synthetic continuation; not promoted to AC07 provider-backed acceptance.
+
 current_delivery_checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
-  branch: chore/record-research-projection-20260910
-  base_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
+  branch: chore/record-live-cycle-20260910
+  base_commit: 770265c96dca8bcf5de4b893d5912e015d5144e0
   status: CODE_VERIFIED
   evidence: execution/delivery-cycle-v2-evidence.json
   completed:
@@ -1838,7 +1859,9 @@ current_delivery_checkpoint:
     - focused v2/runtime/instance-profile checks and full 615-test suite passed
     - PR224 merged: cycle-context now carries repo-local v2 Project root through bootstrap and autonomous resume
     - PR228 merged: Research external work-root/protocol forwarding, Production handoff promotion, and canonical Project projection path
+    - Production PR71 merged: uppercase orchestration run identifiers preserve AAK provenance in native receipts
     - post-merge full suite 621 tests, 1 skip, validator, docs checks and diff check passed
   remaining:
+    - native run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts but Project delivery is BLOCKED_REVIEW
     - live provider-backed acceptance remains NOT_RUN
-  next_operation: Lease released after execution SSOT push; resume DELIVERY-05 only when a provider-backed agent and the required consent are available.
+  next_operation: Resume from saved run://AAK07-AGENT-20260910-R5 context only after native public-plan-review decisions are recorded and a configured provider can execute the required actual-agent acceptance matrix; no billing or GitHub Actions is required.
