@@ -28,7 +28,13 @@ agentic-art-projectへ公開用レコードをexport
 
 **エージェントが自律的に制作プランを出力するところまで動くエージェントハーネス。作品を作る仕組みそのもの。**
 
-芸術の契機を「精霊や風が運び、人間が受け取って具象化する」と捉えます。AIを使うこと自体ではなく、コンセプトとメッセージを持つアートを制作することが目的です。
+### 根底にある問い
+
+古代、芸術家に降りる霊感は、精霊や神といった人間の外部にある存在がもたらすものだと考えられていました。ルネサンス以降、その霊感は次第に人間個人の「才能」へと帰属されるようになります。生成AIが制作に加わった今、これは新しい問いを開きます——生成AIは、かつて古代の芸術家に霊感を与えた精霊のような存在なのか、それとも人間の思考をなぞる延長に過ぎないのか。
+
+このrepoは、この問いに対する態度として、芸術の契機を「精霊や風が運び、人間が受け取って具象化する」と捉えます。作り手が自分の創造性を手放し、生成AIの創造性に身を委ねることで、この問いを実作を通じて検証し続けます。AIを使うこと自体ではなく、この問いに根ざしたコンセプトとメッセージを持つアートを制作することが目的です。
+
+この姿勢は前身プロジェクト「Vibe Art」（2025年）から受け継がれています。
 
 ## 要件
 
@@ -151,7 +157,7 @@ READMEは入口です。実装の正本、子repoのschema、個別taskの完了
 
 For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
 
-Continue the returned agent actions through Production plan generation, native review/attestation, canonical projection, native Project lineage initialization and local receiver validation. Reuse existing native approvals; missing approvals return the prepared target and precise remaining review decisions. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
+Continue the returned agent actions through Production plan generation, the closed automatic plan attestation, canonical projection, native Project lineage initialization and local receiver validation. The automatic plan lane performs Production's renderer, content, asset and provenance checks and records `publication_review.authority: AUTOMATIC_PLAN`; it never waits for human approval and never authorizes an external effect. Work/manual requests use the separate native review lane. If an automatic check fails, the agent receives the exact repair finding and resumes the same run. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait applies only to a separately requested work/manual publication and does not consume the no-progress retry budget.
 
 `PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
 ## Project checkoutだけで使う（output-destinations/v2）
