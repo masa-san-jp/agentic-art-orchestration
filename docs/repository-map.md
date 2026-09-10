@@ -26,6 +26,12 @@ viewer-response-notes ─ aggregate feedback ─→ agentic-art-orchestration
 
 鑑賞者反応は、公開作品から得られた集計可能な根拠を次回のResearchへ戻すフィードバックです。生の会話、個人識別情報、心理推定、credential、内部logはこの流れに含めません。
 
+## 公開の境界
+
+Orchestrationの自動laneが行うのは、Productionで検証されたcanonical planを、指定されたProject checkoutへ投影し、Project側のvalidatorで受け入れを確認するところまでです。これはローカル投影であり、GitHubのリモート公開ではありません。
+
+Gitのcommit、branch、push、PR、merge、release、visibility変更、外部共有、権利・同意範囲の変更は別の人間gateです。したがって、Projectのローカルcheckoutにrecordが存在することだけから、リモートの`main`へ公開済みだとは判断しません。
+
 ## 8リポジトリの役割
 
 | リポジトリ | 役割 | 主な受け渡し |
