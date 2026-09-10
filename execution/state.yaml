@@ -1,5 +1,5 @@
-version: 258
-updated_at: '2026-09-10T12:05:00+09:00'
+version: 259
+updated_at: '2026-09-10T15:12:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -8,10 +8,10 @@ lease:
   acquired_at: '2026-09-10T01:20:51+09:00'
   expires_at: null
   lane: AUTONOMY
-  execution_id: DELIVERY-05-CYCLE-V2:20260910
+  execution_id: DELIVERY-05-AUTOMATIC-PLAN:20260910
   scope:
     repository: agentic-art-orchestration
-    branch: chore/record-live-cycle-20260910
+    branch: chore/complete-delivery-05-p4
     paths:
     - tools/**
     - schemas/**
@@ -26,15 +26,24 @@ lease:
 checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
-  status: BLOCKED
-  result: 'Provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED Research/Production receipts; runtime replay passed after canonical bootstrap; Project delivery remains blocked at exact native public-plan-review approval.'
-  code_candidate: e226bf9a1318bd425d0aeced1bbbffaedfed065d
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/231
-  merge_commit: e226bf9a1318bd425d0aeced1bbbffaedfed065d
-  merged_at: '2026-09-10T12:05:00+09:00'
-  evidence: execution/delivery-cycle-v2-evidence.json
-  review_artifact: execution/aak07-provider-live-p1-review.md
-  blocker: 'AC07 remains NOT_RUN: provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED owner receipts, but Project delivery stopped at PRODUCTION_REVIEW_PENDING because exact public-plan-review content_safety/rights/consent approvals are absent; the provider-backed acceptance matrix and Project delivery remain unrecorded. Account billing/GitHub Actions are not required.'
+  status: DONE
+  result: 'Provider-backed new-clone run AAK07-AGENT-20260910-P4 completed PLAN_READY, committed Research/Production knowledge, automatic Production attestation, Project P0008 projection and delivery_completion COMPLETED with human_gate NOT_REQUIRED.'
+  code_candidate: d591ca965b527c57c0e4d811d46fc605658ab6ca
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/235
+  merge_commit: 9ae154337e00059425c80a7469c19c36325c124b
+  merged_at: '2026-09-10T15:07:50+09:00'
+  production_pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/72
+  production_merge_commit: eec39272c5c4827a1caf27fa928de18b58882e96
+  evidence: execution/aak07-provider-live-p4-evidence.json
+  review_artifact: execution/aak07-provider-live-p4-review.md
+  blocker: null
+last_completed_task: DELIVERY-05
+resume_from:
+  task: null
+  repository: agentic-art-orchestration
+  action: All queued implementation tasks are DONE. Use the normal intake validator only when a new Issue with complete SSOT fields is opened; no automatic human plan approval is required for project-local delivery.
+  command: '.venv/bin/python tools/validate.py --check'
+
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -49,12 +58,6 @@ aak04_checkpoint:
   full_tests: 580 tests, 1 existing skip, PASS
   full_log_sha256: be4ed861b21997f49268aaa1afa388691a32bd9dc37027b3b9bf7e9623988546
   delivery: User-authorized non-force API branch update plus complete tree verification; no merge/publication
-last_completed_task: RESEARCH-100-QUALIFY-001
-resume_from:
-  task: DELIVERY-05
-  repository: agentic-art-orchestration
-  action: Provider-backed run AAK07-AGENT-20260910-P1 is checkpointed at exact native public-plan-review approval; resume the saved context only after the review decision is recorded. Then complete the required provider-backed acceptance matrix and Project delivery. Account billing and GitHub Actions are not prerequisites.
-  command: .venv/bin/python tools/run.py --cycle-context <context> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local
 previous_checkpoint:
   task: AAK-11
   repository: agentic-art-production
