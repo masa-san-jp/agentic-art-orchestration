@@ -60,16 +60,18 @@ agentic-art-projectへ公開用レコードをexport
 
 ## 8つのrepoの役割
 
-| repo | 役割 |
-|---|---|
-| [`self-model-notes`](https://github.com/masa-san-jp/self-model-notes) | 自己モデルの入力知識 |
-| [`art-history-notes`](https://github.com/masa-san-jp/art-history-notes) | 美術史の入力知識 |
-| [`marketing-trends-notes`](https://github.com/masa-san-jp/marketing-trends-notes) | 市場・トレンドの入力知識 |
-| [`viewer-response-notes`](https://github.com/masa-san-jp/viewer-response-notes) | 鑑賞者反応の集計と評価 |
-| [`agentic-art-research`](https://github.com/masa-san-jp/agentic-art-research) | 調査、仮説、要件、判断 |
-| [`agentic-art-production`](https://github.com/masa-san-jp/agentic-art-production) | 制作実行、結果、制作プラン |
-| [`agentic-art-orchestration`](https://github.com/masa-san-jp/agentic-art-orchestration) | 全体の制御、実行状態、横断契約 |
-| [`agentic-art-project`](https://github.com/masa-san-jp/agentic-art-project) | 公開プラン、作品、制作記録のカタログ |
+8つのrepoの全体図、データの流れ、正本と受け渡しの関係は [`docs/repository-map.md`](docs/repository-map.md) にまとめています。ここでは入口だけを示します。
+
+| repo | 役割 | 主な受け渡し |
+|---|---|---|
+| [`self-model-notes`](https://github.com/masa-san-jp/self-model-notes) | 自己モデルの入力知識 | 同意済みのprivacy-safe signalをResearchへ |
+| [`art-history-notes`](https://github.com/masa-san-jp/art-history-notes) | 美術史の入力知識 | 根拠付きsignalをResearchへ |
+| [`marketing-trends-notes`](https://github.com/masa-san-jp/marketing-trends-notes) | 市場・トレンドの入力知識 | 鮮度・出典付きsignalをResearchへ |
+| [`viewer-response-notes`](https://github.com/masa-san-jp/viewer-response-notes) | 鑑賞者反応の集計と評価 | 集計済みfeedbackを次回Researchへ |
+| [`agentic-art-research`](https://github.com/masa-san-jp/agentic-art-research) | 調査、仮説、要件、判断 | versioned production handoffをProductionへ |
+| [`agentic-art-production`](https://github.com/masa-san-jp/agentic-art-production) | 制作実行、結果、制作プラン | canonical plan / resultをOrchestrationへ |
+| [`agentic-art-orchestration`](https://github.com/masa-san-jp/agentic-art-orchestration) | 全体の制御、実行状態、横断契約 | 検証済み成果をProjectへexport-only投影 |
+| [`agentic-art-project`](https://github.com/masa-san-jp/agentic-art-project) | 公開プラン、作品、制作記録のカタログ | 公開可能なrecordを受信し、入力側へ書き戻さない |
 
 各repoのデータ、schema、Issue、検証器は各repoが所有します。このrepoは子repoの内部データをコピーして一つにまとめません。
 
@@ -153,13 +155,14 @@ python3 -m venv .venv
 
 READMEは入口です。実装の正本、子repoのschema、個別taskの完了条件は、上記の正本文書と各repoのIssue・AGENTS・テストに従います。
 
-## Requested delivery completion (Issue 217)
+## 公開投影とリモート公開の違い
 
-For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+このrepoでいうProjectへの「公開投影」は、Productionの検証済みcanonical planを、指定された`agentic-art-project`のcheckoutへ生成し、Project側の受信validatorで確認することです。自動laneは、公開境界・権利・来歴・path・catalog layoutを検査してから投影します。
 
-Continue the returned agent actions through Production plan generation, the closed automatic plan attestation, canonical projection, native Project lineage initialization and local receiver validation. The automatic plan lane performs Production's renderer, content, asset and provenance checks and records `publication_review.authority: AUTOMATIC_PLAN`; it never waits for human approval and never authorizes an external effect. Work/manual requests use the separate native review lane. If an automatic check fails, the agent receives the exact repair finding and resumes the same run. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait applies only to a separately requested work/manual publication and does not consume the no-progress retry budget.
+これはGitHubのリモート公開とは別です。自動laneはGitのcommit、branch、push、PR、merge、release、visibility変更、外部共有を行いません。したがって、`delivery_completion.status=COMPLETED`は指定されたローカル投影の完了を示しますが、GitHubの`main`へ公開済みであることは示しません。
 
-`PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
+Issue #217の受入条件、CLI、失敗分類、再開方法は、一般読者向けREADMEではなく [`docs/agent-runtime-guide.md`](docs/agent-runtime-guide.md#requested-delivery-completion-issue-217) と [`docs/operator-runbook.md`](docs/operator-runbook.md) に記載しています。
+
 ## Project checkoutだけで使う（output-destinations/v2）
 
 clone/fork利用者は、自分の`agentic-art-project` checkoutを明示して、内部state・中間出力・公開投影先を一つの所有境界へまとめられます。
