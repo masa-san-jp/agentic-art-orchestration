@@ -16,7 +16,7 @@
     },
     "AC07": {
       "status": "NOT_RUN",
-      "evidence": "Ollama-backed probe was attempted; native continuation run run://AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED Research/Production receipts, but it was a synthetic new-clone continuation rather than the required provider-backed actual-agent acceptance matrix. Project delivery stopped at PRODUCTION_REVIEW_PENDING because native content_safety, rights, and consent approvals were not supplied. No synthetic evidence is promoted."
+      "evidence": "A local Ollama provider (qwen2.5:0.5b) supplied a native agent decision in run://AAK07-AGENT-20260910-P1; the saved context then reached PLAN_READY, COMMITTED Research/Production receipts, and native review. Project-local delivery stopped at PRODUCTION_REVIEW_PENDING because exact public-plan-review content_safety, rights, and consent approvals are absent. The required provider-backed actual-agent acceptance matrix and Project delivery are therefore not promoted."
     },
     "AC08": {
       "status": "PASS",
@@ -87,9 +87,9 @@
       ],
       "reason": "No approval is fabricated; Project canonical projection remains blocked."
     },
-    "live_agent_acceptance": "NOT_RUN (native synthetic continuation reached PLAN_READY/COMMITTED but is not promoted to provider-backed acceptance)"
+    "live_agent_acceptance": "NOT_RUN (provider-backed run P1 reached PLAN_READY/COMMITTED and exact native review, but Project delivery and the required acceptance matrix are incomplete)"
   },
-  "next_action": "If public Project delivery is intended, record native content_safety, rights, and consent decisions for public-plan-review/PL001, then rerun the saved context through a configured provider for the required actual-agent acceptance matrix. Keep AC07 NOT_RUN until provider-backed artifacts and second-run reuse evidence exist; account billing and GitHub Actions are not required.",
+  "next_action": "If public Project delivery is intended, record native content_safety, rights, and consent decisions for public-plan-review/PL001, then resume run://AAK07-AGENT-20260910-P1 and complete the provider-backed acceptance matrix. Keep AC07 NOT_RUN until Project delivery and second-run reuse evidence exist; account billing and GitHub Actions are not required.",
   "implementation_fix": {
     "parent": {
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
@@ -134,5 +134,39 @@
     ],
     "runtime_replay": "PASS (EVT000001/EVT000002; revision 2)",
     "note": "Native synthetic continuation only; not promoted to AC07 provider-backed acceptance and no public projection was fabricated."
+  },
+  "provider_attempt": {
+    "run_id": "AAK07-AGENT-20260910-P1",
+    "profile": "synthetic-provider-new-clone",
+    "provider": {
+      "kind": "local",
+      "model": "qwen2.5:0.5b",
+      "billing_required": false,
+      "raw_response_sha256": "sha256:b4beff0dfa6cfeba5010230dfaee72fc5f4e511c0156cc9d0978a9192cb063c93",
+      "decision": "USE_PINNED_HANDOFF",
+      "decision_effect": "consume validated Research handoff; preserve unknowns; do not fabricate public approval"
+    },
+    "status": "PARTIAL_NOT_ACCEPTED",
+    "plan_status": "PLAN_READY",
+    "knowledge_status": "COMMITTED",
+    "projection_status": "BLOCKED",
+    "stop_reason": "PRODUCTION_REVIEW_PENDING",
+    "research_code_commit": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+    "production_code_commit": "cf97636ebfba4a51920d02cc404a8b88845eb160",
+    "research_receipt_commit": "c19c851d896c5d289ce6032d0ce94abf67efc8ce",
+    "production_receipt_commit": "eac0debb4b728885445e74d1f3bc5ef78692f066",
+    "production_plan_sha256": "sha256:e784aaacfa98c4636ad73e0fae6abcbb9a86988a5e555ca3b9db6d102c91f0b7",
+    "production_method_sha256": "sha256:49b5d49434a2e742645b775d021cb5f1f43880dcfcd15ebb7690eae0aa4a488c",
+    "aggregate_sha256": "sha256:43d0ca7dc1ee1175a3f5874f44ee2928f93ba4b6d6ae42b50fbfa6e990b21ec1",
+    "handoff_sha256": "sha256:908ed32bae8407fd196007028a4cc2b47a312bb56888c344ed7c931ef18af321",
+    "review_target_sha256": "sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a",
+    "required_review_constraints": [
+      "public-plan-review:content_safety=PASSED",
+      "public-plan-review:rights=PASSED",
+      "public-plan-review:consent=PASSED"
+    ],
+    "runtime_replay": "PASS (EVT000001/EVT000002; revision 2)",
+    "delivery": "PROJECT_LOCAL_DELIVERY NOT_RUN; plans/ contains only inherited P0004",
+    "note": "Provider response and native receipts are recorded as evidence only. No public approval, publication, or synthetic substitution was fabricated."
   }
 }
