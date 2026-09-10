@@ -5,7 +5,9 @@
   "candidate": {
     "parent_merge": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3",
     "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
-    "merge_commit": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3"
+    "merge_commit": "1d5754f04bd5fba8ec1173f7b84f07b0945266b3",
+    "execution_ssot_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/229",
+    "execution_ssot_merge_commit": "770265c96dca8bcf5de4b893d5912e015d5144e0"
   },
   "acceptance": {
     "AC01-AC06": {
@@ -14,7 +16,7 @@
     },
     "AC07": {
       "status": "NOT_RUN",
-      "evidence": "No provider-backed external-agent execution or new content/rights/consent decision is available; synthetic tests are not substituted"
+      "evidence": "Ollama-backed probe was attempted; native continuation run run://AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED Research/Production receipts, but it was a synthetic new-clone continuation rather than the required provider-backed actual-agent acceptance matrix. Project delivery stopped at PRODUCTION_REVIEW_PENDING because native content_safety, rights, and consent approvals were not supplied. No synthetic evidence is promoted."
     },
     "AC08": {
       "status": "PASS",
@@ -74,10 +76,20 @@
   "boundaries": {
     "github_actions_or_billing_required": false,
     "remote_git_push_or_publication": false,
-    "human_public_review": "required only when native Production review decisions are missing",
-    "live_agent_acceptance": "NOT_RUN (provider-backed execution unavailable)"
+    "human_public_review": {
+      "status": "BLOCKED_REVIEW",
+      "target": "public-plan-review/PL001",
+      "target_sha256": "sha256:9a3cd8388953819c127263de20273f28de101bd5e6b2c81a1a7c9ed7143d9ad2",
+      "required_constraints": [
+        "public-plan-review:content_safety=PASSED",
+        "public-plan-review:rights=PASSED",
+        "public-plan-review:consent=PASSED"
+      ],
+      "reason": "No approval is fabricated; Project canonical projection remains blocked."
+    },
+    "live_agent_acceptance": "NOT_RUN (native synthetic continuation reached PLAN_READY/COMMITTED but is not promoted to provider-backed acceptance)"
   },
-  "next_action": "Keep AC07 explicitly NOT_RUN and resume DELIVERY-05 from the saved cycle context for a new-clone provider-backed external-agent Research→Production→Project run; no account billing or GitHub Actions is required.",
+  "next_action": "If public Project delivery is intended, record native content_safety, rights, and consent decisions for public-plan-review/PL001, then rerun the saved context through a configured provider for the required actual-agent acceptance matrix. Keep AC07 NOT_RUN until provider-backed artifacts and second-run reuse evidence exist; account billing and GitHub Actions are not required.",
   "implementation_fix": {
     "parent": {
       "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/228",
@@ -92,6 +104,35 @@
     "local_projection_regression": {
       "status": "PASS",
       "result": "PLAN_READY with automatic authority and canonical Project projection APPLIED in an isolated synthetic fixture; synthetic evidence is not counted as AC07 live acceptance"
+    },
+    "production_child": {
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/71",
+      "merge_commit": "cf97636ebfba4a51920d02cc404a8b88845eb160",
+      "evidence": "Production operation/run identifier validation now preserves uppercase orchestration provenance such as AAK07-AGENT-20260910-R5; regression test added and tools/validate.py --check passed."
     }
+  },
+  "live_attempt": {
+    "run_id": "AAK07-AGENT-20260910-R5",
+    "profile": "synthetic-new-clone",
+    "status": "PARTIAL_NOT_ACCEPTED",
+    "plan_status": "PLAN_READY",
+    "knowledge_status": "COMMITTED",
+    "projection_status": "BLOCKED",
+    "stop_reason": "PRODUCTION_REVIEW_PENDING",
+    "research_code_commit": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+    "production_code_commit": "cf97636ebfba4a51920d02cc404a8b88845eb160",
+    "research_receipt_commit": "92abc8944f2cbe1e7c29e3638fa036355e8902fa",
+    "production_receipt_commit": "a6e9a9aa1dd3ef94e15a7338c94f99e26ac5a910",
+    "production_plan_sha256": "sha256:f0b0ec0d1e52ee8e6b8ce5615bee75b160f587f548fcf43e0a3f15962b5acb42",
+    "production_method_sha256": "sha256:c8bf214c3847993fe2c46b215f998903c14afad5befbb8d75183b7e8f9cdce31",
+    "handoff_sha256": "sha256:908ed32bae8407fd196007028a4cc2b47a312bb56888c344ed7c931ef18af321",
+    "review_target_sha256": "sha256:9a3cd8388953819c127263de20273f28de101bd5e6b2c81a1a7c9ed7143d9ad2",
+    "required_review_constraints": [
+      "public-plan-review:content_safety=PASSED",
+      "public-plan-review:rights=PASSED",
+      "public-plan-review:consent=PASSED"
+    ],
+    "runtime_replay": "PASS (EVT000001/EVT000002; revision 2)",
+    "note": "Native synthetic continuation only; not promoted to AC07 provider-backed acceptance and no public projection was fabricated."
   }
 }

@@ -1,5 +1,5 @@
-version: 81
-updated_at: "2026-09-10T08:01:16+09:00"
+version: 82
+updated_at: "2026-09-10T11:20:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2547,8 +2547,8 @@ tasks:
     human_gate: Provider-backed external-agent run and any missing content/rights/consent decision remain human/provider-gated; code implementation, local tests and merge are complete.
     acceptance_evidence:
       AC01-AC06: {status: PASS, evidence: execution/repo-local-v2-evidence.json, parent delivery verifier and owner focused/full tests}
-      AC07: {status: NOT_RUN, evidence: no provider-backed external agent and no new consent was available; synthetic runs are not substituted}
-      code_regression: {status: PASS, candidate_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/228, evidence: Research external-work-root forwarding, Production handoff promotion, selected child interpreter attestation, and canonical Project projection regressions}
+      AC07: {status: NOT_RUN, evidence: native synthetic run run://AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED Research/Production receipts, but provider-backed actual-agent acceptance was not completed; Project delivery stopped at PRODUCTION_REVIEW_PENDING for public-plan-review content_safety/rights/consent, and synthetic evidence is not substituted}
+      code_regression: {status: PASS, candidate_commit: 770265c96dca8bcf5de4b893d5912e015d5144e0, reference: https://github.com/masa-san-jp/agentic-art-orchestration/pull/229, evidence: parent execution-SSOT synchronization plus Research external-work-root forwarding, Production handoff promotion, uppercase orchestration run-id regression (PR71/cf97636ebfba4a51920d02cc404a8b88845eb160), selected child interpreter attestation, and canonical Project projection regressions}
       AC08: {status: PASS, evidence: README/AGENTS/runtime/state status separation and execution SSOT}
       AC09: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and tests/test_delivery_entrypoints.py}
       AC10: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json and cycle resume/instance bootstrap tests}
@@ -2557,9 +2557,9 @@ tasks:
       AC13: {status: PASS, evidence: execution/delivery-cycle-v2-evidence.json; remote publication remains separate and NOT_RUN}
     code_status: CODE_VERIFIED
     integration_status: MERGED
-    merge_commit: 1d5754f04bd5fba8ec1173f7b84f07b0945266b3
-    completion: Code and local acceptance are complete through parent PR228 (merge 1d5754f04bd5fba8ec1173f7b84f07b0945266b3); Research child protocol fix is merged as a4df0e5b4c4f93d01b7f5f403b214469526206c0 (PR106). BLOCKED only at the declared live-agent acceptance boundary.
-    blocker: AC07 remains NOT_RUN because no completed provider-backed external-agent Research→Production→Project run is recorded; local Ollama availability does not substitute for that evidence, and account billing/GitHub Actions are not required.
+    merge_commit: 770265c96dca8bcf5de4b893d5912e015d5144e0
+    completion: Code and local acceptance are complete through parent PR229 (merge 770265c96dca8bcf5de4b893d5912e015d5144e0); Research child protocol fix is merged as a4df0e5b4c4f93d01b7f5f403b214469526206c0 (PR106) and Production run-id fix as cf97636ebfba4a51920d02cc404a8b88845eb160 (PR71). Native synthetic continuation reached PLAN_READY/COMMITTED but remains PARTIAL_NOT_ACCEPTED; BLOCKED at the declared live-agent and public-review boundaries.
+    blocker: 'AC07 remains NOT_RUN: Project delivery stopped at PRODUCTION_REVIEW_PENDING because public-plan-review content_safety/rights/consent approvals are absent, and no completed provider-backed actual-agent Research→Production→Project run is recorded. Account billing/GitHub Actions are not required.'
   - id: REPO-LOCAL-PROJECT-QUALIFY-001
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
