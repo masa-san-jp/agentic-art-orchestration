@@ -1,6 +1,6 @@
 # AAK07 provider run P1 — Projectローカル投影レビュー
 
-この資料は、`AAK07-AGENT-20260910-P1` のProjectローカル投影を判断するための公開可能なレビュー要約です。Productionの内部schema、raw入力、実行ログ、秘密情報は複製していません。元の一時workspaceがなくても、ここに記載した内容・hash・状態で承認対象を特定できます。
+この資料は、`AAK07-AGENT-20260910-P1` のProjectローカル投影を判断するための、全ての判断項目を含む公開可能な派生レビュー資料です。Productionの内部schema、raw入力、実行ログ、秘密情報は複製していません。これは正本`production-plan.md`の代替ではなく、元の一時workspaceがなくても承認対象を検証できるようにしたものです。
 
 ## 実行状態
 
@@ -44,6 +44,60 @@
 3. 3視点すべてで間隔と中断が識別できるかを確認する。
 
 材料の実在性・数量・権利・利用可能性、会場条件、日程、費用、実地の視認性は未確認です。計画内でも`PROPOSED`または`UNKNOWN`として残っています。
+
+## 要件と根拠
+
+| 要件ID | 優先度 | 内容 | 計画上の対応 | 状態 |
+| --- | --- | --- | --- | --- |
+| `RQ001` | mandatory | 試作で反復する間隔と一箇所の中断を観測可能にする | `DL001`、`TS001`、`AT001`、`TK001`、`TK002`へ接続 | COVERED |
+
+採択仮説は`PH001`（`A single omission in a repeated structure becomes visible through viewer movement.`）です。選択権限は`AGENT`、選択状態は`PROVISIONAL`で、人間が仮説を確定した記録はありません。
+
+## 参照の状態
+
+| 出所 | 内容 | 状態 |
+| --- | --- | --- |
+| `EV001` | primary_public、rights_status=public-use、PUBLIC_CITABLE | URLあり。ただしこのrunが権利を再確認したものではない |
+| `EV002` | independent-secondary、rights_status=public-use、PUBLIC_CITABLE | URLあり。ただしこのrunが権利を再確認したものではない |
+| `DC001` | 二つの資料が知覚上の規則を支持し、反対仮説も残す判断 | URL未提供。gap |
+| `IN001` | 説明文なしでも反復が概念を運べるという洞察 | URL未提供。gap |
+
+## 成果物・技術仕様
+
+- 成果物は`DL001`「Interrupted interval installation」。担当能力は`physical-prototype-agent`、状態は`PLANNED`です。
+- `TS001`は、`RQ001`を対象とする定性的な`frame_review`仕様です。許容差は未設定、状態は`PROVISIONAL`です。
+- Production planに記載されたboardとmockupは、受理済みhandoffから生成したsynthetic fixtureです。外部画像の取得・採用、物理制作、外部検証はありません。
+- mockupは`CONCEPTUAL`、`Not to scale`です。物理寸法・材料選定は確定していません。
+- 材料registerとresource planは空です。12個の紙要素、固定照明、3視点という提案はありますが、数量・権利・在庫・会場は未確認です。
+
+## 作業グラフと現在地
+
+| ID | 内容 | 効果種別 | 前提 | 承認 | 状態 |
+| --- | --- | --- | --- | --- | --- |
+| `TK001` | 12位置の一割縮尺モデルを作り、1要素を欠落させる | `PHYSICAL_EXTERNAL` | なし | `AR001` | BLOCKED |
+| `TK002` | 固定露出で3視点を記録する | `PHYSICAL_EXTERNAL` | `TK001` | `AR001` | BLOCKED |
+| `TK004` | 導出planの依存グラフと要件coverageを検証する | `READ_ONLY` | なし | なし | READY |
+
+クリティカルパスは`TK001 → TK002`です。`TK001`と`TK002`は物理・外部効果のため、Production runtimeの`AR001`承認なしには実行できません。承認対象は`03_plan/task-plan.yaml#TK001,TK002`、hashは`sha256:d271ac7be772acc6c02e5719103965a2dd301694edaaa95faeaf34dc630b6bc6`です。
+
+## 受入、日程、予算
+
+- `AT001`は「3フレームすべてで間隔と中断を識別できること」。計画ファイル上の結果は`PASS`ですが、これは受入条件の定義・plan validation上の値であり、物理フレームの実測結果ではありません。
+- `MS001`（開始）と`MS002`（完了）は相対日程で、`MS002`は`BLOCKED`です。カレンダー日、担当者の空き、会場は未提供です。
+- タスク所要時間の提案は`TK001=1h`、`TK002=1h`、`TK004=15min`です。開始・期限は未設定です。
+- 通貨はJPY、予算状態は`ESTIMATED`です。総額、予備費、承認閾値、見積、供給者、予約、支払い約束はありません。費用帯`LOW`はhandoff由来の推定で、実測ではありません。
+
+## リスクと未解決事項
+
+主なリスクは、3視点すべてで中断が見えるか不明なこと（`RK001`、重要度`MAJOR`、可能性`UNKNOWN`、状態`OPEN`）です。未解決事項には、材料の権利・数量・可用性、参照URL欠落、物理タスクの承認不足、相対日程、予算未設定が含まれます。物理タスクの承認不足（`PG010`、`PG011`）だけが計画上のblocking gapです。
+
+## 公開・制作の境界
+
+計画の除外範囲は`publish`、`submit`、`send`、`purchase`、`contract`、`delete`です。計画生成は、物理作業、購入、契約、支払い、公開、応募、連絡、削除、Drive共有を許可しません。Projectローカル投影の承認は、物理工程`AR001`の承認とは別です。
+
+## 再現性と引き継ぎ
+
+計画は`HO003`、`PH001`、`RQ001`、`AT001`、`PP001`へトレースされています。handoff hashは`sha256:b203e5972c32d8ab3abfeaf2b0357f050e17e7c3089a17e19d05333604d2c5bf`、plan integrity hashは`sha256:8fb3e092b10ff6c7557a52821c03e9d8cc706ec4ffb40895f75aafd75b4090e2`です。実施時には、失敗・差分・変更要求を既存計画へ上書きせず、実行台帳へ追記します。
 
 ## 参照とvisual asset
 
