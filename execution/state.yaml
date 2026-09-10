@@ -1,5 +1,5 @@
-version: 257
-updated_at: '2026-09-10T11:20:00+09:00'
+version: 258
+updated_at: '2026-09-10T12:05:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -27,13 +27,13 @@ checkpoint:
   task: DELIVERY-05
   repository: agentic-art-orchestration
   status: BLOCKED
-  result: 'Cycle-context repo-local v2 delivery plus Research and Production child fixes are merged and locally verified through parent execution-SSOT merge 770265c96dca8bcf5de4b893d5912e015d5144e0 (PR229); native synthetic run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts, while live provider-backed acceptance remains NOT_RUN.'
-  code_candidate: 770265c96dca8bcf5de4b893d5912e015d5144e0
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/229
-  merge_commit: 770265c96dca8bcf5de4b893d5912e015d5144e0
-  merged_at: '2026-09-10T11:20:00+09:00'
+  result: 'Provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED Research/Production receipts; runtime replay passed after canonical bootstrap; Project delivery remains blocked at exact native public-plan-review approval.'
+  code_candidate: e226bf9a1318bd425d0aeced1bbbffaedfed065d
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/231
+  merge_commit: e226bf9a1318bd425d0aeced1bbbffaedfed065d
+  merged_at: '2026-09-10T12:05:00+09:00'
   evidence: execution/delivery-cycle-v2-evidence.json
-  blocker: 'AC07 remains NOT_RUN: native synthetic run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts, but Project delivery stopped at PRODUCTION_REVIEW_PENDING because public-plan-review content_safety/rights/consent approvals are absent; provider-backed actual-agent acceptance is still unrecorded. Account billing/GitHub Actions are not required.'
+  blocker: 'AC07 remains NOT_RUN: provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED owner receipts, but Project delivery stopped at PRODUCTION_REVIEW_PENDING because exact public-plan-review content_safety/rights/consent approvals are absent; the provider-backed acceptance matrix and Project delivery remain unrecorded. Account billing/GitHub Actions are not required.'
 aak04_checkpoint:
   task: AAK-04
   repository: agentic-art-orchestration
@@ -52,7 +52,7 @@ last_completed_task: RESEARCH-100-QUALIFY-001
 resume_from:
   task: DELIVERY-05
   repository: agentic-art-orchestration
-  action: Native synthetic run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts; AC07 remains NOT_RUN. Continue only after the required provider-backed actual-agent acceptance and explicit native public-plan-review decisions. Account billing and GitHub Actions are not prerequisites.
+  action: Provider-backed run AAK07-AGENT-20260910-P1 is checkpointed at exact native public-plan-review approval; resume the saved context only after the review decision is recorded. Then complete the required provider-backed acceptance matrix and Project delivery. Account billing and GitHub Actions are not prerequisites.
   command: .venv/bin/python tools/run.py --cycle-context <context> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local
 previous_checkpoint:
   task: AAK-11
@@ -1862,6 +1862,6 @@ current_delivery_checkpoint:
     - Production PR71 merged: uppercase orchestration run identifiers preserve AAK provenance in native receipts
     - post-merge full suite 621 tests, 1 skip, validator, docs checks and diff check passed
   remaining:
-    - native run AAK07-AGENT-20260910-R5 reached PLAN_READY and COMMITTED owner receipts but Project delivery is BLOCKED_REVIEW
-    - live provider-backed acceptance remains NOT_RUN
-  next_operation: Resume from saved run://AAK07-AGENT-20260910-R5 context only after native public-plan-review decisions are recorded and a configured provider can execute the required actual-agent acceptance matrix; no billing or GitHub Actions is required.
+    - provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED Research/Production receipts; Project delivery is BLOCKED_REVIEW at exact native public-plan-review
+    - required provider-backed acceptance matrix and Project delivery remain NOT_RUN
+  next_operation: Resume from saved run://AAK07-AGENT-20260910-P1 context only after native public-plan-review decisions are recorded, then complete the required provider-backed acceptance matrix and Project delivery; no billing or GitHub Actions is required.

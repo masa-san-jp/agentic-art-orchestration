@@ -1,3 +1,7 @@
+# Provider-backed local run checkpoint — 2026-09-10
+
+Run `AAK07-AGENT-20260910-P1` used local Ollama `qwen2.5:0.5b` (no billing) and a fresh synthetic new-clone profile. The provider decision was `USE_PINNED_HANDOFF`; the saved context reached `PLAN_READY`, committed Research (`c19c851d896c5d289ce6032d0ce94abf67efc8ce`) and Production (`eac0debb4b728885445e74d1f3bc5ef78692f066`) knowledge, and runtime replay passed at revision 2. The native review packet is now blocked only by exact `public-plan-review/PL001` HUMAN approval for target `sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a` and constraints `content_safety=PASSED`, `rights=PASSED`, `consent=PASSED`. No approval or public projection was fabricated. AC07 remains NOT_RUN until Project delivery and the required provider-backed acceptance matrix are complete. Evidence: `execution/delivery-cycle-v2-evidence.json` (`provider_attempt`).
+
 # Delivery correction registered — 2026-09-10
 
 Issue217 is NOT complete. DELIVERY-01 → Production69/Project18 → DELIVERY-04 → DELIVERY-05. Branch fix/delivery-completion-217; base f248056. Existing lease available; claim DELIVERY-01 next. Prior internal AAK acceptance is not Project delivery evidence. Registration only; no new code acceptance yet.
