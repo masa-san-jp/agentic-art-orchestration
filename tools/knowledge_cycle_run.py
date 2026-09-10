@@ -341,20 +341,28 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
     from tools.canonical_plan_projection import source_fields
     from tools.public_projection import build_automatic_plan_authority, project_plan_automatic
     run_id = context['run_id']
-    strict = context.get('delivery_contract') is not None
-    if strict:
-        binding = bindings['agentic-art-production']
-        code = checked_code(binding['code_root'], binding['code_commit'])
-        command = [binding.get('python', sys.executable), str(code/'tools/public_plan_attestation.py'),
-            '--project-root', str(project), '--native-review', '--producer-commit', binding['code_commit'], '--generated-at', context['clock']]
-        result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
-        if result.returncode:
-            try: finding = json.loads(result.stdout)
-            except ValueError: finding = {'status':'BLOCKED_REVIEW','next_action':{'actor':'agent','do':'Inspect the pinned Production review CLI error.'}}
-            save(run_root/'review-packet.json', finding)
-            state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_REVIEW_PENDING',
-                next_action={**finding.get('next_action', {'actor':'agent'}), 'stage':'review', 'receipt':str(run_root/'review-packet.json'), 'command':command})
-            return
+    # A canonical PLAN_READY record uses the closed automatic-plan authority.
+    # It must not enter the human publication-review lane: that lane is for
+    # work/manual requests and external effects. Production still performs its
+    # own renderer, content, asset and provenance checks before writing the
+    # mechanical attestation. A failed mechanical check is an agent repair
+    # action, never an inferred request for consent.
+    binding = bindings['agentic-art-production']
+    code = checked_code(binding['code_root'], binding['code_commit'])
+    command = [binding.get('python', sys.executable), str(code/'tools/public_plan_attestation.py'),
+        '--project-root', str(project), '--automatic-plan', '--producer-commit', binding['code_commit'], '--generated-at', context['clock']]
+    result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
+    if result.returncode:
+        try:
+            finding = json.loads(result.stdout)
+        except ValueError:
+            finding = {'status': 'REJECTED', 'reason': result.stderr.strip() or 'automatic attestation failed'}
+        packet = run_root / 'automatic-plan-attestation.json'
+        save(packet, finding)
+        state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_AUTOMATIC_ATTESTATION_FAILED',
+            next_action={'actor':'agent', 'stage':'attestation', 'receipt':str(packet), 'command':command,
+                         'do':'Repair the reported Production plan, renderer, asset, or provenance finding and resume the identical run.'})
+        return
     destinations = resolution['destination_resolution']
     internal = Path(destinations['destinations']['internal_output_root']['path'])
     public = Path(destinations['destinations']['public_projection_root']['path'])
@@ -366,12 +374,10 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
         'production_plan_sha256': state['plan']['artifacts']['03_plan/production-plan.md'],
         'destination_resolution': destinations,
         **source_fields(project / '03_plan/production-plan.md', bindings['agentic-art-production']['code_root'])}
-    if strict:
-        source['require_native_review'] = True
     source['automatic_plan_authority'] = build_automatic_plan_authority(producer='tools/run.py',
         source_status='PLAN_READY', source_id=run_id, source_sha256=source['production_plan_sha256'],
         destination_resolution=destinations)
-    projected = state.get('projection_receipt') if strict else None
+    projected = state.get('projection_receipt')
     if not isinstance(projected, dict) or projected.get('status') not in {'APPLIED', 'ALREADY_PROJECTED'}:
         projected = project_plan_automatic(source, internal_output_root=internal, public_projection_root=public,
             state_root=state_root, projection_id=run_id)
@@ -383,7 +389,7 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
         if projected['status'] == 'FAILED':
             state['projection_status'] = 'FAILED'
         return
-    if strict and context['delivery_contract']['target'] == 'project-local':
+    if context.get('delivery_contract', {}).get('target') == 'project-local':
         binding = bindings['agentic-art-project']
         code = checked_code(binding['code_root'], binding['code_commit'])
         python = binding.get('python', sys.executable)

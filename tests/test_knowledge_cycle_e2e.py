@@ -188,8 +188,11 @@ raise SystemExit(0 if ok else 1)
         state={'plan_status':'PLAN_READY','knowledge_status':'COMMITTED','plan':{'artifacts':{'03_plan/production-plan.md':'b'*64}}}
         receipt={'status':'BLOCKED_POLICY','result_locator':'run/public-projection-result.json','public_ids':[]}
         record={'record_id':'P0001','content_sha256':'b'*64,'creator_id':'other','origin_instance_id':'inherited','source_identity':'production/proposal#PL001'}
-        with patch('tools.canonical_plan_projection.source_fields',return_value={'source_identity':record['source_identity']}), patch('tools.public_projection.build_automatic_plan_authority',return_value={}), patch('tools.public_projection.project_plan_automatic',side_effect=lambda *a,**k:copy.deepcopy(receipt)), patch.object(cycle.subprocess,'check_output',return_value='c'*40), patch.object(cycle,'invoke',side_effect=lambda *a,**k:{'records':[copy.deepcopy(record)]}):
+        with patch('tools.canonical_plan_projection.source_fields',return_value={'source_identity':record['source_identity']}), patch('tools.public_projection.build_automatic_plan_authority',return_value={}), patch('tools.public_projection.project_plan_automatic',side_effect=lambda *a,**k:copy.deepcopy(receipt)), patch.object(cycle.subprocess,'check_output',return_value='c'*40), patch.object(cycle.subprocess,'run',return_value=cycle.subprocess.CompletedProcess([],0,stdout='{"status":"ATTESTED"}',stderr='')) as automatic_attestation, patch.object(cycle,'checked_code'), patch.object(cycle,'invoke',side_effect=lambda *a,**k:{'records':[copy.deepcopy(record)]}):
             cycle._public_completion(context,profile,resolution,bindings,project,state,run_root)
+            automatic_args = automatic_attestation.call_args.args[0]
+            self.assertIn('--automatic-plan', automatic_args)
+            self.assertNotIn('--native-review', automatic_args)
             self.assertEqual('INCOMPLETE',state['run_status'])
             self.assertEqual('BLOCKED',state['projection_status'])
             receipt.update(status='APPLIED',public_ids=['P0001'])
@@ -199,6 +202,28 @@ raise SystemExit(0 if ok else 1)
             cycle._public_completion(context,profile,resolution,bindings,project,state,run_root)
             self.assertEqual('PROJECTED',state['projection_status'])
             self.assertEqual('COMPLETED',state['run_status'])
+
+    def test_public_plan_attestation_failure_is_agent_repair_not_human_review(self):
+        run_root = self.root / 'state' / 'knowledge-cycles' / 'run'
+        project = self.root / 'internal' / 'production' / 'proposal'
+        resolution = {'destination_resolution': {'destinations': {
+            'internal_output_root': {'path': str(self.root / 'internal')},
+            'public_projection_root': {'path': str(self.root / 'catalog')}}}}
+        context = {'run_id': 'run', 'clock': '2026-09-08T00:00:00Z',
+                   'delivery_contract': {'target': 'project-local'}}
+        profile = {'creator_id': 'creator', 'instance_id': 'origin'}
+        bindings = {'agentic-art-production': {'code_commit': 'a' * 40, 'code_root': str(self.root / 'code')}}
+        state = {'plan_status': 'PLAN_READY', 'knowledge_status': 'COMMITTED',
+                 'plan': {'artifacts': {'03_plan/production-plan.md': 'b' * 64}}}
+        finding = {'status': 'REJECTED', 'reason': 'PUBLIC_CONTENT_BLOCKED'}
+        with patch.object(cycle, 'checked_code'), patch.object(
+                cycle.subprocess, 'run', return_value=cycle.subprocess.CompletedProcess(
+                    [], 2, stdout=json.dumps(finding), stderr='')):
+            cycle._public_completion(context, profile, resolution, bindings, project, state, run_root)
+        self.assertEqual('INCOMPLETE', state['run_status'])
+        self.assertEqual('BLOCKED', state['projection_status'])
+        self.assertEqual('PRODUCTION_AUTOMATIC_ATTESTATION_FAILED', state['stop_reason'])
+        self.assertEqual('agent', state['next_action']['actor'])
 
     def test_cache_parent_symlink_cannot_escape_the_selected_owner(self):
         outside=self.root/'outside';outside.mkdir()
