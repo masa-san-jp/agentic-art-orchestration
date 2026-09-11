@@ -101,6 +101,8 @@
     },
     "report": {"$ref": "#/$defs/report"},
     "destination_resolution": {"type": "object"},
+    "delivery_contract": {"$ref": "delivery-contract.schema.json"},
+    "delivery_completion": {"$ref": "delivery-completion.schema.json"},
     "automatic_plan_authority": {"$ref": "#/$defs/automatic_plan_authority"},
     "remote_operations": {"type": "array", "maxItems": 0},
     "child_mutations": {"type": "array", "maxItems": 0}

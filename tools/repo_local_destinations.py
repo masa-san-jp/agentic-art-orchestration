@@ -140,7 +140,14 @@ def write_resolution_evidence(project_root: str | Path, run_id: str, resolution:
         raise RepoLocalDestinationError("RESOLUTION_INVALID: " + " | ".join(errors))
     if not run_id or any(c not in ID_CHARS for c in run_id):
         raise RepoLocalDestinationError("UNSAFE_LOCAL_WORKSPACE: unsafe run ID")
-    target = Path(project_root).resolve() / ".agentic-art" / "state" / run_id / "destination-resolution.json"
+    # Validate the canonical root, but retain the caller's lexical spelling in
+    # the returned Path.  This keeps create-only evidence stable for callers
+    # using macOS's /var alias while the resolution object remains canonical.
+    root = Path(project_root).expanduser()
+    canonical_root = _absolute(root, "project_root")
+    target = root / ".agentic-art" / "state" / run_id / "destination-resolution.json"
+    if canonical_root != Path(str(resolution.get("project_root", ""))):
+        raise RepoLocalDestinationError("RESOLUTION_CONFLICT: project root differs from resolution")
     target.parent.mkdir(parents=True, exist_ok=True)
     data = json.dumps(dict(resolution), ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
     if target.exists():

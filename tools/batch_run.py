@@ -24,7 +24,7 @@ import time
 from typing import Any, Iterable, Mapping
 
 import yaml
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator, FormatChecker, RefResolver
 
 try:
     from tools.adapters import adapt_art_history_signal, adapt_marketing_signal, adapt_self_model_signal
@@ -510,13 +510,25 @@ def _acceptance_checks(
 
 def validate_batch_run(data: object, source: str = "batch-run") -> list[str]:
     schema = load_json(SCHEMA_PATH)
-    errors = [f"{source}: {error.message}" for error in Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(data)]
+    delivery_schema = load_json(ROOT / "schemas" / "delivery-contract.schema.json")
+    completion_schema = load_json(ROOT / "schemas" / "delivery-completion.schema.json")
+    resolver = RefResolver.from_schema(schema, store={
+        delivery_schema["$id"]: delivery_schema,
+        completion_schema["$id"]: completion_schema,
+    })
+    errors = [f"{source}: {error.message}" for error in Draft202012Validator(schema, resolver=resolver, format_checker=FormatChecker()).iter_errors(data)]
     if not isinstance(data, Mapping):
         return errors
     if "destination_resolution" in data:
         errors.extend(validate_destination_resolution(data["destination_resolution"], f"{source}.destination_resolution"))
         if isinstance(data["destination_resolution"], Mapping) and data["destination_resolution"].get("run_id") != data.get("run_id"):
             errors.append(f"{source}.destination_resolution.run_id: must match batch run_id")
+    if "delivery_contract" in data:
+        from tools.delivery_completion import validate_contract
+        errors.extend(f"{source}.delivery_contract: {error}" for error in validate_contract(data["delivery_contract"]))
+    if "delivery_completion" in data:
+        from tools.delivery_completion import validate_completion
+        errors.extend(f"{source}.delivery_completion: {error}" for error in validate_completion(data["delivery_completion"]))
     if data.get("status") == "PASSED":
         if data.get("completed_count") != data.get("requested_count") or data.get("failed_count") != 0:
             errors.append(f"{source}: PASSED run counts are inconsistent")
@@ -559,6 +571,12 @@ def run_batch(
         raise BatchRunError("max_workers must be positive")
     output_root = _assert_external(output_root, "output_root")
     state_root = _assert_external(state_root, "state_root")
+    from tools.delivery_completion import completion, normal_contract_for_destinations
+    delivery_contract = normal_contract_for_destinations(
+        destination_resolution,
+        project_root_selected=(isinstance(destination_resolution, Mapping)
+                                and destination_resolution.get("contract_version") == "destination-resolution/v2"),
+    )
     workspace_root = workspace_root.expanduser().resolve()
     if not workspace_root.is_dir():
         raise BatchRunError("workspace_root is not a directory")
@@ -715,7 +733,9 @@ def run_batch(
         },
         "remote_operations": [],
         "child_mutations": [],
+        "delivery_contract": delivery_contract,
     }
+    summary["delivery_completion"] = completion(summary, delivery_contract)
     if destination_resolution is not None:
         summary["destination_resolution"] = dict(destination_resolution)
         internal_root = Path(destination_resolution["destinations"]["internal_output_root"]["path"])
@@ -847,8 +867,12 @@ def main(argv: Iterable[str] | None = None) -> int:
     except (BatchRunError, OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
+    summary = result.get("summary") if isinstance(result.get("summary"), Mapping) else {}
     output = {"command": "batch-run", "status": result["status"], "summary": str(result["summary_path"]),
-              "completion_status": "INCOMPLETE", "next_action": "Verify each plan delivery through tools/run.py --cycle-context and the requested --delivery-target."}
+              "completion_status": summary.get("delivery_completion", {}).get("status", "INCOMPLETE"),
+              "delivery_contract": summary.get("delivery_contract"),
+              "delivery_completion": summary.get("delivery_completion"),
+              "next_action": "Verify each plan delivery through tools/run.py --cycle-context and the requested --delivery-target."}
     projection = result.get("public_projection")
     projection_status = projection.get("status") if isinstance(projection, Mapping) else None
     if projection_status is not None:

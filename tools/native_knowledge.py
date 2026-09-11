@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 from tools.plan_completion import checked_code
+from tools.path_safety import external_path as _safe_external_path
 
 BARE_OWNERS = {'self-model-notes', 'marketing-trends-notes', 'agentic-art-production'}
 POLICY = json.loads((Path(__file__).resolve().parents[1] / "config/knowledge-cycle-runtime.json").read_text())
@@ -38,10 +39,10 @@ class NativeKnowledgeError(ValueError):
 
 
 def external_path(value):
-    p = Path(value)
-    if not p.is_absolute() or p.resolve() != p:
-        raise NativeKnowledgeError('EXPLICIT_NONSYMLINK_PATH_REQUIRED')
-    return p
+    try:
+        return _safe_external_path(value)
+    except ValueError as exc:
+        raise NativeKnowledgeError(str(exc)) from exc
 
 
 def _execute(binding, args, *, accepted_failure_statuses=frozenset()):

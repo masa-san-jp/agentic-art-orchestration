@@ -83,6 +83,11 @@ test "$BOOTSTRAP_EXIT" -eq 2
 
 この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
 
+新規の通常runは`delivery-contract/v1`を生成してrun stateへ保存する。明示したProject checkoutを
+`--project-root`または`AGENTIC_ART_PROJECT_ROOT`で選ぶ場合のtargetは`project-local`であり、
+Projectの受取検証までが同じ通常経路に含まれる。保存済みlegacy contextは、契約を追加しても
+既存の`project-committed`やinternalの意味を自動変更せず、同じrunの保存済み入力から再開する。
+
 ResearchとProductionの`--research-root`/`--production-root`はmanifestから自動解決される。引数を省略した通常runでも、workspaceがmissingまたはcleanなpin driftだけなら、run state配下に`pinned-workspace`を新規作成し、全manifest entryを宣言済みのqualified commitへ展開してから同じrunを継続する。元のcheckout、manifest、remote refは変更しない。展開されたworkspaceには`manifest-pinned-workspace/v1`マーカーが付き、detached checkoutでも各commit、clean state、workspace所有証拠を再検証する。dirty、symlink、破損、権限不足、既存tree修復が必要な場合はBLOCKEDのまま停止する。
 
 実Self Modelを読む場合、`--profile-root`には利用が認められた外部profileの絶対パスを明示する。

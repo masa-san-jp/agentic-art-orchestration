@@ -119,10 +119,13 @@ def advance(context, state_root):
         raise ValueError('ALL_OWNER_DECISIONS_REQUIRED')
     if datetime.fromisoformat(context['clock'].replace('Z', '+00:00')).tzinfo is None:
         raise ValueError('EXPLICIT_CLOCK_REQUIRED')
-    state_root = external_path(state_root)
     profile, local = load_profile(external_path(context['instance_profile'])), read(context['local_config'])
     from tools.delivery_completion import resolve_contract
-    delivery_contract = resolve_contract(context.get('delivery_contract'), profile)
+    saved_contract = context.get('delivery_contract')
+    delivery_contract = resolve_contract(saved_contract, profile, legacy_context=saved_contract is None)
+    if context.get('project_root') is None and delivery_contract['target'] == 'project-local':
+        raise ValueError('PROJECT_ROOT_REQUIRED')
+    state_root = external_path(state_root)
     project_resolution = None
     if context.get('project_root') is not None:
         from tools.repo_local_destinations import resolve_project_root
@@ -134,8 +137,10 @@ def advance(context, state_root):
         if state_root != derived_state:
             raise ValueError('STATE_ROOT_DESTINATION_CONFLICT')
         configured = local.get('output_destinations', {})
-        if configured.get('contract_version') == 'output-destinations/v2' and configured.get('project_root') != project_resolution['project_root']:
-            raise ValueError('PROJECT_ROOT_DESTINATION_CONFLICT')
+        if configured.get('contract_version') == 'output-destinations/v2':
+            configured_root = external_path(configured.get('project_root'))
+            if configured_root != Path(project_resolution['project_root']):
+                raise ValueError('PROJECT_ROOT_DESTINATION_CONFLICT')
         # The v2 resolver is authoritative for all repo-local paths.  Keep the
         # external knowledge-store config, but replace only its destination
         # adapter so bootstrap cannot fall back to v1 or an arbitrary public
@@ -144,11 +149,9 @@ def advance(context, state_root):
         local['output_destinations'] = {
             'contract_version': 'output-destinations/v2',
             'mode': 'repo-local-project',
-            'project_root': project_resolution['project_root'],
+            'project_root': str(context['project_root']),
             'destinations': {key: value['relative'] for key, value in project_resolution['destinations'].items()},
         }
-    elif delivery_contract['target'] == 'project-local':
-        raise ValueError('PROJECT_ROOT_REQUIRED')
     if project_resolution is not None and delivery_contract['target'] == 'project-committed':
         raise ValueError('REPO_LOCAL_PROJECT_COMMITTED_REQUIRES_EXPLICIT_COMMIT')
     checked_code(ROOT, profile['repositories']['agentic-art-orchestration']['code_commit'])

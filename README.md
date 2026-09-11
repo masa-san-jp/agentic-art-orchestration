@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-11T01:15:00+09:00`.
+Source updated at: `2026-09-11T01:20:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 1 | 0 | 0 | 168 | 169 |
+| 0 | 0 | 1 | 0 | 168 | 169 |
 
-Current task: `null`; repository: `null`; checkpoint: `AP-01`.
-Next action: Claim AP-02, inspect the parent S1-S6 entrypoint/contract/completion boundaries and repair only the parent implementation.
-Ready: `AP-02`.
-Next task: `AP-02`.
+Current task: `AP-02`; repository: `agentic-art-orchestration`; checkpoint: `AP-02`.
+Next action: Inspect the parent S1-S6 entrypoint, contract, migration and completion boundaries, then implement the smallest parent-only change set.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 
@@ -139,6 +139,11 @@ python3 -m venv .venv
 4. 検証、handoff、stateを更新し、再開可能な状態を残す。
 
 テーマ未指定で制作計画を始める場合も、`--intent`、`--slug`、`--title`を付けずにこの入口を実行します。入力済みのknowledge signalからテーマを自動提案し、必要な検査に失敗した場合はBLOCKEDで停止します。
+
+新規の通常runは`delivery-contract/v1`を自動的に解決して保存します。Projectへ納品する場合は
+`--project-root <absolute agentic-art-project checkout>`または
+`AGENTIC_ART_PROJECT_ROOT`で所有先を明示し、`project-local`として受取検証まで進みます。
+保存済みlegacy contextの`project-committed`など既存の意味は、再開時に黙って変更しません。
 
 ## 詳細文書
 

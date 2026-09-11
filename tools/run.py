@@ -37,6 +37,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.plan_completion import PlanCompletionError, verify_plan
+from tools.delivery_completion import completion, normal_contract_for_destinations
 
 from tools.output_destinations import (
     DestinationError,
@@ -215,11 +216,15 @@ def _resume_command(
     *, python: str, run_id: str, workspace_root: Path, state_root: Path,
     research_root: Path | None, production_root: Path | None, research_work_root: Path | None,
     profile_root: Path | None, purpose: str, intent: str | None, slug: str | None,
-    title: str | None, offline_fixture: bool,
+    title: str | None, offline_fixture: bool, project_root: Path | None = None,
 ) -> list[str]:
     """Build the exact same-run invocation for a checkpoint report."""
     command = [python, str(ROOT / "tools/run.py"), "--run-id", run_id,
-               "--workspace-root", str(workspace_root), "--state-root", str(state_root)]
+               "--workspace-root", str(workspace_root)]
+    if project_root is None:
+        command += ["--state-root", str(state_root)]
+    else:
+        command += ["--project-root", str(project_root)]
     if research_root is not None and production_root is not None:
         command += ["--research-root", str(research_root), "--production-root", str(production_root)]
     if research_work_root is not None:
@@ -618,6 +623,7 @@ def _at_research(
     theme_proposal: dict[str, str] | None = None,
     destination_resolution: Mapping[str, object] | None = None,
     resume_command: list[str] | None = None,
+    delivery_contract: Mapping[str, object] | None = None,
 ) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
@@ -654,6 +660,9 @@ def _at_research(
         },
         "state": str(work),
     }
+    if delivery_contract is not None:
+        report["delivery_contract"] = dict(delivery_contract)
+        report["delivery_completion"] = completion(report, delivery_contract)
     work.mkdir(parents=True, exist_ok=True)
     if destination_resolution is not None:
         report["destination_resolution"] = dict(destination_resolution)
@@ -667,8 +676,15 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         limit: int = 1, offline_fixture: bool = False,
         destination_resolution: Mapping[str, object] | None = None,
         internal_output_root: Path | None = None,
-        profile_root: Path | None = None, research_work_root: Path | None = None) -> dict:
+        profile_root: Path | None = None, research_work_root: Path | None = None,
+        delivery_contract: Mapping[str, object] | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
+    if delivery_contract is None:
+        delivery_contract = normal_contract_for_destinations(
+            destination_resolution,
+            project_root_selected=(isinstance(destination_resolution, Mapping)
+                                    and destination_resolution.get("contract_version") == "destination-resolution/v2"),
+        )
     if (research_root is None) != (production_root is None):
         # Carrying on with one of the two would run a child tool in whatever directory
         # happens to be current, and report a step it did not take.
@@ -696,6 +712,10 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 production_root=production_root, research_work_root=research_work_root,
                 profile_root=profile_root, purpose=purpose, intent=intent,
                 slug=slug, title=title, offline_fixture=False,
+                project_root=(Path(destination_resolution["project_root"])
+                              if isinstance(destination_resolution, Mapping)
+                              and destination_resolution.get("contract_version") == "destination-resolution/v2"
+                              else None),
             )
             blocked_report = {
                 "run_id": run_id,
@@ -709,6 +729,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 "stop_reason": "STARTUP_PRECONDITION",
                 "detail": str(exc),
                 "state": str(blocked_work),
+                "delivery_contract": dict(delivery_contract),
                 "next_action": {
                     "actor": "agent",
                     "stage": "startup",
@@ -717,6 +738,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                     "manual_fallback": "FORBIDDEN: startup BLOCKED is incomplete; do not substitute a manual production plan",
                 },
             }
+            blocked_report["delivery_completion"] = completion(blocked_report, delivery_contract)
             (blocked_work / "run.json").write_text(
                 json.dumps(blocked_report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -751,6 +773,10 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         research_work_root=research_work_root, profile_root=profile_root,
         purpose=purpose, intent=intent, slug=slug, title=title,
         offline_fixture=offline_fixture,
+        project_root=(Path(destination_resolution["project_root"])
+                      if isinstance(destination_resolution, Mapping)
+                      and destination_resolution.get("contract_version") == "destination-resolution/v2"
+                      else None),
     )
 
     def record(name: str, detail: dict) -> None:
@@ -824,6 +850,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             "run_id": run_id, "intent": intent, "status": "BATCH_AT_RESEARCH", "completion_status": "INCOMPLETE",
             "plan_status": "NOT_READY", "knowledge_status": "PENDING", "projection_status": "NOT_RUN", "run_status": "INCOMPLETE",
             "steps": steps, "accepted": accepted, "state": str(work),
+            "delivery_contract": dict(delivery_contract),
             "next_action": {
                 "actor": "agent",
                 "do": ["各プロジェクトで tools/next_action.py を回して調査を進める"],
@@ -832,6 +859,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 "manual_fallback": "FORBIDDEN: 未完了の研究から手動制作案を正規成果物として作成しない",
             },
         }
+        report["delivery_completion"] = completion(report, delivery_contract)
         (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return report
 
@@ -846,7 +874,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
             return _at_research(
                 work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
-                destination_resolution, resume_command,
+                destination_resolution, resume_command, delivery_contract,
             )
 
         _promote_research_handoff(research_data_root, project_slug)
@@ -895,6 +923,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             report = {"run_id": run_id, "status": "AT_PRODUCTION", "plan_status": "PLAN_BUILDING",
                 "completion_status": "INCOMPLETE", "knowledge_status": "PENDING", "projection_status": "SKIPPED", "run_status": "RUNNING",
                 "steps": steps, "plan": str(plan_path), "stop_reason": type(exc).__name__,
+                "delivery_contract": dict(delivery_contract),
                 "next_action": {"actor": "agent", "stage": "production",
                     "project_root": str(plan_path.parent.parent), "code_root": str(production_root),
                     "do": ["Read the pinned Production docs/plan-actionability.md and native validator findings.",
@@ -919,7 +948,9 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             "production_history": str(history_path),
             "theme_proposal": theme_proposal,
             "state": str(work),
+            "delivery_contract": dict(delivery_contract),
         }
+        report["delivery_completion"] = completion(report, delivery_contract)
         production_source_commit = _head(production_root)
         if re.fullmatch(r"[0-9a-f]{40}", production_source_commit):
             report["production_source_commit"] = production_source_commit
@@ -1008,7 +1039,9 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         "theme_proposal": theme_proposal,
         "next_action": next_action,
         "state": str(work),
+        "delivery_contract": dict(delivery_contract),
     }
+    report["delivery_completion"] = completion(report, delivery_contract)
     if destination_resolution is not None:
         report["destination_resolution"] = dict(destination_resolution)
     (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")

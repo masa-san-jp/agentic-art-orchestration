@@ -10,12 +10,18 @@ import re
 import tempfile
 from pathlib import Path
 from typing import Mapping
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.path_safety import external_path as _safe_external_path
 
 import yaml
 
 from tools.validate import _schema_errors, load_json
 
-ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "schemas/instance-profile.schema.json"
 OWNERS = ("self-model-notes", "art-history-notes", "marketing-trends-notes", "agentic-art-research", "agentic-art-production", "viewer-response-notes", "agentic-art-project", "agentic-art-orchestration")
 
@@ -100,12 +106,10 @@ def _pinned_checkout_dirty(path: Path) -> bool:
     return bool(unexpected)
 
 def _external(value: object) -> Path:
-    if not isinstance(value, (str, Path)) or not str(value):
-        raise InstanceProfileError("SETUP_REQUIRED: explicit absolute local path required")
-    path = Path(value)
-    if not path.is_absolute() or path.is_symlink() or any(p.is_symlink() for p in path.parents):
-        raise InstanceProfileError("absolute non-symlink local path required")
-    path = path.resolve()
+    try:
+        path = _safe_external_path(value)
+    except ValueError as exc:
+        raise InstanceProfileError(str(exc).replace("EXPLICIT_NONSYMLINK_PATH_REQUIRED", "absolute non-symlink local path required")) from exc
     if path == ROOT or ROOT in path.parents or path in ROOT.parents:
         raise InstanceProfileError("local state/store must be outside protocol checkout")
     return path
@@ -190,9 +194,10 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
             raise InstanceProfileError("qualified code pin evidence missing")
         # Code sources are read-only inputs; the running protocol checkout is
         # valid here. Only state/store destinations must be outside it.
-        source = Path(str(code.get("path")))
-        if not source.is_absolute() or source.resolve() != source:
-            raise InstanceProfileError("explicit nonsymlink code source required")
+        try:
+            source = _safe_external_path(code.get("path"), require_exists=True)
+        except ValueError as exc:
+            raise InstanceProfileError("explicit nonsymlink code source required") from exc
         if _git(source, "rev-parse", "--show-toplevel") != str(source):
             raise InstanceProfileError("code source must be an explicit repository root")
         _git(source, "cat-file", "-e", entry["code_commit"] + "^{commit}")
@@ -223,7 +228,11 @@ def _bootstrap(profile: Mapping[str, object], local_config: Mapping, state_root:
             raise InstanceProfileError("repo-local output state root must match explicit instance state root")
         destination_evidence = resolve_project_root(project_root, run_id=run_id)
     else:
-        if destinations["destinations"].get("state_root") != str(state_root):
+        try:
+            configured_state_root = _safe_external_path(destinations["destinations"].get("state_root"))
+        except ValueError as exc:
+            raise InstanceProfileError("output state root must be an explicit non-symlink path") from exc
+        if configured_state_root != state_root:
             raise InstanceProfileError("output state root must match explicit instance state root")
         destination_evidence = resolve_destinations(direct=destinations["destinations"], environment={},
             repository_root=ROOT, child_roots=list(stores.values()) + list(sources.values()), run_id=run_id)
