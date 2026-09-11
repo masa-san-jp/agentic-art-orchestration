@@ -30,6 +30,11 @@
         "attempted_at": "2026-09-12T03:49:52+09:00",
         "status": "BLOCKED_AUTHENTICATION",
         "observed": "The same configured gateway returned HTTP 401 Unauthorized before an agent event stream or repository action was produced."
+      },
+      {
+        "attempted_at": "2026-09-12T03:51:39+09:00",
+        "status": "BLOCKED_AUTHENTICATION",
+        "observed": "A third probe against the same configured gateway returned HTTP 401 Unauthorized before an agent event stream or repository action was produced."
       }
     ]
   },

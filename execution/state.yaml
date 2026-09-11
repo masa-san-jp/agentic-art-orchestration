@@ -1,5 +1,5 @@
-version: 289
-updated_at: '2026-09-12T03:49:52+09:00'
+version: 290
+updated_at: '2026-09-12T03:51:39+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -34,7 +34,7 @@ checkpoint:
   task: AP-06
   repository: agentic-art-orchestration
   status: BLOCKED
-  result: 'AP-06 manifest schema and verifier are CODE_VERIFIED. The configured opencode workers-ai tool-capable lane returned HTTP 401 Unauthorized on the initial attempt and retry before an auditable session; the six required normal-entry runs, owner revalidation, knowledge adoption, and Project-local delivery evidence remain NOT_RUN.'
+  result: 'AP-06 manifest schema and verifier are CODE_VERIFIED. The configured opencode workers-ai tool-capable lane returned HTTP 401 Unauthorized on the initial attempt and two retries before an auditable session; the six required normal-entry runs, owner revalidation, knowledge adoption, and Project-local delivery evidence remain NOT_RUN.'
   start_point: d35a4450d80bd9189148b88c63f2233a39b4022f
   code_candidate: d35a4450d80bd9189148b88c63f2233a39b4022f
   evidence: execution/ap-06-acceptance-evidence.json
@@ -42,7 +42,7 @@ checkpoint:
     validator: PASS
     manifest_verifier: 'PASS: valid NOT_RUN report, AC11 NOT_RUN'
     provider_probe: 'RESPONDED: harmless local Ollama probe'
-    external_agent_probe: 'BLOCKED_AUTHENTICATION: opencode workers-ai gateway returned HTTP 401 before agent events on initial attempt and retry'
+    external_agent_probe: 'BLOCKED_AUTHENTICATION: opencode workers-ai gateway returned HTTP 401 before agent events on initial attempt and two retries'
     provider_matrix: NOT_RUN
     full_suite: 'PASS: 637 tests, 1 skipped'
     diff_check: PASS
