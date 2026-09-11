@@ -1,10 +1,10 @@
-version: 276
-updated_at: '2026-09-12T01:32:30+09:00'
-active_task: AP-04-RESEARCH
-active_repository: agentic-art-research
+version: 277
+updated_at: '2026-09-12T01:39:46+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T01:32:30+09:00'
   expires_at: '2026-09-12T04:32:30+09:00'
   lane: AUTONOMY
@@ -26,15 +26,17 @@ lease:
 checkpoint:
   task: AP-04-RESEARCH
   repository: agentic-art-research
-  status: IN_PROGRESS
-  result: 'AP-04-RESEARCH claimed after the Marketing owner record was pushed. Inspect the Research owner contract and qualified main before editing; preserve research payload, source provenance, unresolved findings and owner Git boundaries.'
+  status: DONE
+  result: 'Research owner source efb8ebd passed validator, compile, focused cumulative-specificity/path tests, full 319-test suite, graph and diff checks after candidate b2e26d6 fixed the macOS /var input alias boundary. Research memory, source provenance, unresolved findings and owner Git rules remain intact; draft PR #108 is prepared.'
   start_point: e30debb3513cad8402b79ed4072a6a341790a7b3
-  code_candidate: e30debb3513cad8402b79ed4072a6a341790a7b3
+  code_candidate: b2e26d625cf849c766827dd7b163a2f4c72a226d
+  evidence: execution/ap-04-research-evidence.json
   checks:
-    owner_preflight: PASS
+    owner_validator: PASS
+    owner_compile: PASS
+    owner_focused: PASS
     owner_full_suite: PASS
     owner_graph: PASS
-    owner_audit: PASS
     diff_check: PASS
   blocker: null
   blocker: null
@@ -59,11 +61,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: AP-04-ART-HISTORY
+last_completed_task: AP-04-RESEARCH
 resume_from:
-  task: AP-04-RESEARCH
-  repository: agentic-art-research
-  action: 'Inspect the Research owner contract and qualified main, then implement only the required knowledge-save, source-provenance and development-Git boundary synchronization.'
+  task: AP-04-SELF-MODEL
+  repository: self-model
+  action: 'Claim AP-04-SELF-MODEL, inspect the Self Model owner contract and qualified main, then implement only the required knowledge-save, consent, profile/export and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

@@ -2739,3 +2739,13 @@ Claim `AP-04-MARKETING`; first operation: `.venv/bin/python tools/validate.py --
 ## Next exact action
 
 Claim `AP-04-RESEARCH`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Research owner contract and qualified main, preserve research provenance and unresolved findings in the owner, and record only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-RESEARCH completed
+
+- Research owner source `efb8ebdddf978ad6077be6dce1c1a552eeccf61b` was inspected in an isolated checkout. Candidate `b2e26d625cf849c766827dd7b163a2f4c72a226d` repairs the macOS OS-managed `/var` and `/tmp` external input alias while preserving caller-created symlink rejection.
+- Validator, compile, focused 10 cumulative-specificity plus 2 path tests, full 319-test suite, graph and diff checks passed. Evidence: [`execution/ap-04-research-evidence.json`](ap-04-research-evidence.json).
+- Draft PR [agentic-art-research#108](https://github.com/masa-san-jp/agentic-art-research/pull/108) is open. Parent project/runtime/raw/profile payloads, child default-branch merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-04-SELF-MODEL`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Self Model owner contract and qualified main, preserve consent and profile/export boundaries, and record only opaque evidence in the parent.

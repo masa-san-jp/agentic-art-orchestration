@@ -52,6 +52,12 @@ Marketing ownerのqualified main `932318ce8d76ffd44840cee0a465ea2405ef5037`を�
 
 Owner candidate `932318ce8d76ffd44840cee0a465ea2405ef5037`、record `e7ae5cfeab73e675fd19584288a99d481e832d3c`、draft PR [#91](https://github.com/masa-san-jp/marketing-trends-notes/pull/91)は [`execution/ap-04-marketing-evidence.json`](execution/ap-04-marketing-evidence.json)から参照できる。preflight、57 tests、graph check、`audit --dry-run --now 2026-09-12`、diff checkはPASS。親へtrend/practice/source/observation payload、private dataは複製していない。child default branch、merge、release、external publicationは未実施。
 
+## AP-04-RESEARCH — completed
+
+Research ownerのqualified main `efb8ebdddf978ad6077be6dce1c1a552eeccf61b`を確認した。AAK-08のresearch-memory owner schema、source provenance、rejection/unresolved taxonomy、project/runtime/raw/profile隔離、owner bare Git store、CAS・index復旧、受動的開発Git境界は既存実装で満たされていたが、cumulative-specificityの外部payload pathがmacOSのOS管理 `/var` aliasを拒否していたため、owner-local `tools/path_safety.py`を追加した。利用者作成symlinkは引き続き拒否する。
+
+Owner candidate `b2e26d625cf849c766827dd7b163a2f4c72a226d`、draft PR [#108](https://github.com/masa-san-jp/agentic-art-research/pull/108)は [`execution/ap-04-research-evidence.json`](execution/ap-04-research-evidence.json)から参照できる。validator、compile、focused cumulative-specificity/path tests、full 319 tests、graph、diff checkはPASS。親へproject/runtime/raw/profile/payloadは複製していない。child default branch、merge、release、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

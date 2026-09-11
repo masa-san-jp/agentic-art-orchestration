@@ -2837,7 +2837,7 @@ tasks:
   - id: AP-04-MARKETING
     milestone: INSPIRATION
     title: "Marketing ownerの知識保存・Git境界を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, marketing-trends]
     agent_terminal: DRAFT_PR_READY
@@ -2859,7 +2859,7 @@ tasks:
   - id: AP-04-RESEARCH
     milestone: INSPIRATION
     title: "Research ownerの知識保存・Git境界を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-research]
     agent_terminal: DRAFT_PR_READY
@@ -2874,6 +2874,12 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRは進める。merge、release、外部公開、研究内容の捏造は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Research remains the owner of project and research records."
+    code_status: CODE_VERIFIED
+    code_candidate: b2e26d625cf849c766827dd7b163a2f4c72a226d
+    owner_record_commit: b2e26d625cf849c766827dd7b163a2f4c72a226d
+    draft_pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/108
+    evidence: execution/ap-04-research-evidence.json
+    completion: "Research owner contract and AAK-08 provenance boundary were verified. The only required code delta canonicalizes OS-managed macOS /var and /tmp aliases for cumulative-specificity inputs while preserving caller-created symlink rejection; validator, compile, focused, full 319-test and graph gates pass. Parent project/runtime/raw/profile payloads, merge, release and publication were not performed."
   - id: AP-04-SELF-MODEL
     milestone: INSPIRATION
     title: "Self Model ownerの知識保存・同意・Git境界を同期する"
