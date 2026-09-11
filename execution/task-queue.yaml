@@ -2814,7 +2814,7 @@ tasks:
   - id: AP-04-ART-HISTORY
     milestone: INSPIRATION
     title: "Art History ownerの知識保存・Git境界を同期する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, art-history]
     agent_terminal: DRAFT_PR_READY

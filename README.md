@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:14:46+09:00`.
+Source updated at: `2026-09-12T01:15:50+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 5 | 0 | 0 | 171 | 179 |
+| 3 | 4 | 1 | 0 | 171 | 179 |
 
-Current task: `null`; repository: `null`; checkpoint: `AP-03-PROJECT`.
-Next action: Release the AP-03-PROJECT lease after this record is pushed, then claim AP-04-ART-HISTORY; first operation is parent validation.
-Ready: `AP-04-ART-HISTORY`, `AP-04-MARKETING`, `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
-Next task: `AP-04-ART-HISTORY`.
+Current task: `AP-04-ART-HISTORY`; repository: `art-history`; checkpoint: `AP-04-ART-HISTORY`.
+Next action: Inspect the Art History owner contract and qualified main, then implement only the required knowledge-save and development-Git boundary synchronization.
+Ready: `AP-04-MARKETING`, `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
+Next task: `AP-04-MARKETING`.
 Blocked:
 - none
 
