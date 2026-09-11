@@ -2758,7 +2758,7 @@ tasks:
   - id: AP-03-PRODUCTION
     milestone: INSPIRATION
     title: "Production ownerの自動attestation・手動review選択・再開境界を同期する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-production]
     agent_terminal: DRAFT_PR_READY
