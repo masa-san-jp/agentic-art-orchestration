@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/autonomous-plan-acceptance.schema.json",
+  "title": "Autonomous plan live acceptance manifest v1",
+  "description": "Closed metadata-only manifest for AP-06's six external-agent runs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "task", "status", "provider", "code_pins", "knowledge_pins", "runs", "acceptance", "privacy", "human_gates"],
+  "properties": {
+    "contract_version": {"const": "autonomous-plan-acceptance/v1"},
+    "task": {"const": "AP-06"},
+    "status": {"enum": ["PASS", "NOT_RUN"]},
+    "provider": {"$ref": "#/$defs/provider"},
+    "code_pins": {"$ref": "#/$defs/code_pins"},
+    "knowledge_pins": {"$ref": "#/$defs/knowledge_pins"},
+    "runs": {"type": "array", "maxItems": 6, "items": {"$ref": "#/$defs/run"}},
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "privacy": {"$ref": "#/$defs/privacy"},
+    "human_gates": {"$ref": "#/$defs/human_gates"},
+    "blocker": {"type": ["object", "null"], "additionalProperties": false, "required": ["category", "observed", "remediation"], "properties": {"category": {"type": "string", "minLength": 1}, "observed": {"type": "string", "minLength": 1}, "remediation": {"type": "string", "minLength": 1}}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "PASS"}}},
+      "then": {"properties": {"provider": {"properties": {"available": {"const": true}}}, "runs": {"minItems": 6}, "acceptance": {"properties": {"ac11": {"const": "PASS"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "NOT_RUN"}}},
+      "then": {"required": ["blocker"], "properties": {"provider": {"properties": {"available": {"const": false}}}, "runs": {"maxItems": 0}, "acceptance": {"properties": {"ac11": {"const": "NOT_RUN"}}}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "path": {"type": "string", "minLength": 1},
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "model", "available", "external_agent", "synthetic_identity"],
+      "properties": {
+        "type": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"},
+        "model": {"type": "string", "minLength": 1},
+        "available": {"type": "boolean"},
+        "external_agent": {"const": true},
+        "synthetic_identity": {"type": "boolean"}
+      }
+    },
+    "code_pins": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/sha40"}},
+    "knowledge_pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "commit"],
+      "properties": {"ref": {"type": "string", "pattern": "^knowledge/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}, "commit": {"$ref": "#/$defs/sha40"}}
+    },
+    "knowledge_pins": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/knowledge_pin"}},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instance_id", "creator_id", "synthetic"],
+      "properties": {
+        "instance_id": {"$ref": "#/$defs/id"},
+        "creator_id": {"$ref": "#/$defs/id"},
+        "synthetic": {"type": "boolean"},
+        "origin_instance_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entrypoint", "request_sha256", "input_snapshot_sha256", "instruction_sources"],
+      "properties": {
+        "entrypoint": {"const": "README_DEFAULT"},
+        "request_sha256": {"$ref": "#/$defs/sha256"},
+        "input_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "instruction_sources": {"type": "array", "uniqueItems": true, "items": {"enum": ["README.md", "production-request"]}}
+      }
+    },
+    "provider_execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_path", "evidence_sha256"],
+      "properties": {"evidence_path": {"$ref": "#/$defs/path"}, "evidence_sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "kind"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/sha256"}, "kind": {"enum": ["plan", "asset", "receipt", "project"]}}
+    },
+    "owner_revalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "repository", "observed_commit", "status", "evidence_path", "evidence_sha256"],
+      "properties": {
+        "owner": {"type": "string", "minLength": 1},
+        "repository": {"type": "string", "minLength": 1},
+        "observed_commit": {"$ref": "#/$defs/sha40"},
+        "status": {"const": "PASS"},
+        "evidence_path": {"$ref": "#/$defs/path"},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "operation_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "human_questions", "forbidden_operations"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/sha256"}, "human_questions": {"const": 0}, "forbidden_operations": {"const": []}}
+    },
+    "adoption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence_path", "evidence_sha256", "content_check_path", "content_check_sha256"],
+      "properties": {
+        "status": {"enum": ["BASELINE", "ADOPTED"]},
+        "source_run_id": {"$ref": "#/$defs/id"},
+        "evidence_path": {"$ref": "#/$defs/path"},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "content_check_path": {"$ref": "#/$defs/path"},
+        "content_check_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "sequence", "run_id", "identity", "inputs", "code_pins", "knowledge_pins", "provider_execution", "artifacts", "owner_revalidation", "operation_trace", "knowledge_adoption", "delivery", "human_gate"],
+      "properties": {
+        "mode": {"enum": ["resume", "new-clone", "fork"]},
+        "sequence": {"enum": [1, 2]},
+        "run_id": {"$ref": "#/$defs/id"},
+        "identity": {"$ref": "#/$defs/identity"},
+        "inputs": {"$ref": "#/$defs/inputs"},
+        "code_pins": {"$ref": "#/$defs/code_pins"},
+        "knowledge_pins": {"$ref": "#/$defs/knowledge_pins"},
+        "provider_execution": {"$ref": "#/$defs/provider_execution"},
+        "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}},
+        "owner_revalidation": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/owner_revalidation"}},
+        "operation_trace": {"$ref": "#/$defs/operation_trace"},
+        "knowledge_adoption": {"$ref": "#/$defs/adoption"},
+        "delivery": {"$ref": "#/$defs/delivery"},
+        "human_gate": {"const": "NOT_REQUIRED"}
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["six_runs", "owner_revalidation", "delivery_completion", "zero_human_questions", "second_run_adoption", "fork_upstream_unchanged", "ac11"],
+      "properties": {
+        "six_runs": {"type": "boolean"},
+        "owner_revalidation": {"type": "boolean"},
+        "delivery_completion": {"type": "boolean"},
+        "zero_human_questions": {"type": "boolean"},
+        "second_run_adoption": {"type": "boolean"},
+        "fork_upstream_unchanged": {"type": "boolean"},
+        "ac11": {"enum": ["PASS", "NOT_RUN"]}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_conversation_stored", "credentials_stored", "private_raw_stored", "restricted_stored"],
+      "properties": {"raw_conversation_stored": {"const": false}, "credentials_stored": {"const": false}, "private_raw_stored": {"const": false}, "restricted_stored": {"const": false}}
+    },
+    "human_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["merge", "release", "publication", "physical_work"],
+      "properties": {"merge": {"const": "NOT_RUN"}, "release": {"const": "NOT_RUN"}, "publication": {"const": "NOT_RUN"}, "physical_work": {"const": "NOT_RUN"}}
+    }
+  }
+}

@@ -1,5 +1,5 @@
-version: 85
-updated_at: "2026-09-12T00:30:00+09:00"
+version: 86
+updated_at: "2026-09-12T03:43:26+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2948,7 +2948,7 @@ tasks:
   - id: AP-06
     milestone: INSPIRATION
     title: "実agentの3 identity mode x 2 runを受入する"
-    status: IN_PROGRESS
+    status: BLOCKED
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -2961,6 +2961,11 @@ tasks:
     - git diff --check
     human_gate: "実agentの外部provider利用は既存profile・budget・consent範囲に限定する。merge、release、公開、物理実行、実個人data移設は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-06 implementation-plan row and its provider-missing NOT_RUN rule were read-only observed at 2026-09-12T00:30:00+09:00."
+    code_status: CODE_VERIFIED
+    code_candidate: d35a4450d80bd9189148b88c63f2233a39b4022f
+    evidence: execution/ap-06-acceptance-evidence.json
+    completion: "Manifest schema and verifier are implemented and the parent gates pass. AC11 remains NOT_RUN because the harmless Ollama probe did not produce an auditable tool-capable external-agent six-run matrix; Issue remains open and AP-07 is dependency-blocked."
+    blocker: "EXTERNAL_AGENT_EXECUTION: provide a tool-capable external-agent lane and rerun the acceptance manifest."
   - id: AP-07
     milestone: INSPIRATION
     title: "受入matrixと全repo証跡を最終同期する"

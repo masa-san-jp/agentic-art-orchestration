@@ -1,10 +1,10 @@
-version: 285
-updated_at: '2026-09-12T03:27:02+09:00'
-active_task: AP-06
-active_repository: agentic-art-orchestration
+version: 287
+updated_at: '2026-09-12T03:43:26+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T03:27:02+09:00'
   expires_at: '2026-09-12T06:27:02+09:00'
   lane: AUTONOMY
@@ -33,18 +33,19 @@ lease:
 checkpoint:
   task: AP-06
   repository: agentic-art-orchestration
-  status: IN_PROGRESS
-  result: 'AP-06 claimed after AP-05 qualified integration and evidence were pushed. Implement and run the real-agent three identity-mode by two-run acceptance matrix; preserve AC11 as NOT_RUN if the provider is unavailable.'
-  start_point: d97601dc663d3c7c6a5a8512b29287be6024d460
-  code_candidate: d97601dc663d3c7c6a5a8512b29287be6024d460
+  status: BLOCKED
+  result: 'AP-06 manifest schema and verifier are CODE_VERIFIED. A harmless Ollama probe responded, but no auditable tool-capable external-agent lane produced the six required normal-entry runs, owner revalidation, knowledge adoption, and Project-local delivery evidence; AC11 remains NOT_RUN.'
+  start_point: d35a4450d80bd9189148b88c63f2233a39b4022f
+  code_candidate: d35a4450d80bd9189148b88c63f2233a39b4022f
+  evidence: execution/ap-06-acceptance-evidence.json
   checks:
-    validator: PENDING
-    manifest_verifier: PENDING
-    provider_matrix: PENDING
-    full_suite: PENDING
-    diff_check: PENDING
-  blocker: null
-  blocker: null
+    validator: PASS
+    manifest_verifier: 'PASS: valid NOT_RUN report, AC11 NOT_RUN'
+    provider_probe: 'RESPONDED: harmless local Ollama probe'
+    provider_matrix: NOT_RUN
+    full_suite: 'PASS: 637 tests, 1 skipped'
+    diff_check: PASS
+  blocker: 'EXTERNAL_AGENT_EXECUTION: provide or attach a tool-capable external-agent lane, then rerun the six-run acceptance matrix; AC11 remains NOT_RUN.'
 
 legacy_recovery_checkpoint:
   task: LEGACY-RECOVERY-20260910
@@ -70,8 +71,8 @@ last_completed_task: AP-05
 resume_from:
   task: AP-06
   repository: agentic-art-orchestration
-  action: 'Claim AP-06 and run the provider-backed three identity-mode by two-run acceptance matrix; preserve AC11 as NOT_RUN if the provider is unavailable.'
-  command: '.venv/bin/python tools/validate.py --check'
+  action: 'Provide or attach an auditable tool-capable external-agent lane, then run resume/new-clone/fork twice each from the README default entry; do not promote the model probe or synthetic history to AC11.'
+  command: '.venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>'
 
 aak04_checkpoint:
   task: AAK-04

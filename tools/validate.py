@@ -71,6 +71,7 @@ OUTPUT_DESTINATIONS_EXAMPLE_PATH = ROOT / "config/output-destinations.example.ya
 INSTANCE_PROFILE_SCHEMA_PATH = ROOT / "schemas/instance-profile.schema.json"
 INSTANCE_RESOLUTION_SCHEMA_PATH = ROOT / "schemas/instance-resolution.schema.json"
 WORKSPACE_BOOTSTRAP_SCHEMA_PATH = ROOT / "schemas/workspace-bootstrap.schema.json"
+AUTONOMOUS_PLAN_ACCEPTANCE_SCHEMA_PATH = ROOT / "schemas/autonomous-plan-acceptance.schema.json"
 PUBLIC_PROJECT_LAYOUT_SCHEMA_PATH = ROOT / "schemas/public-project-layout.schema.json"
 PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH = ROOT / "schemas/public-projection-request.schema.json"
 PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH = ROOT / "schemas/public-projection-approval.schema.json"
@@ -133,6 +134,8 @@ REQUIRED_FILES = [
     "schemas/agent-result.schema.json",
     "schemas/autonomous-run.schema.json",
     "tools/autonomous_runner.py",
+    "schemas/autonomous-plan-acceptance.schema.json",
+    "tools/verify_autonomous_plan_acceptance.py",
     "schemas/batch-report-event.schema.json",
     "schemas/batch-run.schema.json",
     "schemas/output-destinations.schema.json",
@@ -473,6 +476,30 @@ def validate_autonomous_contract(
                 errors.append(f"{source}: {label} schema must reject unknown fields; remediation: set additionalProperties to false")
             if not any(property_schema.get("const") == version for property_schema in [schema.get("properties", {}).get("contract_version", {})] if isinstance(property_schema, dict)):
                 errors.append(f"{source}: {label} schema has the wrong contract version; remediation: preserve {version}")
+    return errors
+
+
+def validate_autonomous_plan_acceptance_schema(
+    schema: dict | None = None,
+    source: str = "schemas/autonomous-plan-acceptance.schema.json",
+) -> list[str]:
+    """Keep the AP-06 evidence index closed and versioned in the bootstrap."""
+    schema = schema if schema is not None else load_json(AUTONOMOUS_PLAN_ACCEPTANCE_SCHEMA_PATH)
+    errors: list[str] = []
+    if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        errors.append(f"{source}: AP-06 manifest schema must be Draft 2020-12; remediation: restore autonomous-plan-acceptance/v1")
+        return errors
+    if schema.get("additionalProperties") is not False:
+        errors.append(f"{source}: AP-06 manifest schema must reject unknown fields; remediation: keep the evidence envelope closed")
+    version = schema.get("properties", {}).get("contract_version", {})
+    if not isinstance(version, dict) or version.get("const") != "autonomous-plan-acceptance/v1":
+        errors.append(f"{source}: AP-06 manifest schema has the wrong contract version; remediation: preserve autonomous-plan-acceptance/v1")
+    required = {"contract_version", "task", "status", "provider", "code_pins", "knowledge_pins", "runs", "acceptance", "privacy", "human_gates"}
+    if set(schema.get("required", [])) != required:
+        errors.append(f"{source}: AP-06 manifest required fields are incomplete or expanded; remediation: preserve the fixed evidence envelope")
+    for field in ("provider", "code_pins", "knowledge_pins", "runs", "acceptance", "privacy", "human_gates"):
+        if field not in schema.get("properties", {}):
+            errors.append(f"{source}: AP-06 manifest is missing the {field} contract; remediation: restore the v1 evidence schema")
     return errors
 
 
@@ -4248,6 +4275,11 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
                 load_json(AGENT_ACTION_SCHEMA_PATH),
                 load_json(AGENT_RESULT_SCHEMA_PATH),
                 load_json(AUTONOMOUS_RUN_SCHEMA_PATH),
+            )
+        )
+        errors.extend(
+            validate_autonomous_plan_acceptance_schema(
+                load_json(AUTONOMOUS_PLAN_ACCEPTANCE_SCHEMA_PATH),
             )
         )
         errors.extend(validate_delivery_contract_schema(load_json(DELIVERY_CONTRACT_SCHEMA_PATH)))

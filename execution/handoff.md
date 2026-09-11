@@ -20,12 +20,32 @@ write or catalog write was performed in this read-only integration lane. The
 parent gate redaction now normalizes macOS relative `T/tmp...` markers, and the
 same-run-id child gate `--check` passes.
 
-Parent record commit is the next commit on this branch. Before releasing the
-lease, run the parent validator, project status/readme check, diff check, commit
-the AP-05 evidence and execution SSOT, push the branch normally, and verify the
-remote head. Then claim AP-06. AP-06 must run the real-agent matrix if a
-provider is available; otherwise preserve AC11 as `NOT_RUN` and do not close the
-Issue. First operation: `.venv/bin/python tools/validate.py --check`.
+Parent record commit `d97601dc663d3c7c6a5a8512b29287be6024d460` is pushed to
+the work branch. AP-06 was then claimed and its verifier implementation was
+tested. AP-06 must run the real-agent matrix if a compliant execution lane is
+available; otherwise preserve AC11 as `NOT_RUN` and do not close the Issue.
+
+# AP-06 implementation complete; live acceptance blocked — 2026-09-12
+
+AP-06 added `schemas/autonomous-plan-acceptance.schema.json` and
+`tools/verify_autonomous_plan_acceptance.py`. The verifier cross-checks a
+metadata-only external manifest against hashed provider execution records,
+operation events, owner evidence, delivery-completion evidence, and separate
+second-run knowledge content comparisons. It does not accept a manifest's
+success fields without those files. Focused AP-06 tests, parent validator,
+compile, and the full 637-test suite with one existing skip pass.
+
+The configured local Ollama endpoint answered a harmless probe, but that probe
+did not produce an auditable tool-capable external-agent session. The required
+resume/new-clone/fork two-run matrix, owner revalidation, knowledge adoption,
+and Project-local delivery are therefore `NOT_RUN`; no success or Issue close
+was fabricated. External manifest locator is
+`git-external://ap06-acceptance-manifest-20260912.json` with SHA-256
+`24f858d9a989db8583ef08a08e103f2d5a447a4d45176a2f8069f51e087a8b96`.
+
+AP-06 remains BLOCKED in the queue and AP-07 cannot start. Resume by providing
+the compliant external-agent lane, then run
+`.venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>`.
 
 # Provider-backed local run checkpoint — 2026-09-10
 

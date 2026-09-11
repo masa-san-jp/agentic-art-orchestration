@@ -377,6 +377,20 @@ Continue the returned agent actions through Production plan generation, the clos
 
 `PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
 
+## AP-06 external-agent acceptance
+
+AP-06 evidence is an external, metadata-only manifest. Run
+`.venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>`
+with an absolute manifest outside the repository. The verifier checks the closed
+`autonomous-plan-acceptance/v1` schema, fixed code and knowledge refs, every
+referenced file hash, owner revalidation, delivery completion, operation trace,
+provider execution record, and separate second-run knowledge content checks.
+The manifest's success fields are compared with those observations; they are not
+accepted as proof on their own. A model probe or synthetic/fake run is not a
+six-run acceptance. If a compliant provider-backed external-agent lane is
+unavailable, record `status=NOT_RUN` and `acceptance.ac11=NOT_RUN` with the
+observed blocker and resume command. Do not close the Issue or promote AP-07.
+
 ## Project checkoutだけで動かす（output-destinations/v2）
 
 clone/fork利用者は、明示した`agentic-art-project` checkoutを次のように指定できます。
