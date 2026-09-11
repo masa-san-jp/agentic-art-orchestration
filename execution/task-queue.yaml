@@ -1,5 +1,5 @@
-version: 83
-updated_at: "2026-09-11T00:15:00+09:00"
+version: 84
+updated_at: "2026-09-11T01:15:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2726,3 +2726,18 @@ tasks:
       parent_full_suite: {status: FAILED_BASELINE_ENVIRONMENT, summary: "623 tests; 3 failures, 31 errors, 1 skipped", evidence: execution/ap-01-observation.json}
       diff_check: {status: PASS, command: "git diff --check"}
     completion: "AP-01 read-only observation, eight-repository authority mapping, call graphs, schema compatibility, acceptance mapping, and change separation are recorded in execution/ap-01-observation.json. The macOS /var to /private/var temporary-path baseline is recorded for AP-02; no Issue #241 acceptance condition was promoted."
+  - id: AP-02
+    milestone: INSPIRATION
+    title: "親repoのS1-S6同期と自律通常入口・契約・完了判定の実装"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-01]
+    acceptance: "Issue #241 AP-02として、親repoのS1-S6を既存SSOTへ同期し、通常入口の共通契約・移行・完了判定を実装する。必要schemaは閉じたversion管理とし、任意flag依存を除去する。既存legacy contextの意味とProject-local明示境界を維持し、AC-01..AC-04・AC-06..AC-08・AC-10・AC-13へ観測可能な証拠を残す。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "実装・commit・draft PRは進める。merge、release、外部公開、権限拡張、実カタログ公開は既存gateを維持する。"
+    intake_evidence: "Issue #241のAP-02はAP-01完了を依存に持ち、親repoを対象とし、S1-S6同期・共通入口契約・移行・完了判定・閉じたschema・任意flag除去の受入と検証コマンド・human gateを明示している。"

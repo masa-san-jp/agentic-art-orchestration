@@ -2665,3 +2665,13 @@ Run the saved DELIVERY-05 cycle context through a configured provider from a cle
 ### Next exact action
 
 Register AP-02 from Issue #241, then repair the parent normal-entry contract and the observed path-precedence regressions while preserving the explicit Project-local and human-gate boundaries.
+
+## 2026-09-11 — AP-02 registered
+
+- AP-02 is registered from Issue #241 after AP-01 completed. It is the dependency-ready parent task for synchronizing S1-S6, the normal-entry contract, migration and completion semantics, closed schema versioning, and removal of optional-flag dependence.
+- The task targets `agentic-art-orchestration` only. Child owner changes remain separate AP-03/AP-04 tasks, and Project merge, release, external publication, permission expansion, and real catalog publication remain gated.
+- The AP-01 observation and its known macOS temporary-path baseline are the starting evidence. The next implementation must preserve legacy context meanings and the explicit Project-local destination boundary.
+
+### Next exact action
+
+Claim AP-02, inspect the parent S1-S6 entrypoint, contract, migration, and completion boundaries, then implement the smallest parent-only change set.

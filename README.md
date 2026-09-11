@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-11T01:10:00+09:00`.
+Source updated at: `2026-09-11T01:15:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 168 | 168 |
+| 0 | 1 | 0 | 0 | 168 | 169 |
 
 Current task: `null`; repository: `null`; checkpoint: `AP-01`.
-Next action: Register AP-02 from Issue #241, then repair the parent normal-entry contract and the observed path-precedence regressions.
-Ready: none.
-Next task: `null`.
+Next action: Claim AP-02, inspect the parent S1-S6 entrypoint/contract/completion boundaries and repair only the parent implementation.
+Ready: `AP-02`.
+Next task: `AP-02`.
 Blocked:
 - none
 

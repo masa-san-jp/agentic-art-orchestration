@@ -1,5 +1,5 @@
-version: 263
-updated_at: '2026-09-11T01:10:00+09:00'
+version: 264
+updated_at: '2026-09-11T01:15:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -59,9 +59,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: AP-01
 resume_from:
-  task: null
+  task: AP-02
   repository: agentic-art-orchestration
-  action: 'Register AP-02 from Issue #241, then repair the parent normal-entry contract and the observed path-precedence regressions.'
+  action: 'Claim AP-02, inspect the parent S1-S6 entrypoint/contract/completion boundaries and repair only the parent implementation.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
