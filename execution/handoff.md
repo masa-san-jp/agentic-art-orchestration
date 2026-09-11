@@ -45,6 +45,9 @@ was fabricated. External manifest locator is
 `git-external://ap06-acceptance-manifest-20260912.json` with SHA-256
 `eb1a80ecd3ebcff1aa91f053021195fec1b1524ff5b9a8a89010cbf4a908533b`.
 
+The same provider probe was retried at `2026-09-12T03:49:52+09:00` and again
+returned HTTP 401 before agent events. No credential material was stored.
+
 AP-06 remains BLOCKED in the queue and AP-07 cannot start. Resume by
 reauthenticating the configured provider with
 `opencode providers login https://opencode-for-events.tokyo-odh.workers.dev`,
