@@ -17,13 +17,22 @@
     "probe_status": "RESPONDED",
     "probe_scope": "harmless local response only; no repository, plan, knowledge, delivery, or external mutation"
   },
+  "external_agent_probe": {
+    "tool": "opencode",
+    "provider": "workers-ai",
+    "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+    "attempted_at": "2026-09-12T03:46:20+09:00",
+    "status": "BLOCKED_AUTHENTICATION",
+    "observed": "Configured gateway returned HTTP 401 Unauthorized before an agent event stream or repository action was produced.",
+    "credentials_stored": false
+  },
   "acceptance_manifest": {
     "locator": "git-external://ap06-acceptance-manifest-20260912.json",
-    "sha256": "24f858d9a989db8583ef08a08e103f2d5a447a4d45176a2f8069f51e087a8b96",
+    "sha256": "eb1a80ecd3ebcff1aa91f053021195fec1b1524ff5b9a8a89010cbf4a908533b",
     "verifier_status": "NOT_RUN",
     "manifest_schema_check": "PASS",
     "ac11": "NOT_RUN",
-    "observed_blocker": "The provider probe did not produce an auditable tool-capable external-agent session for the six required normal-entry runs."
+    "observed_blocker": "The configured tool-capable opencode gateway returned HTTP 401 Unauthorized before an auditable external-agent session could begin."
   },
   "parent_checks": {
     "validator": "PASS",
@@ -60,12 +69,12 @@
   },
   "blocker": {
     "category": "EXTERNAL_AGENT_EXECUTION",
-    "observed": "Ollama answered a harmless probe, but no auditable tool-capable external-agent session produced the six required runs and their owner, plan, adoption, and Project-local delivery evidence.",
-    "remediation": "Provide or attach a compliant external-agent execution lane, then run resume/new-clone/fork twice each from the README default entry and regenerate the external manifest."
+    "observed": "The configured opencode workers-ai lane returned HTTP 401 Unauthorized before producing an auditable external-agent session or any repository action.",
+    "remediation": "Reauthenticate the configured provider, then run resume/new-clone/fork twice each from the README default entry and regenerate the external manifest."
   },
   "next_task": {
     "task": "AP-06",
-    "action": "Resume the same acceptance task after the external-agent execution lane is available; AP-07 remains dependent and cannot be started.",
-    "command": ".venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>"
+    "action": "Reauthenticate the configured provider, resume the same acceptance task, and regenerate the manifest; AP-07 remains dependent and cannot be started.",
+    "command": "opencode providers login https://opencode-for-events.tokyo-odh.workers.dev"
   }
 }

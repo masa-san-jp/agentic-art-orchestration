@@ -32,7 +32,7 @@ candidate pin、contract version、owner evidence、Project receiver evidence、
 
 次の実行点はAP-06。実外部agentのresume/new-clone/fork各2runと2回目の知識採用は、providerが無い場合にAC11 NOT_RUNを保持し、合成E2Eを実agent受入へ昇格させない。
 
-AP-06では `autonomous-plan-acceptance/v1` manifest schemaと、外部参照ファイルのhash・provider execution・operation trace・owner再検証・Project-local delivery・2回目の知識採用内容を相互検査する `tools/verify_autonomous_plan_acceptance.py` を追加した。3件のfocused test、親validator、compile、full suite 637 tests（既存skip 1）、diff checkはPASS。Ollamaの無害なprobeは応答したが、6件の通常入口runを操作した監査可能なtool-capable external-agent laneは得られず、AC11はNOT_RUNのままAP-06をBLOCKED記録した。Issue #241は未完了で、AP-07は開始しない。
+AP-06では `autonomous-plan-acceptance/v1` manifest schemaと、外部参照ファイルのhash・provider execution・operation trace・owner再検証・Project-local delivery・2回目の知識採用内容を相互検査する `tools/verify_autonomous_plan_acceptance.py` を追加した。3件のfocused test、親validator、compile、full suite 637 tests（既存skip 1）、diff checkはPASS。Ollamaの無害なprobeは応答したが、設定済みopencode workers-ai laneはHTTP 401 Unauthorizedでagent event生成前に停止した。6件の通常入口runは実施できず、AC11はNOT_RUNのままAP-06をBLOCKED記録した。Issue #241は未完了で、AP-07は開始しない。
 
 ## AP-02 — 親repoの自律通常入口と納品契約 — completed
 

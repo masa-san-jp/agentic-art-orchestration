@@ -2965,7 +2965,7 @@ tasks:
     code_candidate: d35a4450d80bd9189148b88c63f2233a39b4022f
     evidence: execution/ap-06-acceptance-evidence.json
     completion: "Manifest schema and verifier are implemented and the parent gates pass. AC11 remains NOT_RUN because the harmless Ollama probe did not produce an auditable tool-capable external-agent six-run matrix; Issue remains open and AP-07 is dependency-blocked."
-    blocker: "EXTERNAL_AGENT_EXECUTION: provide a tool-capable external-agent lane and rerun the acceptance manifest."
+    blocker: "EXTERNAL_AGENT_AUTHENTICATION: reauthenticate the configured opencode provider and rerun the acceptance manifest."
   - id: AP-07
     milestone: INSPIRATION
     title: "受入matrixと全repo証跡を最終同期する"

@@ -36,15 +36,19 @@ success fields without those files. Focused AP-06 tests, parent validator,
 compile, and the full 637-test suite with one existing skip pass.
 
 The configured local Ollama endpoint answered a harmless probe, but that probe
-did not produce an auditable tool-capable external-agent session. The required
+did not produce an auditable tool-capable external-agent session. A subsequent
+opencode workers-ai attempt reached the configured gateway and received HTTP 401
+Unauthorized before agent events were produced. The required
 resume/new-clone/fork two-run matrix, owner revalidation, knowledge adoption,
 and Project-local delivery are therefore `NOT_RUN`; no success or Issue close
 was fabricated. External manifest locator is
 `git-external://ap06-acceptance-manifest-20260912.json` with SHA-256
-`24f858d9a989db8583ef08a08e103f2d5a447a4d45176a2f8069f51e087a8b96`.
+`eb1a80ecd3ebcff1aa91f053021195fec1b1524ff5b9a8a89010cbf4a908533b`.
 
-AP-06 remains BLOCKED in the queue and AP-07 cannot start. Resume by providing
-the compliant external-agent lane, then run
+AP-06 remains BLOCKED in the queue and AP-07 cannot start. Resume by
+reauthenticating the configured provider with
+`opencode providers login https://opencode-for-events.tokyo-odh.workers.dev`,
+then run
 `.venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>`.
 
 # Provider-backed local run checkpoint — 2026-09-10
