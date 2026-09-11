@@ -1,17 +1,17 @@
-version: 279
-updated_at: '2026-09-12T01:48:47+09:00'
-active_task: null
-active_repository: null
+version: 280
+updated_at: '2026-09-12T01:50:28+09:00'
+active_task: AP-04-VIEWER
+active_repository: viewer-response-notes
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T01:43:37+09:00'
-  expires_at: '2026-09-12T04:43:37+09:00'
+  status: held
+  owner: codex
+  acquired_at: '2026-09-12T01:50:28+09:00'
+  expires_at: '2026-09-12T04:50:28+09:00'
   lane: AUTONOMY
-  execution_id: AP-04-SELF-MODEL:20260912
+  execution_id: AP-04-VIEWER:20260912
   scope:
-    repository: self-model
-    branch: main
+    repository: viewer-response-notes
+    branch: feat/viewer-response-contracts
     paths:
     - config/**
     - schemas/**
@@ -24,21 +24,16 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: AP-04-SELF-MODEL
-  repository: self-model
-  status: DONE
-  result: 'Self Model owner source 351adf3 passed native harness validation, focused 12-test and full 173-test suites, synthetic external-profile graph/audit/bundle checks and diff checks. Existing AAK-05 consent, profile/export and creator-scoped knowledge boundaries were preserved; verification-only commit 04925e1 and draft PR #99 are prepared.'
-  start_point: a61460d4f9add36b256b2db9a860c53a98bd5fcd
-  code_candidate: 351adf30e489b9bc148494bbb3a3677d7df1de19
-  evidence: execution/ap-04-self-model-evidence.json
+  task: AP-04-VIEWER
+  repository: viewer-response-notes
+  status: IN_PROGRESS
+  result: 'AP-04-VIEWER claimed after the Self Model owner record was pushed. Inspect the Viewer owner contract and qualified branch before editing; preserve aggregate response, privacy, free-text, psychological-inference, medical-inference and owner Git boundaries.'
+  start_point: 78b6e9a87831eca5a5c20993374b61b8cc61bd0d
+  code_candidate: 78b6e9a87831eca5a5c20993374b61b8cc61bd0d
   checks:
-    owner_validator: PASS
-    owner_focused: PASS
-    owner_full_suite: PASS
-    owner_graph: PASS
-    owner_audit: PASS
-    owner_bundle: PASS
-    diff_check: PASS
+    owner_validator: PENDING
+    owner_full_suite: PENDING
+    diff_check: PENDING
   blocker: null
   blocker: null
 
@@ -66,7 +61,7 @@ last_completed_task: AP-04-SELF-MODEL
 resume_from:
   task: AP-04-VIEWER
   repository: viewer-response-notes
-  action: 'Claim AP-04-VIEWER, inspect the Viewer owner contract and qualified main, then implement only the required knowledge-save, aggregate/privacy and development-Git boundary synchronization.'
+  action: 'Inspect the Viewer owner contract and qualified branch, then implement only the required knowledge-save, aggregate/privacy and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

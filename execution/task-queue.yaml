@@ -2905,7 +2905,7 @@ tasks:
   - id: AP-04-VIEWER
     milestone: INSPIRATION
     title: "Viewer ownerの知識保存・privacy・Git境界を同期する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, viewer-response-notes]
     agent_terminal: DRAFT_PR_READY
