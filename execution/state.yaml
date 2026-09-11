@@ -1,10 +1,10 @@
-version: 272
-updated_at: '2026-09-12T01:15:50+09:00'
-active_task: AP-04-ART-HISTORY
-active_repository: art-history
+version: 273
+updated_at: '2026-09-12T01:25:42+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T01:15:50+09:00'
   expires_at: '2026-09-12T04:15:50+09:00'
   lane: AUTONOMY
@@ -26,12 +26,19 @@ lease:
 checkpoint:
   task: AP-04-ART-HISTORY
   repository: art-history
-  status: IN_PROGRESS
-  result: 'AP-04-ART-HISTORY claimed after the AP-03-PROJECT record was pushed. Inspect the Art History owner contract and qualified main before editing; keep domain schemas and canonical data owner-controlled.'
+  status: DONE
+  result: 'Art History owner source 3cfc4c3 passed canonical, graph, context-vector, readiness and 142-test gates after candidate f8e5ae4 fixed the macOS /var temporary-directory alias boundary. Caller-created symlinks, owner schema, clean code provenance and parent domain ownership remain protected; draft PR #391 is prepared.'
   start_point: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
-  code_candidate: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
+  code_candidate: f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a
+  evidence: execution/ap-04-art-history-evidence.json
   checks:
-    validator: PENDING
+    owner_agent_doctor: PASS
+    owner_canonical: PASS
+    owner_graph: PASS
+    owner_context_vectors: PASS
+    owner_readiness: PASS
+    owner_full_suite: PASS
+    diff_check: PASS
   blocker: null
   blocker: null
 
@@ -55,11 +62,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: AP-02
+last_completed_task: AP-04-ART-HISTORY
 resume_from:
-  task: AP-04-ART-HISTORY
-  repository: art-history
-  action: 'Inspect the Art History owner contract and qualified main, then implement only the required knowledge-save and development-Git boundary synchronization.'
+  task: AP-04-MARKETING
+  repository: marketing-trends
+  action: 'Claim AP-04-MARKETING, inspect the Marketing owner contract and qualified main, then implement only the required knowledge-save, freshness and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

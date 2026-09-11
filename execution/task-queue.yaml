@@ -2814,7 +2814,7 @@ tasks:
   - id: AP-04-ART-HISTORY
     milestone: INSPIRATION
     title: "Art History ownerの知識保存・Git境界を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, art-history]
     agent_terminal: DRAFT_PR_READY
@@ -2828,6 +2828,12 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRは進める。merge、release、外部公開、機微情報移設は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Art History remains the owner of its schema and canonical data."
+    code_status: CODE_VERIFIED
+    code_candidate: f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a
+    owner_record_commit: f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a
+    draft_pull_request: https://github.com/masa-san-jp/art-history-notes/pull/391
+    evidence: execution/ap-04-art-history-evidence.json
+    completion: "Art History owner contract and AAK-06 intake boundary were verified. The only required code delta canonicalizes OS-managed macOS /var and /tmp aliases while preserving caller-created symlink rejection; owner canonical, graph, context-vector, readiness and 142-test gates pass. Parent domain payloads, merge, release and publication were not performed."
   - id: AP-04-MARKETING
     milestone: INSPIRATION
     title: "Marketing ownerの知識保存・Git境界を同期する"

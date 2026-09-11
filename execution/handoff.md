@@ -2717,3 +2717,14 @@ Release the AP-03-PRODUCTION lease after this record is pushed, then claim `AP-0
 ## Next exact action
 
 Release the AP-03-PROJECT lease after this record is pushed, then claim `AP-04-ART-HISTORY`; first operation: `.venv/bin/python tools/validate.py --check`.
+
+## 2026-09-12 — AP-04-ART-HISTORY completed
+
+- Art History owner source `3cfc4c34d91d1d5176d05ffa08deec479d8b63a7` was inspected in an isolated checkout. Its AAK-06 owner schema, source-read provenance, knowledge-store Git boundary and passive-agent rules were already present.
+- The owner suite exposed a macOS path-boundary defect: the explicit store rejected the OS-managed `/var` temporary-directory alias. Candidate `f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a` adds the owner-local resolver and regression tests; caller-created symlinks remain rejected.
+- Python 3.12.13 owner doctor, canonical verify, graph check, context-vector check, readiness (27 tests), full suite (142 tests) and diff check passed. Evidence: [`execution/ap-04-art-history-evidence.json`](ap-04-art-history-evidence.json).
+- Draft PR [art-history-notes#391](https://github.com/masa-san-jp/art-history-notes/pull/391) is open. Parent domain payloads, source snapshots, private data, merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-04-MARKETING`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Marketing owner contract and qualified main, then preserve freshness, counterevidence and owner Git boundaries while recording only opaque evidence in the parent.

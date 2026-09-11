@@ -40,6 +40,12 @@ Owner candidate `308abfe0f90582b5dd47d17cc5776278d32d5bb3`、record `3d059eb288d
 
 Project ownerのqualified main `c0e172ef719594074eee467a78e221a697781c97`をread-onlyで再検証した。既存実装が明示Project-local receiver、creator/origin attribution、lineage、generated index、catalog sync、read-only Git boundaryを満たしていたため、コード差分は追加せず、owner検証証跡だけを専用branchへ記録した。validator、46 tests、catalog sync、diff checkはPASSし、証跡は [`execution/ap-03-project-evidence.json`](execution/ap-03-project-evidence.json)から参照できる。draft PR [#29](https://github.com/masa-san-jp/agentic-art-project/pull/29)は証跡用で、catalog write、merge、release、remote publicationは未実施。
 
+## AP-04-ART-HISTORY — completed
+
+Art History ownerのqualified main `3cfc4c34d91d1d5176d05ffa08deec479d8b63a7`を確認した。AAK-06のowner schema、source-read証拠、知識保存と開発Gitの境界は既存実装で満たされていたが、macOSのOS管理 `/var` temporary-directory aliasを明示外部storeとして拒否していたため、owner-local `tools/path_safety.py`を追加した。`/var`/`/tmp`だけをcanonicalizeし、利用者作成symlink、store overlap、dirty code、remote pushを引き続き拒否する。
+
+Owner candidate `f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a`、draft PR [#391](https://github.com/masa-san-jp/art-history-notes/pull/391)は [`execution/ap-04-art-history-evidence.json`](execution/ap-04-art-history-evidence.json)から参照できる。Python 3.12.13でagent doctor、canonical verify、graph、context-vector、readiness 27 tests、full 142 tests、diff checkはPASS。親へdomain payload、source snapshot、private dataは複製していない。child default branch、merge、release、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 
