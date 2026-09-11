@@ -2883,7 +2883,7 @@ tasks:
   - id: AP-04-SELF-MODEL
     milestone: INSPIRATION
     title: "Self Model ownerの知識保存・同意・Git境界を同期する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, self-model]
     agent_terminal: DRAFT_PR_READY

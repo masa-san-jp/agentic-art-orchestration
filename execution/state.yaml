@@ -1,16 +1,16 @@
-version: 277
-updated_at: '2026-09-12T01:39:46+09:00'
-active_task: null
-active_repository: null
+version: 278
+updated_at: '2026-09-12T01:43:37+09:00'
+active_task: AP-04-SELF-MODEL
+active_repository: self-model
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T01:32:30+09:00'
-  expires_at: '2026-09-12T04:32:30+09:00'
+  status: held
+  owner: codex
+  acquired_at: '2026-09-12T01:43:37+09:00'
+  expires_at: '2026-09-12T04:43:37+09:00'
   lane: AUTONOMY
-  execution_id: AP-04-RESEARCH:20260912
+  execution_id: AP-04-SELF-MODEL:20260912
   scope:
-    repository: agentic-art-research
+    repository: self-model
     branch: main
     paths:
     - config/**
@@ -24,20 +24,17 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: AP-04-RESEARCH
-  repository: agentic-art-research
-  status: DONE
-  result: 'Research owner source efb8ebd passed validator, compile, focused cumulative-specificity/path tests, full 319-test suite, graph and diff checks after candidate b2e26d6 fixed the macOS /var input alias boundary. Research memory, source provenance, unresolved findings and owner Git rules remain intact; draft PR #108 is prepared.'
-  start_point: e30debb3513cad8402b79ed4072a6a341790a7b3
-  code_candidate: b2e26d625cf849c766827dd7b163a2f4c72a226d
-  evidence: execution/ap-04-research-evidence.json
+  task: AP-04-SELF-MODEL
+  repository: self-model
+  status: IN_PROGRESS
+  result: 'AP-04-SELF-MODEL claimed after the Research owner record was pushed. Inspect the Self Model owner contract and qualified main before editing; preserve consent, profile/export, private/raw and owner Git boundaries.'
+  start_point: a61460d4f9add36b256b2db9a860c53a98bd5fcd
+  code_candidate: a61460d4f9add36b256b2db9a860c53a98bd5fcd
   checks:
-    owner_validator: PASS
-    owner_compile: PASS
-    owner_focused: PASS
-    owner_full_suite: PASS
-    owner_graph: PASS
-    diff_check: PASS
+    owner_validator: PENDING
+    owner_graph: PENDING
+    owner_full_suite: PENDING
+    diff_check: PENDING
   blocker: null
   blocker: null
 
@@ -65,7 +62,7 @@ last_completed_task: AP-04-RESEARCH
 resume_from:
   task: AP-04-SELF-MODEL
   repository: self-model
-  action: 'Claim AP-04-SELF-MODEL, inspect the Self Model owner contract and qualified main, then implement only the required knowledge-save, consent, profile/export and development-Git boundary synchronization.'
+  action: 'Inspect the Self Model owner contract and qualified main, then implement only the required knowledge-save, consent, profile/export and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
