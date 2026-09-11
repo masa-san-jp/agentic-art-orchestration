@@ -2785,7 +2785,7 @@ tasks:
   - id: AP-03-PROJECT
     milestone: INSPIRATION
     title: "Project ownerのローカル受取・帰属・索引検証を同期する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-project]
     agent_terminal: DRAFT_PR_READY
