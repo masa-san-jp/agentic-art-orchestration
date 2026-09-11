@@ -2675,3 +2675,14 @@ Register AP-02 from Issue #241, then repair the parent normal-entry contract and
 ### Next exact action
 
 Claim AP-02, inspect the parent S1-S6 entrypoint, contract, migration, and completion boundaries, then implement the smallest parent-only change set.
+
+## 2026-09-12 — AP-02 completed
+
+- AP-02 parent implementation is fixed at `526324d` on `docs/ecosystem-readme-20260910`. The shared closed `delivery-contract/v1` and `delivery-completion/v1` envelopes now bind normal, cycle, batch and supervisor entrypoints.
+- New explicit Project roots resolve to `project-local`; saved legacy contexts preserve their existing `internal` or `project-committed` meaning. Startup BLOCKED reports retain an agent resume command and incomplete delivery state, and the normal Project-local resume command does not reintroduce a conflicting state root.
+- Focused acceptance: 10 tests PASS. Parent validator, compile, `git diff --check`, and full suite: 633 tests PASS with one existing skip. Evidence: `execution/ap-02-verification.json`; full log SHA-256 `953577609a37d1715ee40c2458368a0ac30c7702e00a8c66bc66cbc61c16ea1b`.
+- No child repository, external artifact, merge, release, public projection or physical work was performed. Existing human gates remain in force.
+
+## Next exact action
+
+Run `.venv/bin/python tools/issue_intake.py` read-only. If no new qualified Issue exists, register the next owner-scoped Issue #241 task without copying the Issue body, then claim the lowest eligible task.

@@ -22,6 +22,14 @@ Issue193 code is integrated via parent PR202 (main merge `cc264f17835049cbdebd36
 
 機械契約 `config/aak-task-projection.json` とqueue参照は2つのMarkdownからの実行用投影であり、第三の仕様ではない。初回は `.venv/bin/python tools/issue_intake.py --register-aak` で冪等登録する。validatorは投影・参照hash・owner・DAGを照合する。子のschema/本文を親へ複製しない。merge/release/公開/実n=1移設のhuman gateを維持する。
 
+## AP-02 — 親repoの自律通常入口と納品契約 — completed
+
+Issue #241のAP-02を親repoだけで実装し、`delivery-contract/v1`と`delivery-completion/v1`を通常run、cycle、batch、supervisorの共通境界へ接続した。新規の明示Project rootは`project-local`として受取検証まで追跡し、保存済みlegacy contextの`internal`/`project-committed`は再開時に保持する。起動BLOCKEDはテーマや手動制作案へ置換せず、同一runのagent resume commandと未完了契約を保存する。
+
+実装commitは`526324d`、受入証跡は[`execution/ap-02-verification.json`](execution/ap-02-verification.json)。focused 10 tests、validator、compile、`git diff --check`、full suite 633 tests（既存skip 1）はPASSした。macOSの`/var` aliasは共通外部path helperで正規化し、利用者作成symlinkは引き続き拒否する。子repo、外部artifact、merge、release、public projection、physical workはこのtaskでは実施していない。
+
+次の再開操作は、queueにeligible taskが無いため `.venv/bin/python tools/issue_intake.py` をread-onlyで実行し、Issue #241の次owner taskを本文複製なしで登録すること。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

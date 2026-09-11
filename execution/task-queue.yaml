@@ -2729,7 +2729,7 @@ tasks:
   - id: AP-02
     milestone: INSPIRATION
     title: "親repoのS1-S6同期と自律通常入口・契約・完了判定の実装"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -2741,3 +2741,17 @@ tasks:
     - git diff --check
     human_gate: "実装・commit・draft PRは進める。merge、release、外部公開、権限拡張、実カタログ公開は既存gateを維持する。"
     intake_evidence: "Issue #241のAP-02はAP-01完了を依存に持ち、親repoを対象とし、S1-S6同期・共通入口契約・移行・完了判定・閉じたschema・任意flag除去の受入と検証コマンド・human gateを明示している。"
+    acceptance_evidence:
+      AC-01: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-02: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-03: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-04: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-06: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-07: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-08: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-10: {status: PASS, evidence: execution/ap-02-verification.json}
+      AC-13: {status: PASS, evidence: execution/ap-02-verification.json}
+    code_status: CODE_VERIFIED
+    code_candidate: 526324d
+    acceptance_scope: "Parent boundary only; child owner gates and real-agent 3-mode x2 acceptance remain separate tasks."
+    completion: "AP-02 parent implementation is code verified. delivery-contract/v1 and delivery-completion/v1 are closed and shared by normal, cycle, batch and supervisor entrypoints; new explicit Project roots use project-local delivery, legacy saved contexts retain their prior meaning, startup recovery persists agent resume actions, and macOS external-path aliases are handled without permitting caller symlinks. Full suite 633 tests passed with one existing skip. No child repository, external artifact, merge, release or public publication was performed."

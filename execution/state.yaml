@@ -1,14 +1,14 @@
-version: 264
-updated_at: '2026-09-11T01:15:00+09:00'
+version: 266
+updated_at: '2026-09-12T00:28:58+09:00'
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: unassigned
-  acquired_at: '2026-09-11T00:20:00+09:00'
+  acquired_at: '2026-09-11T01:20:00+09:00'
   expires_at: null
   lane: AUTONOMY
-  execution_id: AP-01:20260911
+  execution_id: AP-02:20260911
   scope:
     repository: agentic-art-orchestration
     branch: docs/ecosystem-readme-20260910
@@ -24,16 +24,17 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: AP-01
+  task: AP-02
   repository: agentic-art-orchestration
   status: DONE
-  result: 'AP-01 observation and mapping are recorded. Parent validation and diff check pass; the full suite baseline has macOS temporary-path failures/errors and is preserved as AP-02 repair evidence.'
-  start_point: 57e1e11
-  code_candidate: 57e1e114be28a8de5cd0cb7e000d3f73a86b74be
-  evidence: execution/ap-01-observation.json
+  result: 'AP-02 parent implementation is code verified; the shared delivery contract/completion boundary, legacy migration behavior, startup recovery and Project-local resume path are recorded in execution/ap-02-verification.json.'
+  start_point: 3fffb32
+  code_candidate: 526324d
+  evidence: execution/ap-02-verification.json
   checks:
     validator: PASS
-    full_suite: FAILED_BASELINE_ENVIRONMENT
+    focused: PASS
+    full_suite: PASS
     diff_check: PASS
   blocker: null
 
@@ -57,12 +58,12 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: AP-01
+last_completed_task: AP-02
 resume_from:
-  task: AP-02
-  repository: agentic-art-orchestration
-  action: 'Claim AP-02, inspect the parent S1-S6 entrypoint/contract/completion boundaries and repair only the parent implementation.'
-  command: '.venv/bin/python tools/validate.py --check'
+  task: null
+  repository: null
+  action: 'No eligible READY or dependency-complete BACKLOG task remains; run read-only issue intake and register the next owner-scoped Issue #241 task.'
+  command: '.venv/bin/python tools/issue_intake.py'
 
 aak04_checkpoint:
   task: AAK-04

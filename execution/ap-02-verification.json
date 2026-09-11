@@ -1,0 +1,44 @@
+{
+  "contract_version": "ap-02-verification/v1",
+  "task": "AP-02",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "specification_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
+  "repository": "masa-san-jp/agentic-art-orchestration",
+  "branch": "docs/ecosystem-readme-20260910",
+  "code_candidate": "526324d",
+  "scope": "Parent-only implementation of the S1-S6 normal-entry contract, migration compatibility, completion reporting, startup recovery and path-boundary repairs. Child repositories and external catalogs were not changed.",
+  "acceptance": {
+    "AC-01": {"status": "PASS", "evidence": ["AGENTS.md automatic-plan lane wording", "tools/run.py and tools/delivery_completion.py", "tests.test_autonomous_plan_entrypoints"]},
+    "AC-02": {"status": "PASS", "evidence": ["README.md theme-free entry and explicit project-root boundary", "tests.test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback"]},
+    "AC-03": {"status": "PASS", "evidence": ["No manual review, merge, push, billing or provider credential step was added to the normal lane", "full-suite regression"]},
+    "AC-04": {"status": "PASS", "evidence": ["delivery-contract/v1 and delivery-completion/v1 are shared by run, cycle, batch and supervisor boundaries", "tests.test_autonomous_plan_contract"]},
+    "AC-06": {"status": "PASS", "evidence": ["project-local completion requires the native local receiver receipt and explicit destination resolution", "tests.test_delivery_completion and tests.test_delivery_entrypoints"]},
+    "AC-07": {"status": "PASS", "evidence": ["startup BLOCKED reports persist a sanitized agent resume command", "tests.test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_startup_block_is_persisted_with_an_agent_resume_action"]},
+    "AC-08": {"status": "PASS", "evidence": ["legacy cycle contexts retain project-committed/internal meaning; new public normal resolution is project-local", "tests.test_autonomous_plan_contract and tests.test_autonomous_plan_recovery"]},
+    "AC-10": {"status": "PASS", "evidence": ["completion remains separate from PLAN_READY and worker success; physical work and publication remain outside the normal lane", "tests.test_delivery_completion and full-suite regression"]},
+    "AC-13": {"status": "PASS", "evidence": ["closed schemas, independent completion fields and failed-stage recovery prevent stage status from becoming delivery success", "633-test full-suite regression"]}
+  },
+  "checks": {
+    "focused": {"status": "PASS", "command": ".venv/bin/python -m unittest tests.test_autonomous_plan_contract tests.test_autonomous_plan_entrypoints tests.test_autonomous_plan_recovery -v", "summary": "10 tests OK"},
+    "validator": {"status": "PASS", "command": ".venv/bin/python tools/validate.py --check"},
+    "full_suite": {"status": "PASS", "command": ".venv/bin/python -m unittest discover -s tests -v", "summary": "633 tests in 273.923s; OK (skipped=1)", "log_sha256": "953577609a37d1715ee40c2458368a0ac30c7702e00a8c66bc66cbc61c16ea1b"},
+    "compile": {"status": "PASS", "command": ".venv/bin/python -m py_compile <changed Python modules>"},
+    "diff": {"status": "PASS", "command": "git diff --check"}
+  },
+  "compatibility": {
+    "new_normal_public": "project-local when an explicit Project root is selected",
+    "legacy_saved_context": "preserved, including project-committed and internal meanings",
+    "schema_policy": "closed additionalProperties=false envelopes with explicit v1 versions",
+    "path_policy": "macOS /var alias canonicalization is shared; caller-created symlinks remain rejected"
+  },
+  "boundaries": {
+    "child_repositories": "NOT_CHANGED",
+    "external_artifacts": "NOT_CREATED",
+    "public_projection": "NOT_RUN",
+    "merge_release_publication": "HUMAN_GATED",
+    "physical_work": "NOT_RUN"
+  },
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "feedback": {"explicit": "User requested all issues be resolved and completed.", "inferred": []},
+  "next_action": "Run read-only issue intake because no eligible READY/BACKLOG task is currently queued, then register the next owner-scoped Issue #241 task without copying Issue body text."
+}
