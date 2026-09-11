@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:31:25+09:00`.
+Source updated at: `2026-09-12T01:32:30+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 3 | 1 | 0 | 172 | 179 |
+| 3 | 2 | 2 | 0 | 172 | 179 |
 
-Current task: `null`; repository: `null`; checkpoint: `AP-04-MARKETING`.
-Next action: Claim AP-04-RESEARCH, inspect the Research owner contract and qualified main, then implement only the required knowledge-save, source-provenance and development-Git boundary synchronization.
-Ready: `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
-Next task: `AP-04-RESEARCH`.
+Current task: `AP-04-RESEARCH`; repository: `agentic-art-research`; checkpoint: `AP-04-RESEARCH`.
+Next action: Inspect the Research owner contract and qualified main, then implement only the required knowledge-save, source-provenance and development-Git boundary synchronization.
+Ready: `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
+Next task: `AP-04-SELF-MODEL`.
 Blocked:
 - none
 

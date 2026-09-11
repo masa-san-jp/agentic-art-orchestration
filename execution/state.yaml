@@ -1,16 +1,16 @@
-version: 275
-updated_at: '2026-09-12T01:31:25+09:00'
-active_task: null
-active_repository: null
+version: 276
+updated_at: '2026-09-12T01:32:30+09:00'
+active_task: AP-04-RESEARCH
+active_repository: agentic-art-research
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T01:27:05+09:00'
-  expires_at: '2026-09-12T04:27:05+09:00'
+  status: held
+  owner: codex
+  acquired_at: '2026-09-12T01:32:30+09:00'
+  expires_at: '2026-09-12T04:32:30+09:00'
   lane: AUTONOMY
-  execution_id: AP-04-MARKETING:20260912
+  execution_id: AP-04-RESEARCH:20260912
   scope:
-    repository: marketing-trends
+    repository: agentic-art-research
     branch: main
     paths:
     - config/**
@@ -24,13 +24,12 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: AP-04-MARKETING
-  repository: marketing-trends
-  status: DONE
-  result: 'Marketing owner source 932318c passed preflight, 57-test full suite, graph, dry-run audit and diff checks. Existing AAK-07 freshness, counterevidence, source provenance and owner Git boundary were preserved; evidence-only commit e7ae5cf and draft PR #91 are prepared.'
-  start_point: 41598313d6c879effb807e6312ca9df816416bf5
-  code_candidate: 932318ce8d76ffd44840cee0a465ea2405ef5037
-  evidence: execution/ap-04-marketing-evidence.json
+  task: AP-04-RESEARCH
+  repository: agentic-art-research
+  status: IN_PROGRESS
+  result: 'AP-04-RESEARCH claimed after the Marketing owner record was pushed. Inspect the Research owner contract and qualified main before editing; preserve research payload, source provenance, unresolved findings and owner Git boundaries.'
+  start_point: e30debb3513cad8402b79ed4072a6a341790a7b3
+  code_candidate: e30debb3513cad8402b79ed4072a6a341790a7b3
   checks:
     owner_preflight: PASS
     owner_full_suite: PASS
@@ -64,7 +63,7 @@ last_completed_task: AP-04-ART-HISTORY
 resume_from:
   task: AP-04-RESEARCH
   repository: agentic-art-research
-  action: 'Claim AP-04-RESEARCH, inspect the Research owner contract and qualified main, then implement only the required knowledge-save, source-provenance and development-Git boundary synchronization.'
+  action: 'Inspect the Research owner contract and qualified main, then implement only the required knowledge-save, source-provenance and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
