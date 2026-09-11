@@ -22,6 +22,16 @@ Issue193 code is integrated via parent PR202 (main merge `cc264f17835049cbdebd36
 
 機械契約 `config/aak-task-projection.json` とqueue参照は2つのMarkdownからの実行用投影であり、第三の仕様ではない。初回は `.venv/bin/python tools/issue_intake.py --register-aak` で冪等登録する。validatorは投影・参照hash・owner・DAGを照合する。子のschema/本文を親へ複製しない。merge/release/公開/実n=1移設のhuman gateを維持する。
 
+## AP-05 — qualified integration completed
+
+Issue #241 AP-05を、各ownerのcandidateを一時のGit外部workspaceへ隔離して検証した。qualified manifestは6 owner candidate pinを固定し、Production、Research、Art History、Marketing、Self Model、Viewerの16 child gateがimmutable archive・per-child environmentで全件PASSした。Projectは [`execution/ap-03-project-evidence.json`](execution/ap-03-project-evidence.json) のlocal receiver/lineage証拠を参照し、Projectのcatalog writeは行っていない。
+
+親のvalidator、634 tests（既存skip 1）、workspace status、audit（blocking false、既存warning 1件）、diff checkはPASS。`run.py` のテーマ未指定入口はAT_EDGEで停止条件を正確に保持し、child gate未提示のPurpose E2EはBLOCKED、検証済みgateを提示したPurpose E2Eは全acceptance trueの`PLAN_READY`へ到達した。interaction（通常/initial）、initial operations、v1.2、9故障注入と再開、legacy recovery 6候補もnetworklessでPASSした。
+
+candidate pin、contract version、owner evidence、Project receiver evidence、child gate report、Purpose plan-ready、legacy bundleのhashは [`execution/ap-05-integration-evidence.json`](execution/ap-05-integration-evidence.json) に記録した。child gateの出力に残ったmacOS相対temporary markerを親redactionで正規化し、同一run-idの`--check`までPASSさせた。外部一時成果物はGit外部のcreate-only stagingに置き、親にはopaque locatorとhashだけを保存した。AP-05の統合laneではowner knowledge writeを実行せず、既存owner契約証拠とProject receiver証拠を参照として保持した。merge、release、default branch変更、外部公開、実カタログ書込は未実施。
+
+次の実行点はAP-06。実外部agentのresume/new-clone/fork各2runと2回目の知識採用は、providerが無い場合にAC11 NOT_RUNを保持し、合成E2Eを実agent受入へ昇格させない。
+
 ## AP-02 — 親repoの自律通常入口と納品契約 — completed
 
 Issue #241のAP-02を親repoだけで実装し、`delivery-contract/v1`と`delivery-completion/v1`を通常run、cycle、batch、supervisorの共通境界へ接続した。新規の明示Project rootは`project-local`として受取検証まで追跡し、保存済みlegacy contextの`internal`/`project-committed`は再開時に保持する。起動BLOCKEDはテーマや手動制作案へ置換せず、同一runのagent resume commandと未完了契約を保存する。

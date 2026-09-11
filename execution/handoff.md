@@ -1,3 +1,32 @@
+# AP-05 completed — next AP-06
+
+AP-05 was completed on `docs/ecosystem-readme-20260910` from parent start point
+`cbce7265e9e15264024a460f9e3f0f039efdcc73`. The six owner candidates were
+checked out into a Git-external qualified workspace with candidate pins recorded
+in `execution/ap-05-integration-evidence.json`. The qualified
+`child-quality-gates/v1` report matched all six pins and passed all 16 declared
+gates; report SHA-256 is
+`f45a777359ced21b9fa6deb1e926436041f28426b22b799e14f13cfd7e4bd385`.
+
+Parent validation, the 634-test suite with one existing skip, workspace status,
+and diff check pass. Audit remains nonblocking `FINDINGS` with the existing
+`portfolio-unavailable` warning. The theme-free `run.py` entrypoint correctly
+stayed incomplete at `AT_EDGE`; the Purpose E2E stayed blocked without a child
+gate report and reached `PLAN_READY` with the qualified report. Interaction,
+initial-operations, v1.2, nine failure injections with recovery paths, and six
+legacy recovery bundles passed in the networkless lane. Project receiver and
+lineage evidence is referenced from the prior owner record; no new knowledge
+write or catalog write was performed in this read-only integration lane. The
+parent gate redaction now normalizes macOS relative `T/tmp...` markers, and the
+same-run-id child gate `--check` passes.
+
+Parent record commit is the next commit on this branch. Before releasing the
+lease, run the parent validator, project status/readme check, diff check, commit
+the AP-05 evidence and execution SSOT, push the branch normally, and verify the
+remote head. Then claim AP-06. AP-06 must run the real-agent matrix if a
+provider is available; otherwise preserve AC11 as `NOT_RUN` and do not close the
+Issue. First operation: `.venv/bin/python tools/validate.py --check`.
+
 # Provider-backed local run checkpoint — 2026-09-10
 
 Run `AAK07-AGENT-20260910-P1` used local Ollama `qwen2.5:0.5b` (no billing) and a fresh synthetic new-clone profile. The provider decision was `USE_PINNED_HANDOFF`; the saved context reached `PLAN_READY`, committed Research (`c19c851d896c5d289ce6032d0ce94abf67efc8ce`) and Production (`eac0debb4b728885445e74d1f3bc5ef78692f066`) knowledge, and runtime replay passed at revision 2. The native review packet is now blocked only by exact `public-plan-review/PL001` HUMAN approval for target `sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a` and constraints `content_safety=PASSED`, `rights=PASSED`, `consent=PASSED`. A user-readable review summary is at `execution/aak07-provider-live-p1-review.md`. No approval or public projection was fabricated. AC07 remains NOT_RUN until Project delivery and the required provider-backed acceptance matrix are complete. Evidence: `execution/delivery-cycle-v2-evidence.json` (`provider_attempt`).

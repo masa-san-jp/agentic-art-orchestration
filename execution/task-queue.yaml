@@ -2927,7 +2927,7 @@ tasks:
   - id: AP-05
     milestone: INSPIRATION
     title: "qualified owner候補を隔離workspaceで統合検証する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project, agentic-art-research, self-model, art-history, marketing-trends, viewer-response-notes]
     agent_terminal: EVIDENCE_READY
@@ -2941,10 +2941,14 @@ tasks:
     - git diff --check
     human_gate: "隔離workspaceの検証と証跡同期は進める。merge、release、remote default branch、外部公開、実カタログ書込は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-05 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; all seven owner-scoped prerequisites are explicit queue dependencies."
+    code_status: CODE_VERIFIED
+    code_candidate: 256c51f0e9c53ff5c13857e571574c1924a86576
+    evidence: execution/ap-05-integration-evidence.json
+    completion: "Qualified candidate integration passed in an isolated networkless workspace. Six owner pins matched immutable archives and all 16 child gates passed; all entrypoints, legacy recovery, fault injection, resume, document checks and artifact hashes are recorded. Merge, release, default-branch mutation, catalog write and external publication were not performed."
   - id: AP-06
     milestone: INSPIRATION
     title: "実agentの3 identity mode x 2 runを受入する"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
