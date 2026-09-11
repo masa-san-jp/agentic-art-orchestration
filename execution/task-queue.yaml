@@ -2837,7 +2837,7 @@ tasks:
   - id: AP-04-MARKETING
     milestone: INSPIRATION
     title: "Marketing ownerの知識保存・Git境界を同期する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, marketing-trends]
     agent_terminal: DRAFT_PR_READY

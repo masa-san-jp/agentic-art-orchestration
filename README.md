@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:25:42+09:00`.
+Source updated at: `2026-09-12T01:27:05+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 4 | 0 | 0 | 172 | 179 |
+| 3 | 3 | 1 | 0 | 172 | 179 |
 
-Current task: `null`; repository: `null`; checkpoint: `AP-04-ART-HISTORY`.
-Next action: Claim AP-04-MARKETING, inspect the Marketing owner contract and qualified main, then implement only the required knowledge-save, freshness and development-Git boundary synchronization.
-Ready: `AP-04-MARKETING`, `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
-Next task: `AP-04-MARKETING`.
+Current task: `AP-04-MARKETING`; repository: `marketing-trends`; checkpoint: `AP-04-MARKETING`.
+Next action: Inspect the Marketing owner contract and qualified main, then implement only the required knowledge-save, freshness and development-Git boundary synchronization.
+Ready: `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
+Next task: `AP-04-RESEARCH`.
 Blocked:
 - none
 

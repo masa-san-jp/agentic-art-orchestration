@@ -1,16 +1,16 @@
-version: 273
-updated_at: '2026-09-12T01:25:42+09:00'
-active_task: null
-active_repository: null
+version: 274
+updated_at: '2026-09-12T01:27:05+09:00'
+active_task: AP-04-MARKETING
+active_repository: marketing-trends
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T01:15:50+09:00'
-  expires_at: '2026-09-12T04:15:50+09:00'
+  status: held
+  owner: codex
+  acquired_at: '2026-09-12T01:27:05+09:00'
+  expires_at: '2026-09-12T04:27:05+09:00'
   lane: AUTONOMY
-  execution_id: AP-04-ART-HISTORY:20260912
+  execution_id: AP-04-MARKETING:20260912
   scope:
-    repository: art-history
+    repository: marketing-trends
     branch: main
     paths:
     - config/**
@@ -24,21 +24,14 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: AP-04-ART-HISTORY
-  repository: art-history
-  status: DONE
-  result: 'Art History owner source 3cfc4c3 passed canonical, graph, context-vector, readiness and 142-test gates after candidate f8e5ae4 fixed the macOS /var temporary-directory alias boundary. Caller-created symlinks, owner schema, clean code provenance and parent domain ownership remain protected; draft PR #391 is prepared.'
-  start_point: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
-  code_candidate: f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a
-  evidence: execution/ap-04-art-history-evidence.json
+  task: AP-04-MARKETING
+  repository: marketing-trends
+  status: IN_PROGRESS
+  result: 'AP-04-MARKETING claimed after the Art History owner record was pushed. Inspect the Marketing owner contract and qualified main before editing; preserve freshness, counterevidence, source provenance and owner data boundaries.'
+  start_point: 41598313d6c879effb807e6312ca9df816416bf5
+  code_candidate: 41598313d6c879effb807e6312ca9df816416bf5
   checks:
-    owner_agent_doctor: PASS
-    owner_canonical: PASS
-    owner_graph: PASS
-    owner_context_vectors: PASS
-    owner_readiness: PASS
-    owner_full_suite: PASS
-    diff_check: PASS
+    validator: PENDING
   blocker: null
   blocker: null
 
@@ -66,7 +59,7 @@ last_completed_task: AP-04-ART-HISTORY
 resume_from:
   task: AP-04-MARKETING
   repository: marketing-trends
-  action: 'Claim AP-04-MARKETING, inspect the Marketing owner contract and qualified main, then implement only the required knowledge-save, freshness and development-Git boundary synchronization.'
+  action: 'Inspect the Marketing owner contract and qualified main, then implement only the required knowledge-save, freshness and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
