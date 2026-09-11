@@ -1,14 +1,14 @@
-version: 284
-updated_at: '2026-09-12T03:24:12+09:00'
-active_task: null
-active_repository: null
+version: 285
+updated_at: '2026-09-12T03:27:02+09:00'
+active_task: AP-06
+active_repository: agentic-art-orchestration
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T01:54:13+09:00'
-  expires_at: '2026-09-12T04:54:13+09:00'
+  status: held
+  owner: codex
+  acquired_at: '2026-09-12T03:27:02+09:00'
+  expires_at: '2026-09-12T06:27:02+09:00'
   lane: AUTONOMY
-  execution_id: AP-05:20260912
+  execution_id: AP-06:20260912
   scope:
     repository: agentic-art-orchestration
     branch: docs/ecosystem-readme-20260910
@@ -31,22 +31,18 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: AP-05
+  task: AP-06
   repository: agentic-art-orchestration
-  status: DONE
-  result: 'AP-05 qualified candidate integration passed in an isolated networkless workspace. Six owner pins matched immutable archives and all 16 child gates passed; entrypoint, legacy recovery, fault-injection, resume and documentation checks are recorded without merge, release or catalog writes.'
-  start_point: cbce7265e9e15264024a460f9e3f0f039efdcc73
-  code_candidate: 256c51f0e9c53ff5c13857e571574c1924a86576
-  evidence: execution/ap-05-integration-evidence.json
+  status: IN_PROGRESS
+  result: 'AP-06 claimed after AP-05 qualified integration and evidence were pushed. Implement and run the real-agent three identity-mode by two-run acceptance matrix; preserve AC11 as NOT_RUN if the provider is unavailable.'
+  start_point: d97601dc663d3c7c6a5a8512b29287be6024d460
+  code_candidate: d97601dc663d3c7c6a5a8512b29287be6024d460
   checks:
-    validator: PASS
-    full_suite: 'PASS: 634 tests, 1 skipped'
-    workspace_status: PASS
-    audit: FINDINGS_NONBLOCKING
-    diff_check: PASS
-    child_quality_gates: 'PASS: 6 repositories, 16 gates'
-    child_quality_deterministic_check: PASS
-    runtime_redaction_regression: PASS
+    validator: PENDING
+    manifest_verifier: PENDING
+    provider_matrix: PENDING
+    full_suite: PENDING
+    diff_check: PENDING
   blocker: null
   blocker: null
 

@@ -2948,7 +2948,7 @@ tasks:
   - id: AP-06
     milestone: INSPIRATION
     title: "実agentの3 identity mode x 2 runを受入する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
