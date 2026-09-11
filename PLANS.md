@@ -64,6 +64,12 @@ Self Model ownerのqualified main `351adf30e489b9bc148494bbb3a3677d7df1de19`を�
 
 Owner candidate `351adf30e489b9bc148494bbb3a3677d7df1de19`、record `04925e18879ce342202eb2e1e48871372791178e`、draft PR [#99](https://github.com/masa-san-jp/self-model-notes/pull/99)は [`execution/ap-04-self-model-evidence.json`](execution/ap-04-self-model-evidence.json)から参照できる。native harness、focused 12 tests、full 173 tests、synthetic external-profile graph/audit/bundle、diff checkはPASS。parentへpersonal/raw/profile/knowledge payloadは複製していない。child default branch、real migration、merge、release、external publicationは未実施。
 
+## AP-04-VIEWER — completed
+
+Viewer ownerのqualified branch `feat/viewer-response-contracts`、source `2c1167c7ce95f0bfa3a2e9f0896bec5836009a87`を確認した。aggregate-only record/assessment schema、opaque provenance、conservative assessment、deterministic export、PII/free-text/psychological/medical/raw/credential拒否は既存実装で満たされていたため、owner branchには検証記録だけを追加した。
+
+Owner candidate `2c1167c7ce95f0bfa3a2e9f0896bec5836009a87`、record `c886f6b40ff9ca3a85075e5eaa02af64cba9c22e`、draft PR [#12](https://github.com/masa-san-jp/viewer-response-notes/pull/12)は [`execution/ap-04-viewer-evidence.json`](execution/ap-04-viewer-evidence.json)から参照できる。validator、13 tests、READMEのfresh export、diff checkはPASS。parentへviewer record/free text/identifier/raw/credential payloadは複製していない。owner base branch、merge、release、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

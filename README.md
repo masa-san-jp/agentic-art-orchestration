@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:50:28+09:00`.
+Source updated at: `2026-09-12T01:52:43+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 0 | 1 | 0 | 175 | 179 |
+| 2 | 1 | 0 | 0 | 176 | 179 |
 
-Current task: `AP-04-VIEWER`; repository: `viewer-response-notes`; checkpoint: `AP-04-VIEWER`.
-Next action: Inspect the Viewer owner contract and qualified branch, then implement only the required knowledge-save, aggregate/privacy and development-Git boundary synchronization.
-Ready: none.
-Next task: `null`.
+Current task: `null`; repository: `null`; checkpoint: `AP-04-VIEWER`.
+Next action: Claim AP-05, isolate qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.
+Ready: `AP-05`.
+Next task: `AP-05`.
 Blocked:
 - none
 

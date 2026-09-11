@@ -2905,7 +2905,7 @@ tasks:
   - id: AP-04-VIEWER
     milestone: INSPIRATION
     title: "Viewer ownerの知識保存・privacy・Git境界を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, viewer-response-notes]
     agent_terminal: DRAFT_PR_READY
@@ -2918,10 +2918,16 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRは進める。個人識別情報、free text、merge、release、外部公開は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Viewer remains the owner of aggregate response and privacy decisions."
+    code_status: CODE_VERIFIED
+    code_candidate: 2c1167c7ce95f0bfa3a2e9f0896bec5836009a87
+    owner_record_commit: c886f6b40ff9ca3a85075e5eaa02af64cba9c22e
+    draft_pull_request: https://github.com/masa-san-jp/viewer-response-notes/pull/12
+    evidence: execution/ap-04-viewer-evidence.json
+    completion: "Viewer owner aggregate-only schema, conservative assessment, opaque provenance and privacy boundary were verified on qualified branch feat/viewer-response-contracts. Validator, 13-test suite, fresh README export and diff gates pass; the owner branch contains verification documentation only. Viewer records, free text, identifiers, merge, release and publication were not performed."
   - id: AP-05
     milestone: INSPIRATION
     title: "qualified owner候補を隔離workspaceで統合検証する"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project, agentic-art-research, self-model, art-history, marketing-trends, viewer-response-notes]
     agent_terminal: EVIDENCE_READY

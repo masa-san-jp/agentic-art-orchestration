@@ -2759,3 +2759,13 @@ Claim `AP-04-SELF-MODEL`; first operation: `.venv/bin/python tools/validate.py -
 ## Next exact action
 
 Claim `AP-04-VIEWER`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Viewer owner contract and qualified main, preserve aggregate/privacy and free-text boundaries, and record only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-VIEWER completed
+
+- Viewer owner source `2c1167c7ce95f0bfa3a2e9f0896bec5836009a87` on `feat/viewer-response-contracts` was inspected. Aggregate-only records, conservative assessments, opaque provenance, deterministic export and privacy rejection boundaries were already present; the owner branch adds verification documentation only.
+- Validator, 13-test full suite, README export example with a fresh temporary output and diff check passed. Evidence: [`execution/ap-04-viewer-evidence.json`](ap-04-viewer-evidence.json).
+- Draft PR [viewer-response-notes#12](https://github.com/masa-san-jp/viewer-response-notes/pull/12) is open at owner record `c886f6b40ff9ca3a85075e5eaa02af64cba9c22e`. Viewer records, free text, identifiers, raw assets, credentials, merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-05`; first operation: `.venv/bin/python tools/validate.py --check`. Isolate the qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.

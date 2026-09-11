@@ -1,10 +1,10 @@
-version: 280
-updated_at: '2026-09-12T01:50:28+09:00'
-active_task: AP-04-VIEWER
-active_repository: viewer-response-notes
+version: 281
+updated_at: '2026-09-12T01:52:43+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T01:50:28+09:00'
   expires_at: '2026-09-12T04:50:28+09:00'
   lane: AUTONOMY
@@ -26,14 +26,16 @@ lease:
 checkpoint:
   task: AP-04-VIEWER
   repository: viewer-response-notes
-  status: IN_PROGRESS
-  result: 'AP-04-VIEWER claimed after the Self Model owner record was pushed. Inspect the Viewer owner contract and qualified branch before editing; preserve aggregate response, privacy, free-text, psychological-inference, medical-inference and owner Git boundaries.'
+  status: DONE
+  result: 'Viewer owner source 2c1167c passed validator, 13-test full suite, fresh README export and diff checks. Existing aggregate-only, conservative assessment, opaque provenance and privacy boundaries were preserved; verification-only commit c886f6b and draft PR #12 are prepared.'
   start_point: 78b6e9a87831eca5a5c20993374b61b8cc61bd0d
-  code_candidate: 78b6e9a87831eca5a5c20993374b61b8cc61bd0d
+  code_candidate: 2c1167c7ce95f0bfa3a2e9f0896bec5836009a87
+  evidence: execution/ap-04-viewer-evidence.json
   checks:
-    owner_validator: PENDING
-    owner_full_suite: PENDING
-    diff_check: PENDING
+    owner_validator: PASS
+    owner_full_suite: PASS
+    owner_readme_export: PASS
+    diff_check: PASS
   blocker: null
   blocker: null
 
@@ -57,11 +59,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: AP-04-SELF-MODEL
+last_completed_task: AP-04-VIEWER
 resume_from:
-  task: AP-04-VIEWER
-  repository: viewer-response-notes
-  action: 'Inspect the Viewer owner contract and qualified branch, then implement only the required knowledge-save, aggregate/privacy and development-Git boundary synchronization.'
+  task: AP-05
+  repository: agentic-art-orchestration
+  action: 'Claim AP-05, isolate qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
