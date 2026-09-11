@@ -1,0 +1,29 @@
+{
+  "contract_version": "ap-03-project-evidence/v1",
+  "task": "AP-03-PROJECT",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "owner_repository": "masa-san-jp/agentic-art-project",
+  "owner_source_commit": "c0e172ef719594074eee467a78e221a697781c97",
+  "owner_candidate_commit": "c0e172ef719594074eee467a78e221a697781c97",
+  "owner_record_commit": "179ff49e77c752d187360f7a96fd04c47d307119",
+  "owner_branch": "agent/ap03-project-20260912",
+  "draft_pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/29",
+  "change_decision": "NO_CODE_DELTA_REQUIRED",
+  "reason": "The qualified owner main already contains the explicit local receiver, creator/origin attribution, lineage, generated index and read-only Git boundary required by AP-03; owner verification evidence was added separately.",
+  "acceptance": {
+    "local_receiver": {"status": "PASS", "evidence": "owner tests/test_local_delivery.py"},
+    "attribution_and_lineage": {"status": "PASS", "evidence": "owner tests/test_catalog_lineage.py"},
+    "index_and_catalog_sync": {"status": "PASS", "evidence": "owner tests/test_catalog_sync.py and catalog_sync --check"},
+    "remote_and_publication_boundary": {"status": "PASS", "evidence": "owner AGENTS.md/README.md and native checks"}
+  },
+  "checks": {
+    "owner_validator": "PASS",
+    "owner_full_suite": "PASS: 46 tests in 9.390s",
+    "owner_catalog_sync": "PASS",
+    "owner_diff": "PASS"
+  },
+  "integration": {"parent_child_gate": "PASS", "child_default_branch": "UNCHANGED", "catalog_write": "NOT_RUN", "merge": "NOT_RUN", "release": "NOT_RUN"},
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "external_artifacts": "NOT_CREATED",
+  "next_task": "AP-04-ART-HISTORY"
+}

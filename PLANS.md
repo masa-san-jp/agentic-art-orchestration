@@ -36,6 +36,10 @@ Production ownerのautomatic-plan attestationとmanual/publication reviewの境�
 
 Owner candidate `308abfe0f90582b5dd47d17cc5776278d32d5bb3`、record `3d059eb288d7f928046c3933509bbc6c1f5e79b3`、draft PR [#75](https://github.com/masa-san-jp/agentic-art-production/pull/75)は [`execution/ap-03-production-evidence.json`](execution/ap-03-production-evidence.json)から参照できる。owner validator、focused 11 tests、clean full 132 tests、evaluation、diff checkはPASS。child default branch、merge、release、physical work、external publicationは未実施。
 
+## AP-03-PROJECT — completed
+
+Project ownerのqualified main `c0e172ef719594074eee467a78e221a697781c97`をread-onlyで再検証した。既存実装が明示Project-local receiver、creator/origin attribution、lineage、generated index、catalog sync、read-only Git boundaryを満たしていたため、コード差分は追加せず、owner検証証跡だけを専用branchへ記録した。validator、46 tests、catalog sync、diff checkはPASSし、証跡は [`execution/ap-03-project-evidence.json`](execution/ap-03-project-evidence.json)から参照できる。draft PR [#29](https://github.com/masa-san-jp/agentic-art-project/pull/29)は証跡用で、catalog write、merge、release、remote publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

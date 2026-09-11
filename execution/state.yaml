@@ -1,12 +1,12 @@
-version: 270
-updated_at: '2026-09-12T01:12:46+09:00'
-active_task: AP-03-PROJECT
-active_repository: agentic-art-project
+version: 271
+updated_at: '2026-09-12T01:14:46+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T01:12:46+09:00'
-  expires_at: '2026-09-12T04:12:46+09:00'
+  expires_at: null
   lane: AUTONOMY
   execution_id: AP-03-PROJECT:20260912
   scope:
@@ -26,12 +26,16 @@ lease:
 checkpoint:
   task: AP-03-PROJECT
   repository: agentic-art-project
-  status: IN_PROGRESS
-  result: 'AP-03-PROJECT claimed after the Production owner record was pushed. The parent has no Project checkout; inspect the owner main at its qualified remote commit in an isolated checkout before editing.'
+  status: DONE
+  result: 'Project owner source c0e172e passed native validator, 46-test full suite, catalog sync and diff checks; metadata evidence is recorded and draft PR #29 is prepared without catalog writes or merge.'
   start_point: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
-  code_candidate: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
+  code_candidate: c0e172ef719594074eee467a78e221a697781c97
+  evidence: execution/ap-03-project-evidence.json
   checks:
-    validator: PENDING
+    owner_validator: PASS
+    owner_full_suite: PASS
+    owner_catalog_sync: PASS
+    diff_check: PASS
   blocker: null
   blocker: null
 
@@ -59,7 +63,7 @@ last_completed_task: AP-02
 resume_from:
   task: AP-03-PROJECT
   repository: agentic-art-project
-  action: 'Inspect the Project owner contract and current qualified checkout, then implement only its local receiver, attribution and index validation scope.'
+  action: 'Release the AP-03-PROJECT lease after this record is pushed, then claim AP-04-ART-HISTORY; first operation is parent validation.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

@@ -2707,3 +2707,13 @@ Claim `AP-03-PRODUCTION`; first operation: `.venv/bin/python tools/validate.py -
 ## Next exact action
 
 Release the AP-03-PRODUCTION lease after this record is pushed, then claim `AP-03-PROJECT`; first operation: `.venv/bin/python tools/validate.py --check`.
+
+## 2026-09-12 — AP-03-PROJECT completed
+
+- Project owner source `c0e172ef719594074eee467a78e221a697781c97` was inspected in an isolated checkout because no Project checkout exists under the parent. Its existing receiver, attribution, lineage and generated-index implementation satisfies the AP-03 boundary; no owner code delta was required.
+- Owner validator, 46-test full suite, catalog sync and diff checks passed. Verification evidence was recorded at owner commit `179ff49e77c752d187360f7a96fd04c47d307119`; parent evidence is `execution/ap-03-project-evidence.json`.
+- Draft PR [agentic-art-project#29](https://github.com/masa-san-jp/agentic-art-project/pull/29) contains evidence only. Catalog write, child default-branch merge, release and external publication were not performed.
+
+## Next exact action
+
+Release the AP-03-PROJECT lease after this record is pushed, then claim `AP-04-ART-HISTORY`; first operation: `.venv/bin/python tools/validate.py --check`.

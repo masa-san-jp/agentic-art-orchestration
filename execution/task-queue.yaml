@@ -2785,7 +2785,7 @@ tasks:
   - id: AP-03-PROJECT
     milestone: INSPIRATION
     title: "Project ownerのローカル受取・帰属・索引検証を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-project]
     agent_terminal: DRAFT_PR_READY
@@ -2799,6 +2799,18 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRとlocal receiver検証は進める。Projectのmerge、remote同期、公開catalog書込、帰属不明値の補完は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-03 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; the parent issue supplies the SSOT and the owner is separated into its own task."
+    acceptance_evidence:
+      local_receiver: {status: PASS, evidence: execution/ap-03-project-evidence.json}
+      attribution_and_lineage: {status: PASS, evidence: execution/ap-03-project-evidence.json}
+      index_and_catalog_sync: {status: PASS, evidence: execution/ap-03-project-evidence.json}
+      remote_and_publication_boundary: {status: PASS, evidence: execution/ap-03-project-evidence.json}
+    change_decision: NO_CODE_DELTA_REQUIRED
+    code_status: CODE_VERIFIED
+    code_candidate: c0e172ef719594074eee467a78e221a697781c97
+    owner_record_commit: 179ff49e77c752d187360f7a96fd04c47d307119
+    pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/29
+    integration_status: DRAFT_PR_READY
+    completion: "Project owner source c0e172e already provides the required explicit local receiver, creator/origin attribution, lineage, generated index and read-only Git boundary. Native validator, 46-test full suite, catalog sync and diff checks pass; only metadata evidence was added on branch agent/ap03-project-20260912. Catalog write, default-branch merge, release and external publication were not performed."
   - id: AP-04-ART-HISTORY
     milestone: INSPIRATION
     title: "Art History ownerの知識保存・Git境界を同期する"

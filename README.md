@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:12:46+09:00`.
+Source updated at: `2026-09-12T01:14:46+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 5 | 1 | 0 | 170 | 179 |
+| 3 | 5 | 0 | 0 | 171 | 179 |
 
-Current task: `AP-03-PROJECT`; repository: `agentic-art-project`; checkpoint: `AP-03-PROJECT`.
-Next action: Inspect the Project owner contract and current qualified checkout, then implement only its local receiver, attribution and index validation scope.
+Current task: `null`; repository: `null`; checkpoint: `AP-03-PROJECT`.
+Next action: Release the AP-03-PROJECT lease after this record is pushed, then claim AP-04-ART-HISTORY; first operation is parent validation.
 Ready: `AP-04-ART-HISTORY`, `AP-04-MARKETING`, `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`.
 Next task: `AP-04-ART-HISTORY`.
 Blocked:
