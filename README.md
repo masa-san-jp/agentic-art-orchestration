@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-10T15:12:00+09:00`.
+Source updated at: `2026-09-11T00:15:00+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 167 | 167 |
+| 0 | 1 | 0 | 0 | 167 | 168 |
 
 Current task: `null`; repository: `null`; checkpoint: `DELIVERY-05`.
-Next action: All queued implementation tasks are DONE. Use the normal intake validator only when a new Issue with complete SSOT fields is opened; no automatic human plan approval is required for project-local delivery.
-Ready: none.
-Next task: `null`.
+Next action: Claim AP-01 and inspect the current eight-repository authorities, related Issue/PR state, and normal/fixture/recovery call graphs before any implementation.
+Ready: `AP-01`.
+Next task: `AP-01`.
 Blocked:
 - none
 

@@ -1,5 +1,5 @@
-version: 260
-updated_at: '2026-09-11T00:05:00+09:00'
+version: 261
+updated_at: '2026-09-11T00:15:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -60,9 +60,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: DELIVERY-05
 resume_from:
-  task: null
+  task: AP-01
   repository: agentic-art-orchestration
-  action: All queued implementation tasks are DONE. Use the normal intake validator only when a new Issue with complete SSOT fields is opened; no automatic human plan approval is required for project-local delivery.
+  action: 'Claim AP-01 and inspect the current eight-repository authorities, related Issue/PR state, and normal/fixture/recovery call graphs before any implementation.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

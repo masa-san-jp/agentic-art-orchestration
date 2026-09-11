@@ -2643,3 +2643,14 @@ Run the saved DELIVERY-05 cycle context through a configured provider from a cle
 ### Next exact action
 
 1. If a legacy handoff/source bundle becomes available, run that candidate alone through current Production attestation and the explicit Project root; otherwise retain the six recorded blockers and the verified P0008 output.
+
+## 2026-09-11 — Issue intake: AP-01 registered
+
+- The current parent queue had no READY/BACKLOG task and `project_status.py --format json` reported 167/167 DONE.
+- Read-only GitHub intake observed open Issues #241 and #242. Issue #241 met all four SSOT minimums and was classified `REGISTER_BACKLOG`; Issue #242 was classified `UNQUEUED_NEEDS_SSOT` because it has no verification-commands section.
+- AP-01 was registered in `execution/task-queue.yaml` as the dependency-free READY task owned by `agentic-art-orchestration`. The task is observation and execution-plan mapping only; implementation remains AP-02 and later.
+- Intake output was metadata-only and kept outside Git at `/private/tmp/issue-intake-current.json` when available. No Issue body, conversation, credential, PRIVATE_RAW, or RESTRICTED data was copied into the repository.
+
+### Next exact action
+
+1. Claim AP-01, verify the clean parent and each available child checkout, then record the fixed source commits and the call-graph/acceptance mapping before implementation.

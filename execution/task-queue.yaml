@@ -1,5 +1,5 @@
-version: 82
-updated_at: "2026-09-10T11:20:00+09:00"
+version: 83
+updated_at: "2026-09-11T00:15:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2705,3 +2705,18 @@ tasks:
     merge_commit: 7b497dee368d470364ce89198affb26c7658d27a
     pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/102
     completion: Parent aliases are accepted only when the resolved external path remains outside the protocol root; final-component symlinks, traversal and unsafe stores continue to fail closed. No raw/private data or external artifacts were added.
+  - id: AP-01
+    milestone: INSPIRATION
+    title: "現行8repo・Issue・実装の観測と着想改善計画の正規登録"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: []
+    acceptance: "Issue #241 AP-01として、現行8repoのAGENTS/README/起動文/config、関連Issue/PR、親と子の実装をread-onlyで観測し、矛盾箇所→S1-S6→owner→ACの対応表、固定commit、通常経路とfixture/復旧経路のcall graph、schema互換方針、既存変更との分離を実行SSOTへ記録する。コード実装はAP-02以降に分離する。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "実装・観測・commitは進める。merge、release、外部公開、権限拡張は既存gateを維持する。"
+    intake_evidence: "Read-only live intake at 2026-09-11T00:10:00+09:00 classified Issue #241 as REGISTER_BACKLOG with all four SSOT fields present; Issue #242 remained UNQUEUED_NEEDS_SSOT because verification_commands was absent."
