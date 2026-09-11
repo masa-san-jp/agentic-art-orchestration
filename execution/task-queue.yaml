@@ -2927,7 +2927,7 @@ tasks:
   - id: AP-05
     milestone: INSPIRATION
     title: "qualified owner候補を隔離workspaceで統合検証する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project, agentic-art-research, self-model, art-history, marketing-trends, viewer-response-notes]
     agent_terminal: EVIDENCE_READY

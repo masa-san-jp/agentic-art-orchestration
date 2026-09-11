@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:52:43+09:00`.
+Source updated at: `2026-09-12T01:54:13+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 1 | 0 | 0 | 176 | 179 |
+| 2 | 0 | 1 | 0 | 176 | 179 |
 
-Current task: `null`; repository: `null`; checkpoint: `AP-04-VIEWER`.
-Next action: Claim AP-05, isolate qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.
-Ready: `AP-05`.
-Next task: `AP-05`.
+Current task: `AP-05`; repository: `agentic-art-orchestration`; checkpoint: `AP-05`.
+Next action: Isolate qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 
