@@ -2758,7 +2758,7 @@ tasks:
   - id: AP-03-PRODUCTION
     milestone: INSPIRATION
     title: "Production ownerの自動attestation・手動review選択・再開境界を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, agentic-art-production]
     agent_terminal: DRAFT_PR_READY
@@ -2772,6 +2772,16 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRと自動attestation検証は進める。Productionのmerge、release、物理実行、外部公開、manual work publicationは既存gateを維持する。"
     intake_evidence: "Issue #241 AP-03 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; the parent issue supplies the SSOT and the owner is separated into its own task."
+    acceptance_evidence:
+      automatic_attestation_and_manual_review_boundary: {status: PASS, evidence: execution/ap-03-production-evidence.json}
+      resume_and_fail_closed: {status: PASS, evidence: execution/ap-03-production-evidence.json}
+      external_path_compatibility: {status: PASS, evidence: execution/ap-03-production-evidence.json}
+    code_status: CODE_VERIFIED
+    code_candidate: 308abfe0f90582b5dd47d17cc5776278d32d5bb3
+    owner_record_commit: 3d059eb288d7f928046c3933509bbc6c1f5e79b3
+    pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/75
+    integration_status: DRAFT_PR_READY
+    completion: "Production owner candidate 308abfe is verified from source 7bab731. The clean owner validator, focused 11 tests, full 132 tests, evaluation and diff checks pass; automatic-plan attestation and manual/publication review boundaries remain separate, and the macOS external-store alias guard now accepts only OS-owned aliases while rejecting caller symlinks. Child default branch, merge, release, physical work and external publication were not performed."
   - id: AP-03-PROJECT
     milestone: INSPIRATION
     title: "Project ownerのローカル受取・帰属・索引検証を同期する"

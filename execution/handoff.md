@@ -2696,3 +2696,14 @@ Run `.venv/bin/python tools/issue_intake.py` read-only. If no new qualified Issu
 ## Next exact action
 
 Claim `AP-03-PRODUCTION`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the qualified Production checkout and its owner AGENTS/Issue contract, then implement only the automatic-attestation/manual-review selection and recovery scope. Keep the child commit and parent record separate.
+
+## 2026-09-12 — AP-03-PRODUCTION completed
+
+- Production owner source `7bab731acea20aa86b45efc99a0724d5bd569953` was inspected in an isolated checkout because the parent child directory is a networkless fixture. The owner fix is candidate `308abfe0f90582b5dd47d17cc5776278d32d5bb3`; its record commit is `3d059eb288d7f928046c3933509bbc6c1f5e79b3`.
+- The fix canonicalizes only OS-owned `/var` and `/tmp` aliases for external knowledge stores and continues to reject caller-created symlinks and code-store overlap. Existing automatic-plan attestation and explicit manual/publication review semantics are preserved.
+- Owner validator, focused 11 tests, clean full suite 132 tests, evaluation and diff check passed. Evidence: `execution/ap-03-production-evidence.json`; owner evidence: `agentic-art-production/execution/ap-03-production-verification.json`.
+- Draft PR [agentic-art-production#75](https://github.com/masa-san-jp/agentic-art-production/pull/75) is open. Child default branch, merge, release, physical work and external publication were not performed.
+
+## Next exact action
+
+Release the AP-03-PRODUCTION lease after this record is pushed, then claim `AP-03-PROJECT`; first operation: `.venv/bin/python tools/validate.py --check`.

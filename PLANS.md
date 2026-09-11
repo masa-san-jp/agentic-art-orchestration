@@ -30,6 +30,12 @@ Issue #241のAP-02を親repoだけで実装し、`delivery-contract/v1`と`deliv
 
 次の再開操作は、queueにeligible taskが無いため `.venv/bin/python tools/issue_intake.py` をread-onlyで実行し、Issue #241の次owner taskを本文複製なしで登録すること。
 
+## AP-03-PRODUCTION — completed
+
+Production ownerのautomatic-plan attestationとmanual/publication reviewの境界を再確認し、macOS `/var` aliasでcurated knowledge storeが拒否される既存path guardだけを修復した。OS-owned `/var`/`/tmp` aliasはcanonicalizeし、caller-created symlink、code-store overlap、dirty producer checkout、approval失効、plan変更はfail closedのまま保持する。
+
+Owner candidate `308abfe0f90582b5dd47d17cc5776278d32d5bb3`、record `3d059eb288d7f928046c3933509bbc6c1f5e79b3`、draft PR [#75](https://github.com/masa-san-jp/agentic-art-production/pull/75)は [`execution/ap-03-production-evidence.json`](execution/ap-03-production-evidence.json)から参照できる。owner validator、focused 11 tests、clean full 132 tests、evaluation、diff checkはPASS。child default branch、merge、release、physical work、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

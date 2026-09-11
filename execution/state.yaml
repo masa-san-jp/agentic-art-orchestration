@@ -1,12 +1,12 @@
-version: 268
-updated_at: '2026-09-12T00:35:05+09:00'
-active_task: AP-03-PRODUCTION
-active_repository: agentic-art-production
+version: 269
+updated_at: '2026-09-12T01:11:39+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T00:35:05+09:00'
-  expires_at: '2026-09-12T03:35:05+09:00'
+  expires_at: null
   lane: AUTONOMY
   execution_id: AP-03-PRODUCTION:20260912
   scope:
@@ -26,10 +26,17 @@ lease:
 checkpoint:
   task: AP-03-PRODUCTION
   repository: agentic-art-production
-  status: IN_PROGRESS
-  result: 'AP-03-PRODUCTION claimed after registration. The existing parent child path is a networkless fixture; inspect the owner main at its qualified remote commit in an isolated checkout before editing.'
+  status: DONE
+  result: 'Production owner candidate 308abfe and record 3d059eb passed the owner validator, focused/full suite, evaluation and diff gate; draft PR #75 is prepared and no merge/release was performed.'
   start_point: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
-  code_candidate: e3a8eb42748b93dcd75b2946300dd569ff12c0a7
+  code_candidate: 308abfe0f90582b5dd47d17cc5776278d32d5bb3
+  evidence: execution/ap-03-production-evidence.json
+  checks:
+    owner_validator: PASS
+    owner_focused: PASS
+    owner_full_suite: PASS
+    owner_evaluation: PASS
+    diff_check: PASS
   blocker: null
   blocker: null
 
@@ -55,9 +62,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: AP-02
 resume_from:
-  task: AP-03-PRODUCTION
-  repository: agentic-art-production
-  action: 'Inspect the Production owner contract and current qualified checkout, then implement only its automatic-attestation/manual-review selection and recovery scope.'
+  task: AP-03-PROJECT
+  repository: agentic-art-project
+  action: 'Claim AP-03-PROJECT, inspect the Project owner contract and current qualified checkout, then implement only its local receiver, attribution and index validation scope.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
