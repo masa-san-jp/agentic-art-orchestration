@@ -58,6 +58,12 @@ Research ownerのqualified main `efb8ebdddf978ad6077be6dce1c1a552eeccf61b`を確
 
 Owner candidate `b2e26d625cf849c766827dd7b163a2f4c72a226d`、draft PR [#108](https://github.com/masa-san-jp/agentic-art-research/pull/108)は [`execution/ap-04-research-evidence.json`](execution/ap-04-research-evidence.json)から参照できる。validator、compile、focused cumulative-specificity/path tests、full 319 tests、graph、diff checkはPASS。親へproject/runtime/raw/profile/payloadは複製していない。child default branch、merge、release、external publicationは未実施。
 
+## AP-04-SELF-MODEL — completed
+
+Self Model ownerのqualified main `351adf30e489b9bc148494bbb3a3677d7df1de19`を確認した。AAK-05のcreative-feedback/v1、creator scope、同意再検証、external profile-root、export filtering、native SM-036証跡は既存実装で満たされていたため、owner branchにはAP-04検証証跡だけを追加した。Issue #82の実profile移行human gate、raw/private data境界、owner Git境界は維持する。
+
+Owner candidate `351adf30e489b9bc148494bbb3a3677d7df1de19`、record `04925e18879ce342202eb2e1e48871372791178e`、draft PR [#99](https://github.com/masa-san-jp/self-model-notes/pull/99)は [`execution/ap-04-self-model-evidence.json`](execution/ap-04-self-model-evidence.json)から参照できる。native harness、focused 12 tests、full 173 tests、synthetic external-profile graph/audit/bundle、diff checkはPASS。parentへpersonal/raw/profile/knowledge payloadは複製していない。child default branch、real migration、merge、release、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

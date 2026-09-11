@@ -2749,3 +2749,13 @@ Claim `AP-04-RESEARCH`; first operation: `.venv/bin/python tools/validate.py --c
 ## Next exact action
 
 Claim `AP-04-SELF-MODEL`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Self Model owner contract and qualified main, preserve consent and profile/export boundaries, and record only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-SELF-MODEL completed
+
+- Self Model owner source `351adf30e489b9bc148494bbb3a3677d7df1de19` is the qualified main descendant of manifest pin `a61460d4f9add36b256b2db9a860c53a98bd5fcd`. Existing AAK-05 consent, profile-root, creator-scoped knowledge, export and Git boundaries were verified; the owner branch adds verification evidence only.
+- Native harness validation, focused 12-test creative-feedback suite, full 173-test suite, synthetic external-profile graph (7 entities), audit, bundle and diff checks passed. Evidence: [`execution/ap-04-self-model-evidence.json`](ap-04-self-model-evidence.json).
+- Draft PR [self-model-notes#99](https://github.com/masa-san-jp/self-model-notes/pull/99) is open at owner record `04925e18879ce342202eb2e1e48871372791178e`. Real profile migration, personal/raw data, child default-branch merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-04-VIEWER`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Viewer owner contract and qualified main, preserve aggregate/privacy and free-text boundaries, and record only opaque evidence in the parent.

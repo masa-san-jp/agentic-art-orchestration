@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-12T01:43:37+09:00`.
+Source updated at: `2026-09-12T01:48:47+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 1 | 1 | 0 | 174 | 179 |
+| 3 | 1 | 0 | 0 | 175 | 179 |
 
-Current task: `AP-04-SELF-MODEL`; repository: `self-model`; checkpoint: `AP-04-SELF-MODEL`.
-Next action: Inspect the Self Model owner contract and qualified main, then implement only the required knowledge-save, consent, profile/export and development-Git boundary synchronization.
+Current task: `null`; repository: `null`; checkpoint: `AP-04-SELF-MODEL`.
+Next action: Claim AP-04-VIEWER, inspect the Viewer owner contract and qualified main, then implement only the required knowledge-save, aggregate/privacy and development-Git boundary synchronization.
 Ready: `AP-04-VIEWER`.
 Next task: `AP-04-VIEWER`.
 Blocked:

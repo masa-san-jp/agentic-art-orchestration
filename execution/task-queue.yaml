@@ -2883,7 +2883,7 @@ tasks:
   - id: AP-04-SELF-MODEL
     milestone: INSPIRATION
     title: "Self Model ownerの知識保存・同意・Git境界を同期する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration, self-model]
     agent_terminal: DRAFT_PR_READY
@@ -2896,6 +2896,12 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRは進める。同意範囲変更、実個人raw data、merge、release、外部公開は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Self Model remains the owner of identity and consent decisions."
+    code_status: CODE_VERIFIED
+    code_candidate: 351adf30e489b9bc148494bbb3a3677d7df1de19
+    owner_record_commit: 04925e18879ce342202eb2e1e48871372791178e
+    draft_pull_request: https://github.com/masa-san-jp/self-model-notes/pull/99
+    evidence: execution/ap-04-self-model-evidence.json
+    completion: "Self Model owner AAK-05 contract, consent revalidation, external profile-root, creator-scoped knowledge and export boundaries were verified on qualified main. Native validation, focused 12-test, full 173-test, synthetic graph/audit/bundle and diff gates pass; the owner branch contains verification evidence only. Personal/raw payloads, real migration, merge, release and publication were not performed."
   - id: AP-04-VIEWER
     milestone: INSPIRATION
     title: "Viewer ownerの知識保存・privacy・Git境界を同期する"
