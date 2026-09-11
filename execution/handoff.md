@@ -2654,3 +2654,14 @@ Run the saved DELIVERY-05 cycle context through a configured provider from a cle
 ### Next exact action
 
 1. Claim AP-01, verify the clean parent and each available child checkout, then record the fixed source commits and the call-graph/acceptance mapping before implementation.
+
+## 2026-09-11 — AP-01 observation complete
+
+- AP-01 recorded the current eight repository authority blobs, manifest and remote pins, related Issue/PR states, normal/fixture/recovery/supervisor call graphs, boundary schemas, and the AC-01..AC-13 owner/task mapping in [`execution/ap-01-observation.json`](ap-01-observation.json).
+- Issue #241 remains open and all thirteen acceptance conditions remain `MAPPED_NOT_ACCEPTED`. Issue #242 remains `UNQUEUED_NEEDS_SSOT` because its verification command is not intake-complete; no Issue body or conversation was copied.
+- Parent validation and `git diff --check` pass. The full local suite ran 623 tests with 3 failures, 31 errors, and 1 skip from the macOS `/var` to `/private/var` temporary-path alias against strict external path guards; the path-precedence cases are preserved as AP-02 repair evidence and no result is reported as PASS.
+- AP-01 is complete as an observation task. No child checkout, remote ref, Issue, PR, Project catalog, approval, permission, or publication was mutated.
+
+### Next exact action
+
+Register AP-02 from Issue #241, then repair the parent normal-entry contract and the observed path-precedence regressions while preserving the explicit Project-local and human-gate boundaries.

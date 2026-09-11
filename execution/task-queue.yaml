@@ -2708,7 +2708,7 @@ tasks:
   - id: AP-01
     milestone: INSPIRATION
     title: "現行8repo・Issue・実装の観測と着想改善計画の正規登録"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: DRAFT_PR_READY
@@ -2720,3 +2720,9 @@ tasks:
     - git diff --check
     human_gate: "実装・観測・commitは進める。merge、release、外部公開、権限拡張は既存gateを維持する。"
     intake_evidence: "Read-only live intake at 2026-09-11T00:10:00+09:00 classified Issue #241 as REGISTER_BACKLOG with all four SSOT fields present; Issue #242 remained UNQUEUED_NEEDS_SSOT because verification_commands was absent."
+    acceptance_evidence:
+      observation: {status: PASS, evidence: execution/ap-01-observation.json}
+      parent_validation: {status: PASS, command: ".venv/bin/python tools/validate.py --check"}
+      parent_full_suite: {status: FAILED_BASELINE_ENVIRONMENT, summary: "623 tests; 3 failures, 31 errors, 1 skipped", evidence: execution/ap-01-observation.json}
+      diff_check: {status: PASS, command: "git diff --check"}
+    completion: "AP-01 read-only observation, eight-repository authority mapping, call graphs, schema compatibility, acceptance mapping, and change separation are recorded in execution/ap-01-observation.json. The macOS /var to /private/var temporary-path baseline is recorded for AP-02; no Issue #241 acceptance condition was promoted."

@@ -1,17 +1,17 @@
-version: 261
-updated_at: '2026-09-11T00:15:00+09:00'
+version: 263
+updated_at: '2026-09-11T01:10:00+09:00'
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: unassigned
-  acquired_at: '2026-09-10T01:20:51+09:00'
+  acquired_at: '2026-09-11T00:20:00+09:00'
   expires_at: null
   lane: AUTONOMY
-  execution_id: DELIVERY-05-AUTOMATIC-PLAN:20260910
+  execution_id: AP-01:20260911
   scope:
     repository: agentic-art-orchestration
-    branch: chore/complete-delivery-05-p4
+    branch: docs/ecosystem-readme-20260910
     paths:
     - tools/**
     - schemas/**
@@ -24,18 +24,17 @@ lease:
     - PLANS.md
     child_repositories: []
 checkpoint:
-  task: DELIVERY-05
+  task: AP-01
   repository: agentic-art-orchestration
   status: DONE
-  result: 'Provider-backed new-clone run AAK07-AGENT-20260910-P4 completed PLAN_READY, committed Research/Production knowledge, automatic Production attestation, Project P0008 projection and delivery_completion COMPLETED with human_gate NOT_REQUIRED.'
-  code_candidate: d591ca965b527c57c0e4d811d46fc605658ab6ca
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/235
-  merge_commit: 9ae154337e00059425c80a7469c19c36325c124b
-  merged_at: '2026-09-10T15:07:50+09:00'
-  production_pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/72
-  production_merge_commit: eec39272c5c4827a1caf27fa928de18b58882e96
-  evidence: execution/aak07-provider-live-p4-evidence.json
-  review_artifact: execution/aak07-provider-live-p4-review.md
+  result: 'AP-01 observation and mapping are recorded. Parent validation and diff check pass; the full suite baseline has macOS temporary-path failures/errors and is preserved as AP-02 repair evidence.'
+  start_point: 57e1e11
+  code_candidate: 57e1e114be28a8de5cd0cb7e000d3f73a86b74be
+  evidence: execution/ap-01-observation.json
+  checks:
+    validator: PASS
+    full_suite: FAILED_BASELINE_ENVIRONMENT
+    diff_check: PASS
   blocker: null
 
 legacy_recovery_checkpoint:
@@ -58,11 +57,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: DELIVERY-05
+last_completed_task: AP-01
 resume_from:
-  task: AP-01
+  task: null
   repository: agentic-art-orchestration
-  action: 'Claim AP-01 and inspect the current eight-repository authorities, related Issue/PR state, and normal/fixture/recovery call graphs before any implementation.'
+  action: 'Register AP-02 from Issue #241, then repair the parent normal-entry contract and the observed path-precedence regressions.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
