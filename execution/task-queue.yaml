@@ -2850,6 +2850,12 @@ tasks:
     - git diff --check
     human_gate: "owner実装・commit・draft PRは進める。merge、release、外部公開、vendor情報の拡張は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Marketing remains the owner of freshness and evidence decisions."
+    code_status: CODE_VERIFIED
+    code_candidate: 932318ce8d76ffd44840cee0a465ea2405ef5037
+    owner_record_commit: e7ae5cfeab73e675fd19584288a99d481e832d3c
+    draft_pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/91
+    evidence: execution/ap-04-marketing-evidence.json
+    completion: "Marketing owner qualified main already satisfies the AAK-07 knowledge, freshness, counterevidence and development-Git boundaries. Owner preflight, 57-test full suite, graph check, dry-run audit and diff check pass; only evidence metadata was added on branch agent/ap04-marketing-20260912. Parent domain payloads, merge, release and publication were not performed."
   - id: AP-04-RESEARCH
     milestone: INSPIRATION
     title: "Research ownerの知識保存・Git境界を同期する"

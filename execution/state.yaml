@@ -1,10 +1,10 @@
-version: 274
-updated_at: '2026-09-12T01:27:05+09:00'
-active_task: AP-04-MARKETING
-active_repository: marketing-trends
+version: 275
+updated_at: '2026-09-12T01:31:25+09:00'
+active_task: null
+active_repository: null
 lease:
-  status: held
-  owner: codex
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-12T01:27:05+09:00'
   expires_at: '2026-09-12T04:27:05+09:00'
   lane: AUTONOMY
@@ -26,12 +26,17 @@ lease:
 checkpoint:
   task: AP-04-MARKETING
   repository: marketing-trends
-  status: IN_PROGRESS
-  result: 'AP-04-MARKETING claimed after the Art History owner record was pushed. Inspect the Marketing owner contract and qualified main before editing; preserve freshness, counterevidence, source provenance and owner data boundaries.'
+  status: DONE
+  result: 'Marketing owner source 932318c passed preflight, 57-test full suite, graph, dry-run audit and diff checks. Existing AAK-07 freshness, counterevidence, source provenance and owner Git boundary were preserved; evidence-only commit e7ae5cf and draft PR #91 are prepared.'
   start_point: 41598313d6c879effb807e6312ca9df816416bf5
-  code_candidate: 41598313d6c879effb807e6312ca9df816416bf5
+  code_candidate: 932318ce8d76ffd44840cee0a465ea2405ef5037
+  evidence: execution/ap-04-marketing-evidence.json
   checks:
-    validator: PENDING
+    owner_preflight: PASS
+    owner_full_suite: PASS
+    owner_graph: PASS
+    owner_audit: PASS
+    diff_check: PASS
   blocker: null
   blocker: null
 
@@ -57,9 +62,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: AP-04-ART-HISTORY
 resume_from:
-  task: AP-04-MARKETING
-  repository: marketing-trends
-  action: 'Inspect the Marketing owner contract and qualified main, then implement only the required knowledge-save, freshness and development-Git boundary synchronization.'
+  task: AP-04-RESEARCH
+  repository: agentic-art-research
+  action: 'Claim AP-04-RESEARCH, inspect the Research owner contract and qualified main, then implement only the required knowledge-save, source-provenance and development-Git boundary synchronization.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

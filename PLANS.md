@@ -46,6 +46,12 @@ Art History ownerのqualified main `3cfc4c34d91d1d5176d05ffa08deec479d8b63a7`を
 
 Owner candidate `f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a`、draft PR [#391](https://github.com/masa-san-jp/art-history-notes/pull/391)は [`execution/ap-04-art-history-evidence.json`](execution/ap-04-art-history-evidence.json)から参照できる。Python 3.12.13でagent doctor、canonical verify、graph、context-vector、readiness 27 tests、full 142 tests、diff checkはPASS。親へdomain payload、source snapshot、private dataは複製していない。child default branch、merge、release、external publicationは未実施。
 
+## AP-04-MARKETING — completed
+
+Marketing ownerのqualified main `932318ce8d76ffd44840cee0a465ea2405ef5037`を確認した。AAK-07のmarket-observation intake、鮮度、counterevidence、`certainty`/`retrieved`のsource provenance、owner bare Git storeのCAS・INDEX_PENDING復旧、受動的な開発Git境界は既存実装で満たされていたため、コード差分は追加せず、owner検証証跡だけを専用branchへ記録した。
+
+Owner candidate `932318ce8d76ffd44840cee0a465ea2405ef5037`、record `e7ae5cfeab73e675fd19584288a99d481e832d3c`、draft PR [#91](https://github.com/masa-san-jp/marketing-trends-notes/pull/91)は [`execution/ap-04-marketing-evidence.json`](execution/ap-04-marketing-evidence.json)から参照できる。preflight、57 tests、graph check、`audit --dry-run --now 2026-09-12`、diff checkはPASS。親へtrend/practice/source/observation payload、private dataは複製していない。child default branch、merge、release、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

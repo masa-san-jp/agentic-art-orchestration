@@ -2728,3 +2728,14 @@ Release the AP-03-PROJECT lease after this record is pushed, then claim `AP-04-A
 ## Next exact action
 
 Claim `AP-04-MARKETING`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Marketing owner contract and qualified main, then preserve freshness, counterevidence and owner Git boundaries while recording only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-MARKETING completed
+
+- Marketing owner source `932318ce8d76ffd44840cee0a465ea2405ef5037` was inspected in an isolated checkout. AAK-07 already provides the owner schema, source provenance, freshness, counterevidence, CAS, INDEX_PENDING recovery and passive Git boundary required by AP-04; no code delta was necessary.
+- Evidence-only owner commit `e7ae5cfeab73e675fd19584288a99d481e832d3c` and draft PR [marketing-trends-notes#91](https://github.com/masa-san-jp/marketing-trends-notes/pull/91) record the verification. Preflight, full 57-test suite, graph check, dry-run audit and diff check passed.
+- No trend, practice, source, observation, private/raw payload or external artifact was copied to the parent. Child default branch, merge, release and external publication remain unchanged.
+- Parent evidence: [`execution/ap-04-marketing-evidence.json`](ap-04-marketing-evidence.json).
+
+## Next exact action
+
+Claim `AP-04-RESEARCH`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Research owner contract and qualified main, preserve research provenance and unresolved findings in the owner, and record only opaque evidence in the parent.
