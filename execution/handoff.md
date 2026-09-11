@@ -2686,3 +2686,13 @@ Claim AP-02, inspect the parent S1-S6 entrypoint, contract, migration, and compl
 ## Next exact action
 
 Run `.venv/bin/python tools/issue_intake.py` read-only. If no new qualified Issue exists, register the next owner-scoped Issue #241 task without copying the Issue body, then claim the lowest eligible task.
+
+## 2026-09-12 — AP-03〜07 registered
+
+- Live read-only intake at `2026-09-12T00:30:00+09:00` found no new qualified open Issue. Issue #241 is already queued; #242 remains `UNQUEUED_NEEDS_SSOT` because `verification_commands` is missing. The metadata-only intake result was written outside Git at `/private/tmp/ap02-issue-intake-20260912.json`.
+- The Issue #241 implementation-plan rows were registered as separate owner tasks: `AP-03-PRODUCTION`, `AP-03-PROJECT`, and `AP-04-ART-HISTORY`, `AP-04-MARKETING`, `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`. `AP-05`, `AP-06`, and `AP-07` remain dependent BACKLOG tasks.
+- Registration evidence is [`execution/ap-03-07-registration.json`](ap-03-07-registration.json). No Issue body, comment, child repository, external artifact, credential, PRIVATE_RAW or RESTRICTED data was copied or mutated.
+
+## Next exact action
+
+Claim `AP-03-PRODUCTION`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the qualified Production checkout and its owner AGENTS/Issue contract, then implement only the automatic-attestation/manual-review selection and recovery scope. Keep the child commit and parent record separate.

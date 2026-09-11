@@ -1,5 +1,5 @@
-version: 266
-updated_at: '2026-09-12T00:28:58+09:00'
+version: 267
+updated_at: '2026-09-12T00:30:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -60,10 +60,10 @@ legacy_recovery_checkpoint:
 
 last_completed_task: AP-02
 resume_from:
-  task: null
-  repository: null
-  action: 'No eligible READY or dependency-complete BACKLOG task remains; run read-only issue intake and register the next owner-scoped Issue #241 task.'
-  command: '.venv/bin/python tools/issue_intake.py'
+  task: AP-03-PRODUCTION
+  repository: agentic-art-production
+  action: 'Claim AP-03-PRODUCTION, inspect the Production owner contract and current qualified checkout, then implement only its automatic-attestation/manual-review selection and recovery scope.'
+  command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
   task: AAK-04

@@ -1,5 +1,5 @@
-version: 84
-updated_at: "2026-09-11T01:15:00+09:00"
+version: 85
+updated_at: "2026-09-12T00:30:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2755,3 +2755,170 @@ tasks:
     code_candidate: 526324d
     acceptance_scope: "Parent boundary only; child owner gates and real-agent 3-mode x2 acceptance remain separate tasks."
     completion: "AP-02 parent implementation is code verified. delivery-contract/v1 and delivery-completion/v1 are closed and shared by normal, cycle, batch and supervisor entrypoints; new explicit Project roots use project-local delivery, legacy saved contexts retain their prior meaning, startup recovery persists agent resume actions, and macOS external-path aliases are handled without permitting caller symlinks. Full suite 633 tests passed with one existing skip. No child repository, external artifact, merge, release or public publication was performed."
+  - id: AP-03-PRODUCTION
+    milestone: INSPIRATION
+    title: "Production ownerの自動attestation・手動review選択・再開境界を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-03のProduction owner taskとして、自動制作プランのnative attestationを通常経路に接続し、manual reviewは明示的に要求された別経路として選択・文書化する。旧runの再開、未承認の物理操作、失敗時の停止をowner契約に従って保持し、parentへcandidate commit・contract version・受入証拠だけを返す。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - python3 tools/run_evaluation.py --format json
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRと自動attestation検証は進める。Productionのmerge、release、物理実行、外部公開、manual work publicationは既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-03 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; the parent issue supplies the SSOT and the owner is separated into its own task."
+  - id: AP-03-PROJECT
+    milestone: INSPIRATION
+    title: "Project ownerのローカル受取・帰属・索引検証を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, agentic-art-project]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-03のProject owner taskとして、明示されたProject rootへのlocal delivery、creator/origin帰属、native lineageと索引、receiver validationを自動経路へ接続する。Git commit・remote同期・公開は納品完了と混同せず、parentへcandidate commit・contract version・受入証拠だけを返す。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - python3 tools/catalog_sync.py --check
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRとlocal receiver検証は進める。Projectのmerge、remote同期、公開catalog書込、帰属不明値の補完は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-03 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; the parent issue supplies the SSOT and the owner is separated into its own task."
+  - id: AP-04-ART-HISTORY
+    milestone: INSPIRATION
+    title: "Art History ownerの知識保存・Git境界を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, art-history]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-04のArt History owner taskとして、知識保存のowner schemaと開発Git操作の境界を確認し、必要なAGENTS/README/実行契約だけを同期する。差分不要なら理由と検証commitを記録し、parentへdomain payloadを複製しない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 tools/build_graph.py --check
+    - python3 tools/build_context_vectors.py --check
+    - python3 -m unittest discover -s tests -p "test*.py"
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRは進める。merge、release、外部公開、機微情報移設は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Art History remains the owner of its schema and canonical data."
+  - id: AP-04-MARKETING
+    milestone: INSPIRATION
+    title: "Marketing ownerの知識保存・Git境界を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, marketing-trends]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-04のMarketing owner taskとして、知識保存のowner schemaと開発Git操作の境界を確認し、必要なAGENTS/README/実行契約だけを同期する。agent-task/v1とfreshness・counterevidence規則を弱めず、parentへdomain payloadを複製しない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 tools/build_graph.py --check
+    - python3 tools/audit.py --dry-run
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRは進める。merge、release、外部公開、vendor情報の拡張は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Marketing remains the owner of freshness and evidence decisions."
+  - id: AP-04-RESEARCH
+    milestone: INSPIRATION
+    title: "Research ownerの知識保存・Git境界を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-04のResearch owner taskとして、知識保存のowner schemaと開発Git操作の境界を確認し、必要なAGENTS/README/実行契約だけを同期する。研究payload・source provenance・未解決をowner側に保持し、parentへ複製しない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 -m compileall -q tools tests
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - python3 tools/build_graph.py --check
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRは進める。merge、release、外部公開、研究内容の捏造は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Research remains the owner of project and research records."
+  - id: AP-04-SELF-MODEL
+    milestone: INSPIRATION
+    title: "Self Model ownerの知識保存・同意・Git境界を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, self-model]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-04のSelf Model owner taskとして、知識保存のowner schema、同意範囲、profile/exportと開発Git操作の境界を確認し、必要なAGENTS/README/実行契約だけを同期する。private/raw dataをparentへ集約しない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 tools/build_graph.py --check
+    - python3 -m unittest discover -s tests -p "test_*.py"
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRは進める。同意範囲変更、実個人raw data、merge、release、外部公開は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Self Model remains the owner of identity and consent decisions."
+  - id: AP-04-VIEWER
+    milestone: INSPIRATION
+    title: "Viewer ownerの知識保存・privacy・Git境界を同期する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, viewer-response-notes]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [AP-02]
+    acceptance: "Issue #241 AP-04のViewer owner taskとして、知識保存のowner schema、aggregate/privacy boundary、開発Git操作の境界を確認し、必要なAGENTS/README/実行契約だけを同期する。free text・心理推定・medical inferenceをparentへ集約しない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "owner実装・commit・draft PRは進める。個人識別情報、free text、merge、release、外部公開は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Viewer remains the owner of aggregate response and privacy decisions."
+  - id: AP-05
+    milestone: INSPIRATION
+    title: "qualified owner候補を隔離workspaceで統合検証する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project, agentic-art-research, self-model, art-history, marketing-trends, viewer-response-notes]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [AP-03-PRODUCTION, AP-03-PROJECT, AP-04-ART-HISTORY, AP-04-MARKETING, AP-04-RESEARCH, AP-04-SELF-MODEL, AP-04-VIEWER]
+    acceptance: "Issue #241 AP-05として、qualified candidateを隔離workspaceで結合し、全入口・legacy run移行・故障注入・再開・文書整合を回帰する。child gateを通過したcandidate pin、contract version、knowledge/receiver receipt、各成果物hashをparent stateへ同期する。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - .venv/bin/python tools/workspace.py status
+    - .venv/bin/python tools/audit.py
+    - git diff --check
+    human_gate: "隔離workspaceの検証と証跡同期は進める。merge、release、remote default branch、外部公開、実カタログ書込は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-05 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; all seven owner-scoped prerequisites are explicit queue dependencies."
+  - id: AP-06
+    milestone: INSPIRATION
+    title: "実agentの3 identity mode x 2 runを受入する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [AP-05]
+    acceptance: "Issue #241 AP-06として、通常入口と制作依頼だけを渡した実agentでresume/new-clone/forkの各identity modeを2回ずつ実行し、owner再検証、2回目の知識採用、追加人間質問ゼロ、requested delivery completionをmanifestで検査する。provider不足時はAC11 NOT_RUNを保持しIssue完了にしない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "実agentの外部provider利用は既存profile・budget・consent範囲に限定する。merge、release、公開、物理実行、実個人data移設は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-06 implementation-plan row and its provider-missing NOT_RUN rule were read-only observed at 2026-09-12T00:30:00+09:00."
+  - id: AP-07
+    milestone: INSPIRATION
+    title: "受入matrixと全repo証跡を最終同期する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [AP-06]
+    acceptance: "Issue #241 AP-07として、受入matrix、全repoのcandidate commit/PR、正規state/handoff、README現況、公開Issue/PRから証拠へ到達可能な参照を同期し、未実施・未承認・unknownを正常値へ変換しない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --check-readme
+    - .venv/bin/python tools/audit.py
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "証跡の同期は進める。Issue/PR close、merge、release、外部公開、実カタログ公開は既存gateを維持する。"
+    intake_evidence: "Issue #241 AP-07 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00."

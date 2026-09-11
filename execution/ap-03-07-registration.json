@@ -1,0 +1,19 @@
+{
+  "contract_version": "ap-registration/v1",
+  "observed_at": "2026-09-12T00:30:00+09:00",
+  "source": "read-only live issue intake and Issue #241 implementation-plan rows",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "qualified_open_issue_count": 0,
+  "unqueued_needs_ssot": [
+    {"issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242", "missing": ["verification_commands"]}
+  ],
+  "already_queued": ["https://github.com/masa-san-jp/agentic-art-orchestration/issues/241"],
+  "registered_tasks": [
+    "AP-03-PRODUCTION", "AP-03-PROJECT",
+    "AP-04-ART-HISTORY", "AP-04-MARKETING", "AP-04-RESEARCH", "AP-04-SELF-MODEL", "AP-04-VIEWER",
+    "AP-05", "AP-06", "AP-07"
+  ],
+  "registration_policy": "Owner-scoped child work uses separate queue tasks and later separate commits/PRs; Issue body text is not copied into the queue or repository.",
+  "next_task": "AP-03-PRODUCTION",
+  "next_action": "Claim AP-03-PRODUCTION, inspect the Production owner contract and current qualified checkout, then implement only its automatic-attestation/manual-review selection and recovery scope."
+}
