@@ -2883,3 +2883,14 @@ Run `.venv/bin/python tools/issue_intake.py` in read-only mode. Register a futur
 ### Next exact action
 
 Claim OI-02, run `.venv/bin/python tools/project_status.py --format json`, and inspect the existing parent AAK contracts and measured call graph before editing parent runtime files.
+
+## 2026-09-14 — OI-02 SSOT integration completed
+
+- The two AAK SSOT documents are now version 2 and explicitly link #242/#243 to the existing AAK IDs, measured normal/batch/cycle/worker call graph, owner boundaries, and compatibility rules. The additional open-issue plan remains the execution DAG; child schemas and issue bodies were not copied.
+- `config/aak-task-projection.json` was regenerated from the two SSOT documents. The queue's AAK contract hashes were synchronized and `tools/validate.py --check` passed. The metadata-only evidence is [`execution/oi-02-ssot-integration-evidence.json`](oi-02-ssot-integration-evidence.json).
+- Focused docs, AAK contract, intake and validator checks passed (57 tests). The second parent full suite passed with 638 tests and 1 skipped after the SSOT version/hash change.
+- OI-02 is recorded as DONE and OI-03 is READY. The next operation is `.venv/bin/python tools/project_status.py --format json`, followed by Research #109 owner validation and the Production boundary check.
+
+### Next exact action
+
+Claim OI-03, run `.venv/bin/python tools/project_status.py --format json`, then validate the merged Research #109 candidate against the qualified Production prototype contract.

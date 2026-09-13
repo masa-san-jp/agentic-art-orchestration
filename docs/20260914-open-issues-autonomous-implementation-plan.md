@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-00 実行中 / ExecPlan SSOT  
+状態: OI-02 完了 / OI-03 READY / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -18,6 +18,7 @@
 - [x] 実装対象、意図的open、human-blockedを分離した。
 - [x] Issue間の重複箇所を確認し、ResearchとProductionの実装順を決めた。
 - [x] `OI-00`でIssue intakeとSSOT修復を完了し、実行queueへ登録する。
+- [x] `OI-02`で#242/#243を既存AAK SSOT、実測call graph、owner境界へ統合する。
 - [ ] `OI-01`から`OI-12`を依存順に実装・検証・統合する。
 - [ ] merge後のqualified mainで最終通常runを実施し、対象Issueをcloseする。
 
@@ -43,7 +44,7 @@
 
 ## Outcomes & Retrospective
 
-未着手。各milestone完了時に、達成した受入条件、採用commit、失敗と回復、残存リスクを追記する。全完了時には、通常runのProject-local delivery ID、全owner merge commit、親merge commit、closeしたIssue、意図的にopen維持したIssueを記録する。
+OI-00はintake・SSOT修復・queue登録を完了し、OI-02は#242/#243のSSOT統合、call graph記録、AAK projection hash同期、親638-test gateを完了した。OI-01のArt History #392とResearch #109のowner candidateは先行実装済みだが、OI-03で横断検証する。残りのmilestoneでは達成した受入条件、採用commit、失敗と回復、残存リスクを追記する。全完了時には、通常runのProject-local delivery ID、全owner merge commit、親merge commit、closeしたIssue、意図的にopen維持したIssueを記録する。
 
 ## Context and Orientation
 

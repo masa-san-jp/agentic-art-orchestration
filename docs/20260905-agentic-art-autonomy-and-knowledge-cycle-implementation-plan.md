@@ -1,9 +1,11 @@
 # Agentic Art：自律制作と累積知識の実装計画
 
-作成日: 2026-09-05  
-計画ID: AAK-PLAN / version: 1  
-仕様SSOT: [20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md](20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)  
+作成日: 2026-09-05
+計画ID: AAK-PLAN / version: 2
+仕様SSOT: [20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md](20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md)
 この文書はAAK-01〜13の実装順・作業単位・検証・再開の正本。仕様の意味・受入条件は仕様SSOTに置き、ここで独自に変更しない。
+
+追加実装系列: [未解消Issueの自律実装完了計画](20260914-open-issues-autonomous-implementation-plan.md)。#242/#243の実装はこのAAK計画の既存依存を置き換えず、OI-00〜OI-12の親queueへ分解して進める。
 
 ## starting-point
 
@@ -103,6 +105,19 @@ rawやcredentialをPR evidenceへ含めない。privacy-safe fixtureやhash/reco
 中断時はtask/run ID・base/candidate commit・receipt・次工程をowner stateへ保存し、既存lease/claimに従って再取得する。ユーザーの既存worktreeをresetして再開しない。planが完成済みでknowledge保存が一部失敗した場合は、そのplanと成功receiptを保持してpending ownerだけを再試行する。
 
 仕様を改訂する場合は、同一SSOTファイルでversion/変更理由/影響AAK IDを更新し、仕様pin、Issue投影、machine contract、queueの参照/hashを同じ変更系列で同期する。Issueコメント、子README、PR説明だけに追加要求を残さない。owner schemaの実装上のフィールド名等はownerで決定するが、共通境界・identity・epistemic state・完了条件を独自に弱めない。
+
+## open-issue-integration
+
+### OI-02 / INSP-01 measured integration
+
+対象: `masa-san-jp/agentic-art-orchestration`。Issue: [#242](https://github.com/masa-san-jp/agentic-art-orchestration/issues/242)、[プロトタイプIssue #243](https://github.com/masa-san-jp/agentic-art-orchestration/issues/243)。観測基点は親 `89a5c34fd67a1369dc315b249eece1887918c002` と、Art History #392、Research #109、Production #76のowner candidateである。
+
+1. #242のINSP-01は既存AAK-02/08/09/10/11/13へ対応付け、候補生成・比較・批評・制作方法・Production handoff・Project receiver・delivery completionの責任を重複させない。
+2. #243のPRT-04/06は、Productionの`prototype_status`とattestation、Project-local receiver、`delivery_completion.status`を親入口へ接続する。`PLAN_READY`、batch `PASSED`、worker成功は段階状態として保存し、最終完了とはみなさない。
+3. 通常入口の観測経路は `run.py` の入力・候補・採択・Research request、Researchのaccept/complete/handoff/export、Production exchange/build/verify、automatic Project projectionである。batch、autonomous runner、cycle、offline fixtureは同じ境界へ合流させる。
+4. AAK仕様のsource/knowledge pin、legacy context、owner schema、epistemic state、Project export-only、human gateは変更しない。追加系列は参照commit・contract version・hash・receiptを親に記録する。
+
+機械契約 `config/aak-task-projection.json` は本仕様と本計画のAAK-01〜13から再生成し、queue内AAK taskのcontract hashを更新する。OI taskの本文とchild schemaはこのprojectionへ複製しない。実装後の観測証拠は `execution/oi-02-ssot-integration-evidence.json` にmetadata-onlyで保存する。
 
 ## human-gate
 
@@ -607,3 +622,4 @@ tools/validate.pyは前提Project#6のreceiver実装を確認して使う。未�
 ## change-log
 
 - v1 / 2026-09-05: 13件の実装DAG、個別scope、検証、再開、既存Issue境界を定義。実装は未実施。8repoに13件のIssueを起票し、indexと依存URLを照合した。
+- v2 / 2026-09-14: #242/#243とResearch/Production/Projectの追加Issueを既存AAK-01〜13へ対応付け、親runtimeの測定call graph、prototype/deliveryの責任境界、機械projectionとOI queueの分離を記録。既存legacy・owner schema・Project export-only・human gateは維持する。

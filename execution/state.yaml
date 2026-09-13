@@ -1,5 +1,5 @@
-version: 295
-updated_at: '2026-09-14T02:00:00+09:00'
+version: 296
+updated_at: '2026-09-14T02:30:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -31,17 +31,18 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: OI-00
+  task: OI-02
   repository: agentic-art-orchestration
   status: DONE
-  result: 'OI-00 completed the fixed-time read-only intake, the minimum SSOT repairs for #242 and #76, export-only Project recognition through repository-relationships.yaml, and dependency-ordered OI-01..OI-13 registration.'
-  start_point: 93fe2d5b9c8f3d8b29020115daf759b8e0b6c9c0
-  code_candidate: 93fe2d5b9c8f3d8b29020115daf759b8e0b6c9c0
-  evidence: execution/issue-intake-20260914.json
+  result: 'OI-02 integrated #242/#243 into the two AAK SSOT documents, recorded the measured parent call graph and compatibility boundaries, and regenerated the AAK machine projection hashes without copying child schemas or issue bodies.'
+  start_point: 89a5c34fd67a1369dc315b249eece1887918c002
+  code_candidate: 89a5c34fd67a1369dc315b249eece1887918c002
+  evidence: execution/oi-02-ssot-integration-evidence.json
   checks:
     validator: PASS
     issue_intake_tests: PASS
     issue_intake: 'PASS: 7 open Issues, 6 qualified unqueued, 0 UNQUEUED_NEEDS_SSOT'
+    ssot_integration_tests: 'PASS: 57 tests'
     full_suite: 'PASS: 638 tests, 1 skipped'
     diff_check: PASS
   unresolved:
@@ -72,11 +73,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-00
+last_completed_task: OI-02
 resume_from:
-  task: OI-02
+  task: OI-03
   repository: agentic-art-orchestration
-  action: 'Claim OI-02, inspect #242/#243 against the existing AAK SSOT and measured runtime call graph, then make the smallest parent-only integration change.'
+  action: 'Claim OI-03, verify Research #109 against the qualified Production candidate and run the owner gate before any further cross-repository change.'
   command: '.venv/bin/python tools/project_status.py --format json'
 
 aak04_checkpoint:
