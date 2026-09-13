@@ -2861,3 +2861,13 @@ Run .venv/bin/python tools/issue_intake.py in read-only mode. Register a future 
 ### Next exact action
 
 Commit and push this evidence synchronization, create and merge the parent PR for `docs/ecosystem-readme-20260910`, then close Issue #241 and update the final evidence with the parent merge and close result.
+
+## 2026-09-13 — Parent merge and Issue close completed
+
+- Parent PR [agentic-art-orchestration#244](https://github.com/masa-san-jp/agentic-art-orchestration/pull/244) passed `bootstrap`, `production-exchange` and the real immutable `real-chain` gate. It was merged with the normal merge method as `2d15ca8612e12a27f02223db4872e382aef266d2` at `2026-09-13T21:51:31+09:00`; `docs/ecosystem-readme-20260910` was deleted after merge.
+- Issue [#241](https://github.com/masa-san-jp/agentic-art-orchestration/issues/241) was closed at `2026-09-13T21:51:50+09:00`. The acceptance matrix remains 13/13 PASS, with the merge and close operations now recorded in `execution/ap-07-final-sync-evidence.json`, `execution/state.yaml` and `execution/task-queue.yaml`.
+- No force push was used. No release was created because no release target or version was specified. Project-local delivery remains COMPLETED; catalog remote synchronization and external publication remain NOT_RUN. Project P0004 remains `UNKNOWN_ATTRIBUTION`, and Issue #242 remains `UNQUEUED_NEEDS_SSOT` because `verification_commands` is missing.
+
+### Next exact action
+
+Run `.venv/bin/python tools/issue_intake.py` in read-only mode. Register a future Issue only when all four SSOT minimums are present; retain Issue #242 as `UNQUEUED_NEEDS_SSOT` otherwise.

@@ -3,9 +3,10 @@
   "task": "AP-07",
   "issue_ssot": {
     "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
-    "state": "OPEN",
-    "observed_at": "2026-09-13T21:01:22+09:00",
-    "close_operation": "PENDING_PARENT_EVIDENCE_PUSH"
+    "state": "CLOSED",
+    "observed_at": "2026-09-13T21:52:53+09:00",
+    "closed_at": "2026-09-13T21:51:50+09:00",
+    "close_operation": "COMPLETED"
   },
   "source_of_truth": {
     "queue": "execution/task-queue.yaml",
@@ -128,13 +129,15 @@
   "repository_candidates": [
     {
       "repository": "agentic-art-orchestration",
-      "candidate_commit": "2b76adcbc46ef8826f1604329e2dca62a5614927",
+      "candidate_commit": "66cb176782e61856b7a87db9dcb67841c4e1e5e8",
       "owner_record_commit": null,
-      "pull_request": null,
-      "pull_request_state": "NOT_CREATED",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/244",
+      "pull_request_state": "MERGED",
+      "merge_commit": "2d15ca8612e12a27f02223db4872e382aef266d2",
       "remote_ref": "docs/ecosystem-readme-20260910",
-      "remote_head": "2b76adcbc46ef8826f1604329e2dca62a5614927",
-      "source": "AP-06 parent code candidate and pushed task branch",
+      "remote_head": "66cb176782e61856b7a87db9dcb67841c4e1e5e8",
+      "remote_ref_state": "DELETED_AFTER_MERGE",
+      "source": "AP-06 parent code candidate and pushed task branch; parent PR #244 merged",
       "reachability": "PASS"
     },
     {
@@ -210,7 +213,7 @@
   "public_reference_reachability": {
     "issue_241": "PASS: gh issue view 241",
     "child_pull_requests": "PASS: PRs 75, 29, 108, 391 and 91 merged; PR12 merged into qualified base; PRs 99 and 100 closed as superseded",
-    "parent_branch": "PASS: git ls-remote origin refs/heads/docs/ecosystem-readme-20260910",
+    "parent_branch": "PASS: PR #244 merged as 2d15ca86; head branch deleted; origin/main is reachable",
     "candidate_reference_correction": "PASS: marketing PR #91 owner record commit synchronized"
   },
   "ap06_external_manifest": {
@@ -231,8 +234,10 @@
     "issue_242": "UNQUEUED_NEEDS_SSOT"
   },
   "human_gates": {
-    "issue_241_close": "PENDING_PARENT_EVIDENCE_PUSH",
+    "issue_241_close": "COMPLETED",
     "child_pr_merge": "COMPLETED_WITH_SELF_MODEL_NO_DELTA",
+    "parent_pr_merge": "COMPLETED: PR #244 merged as 2d15ca86",
+    "force_push": "NOT_USED",
     "release": "NOT_RUN",
     "external_publication": "NOT_RUN",
     "physical_work": "NOT_RUN",
@@ -250,17 +255,17 @@
     "inferred": []
   },
   "unresolved": [
-    "Issue #241 close is pending the parent evidence commit and final parent merge.",
-    "Six owner PRs are merged (five to child main and Viewer #12 to its qualified base); Self Model validation-only PRs #99/#100 are closed as superseded because qualified main already contained the owner implementation and their CI contract did not pass.",
+    "No release version or release target was specified, so no release was created.",
     "Project existing P0004 remains UNKNOWN_ATTRIBUTION and was not relabeled.",
     "Project-local delivery is complete; Git remote synchronization and catalog publication remain NOT_RUN.",
-    "No release version or release target was specified, so no release was created.",
     "Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing."
   ],
   "references_are_metadata_only": true,
   "checks": {
     "validator": "PASS: .venv/bin/python tools/validate.py --check",
     "readme_status": "PASS: .venv/bin/python tools/project_status.py --check-readme",
+    "parent_pr_checks": "PASS: PR #244 bootstrap, production-exchange and real-chain",
+    "issue_241_close": "PASS: gh issue view 241 (CLOSED)",
     "audit": "FINDINGS: 1 known nonblocking portfolio-unavailable/marketing freshness finding; exit 0",
     "full_suite": "PASS: 637 tests, 1 skipped",
     "diff_check": "PASS: git diff --check"

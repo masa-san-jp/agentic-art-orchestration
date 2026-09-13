@@ -1,5 +1,5 @@
-version: 293
-updated_at: '2026-09-13T21:01:22+09:00'
+version: 294
+updated_at: '2026-09-13T21:52:53+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -11,7 +11,7 @@ lease:
   execution_id: AP-06:20260912
   scope:
     repository: agentic-art-orchestration
-    branch: docs/ecosystem-readme-20260910
+    branch: chore/record-final-external-ops-20260913
     paths:
     - config/**
     - schemas/**
@@ -34,19 +34,23 @@ checkpoint:
   task: AP-07
   repository: agentic-art-orchestration
   status: DONE_EXTERNAL_OPERATIONS_RECORDED
-  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS. Six child PRs were merged with recorded merge commits, Viewer #12 was merged into its qualified base, and Self Model validation-only PRs #99/#100 were closed as superseded after CI contract failure because qualified main already contained the owner implementation.'
+  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS. Six child PRs were merged with recorded merge commits, Viewer #12 was merged into its qualified base, Self Model validation-only PRs #99/#100 were closed as superseded, parent PR #244 passed all three CI gates and merged, and Issue #241 was closed.'
   start_point: 2b76adcbc46ef8826f1604329e2dca62a5614927
-  code_candidate: 2b76adcbc46ef8826f1604329e2dca62a5614927
+  code_candidate: 66cb176782e61856b7a87db9dcb67841c4e1e5e8
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/244
+  pull_request_state: MERGED
+  merge_commit: 2d15ca8612e12a27f02223db4872e382aef266d2
+  merged_at: '2026-09-13T21:51:31+09:00'
   evidence: execution/ap-07-final-sync-evidence.json
   checks:
     validator: PASS
     readme_status: PASS
     audit: 'FINDINGS: 1 known nonblocking portfolio-unavailable/marketing freshness finding'
     full_suite: 'PASS: 637 tests, 1 skipped'
+    parent_pr_checks: 'PASS: PR #244 bootstrap, production-exchange and real-chain'
+    issue_241_close: 'PASS: gh issue view 241 (CLOSED)'
     diff_check: PASS
   unresolved:
-    - 'Issue #241 close is pending the final parent evidence push and parent merge'
-    - 'six owner PRs are merged; Self Model validation-only PRs #99/#100 are closed as superseded'
     - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
     - 'project-local delivery is complete; Git remote synchronization is NOT_RUN/OUTPUT_ONLY_UNCOMMITTED'
     - 'Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing'
