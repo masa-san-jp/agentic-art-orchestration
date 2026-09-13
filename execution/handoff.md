@@ -2826,3 +2826,15 @@ Claim `AP-04-VIEWER`; first operation: `.venv/bin/python tools/validate.py --che
 ## Next exact action
 
 Claim `AP-05`; first operation: `.venv/bin/python tools/validate.py --check`. Isolate the qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.
+
+
+## 2026-09-13 — AP-06 completed
+
+- AP-06 was resumed after the prior provider authentication blocker. A real OpenCode external agent using local Ollama qwen3.8:27b executed the six required runs from the normal README entry and production request: resume, new-clone, and fork, twice each. No synthetic identity was used and no human question was asked.
+- The external acceptance manifest is available at /private/tmp/ap06-live-20260912/acceptance-evidence/manifest.json with SHA-256 80227e1696afc8a201059076c6608dbdfca2f08aab88c12ae1362b8401bed05a. The native verifier returned PASS; all six runs reached PLAN_READY and delivery_completion.status=COMPLETED for project-local.
+- Owner revalidation passed for all six runs. The second run in each mode records knowledge adoption from the first run. Fork upstream remained unchanged. Provider execution, operation traces, delivery receipts and adoption evidence are metadata-only and remain outside Git.
+- AP-06 acceptance: 7/7 PASS. The existing Project record P0004 UNKNOWN_ATTRIBUTION remains unresolved, Git remote synchronization remains NOT_RUN/OUTPUT_ONLY_UNCOMMITTED, and Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing. Merge, release, publication and physical work remain human-gated and were not performed.
+
+### Next exact action
+
+Claim AP-07; first operation: .venv/bin/python tools/project_status.py --format json. Synchronize the acceptance matrix, all eight repository candidate commit/PR references, canonical state/handoff, README status and reachable Issue/PR evidence while preserving every NOT_RUN and UNKNOWN result.

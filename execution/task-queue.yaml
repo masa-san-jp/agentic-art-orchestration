@@ -1,5 +1,5 @@
-version: 86
-updated_at: "2026-09-12T03:43:26+09:00"
+version: 87
+updated_at: "2026-09-13T20:35:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2948,7 +2948,7 @@ tasks:
   - id: AP-06
     milestone: INSPIRATION
     title: "実agentの3 identity mode x 2 runを受入する"
-    status: BLOCKED
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -2964,12 +2964,12 @@ tasks:
     code_status: CODE_VERIFIED
     code_candidate: d35a4450d80bd9189148b88c63f2233a39b4022f
     evidence: execution/ap-06-acceptance-evidence.json
-    completion: "Manifest schema and verifier are implemented and the parent gates pass. AC11 remains NOT_RUN because the harmless Ollama probe did not produce an auditable tool-capable external-agent six-run matrix; Issue remains open and AP-07 is dependency-blocked."
-    blocker: "EXTERNAL_AGENT_AUTHENTICATION: reauthenticate the configured opencode provider and rerun the acceptance manifest."
+    completion: "AC11 PASS: six real external-agent runs completed from the normal README entry and production request: resume, new-clone and fork twice each. All runs reached PLAN_READY and project-local delivery COMPLETED; owner revalidation, second-run adoption, zero human questions and fork upstream preservation passed. Provider metadata, receipts and plan hashes are in the external manifest."
+    acceptance_result: "7/7 AP-06 acceptance checks PASS; merge, release, publication and physical work remain NOT_RUN by design."
   - id: AP-07
     milestone: INSPIRATION
     title: "受入matrixと全repo証跡を最終同期する"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
