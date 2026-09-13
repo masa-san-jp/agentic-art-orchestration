@@ -29,7 +29,7 @@
     "synthetic_profile_bundle": "PASS: 1 subject bundle",
     "owner_diff": "PASS"
   },
-  "integration": {"parent_record": "PENDING", "child_default_branch": "UNCHANGED", "real_profile_migration": "NOT_RUN", "merge": "NOT_RUN", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "integration": {"parent_record": "PENDING", "child_default_branch": "UNCHANGED", "real_profile_migration": "NOT_RUN", "merge": "NOT_APPLICABLE_NO_CODE_DELTA", "validation_prs": "CLOSED_SUPERSEDED", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
   "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
   "external_artifacts": "NOT_CREATED",
   "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},

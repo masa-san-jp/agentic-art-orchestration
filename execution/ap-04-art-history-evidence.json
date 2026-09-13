@@ -26,7 +26,7 @@
     "owner_full_suite": "PASS: 142 tests",
     "owner_diff": "PASS"
   },
-  "integration": {"parent_record": "PENDING", "child_default_branch": "UNCHANGED", "merge": "NOT_RUN", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "integration": {"parent_record": "PENDING", "child_default_branch": "MERGED", "merge": "MERGED", "merge_commit": "33fbc82137e138dfda28a3f53f4605689e168794", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
   "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
   "external_artifacts": "NOT_CREATED",
   "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},

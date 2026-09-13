@@ -1,5 +1,5 @@
-version: 292
-updated_at: '2026-09-13T20:40:44.870992+09:00'
+version: 293
+updated_at: '2026-09-13T21:01:22+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -33,10 +33,10 @@ lease:
 checkpoint:
   task: AP-07
   repository: agentic-art-orchestration
-  status: DONE
-  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS, all eight repository candidate commits and reachable PR/branch references, AP-06 external manifest, canonical state/handoff, README status and Issue #241 reachability. OPEN, NOT_RUN and UNKNOWN values remain explicit.'
-  start_point: 315ba8224f09a06d3f5c6b395ffb3ed2cb8ffbd4
-  code_candidate: 315ba8224f09a06d3f5c6b395ffb3ed2cb8ffbd4
+  status: DONE_EXTERNAL_OPERATIONS_RECORDED
+  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS. Six child PRs were merged with recorded merge commits, Viewer #12 was merged into its qualified base, and Self Model validation-only PRs #99/#100 were closed as superseded after CI contract failure because qualified main already contained the owner implementation.'
+  start_point: 2b76adcbc46ef8826f1604329e2dca62a5614927
+  code_candidate: 2b76adcbc46ef8826f1604329e2dca62a5614927
   evidence: execution/ap-07-final-sync-evidence.json
   checks:
     validator: PASS
@@ -45,11 +45,12 @@ checkpoint:
     full_suite: 'PASS: 637 tests, 1 skipped'
     diff_check: PASS
   unresolved:
-    - 'Issue #241 remains OPEN; close is human-gated'
-    - 'seven child PRs remain OPEN; merge is human-gated'
+    - 'Issue #241 close is pending the final parent evidence push and parent merge'
+    - 'six owner PRs are merged; Self Model validation-only PRs #99/#100 are closed as superseded'
     - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
     - 'project-local delivery is complete; Git remote synchronization is NOT_RUN/OUTPUT_ONLY_UNCOMMITTED'
     - 'Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing'
+    - 'No release was created because no release target or version was specified'
 
 legacy_recovery_checkpoint:
   task: LEGACY-RECOVERY-20260910

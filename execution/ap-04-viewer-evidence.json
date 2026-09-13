@@ -26,7 +26,7 @@
     "owner_readme_export": "PASS: fresh temporary output",
     "owner_diff": "PASS"
   },
-  "integration": {"parent_record": "PENDING", "owner_base_branch": "UNCHANGED", "merge": "NOT_RUN", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "integration": {"parent_record": "PENDING", "owner_base_branch": "MERGED_INTO_QUALIFIED_BASE", "merge": "MERGED_INTO_QUALIFIED_BASE", "merge_commit": "1158286151632482e5a3f910adefc229de2bea7e", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
   "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
   "external_artifacts": "NOT_CREATED",
   "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},

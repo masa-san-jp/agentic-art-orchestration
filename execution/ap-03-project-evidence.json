@@ -22,7 +22,7 @@
     "owner_catalog_sync": "PASS",
     "owner_diff": "PASS"
   },
-  "integration": {"parent_child_gate": "PASS", "child_default_branch": "UNCHANGED", "catalog_write": "NOT_RUN", "merge": "NOT_RUN", "release": "NOT_RUN"},
+  "integration": {"parent_child_gate": "PASS", "child_default_branch": "MERGED", "catalog_write": "NOT_RUN", "merge": "MERGED", "merge_commit": "f2de7d4747eb412a525557bb229cf8de99943218", "release": "NOT_RUN"},
   "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
   "external_artifacts": "NOT_CREATED",
   "next_task": "AP-04-ART-HISTORY"

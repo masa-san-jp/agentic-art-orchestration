@@ -20,7 +20,7 @@
     "owner_evaluation": "PASS: log_sha256 ba2e1d4c78669d6f0947007000ce291e436daf42448c8805520587fe9c2b003b",
     "owner_diff": "PASS"
   },
-  "integration": {"parent_child_gate": "PASS", "child_default_branch": "UNCHANGED", "merge": "NOT_RUN", "release": "NOT_RUN"},
+  "integration": {"parent_child_gate": "PASS", "child_default_branch": "MERGED", "merge": "MERGED", "merge_commit": "263f198b6ed90fdbec3e593a6c5f9442000b0822", "release": "NOT_RUN"},
   "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
   "external_artifacts": "NOT_CREATED",
   "next_task": "AP-03-PROJECT"

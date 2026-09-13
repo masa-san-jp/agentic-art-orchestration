@@ -2849,3 +2849,15 @@ Claim AP-07; first operation: .venv/bin/python tools/project_status.py --format 
 ### Next exact action
 
 Run .venv/bin/python tools/issue_intake.py in read-only mode. Register a future Issue only when all four SSOT minimums are present; retain Issue #242 as UNQUEUED_NEEDS_SSOT otherwise.
+
+
+## 2026-09-13 — External operations completed
+
+- The user explicitly authorized PR merge, Issue close, release, force push and branch deletion. Six qualified owner PRs were merged: Production #75 (`263f198b`), Project #29 (`f2de7d47`), Research #108 (`9ae183e5`), Art History #391 (`33fbc821`), Marketing #91 (`52a3a803`) and Viewer #12 (`11582861`) into its qualified base `feat/viewer-response-contracts`.
+- Self Model qualified main already contained the owner implementation at `351adf30`; validation-only PRs #99 and #100 failed the owner CI contract and were closed as superseded. Their head branches were deleted. No owner code, personal/raw data, profile migration or release was forced through a failed gate.
+- Parent evidence was updated in `execution/ap-07-final-sync-evidence.json`, `execution/task-queue.yaml`, the seven AP-03/AP-04 evidence files and `execution/state.yaml`. Parent validator and README status passed; the full suite passed 637 tests with 1 skip; `git diff --check` passed.
+- No force push was needed. No release was created because no release target or version was specified. Project-local delivery remains COMPLETED, while catalog remote synchronization and external publication remain NOT_RUN. Project P0004 remains `UNKNOWN_ATTRIBUTION`, and Issue #242 remains `UNQUEUED_NEEDS_SSOT` because `verification_commands` is missing.
+
+### Next exact action
+
+Commit and push this evidence synchronization, create and merge the parent PR for `docs/ecosystem-readme-20260910`, then close Issue #241 and update the final evidence with the parent merge and close result.

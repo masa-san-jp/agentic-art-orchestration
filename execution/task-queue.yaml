@@ -2780,8 +2780,10 @@ tasks:
     code_candidate: 308abfe0f90582b5dd47d17cc5776278d32d5bb3
     owner_record_commit: 3d059eb288d7f928046c3933509bbc6c1f5e79b3
     pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/75
-    integration_status: DRAFT_PR_READY
-    completion: "Production owner candidate 308abfe is verified from source 7bab731. The clean owner validator, focused 11 tests, full 132 tests, evaluation and diff checks pass; automatic-plan attestation and manual/publication review boundaries remain separate, and the macOS external-store alias guard now accepts only OS-owned aliases while rejecting caller symlinks. Child default branch, merge, release, physical work and external publication were not performed."
+    integration_status: MERGED
+    merge_commit: 263f198b6ed90fdbec3e593a6c5f9442000b0822
+    pull_request_state: MERGED
+    completion: "Production owner candidate 308abfe is verified from source 7bab731. The clean owner validator, focused 11 tests, full 132 tests, evaluation and diff checks pass; automatic-plan attestation and manual/publication review boundaries remain separate, and the macOS external-store alias guard now accepts only OS-owned aliases while rejecting caller symlinks. PR75 merged to child main as 263f198b on 2026-09-13 and its head branch was deleted; release, physical work and external publication remain unperformed."
   - id: AP-03-PROJECT
     milestone: INSPIRATION
     title: "Project ownerのローカル受取・帰属・索引検証を同期する"
@@ -2809,8 +2811,10 @@ tasks:
     code_candidate: c0e172ef719594074eee467a78e221a697781c97
     owner_record_commit: 179ff49e77c752d187360f7a96fd04c47d307119
     pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/29
-    integration_status: DRAFT_PR_READY
-    completion: "Project owner source c0e172e already provides the required explicit local receiver, creator/origin attribution, lineage, generated index and read-only Git boundary. Native validator, 46-test full suite, catalog sync and diff checks pass; only metadata evidence was added on branch agent/ap03-project-20260912. Catalog write, default-branch merge, release and external publication were not performed."
+    integration_status: MERGED
+    merge_commit: f2de7d4747eb412a525557bb229cf8de99943218
+    pull_request_state: MERGED
+    completion: "Project owner source c0e172e already provides the required explicit local receiver, creator/origin attribution, lineage, generated index and read-only Git boundary. Native validator, 46-test full suite, catalog sync and diff checks pass; only metadata evidence was added on branch agent/ap03-project-20260912. PR29 merged to child main as f2de7d47 on 2026-09-13 and its head branch was deleted; catalog write, release and external publication remain unperformed."
   - id: AP-04-ART-HISTORY
     milestone: INSPIRATION
     title: "Art History ownerの知識保存・Git境界を同期する"
@@ -2833,7 +2837,10 @@ tasks:
     owner_record_commit: f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a
     draft_pull_request: https://github.com/masa-san-jp/art-history-notes/pull/391
     evidence: execution/ap-04-art-history-evidence.json
-    completion: "Art History owner contract and AAK-06 intake boundary were verified. The only required code delta canonicalizes OS-managed macOS /var and /tmp aliases while preserving caller-created symlink rejection; owner canonical, graph, context-vector, readiness and 142-test gates pass. Parent domain payloads, merge, release and publication were not performed."
+    integration_status: MERGED
+    merge_commit: 33fbc82137e138dfda28a3f53f4605689e168794
+    pull_request_state: MERGED
+    completion: "Art History owner contract and AAK-06 intake boundary were verified. The only required code delta canonicalizes OS-managed macOS /var and /tmp aliases while preserving caller-created symlink rejection; owner canonical, graph, context-vector, readiness and 142-test gates pass. PR391 merged to child main as 33fbc821 on 2026-09-13 and its head branch was deleted; parent domain payloads, release and publication remain unperformed."
   - id: AP-04-MARKETING
     milestone: INSPIRATION
     title: "Marketing ownerの知識保存・Git境界を同期する"
@@ -2855,7 +2862,10 @@ tasks:
     owner_record_commit: e7ae5cfa273329cf7e25e65bda21e867ee77a87f
     draft_pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/91
     evidence: execution/ap-04-marketing-evidence.json
-    completion: "Marketing owner qualified main already satisfies the AAK-07 knowledge, freshness, counterevidence and development-Git boundaries. Owner preflight, 57-test full suite, graph check, dry-run audit and diff check pass; only evidence metadata was added on branch agent/ap04-marketing-20260912. Parent domain payloads, merge, release and publication were not performed."
+    integration_status: MERGED
+    merge_commit: 52a3a8032f1c62a37d26dab22f2c30b488bf1f54
+    pull_request_state: MERGED
+    completion: "Marketing owner qualified main already satisfies the AAK-07 knowledge, freshness, counterevidence and development-Git boundaries. Owner preflight, 57-test full suite, graph check, dry-run audit and diff check pass; only evidence metadata was added on branch agent/ap04-marketing-20260912. PR91 merged to child main as 52a3a803 on 2026-09-13 and its head branch was deleted; parent domain payloads, release and publication remain unperformed."
   - id: AP-04-RESEARCH
     milestone: INSPIRATION
     title: "Research ownerの知識保存・Git境界を同期する"
@@ -2879,7 +2889,10 @@ tasks:
     owner_record_commit: b2e26d625cf849c766827dd7b163a2f4c72a226d
     draft_pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/108
     evidence: execution/ap-04-research-evidence.json
-    completion: "Research owner contract and AAK-08 provenance boundary were verified. The only required code delta canonicalizes OS-managed macOS /var and /tmp aliases for cumulative-specificity inputs while preserving caller-created symlink rejection; validator, compile, focused, full 319-test and graph gates pass. Parent project/runtime/raw/profile payloads, merge, release and publication were not performed."
+    integration_status: MERGED
+    merge_commit: 9ae183e5e85ef444915c866d0b0518541d3760a6
+    pull_request_state: MERGED
+    completion: "Research owner contract and AAK-08 provenance boundary were verified. The only required code delta canonicalizes OS-managed macOS /var and /tmp aliases for cumulative-specificity inputs while preserving caller-created symlink rejection; validator, compile, focused, full 319-test and graph gates pass. PR108 merged to child main as 9ae183e5 on 2026-09-13 and its head branch was deleted; parent project/runtime/raw/profile payloads, release and publication remain unperformed."
   - id: AP-04-SELF-MODEL
     milestone: INSPIRATION
     title: "Self Model ownerの知識保存・同意・Git境界を同期する"
@@ -2900,8 +2913,11 @@ tasks:
     code_candidate: 351adf30e489b9bc148494bbb3a3677d7df1de19
     owner_record_commit: 04925e18879ce342202eb2e1e48871372791178e
     draft_pull_request: https://github.com/masa-san-jp/self-model-notes/pull/99
+    integration_status: VERIFIED_NO_DELTA
+    pull_request_state: CLOSED_SUPERSEDED
+    closed_pull_requests: [https://github.com/masa-san-jp/self-model-notes/pull/99, https://github.com/masa-san-jp/self-model-notes/pull/100]
     evidence: execution/ap-04-self-model-evidence.json
-    completion: "Self Model owner AAK-05 contract, consent revalidation, external profile-root, creator-scoped knowledge and export boundaries were verified on qualified main. Native validation, focused 12-test, full 173-test, synthetic graph/audit/bundle and diff gates pass; the owner branch contains verification evidence only. Personal/raw payloads, real migration, merge, release and publication were not performed."
+    completion: "Self Model owner AAK-05 contract, consent revalidation, external profile-root, creator-scoped knowledge and export boundaries were verified on qualified main. Native validation, focused 12-test, full 173-test, synthetic graph/audit/bundle and diff gates pass. No owner code delta was required; validation-only PRs #99 and #100 were closed as superseded after CI contract failure and their head branches were deleted. Personal/raw payloads, real migration, release and publication remain unperformed."
   - id: AP-04-VIEWER
     milestone: INSPIRATION
     title: "Viewer ownerの知識保存・privacy・Git境界を同期する"
@@ -2922,8 +2938,11 @@ tasks:
     code_candidate: 2c1167c7ce95f0bfa3a2e9f0896bec5836009a87
     owner_record_commit: c886f6b40ff9ca3a85075e5eaa02af64cba9c22e
     draft_pull_request: https://github.com/masa-san-jp/viewer-response-notes/pull/12
+    integration_status: MERGED_INTO_QUALIFIED_BASE
+    merge_commit: 1158286151632482e5a3f910adefc229de2bea7e
+    pull_request_state: MERGED
     evidence: execution/ap-04-viewer-evidence.json
-    completion: "Viewer owner aggregate-only schema, conservative assessment, opaque provenance and privacy boundary were verified on qualified branch feat/viewer-response-contracts. Validator, 13-test suite, fresh README export and diff gates pass; the owner branch contains verification documentation only. Viewer records, free text, identifiers, merge, release and publication were not performed."
+    completion: "Viewer owner aggregate-only schema, conservative assessment, opaque provenance and privacy boundary were verified on qualified branch feat/viewer-response-contracts. Validator, 13-test suite, fresh README export and diff gates pass; the owner branch contains verification documentation only. PR12 merged into the qualified base feat/viewer-response-contracts as 11582861 on 2026-09-13 and its head branch was deleted; viewer records, free text, identifiers, merge, release and publication remain unperformed."
   - id: AP-05
     milestone: INSPIRATION
     title: "qualified owner候補を隔離workspaceで統合検証する"
