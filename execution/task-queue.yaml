@@ -1,5 +1,5 @@
-version: 92
-updated_at: "2026-09-14T03:30:00+09:00"
+version: 93
+updated_at: "2026-09-14T02:51:44+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3087,10 +3087,10 @@ tasks:
   - id: OI-04
     milestone: INSPIRATION
     title: "Research #242 INSP-02の候補生成・比較・批評・handoffを実装する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research]
-    agent_terminal: IN_PROGRESS
+    agent_terminal: EVIDENCE_READY
     depends_on: [OI-03]
     acceptance: "根拠付きcontextから意味のある複数候補を生成・比較・批評し、制作方法、creative direction、変更可能部分、採択理由を保持したhandoffをProductionへ渡せる。"
     checks:
@@ -3098,6 +3098,11 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "候補生成・批評・handoffは自律実行する。外部公開、物理制作、同意範囲変更は実行しない。"
+    code_candidate: c3596373cf542677f7fb78cf0f8e5360a29006c1
+    pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/111
+    merge_commit: 24122840c8193c0199c23c2b8547464dbe0950ca
+    evidence: execution/oi-04-inspiration-evidence.json
+    completion: "Research #242 INSP-02 is merged; candidate generation, semantic comparison, critique/revision, knowledge reuse and handoff preservation pass owner and remote gates."
   - id: OI-05
     milestone: PROTOTYPE-CONTRACT
     title: "Production #76の決定論的デジタルSVG試作を生成する"
@@ -3121,7 +3126,7 @@ tasks:
   - id: OI-06
     milestone: PROTOTYPE-CONTRACT
     title: "Production #77のpreview、attestation、actionability接続を実装する"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/77
     target_repositories: [agentic-art-production]
     agent_terminal: DRAFT_PR_READY

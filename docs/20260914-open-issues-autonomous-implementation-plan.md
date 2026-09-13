@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-03 完了 / OI-04 READY / ExecPlan SSOT
+状態: OI-04 完了 / OI-06 READY / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -21,7 +21,8 @@
 - [x] `OI-02`で#242/#243を既存AAK SSOT、実測call graph、owner境界へ統合する。
 - [x] `OI-03`でResearch #109の試作契約をProduction境界まで検証する。
 - [x] `OI-05`でProduction #76の決定論的SVG試作を実装・merge・closeする。
-- [ ] `OI-04`、`OI-06`から`OI-12`を依存順に実装・検証・統合する。
+- [x] `OI-04`を実装・検証・統合し、Research PR #111をmergeした。
+- [ ] `OI-06`から`OI-12`を依存順に実装・検証・統合する。
 - [ ] merge後のqualified mainで最終通常runを実施し、対象Issueをcloseする。
 
 ## Surprises & Discoveries
@@ -34,6 +35,7 @@
 - Self Model #82は実データを扱う前に `destination_root`、`consent_scope`、`retention_decision` が必要である。3項目がない限り、自律実装の完了件数に含めない。
 - Art History #392は制作runtimeとは独立して実装できるが、入力ownerのqualified pinを変える。最終統合前に完了させ、新しいpinを使う。
 - OI-03の横断fixtureは、Researchの正例をProductionへ受け渡すと `PLANNING` かつ `readiness.startable=true` になることを確認した。寸法・素材・数量がProduction planに無い状態でのrenderer停止は、`PROTOTYPE_RENDER_INPUTS` による入力不足の明示であり、placeholder出力を作らない。Production #76はこの境界を実装済みなので、OI-05をOI-03直後の独立taskとして完了記録した。
+- OI-04はResearchにprovider-neutralな `inspiration-pipeline/v1` を追加し、candidateの意味的重複、創作上の飛躍、批評・修正、前回知識の再利用、Production handoffの置換 drift を機械契約と個別テストで検証した。Research PR #111のremote CIとclean checkoutの333 testsがPASSし、次の最小taskはProduction #77のOI-06になった。
 
 ## Decision Log
 
@@ -47,7 +49,7 @@
 
 ## Outcomes & Retrospective
 
-OI-00はintake・SSOT修復・queue登録を完了し、OI-02は#242/#243のSSOT統合、call graph記録、AAK projection hash同期、親638-test gateを完了した。OI-03はResearch #109のowner candidateをProduction qualified candidateへ通し、OI-05はProduction #76をmergeしてIssueをcloseした。残りのmilestoneでは達成した受入条件、採用commit、失敗と回復、残存リスクを追記する。全完了時には、通常runのProject-local delivery ID、全owner merge commit、親merge commit、closeしたIssue、意図的にopen維持したIssueを記録する。
+OI-00はintake・SSOT修復・queue登録を完了し、OI-02は#242/#243のSSOT統合、call graph記録、AAK projection hash同期、親638-test gateを完了した。OI-03はResearch #109のowner candidateをProduction qualified candidateへ通し、OI-05はProduction #76をmergeしてIssueをcloseした。OI-04はResearch #242 INSP-02をmergeし、親queue/stateへ証拠を公開した。残りのmilestoneでは達成した受入条件、採用commit、失敗と回復、残存リスクを追記する。全完了時には、通常runのProject-local delivery ID、全owner merge commit、親merge commit、closeしたIssue、意図的にopen維持したIssueを記録する。
 
 ## Context and Orientation
 

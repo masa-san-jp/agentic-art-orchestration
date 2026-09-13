@@ -1,0 +1,38 @@
+{
+  "evidence_version": "oi-evidence/v1",
+  "task": "OI-04",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
+  "owner_repository": "masa-san-jp/agentic-art-research",
+  "contract_version": "inspiration-pipeline/v1",
+  "start_point": "aa74d8fde89598616e0e7e4494d52bb44736be35",
+  "code_candidate": "c3596373cf542677f7fb78cf0f8e5360a29006c1",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/111",
+  "merge_commit": "24122840c8193c0199c23c2b8547464dbe0950ca",
+  "owner_gates": {
+    "focused_tests": "PASS: 20 tests",
+    "clean_full_suite": "PASS: 333 tests",
+    "validator": "PASS",
+    "compile": "PASS",
+    "diff_check": "PASS",
+    "remote_ci_run": "https://github.com/masa-san-jp/agentic-art-research/actions/runs/34772302942",
+    "remote_ci": "PASS: compile, validator, security, chaos, docs, 333 tests, graph, harness, release, handoff release"
+  },
+  "acceptance": {
+    "candidate_generation": "PASS: typed candidate packet requires question, proposition, experience, composition, material relation, source refs and feasibility",
+    "semantic_comparison": "PASS: title/device/quantity-only variants are rejected; substantive experience evolution remains distinct",
+    "creative_leap": "PASS: source commit is required, creative leap is CREATIVE_PROPOSAL, fixture/example/local URLs are rejected",
+    "critique_and_revision": "PASS: poetic-only, measurement-only, disconnected material and incomplete path produce named revision findings",
+    "knowledge_reuse": "PASS: previous comparison/adoption/revision IDs must be reloaded and referenced when required",
+    "handoff_preservation": "PASS: production hypothesis, digital prototype plan and creative direction are generated and drift returns REVISION_REQUIRED",
+    "idempotent_project_write": "PASS: atomic per-file writes and same-result replay preserve bytes"
+  },
+  "boundaries": {
+    "provider": "provider-neutral; no LLM or daemon embedded",
+    "raw_private_data": "not used or persisted",
+    "external_artifact": "none",
+    "publication": "not performed",
+    "physical_production": "not performed",
+    "human_gate": "no new gate introduced; external publication, physical work and consent changes remain gated"
+  },
+  "result": "OI-04 Research implementation is merged and its candidate, critique, comparison, knowledge-reuse and handoff contracts are qualified. Production plan actionability and Project delivery remain dependent tasks OI-06 through OI-12."
+}

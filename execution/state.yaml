@@ -1,14 +1,14 @@
-version: 298
-updated_at: '2026-09-14T03:45:00+09:00'
-active_task: OI-04
-active_repository: agentic-art-research
+version: 299
+updated_at: '2026-09-14T02:51:44+09:00'
+active_task: OI-06
+active_repository: agentic-art-production
 lease:
   status: active
   owner: codex-open-issues-20260914
-  acquired_at: '2026-09-14T03:45:00+09:00'
-  expires_at: '2026-09-14T09:45:00+09:00'
+  acquired_at: '2026-09-14T02:51:44+09:00'
+  expires_at: '2026-09-14T08:51:44+09:00'
   lane: AUTONOMY
-  execution_id: OI-04:20260914
+  execution_id: OI-06:20260914
   scope:
     repository: agentic-art-orchestration
     branch: codex/open-issues-autonomous-20260914
@@ -31,20 +31,21 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: OI-03
+  task: OI-04
   repository: agentic-art-research
   status: DONE
-  result: 'Research #109 is merged and the qualified Production candidate accepts its digital prototype plan; a complete production-plan input produces a traceable simulated SVG.'
-  start_point: 9ae183e5e85ef444915c866d0b0518541d3760a6
-  code_candidate: aa74d8fde89598616e0e7e4494d52bb44736be35
-  evidence: execution/oi-03-cross-validation-evidence.json
+  result: 'Research #242 INSP-02 is merged; typed inspiration candidates are compared, critiqued, revised, reloaded from prior knowledge, and transformed into a traceable Production handoff.'
+  start_point: aa74d8fde89598616e0e7e4494d52bb44736be35
+  code_candidate: c3596373cf542677f7fb78cf0f8e5360a29006c1
+  evidence: execution/oi-04-inspiration-evidence.json
   checks:
     research_validator: PASS
-    research_owner_ci: PASS
-    production_boundary: PASS
-    production_validator: PASS
-    production_svg: 'PASS: PRT001, 120 cm, reclaimed translucent sheet, 1 sheet'
-    full_suite: 'PASS: owner gates recorded in execution/oi-03-cross-validation-evidence.json'
+    research_owner_ci: 'PASS: remote run 34772302942'
+    research_full_suite: 'PASS: 333 tests in clean checkout'
+    semantic_candidate_comparison: PASS
+    critique_revision: PASS
+    knowledge_reuse: PASS
+    handoff_preservation: PASS
     diff_check: PASS
   unresolved:
     - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
@@ -74,11 +75,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-03
+last_completed_task: OI-04
 resume_from:
-  task: OI-04
-  repository: agentic-art-research
-  action: 'Implement OI-04 in an isolated Research branch, then run owner gates and record exact candidate evidence.'
+  task: OI-06
+  repository: agentic-art-production
+  action: 'Implement OI-06 in an isolated Production branch, then run owner gates and record exact preview/attestation evidence.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:
