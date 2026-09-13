@@ -1,5 +1,5 @@
-version: 87
-updated_at: "2026-09-13T20:35:00+09:00"
+version: 88
+updated_at: "2026-09-13T20:40:44.870992+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -2852,7 +2852,7 @@ tasks:
     intake_evidence: "Issue #241 AP-04 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00; Marketing remains the owner of freshness and evidence decisions."
     code_status: CODE_VERIFIED
     code_candidate: 932318ce8d76ffd44840cee0a465ea2405ef5037
-    owner_record_commit: e7ae5cfeab73e675fd19584288a99d481e832d3c
+    owner_record_commit: e7ae5cfa273329cf7e25e65bda21e867ee77a87f
     draft_pull_request: https://github.com/masa-san-jp/marketing-trends-notes/pull/91
     evidence: execution/ap-04-marketing-evidence.json
     completion: "Marketing owner qualified main already satisfies the AAK-07 knowledge, freshness, counterevidence and development-Git boundaries. Owner preflight, 57-test full suite, graph check, dry-run audit and diff check pass; only evidence metadata was added on branch agent/ap04-marketing-20260912. Parent domain payloads, merge, release and publication were not performed."
@@ -2969,7 +2969,7 @@ tasks:
   - id: AP-07
     milestone: INSPIRATION
     title: "受入matrixと全repo証跡を最終同期する"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/241
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -2983,3 +2983,7 @@ tasks:
     - git diff --check
     human_gate: "証跡の同期は進める。Issue/PR close、merge、release、外部公開、実カタログ公開は既存gateを維持する。"
     intake_evidence: "Issue #241 AP-07 implementation-plan row was read-only observed at 2026-09-12T00:30:00+09:00."
+    code_status: CODE_VERIFIED
+    evidence: execution/ap-07-final-sync-evidence.json
+    completion: "AP-07 acceptance matrix is synchronized with 13/13 acceptance entries PASS. All eight repository candidate commits and their reachable PR or branch references are recorded; the AP-06 external manifest, canonical state/handoff, README status and Issue #241 reachability are linked. OPEN, NOT_RUN and UNKNOWN values are preserved."
+    acceptance_result: "13/13 matrix entries PASS; Issue #241 close, child PR merges, release, publication and catalog remote synchronization remain NOT_RUN under existing human gates."

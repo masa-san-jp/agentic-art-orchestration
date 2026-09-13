@@ -35,7 +35,7 @@
       "id": "marketing-trends",
       "repository": "masa-san-jp/marketing-trends-notes",
       "candidate_commit": "932318ce8d76ffd44840cee0a465ea2405ef5037",
-      "owner_record_commit": "e7ae5cfeab73e675fd19584288a99d481e832d3c",
+      "owner_record_commit": "e7ae5cfa273329cf7e25e65bda21e867ee77a87f",
       "previous_manifest_pin": "de1f77730d3856e7e81d591de48da5aed79a983a",
       "draft_pull_request": "https://github.com/masa-san-jp/marketing-trends-notes/pull/91"
     },
@@ -95,13 +95,18 @@
       "blocking": false,
       "error_count": 0,
       "finding_count": 1,
-      "finding_codes": ["portfolio-unavailable"]
+      "finding_codes": [
+        "portfolio-unavailable"
+      ]
     },
     "diff_check": "PASS: git diff --check"
   },
   "parent_runtime_redaction_fix": {
     "status": "PASS",
-    "paths": ["tools/quality_gates.py", "tests/test_quality_gates.py"],
+    "paths": [
+      "tools/quality_gates.py",
+      "tests/test_quality_gates.py"
+    ],
     "change": "normalize macOS relative T/tmp temporary markers before output hashing",
     "focused_suite": "PASS: 8 tests"
   },
@@ -132,7 +137,14 @@
     "legacy_plan_recovery": {
       "status": "PASS",
       "candidate_count": 6,
-      "candidate_ids": ["P0001", "P0002", "P0003", "P0005", "P0006", "P0007"],
+      "candidate_ids": [
+        "P0001",
+        "P0002",
+        "P0003",
+        "P0005",
+        "P0006",
+        "P0007"
+      ],
       "bundle_manifest_sha256": {
         "P0001": "bd96350ed1fce55499e1cbade90d18e8117575694003a9fdd2a7a8003616b78b",
         "P0002": "b8b1b22d8021931843e98a1751267f28f978dbea97d3a821e3aee78d77438b82",
@@ -154,10 +166,26 @@
     "interaction_and_initial_operations": {
       "status": "PASS",
       "reports": [
-        {"contract_version": "interaction-e2e/v1", "locator": "git-external://ap05-interaction-20260912.json", "sha256": "1d2690c8060ae8c08c15630002fae6627d686fb1fc9c63952436142a6d6c078f"},
-        {"contract_version": "interaction-e2e/v1", "locator": "git-external://ap05-interaction-initial-20260912.json", "sha256": "1d2690c8060ae8c08c15630002fae6627d686fb1fc9c63952436142a6d6c078f"},
-        {"contract_version": "initial-operations-e2e/v1", "locator": "git-external://ap05-initial-20260912.json", "sha256": "a9864b1390bae600a5ca89ecaa5cb12fa99493719b853886a4c476401dad1107"},
-        {"contract_version": "v12-e2e/v1", "locator": "git-external://ap05-v12-20260912.json", "sha256": "19ba68117f4763286c631b6d874e56018af428db47a715224a6d0a1d8697061d"}
+        {
+          "contract_version": "interaction-e2e/v1",
+          "locator": "git-external://ap05-interaction-20260912.json",
+          "sha256": "1d2690c8060ae8c08c15630002fae6627d686fb1fc9c63952436142a6d6c078f"
+        },
+        {
+          "contract_version": "interaction-e2e/v1",
+          "locator": "git-external://ap05-interaction-initial-20260912.json",
+          "sha256": "1d2690c8060ae8c08c15630002fae6627d686fb1fc9c63952436142a6d6c078f"
+        },
+        {
+          "contract_version": "initial-operations-e2e/v1",
+          "locator": "git-external://ap05-initial-20260912.json",
+          "sha256": "a9864b1390bae600a5ca89ecaa5cb12fa99493719b853886a4c476401dad1107"
+        },
+        {
+          "contract_version": "v12-e2e/v1",
+          "locator": "git-external://ap05-v12-20260912.json",
+          "sha256": "19ba68117f4763286c631b6d874e56018af428db47a715224a6d0a1d8697061d"
+        }
       ],
       "remote_operations": 0,
       "network": "disabled"
@@ -217,5 +245,13 @@
     "explicit": "全てのイシューを解決して完了させること",
     "inferred": "none"
   },
-  "next_task": "AP-06"
+  "next_task": "AP-06",
+  "reference_correction": {
+    "status": "PASS",
+    "field": "qualified_candidates[marketing-trends].owner_record_commit",
+    "previous_value": "e7ae5cfeab73e675fd19584288a99d481e832d3c",
+    "observed_value": "e7ae5cfa273329cf7e25e65bda21e867ee77a87f",
+    "source": "gh pr view 91 --repo masa-san-jp/marketing-trends-notes",
+    "observed_at": "2026-09-13T20:40:44.870992+09:00"
+  }
 }

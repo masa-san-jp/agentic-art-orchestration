@@ -1,0 +1,262 @@
+{
+  "contract_version": "ap-07-final-sync/v1",
+  "task": "AP-07",
+  "issue_ssot": {
+    "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+    "state": "OPEN",
+    "observed_at": "2026-09-13T20:40:44.870992+09:00",
+    "close_operation": "NOT_RUN"
+  },
+  "source_of_truth": {
+    "queue": "execution/task-queue.yaml",
+    "state": "execution/state.yaml",
+    "handoff": "execution/handoff.md",
+    "readme": "README.md",
+    "ssot": "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md"
+  },
+  "acceptance_matrix": [
+    {
+      "id": "AC-01",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-05",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-03-production-evidence.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-06",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-03-project-evidence.json",
+        "execution/ap-06-acceptance-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-07",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-08",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-09",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-10",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-11",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-06-acceptance-evidence.json",
+        "/private/tmp/ap06-live-20260912/acceptance-evidence/manifest.json"
+      ]
+    },
+    {
+      "id": "AC-12",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-05-integration-evidence.json",
+        "execution/ap-06-acceptance-evidence.json"
+      ]
+    },
+    {
+      "id": "AC-13",
+      "status": "PASS",
+      "evidence": [
+        "execution/ap-02-verification.json",
+        "execution/ap-05-integration-evidence.json",
+        "execution/ap-06-acceptance-evidence.json"
+      ]
+    }
+  ],
+  "matrix_result": {
+    "pass_count": 13,
+    "total": 13,
+    "status": "PASS"
+  },
+  "repository_candidates": [
+    {
+      "repository": "agentic-art-orchestration",
+      "candidate_commit": "d35a4450d80bd9189148b88c63f2233a39b4022f",
+      "owner_record_commit": null,
+      "pull_request": null,
+      "pull_request_state": "NOT_CREATED",
+      "remote_ref": "docs/ecosystem-readme-20260910",
+      "remote_head": "315ba8224f09a06d3f5c6b395ffb3ed2cb8ffbd4",
+      "source": "AP-06 parent code candidate and pushed task branch",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "agentic-art-production",
+      "candidate_commit": "308abfe0f90582b5dd47d17cc5776278d32d5bb3",
+      "owner_record_commit": "3d059eb288d7f928046c3933509bbc6c1f5e79b3",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/75",
+      "pull_request_state": "OPEN",
+      "source": "AP-03-PRODUCTION queue entry",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "agentic-art-project",
+      "candidate_commit": "c0e172ef719594074eee467a78e221a697781c97",
+      "owner_record_commit": "179ff49e77c752d187360f7a96fd04c47d307119",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/29",
+      "pull_request_state": "OPEN",
+      "source": "AP-03-PROJECT queue entry",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "agentic-art-research",
+      "candidate_commit": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+      "owner_record_commit": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+      "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/108",
+      "pull_request_state": "OPEN",
+      "source": "AP-04-RESEARCH queue entry",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "self-model-notes",
+      "candidate_commit": "351adf30e489b9bc148494bbb3a3677d7df1de19",
+      "owner_record_commit": "04925e18879ce342202eb2e1e48871372791178e",
+      "pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/99",
+      "pull_request_state": "OPEN",
+      "source": "AP-04-SELF-MODEL queue entry",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "art-history-notes",
+      "candidate_commit": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+      "owner_record_commit": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+      "pull_request": "https://github.com/masa-san-jp/art-history-notes/pull/391",
+      "pull_request_state": "OPEN",
+      "source": "AP-04-ART-HISTORY queue entry",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "marketing-trends-notes",
+      "candidate_commit": "932318ce8d76ffd44840cee0a465ea2405ef5037",
+      "owner_record_commit": "e7ae5cfa273329cf7e25e65bda21e867ee77a87f",
+      "pull_request": "https://github.com/masa-san-jp/marketing-trends-notes/pull/91",
+      "pull_request_state": "OPEN",
+      "source": "AP-04-MARKETING queue entry, corrected from live PR",
+      "reachability": "PASS"
+    },
+    {
+      "repository": "viewer-response-notes",
+      "candidate_commit": "2c1167c7ce95f0bfa3a2e9f0896bec5836009a87",
+      "owner_record_commit": "c886f6b40ff9ca3a85075e5eaa02af64cba9c22e",
+      "pull_request": "https://github.com/masa-san-jp/viewer-response-notes/pull/12",
+      "pull_request_state": "OPEN",
+      "source": "AP-04-VIEWER queue entry",
+      "reachability": "PASS"
+    }
+  ],
+  "public_reference_reachability": {
+    "issue_241": "PASS: gh issue view 241",
+    "child_pull_requests": "PASS: gh pr view for PRs 75, 29, 108, 99, 391, 91, 12",
+    "parent_branch": "PASS: git ls-remote origin refs/heads/docs/ecosystem-readme-20260910",
+    "candidate_reference_correction": "PASS: marketing PR #91 owner record commit synchronized"
+  },
+  "ap06_external_manifest": {
+    "locator": "/private/tmp/ap06-live-20260912/acceptance-evidence/manifest.json",
+    "sha256": "80227e1696afc8a201059076c6608dbdfca2f08aab88c12ae1362b8401bed05a",
+    "status": "PASS",
+    "six_runs": true,
+    "provider": "ollama/qwen3.8:27b",
+    "delivery_target": "project-local",
+    "delivery_status": "COMPLETED"
+  },
+  "execution_state": {
+    "ap06": "DONE",
+    "ap07": "DONE_PENDING_CHECKS",
+    "project_local_delivery": "COMPLETED",
+    "project_existing_p0004": "UNKNOWN_ATTRIBUTION",
+    "git_remote_sync_for_local_delivery": "NOT_RUN/OUTPUT_ONLY_UNCOMMITTED",
+    "issue_242": "UNQUEUED_NEEDS_SSOT"
+  },
+  "human_gates": {
+    "issue_241_close": "NOT_RUN",
+    "child_pr_merge": "NOT_RUN",
+    "release": "NOT_RUN",
+    "external_publication": "NOT_RUN",
+    "physical_work": "NOT_RUN",
+    "catalog_remote_sync": "NOT_RUN"
+  },
+  "privacy": {
+    "raw_conversation_stored": false,
+    "credentials_stored": false,
+    "private_raw_stored": false,
+    "restricted_stored": false,
+    "inferred_feedback_promoted": false
+  },
+  "feedback": {
+    "explicit": "User requested that all issues be resolved and completed.",
+    "inferred": []
+  },
+  "unresolved": [
+    "Issue #241 remains OPEN because Issue close is a human-gated operation.",
+    "The seven child PRs remain OPEN; merge is human-gated.",
+    "Project existing P0004 remains UNKNOWN_ATTRIBUTION and was not relabeled.",
+    "Project-local delivery is complete; Git remote synchronization and catalog publication remain NOT_RUN.",
+    "Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing."
+  ],
+  "references_are_metadata_only": true,
+  "checks": {
+    "validator": "PASS: .venv/bin/python tools/validate.py --check",
+    "readme_status": "PASS: .venv/bin/python tools/project_status.py --check-readme",
+    "audit": "FINDINGS: 1 known nonblocking portfolio-unavailable/marketing freshness finding; exit 0",
+    "full_suite": "PASS: 637 tests, 1 skipped",
+    "diff_check": "PASS: git diff --check"
+  },
+  "status": "PASS"
+}

@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-13T20:35:00+09:00`.
+Source updated at: `2026-09-13T20:40:44.870992+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 1 | 0 | 0 | 178 | 179 |
+| 0 | 0 | 0 | 0 | 179 | 179 |
 
-Current task: `null`; repository: `null`; checkpoint: `AP-06`.
-Next action: Synchronize the AP-06 acceptance matrix, all eight repository candidate references and PRs, canonical state/handoff, README status and reachable Issue/PR evidence. Preserve NOT_RUN and UNKNOWN values.
-Ready: `AP-07`.
-Next task: `AP-07`.
+Current task: `null`; repository: `null`; checkpoint: `AP-07`.
+Next action: Run read-only issue intake. Register only a new Issue that meets all SSOT minimums; preserve Issue #242 as UNQUEUED_NEEDS_SSOT until verification_commands exists.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 
