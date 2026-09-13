@@ -1,0 +1,28 @@
+{
+  "contract_version": "legacy-plan-recovery/v1",
+  "task": "LEGACY-RECOVERY-P0007",
+  "target_repository": "agentic-art-project",
+  "target_delivery": "project-local",
+  "status": "BLOCKED",
+  "candidate": {
+    "record_id": "P0007",
+    "source_candidate": "run/auto-new-plan-20260904-001-d3fa82c0d944",
+    "historical_commit": "d6928e5f7a33dbeb90c5e62ef3899fe65f17373d",
+    "historical_path": "plans/P0007-near-not-received",
+    "historical_content_sha256": "sha256:e8a75a205892214ae8e6edd600e680cfd6593b493881e0589931d14adaa3f9ed",
+    "historical_handoff": "HO001"
+  },
+  "observations": [
+    "The historical revision contains a detailed execution-ready plan and original templates, but its metadata explicitly says production_clearance=pending and projection=sanitized-public-plan.",
+    "No matching accepted Research handoff/source bundle, current Production project, or Production attestation for run/auto-new-plan-20260904-001-d3fa82c0d944 was found in the local parent, Research, Production, or Project evidence.",
+    "The later Project canonical-plan enforcement removed the historical summary-style candidates from the current catalog; the old execution-ready label is not a current Production proof."
+  ],
+  "blocked_reason": "P0007 cannot be re-projected from the detailed old execution specification because the current Production canonical source and attestation are absent.",
+  "unblock_condition": "Recover HO001/source bundle or the authoritative Production project, rerun current Production with stable identity, pass attestation and native Project validation, then project exact verified bytes.",
+  "actions_taken": [
+    "Inspected the historical completion and publication commits read-only.",
+    "No Project catalog files were changed for P0007.",
+    "No approval, consent, source identity, or attestation was fabricated."
+  ],
+  "next_operation": "Run aggregate validation of the six legacy recovery records and current Project-local P0008 output; preserve all legacy IDs in migration.yaml."
+}

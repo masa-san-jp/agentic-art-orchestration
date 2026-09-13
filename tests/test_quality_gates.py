@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from tools.quality_gates import QualityGateError, _runtime_bin_dirs, run_quality_gates
+from tools.quality_gates import QualityGateError, _output_evidence, _runtime_bin_dirs, run_quality_gates
 
 
 def manifest_for(workspace: Path) -> dict:
@@ -88,6 +88,13 @@ class QualityGateTests(unittest.TestCase):
             gate = next(item for item in result["repositories"] if item["repository"] == "pass-repo")["gates"][0]
             self.assertIn("<TEMP_PATH>", gate["output_redacted"])
             self.assertNotIn("/private/var/folders", gate["output_redacted"])
+
+    def test_macos_relative_temporary_paths_are_normalized_before_hashing(self):
+        first = _output_evidence("✓ T/tmp3u3zd37t/example.md was created\n", "")
+        second = _output_evidence("✓ T/tmp8k9p4x1q/example.md was created\n", "")
+        self.assertEqual(first["output_redacted"], second["output_redacted"])
+        self.assertEqual(first["output_sha256"], second["output_sha256"])
+        self.assertNotIn("T/tmp", first["output_redacted"])
 
     def test_test_runner_durations_are_normalized_before_output_hashing(self):
         with tempfile.TemporaryDirectory(prefix="quality-gates-duration-") as temporary:

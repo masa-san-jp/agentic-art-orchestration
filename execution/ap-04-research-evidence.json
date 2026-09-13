@@ -1,0 +1,34 @@
+{
+  "contract_version": "ap-04-research-evidence/v1",
+  "task": "AP-04-RESEARCH",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "owner_issue": "https://github.com/masa-san-jp/agentic-art-research/issues/93",
+  "owner_repository": "masa-san-jp/agentic-art-research",
+  "owner_source_commit": "efb8ebdddf978ad6077be6dce1c1a552eeccf61b",
+  "owner_code_candidate": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+  "owner_record_commit": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+  "owner_branch": "agent/ap04-research-20260912",
+  "draft_pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/108",
+  "change_decision": "CODE_DELTA_REQUIRED",
+  "reason": "The qualified Research owner already contained AAK-08 research-memory, source provenance and owner Git boundaries, but cumulative-specificity input validation rejected valid payload paths below macOS's OS-managed /var alias. The owner-local resolver now canonicalizes /var and /tmp while preserving caller-created symlink rejection.",
+  "acceptance": {
+    "knowledge_and_source_provenance": {"status": "PASS", "evidence": "owner docs/research-memory.md, schemas, research_memory.py and existing tests"},
+    "unresolved_and_rejection_boundary": {"status": "PASS", "evidence": "owner research-memory rejection taxonomy and cumulative-specificity regression suite"},
+    "development_git_boundary": {"status": "PASS", "evidence": "owner AGENTS.md and explicit external store/clean code provenance rules"},
+    "external_path_compatibility": {"status": "PASS", "evidence": "owner tools/path_safety.py, cumulative-specificity integration and tests/test_path_safety.py"},
+    "parent_ownership_boundary": {"status": "PASS", "evidence": "No project, runtime, raw, profile or owner payload was copied to the parent"}
+  },
+  "checks": {
+    "owner_validator": "PASS",
+    "owner_compile": "PASS",
+    "owner_focused": "PASS: 10 cumulative-specificity tests and 2 path tests",
+    "owner_full_suite": "PASS: 319 tests",
+    "owner_graph": "PASS",
+    "owner_diff": "PASS"
+  },
+  "integration": {"parent_record": "PENDING", "child_default_branch": "MERGED", "merge": "MERGED", "merge_commit": "9ae183e5e85ef444915c866d0b0518541d3760a6", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "external_artifacts": "NOT_CREATED",
+  "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},
+  "next_task": "AP-04-SELF-MODEL"
+}

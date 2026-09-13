@@ -1,8 +1,100 @@
+# AP-05 completed — next AP-06
+
+AP-05 was completed on `docs/ecosystem-readme-20260910` from parent start point
+`cbce7265e9e15264024a460f9e3f0f039efdcc73`. The six owner candidates were
+checked out into a Git-external qualified workspace with candidate pins recorded
+in `execution/ap-05-integration-evidence.json`. The qualified
+`child-quality-gates/v1` report matched all six pins and passed all 16 declared
+gates; report SHA-256 is
+`f45a777359ced21b9fa6deb1e926436041f28426b22b799e14f13cfd7e4bd385`.
+
+Parent validation, the 634-test suite with one existing skip, workspace status,
+and diff check pass. Audit remains nonblocking `FINDINGS` with the existing
+`portfolio-unavailable` warning. The theme-free `run.py` entrypoint correctly
+stayed incomplete at `AT_EDGE`; the Purpose E2E stayed blocked without a child
+gate report and reached `PLAN_READY` with the qualified report. Interaction,
+initial-operations, v1.2, nine failure injections with recovery paths, and six
+legacy recovery bundles passed in the networkless lane. Project receiver and
+lineage evidence is referenced from the prior owner record; no new knowledge
+write or catalog write was performed in this read-only integration lane. The
+parent gate redaction now normalizes macOS relative `T/tmp...` markers, and the
+same-run-id child gate `--check` passes.
+
+Parent record commit `d97601dc663d3c7c6a5a8512b29287be6024d460` is pushed to
+the work branch. AP-06 was then claimed and its verifier implementation was
+tested. AP-06 must run the real-agent matrix if a compliant execution lane is
+available; otherwise preserve AC11 as `NOT_RUN` and do not close the Issue.
+
+# AP-06 implementation complete; live acceptance blocked — 2026-09-12
+
+AP-06 added `schemas/autonomous-plan-acceptance.schema.json` and
+`tools/verify_autonomous_plan_acceptance.py`. The verifier cross-checks a
+metadata-only external manifest against hashed provider execution records,
+operation events, owner evidence, delivery-completion evidence, and separate
+second-run knowledge content comparisons. It does not accept a manifest's
+success fields without those files. Focused AP-06 tests, parent validator,
+compile, and the full 637-test suite with one existing skip pass.
+
+The configured local Ollama endpoint answered a harmless probe, but that probe
+did not produce an auditable tool-capable external-agent session. A subsequent
+opencode workers-ai attempt reached the configured gateway and received HTTP 401
+Unauthorized before agent events were produced. The required
+resume/new-clone/fork two-run matrix, owner revalidation, knowledge adoption,
+and Project-local delivery are therefore `NOT_RUN`; no success or Issue close
+was fabricated. External manifest locator is
+`git-external://ap06-acceptance-manifest-20260912.json` with SHA-256
+`eb1a80ecd3ebcff1aa91f053021195fec1b1524ff5b9a8a89010cbf4a908533b`.
+
+The same provider probe was retried at `2026-09-12T03:49:52+09:00` and
+`2026-09-12T03:51:39+09:00`; both retries returned HTTP 401 before agent
+events. No credential material was stored.
+
+AP-06 remains BLOCKED in the queue and AP-07 cannot start. Resume by
+reauthenticating the configured provider with
+`opencode providers login https://opencode-for-events.tokyo-odh.workers.dev`,
+then run
+`.venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>`.
+
 # Provider-backed local run checkpoint — 2026-09-10
 
 Run `AAK07-AGENT-20260910-P1` used local Ollama `qwen2.5:0.5b` (no billing) and a fresh synthetic new-clone profile. The provider decision was `USE_PINNED_HANDOFF`; the saved context reached `PLAN_READY`, committed Research (`c19c851d896c5d289ce6032d0ce94abf67efc8ce`) and Production (`eac0debb4b728885445e74d1f3bc5ef78692f066`) knowledge, and runtime replay passed at revision 2. The native review packet is now blocked only by exact `public-plan-review/PL001` HUMAN approval for target `sha256:9396873f118ee41ef6c998aaf86fa669831110edad8b0d806435c4a3d86f7c5a` and constraints `content_safety=PASSED`, `rights=PASSED`, `consent=PASSED`. A user-readable review summary is at `execution/aak07-provider-live-p1-review.md`. No approval or public projection was fabricated. AC07 remains NOT_RUN until Project delivery and the required provider-backed acceptance matrix are complete. Evidence: `execution/delivery-cycle-v2-evidence.json` (`provider_attempt`).
 
-# Delivery correction registered — 2026-09-10
+# Legacy Project plan recovery completed — 2026-09-11
+
+The previously generated P0009-P0014 recovery outputs were rejected as
+insufficient because their bodies were nearly identical. They were replaced,
+not promoted, by six fresh Production plans derived from the historical
+candidate-specific constraints. Each plan passed the qualified Production
+attestation at `eec39272c5c4827a1caf27fa928de18b58882e96`, native Project
+projection, lineage initialization, catalog synchronization, and Project
+validation. Public IDs were restored to the historical sequence:
+P0001/P0002/P0003/P0005/P0006/P0007, leaving the catalog as P0001-P0008 with
+no gap. Final evidence is
+`execution/project-local-legacy-recovery-final-20260911.json`.
+
+The six recovered plans are materially distinct: P0001 uses three translation
+panels and adopt/hold/reject persistence; P0002 uses two distinct traditions,
+two approach directions, and a local non-contact gap; P0003 uses free
+repositioning and a detail/whole trade-off; P0005 places the frame on the
+viewer side; P0006 fixes a 1800x2100mm surface, 450mm stop line, and timed
+light rest; P0007 is a closed A3 6x6 box with 35 packets and one empty cell.
+The old template outputs remain in Git history via explicit reverts and the
+old internal copies are preserved under
+`.agentic-art/internal/production/recovery-superseded-20260911/`.
+
+Project branch `docs/ecosystem-readme-20260910` is at
+`b901e5edaf99d20fada2e7321b30160e9fd9f0e9`. Native checks pass. Existing
+`tests/test_local_workspace.py` is a pre-existing uncommitted Project change
+and was not touched. P0004 remains `UNKNOWN_ATTRIBUTION` by design; no creator
+was fabricated. Remote push/release was not performed.
+
+All legacy-recovery sections dated 2026-09-10 below are preserved as the
+initial read-only observations and are superseded by the 2026-09-11 final
+recovery record. Their `BLOCKED` wording describes the state before the
+regenerated Production inputs were created; it is not the current Project
+catalog status.
+
+# Historical delivery correction registered — 2026-09-10 (superseded)
 
 Issue217 is NOT complete. DELIVERY-01 → Production69/Project18 → DELIVERY-04 → DELIVERY-05. Branch fix/delivery-completion-217; base f248056. Existing lease available; claim DELIVERY-01 next. Prior internal AAK acceptance is not Project delivery evidence. Registration only; no new code acceptance yet.
 
@@ -2528,3 +2620,244 @@ Run the saved DELIVERY-05 cycle context through a configured provider from a cle
 ### Next exact action
 
 1. For a normal Project-local request, provide the explicit project checkout and delivery contract to `tools/run.py`; the automatic plan lane will continue to the Project receiver without requesting a plan approval. Use the separate human gate only for work/manual publication or external effects.
+
+## 2026-09-10 — Project-local destination correction
+
+- The earlier DELIVERY-05 evidence was produced in a temporary provider workspace. It did not prove delivery into the explicitly requested `/Users/masa/マイドライブ/Dev/agentic-art-project` checkout.
+- The corrected cycle `PROJECT-LOCAL-PLAN-20260910-04` used the explicit Project root and saved its state below the Project-local `.agentic-art/state/` boundary. The requested delivery contract is `delivery-contract/v1: project-local`.
+- Project received `P0008` at `plans/P0008-aak07-agent-20260910-p4`. Native lineage is `VALIDATED` with the explicit new-clone instance/creator, the Project validator and catalog sync pass, and the local receiver receipt is `VERIFIED`.
+- The corrected cycle state reports `run_status=COMPLETED`, `projection_status=PROJECTED`, and `delivery_completion.status=COMPLETED`. The inherited `P0004` `UNKNOWN_ATTRIBUTION` blocker remains preserved and was not relabeled.
+- The Project checkout remains intentionally uncommitted at its existing branch head; Git commit, remote synchronization, public release, and physical work are separate gates. Machine-readable correction evidence is [`execution/project-local-plan-20260910-04-evidence.json`](project-local-plan-20260910-04-evidence.json).
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0001 (superseded)
+
+- Task `LEGACY-RECOVERY-P0001` was assessed first by ID order against the local Project Git history, migration record, parent execution evidence, and available Production checkout.
+- The historical P0001 record at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` is a sanitized public summary (`sha256:525fcd31ff35c11603baac67d9adca86ac4b89baa533372dcf14510006aae8af`). It is not a current Production canonical plan and has no verifiable accepted handoff/source bundle or Production attestation in the available local evidence.
+- P0001 was initially recorded as `BLOCKED` in [`execution/project-local-legacy-recovery-20260910.json`](project-local-legacy-recovery-20260910.json); this initial observation is superseded by the final regenerated record. No provenance or approval was invented.
+
+### Next exact action
+
+1. Inspect P0002 (`run/auto-auto-plan-repository-202`) and apply the same read-only source recovery and canonical Production/Project gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0002 (superseded)
+
+- Task `LEGACY-RECOVERY-P0002` assessed the candidate `run/auto-auto-plan-repository-202` after P0001, in numeric order.
+- The historical record at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` has a detailed summary (`sha256:6968d922845591e47244b8af11f623a25ecf57414e807e2f28c48079ca030036`), but no matching accepted Research handoff/source bundle, current Production project, stable Production identity, or attestation was found in the local evidence.
+- P0002 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0002-20260910.json`](project-local-legacy-recovery-P0002-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0003 (`run/auto-run-yohaku-001`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0003 (superseded)
+
+- Task `LEGACY-RECOVERY-P0003` assessed `run/auto-run-yohaku-001` after P0002, in numeric order.
+- The historical P0003 summary at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` has hash `sha256:cb887f2b2771554083b0c54aed32ff276d64c473be364682bf896d3146e090c9`, but no matching accepted Research handoff/source bundle, current Production project, stable source identity, or attestation was found.
+- P0003 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0003-20260910.json`](project-local-legacy-recovery-P0003-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0005 (`production/close-but-cannot-reach`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0005 (superseded)
+
+- Task `LEGACY-RECOVERY-P0005` assessed `production/close-but-cannot-reach` after P0003, in migration order.
+- The historical summary at `e5ff621769a9828ac867cf3fb55e859c79bb46fb` has hash `sha256:ba95efb8113cb1177033a9a9b8accf4e281fa52aaa8c53970cfc8e80cd5331135a`. A local old self-model fixture reference exists, but it is not an accepted current handoff or canonical Production source and has unknown freshness.
+- P0005 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0005-20260910.json`](project-local-legacy-recovery-P0005-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0006 (`run/boundary-distance-20260905`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0006 (superseded)
+
+- Task `LEGACY-RECOVERY-P0006` assessed `run/boundary-distance-20260905` after P0005.
+- A historical Project commit `dbfa65c33fc254ee4787a9e04cbfc0b5971a7e5a` temporarily labeled the record canonical and named Production commit `e1bb0deb4c28489a881ef663a3d2a8d974c5b295` and handoff `HO20260908`; however, the metadata still had `production_clearance: pending`, and no bound attestation or recoverable accepted Production project was found.
+- P0006 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0006-20260910.json`](project-local-legacy-recovery-P0006-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Inspect P0007 (`run/auto-new-plan-20260904-001-d3fa82c0d944`) through the same canonical recovery gates.
+
+## Historical 2026-09-10 — Legacy candidate recovery: P0007 (superseded)
+
+- Task `LEGACY-RECOVERY-P0007` assessed `run/auto-new-plan-20260904-001-d3fa82c0d944` after P0006.
+- The historical detailed plan at `d6928e5f7a33dbeb90c5e62ef3899fe65f17373d` has hash `sha256:e8a75a205892214ae8e6edd600e680cfd6593b493881e0589931d14adaa3f9ed`; its metadata still says `production_clearance: pending` and `projection: sanitized-public-plan`, with no bound Production attestation found.
+- P0007 was initially `BLOCKED` and is recorded in [`execution/project-local-legacy-recovery-P0007-20260910.json`](project-local-legacy-recovery-P0007-20260910.json); the final regenerated record supersedes that initial state.
+
+### Next exact action
+
+1. Run aggregate validation of the six legacy recovery records and current Project-local P0008 output; preserve all legacy IDs in `plans/migration.yaml`.
+
+## Historical 2026-09-10 — Legacy recovery aggregate (superseded)
+
+- All six legacy candidates were initially checked individually in ID order and were then regenerated through the current Production/Project path. The initial missing-source findings are retained as historical evidence only.
+- Existing P0004 `UNKNOWN_ATTRIBUTION` was preserved. It was not relabeled or used as evidence for another candidate.
+- The corrected Project-local output P0008 remains `COMPLETED_PROJECT_LOCAL` and is verified by the native Project receiver. Parent and Project checks are recorded in [`execution/project-local-legacy-recovery-summary-20260910.json`](project-local-legacy-recovery-summary-20260910.json).
+- The parent full suite completed as `623 tests; 3 failures, 31 errors, 1 skipped`; the failures/errors are the known macOS `/var` → `/private/var` temporary-path symlink incompatibility with strict external-path guards. The focused delivery/cycle checks and all Project receiver checks pass.
+- No old summary, historical canonical label, inferred personal signal, approval, or consent was promoted into a new public record. The numeric gaps are therefore intentional preservation of unresolved migration IDs, not missing output paths.
+
+### Next exact action
+
+1. If a legacy handoff/source bundle becomes available, run that candidate alone through current Production attestation and the explicit Project root; otherwise retain the six recorded blockers and the verified P0008 output.
+
+## 2026-09-11 — Issue intake: AP-01 registered
+
+- The current parent queue had no READY/BACKLOG task and `project_status.py --format json` reported 167/167 DONE.
+- Read-only GitHub intake observed open Issues #241 and #242. Issue #241 met all four SSOT minimums and was classified `REGISTER_BACKLOG`; Issue #242 was classified `UNQUEUED_NEEDS_SSOT` because it has no verification-commands section.
+- AP-01 was registered in `execution/task-queue.yaml` as the dependency-free READY task owned by `agentic-art-orchestration`. The task is observation and execution-plan mapping only; implementation remains AP-02 and later.
+- Intake output was metadata-only and kept outside Git at `/private/tmp/issue-intake-current.json` when available. No Issue body, conversation, credential, PRIVATE_RAW, or RESTRICTED data was copied into the repository.
+
+### Next exact action
+
+1. Claim AP-01, verify the clean parent and each available child checkout, then record the fixed source commits and the call-graph/acceptance mapping before implementation.
+
+## 2026-09-11 — AP-01 observation complete
+
+- AP-01 recorded the current eight repository authority blobs, manifest and remote pins, related Issue/PR states, normal/fixture/recovery/supervisor call graphs, boundary schemas, and the AC-01..AC-13 owner/task mapping in [`execution/ap-01-observation.json`](ap-01-observation.json).
+- Issue #241 remains open and all thirteen acceptance conditions remain `MAPPED_NOT_ACCEPTED`. Issue #242 remains `UNQUEUED_NEEDS_SSOT` because its verification command is not intake-complete; no Issue body or conversation was copied.
+- Parent validation and `git diff --check` pass. The full local suite ran 623 tests with 3 failures, 31 errors, and 1 skip from the macOS `/var` to `/private/var` temporary-path alias against strict external path guards; the path-precedence cases are preserved as AP-02 repair evidence and no result is reported as PASS.
+- AP-01 is complete as an observation task. No child checkout, remote ref, Issue, PR, Project catalog, approval, permission, or publication was mutated.
+
+### Next exact action
+
+Register AP-02 from Issue #241, then repair the parent normal-entry contract and the observed path-precedence regressions while preserving the explicit Project-local and human-gate boundaries.
+
+## 2026-09-11 — AP-02 registered
+
+- AP-02 is registered from Issue #241 after AP-01 completed. It is the dependency-ready parent task for synchronizing S1-S6, the normal-entry contract, migration and completion semantics, closed schema versioning, and removal of optional-flag dependence.
+- The task targets `agentic-art-orchestration` only. Child owner changes remain separate AP-03/AP-04 tasks, and Project merge, release, external publication, permission expansion, and real catalog publication remain gated.
+- The AP-01 observation and its known macOS temporary-path baseline are the starting evidence. The next implementation must preserve legacy context meanings and the explicit Project-local destination boundary.
+
+### Next exact action
+
+Claim AP-02, inspect the parent S1-S6 entrypoint, contract, migration, and completion boundaries, then implement the smallest parent-only change set.
+
+## 2026-09-12 — AP-02 completed
+
+- AP-02 parent implementation is fixed at `526324d` on `docs/ecosystem-readme-20260910`. The shared closed `delivery-contract/v1` and `delivery-completion/v1` envelopes now bind normal, cycle, batch and supervisor entrypoints.
+- New explicit Project roots resolve to `project-local`; saved legacy contexts preserve their existing `internal` or `project-committed` meaning. Startup BLOCKED reports retain an agent resume command and incomplete delivery state, and the normal Project-local resume command does not reintroduce a conflicting state root.
+- Focused acceptance: 10 tests PASS. Parent validator, compile, `git diff --check`, and full suite: 633 tests PASS with one existing skip. Evidence: `execution/ap-02-verification.json`; full log SHA-256 `953577609a37d1715ee40c2458368a0ac30c7702e00a8c66bc66cbc61c16ea1b`.
+- No child repository, external artifact, merge, release, public projection or physical work was performed. Existing human gates remain in force.
+
+## Next exact action
+
+Run `.venv/bin/python tools/issue_intake.py` read-only. If no new qualified Issue exists, register the next owner-scoped Issue #241 task without copying the Issue body, then claim the lowest eligible task.
+
+## 2026-09-12 — AP-03〜07 registered
+
+- Live read-only intake at `2026-09-12T00:30:00+09:00` found no new qualified open Issue. Issue #241 is already queued; #242 remains `UNQUEUED_NEEDS_SSOT` because `verification_commands` is missing. The metadata-only intake result was written outside Git at `/private/tmp/ap02-issue-intake-20260912.json`.
+- The Issue #241 implementation-plan rows were registered as separate owner tasks: `AP-03-PRODUCTION`, `AP-03-PROJECT`, and `AP-04-ART-HISTORY`, `AP-04-MARKETING`, `AP-04-RESEARCH`, `AP-04-SELF-MODEL`, `AP-04-VIEWER`. `AP-05`, `AP-06`, and `AP-07` remain dependent BACKLOG tasks.
+- Registration evidence is [`execution/ap-03-07-registration.json`](ap-03-07-registration.json). No Issue body, comment, child repository, external artifact, credential, PRIVATE_RAW or RESTRICTED data was copied or mutated.
+
+## Next exact action
+
+Claim `AP-03-PRODUCTION`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the qualified Production checkout and its owner AGENTS/Issue contract, then implement only the automatic-attestation/manual-review selection and recovery scope. Keep the child commit and parent record separate.
+
+## 2026-09-12 — AP-03-PRODUCTION completed
+
+- Production owner source `7bab731acea20aa86b45efc99a0724d5bd569953` was inspected in an isolated checkout because the parent child directory is a networkless fixture. The owner fix is candidate `308abfe0f90582b5dd47d17cc5776278d32d5bb3`; its record commit is `3d059eb288d7f928046c3933509bbc6c1f5e79b3`.
+- The fix canonicalizes only OS-owned `/var` and `/tmp` aliases for external knowledge stores and continues to reject caller-created symlinks and code-store overlap. Existing automatic-plan attestation and explicit manual/publication review semantics are preserved.
+- Owner validator, focused 11 tests, clean full suite 132 tests, evaluation and diff check passed. Evidence: `execution/ap-03-production-evidence.json`; owner evidence: `agentic-art-production/execution/ap-03-production-verification.json`.
+- Draft PR [agentic-art-production#75](https://github.com/masa-san-jp/agentic-art-production/pull/75) is open. Child default branch, merge, release, physical work and external publication were not performed.
+
+## Next exact action
+
+Release the AP-03-PRODUCTION lease after this record is pushed, then claim `AP-03-PROJECT`; first operation: `.venv/bin/python tools/validate.py --check`.
+
+## 2026-09-12 — AP-03-PROJECT completed
+
+- Project owner source `c0e172ef719594074eee467a78e221a697781c97` was inspected in an isolated checkout because no Project checkout exists under the parent. Its existing receiver, attribution, lineage and generated-index implementation satisfies the AP-03 boundary; no owner code delta was required.
+- Owner validator, 46-test full suite, catalog sync and diff checks passed. Verification evidence was recorded at owner commit `179ff49e77c752d187360f7a96fd04c47d307119`; parent evidence is `execution/ap-03-project-evidence.json`.
+- Draft PR [agentic-art-project#29](https://github.com/masa-san-jp/agentic-art-project/pull/29) contains evidence only. Catalog write, child default-branch merge, release and external publication were not performed.
+
+## Next exact action
+
+Release the AP-03-PROJECT lease after this record is pushed, then claim `AP-04-ART-HISTORY`; first operation: `.venv/bin/python tools/validate.py --check`.
+
+## 2026-09-12 — AP-04-ART-HISTORY completed
+
+- Art History owner source `3cfc4c34d91d1d5176d05ffa08deec479d8b63a7` was inspected in an isolated checkout. Its AAK-06 owner schema, source-read provenance, knowledge-store Git boundary and passive-agent rules were already present.
+- The owner suite exposed a macOS path-boundary defect: the explicit store rejected the OS-managed `/var` temporary-directory alias. Candidate `f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a` adds the owner-local resolver and regression tests; caller-created symlinks remain rejected.
+- Python 3.12.13 owner doctor, canonical verify, graph check, context-vector check, readiness (27 tests), full suite (142 tests) and diff check passed. Evidence: [`execution/ap-04-art-history-evidence.json`](ap-04-art-history-evidence.json).
+- Draft PR [art-history-notes#391](https://github.com/masa-san-jp/art-history-notes/pull/391) is open. Parent domain payloads, source snapshots, private data, merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-04-MARKETING`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Marketing owner contract and qualified main, then preserve freshness, counterevidence and owner Git boundaries while recording only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-MARKETING completed
+
+- Marketing owner source `932318ce8d76ffd44840cee0a465ea2405ef5037` was inspected in an isolated checkout. AAK-07 already provides the owner schema, source provenance, freshness, counterevidence, CAS, INDEX_PENDING recovery and passive Git boundary required by AP-04; no code delta was necessary.
+- Evidence-only owner commit `e7ae5cfeab73e675fd19584288a99d481e832d3c` and draft PR [marketing-trends-notes#91](https://github.com/masa-san-jp/marketing-trends-notes/pull/91) record the verification. Preflight, full 57-test suite, graph check, dry-run audit and diff check passed.
+- No trend, practice, source, observation, private/raw payload or external artifact was copied to the parent. Child default branch, merge, release and external publication remain unchanged.
+- Parent evidence: [`execution/ap-04-marketing-evidence.json`](ap-04-marketing-evidence.json).
+
+## Next exact action
+
+Claim `AP-04-RESEARCH`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Research owner contract and qualified main, preserve research provenance and unresolved findings in the owner, and record only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-RESEARCH completed
+
+- Research owner source `efb8ebdddf978ad6077be6dce1c1a552eeccf61b` was inspected in an isolated checkout. Candidate `b2e26d625cf849c766827dd7b163a2f4c72a226d` repairs the macOS OS-managed `/var` and `/tmp` external input alias while preserving caller-created symlink rejection.
+- Validator, compile, focused 10 cumulative-specificity plus 2 path tests, full 319-test suite, graph and diff checks passed. Evidence: [`execution/ap-04-research-evidence.json`](ap-04-research-evidence.json).
+- Draft PR [agentic-art-research#108](https://github.com/masa-san-jp/agentic-art-research/pull/108) is open. Parent project/runtime/raw/profile payloads, child default-branch merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-04-SELF-MODEL`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Self Model owner contract and qualified main, preserve consent and profile/export boundaries, and record only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-SELF-MODEL completed
+
+- Self Model owner source `351adf30e489b9bc148494bbb3a3677d7df1de19` is the qualified main descendant of manifest pin `a61460d4f9add36b256b2db9a860c53a98bd5fcd`. Existing AAK-05 consent, profile-root, creator-scoped knowledge, export and Git boundaries were verified; the owner branch adds verification evidence only.
+- Native harness validation, focused 12-test creative-feedback suite, full 173-test suite, synthetic external-profile graph (7 entities), audit, bundle and diff checks passed. Evidence: [`execution/ap-04-self-model-evidence.json`](ap-04-self-model-evidence.json).
+- Draft PR [self-model-notes#99](https://github.com/masa-san-jp/self-model-notes/pull/99) is open at owner record `04925e18879ce342202eb2e1e48871372791178e`. Real profile migration, personal/raw data, child default-branch merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-04-VIEWER`; first operation: `.venv/bin/python tools/validate.py --check`. Inspect the Viewer owner contract and qualified main, preserve aggregate/privacy and free-text boundaries, and record only opaque evidence in the parent.
+
+## 2026-09-12 — AP-04-VIEWER completed
+
+- Viewer owner source `2c1167c7ce95f0bfa3a2e9f0896bec5836009a87` on `feat/viewer-response-contracts` was inspected. Aggregate-only records, conservative assessments, opaque provenance, deterministic export and privacy rejection boundaries were already present; the owner branch adds verification documentation only.
+- Validator, 13-test full suite, README export example with a fresh temporary output and diff check passed. Evidence: [`execution/ap-04-viewer-evidence.json`](ap-04-viewer-evidence.json).
+- Draft PR [viewer-response-notes#12](https://github.com/masa-san-jp/viewer-response-notes/pull/12) is open at owner record `c886f6b40ff9ca3a85075e5eaa02af64cba9c22e`. Viewer records, free text, identifiers, raw assets, credentials, merge, release and external publication were not performed.
+
+## Next exact action
+
+Claim `AP-05`; first operation: `.venv/bin/python tools/validate.py --check`. Isolate the qualified owner candidates and run the full integration, legacy migration, fault-injection, resume and documentation acceptance matrix.
+
+
+## 2026-09-13 — AP-06 completed
+
+- AP-06 was resumed after the prior provider authentication blocker. A real OpenCode external agent using local Ollama qwen3.8:27b executed the six required runs from the normal README entry and production request: resume, new-clone, and fork, twice each. No synthetic identity was used and no human question was asked.
+- The external acceptance manifest is available at /private/tmp/ap06-live-20260912/acceptance-evidence/manifest.json with SHA-256 80227e1696afc8a201059076c6608dbdfca2f08aab88c12ae1362b8401bed05a. The native verifier returned PASS; all six runs reached PLAN_READY and delivery_completion.status=COMPLETED for project-local.
+- Owner revalidation passed for all six runs. The second run in each mode records knowledge adoption from the first run. Fork upstream remained unchanged. Provider execution, operation traces, delivery receipts and adoption evidence are metadata-only and remain outside Git.
+- AP-06 acceptance: 7/7 PASS. The existing Project record P0004 UNKNOWN_ATTRIBUTION remains unresolved, Git remote synchronization remains NOT_RUN/OUTPUT_ONLY_UNCOMMITTED, and Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing. Merge, release, publication and physical work remain human-gated and were not performed.
+
+### Next exact action
+
+Claim AP-07; first operation: .venv/bin/python tools/project_status.py --format json. Synchronize the acceptance matrix, all eight repository candidate commit/PR references, canonical state/handoff, README status and reachable Issue/PR evidence while preserving every NOT_RUN and UNKNOWN result.
+
+
+## 2026-09-13 — AP-07 completed
+
+- AP-07 synchronized the Issue #241 acceptance matrix at 13/13 PASS, the eight repository candidate commits, the seven reachable child PRs, the pushed parent branch, the AP-06 external manifest, canonical state/handoff and README status. A stale Marketing owner-record hash was corrected from the queue/evidence record to the commit returned by live PR #91.
+- Issue #241 is still OPEN and its seven child PRs are still OPEN. Close, merge, release, external publication, physical work and catalog remote synchronization remain NOT_RUN under the existing human gates. The existing Project P0004 UNKNOWN_ATTRIBUTION was preserved. Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing.
+- No raw conversation, credential, private/restricted payload or inferred feedback was stored. AP-06 project-local delivery remains COMPLETED; Git remote synchronization is a separate NOT_RUN state.
+
+### Next exact action
+
+Run .venv/bin/python tools/issue_intake.py in read-only mode. Register a future Issue only when all four SSOT minimums are present; retain Issue #242 as UNQUEUED_NEEDS_SSOT otherwise.
+
+
+## 2026-09-13 — External operations completed
+
+- The user explicitly authorized PR merge, Issue close, release, force push and branch deletion. Six qualified owner PRs were merged: Production #75 (`263f198b`), Project #29 (`f2de7d47`), Research #108 (`9ae183e5`), Art History #391 (`33fbc821`), Marketing #91 (`52a3a803`) and Viewer #12 (`11582861`) into its qualified base `feat/viewer-response-contracts`.
+- Self Model qualified main already contained the owner implementation at `351adf30`; validation-only PRs #99 and #100 failed the owner CI contract and were closed as superseded. Their head branches were deleted. No owner code, personal/raw data, profile migration or release was forced through a failed gate.
+- Parent evidence was updated in `execution/ap-07-final-sync-evidence.json`, `execution/task-queue.yaml`, the seven AP-03/AP-04 evidence files and `execution/state.yaml`. Parent validator and README status passed; the full suite passed 637 tests with 1 skip; `git diff --check` passed.
+- No force push was needed. No release was created because no release target or version was specified. Project-local delivery remains COMPLETED, while catalog remote synchronization and external publication remain NOT_RUN. Project P0004 remains `UNKNOWN_ATTRIBUTION`, and Issue #242 remains `UNQUEUED_NEEDS_SSOT` because `verification_commands` is missing.
+
+### Next exact action
+
+Commit and push this evidence synchronization, create and merge the parent PR for `docs/ecosystem-readme-20260910`, then close Issue #241 and update the final evidence with the parent merge and close result.

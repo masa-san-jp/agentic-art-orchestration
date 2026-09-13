@@ -1,0 +1,27 @@
+{
+  "contract_version": "ap-03-production-evidence/v1",
+  "task": "AP-03-PRODUCTION",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "owner_repository": "masa-san-jp/agentic-art-production",
+  "owner_source_commit": "7bab731acea20aa86b45efc99a0724d5bd569953",
+  "owner_code_candidate": "308abfe0f90582b5dd47d17cc5776278d32d5bb3",
+  "owner_record_commit": "3d059eb288d7f928046c3933509bbc6c1f5e79b3",
+  "owner_branch": "agent/ap03-production-20260912",
+  "draft_pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/75",
+  "acceptance": {
+    "automatic_attestation_and_manual_review_boundary": {"status": "PASS", "evidence": "owner execution/ap-03-production-verification.json and PR #75"},
+    "resume_and_fail_closed": {"status": "PASS", "evidence": "owner clean full suite and evaluation"},
+    "external_path_compatibility": {"status": "PASS", "evidence": "owner candidate 308abfe; caller symlinks remain rejected"}
+  },
+  "checks": {
+    "owner_validator": "PASS",
+    "owner_focused": "PASS: 11 tests",
+    "owner_full_suite": "PASS: 132 tests; log_sha256 07a6dc268cd86807645954ffca2067fbb658ec8cfde6e386060ff725e7c52d3d",
+    "owner_evaluation": "PASS: log_sha256 ba2e1d4c78669d6f0947007000ce291e436daf42448c8805520587fe9c2b003b",
+    "owner_diff": "PASS"
+  },
+  "integration": {"parent_child_gate": "PASS", "child_default_branch": "MERGED", "merge": "MERGED", "merge_commit": "263f198b6ed90fdbec3e593a6c5f9442000b0822", "release": "NOT_RUN"},
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "external_artifacts": "NOT_CREATED",
+  "next_task": "AP-03-PROJECT"
+}

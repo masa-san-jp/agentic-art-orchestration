@@ -22,6 +22,7 @@
     "lease": {"$ref": "#/$defs/lease"},
     "history": {"type": "array", "items": {"$ref": "#/$defs/history"}},
     "privacy": {"$ref": "#/$defs/privacy"},
+    "delivery_contract": {"$ref": "delivery-contract.schema.json"},
     "destination_resolution": {"type": "object"}
   },
   "$defs": {

@@ -36,6 +36,7 @@ _SECRET_PATTERNS = [
     re.compile(r"\b(?:ghp|github_pat|sk)-[A-Za-z0-9_-]{8,}\b"),
 ]
 _RUNTIME_PATH_PATTERN = re.compile(r"(?:/private)?/var/folders/\S+|/tmp/\S+")
+_MACOS_TEMP_RELATIVE_PATTERN = re.compile(r"(?<![A-Za-z0-9_])T/tmp[A-Za-z0-9._-]+(?:/[^\s]*)?")
 _TEST_DURATION_PATTERN = re.compile(r"(Ran \d+ tests? in )\d+(?:\.\d+)?s")
 
 
@@ -68,6 +69,7 @@ def redact_output(output: str) -> str:
     # Gate output often contains temporary archive/output roots. Normalize those
     # paths before hashing so repeated immutable runs compare semantic evidence.
     redacted = _RUNTIME_PATH_PATTERN.sub("<TEMP_PATH>", output)
+    redacted = _MACOS_TEMP_RELATIVE_PATTERN.sub("<TEMP_PATH>", redacted)
     redacted = _TEST_DURATION_PATTERN.sub(r"\1<TEST_DURATION>", redacted)
     for pattern in _SECRET_PATTERNS:
         if pattern.groups:

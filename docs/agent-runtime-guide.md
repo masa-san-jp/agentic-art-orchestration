@@ -83,6 +83,11 @@ test "$BOOTSTRAP_EXIT" -eq 2
 
 この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
 
+新規の通常runは`delivery-contract/v1`を生成してrun stateへ保存する。明示したProject checkoutを
+`--project-root`または`AGENTIC_ART_PROJECT_ROOT`で選ぶ場合のtargetは`project-local`であり、
+Projectの受取検証までが同じ通常経路に含まれる。保存済みlegacy contextは、契約を追加しても
+既存の`project-committed`やinternalの意味を自動変更せず、同じrunの保存済み入力から再開する。
+
 ResearchとProductionの`--research-root`/`--production-root`はmanifestから自動解決される。引数を省略した通常runでも、workspaceがmissingまたはcleanなpin driftだけなら、run state配下に`pinned-workspace`を新規作成し、全manifest entryを宣言済みのqualified commitへ展開してから同じrunを継続する。元のcheckout、manifest、remote refは変更しない。展開されたworkspaceには`manifest-pinned-workspace/v1`マーカーが付き、detached checkoutでも各commit、clean state、workspace所有証拠を再検証する。dirty、symlink、破損、権限不足、既存tree修復が必要な場合はBLOCKEDのまま停止する。
 
 実Self Modelを読む場合、`--profile-root`には利用が認められた外部profileの絶対パスを明示する。
@@ -371,6 +376,20 @@ For a request to output to Project, run `tools/run.py --cycle-context <external-
 Continue the returned agent actions through Production plan generation, the closed automatic plan attestation, canonical projection, native Project lineage initialization and local receiver validation. The automatic plan lane performs Production's renderer, content, asset and provenance checks and records `publication_review.authority: AUTOMATIC_PLAN`; it never waits for human approval and never authorizes an external effect. Work/manual requests use the separate native review lane. If an automatic check fails, the agent receives the exact repair finding and resumes the same run. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait applies only to a separately requested work/manual publication and does not consume the no-progress retry budget.
 
 `PLAN_READY` and batch `PASSED` describe stages, not final delivery. For the cycle entry, only `delivery_completion.status=COMPLETED` with the requested target is the overall completion report. Required knowledge saves, receiver hashes and creator/origin must verify. A local receipt does not prove Git commit or remote synchronization. GitHub Actions, account billing and a built-in provider are not required. Existing AAK internal evidence is not public-catalog acceptance.
+
+## AP-06 external-agent acceptance
+
+AP-06 evidence is an external, metadata-only manifest. Run
+`.venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>`
+with an absolute manifest outside the repository. The verifier checks the closed
+`autonomous-plan-acceptance/v1` schema, fixed code and knowledge refs, every
+referenced file hash, owner revalidation, delivery completion, operation trace,
+provider execution record, and separate second-run knowledge content checks.
+The manifest's success fields are compared with those observations; they are not
+accepted as proof on their own. A model probe or synthetic/fake run is not a
+six-run acceptance. If a compliant provider-backed external-agent lane is
+unavailable, record `status=NOT_RUN` and `acceptance.ac11=NOT_RUN` with the
+observed blocker and resume command. Do not close the Issue or promote AP-07.
 
 ## Project checkoutだけで動かす（output-destinations/v2）
 

@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 from tools.plan_completion import checked_code
+from tools.path_safety import external_path as _safe_external_path
 
 BARE_OWNERS = {'self-model-notes', 'marketing-trends-notes', 'agentic-art-production'}
 POLICY = json.loads((Path(__file__).resolve().parents[1] / "config/knowledge-cycle-runtime.json").read_text())
@@ -38,13 +39,21 @@ class NativeKnowledgeError(ValueError):
 
 
 def external_path(value):
-    p = Path(value)
-    if not p.is_absolute() or p.resolve() != p:
-        raise NativeKnowledgeError('EXPLICIT_NONSYMLINK_PATH_REQUIRED')
-    return p
+    try:
+        return _safe_external_path(value)
+    except ValueError as exc:
+        raise NativeKnowledgeError(str(exc)) from exc
 
 
-def _execute(binding, args):
+def _execute(binding, args, *, accepted_failure_statuses=frozenset()):
+    """Run an owner command, retaining only explicitly safe read statuses.
+
+    Project catalog export is read-only. An existing catalog may contain an
+    intentionally preserved unknown-attribution record; that makes the export
+    result BLOCKED, but does not authorize changing or consuming that record.
+    All callers must opt into retaining such a status, so writes and other
+    owner failures remain fail-closed.
+    """
     code = checked_code(binding['code_root'], binding['code_commit'])
     process = subprocess.run([binding.get('python', sys.executable), *map(str, args)], cwd=code,
                              capture_output=True, text=True, timeout=POLICY["step_timeout_seconds"])
@@ -56,6 +65,8 @@ def _execute(binding, args):
     if not isinstance(result, dict):
         raise NativeKnowledgeError('NATIVE_RESPONSE_INVALID')
     if process.returncode:
+        if result.get('status') in accepted_failure_statuses:
+            return result
         # Do not persist arbitrary owner stderr, private source text or raw data.
         raise NativeKnowledgeError('NATIVE_' + str(result.get('status', 'REJECTED')))
     return result
@@ -153,4 +164,6 @@ def invoke(owner, binding, action, inputs, **context):
         external_path(path)
         path.write_text(json.dumps(receipt))
         _execute(binding, command(owner, binding, 'index', {'receipt': str(path)}, **context))
-    return _execute(binding, command(owner, binding, action, inputs, **context))
+    accepted_failure_statuses = {'BLOCKED'} if owner == 'agentic-art-project' and action == 'query' else set()
+    return _execute(binding, command(owner, binding, action, inputs, **context),
+                    accepted_failure_statuses=accepted_failure_statuses)

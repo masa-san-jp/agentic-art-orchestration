@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/delivery-contract.schema.json",
+  "title": "Delivery contract v1",
+  "description": "Closed delivery goal shared by normal, legacy and cycle entrypoints.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "target"],
+  "properties": {
+    "contract_version": {"const": "delivery-contract/v1"},
+    "target": {"enum": ["internal", "project-local", "project-committed"]}
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "contract_version": "project-local-delivery-correction/v1",
+  "task": "ISSUE-217-PROJECT-LOCAL-CORRECTION",
+  "run_id": "PROJECT-LOCAL-PLAN-20260910-04",
+  "requested_delivery": {
+    "contract_version": "delivery-contract/v1",
+    "target": "project-local",
+    "root_role": "public_projection_root"
+  },
+  "profile": {
+    "mode": "new-clone",
+    "instance_id": "synthetic-provider-new-clone-instance",
+    "creator_id": "synthetic-provider-new-clone-creator",
+    "public_projection": true,
+    "remote_write": false
+  },
+  "pins": {
+    "project": "41933528361c17722cbc485863dbdc10eb0880c6",
+    "production": "eec39272c5c4827a1caf27fa928de18b58882e96",
+    "research": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+    "orchestration_runtime": "793f6957ed8f7a741066549061944df8840cf747"
+  },
+  "status": {
+    "run": "COMPLETED",
+    "plan": "PLAN_READY",
+    "knowledge": "COMMITTED",
+    "projection": "PROJECTED",
+    "delivery": "COMPLETED",
+    "human_gate": "NOT_REQUIRED"
+  },
+  "production": {
+    "project_id": "production/aak07-agent-20260910-p4",
+    "plan_id": "PL001",
+    "plan_revision": 1,
+    "plan_markdown_sha256": "sha256:aa4d7c8dcc33b40349f80d015b29830d4fc729434aba2000ae2245988e73be8e",
+    "attestation_sha256": "sha256:2986496c124bd3142fa98939b52971b35489f9f4d9270bd82d40322277613d01",
+    "producer_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+    "authority": "AUTOMATIC_PLAN",
+    "external_effects_authorized": false
+  },
+  "project": {
+    "public_id": "P0008",
+    "path": "plans/P0008-aak07-agent-20260910-p4",
+    "plan_sha256": "sha256:aa4d7c8dcc33b40349f80d015b29830d4fc729434aba2000ae2245988e73be8e",
+    "lineage_sha256": "sha256:7e9c706fbb05787a264a9aedb5a621d63124403358cc913b1c7eadfb03e131a3",
+    "attestation_sha256": "sha256:2986496c124bd3142fa98939b52971b35489f9f4d9270bd82d40322277613d01",
+    "native_validator": "PASS",
+    "catalog_sync": "PASS",
+    "lineage": {
+      "status": "VALIDATED",
+      "origin_instance_id": "synthetic-provider-new-clone-instance",
+      "creator_id": "synthetic-provider-new-clone-creator"
+    },
+    "target_git_head": "41933528361c17722cbc485863dbdc10eb0880c6",
+    "target_working_tree": "OUTPUT_ONLY_UNCOMMITTED",
+    "remote_sync": "NOT_RUN"
+  },
+  "preserved_existing_blockers": [
+    {"record_id": "P0004", "status": "UNKNOWN_ATTRIBUTION"}
+  ],
+  "privacy": {
+    "credential_stored": false,
+    "raw_conversation_stored": false,
+    "private_workspace_projected": false,
+    "remote_operations": []
+  },
+  "evidence": {
+    "target_cycle_state": ".agentic-art/state/knowledge-cycles/PROJECT-LOCAL-PLAN-20260910-04/cycle.json",
+    "target_receipt": ".agentic-art/state/knowledge-cycles/PROJECT-LOCAL-PLAN-20260910-04/local-delivery.json",
+    "projection_result": ".agentic-art/state/PROJECT-LOCAL-PLAN-20260910-04/public-projection-result.json"
+  },
+  "correction": "The first attempt used a temporary provider workspace. This correction used the explicitly selected Project root and completed the native Project lineage and local receiver checks there."
+}

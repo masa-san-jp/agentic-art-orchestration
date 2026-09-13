@@ -22,6 +22,66 @@ Issue193 code is integrated via parent PR202 (main merge `cc264f17835049cbdebd36
 
 機械契約 `config/aak-task-projection.json` とqueue参照は2つのMarkdownからの実行用投影であり、第三の仕様ではない。初回は `.venv/bin/python tools/issue_intake.py --register-aak` で冪等登録する。validatorは投影・参照hash・owner・DAGを照合する。子のschema/本文を親へ複製しない。merge/release/公開/実n=1移設のhuman gateを維持する。
 
+## AP-05 — qualified integration completed
+
+Issue #241 AP-05を、各ownerのcandidateを一時のGit外部workspaceへ隔離して検証した。qualified manifestは6 owner candidate pinを固定し、Production、Research、Art History、Marketing、Self Model、Viewerの16 child gateがimmutable archive・per-child environmentで全件PASSした。Projectは [`execution/ap-03-project-evidence.json`](execution/ap-03-project-evidence.json) のlocal receiver/lineage証拠を参照し、Projectのcatalog writeは行っていない。
+
+親のvalidator、634 tests（既存skip 1）、workspace status、audit（blocking false、既存warning 1件）、diff checkはPASS。`run.py` のテーマ未指定入口はAT_EDGEで停止条件を正確に保持し、child gate未提示のPurpose E2EはBLOCKED、検証済みgateを提示したPurpose E2Eは全acceptance trueの`PLAN_READY`へ到達した。interaction（通常/initial）、initial operations、v1.2、9故障注入と再開、legacy recovery 6候補もnetworklessでPASSした。
+
+candidate pin、contract version、owner evidence、Project receiver evidence、child gate report、Purpose plan-ready、legacy bundleのhashは [`execution/ap-05-integration-evidence.json`](execution/ap-05-integration-evidence.json) に記録した。child gateの出力に残ったmacOS相対temporary markerを親redactionで正規化し、同一run-idの`--check`までPASSさせた。外部一時成果物はGit外部のcreate-only stagingに置き、親にはopaque locatorとhashだけを保存した。AP-05の統合laneではowner knowledge writeを実行せず、既存owner契約証拠とProject receiver証拠を参照として保持した。merge、release、default branch変更、外部公開、実カタログ書込は未実施。
+
+次の実行点はAP-06。実外部agentのresume/new-clone/fork各2runと2回目の知識採用は、providerが無い場合にAC11 NOT_RUNを保持し、合成E2Eを実agent受入へ昇格させない。
+
+AP-06では `autonomous-plan-acceptance/v1` manifest schemaと、外部参照ファイルのhash・provider execution・operation trace・owner再検証・Project-local delivery・2回目の知識採用内容を相互検査する `tools/verify_autonomous_plan_acceptance.py` を追加した。3件のfocused test、親validator、compile、full suite 637 tests（既存skip 1）、diff checkはPASS。Ollamaの無害なprobeは応答したが、設定済みopencode workers-ai laneはHTTP 401 Unauthorizedでagent event生成前に停止した。6件の通常入口runは実施できず、AC11はNOT_RUNのままAP-06をBLOCKED記録した。Issue #241は未完了で、AP-07は開始しない。
+
+## AP-02 — 親repoの自律通常入口と納品契約 — completed
+
+Issue #241のAP-02を親repoだけで実装し、`delivery-contract/v1`と`delivery-completion/v1`を通常run、cycle、batch、supervisorの共通境界へ接続した。新規の明示Project rootは`project-local`として受取検証まで追跡し、保存済みlegacy contextの`internal`/`project-committed`は再開時に保持する。起動BLOCKEDはテーマや手動制作案へ置換せず、同一runのagent resume commandと未完了契約を保存する。
+
+実装commitは`526324d`、受入証跡は[`execution/ap-02-verification.json`](execution/ap-02-verification.json)。focused 10 tests、validator、compile、`git diff --check`、full suite 633 tests（既存skip 1）はPASSした。macOSの`/var` aliasは共通外部path helperで正規化し、利用者作成symlinkは引き続き拒否する。子repo、外部artifact、merge、release、public projection、physical workはこのtaskでは実施していない。
+
+次の再開操作は、queueにeligible taskが無いため `.venv/bin/python tools/issue_intake.py` をread-onlyで実行し、Issue #241の次owner taskを本文複製なしで登録すること。
+
+## AP-03-PRODUCTION — completed
+
+Production ownerのautomatic-plan attestationとmanual/publication reviewの境界を再確認し、macOS `/var` aliasでcurated knowledge storeが拒否される既存path guardだけを修復した。OS-owned `/var`/`/tmp` aliasはcanonicalizeし、caller-created symlink、code-store overlap、dirty producer checkout、approval失効、plan変更はfail closedのまま保持する。
+
+Owner candidate `308abfe0f90582b5dd47d17cc5776278d32d5bb3`、record `3d059eb288d7f928046c3933509bbc6c1f5e79b3`、draft PR [#75](https://github.com/masa-san-jp/agentic-art-production/pull/75)は [`execution/ap-03-production-evidence.json`](execution/ap-03-production-evidence.json)から参照できる。owner validator、focused 11 tests、clean full 132 tests、evaluation、diff checkはPASS。child default branch、merge、release、physical work、external publicationは未実施。
+
+## AP-03-PROJECT — completed
+
+Project ownerのqualified main `c0e172ef719594074eee467a78e221a697781c97`をread-onlyで再検証した。既存実装が明示Project-local receiver、creator/origin attribution、lineage、generated index、catalog sync、read-only Git boundaryを満たしていたため、コード差分は追加せず、owner検証証跡だけを専用branchへ記録した。validator、46 tests、catalog sync、diff checkはPASSし、証跡は [`execution/ap-03-project-evidence.json`](execution/ap-03-project-evidence.json)から参照できる。draft PR [#29](https://github.com/masa-san-jp/agentic-art-project/pull/29)は証跡用で、catalog write、merge、release、remote publicationは未実施。
+
+## AP-04-ART-HISTORY — completed
+
+Art History ownerのqualified main `3cfc4c34d91d1d5176d05ffa08deec479d8b63a7`を確認した。AAK-06のowner schema、source-read証拠、知識保存と開発Gitの境界は既存実装で満たされていたが、macOSのOS管理 `/var` temporary-directory aliasを明示外部storeとして拒否していたため、owner-local `tools/path_safety.py`を追加した。`/var`/`/tmp`だけをcanonicalizeし、利用者作成symlink、store overlap、dirty code、remote pushを引き続き拒否する。
+
+Owner candidate `f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a`、draft PR [#391](https://github.com/masa-san-jp/art-history-notes/pull/391)は [`execution/ap-04-art-history-evidence.json`](execution/ap-04-art-history-evidence.json)から参照できる。Python 3.12.13でagent doctor、canonical verify、graph、context-vector、readiness 27 tests、full 142 tests、diff checkはPASS。親へdomain payload、source snapshot、private dataは複製していない。child default branch、merge、release、external publicationは未実施。
+
+## AP-04-MARKETING — completed
+
+Marketing ownerのqualified main `932318ce8d76ffd44840cee0a465ea2405ef5037`を確認した。AAK-07のmarket-observation intake、鮮度、counterevidence、`certainty`/`retrieved`のsource provenance、owner bare Git storeのCAS・INDEX_PENDING復旧、受動的な開発Git境界は既存実装で満たされていたため、コード差分は追加せず、owner検証証跡だけを専用branchへ記録した。
+
+Owner candidate `932318ce8d76ffd44840cee0a465ea2405ef5037`、record `e7ae5cfeab73e675fd19584288a99d481e832d3c`、draft PR [#91](https://github.com/masa-san-jp/marketing-trends-notes/pull/91)は [`execution/ap-04-marketing-evidence.json`](execution/ap-04-marketing-evidence.json)から参照できる。preflight、57 tests、graph check、`audit --dry-run --now 2026-09-12`、diff checkはPASS。親へtrend/practice/source/observation payload、private dataは複製していない。child default branch、merge、release、external publicationは未実施。
+
+## AP-04-RESEARCH — completed
+
+Research ownerのqualified main `efb8ebdddf978ad6077be6dce1c1a552eeccf61b`を確認した。AAK-08のresearch-memory owner schema、source provenance、rejection/unresolved taxonomy、project/runtime/raw/profile隔離、owner bare Git store、CAS・index復旧、受動的開発Git境界は既存実装で満たされていたが、cumulative-specificityの外部payload pathがmacOSのOS管理 `/var` aliasを拒否していたため、owner-local `tools/path_safety.py`を追加した。利用者作成symlinkは引き続き拒否する。
+
+Owner candidate `b2e26d625cf849c766827dd7b163a2f4c72a226d`、draft PR [#108](https://github.com/masa-san-jp/agentic-art-research/pull/108)は [`execution/ap-04-research-evidence.json`](execution/ap-04-research-evidence.json)から参照できる。validator、compile、focused cumulative-specificity/path tests、full 319 tests、graph、diff checkはPASS。親へproject/runtime/raw/profile/payloadは複製していない。child default branch、merge、release、external publicationは未実施。
+
+## AP-04-SELF-MODEL — completed
+
+Self Model ownerのqualified main `351adf30e489b9bc148494bbb3a3677d7df1de19`を確認した。AAK-05のcreative-feedback/v1、creator scope、同意再検証、external profile-root、export filtering、native SM-036証跡は既存実装で満たされていたため、owner branchにはAP-04検証証跡だけを追加した。Issue #82の実profile移行human gate、raw/private data境界、owner Git境界は維持する。
+
+Owner candidate `351adf30e489b9bc148494bbb3a3677d7df1de19`、record `04925e18879ce342202eb2e1e48871372791178e`、draft PR [#99](https://github.com/masa-san-jp/self-model-notes/pull/99)は [`execution/ap-04-self-model-evidence.json`](execution/ap-04-self-model-evidence.json)から参照できる。native harness、focused 12 tests、full 173 tests、synthetic external-profile graph/audit/bundle、diff checkはPASS。parentへpersonal/raw/profile/knowledge payloadは複製していない。child default branch、real migration、merge、release、external publicationは未実施。
+
+## AP-04-VIEWER — completed
+
+Viewer ownerのqualified branch `feat/viewer-response-contracts`、source `2c1167c7ce95f0bfa3a2e9f0896bec5836009a87`を確認した。aggregate-only record/assessment schema、opaque provenance、conservative assessment、deterministic export、PII/free-text/psychological/medical/raw/credential拒否は既存実装で満たされていたため、owner branchには検証記録だけを追加した。
+
+Owner candidate `2c1167c7ce95f0bfa3a2e9f0896bec5836009a87`、record `c886f6b40ff9ca3a85075e5eaa02af64cba9c22e`、draft PR [#12](https://github.com/masa-san-jp/viewer-response-notes/pull/12)は [`execution/ap-04-viewer-evidence.json`](execution/ap-04-viewer-evidence.json)から参照できる。validator、13 tests、READMEのfresh export、diff checkはPASS。parentへviewer record/free text/identifier/raw/credential payloadは複製していない。owner base branch、merge、release、external publicationは未実施。
+
 
 ExecPlanは、複数repo・複数セッションにまたがる変更を、会話履歴なしの別エージェントが引き継げる自己完結型計画である。
 

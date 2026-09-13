@@ -1,0 +1,34 @@
+{
+  "contract_version": "ap-04-art-history-evidence/v1",
+  "task": "AP-04-ART-HISTORY",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "owner_issue": "https://github.com/masa-san-jp/art-history-notes/issues/386",
+  "owner_repository": "masa-san-jp/art-history-notes",
+  "owner_source_commit": "3cfc4c34d91d1d5176d05ffa08deec479d8b63a7",
+  "owner_code_candidate": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+  "owner_record_commit": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+  "owner_branch": "agent/ap04-art-history-20260912",
+  "draft_pull_request": "https://github.com/masa-san-jp/art-history-notes/pull/391",
+  "change_decision": "CODE_DELTA_REQUIRED",
+  "reason": "The owner contract was already present, but its explicit external knowledge-store boundary rejected macOS's OS-managed /var temporary-directory alias. The owner-local resolver now canonicalizes /var and /tmp while continuing to reject caller-created symlinks.",
+  "acceptance": {
+    "owner_schema_and_source_provenance": {"status": "PASS", "evidence": "owner AGENTS.md, docs/research-knowledge-intake.md and existing intake contract"},
+    "knowledge_and_canonical_data_ownership": {"status": "PASS", "evidence": "owner-local tools/research_knowledge_intake.py and no parent domain payload"},
+    "development_git_boundary": {"status": "PASS", "evidence": "owner intake remains explicit-store, clean-code-commit and no-remote-push; draft PR only"},
+    "external_path_compatibility": {"status": "PASS", "evidence": "owner tools/path_safety.py and tests/test_path_safety.py"}
+  },
+  "checks": {
+    "owner_agent_doctor": "PASS: Python 3.12.13",
+    "owner_canonical": "PASS: 1486 entities, 4745 relations, 4 contexts",
+    "owner_graph": "PASS",
+    "owner_context_vectors": "PASS",
+    "owner_readiness": "PASS: 27 tests",
+    "owner_full_suite": "PASS: 142 tests",
+    "owner_diff": "PASS"
+  },
+  "integration": {"parent_record": "PENDING", "child_default_branch": "MERGED", "merge": "MERGED", "merge_commit": "33fbc82137e138dfda28a3f53f4605689e168794", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "external_artifacts": "NOT_CREATED",
+  "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},
+  "next_task": "AP-04-MARKETING"
+}

@@ -22,6 +22,7 @@ try:
         write_resolution_evidence,
     )
     from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
+    from tools.delivery_completion import normal_contract_for_destinations
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from tools.validate import _schema_errors, load_json, load_yaml
@@ -32,6 +33,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         write_resolution_evidence,
     )
     from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
+    from tools.delivery_completion import normal_contract_for_destinations
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -323,7 +325,10 @@ def _git_head() -> str:
     return commit
 
 
-def _new_state(run_id: str, child_repository: str, source_commit: str, project_path: str, allowed_paths: list[str], now: str) -> dict[str, Any]:
+def _new_state(run_id: str, child_repository: str, source_commit: str, project_path: str,
+               allowed_paths: list[str], now: str,
+               delivery_contract: dict[str, str] | None = None) -> dict[str, Any]:
+    delivery_contract = delivery_contract or {"contract_version": "delivery-contract/v1", "target": "internal"}
     return {
         "contract_version": "autonomous-run/v1",
         "run_id": run_id,
@@ -340,6 +345,7 @@ def _new_state(run_id: str, child_repository: str, source_commit: str, project_p
         "lease": {"status": "available", "owner": "unassigned", "expires_at": now},
         "history": [],
         "privacy": {"raw_conversation_stored": False, "credentials_stored": False, "private_raw_stored": False, "restricted_stored": False},
+        "delivery_contract": delivery_contract,
     }
 
 
@@ -495,6 +501,10 @@ def run_autonomous(
         state_root = Path(destination_resolution["destinations"]["state_root"]["path"])
     if state_root is None:
         raise _error("state-root is required", "pass --state-root or select an output-destinations/v1 profile")
+    delivery_contract = normal_contract_for_destinations(
+        destination_resolution,
+        project_root_selected=project_root_selected,
+    )
     resolved_root = state_root.expanduser().resolve()
     try:
         resolved_root.relative_to(ROOT)
@@ -515,8 +525,10 @@ def run_autonomous(
         _check_initial_args(state, child_repository, source_commit, project_path, paths)
         if destination_resolution is not None and state.get("destination_resolution") != dict(destination_resolution):
             raise _error("existing supervisor state has different destination resolution", "resume with the same profile and run ID")
+        if state.get("delivery_contract") is not None and state.get("delivery_contract") != delivery_contract:
+            raise _error("existing supervisor state has a different delivery contract", "resume with the same delivery target and destination")
     else:
-        state = _new_state(run_id, child_repository, source_commit, project_path, paths, _now())
+        state = _new_state(run_id, child_repository, source_commit, project_path, paths, _now(), delivery_contract)
         if destination_resolution is not None:
             state["destination_resolution"] = dict(destination_resolution)
         state_errors = validate_autonomous_state(state)
@@ -661,7 +673,7 @@ def main() -> int:
         report = advance(context, args.state_root)
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report['run_status'] == 'COMPLETED' else 1
-    print(json.dumps({"command": "autonomous-runner", "run_id": state["run_id"], "status": state["status"], "attempts": state["attempts"], "history_count": len(state["history"])}, ensure_ascii=False, sort_keys=True))
+    print(json.dumps({"command": "autonomous-runner", "run_id": state["run_id"], "status": state["status"], "attempts": state["attempts"], "history_count": len(state["history"]), "delivery_contract": state.get("delivery_contract")}, ensure_ascii=False, sort_keys=True))
     return 0
 
 

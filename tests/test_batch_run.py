@@ -80,6 +80,8 @@ class BatchRunContractTests(unittest.TestCase):
             },
             "remote_operations": [],
             "child_mutations": [],
+            "delivery_contract": {"contract_version": "delivery-contract/v1", "target": "internal"},
+            "delivery_completion": {"contract_version": "delivery-completion/v1", "target": "internal", "status": "INCOMPLETE", "missing": ["KNOWLEDGE_COMMIT"]},
         }
 
     def test_summary_is_closed_and_passed_counts_are_consistent(self) -> None:

@@ -1,0 +1,34 @@
+{
+  "contract_version": "ap-04-viewer-evidence/v1",
+  "task": "AP-04-VIEWER",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "owner_issue": "https://github.com/masa-san-jp/viewer-response-notes/issues/2",
+  "owner_repository": "masa-san-jp/viewer-response-notes",
+  "manifest_observed_commit": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+  "owner_source_commit": "2c1167c7ce95f0bfa3a2e9f0896bec5836009a87",
+  "owner_code_candidate": "2c1167c7ce95f0bfa3a2e9f0896bec5836009a87",
+  "owner_record_commit": "c886f6b40ff9ca3a85075e5eaa02af64cba9c22e",
+  "owner_branch": "agent/ap04-viewer-20260912",
+  "owner_base_branch": "feat/viewer-response-contracts",
+  "draft_pull_request": "https://github.com/masa-san-jp/viewer-response-notes/pull/12",
+  "change_decision": "NO_CODE_DELTA_REQUIRED",
+  "reason": "Qualified Viewer owner branch already contains the aggregate-only record and assessment schemas, opaque provenance, deterministic export, conservative thresholds and privacy rejection rules required by AP-04. The owner branch records verification in README only.",
+  "acceptance": {
+    "aggregate_record_schema": {"status": "PASS", "evidence": "owner schemas/viewer-response-record.schema.json, tools/viewer_contract.py and 13-test suite"},
+    "conservative_assessment_and_provenance": {"status": "PASS", "evidence": "owner schemas/viewer-response-assessment.schema.json, tools/assessment.py and source commit/evidence reference checks"},
+    "privacy_boundary": {"status": "PASS", "evidence": "owner AGENTS.md, README and tests rejecting PII, free text, psychological/medical inference, raw assets, private URLs and credentials"},
+    "development_git_boundary": {"status": "PASS", "evidence": "clean qualified branch, evidence-only draft branch and no owner external write"},
+    "parent_ownership_boundary": {"status": "PASS", "evidence": "No viewer record, free text, identifier, raw asset, credential or private payload was copied to the parent"}
+  },
+  "checks": {
+    "owner_validator": "PASS",
+    "owner_full_suite": "PASS: 13 tests",
+    "owner_readme_export": "PASS: fresh temporary output",
+    "owner_diff": "PASS"
+  },
+  "integration": {"parent_record": "PENDING", "owner_base_branch": "MERGED_INTO_QUALIFIED_BASE", "merge": "MERGED_INTO_QUALIFIED_BASE", "merge_commit": "1158286151632482e5a3f910adefc229de2bea7e", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "external_artifacts": "NOT_CREATED",
+  "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},
+  "next_task": "AP-05"
+}

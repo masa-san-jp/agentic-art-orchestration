@@ -14,11 +14,14 @@ from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import Callable, Mapping
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+from tools.path_safety import external_path as _safe_external_path
+
+import yaml
+
 STATUSES = {"NO_CHANGE", "COMMITTED", "INDEX_PENDING", "REJECTED", "CONFLICT", "ALREADY_APPLIED"}
 
 
@@ -167,9 +170,11 @@ class LocalOwner:
                 raise KnowledgeCycleError("unsafe owner identity")
         if re.fullmatch(r"[0-9a-f]{40}", code_commit) is None:
             raise KnowledgeCycleError("invalid code commit")
-        if root.is_symlink() or any(p.is_symlink() for p in root.parents):
-            raise KnowledgeCycleError("symlink store forbidden")
-        self.root, self.owner, self.collection = root.absolute(), owner, collection
+        try:
+            root = _safe_external_path(root)
+        except ValueError as exc:
+            raise KnowledgeCycleError("symlink store forbidden") from exc
+        self.root, self.owner, self.collection = root, owner, collection
         self.creator, self.code_commit = creator, code_commit
         self.payload_validator = payload_validator
         self.index_path = self.root / "index.json"

@@ -1,48 +1,83 @@
-version: 259
-updated_at: '2026-09-10T15:12:00+09:00'
+version: 293
+updated_at: '2026-09-13T21:01:22+09:00'
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: unassigned
-  acquired_at: '2026-09-10T01:20:51+09:00'
-  expires_at: null
+  acquired_at: '2026-09-12T03:27:02+09:00'
+  expires_at: '2026-09-12T06:27:02+09:00'
   lane: AUTONOMY
-  execution_id: DELIVERY-05-AUTOMATIC-PLAN:20260910
+  execution_id: AP-06:20260912
   scope:
     repository: agentic-art-orchestration
-    branch: chore/complete-delivery-05-p4
+    branch: docs/ecosystem-readme-20260910
     paths:
-    - tools/**
-    - schemas/**
     - config/**
-    - tests/**
+    - schemas/**
     - docs/**
+    - tools/**
+    - tests/**
     - execution/**
     - README.md
     - AGENTS.md
     - PLANS.md
-    child_repositories: []
+    child_repositories:
+    - agentic-art-production
+    - agentic-art-project
+    - agentic-art-research
+    - self-model
+    - art-history
+    - marketing-trends
+    - viewer-response-notes
 checkpoint:
-  task: DELIVERY-05
+  task: AP-07
   repository: agentic-art-orchestration
-  status: DONE
-  result: 'Provider-backed new-clone run AAK07-AGENT-20260910-P4 completed PLAN_READY, committed Research/Production knowledge, automatic Production attestation, Project P0008 projection and delivery_completion COMPLETED with human_gate NOT_REQUIRED.'
-  code_candidate: d591ca965b527c57c0e4d811d46fc605658ab6ca
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/235
-  merge_commit: 9ae154337e00059425c80a7469c19c36325c124b
-  merged_at: '2026-09-10T15:07:50+09:00'
-  production_pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/72
-  production_merge_commit: eec39272c5c4827a1caf27fa928de18b58882e96
-  evidence: execution/aak07-provider-live-p4-evidence.json
-  review_artifact: execution/aak07-provider-live-p4-review.md
-  blocker: null
-last_completed_task: DELIVERY-05
+  status: DONE_EXTERNAL_OPERATIONS_RECORDED
+  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS. Six child PRs were merged with recorded merge commits, Viewer #12 was merged into its qualified base, and Self Model validation-only PRs #99/#100 were closed as superseded after CI contract failure because qualified main already contained the owner implementation.'
+  start_point: 2b76adcbc46ef8826f1604329e2dca62a5614927
+  code_candidate: 2b76adcbc46ef8826f1604329e2dca62a5614927
+  evidence: execution/ap-07-final-sync-evidence.json
+  checks:
+    validator: PASS
+    readme_status: PASS
+    audit: 'FINDINGS: 1 known nonblocking portfolio-unavailable/marketing freshness finding'
+    full_suite: 'PASS: 637 tests, 1 skipped'
+    diff_check: PASS
+  unresolved:
+    - 'Issue #241 close is pending the final parent evidence push and parent merge'
+    - 'six owner PRs are merged; Self Model validation-only PRs #99/#100 are closed as superseded'
+    - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
+    - 'project-local delivery is complete; Git remote synchronization is NOT_RUN/OUTPUT_ONLY_UNCOMMITTED'
+    - 'Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing'
+    - 'No release was created because no release target or version was specified'
+
+legacy_recovery_checkpoint:
+  task: LEGACY-RECOVERY-20260910
+  repository: agentic-art-project
+  status: COMPLETED
+  target_branch: docs/ecosystem-readme-20260910
+  target_commit: b901e5edaf99d20fada2e7321b30160e9fd9f0e9
+  result: Six historical candidates were regenerated through qualified Production and Project-native delivery, replacing the near-identical template outputs. Public IDs were restored to P0001-P0008 with no gap.
+  records: [P0001, P0002, P0003, P0005, P0006, P0007]
+  source_production_commit: eec39272c5c4827a1caf27fa928de18b58882e96
+  evidence: execution/project-local-legacy-recovery-final-20260911.json
+  checks:
+    production_attestation: PASS
+    project_validator: PASS
+    catalog_sync: PASS
+    lineage: PASS for recovered records
+    distinct_content: PASS
+  private_old_output: .agentic-art/internal/production/recovery-superseded-20260911/
+  preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
+  remote_sync: NOT_RUN
+
+last_completed_task: AP-07
 resume_from:
   task: null
   repository: agentic-art-orchestration
-  action: All queued implementation tasks are DONE. Use the normal intake validator only when a new Issue with complete SSOT fields is opened; no automatic human plan approval is required for project-local delivery.
-  command: '.venv/bin/python tools/validate.py --check'
+  action: 'Run read-only issue intake. Register only a new Issue that meets all SSOT minimums; preserve Issue #242 as UNQUEUED_NEEDS_SSOT until verification_commands exists.'
+  command: '.venv/bin/python tools/issue_intake.py'
 
 aak04_checkpoint:
   task: AAK-04

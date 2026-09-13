@@ -1,0 +1,306 @@
+{
+  "contract_version": "ap-01-observation/v1",
+  "task": "AP-01",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "observed_at": "2026-09-11T00:40:00+09:00",
+  "observation_scope": "read-only observation of the eight repository authorities, related Issue/PR state, current entrypoints, fixture/recovery paths, and compatibility boundaries",
+  "parent": {
+    "repository": "masa-san-jp/agentic-art-orchestration",
+    "working_branch": "docs/ecosystem-readme-20260910",
+    "working_start_commit": "57e1e114be28a8de5cd0cb7e000d3f73a86b74be",
+    "remote_main_commit": "aab329d21f2f688d8e5d71c817aa7fee4e402be3",
+    "working_tree_before_observation": "execution SSOT claim changes only",
+    "implementation_change_in_ap01": false
+  },
+  "repositories": [
+    {
+      "repository": "masa-san-jp/agentic-art-orchestration",
+      "role": "control-plane",
+      "remote_branch": "main",
+      "remote_head": "aab329d21f2f688d8e5d71c817aa7fee4e402be3",
+      "manifest_pin": null,
+      "local_checkout": {"path": ".", "branch": "docs/ecosystem-readme-20260910", "head": "57e1e114be28a8de5cd0cb7e000d3f73a86b74be", "dirty": true, "dirty_scope": ["execution/state.yaml", "execution/task-queue.yaml"]},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "79d17f1805a5bc4520977b76d0bb6f722123c70a", "size": 12760},
+        "README.md": {"sha": "1dae9be7d13252f2eecf73ae20f0ec9440017110", "size": 12538}
+      },
+      "boundary_paths": ["config/human-gates.yaml", "config/knowledge-owners.yaml", "config/knowledge-cycle-runtime.json", "schemas/knowledge-write-receipt.schema.json", "schemas/reuse-trace.schema.json", "tools/run.py", "tools/knowledge_cycle_run.py", "tools/public_projection.py", "tools/delivery_completion.py", "tools/autonomous_runner.py", "tools/batch_run.py"]
+    },
+    {
+      "repository": "masa-san-jp/agentic-art-research",
+      "role": "consumer-runtime",
+      "remote_branch": "main",
+      "remote_head": "efb8ebdddf978ad6077be6dce1c1a552eeccf61b",
+      "manifest_id": "agentic-art-research",
+      "manifest_pin": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+      "local_checkout": {"path": "repos/agentic-art-research", "branch": "main", "head": "e0a833b310072b30af48b3fde707fd3a54d802cb", "dirty": false, "upstream": "origin/main", "source": "offline-fixture"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "dc5b514b1b185c5495ee3a29b2e75ebc2d0e371d", "size": 8020},
+        "README.md": {"sha": "4ade603b2b6b6d6a0e553e0515a320fa71a5e313", "size": 21055}
+      },
+      "boundary_paths": ["config/handoff-policy.yaml", "config/worker-adapters.yaml", "config/execution-boundary.yaml", "schemas/production-handoff.schema.json", "schemas/hypothesis-comparison.schema.json", "schemas/self-repetition-review.schema.json", "tools/worker_adapter.py", "tools/build_handoff.py", "tools/export_handoff.py", "tools/import_production_result.py"]
+    },
+    {
+      "repository": "masa-san-jp/agentic-art-production",
+      "role": "control-plane-extension",
+      "remote_branch": "main",
+      "remote_head": "7bab731acea20aa86b45efc99a0724d5bd569953",
+      "manifest_id": "agentic-art-production",
+      "manifest_pin": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "local_checkout": {"path": "repos/agentic-art-production", "branch": "main", "head": "e2fda297a058ce32df31bfcccec935f3c8214a19", "dirty": false, "upstream": "origin/main", "source": "offline-fixture"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "ea8c58f4cb6a4c9908b84233403b24344a22d6fc", "size": 6914},
+        "README.md": {"sha": "2c038e87ed884df090fdb8ef2afeb867dde69fe9", "size": 14611}
+      },
+      "boundary_paths": ["config/approval-policy.yaml", "config/public-plan-policy.yaml", "config/production-memory.yaml", "config/runtime-policy.yaml", "schemas/production-public-plan-attestation.schema.json", "schemas/public-plan-review.schema.json", "schemas/production-plan.schema.json", "tools/public_plan_attestation.py", "tools/public_plan_review.py", "tools/build_plan.py"]
+    },
+    {
+      "repository": "masa-san-jp/agentic-art-project",
+      "role": "public-catalog-receiver",
+      "remote_branch": "main",
+      "remote_head": "c0e172ef719594074eee467a78e221a697781c97",
+      "manifest_id": null,
+      "manifest_pin": null,
+      "local_checkout": {"path": "not present under parent repos/", "source": "remote-only observation"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "e60320f91a24e7acd773451d49e94e8e65b337bd", "size": 6539},
+        "README.md": {"sha": "68763db6cf1338c6996a1e5155fc525d1ebc5dd3", "size": 11239}
+      },
+      "boundary_paths": ["schemas/catalog-lineage.schema.json", "schemas/catalog-reference.schema.json", "schemas/public-work-stage.schema.json", "tools/local_delivery.py", "tools/migration_plan.py"]
+    },
+    {
+      "repository": "masa-san-jp/self-model-notes",
+      "role": "input-kb",
+      "remote_branch": "main",
+      "remote_head": "351adf30e489b9bc148494bbb3a3677d7df1de19",
+      "manifest_id": "self-model",
+      "manifest_pin": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "local_checkout": {"path": "repos/self-model-notes", "branch": "main", "head": "f3c97f5c9b75ce6d09438d04c0b483cfcffe0786", "dirty": false, "upstream": "origin/main", "source": "offline-fixture"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "ebe530a54c29efbf2394e6878d696dc8fb3a2cd3", "size": 10105},
+        "README.md": {"sha": "75c65ceda067196a59082610e6b5769193bd10d0", "size": 16935}
+      },
+      "boundary_paths": ["config/profile-root-schema.yaml", "config/drive-systems.yaml", "schemas/creative-feedback-v1.schema.json", "tools/export_signals.py"],
+      "observed_boundary": "external-local profile root, consent-scoped export, and raw/private data exclusion remain owner-controlled"
+    },
+    {
+      "repository": "masa-san-jp/art-history-notes",
+      "role": "input-kb",
+      "remote_branch": "main",
+      "remote_head": "3cfc4c34d91d1d5176d05ffa08deec479d8b63a7",
+      "manifest_id": "art-history",
+      "manifest_pin": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+      "local_checkout": {"path": "repos/art-history-notes", "branch": "main", "head": "c306799d5070074c8515a36cedaeffd7c5db0453", "dirty": false, "upstream": "origin/main", "source": "offline-fixture"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "ba5a7c3b56485eb6322f0fddb437e4f5adc51f6e", "size": 4036},
+        "README.md": {"sha": "41a8ee679637fb9fb664f16fb67b13260787b5d3", "size": 14595}
+      },
+      "boundary_paths": ["config/agent-task.schema.json", "config/agent-checks.yaml", "docs/research-knowledge-intake.md", "tools/research_knowledge_intake.py", "tools/export_signals.py"],
+      "observed_boundary": "agent-task:v2 carries objective, scope, requirements, acceptance, checks, constraints, dependencies, and non-goals; evidence stays owner-defined"
+    },
+    {
+      "repository": "masa-san-jp/marketing-trends-notes",
+      "role": "input-kb",
+      "remote_branch": "main",
+      "remote_head": "932318ce8d76ffd44840cee0a465ea2405ef5037",
+      "manifest_id": "marketing-trends",
+      "manifest_pin": "de1f77730d3856e7e81d591de48da5aed79a983a",
+      "local_checkout": {"path": "repos/marketing-trends-notes", "branch": "main", "head": "d77ed2506632846208d16cd90c3bbf9ac3abc34c", "dirty": false, "upstream": "origin/main", "source": "offline-fixture"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "7780a4c81a68344c28d3df3b2bc75bc1bb8f8caa", "size": 6286},
+        "README.md": {"sha": "d0ea32577980821e41c0637a7f3fb5e3bbfd89b3", "size": 18357}
+      },
+      "boundary_paths": ["config/market-observation.schema.json", "config/markets.yaml", "docs/research-knowledge-intake.md", "tools/export_signals.py"],
+      "observed_boundary": "source/evidence, epistemic status, freshness, vendor interest, and counterevidence are explicit; current status is not inferred from popularity"
+    },
+    {
+      "repository": "masa-san-jp/viewer-response-notes",
+      "role": "input-kb",
+      "remote_branch": "main",
+      "remote_head": "c0198ec38629fb032f778071e35f265286f6566f",
+      "manifest_id": "viewer-response-notes",
+      "manifest_pin": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+      "manifest_pin_branch": "feat/viewer-response-contracts",
+      "qualified_branch_observed_head": "2c1167c7ce95f0bfa3a2e9f0896bec5836009a87",
+      "local_checkout": {"path": "repos/viewer-response-notes", "branch": "main", "head": "ed68082701edadaec634769398b07b8aad32560b", "dirty": false, "upstream": "origin/main", "source": "offline-fixture"},
+      "authority_blobs": {
+        "AGENTS.md": {"sha": "c8fb216db65566a09f721b94c29397f22cf3ebc2", "size": 6586},
+        "README.md": {"sha": "23c057940a58fb5bf3b8c8fbe7671d12ecebad09", "size": 1859}
+      },
+      "boundary_paths": ["schemas/viewer-response-record.schema.json", "schemas/viewer-response-assessment.schema.json", "schemas/research-signal-export.schema.json", "config/viewer-memory.json", "tools/export_signals.py"],
+      "observed_boundary": "aggregate records and conservative assessments are separate; UNKNOWN, CONTRADICTED, and EXTERNALLY_SUPPORTED can require BLIND_OR_FRAME review"
+    }
+  ],
+  "related_issue_state": [
+    {"number": 241, "repository": "masa-san-jp/agentic-art-orchestration", "state": "OPEN", "role": "current AP task SSOT"},
+    {"number": 187, "repository": "masa-san-jp/agentic-art-orchestration", "state": "CLOSED", "role": "existing automatic projection prerequisite"},
+    {"number": 190, "repository": "masa-san-jp/agentic-art-orchestration", "state": "CLOSED", "role": "Project relationship registry"},
+    {"number": 193, "repository": "masa-san-jp/agentic-art-orchestration", "state": "CLOSED", "role": "canonical projection and attestation"},
+    {"number": 213, "repository": "masa-san-jp/agentic-art-orchestration", "state": "CLOSED", "role": "repo-local output boundary"},
+    {"number": 214, "repository": "masa-san-jp/agentic-art-orchestration", "state": "CLOSED", "role": "startup recovery"},
+    {"number": 217, "repository": "masa-san-jp/agentic-art-orchestration", "state": "CLOSED", "role": "delivery completion"},
+    {"number": 69, "repository": "masa-san-jp/agentic-art-production", "state": "CLOSED", "role": "native review and attestation"},
+    {"number": 18, "repository": "masa-san-jp/agentic-art-project", "state": "CLOSED", "role": "local delivery receipt"},
+    {"number": 10, "repository": "masa-san-jp/agentic-art-project", "state": "CLOSED", "role": "catalog lineage"},
+    {"number": 93, "repository": "masa-san-jp/agentic-art-research", "state": "CLOSED", "role": "research memory"},
+    {"number": 94, "repository": "masa-san-jp/agentic-art-research", "state": "CLOSED", "role": "cumulative specificity"},
+    {"number": 62, "repository": "masa-san-jp/agentic-art-production", "state": "CLOSED", "role": "production memory"}
+  ],
+  "related_pr_state": [
+    {"number": 235, "repository": "masa-san-jp/agentic-art-orchestration", "state": "MERGED", "merge_commit": "9ae154337e00059425c80a7469c19c36325c124b", "role": "automatic local delivery"},
+    {"number": 72, "repository": "masa-san-jp/agentic-art-production", "state": "MERGED", "merge_commit": "eec39272c5c4827a1caf27fa928de18b58882e96", "role": "automatic plan attestation"},
+    {"number": 219, "repository": "masa-san-jp/agentic-art-orchestration", "state": "MERGED", "merge_commit": "3ad01771742f971aa8933f377d58370001617cec", "role": "reader-first documentation"},
+    {"number": 21, "repository": "masa-san-jp/agentic-art-project", "state": "MERGED", "merge_commit": "17767752630282f0ab6e9f75077a8ba6c86740f6", "role": "local delivery documentation"}
+  ],
+  "call_graphs": {
+    "normal_theme_free_orchestration": {
+      "status": "OBSERVED",
+      "path": [
+        "tools/run.py:main",
+        "tools/run.py:_run_orchestration",
+        "workspace preflight / qualified recovery",
+        "ingest_signals",
+        "candidate_space -> candidate_gates -> candidate_selection -> proposition_provenance",
+        "build_research_request",
+        "Research accept_research_request -> complete.py",
+        "build_handoff -> export_handoff",
+        "Production new_production.py -> build_plan.py -> parent verify_plan",
+        "optional tools/public_projection.py:project_plan_automatic",
+        "run.json stage report"
+      ],
+      "limitation": "Without child roots, the current path stops at AT_EDGE/RESEARCH_PENDING and returns agent next_action; it does not itself perform the research work. A project-local contract is resolved in the separate cycle-context path."
+    },
+    "normal_cycle_context": {
+      "status": "OBSERVED",
+      "path": [
+        "tools/run.py:main --cycle-context",
+        "tools/knowledge_cycle_run.advance",
+        "instance_profiles.load_profile/bootstrap",
+        "native_knowledge initializer/invoke for eight owner bindings",
+        "Research/Production plan and owner receipts",
+        "tools/public_projection.py:project_plan_automatic",
+        "tools/delivery_completion.py:completion",
+        "Project local receiver validation"
+      ],
+      "limitation": "The current cycle contract requires an explicit project_root for project-local delivery and rejects a project-local target without it; missing approvals are still described in the parent main AGENTS requested-delivery text even though the automatic lane is closed by PR235/PR72."
+    },
+    "batch": {
+      "status": "OBSERVED",
+      "path": ["tools/batch_run.py:run_batch", "_run_project", "tools/production_exchange.py:run_exchange", "batch acceptance", "tools/public_projection.py:project_batch_automatic"]
+    },
+    "offline_fixture": {
+      "status": "OBSERVED",
+      "path": ["tools/run.py --offline-fixture", "_materialize_offline_signals", "checked-in tests/fixtures/portfolio", "candidate/gate/selection/provenance pipeline"],
+      "limitation": "No child checkout or external provider is read; the parent reports OFFLINE_FIXTURE and the six local child checkouts are synthetic fixture clones."
+    },
+    "recovery": {
+      "status": "OBSERVED",
+      "path": ["tools/run.py:_prepare_runtime_workspace", "_guard_pinned_workspace", "_can_materialize_qualified_workspace", "_materialize_qualified_workspace", "tools/pinned_workspace.py / tools/workspace.py", "same run state and resume command"],
+      "boundary": "dirty, detached, diverged, unsafe, or unqualified existing trees are preserved; only a new qualified workspace is materialized when the precondition permits it"
+    },
+    "supervisor_worker": {
+      "status": "OBSERVED",
+      "path": ["tools/autonomous_runner.py:run_autonomous", "atomic supervisor state and lease", "agent-action/v1 request", "provider-neutral worker response", "agent-result/v1 validation", "knowledge_cycle_run.advance when cycle context is supplied"]
+    }
+  },
+  "observed_contradictions": [
+    {
+      "id": "AP01-C01",
+      "finding": "parent main AGENTS still opens with Missing review blocks projection and requested-delivery text returns prepared target and remaining review decisions; this can direct a normal automatic plan to the manual review lane",
+      "sources": ["parent main AGENTS.md blob 79d17f1805a5bc4520977b76d0bb6f722123c70a", "tools/knowledge_cycle_run.py", "tools/public_projection.py", "PR235", "PR72"],
+      "owner": "agentic-art-orchestration",
+      "spec_sections": ["S1", "S3", "S6"],
+      "acceptance_ids": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-13"],
+      "planned_task": "AP-02"
+    },
+    {
+      "id": "AP01-C02",
+      "finding": "Production main AGENTS documents native review and --require-native-review without an explicit automatic-plan exemption, while the merged automatic attestation path is separate",
+      "sources": ["production main AGENTS.md blob ea8c58f4cb6a4c9908b84233403b24344a22d6fc", "production main README.md blob 2c038e87ed884df090fdb8ef2afeb867dde69fe9", "Production PR72"],
+      "owner": "agentic-art-production",
+      "spec_sections": ["S3", "S4", "S6"],
+      "acceptance_ids": ["AC-01", "AC-03", "AC-05", "AC-10", "AC-13"],
+      "planned_task": "AP-03"
+    },
+    {
+      "id": "AP01-C03",
+      "finding": "Project documentation clearly separates local projection from Git publication, but the normal eight-repository entrypoint must still prove that receiver validation and development merge gates are not conflated",
+      "sources": ["project main AGENTS.md blob e60320f91a24e7acd773451d49e94e8e65b337bd", "project main README.md blob 68763db6cf1338c6996a1e5155fc525d1ebc5dd3", "Project PR21"],
+      "owner": "agentic-art-project",
+      "spec_sections": ["S3", "S4", "S6"],
+      "acceptance_ids": ["AC-01", "AC-02", "AC-03", "AC-06", "AC-09", "AC-12"],
+      "planned_task": "AP-03"
+    },
+    {
+      "id": "AP01-C04",
+      "finding": "parent delivery_completion.resolve_contract defaults a public-catalog profile without an explicit contract to project-committed, while the issue requires new normal runs to carry project-local explicitly and preserve legacy meanings",
+      "sources": ["tools/delivery_completion.py:6-19", "tools/run.py:main", "tools/knowledge_cycle_run.py:advance"],
+      "owner": "agentic-art-orchestration",
+      "spec_sections": ["S1", "S3", "S6"],
+      "acceptance_ids": ["AC-02", "AC-04", "AC-06", "AC-08", "AC-13"],
+      "planned_task": "AP-02"
+    },
+    {
+      "id": "AP01-C05",
+      "finding": "the provider-backed P4 evidence proves one prepared context reached local delivery, but does not prove the normal README entrypoint, all modes, or two runs per identity mode",
+      "sources": ["execution/aak07-provider-live-p4-evidence.json", "execution/aak07-provider-live-p4-review.md", "Issue241 body"],
+      "owner": "agentic-art-orchestration",
+      "spec_sections": ["S1", "S2", "S5", "S6"],
+      "acceptance_ids": ["AC-02", "AC-04", "AC-11", "AC-12", "AC-13"],
+      "planned_task": "AP-05/AP-06"
+    }
+  ],
+  "schema_compatibility": {
+    "current_boundary_versions": ["normalized-research-signal/v1", "production-handoff/v1", "production-result/v1", "delivery-contract/v1", "output-destinations/v2", "automatic-plan-projection-authority/v1", "catalog-lineage/v1", "catalog-reference/v1", "viewer-response-assessment/v1"],
+    "policy": "child domain schemas remain child-owned; parent stores source commit, schema/contract version, hash, locator, envelope, receipt, and resume metadata only",
+    "required_change_shape": "add closed versioned envelopes or adapters with explicit legacy compatibility; do not copy child payloads, rename fields silently, or migrate old contexts in place",
+    "code_knowledge_boundary": "qualified code commit and per-run knowledge snapshot/commit remain separate references",
+    "project_boundary": "Project remains export-only for canonical plans; catalog-reference is read-only and does not authorize parent knowledge writes"
+  },
+  "acceptance_mapping": [
+    {"id": "AC-01", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-research", "agentic-art-production", "agentic-art-project", "self-model-notes", "art-history-notes", "marketing-trends-notes", "viewer-response-notes"], "implementation_tasks": ["AP-02", "AP-03", "AP-04", "AP-05", "AP-07"]},
+    {"id": "AC-02", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-research", "agentic-art-production", "agentic-art-project"], "implementation_tasks": ["AP-02", "AP-03", "AP-05", "AP-06"]},
+    {"id": "AC-03", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-production", "agentic-art-project"], "implementation_tasks": ["AP-02", "AP-03", "AP-05", "AP-06"]},
+    {"id": "AC-04", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration"], "implementation_tasks": ["AP-02", "AP-05"]},
+    {"id": "AC-05", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-research", "agentic-art-production"], "implementation_tasks": ["AP-03", "AP-05"]},
+    {"id": "AC-06", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-project"], "implementation_tasks": ["AP-03", "AP-05"]},
+    {"id": "AC-07", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration"], "implementation_tasks": ["AP-02", "AP-05"]},
+    {"id": "AC-08", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-production", "agentic-art-project"], "implementation_tasks": ["AP-02", "AP-03", "AP-05"]},
+    {"id": "AC-09", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-research", "agentic-art-production", "agentic-art-project", "self-model-notes", "art-history-notes", "marketing-trends-notes", "viewer-response-notes"], "implementation_tasks": ["AP-03", "AP-04", "AP-05"]},
+    {"id": "AC-10", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-production", "agentic-art-project"], "implementation_tasks": ["AP-02", "AP-03", "AP-05"]},
+    {"id": "AC-11", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-research", "agentic-art-production", "agentic-art-project", "self-model-notes", "art-history-notes", "marketing-trends-notes", "viewer-response-notes"], "implementation_tasks": ["AP-06", "AP-07"]},
+    {"id": "AC-12", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-research", "agentic-art-production", "agentic-art-project"], "implementation_tasks": ["AP-05", "AP-06", "AP-07"]},
+    {"id": "AC-13", "status": "MAPPED_NOT_ACCEPTED", "owners": ["agentic-art-orchestration", "agentic-art-research", "agentic-art-production", "agentic-art-project"], "implementation_tasks": ["AP-02", "AP-03", "AP-05", "AP-07"]}
+  ],
+  "existing_change_separation": {
+    "parent": "registration commit 57e1e114be28a8de5cd0cb7e000d3f73a86b74be contains queue/status/handoff registration only; AP-01 observation changes are execution/ap-01-observation.json and execution SSOT",
+    "child_checkouts": "all six available local child checkouts were clean, but each is an offline fixture and not a qualified remote candidate",
+    "open_prs": "none observed in all eight repositories",
+    "remote_mutation": "none; Issue/PR/file reads only",
+    "unresolved_issue": "Issue #242 is open but remains UNQUEUED_NEEDS_SSOT because the intake validator did not find a verification-commands section; it is not silently registered or implemented by AP-01"
+  },
+  "observed_commands": [
+    "git ls-remote https://github.com/<owner>/<repo>.git refs/heads/main",
+    "gh issue view <number> --repo <owner>/<repo> --json number,title,state,url",
+    "gh pr view <number> --repo <owner>/<repo> --json number,title,state,mergedAt,mergeCommit,url",
+    "gh pr list --repo <owner>/<repo> --state open",
+    ".venv/bin/python tools/workspace.py status --json",
+    ".venv/bin/python tools/project_status.py --format json"
+  ],
+  "verification": {
+    "validator": {"status": "PASS", "command": ".venv/bin/python tools/validate.py --check"},
+    "full_suite": {
+      "status": "FAILED_BASELINE_ENVIRONMENT",
+      "command": ".venv/bin/python -m unittest discover -s tests -v",
+      "summary": "623 tests run; 3 failures, 31 errors, 1 skipped",
+      "evidence": [
+        "macOS temporary roots are lexically under /var while Path.resolve() returns /private/var; strict external-path guards reject the parent alias or return the canonical spelling",
+        "cycle.advance validates state_root before the project-local contract error is emitted when the project root is absent",
+        "the affected failures are existing path-guard/platform regressions observed during AP-01 and are assigned to AP-02 implementation work"
+      ],
+      "acceptance_effect": "The AP-01 observation acceptance is complete; no test result is represented as PASS and no Issue #241 acceptance condition is claimed."
+    },
+    "diff_check": {"status": "PASS", "command": "git diff --check"}
+  },
+  "task_result": "AP-01 observation and mapping recorded; no Issue #241 acceptance condition is claimed as complete by this observation task."
+}

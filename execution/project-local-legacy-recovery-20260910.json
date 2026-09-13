@@ -1,0 +1,28 @@
+{
+  "contract_version": "legacy-plan-recovery/v1",
+  "task": "LEGACY-RECOVERY-P0001",
+  "target_repository": "agentic-art-project",
+  "target_delivery": "project-local",
+  "status": "BLOCKED",
+  "candidate": {
+    "record_id": "P0001",
+    "source_candidate": "production/owner-of-choice",
+    "historical_commit": "e5ff621769a9828ac867cf3fb55e859c79bb46fb",
+    "historical_path": "plans/P0001-owner-of-choice",
+    "historical_content_sha256": "sha256:525fcd31ff35c11603baac67d9adca86ac4b89baa533372dcf14510006aae8af"
+  },
+  "observations": [
+    "The historical record is a sanitized public summary, not a current Production canonical plan.",
+    "No verifiable current Production project, accepted Research handoff/source bundle, or Production attestation for P0001 was found in the local repositories and execution evidence.",
+    "The observed facts match plans/migration.yaml: Production publication proof and a current renderer-generated canonical record are missing."
+  ],
+  "blocked_reason": "Cannot produce a harness-valid P0001 projection without its accepted Production input and attestation; reusing the historical summary would invent canonical provenance.",
+  "unblock_condition": "Recover the original accepted handoff/source bundle or an authoritative Production project, rerun the current Production renderer with stable identity, pass attestation and native Project validation, then project the exact verified bytes.",
+  "actions_taken": [
+    "Read-only Git history and local workspace search completed.",
+    "No Project catalog files were changed for P0001.",
+    "No approval, consent, source identity, or attestation was fabricated."
+  ],
+  "next_candidate": "P0002",
+  "next_operation": "Inspect P0002 source evidence and recover it through the same Production-to-Project gates if authoritative input exists."
+}

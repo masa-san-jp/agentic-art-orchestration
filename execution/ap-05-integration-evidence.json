@@ -1,0 +1,257 @@
+{
+  "contract_version": "ap-05-integration-evidence/v1",
+  "task": "AP-05",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "parent_repository": "masa-san-jp/agentic-art-orchestration",
+  "parent_start_point": "cbce7265e9e15264024a460f9e3f0f039efdcc73",
+  "integration_lane": "networkless-qualified-candidates",
+  "parent_manifest": {
+    "locator": "config/repositories.yaml",
+    "sha256": "bf8bf604df10d1bf369dab1bbdaf1ebb32e3941d2e247c6688f23a84fe373171"
+  },
+  "qualified_manifest": {
+    "locator": "git-external://ap05-qualified-candidates-manifest-20260912.yaml",
+    "sha256": "eef57940212cb2093885327b11a5daed0da5d7a1d0deb36b8dec09a737e41a0b",
+    "derivation": "parent manifest with each owner candidate commit substituted; paths and declared gates preserved"
+  },
+  "qualified_candidates": [
+    {
+      "id": "self-model",
+      "repository": "masa-san-jp/self-model-notes",
+      "candidate_commit": "351adf30e489b9bc148494bbb3a3677d7df1de19",
+      "owner_record_commit": "04925e18879ce342202eb2e1e48871372791178e",
+      "previous_manifest_pin": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "draft_pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/99"
+    },
+    {
+      "id": "art-history",
+      "repository": "masa-san-jp/art-history-notes",
+      "candidate_commit": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+      "owner_record_commit": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+      "previous_manifest_pin": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+      "draft_pull_request": "https://github.com/masa-san-jp/art-history-notes/pull/391"
+    },
+    {
+      "id": "marketing-trends",
+      "repository": "masa-san-jp/marketing-trends-notes",
+      "candidate_commit": "932318ce8d76ffd44840cee0a465ea2405ef5037",
+      "owner_record_commit": "e7ae5cfa273329cf7e25e65bda21e867ee77a87f",
+      "previous_manifest_pin": "de1f77730d3856e7e81d591de48da5aed79a983a",
+      "draft_pull_request": "https://github.com/masa-san-jp/marketing-trends-notes/pull/91"
+    },
+    {
+      "id": "agentic-art-research",
+      "repository": "masa-san-jp/agentic-art-research",
+      "candidate_commit": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+      "owner_record_commit": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+      "previous_manifest_pin": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+      "draft_pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/108"
+    },
+    {
+      "id": "agentic-art-production",
+      "repository": "masa-san-jp/agentic-art-production",
+      "candidate_commit": "308abfe0f90582b5dd47d17cc5776278d32d5bb3",
+      "owner_record_commit": "3d059eb288d7f928046c3933509bbc6c1f5e79b3",
+      "previous_manifest_pin": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "draft_pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/75"
+    },
+    {
+      "id": "viewer-response-notes",
+      "repository": "masa-san-jp/viewer-response-notes",
+      "candidate_commit": "2c1167c7ce95f0bfa3a2e9f0896bec5836009a87",
+      "owner_record_commit": "c886f6b40ff9ca3a85075e5eaa02af64cba9c22e",
+      "previous_manifest_pin": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+      "draft_pull_request": "https://github.com/masa-san-jp/viewer-response-notes/pull/12"
+    }
+  ],
+  "project_owner_evidence": {
+    "repository": "masa-san-jp/agentic-art-project",
+    "candidate_commit": "c0e172ef719594074eee467a78e221a697781c97",
+    "owner_record_commit": "179ff49e77c752d187360f7a96fd04c47d307119",
+    "draft_pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/29",
+    "evidence": "execution/ap-03-project-evidence.json",
+    "integration_scope": "owner receiver and lineage evidence; Project is not in config/repositories.yaml child gate set"
+  },
+  "child_quality_gates": {
+    "contract_version": "child-quality-gates/v1",
+    "run_id": "AP05-QUALIFIED-GATES-POSTFIX-20260912",
+    "report_locator": "git-external://ap05-qualified-child-gates-postfix-20260912.json",
+    "report_sha256": "f45a777359ced21b9fa6deb1e926436041f28426b22b799e14f13cfd7e4bd385",
+    "manifest_sha256": "eef57940212cb2093885327b11a5daed0da5d7a1d0deb36b8dec09a737e41a0b",
+    "repository_count": 6,
+    "gate_count": 16,
+    "status": "PASSED",
+    "workspace_state": "all six MATCHED at candidate_commit",
+    "execution_mode": "immutable-archive",
+    "environment_mode": "per-child",
+    "deterministic_check": "PASS: --check with the same run id"
+  },
+  "parent_checks": {
+    "validator": "PASS: .venv/bin/python tools/validate.py --check",
+    "full_suite": "PASS: 634 tests, 1 skipped",
+    "workspace_status": "PASS: six fixture checkouts clean and pin matched",
+    "audit": {
+      "status": "FINDINGS",
+      "blocking": false,
+      "error_count": 0,
+      "finding_count": 1,
+      "finding_codes": [
+        "portfolio-unavailable"
+      ]
+    },
+    "diff_check": "PASS: git diff --check"
+  },
+  "parent_runtime_redaction_fix": {
+    "status": "PASS",
+    "paths": [
+      "tools/quality_gates.py",
+      "tests/test_quality_gates.py"
+    ],
+    "change": "normalize macOS relative T/tmp temporary markers before output hashing",
+    "focused_suite": "PASS: 8 tests"
+  },
+  "integration_e2e": {
+    "legacy_entrypoint": {
+      "status": "PASS",
+      "terminal_status": "AT_EDGE",
+      "evidence": "run.py offline fixture without a prepared topic preserved an incomplete Research request and did not fabricate PLAN_READY"
+    },
+    "purpose_e2e_without_child_report": {
+      "status": "PASS_FAIL_CLOSED",
+      "observed_status": "BLOCKED",
+      "evidence": "missing child-quality-gates/v1 report did not claim plan acceptance"
+    },
+    "purpose_e2e_with_qualified_report": {
+      "status": "PASS",
+      "terminal_status": "PLAN_READY",
+      "evidence_locator": "git-external://ap05-purpose-qualified-20260912.json",
+      "evidence_sha256": "e51a00626a09c14f430be317a0e78b953ac9ec99c66ddd2c217754dcdb6e0e43",
+      "canonical_evidence_sha256": "b7fae0bbd2f9784c9215c6c8df27c689ec5659968a0e01d6e365d15158930b0d",
+      "human_prompt_count": 0,
+      "forbidden_external_operation_count": 0,
+      "worker_invocation_count": 1,
+      "resume_reused": true,
+      "acceptance_all_true": true,
+      "check_mode": "PASS"
+    },
+    "legacy_plan_recovery": {
+      "status": "PASS",
+      "candidate_count": 6,
+      "candidate_ids": [
+        "P0001",
+        "P0002",
+        "P0003",
+        "P0005",
+        "P0006",
+        "P0007"
+      ],
+      "bundle_manifest_sha256": {
+        "P0001": "bd96350ed1fce55499e1cbade90d18e8117575694003a9fdd2a7a8003616b78b",
+        "P0002": "b8b1b22d8021931843e98a1751267f28f978dbea97d3a821e3aee78d77438b82",
+        "P0003": "f16deca7aa7b3edd43be5b1c4d857b622ac72eab061c5a1780fcd50e69154e2d",
+        "P0005": "2615e647083c1afb77ca17903955b0f74b7043bb1a7b2d011b0d94e7f8b787cf",
+        "P0006": "ce9b6215da5f335d3024744b208b540b43e8bdac284f3c2b938e40e8725e30e0",
+        "P0007": "d1596cec913c3b305aac41fe56dcd03b70c601070f05982fe12fa7355b1f3788"
+      },
+      "source_policy": "historical records were provenance only; current plan bytes were not copied or projected"
+    },
+    "fault_injection_and_resume": {
+      "status": "PASS",
+      "evidence_locator": "git-external://ap05-e2e-20260912.json",
+      "evidence_sha256": "bb1d2b77d222539d895a8183c29d851927bbffe94a01b1a9dd7b05dcc38bb57e",
+      "failure_injection_count": 9,
+      "all_observed_with_terminal_and_recovery": true,
+      "network": "disabled"
+    },
+    "interaction_and_initial_operations": {
+      "status": "PASS",
+      "reports": [
+        {
+          "contract_version": "interaction-e2e/v1",
+          "locator": "git-external://ap05-interaction-20260912.json",
+          "sha256": "1d2690c8060ae8c08c15630002fae6627d686fb1fc9c63952436142a6d6c078f"
+        },
+        {
+          "contract_version": "interaction-e2e/v1",
+          "locator": "git-external://ap05-interaction-initial-20260912.json",
+          "sha256": "1d2690c8060ae8c08c15630002fae6627d686fb1fc9c63952436142a6d6c078f"
+        },
+        {
+          "contract_version": "initial-operations-e2e/v1",
+          "locator": "git-external://ap05-initial-20260912.json",
+          "sha256": "a9864b1390bae600a5ca89ecaa5cb12fa99493719b853886a4c476401dad1107"
+        },
+        {
+          "contract_version": "v12-e2e/v1",
+          "locator": "git-external://ap05-v12-20260912.json",
+          "sha256": "19ba68117f4763286c631b6d874e56018af428db47a715224a6d0a1d8697061d"
+        }
+      ],
+      "remote_operations": 0,
+      "network": "disabled"
+    }
+  },
+  "knowledge_and_receiver_evidence": {
+    "status": "PRESERVED_AS_REFERENCES",
+    "knowledge_writes_in_this_lane": "NOT_RUN: AP-05 integration is read-only and does not fabricate owner receipts",
+    "owner_contract_evidence": [
+      "execution/ap-04-art-history-evidence.json",
+      "execution/ap-04-marketing-evidence.json",
+      "execution/ap-04-research-evidence.json",
+      "execution/ap-04-self-model-evidence.json",
+      "execution/ap-04-viewer-evidence.json"
+    ],
+    "receiver_evidence": {
+      "status": "PASS",
+      "locator": "execution/project-local-legacy-recovery-final-20260911.json",
+      "sha256": "3311c4a050de5d7b31e3b69d7b1bec77f6c154df1cd3c4bdcc04db090891f53f"
+    }
+  },
+  "artifact_hashes": {
+    "child_gate_report": "f45a777359ced21b9fa6deb1e926436041f28426b22b799e14f13cfd7e4bd385",
+    "purpose_plan_ready_evidence": "e51a00626a09c14f430be317a0e78b953ac9ec99c66ddd2c217754dcdb6e0e43",
+    "legacy_recovery_bundle_set": "external six manifest hashes recorded above",
+    "all_artifacts": "Git-external create-only staging; only opaque locator and hash entered parent"
+  },
+  "acceptance": {
+    "qualified_candidate_pins_recorded": true,
+    "qualified_workspace_isolated_and_pin_matched": true,
+    "child_quality_gates_passed": true,
+    "all_entrypoints_regressed": true,
+    "legacy_run_migration_regressed": true,
+    "fault_injection_and_resume_regressed": true,
+    "document_and_parent_checks_passed": true,
+    "runtime_output_determinism_regression_fixed": true,
+    "knowledge_and_receiver_references_preserved": true,
+    "artifact_hashes_recorded": true,
+    "remote_mutation_absent": true,
+    "privacy_boundary_passed": true
+  },
+  "privacy": {
+    "raw_conversation_stored": false,
+    "credentials_stored": false,
+    "private_raw_stored": false,
+    "restricted_stored": false,
+    "personal_identity_inferred": false
+  },
+  "human_gate": {
+    "merge": "NOT_RUN",
+    "release": "NOT_RUN",
+    "remote_default_branch": "UNCHANGED",
+    "external_publication": "NOT_RUN",
+    "catalog_write": "NOT_RUN"
+  },
+  "feedback": {
+    "explicit": "全てのイシューを解決して完了させること",
+    "inferred": "none"
+  },
+  "next_task": "AP-06",
+  "reference_correction": {
+    "status": "PASS",
+    "field": "qualified_candidates[marketing-trends].owner_record_commit",
+    "previous_value": "e7ae5cfeab73e675fd19584288a99d481e832d3c",
+    "observed_value": "e7ae5cfa273329cf7e25e65bda21e867ee77a87f",
+    "source": "gh pr view 91 --repo masa-san-jp/marketing-trends-notes",
+    "observed_at": "2026-09-13T20:40:44.870992+09:00"
+  }
+}

@@ -93,8 +93,17 @@ def _query(owner, binding, inputs, snapshot, context):
     if path.exists() and read(path) != result:
         raise ValueError('PINNED_QUERY_CHANGED')
     save(path, result)
-    return {'owner': owner, 'snapshot': snapshot, 'query_hash': hashed(inputs),
-            'result_hash': hashed(result), 'result_ref': str(path), 'evaluated_at': context['clock']}
+    metadata = {'owner': owner, 'snapshot': snapshot, 'query_hash': hashed(inputs),
+                'result_hash': hashed(result), 'result_ref': str(path), 'evaluated_at': context['clock']}
+    # Keep a pre-existing Project catalog blocker visible in the run evidence.
+    # It is never converted to a successful reference and never supplies
+    # lineage for the new record; native Project validation below remains the
+    # acceptance gate for the requested projection.
+    if owner == 'agentic-art-project' and result.get('status') == 'BLOCKED':
+        blocked = result.get('blocked', [])
+        metadata['result_status'] = 'BLOCKED'
+        metadata['blocked_record_count'] = len(blocked) if isinstance(blocked, list) else 0
+    return metadata
 
 
 def advance(context, state_root):
@@ -110,10 +119,13 @@ def advance(context, state_root):
         raise ValueError('ALL_OWNER_DECISIONS_REQUIRED')
     if datetime.fromisoformat(context['clock'].replace('Z', '+00:00')).tzinfo is None:
         raise ValueError('EXPLICIT_CLOCK_REQUIRED')
-    state_root = external_path(state_root)
     profile, local = load_profile(external_path(context['instance_profile'])), read(context['local_config'])
     from tools.delivery_completion import resolve_contract
-    delivery_contract = resolve_contract(context.get('delivery_contract'), profile)
+    saved_contract = context.get('delivery_contract')
+    delivery_contract = resolve_contract(saved_contract, profile, legacy_context=saved_contract is None)
+    if context.get('project_root') is None and delivery_contract['target'] == 'project-local':
+        raise ValueError('PROJECT_ROOT_REQUIRED')
+    state_root = external_path(state_root)
     project_resolution = None
     if context.get('project_root') is not None:
         from tools.repo_local_destinations import resolve_project_root
@@ -125,8 +137,10 @@ def advance(context, state_root):
         if state_root != derived_state:
             raise ValueError('STATE_ROOT_DESTINATION_CONFLICT')
         configured = local.get('output_destinations', {})
-        if configured.get('contract_version') == 'output-destinations/v2' and configured.get('project_root') != project_resolution['project_root']:
-            raise ValueError('PROJECT_ROOT_DESTINATION_CONFLICT')
+        if configured.get('contract_version') == 'output-destinations/v2':
+            configured_root = external_path(configured.get('project_root'))
+            if configured_root != Path(project_resolution['project_root']):
+                raise ValueError('PROJECT_ROOT_DESTINATION_CONFLICT')
         # The v2 resolver is authoritative for all repo-local paths.  Keep the
         # external knowledge-store config, but replace only its destination
         # adapter so bootstrap cannot fall back to v1 or an arbitrary public
@@ -135,11 +149,9 @@ def advance(context, state_root):
         local['output_destinations'] = {
             'contract_version': 'output-destinations/v2',
             'mode': 'repo-local-project',
-            'project_root': project_resolution['project_root'],
+            'project_root': str(context['project_root']),
             'destinations': {key: value['relative'] for key, value in project_resolution['destinations'].items()},
         }
-    elif delivery_contract['target'] == 'project-local':
-        raise ValueError('PROJECT_ROOT_REQUIRED')
     if project_resolution is not None and delivery_contract['target'] == 'project-committed':
         raise ValueError('REPO_LOCAL_PROJECT_COMMITTED_REQUIRES_EXPLICIT_COMMIT')
     checked_code(ROOT, profile['repositories']['agentic-art-orchestration']['code_commit'])
@@ -393,23 +405,25 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
         binding = bindings['agentic-art-project']
         code = checked_code(binding['code_root'], binding['code_commit'])
         python = binding.get('python', sys.executable)
+        from tools.project_local_delivery import prepare_lineage, sync_catalog, verify as verify_project_local
+        project_profile = run_root / 'project-instance-profile.yaml'
         for identifier in projected['public_ids']:
+            lineage_input = run_root / (identifier + '-lineage.json')
+            prepare_lineage(code, python, public, identifier, Path(context['instance_profile']),
+                            lineage_input, project_profile)
             subprocess.run([python, str(code/'tools/catalog_lineage.py'), 'annotate', '--root', str(public),
-                '--record-id', identifier, '--instance-profile', context['instance_profile'], '--mode', 'new', '--initialize-new', '--apply'],
+                '--record-id', identifier, '--input', str(lineage_input), '--instance-profile', str(project_profile),
+                '--mode', 'new', '--apply'],
                 cwd=code, check=True, capture_output=True, text=True, timeout=120)
-        subprocess.run([python, str(code/'tools/catalog_sync.py'), '--root', str(public), '--write'], cwd=code, check=True, capture_output=True, timeout=120)
+        sync_catalog(code, python, public)
         expected = [{'record_id':identifier, 'content_sha256':source['production_plan_sha256'],
             'creator_id':profile['creator_id'], 'origin_instance_id':profile['instance_id'], 'source_identity':source['source_identity']}
             for identifier in projected['public_ids']]
         expectation = run_root/'expected-delivery.json'
         save(expectation, expected)
-        result = subprocess.run([python, str(code/'tools/local_delivery.py'), '--root', str(public), '--expected', str(expectation)],
-            cwd=code, capture_output=True, text=True, timeout=120)
-        receipt = json.loads(result.stdout)
-        save(run_root/'local-delivery.json', receipt)
-        if result.returncode or receipt.get('status') != 'VERIFIED' or receipt.get('contract_version') != 'local-plan-delivery-receipt/v1':
-            state.update(stop_reason='PROJECT_LOCAL_DELIVERY_INVALID', next_action={'actor':'agent','stage':'projection','receipt':str(run_root/'local-delivery.json')})
-            return
+        projection_result = run_root.parent.parent / run_id / 'public-projection-result.json'
+        receipt = verify_project_local(public, code, python, expectation,
+            run_root/'local-delivery.json', run_id, projection_result)
         checked_code(code, binding['code_commit'])
         state.update(projection_status='PROJECTED', run_status='COMPLETED', stop_reason=None, next_action=None, local_delivery_receipt=receipt)
         return

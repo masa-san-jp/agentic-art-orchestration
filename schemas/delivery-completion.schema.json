@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/delivery-completion.schema.json",
+  "title": "Delivery completion v1",
+  "description": "Closed, metadata-only completion result for a requested delivery contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "target", "status", "missing"],
+  "properties": {
+    "contract_version": {"const": "delivery-completion/v1"},
+    "target": {"enum": ["internal", "project-local", "project-committed"]},
+    "status": {"enum": ["COMPLETED", "INCOMPLETE"]},
+    "missing": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "PRODUCTION_PLAN",
+          "KNOWLEDGE_COMMIT",
+          "PROJECT_LOCAL_DELIVERY",
+          "PROJECT_COMMITTED_DELIVERY"
+        ]
+      }
+    }
+  }
+}

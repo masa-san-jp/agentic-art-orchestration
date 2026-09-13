@@ -1,0 +1,312 @@
+{
+  "contract_version": "ap-06-acceptance-evidence/v2",
+  "task": "AP-06",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "parent_repository": "agentic-art-orchestration",
+  "parent_start_point": "d35a4450d80bd9189148b88c63f2233a39b4022f",
+  "code_candidate": "d35a4450d80bd9189148b88c63f2233a39b4022f",
+  "status": "PASS",
+  "manifest": {
+    "locator": "/private/tmp/ap06-live-20260912/acceptance-evidence/manifest.json",
+    "sha256": "80227e1696afc8a201059076c6608dbdfca2f08aab88c12ae1362b8401bed05a",
+    "contract_version": "autonomous-plan-acceptance/v1",
+    "verifier_command": ".venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest /private/tmp/ap06-live-20260912/acceptance-evidence/manifest.json",
+    "verifier_status": "PASS",
+    "ac11": "PASS"
+  },
+  "provider": {
+    "type": "ollama",
+    "model": "qwen3.8:27b",
+    "external_agent": true,
+    "synthetic_identity": false,
+    "observed_runs": 6,
+    "provider_evidence_is_metadata_only": true
+  },
+  "code_pins": {
+    "agentic-art-orchestration": "d35a4450d80bd9189148b88c63f2233a39b4022f",
+    "agentic-art-production": "308abfe0f90582b5dd47d17cc5776278d32d5bb3",
+    "agentic-art-project": "f058995941fab76ec9942e204d8380f3f593172d",
+    "agentic-art-research": "b2e26d625cf849c766827dd7b163a2f4c72a226d",
+    "art-history-notes": "f8e5ae477368bdd8d0ddd071ba0b7ac8a41e321a",
+    "marketing-trends-notes": "932318ce8d76ffd44840cee0a465ea2405ef5037",
+    "self-model-notes": "351adf30e489b9bc148494bbb3a3677d7df1de19",
+    "viewer-response-notes": "ca2fbe2cb66ed771486e60159431a670721be3e7"
+  },
+  "knowledge_pins": {
+    "agentic-art-orchestration": {
+      "commit": "3faccf47dba60dc982c7af70bb370a9190858619",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "agentic-art-production": {
+      "commit": "a1b11851b411615c6c0bb0220a6444aecf150d2b",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "agentic-art-project": {
+      "commit": "f8e70013c7d136a54d33df88650f6ac549dba470",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "agentic-art-research": {
+      "commit": "b650417b92f42aab4ece84abe40e2d58e6d5ef27",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "art-history-notes": {
+      "commit": "2b0fbdb335fff3e840b58a85cec5fc4cdb8d288f",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "marketing-trends-notes": {
+      "commit": "c3eb398e638093e345070777b0b8ca13260ba280",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "self-model-notes": {
+      "commit": "09ad6949216985035d64dbb7b7e5bea5ada34e65",
+      "ref": "knowledge/ap06-acceptance-input"
+    },
+    "viewer-response-notes": {
+      "commit": "59d1440cc883b7e895973b93413c5057a25e3edb",
+      "ref": "knowledge/ap06-acceptance-input"
+    }
+  },
+  "acceptance": {
+    "six_runs": true,
+    "owner_revalidation": true,
+    "second_run_adoption": true,
+    "zero_human_questions": true,
+    "delivery_completion": true,
+    "fork_upstream_unchanged": true,
+    "ac11": "PASS",
+    "achieved": "7/7"
+  },
+  "runs": [
+    {
+      "run_id": "AP06-RESUME-20260913-04",
+      "mode": "resume",
+      "identity": {
+        "creator_id": "ap06-resume-creator",
+        "instance_id": "ap06-resume-instance",
+        "origin_instance_id": null,
+        "synthetic": false
+      },
+      "delivery": {
+        "status": "COMPLETED",
+        "target": "project-local",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-04-delivery.json",
+        "evidence_sha256": "392cef9eb959fd522111ce7ca43e6372ba6688d33b397454cd0eb88b6d79e538"
+      },
+      "provider_execution": {
+        "status": "PASS",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-04-provider-execution.json",
+        "evidence_sha256": "dd28e0a1d5c1285a16cb1d99601d6db5c6dbac5fc9f74ff998904628a0391919"
+      },
+      "operation_trace": {
+        "human_questions": 0,
+        "forbidden_operations": [],
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-04-operation-trace.json",
+        "evidence_sha256": "c83f1b22b97b026e3e1ca1124cde643c44330d597da69ab0b6c2c3ba74b68a13"
+      },
+      "adoption_evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-04-adoption.json",
+      "adoption_evidence_sha256": "ce846fe55065e378c19e82459087ae4b3447ebcc2ad86283f462a69344f77c13",
+      "content_check": {
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-04-content-check.json",
+        "evidence_sha256": "3c29cae212c6844c0657bef531af9e95c0c971d4b9c7062bbfba56d848bea5f6"
+      },
+      "plan_sha256": null
+    },
+    {
+      "run_id": "AP06-RESUME-20260913-05",
+      "mode": "resume",
+      "identity": {
+        "creator_id": "ap06-resume-creator",
+        "instance_id": "ap06-resume-instance",
+        "origin_instance_id": null,
+        "synthetic": false
+      },
+      "delivery": {
+        "status": "COMPLETED",
+        "target": "project-local",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-05-delivery.json",
+        "evidence_sha256": "392cef9eb959fd522111ce7ca43e6372ba6688d33b397454cd0eb88b6d79e538"
+      },
+      "provider_execution": {
+        "status": "PASS",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-05-provider-execution.json",
+        "evidence_sha256": "0018bfb134bdd30d0c1c2e76ccf57eafe9005cf833b80e06fe4368cee45d24e6"
+      },
+      "operation_trace": {
+        "human_questions": 0,
+        "forbidden_operations": [],
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-05-operation-trace.json",
+        "evidence_sha256": "f539bc6fa88729fb07bbcf6568eb1a40df7e1951b4479fa7a40ecc9a19551b49"
+      },
+      "adoption_evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-05-adoption.json",
+      "adoption_evidence_sha256": "0cb1327fadc46b79dcfff29f423313e6cb0ff39b3b416f2145b43d225c4517c5",
+      "content_check": {
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-RESUME-20260913-05-content-check.json",
+        "evidence_sha256": "6e8ec5ad2cde9583947c5cd79f0aa5c854ff8ae74e1c4aa6248fb6eab36de79a"
+      },
+      "plan_sha256": "6c1b6158028e127161963978263cf142461fe26e9bf9506e89961bad6f9287d9"
+    },
+    {
+      "run_id": "AP06-NEW-CLONE-20260912-01",
+      "mode": "new-clone",
+      "identity": {
+        "creator_id": "ap06-new-clone-creator-2",
+        "instance_id": "ap06-new-clone-instance-2",
+        "synthetic": false
+      },
+      "delivery": {
+        "status": "COMPLETED",
+        "target": "project-local",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-01-delivery.json",
+        "evidence_sha256": "392cef9eb959fd522111ce7ca43e6372ba6688d33b397454cd0eb88b6d79e538"
+      },
+      "provider_execution": {
+        "status": "PASS",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-01-provider-execution.json",
+        "evidence_sha256": "70c6f3a83946e78def0842127ecc37820ad5b3db06e08fc6d7d9b800ced8a46f"
+      },
+      "operation_trace": {
+        "human_questions": 0,
+        "forbidden_operations": [],
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-01-operation-trace.json",
+        "evidence_sha256": "29f1331efcfbe4af562374c32dffd9de30f9656105f27cf6d74b5a3dfb25cfb1"
+      },
+      "adoption_evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-01-adoption.json",
+      "adoption_evidence_sha256": "65d5f4e62949ca5a93eb6d5305faf4b143f60137448abc2cfb36d728db554e03",
+      "content_check": {
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-01-content-check.json",
+        "evidence_sha256": "edb66f94bba9e46b56533af38a32602b83c8386dd50276f2dfe4b728e4ec0dc7"
+      },
+      "plan_sha256": null
+    },
+    {
+      "run_id": "AP06-NEW-CLONE-20260912-02",
+      "mode": "new-clone",
+      "identity": {
+        "creator_id": "ap06-new-clone-creator-2",
+        "instance_id": "ap06-new-clone-instance-2",
+        "synthetic": false
+      },
+      "delivery": {
+        "status": "COMPLETED",
+        "target": "project-local",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-02-delivery.json",
+        "evidence_sha256": "392cef9eb959fd522111ce7ca43e6372ba6688d33b397454cd0eb88b6d79e538"
+      },
+      "provider_execution": {
+        "status": "PASS",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-02-provider-execution.json",
+        "evidence_sha256": "6ea4c44dd91447a3754a5b36bb60ede19d152123e09c74e0b999b1af593ba04c"
+      },
+      "operation_trace": {
+        "human_questions": 0,
+        "forbidden_operations": [],
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-02-operation-trace.json",
+        "evidence_sha256": "b110fbab1b477dc6df9ee5aec41a713eca618ebb77100b0238342c8ee0ae9d63"
+      },
+      "adoption_evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-02-adoption.json",
+      "adoption_evidence_sha256": "53bc4d18d794237dc8dd0b4855ef7a0cd075707b9f8249de8965006c5c9db5ed",
+      "content_check": {
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-NEW-CLONE-20260912-02-content-check.json",
+        "evidence_sha256": "6655f08c6056712382b61c176b96ffca20df505515f2dab7426ac428c2d1c6a7"
+      },
+      "plan_sha256": "a3a472f3e903c478fb1c94828bbc88516d6da4d46512a6a68b94e98f6ca648c2"
+    },
+    {
+      "run_id": "AP06-FORK-20260912-01",
+      "mode": "fork",
+      "identity": {
+        "creator_id": "ap06-fork-creator",
+        "instance_id": "ap06-fork-instance",
+        "synthetic": false
+      },
+      "delivery": {
+        "status": "COMPLETED",
+        "target": "project-local",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-01-delivery.json",
+        "evidence_sha256": "392cef9eb959fd522111ce7ca43e6372ba6688d33b397454cd0eb88b6d79e538"
+      },
+      "provider_execution": {
+        "status": "PASS",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-01-provider-execution.json",
+        "evidence_sha256": "d8e4fa92f0e7746f0ed3a1cc3837b1a85c812f00f55f2ae3bab90d85533e19b9"
+      },
+      "operation_trace": {
+        "human_questions": 0,
+        "forbidden_operations": [],
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-01-operation-trace.json",
+        "evidence_sha256": "460ce30534cdd46b64715baacdd9ccf5e641169cdd6d1a1de038b39a67f929e0"
+      },
+      "adoption_evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-01-adoption.json",
+      "adoption_evidence_sha256": "bdb03e6401686c9c1654fc077454e47e7ea23fbdab9598e2cf6a320249b5dacc",
+      "content_check": {
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-01-content-check.json",
+        "evidence_sha256": "8d2480e4520a7a5bcb0c9df66089b0a1dd9019208cc04b63eaff20cbd73a4b00"
+      },
+      "plan_sha256": null
+    },
+    {
+      "run_id": "AP06-FORK-20260912-02",
+      "mode": "fork",
+      "identity": {
+        "creator_id": "ap06-fork-creator",
+        "instance_id": "ap06-fork-instance",
+        "synthetic": false
+      },
+      "delivery": {
+        "status": "COMPLETED",
+        "target": "project-local",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-02-delivery.json",
+        "evidence_sha256": "392cef9eb959fd522111ce7ca43e6372ba6688d33b397454cd0eb88b6d79e538"
+      },
+      "provider_execution": {
+        "status": "PASS",
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-02-provider-execution.json",
+        "evidence_sha256": "edcc4540e87fefc04501612349984749516b6e437d2ac47c1b63935c880f22e1"
+      },
+      "operation_trace": {
+        "human_questions": 0,
+        "forbidden_operations": [],
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-02-operation-trace.json",
+        "evidence_sha256": "c72a2bb58483eebdba66d6386d7484783deda0e2526bb54720cf347df42aee8f"
+      },
+      "adoption_evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-02-adoption.json",
+      "adoption_evidence_sha256": "a8fd4588ebe5682c9f3eaf965b3c607bea8e5881f3f920b1890b5bd4c97e7810",
+      "content_check": {
+        "evidence": "/private/tmp/ap06-live-20260912/acceptance-evidence/AP06-FORK-20260912-02-content-check.json",
+        "evidence_sha256": "ebf358715ad89870a8a77690d552eba8fba041999d9e040fb8557ade90273cbd"
+      },
+      "plan_sha256": "08482196fc6c48ea69868bf01598e07e528c69924403ad9a25a2b3d230892709"
+    }
+  ],
+  "privacy": {
+    "credentials_stored": false,
+    "private_raw_stored": false,
+    "raw_conversation_stored": false,
+    "restricted_stored": false
+  },
+  "human_gates": {
+    "merge": "NOT_RUN",
+    "physical_work": "NOT_RUN",
+    "publication": "NOT_RUN",
+    "release": "NOT_RUN"
+  },
+  "feedback": {
+    "explicit": "User requested that all issues be resolved and completed.",
+    "inferred": []
+  },
+  "unresolved": [
+    "Project existing P0004 remains UNKNOWN_ATTRIBUTION; creator identity was not invented.",
+    "Project local delivery is COMPLETED, while Git remote synchronization remains NOT_RUN/OUTPUT_ONLY_UNCOMMITTED.",
+    "Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing."
+  ],
+  "history": {
+    "previous_blocked_record": "The prior AP-06 authentication blocker remains in Git history and is superseded by this PASS evidence.",
+    "no_raw_conversation_or_credentials_stored": true
+  },
+  "parent_checks": {
+    "validator": "PASS: .venv/bin/python tools/validate.py --check",
+    "manifest_verifier": "PASS: AC11 and all six run checks",
+    "full_suite": "PASS: 637 tests, 1 skipped",
+    "diff_check": "PASS: git diff --check"
+  }
+}

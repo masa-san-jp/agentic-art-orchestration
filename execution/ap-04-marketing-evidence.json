@@ -1,0 +1,33 @@
+{
+  "contract_version": "ap-04-marketing-evidence/v1",
+  "task": "AP-04-MARKETING",
+  "issue_ssot": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+  "owner_issue": "https://github.com/masa-san-jp/marketing-trends-notes/issues/86",
+  "owner_repository": "masa-san-jp/marketing-trends-notes",
+  "owner_source_commit": "932318ce8d76ffd44840cee0a465ea2405ef5037",
+  "owner_code_candidate": "932318ce8d76ffd44840cee0a465ea2405ef5037",
+  "owner_record_commit": "e7ae5cfeab73e675fd19584288a99d481e832d3c",
+  "owner_branch": "agent/ap04-marketing-20260912",
+  "draft_pull_request": "https://github.com/masa-san-jp/marketing-trends-notes/pull/91",
+  "change_decision": "NO_CODE_DELTA_REQUIRED",
+  "reason": "Qualified Marketing main already contains AAK-07 market-observation intake, freshness and counterevidence rules, primary-versus-summary provenance, explicit owner bare Git storage, CAS and INDEX_PENDING recovery, and passive-agent Git boundaries required by AP-04.",
+  "acceptance": {
+    "owner_schema_and_knowledge_boundary": {"status": "PASS", "evidence": "owner docs/research-knowledge-intake.md and config/market-observation.schema.json"},
+    "freshness_and_counterevidence": {"status": "PASS", "evidence": "owner docs/freshness.md, docs/schema.md and audit gate"},
+    "source_provenance": {"status": "PASS", "evidence": "owner source_checks preserve retrieved, checked_at, as_of and content hashes"},
+    "development_git_boundary": {"status": "PASS", "evidence": "owner AGENTS.md/docs/agent-harness.md and evidence-only branch commit; no owner remote write by runtime"},
+    "parent_ownership_boundary": {"status": "PASS", "evidence": "No trend, practice, source, observation or private/raw payload was copied to the parent"}
+  },
+  "checks": {
+    "owner_preflight": "PASS: Python 3.14, pinned PyYAML, repository and hooks",
+    "owner_full_suite": "PASS: 57 tests",
+    "owner_graph": "PASS: 127 entities, 133 relations",
+    "owner_audit": "PASS: no findings",
+    "owner_diff": "PASS"
+  },
+  "integration": {"parent_record": "PENDING", "child_default_branch": "MERGED", "merge": "MERGED", "merge_commit": "52a3a8032f1c62a37d26dab22f2c30b488bf1f54", "release": "NOT_RUN", "external_publication": "NOT_RUN"},
+  "privacy": {"raw_conversation_stored": false, "credentials_stored": false, "private_raw_stored": false, "restricted_stored": false},
+  "external_artifacts": "NOT_CREATED",
+  "feedback": {"explicit": "all issuesを解決して完了させること", "inferred": "none"},
+  "next_task": "AP-04-RESEARCH"
+}

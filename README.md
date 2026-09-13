@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-10T15:12:00+09:00`.
+Source updated at: `2026-09-13T21:01:22+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 167 | 167 |
+| 0 | 0 | 0 | 0 | 179 | 179 |
 
-Current task: `null`; repository: `null`; checkpoint: `DELIVERY-05`.
-Next action: All queued implementation tasks are DONE. Use the normal intake validator only when a new Issue with complete SSOT fields is opened; no automatic human plan approval is required for project-local delivery.
+Current task: `null`; repository: `null`; checkpoint: `AP-07`.
+Next action: Run read-only issue intake. Register only a new Issue that meets all SSOT minimums; preserve Issue #242 as UNQUEUED_NEEDS_SSOT until verification_commands exists.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -139,6 +139,11 @@ python3 -m venv .venv
 4. 検証、handoff、stateを更新し、再開可能な状態を残す。
 
 テーマ未指定で制作計画を始める場合も、`--intent`、`--slug`、`--title`を付けずにこの入口を実行します。入力済みのknowledge signalからテーマを自動提案し、必要な検査に失敗した場合はBLOCKEDで停止します。
+
+新規の通常runは`delivery-contract/v1`を自動的に解決して保存します。Projectへ納品する場合は
+`--project-root <absolute agentic-art-project checkout>`または
+`AGENTIC_ART_PROJECT_ROOT`で所有先を明示し、`project-local`として受取検証まで進みます。
+保存済みlegacy contextの`project-committed`など既存の意味は、再開時に黙って変更しません。
 
 ## 詳細文書
 
