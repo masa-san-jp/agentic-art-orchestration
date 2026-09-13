@@ -1,17 +1,17 @@
-version: 297
-updated_at: '2026-09-14T03:30:00+09:00'
-active_task: null
-active_repository: null
+version: 298
+updated_at: '2026-09-14T03:45:00+09:00'
+active_task: OI-04
+active_repository: agentic-art-research
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T03:27:02+09:00'
-  expires_at: '2026-09-12T06:27:02+09:00'
+  status: active
+  owner: codex-open-issues-20260914
+  acquired_at: '2026-09-14T03:45:00+09:00'
+  expires_at: '2026-09-14T09:45:00+09:00'
   lane: AUTONOMY
-  execution_id: AP-06:20260912
+  execution_id: OI-04:20260914
   scope:
     repository: agentic-art-orchestration
-    branch: chore/record-final-external-ops-20260913
+    branch: codex/open-issues-autonomous-20260914
     paths:
     - config/**
     - schemas/**
@@ -78,7 +78,7 @@ last_completed_task: OI-03
 resume_from:
   task: OI-04
   repository: agentic-art-research
-  action: 'Claim OI-04, inspect the Research #242 INSP-02 contract and implement candidate generation, semantic comparison, independent critique, revision/reselection and handoff on top of the merged OI-03 contract.'
+  action: 'Implement OI-04 in an isolated Research branch, then run owner gates and record exact candidate evidence.'
   command: '.venv/bin/python tools/validate.py --check'
 
 aak04_checkpoint:

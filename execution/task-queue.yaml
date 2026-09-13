@@ -3087,10 +3087,10 @@ tasks:
   - id: OI-04
     milestone: INSPIRATION
     title: "Research #242 INSP-02の候補生成・比較・批評・handoffを実装する"
-    status: READY
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research]
-    agent_terminal: DRAFT_PR_READY
+    agent_terminal: IN_PROGRESS
     depends_on: [OI-03]
     acceptance: "根拠付きcontextから意味のある複数候補を生成・比較・批評し、制作方法、creative direction、変更可能部分、採択理由を保持したhandoffをProductionへ渡せる。"
     checks:
