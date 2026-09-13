@@ -1,5 +1,5 @@
-version: 91
-updated_at: "2026-09-14T02:30:00+09:00"
+version: 92
+updated_at: "2026-09-14T03:30:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3067,7 +3067,7 @@ tasks:
   - id: OI-03
     milestone: PROTOTYPE-CONTRACT
     title: "Research #109のデジタルprototype-plan契約を検証し固定する"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/109
     target_repositories: [agentic-art-research]
     agent_terminal: EVIDENCE_READY
@@ -3078,14 +3078,16 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "owner PRのmergeとIssue closeは品質gate通過後に実行する。実作品や外部artifactは作成しない。"
-    code_candidate: aa74d8f
+    code_candidate: aa74d8fde89598616e0e7e4494d52bb44736be35
     pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/110
     merge_commit: 888b23100e50daa73daf83bd8a25bcfd595e52df
-    completion: "Candidate PR #110 is merged and its owner CI passed; cross-repository acceptance remains to be run after OI-02."
+    code_status: CODE_VERIFIED
+    evidence: execution/oi-03-cross-validation-evidence.json
+    completion: "Research #109 is merged and its effect_type/digital-plan contract passes the Production qualified boundary. Missing production-plan geometry/material/quantity remains a named PROTOTYPE_RENDER_INPUTS failure."
   - id: OI-04
     milestone: INSPIRATION
     title: "Research #242 INSP-02の候補生成・比較・批評・handoffを実装する"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research]
     agent_terminal: DRAFT_PR_READY
@@ -3099,11 +3101,11 @@ tasks:
   - id: OI-05
     milestone: PROTOTYPE-CONTRACT
     title: "Production #76の決定論的デジタルSVG試作を生成する"
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/76
     target_repositories: [agentic-art-production]
     agent_terminal: DRAFT_PR_READY
-    depends_on: [OI-04]
+    depends_on: [OI-03]
     acceptance: "production-planの寸法・単位・素材・数量からrun/plan/revisionに追跡可能な判断用SVGを04_prototypeへ生成し、実使用値、hash、縮尺外の扱い、Git外asset境界を検証できる。"
     checks:
     - python3 tools/validate.py --check
@@ -3111,9 +3113,11 @@ tasks:
     - python3 -m unittest tests.test_bootstrap tests.test_result tests.test_documentation
     - git diff --check
     human_gate: "owner PRのmergeとIssue closeは品質gate通過後に実行する。物理制作、購入、公開previewは後続taskへ分離する。"
-    code_candidate: f5253e3
+    code_candidate: f5253e3e350e562906ae3be58334af945624ddf3
     pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/78
-    completion: "Candidate implementation and clean 133-test owner gate passed; PR CI and merge are pending."
+    merge_commit: 6abbcc0b5d01da5eedfd0e00963675ee6299b4b6
+    evidence: execution/oi-05-production-prototype-evidence.json
+    completion: "Deterministic digital SVG rendering, traceable run output, Git-external asset boundary and owner gates passed; PR #78 merged and Issue #76 closed."
   - id: OI-06
     milestone: PROTOTYPE-CONTRACT
     title: "Production #77のpreview、attestation、actionability接続を実装する"

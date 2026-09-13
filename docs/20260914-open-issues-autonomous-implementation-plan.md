@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-02 完了 / OI-03 READY / ExecPlan SSOT
+状態: OI-03 完了 / OI-04 READY / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -19,7 +19,9 @@
 - [x] Issue間の重複箇所を確認し、ResearchとProductionの実装順を決めた。
 - [x] `OI-00`でIssue intakeとSSOT修復を完了し、実行queueへ登録する。
 - [x] `OI-02`で#242/#243を既存AAK SSOT、実測call graph、owner境界へ統合する。
-- [ ] `OI-01`から`OI-12`を依存順に実装・検証・統合する。
+- [x] `OI-03`でResearch #109の試作契約をProduction境界まで検証する。
+- [x] `OI-05`でProduction #76の決定論的SVG試作を実装・merge・closeする。
+- [ ] `OI-04`、`OI-06`から`OI-12`を依存順に実装・検証・統合する。
 - [ ] merge後のqualified mainで最終通常runを実施し、対象Issueをcloseする。
 
 ## Surprises & Discoveries
@@ -31,20 +33,21 @@
 - Production #10は要件SSOTとしてopen維持が明記されている。実装完了時もcloseしない。
 - Self Model #82は実データを扱う前に `destination_root`、`consent_scope`、`retention_decision` が必要である。3項目がない限り、自律実装の完了件数に含めない。
 - Art History #392は制作runtimeとは独立して実装できるが、入力ownerのqualified pinを変える。最終統合前に完了させ、新しいpinを使う。
+- OI-03の横断fixtureは、Researchの正例をProductionへ受け渡すと `PLANNING` かつ `readiness.startable=true` になることを確認した。寸法・素材・数量がProduction planに無い状態でのrenderer停止は、`PROTOTYPE_RENDER_INPUTS` による入力不足の明示であり、placeholder出力を作らない。Production #76はこの境界を実装済みなので、OI-05をOI-03直後の独立taskとして完了記録した。
 
 ## Decision Log
 
 - 2026-09-14: 実装対象を、制作runtimeの主系列7 Issue（親#242/#243、Research #109、Production #76/#77、Project #31、Art History #392）とする。
 - 2026-09-14: Production #10は永続要件SSOT、Self Model #82はhuman-blockedとして別管理し、未実装Issueと同じclose判定を適用しない。
 - 2026-09-14: Researchは #109 の試作plan契約を先に実装し、そのcandidate上で #242 INSP-02を実装する。
-- 2026-09-14: Productionは #76、#77、#242 INSP-03の順に積み、rendererを一つだけ所有する。
+- 2026-09-14: Productionは #76をResearch #109の契約確認後に独立実装し、#77、#242 INSP-03をその上へ積む。rendererは一つだけ所有する。
 - 2026-09-14: ownerごとにcommit/PRを分ける。複数Issueを一つの巨大commitで閉じない。
 - 2026-09-14: 子PRのmerge前でも、exact candidate commitを隔離workspaceへ集めて親統合検証を進める。merge待ちを実装停止理由にしない。
 - 2026-09-14: OI-00の修復後intakeは6件のqualified unqueued Issueを返し、#242、#243、#76、#77、#31を実装DAGへ、#82をBLOCKEDのhuman laneへ登録する。#10は既存の永続要件としてqueue外へ重複登録しない。
 
 ## Outcomes & Retrospective
 
-OI-00はintake・SSOT修復・queue登録を完了し、OI-02は#242/#243のSSOT統合、call graph記録、AAK projection hash同期、親638-test gateを完了した。OI-01のArt History #392とResearch #109のowner candidateは先行実装済みだが、OI-03で横断検証する。残りのmilestoneでは達成した受入条件、採用commit、失敗と回復、残存リスクを追記する。全完了時には、通常runのProject-local delivery ID、全owner merge commit、親merge commit、closeしたIssue、意図的にopen維持したIssueを記録する。
+OI-00はintake・SSOT修復・queue登録を完了し、OI-02は#242/#243のSSOT統合、call graph記録、AAK projection hash同期、親638-test gateを完了した。OI-03はResearch #109のowner candidateをProduction qualified candidateへ通し、OI-05はProduction #76をmergeしてIssueをcloseした。残りのmilestoneでは達成した受入条件、採用commit、失敗と回復、残存リスクを追記する。全完了時には、通常runのProject-local delivery ID、全owner merge commit、親merge commit、closeしたIssue、意図的にopen維持したIssueを記録する。
 
 ## Context and Orientation
 
@@ -79,13 +82,13 @@ OI-00 intake・SSOT修復・queue登録
   ├─ OI-01 Art History #392
   └─ OI-02 親 #242/#243 のSSOT統合とcall graph
        ├─ OI-03 Research #109
-       │    └─ OI-04 Research INSP-02
-       │         └─ OI-05 Production #76
-       │              └─ OI-06 Production #77
-       │                   ├─ OI-07 Production INSP-03
-       │                   ├─ OI-08 Project #31
-       │                   │    └─ OI-09 Project INSP-04
-       │                   └─ OI-10 Parent PRT-04
+       │    ├─ OI-04 Research INSP-02
+       │    └─ OI-05 Production #76
+       │         └─ OI-06 Production #77
+       │              ├─ OI-07 Production INSP-03
+       │              ├─ OI-08 Project #31
+       │              │    └─ OI-09 Project INSP-04
+       │              └─ OI-10 Parent PRT-04
        └───────────────────────────┐
 OI-01 ─────────────────────────────┼─ OI-11 Parent INSP-05 / owner qualification
 OI-07 + OI-09 + OI-10 + OI-11 ────┴─ OI-12 qualified integration、merge、close

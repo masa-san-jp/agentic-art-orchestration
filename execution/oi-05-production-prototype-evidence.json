@@ -1,0 +1,27 @@
+{
+  "contract_version": "oi-05-production-prototype/v1",
+  "task": "OI-05",
+  "observed_at": "2026-09-14T03:30:00+09:00",
+  "issue": "https://github.com/masa-san-jp/agentic-art-production/issues/76",
+  "candidate_commit": "f5253e3e350e562906ae3be58334af945624ddf3",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/78",
+  "merge_commit": "6abbcc0b5d01da5eedfd0e00963675ee6299b4b6",
+  "owner_checks": {
+    "validator": "PASS",
+    "bootstrap_tests": "PASS: 49 tests",
+    "result_tests": "PASS: 8 tests",
+    "documentation_tests": "PASS: 4 tests",
+    "full_suite": "PASS: 133 tests",
+    "diff_check": "PASS",
+    "pull_request_ci": "PASS: Python 3.11 and 3.12"
+  },
+  "observed_behavior": {
+    "output_root": "04_prototype/outputs/PRT001/",
+    "format": "image/svg+xml",
+    "trace": "run_id, prototype_plan_id, revision, dimensions, materials, quantity, sha256 and byte_length are recorded in prototype-control.yaml",
+    "git_boundary": "PASS: output is Git-external project work; asset bytes are not committed to the protocol repository",
+    "external_effects": "NOT_RUN"
+  },
+  "issue_state": "CLOSED",
+  "source_scope": "metadata-only; no project asset bytes, private data, or credentials are stored in the parent"
+}
