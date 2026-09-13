@@ -1,5 +1,5 @@
-version: 89
-updated_at: "2026-09-13T21:52:53+09:00"
+version: 90
+updated_at: "2026-09-14T02:00:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3009,3 +3009,222 @@ tasks:
     merge_commit: 2d15ca8612e12a27f02223db4872e382aef266d2
     completion: "AP-07 acceptance matrix is synchronized with 13/13 acceptance entries PASS. All eight repository candidate commits and their reachable PR or branch references are recorded; the AP-06 external manifest, canonical state/handoff, README status and Issue #241 reachability are linked. Parent PR #244 passed bootstrap, production-exchange and real-chain, then merged; Issue #241 is CLOSED. OPEN, NOT_RUN and UNKNOWN values are preserved for remaining items."
     acceptance_result: "13/13 matrix entries PASS; child PR merges and parent PR #244 merge PASS; Issue #241 CLOSED; release, publication and catalog remote synchronization remain NOT_RUN; force push was not used."
+  - id: OI-00
+    milestone: OPEN-ISSUE-IMPLEMENTATION
+    title: "未解消Issueをintakeし、SSOT修復と実行queue登録を完了する"
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: []
+    acceptance: "固定時刻の8repository intake、Issue SSOTの最小修復、export-only Projectの関係registry認識、OI-01以降の依存DAG登録、Self Model #82のBLOCKED human lane登録をmetadata-only evidenceで再現できる。"
+    checks:
+    - .venv/bin/python tools/issue_intake.py --check --output execution/issue-intake-20260914.json
+    - .venv/bin/python -m unittest tests.test_issue_intake tests.test_validate
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: "Issue本文の最小SSOT修復とqueue登録は実行する。merge、release、公開範囲変更、実個人profile移設は別gateを維持する。"
+    intake_evidence: "execution/issue-intake-20260914.json; fixed observation 2026-09-14T00:00:00Z; 7 open Issues observed, 6 qualified unqueued and 0 UNQUEUED_NEEDS_SSOT after the repair."
+    completion: "#242 heading and #76 acceptance-list parser compatibility were repaired without changing requirement meaning. Project #31 is recognized through repository-relationships.yaml while remaining excluded from the input manifest. OI-01..OI-13 were registered with the dependency DAG; #10 remains an existing persistent task and #82 is BLOCKED."
+  - id: OI-01
+    milestone: OPEN-ISSUE-IMPLEMENTATION
+    title: "Art History #392のMyron KruegerとVideoplace系譜を追加する"
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/art-history-notes/issues/392
+    target_repositories: [art-history]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [OI-00]
+    acceptance: "Art History ownerの人物・作品・graph・coverageが更新され、一次資料に基づく根拠と未確定事項を保持したcandidateがqualified mainへ統合される。"
+    checks:
+    - python3 tools/build_graph.py --check
+    - python3 tools/build_context_vectors.py --check
+    - python3 -m unittest discover -s tests -p "test*.py"
+    - git diff --check
+    human_gate: "owner品質gate後のPR mergeとIssue closeは許可済み操作として実行する。外部公開や根拠のないmovement追加は行わない。"
+    code_candidate: 1316c7f
+    pull_request: https://github.com/masa-san-jp/art-history-notes/pull/393
+    merge_commit: d5e6a48d134aee3d4b0113f415b224c85b412245
+    completion: "PR #393 merged with owner checks and 142-test suite PASS; Issue #392 is CLOSED."
+  - id: OI-02
+    milestone: OPEN-ISSUE-IMPLEMENTATION
+    title: "親 #242/#243の既存AAK SSOTと実装call graphを統合する"
+    status: READY
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [OI-00]
+    acceptance: "#242/#243のS・AC・検証・human gateが既存AAK仕様、実装計画、runtime call graph、Research/Production/Project境界へ対応付けられ、後続Issueの採用commitとcontract versionを固定できる。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --format json
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "SSOTとcall graphの統合は進める。runtimeのmerge、release、Project公開、実カタログ書込は後続gateを維持する。"
+  - id: OI-03
+    milestone: PROTOTYPE-CONTRACT
+    title: "Research #109のデジタルprototype-plan契約を検証し固定する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/109
+    target_repositories: [agentic-art-research]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [OI-02]
+    acceptance: "prototype-planの全taskでeffect_typeが必須となり、digital-prototype-rendererによる非物理SVG planがProductionのqualified candidateでBLOCKEDにならず、欠落は固定エラーになる。"
+    checks:
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "owner PRのmergeとIssue closeは品質gate通過後に実行する。実作品や外部artifactは作成しない。"
+    code_candidate: aa74d8f
+    pull_request: https://github.com/masa-san-jp/agentic-art-research/pull/110
+    merge_commit: 888b23100e50daa73daf83bd8a25bcfd595e52df
+    completion: "Candidate PR #110 is merged and its owner CI passed; cross-repository acceptance remains to be run after OI-02."
+  - id: OI-04
+    milestone: INSPIRATION
+    title: "Research #242 INSP-02の候補生成・比較・批評・handoffを実装する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-03]
+    acceptance: "根拠付きcontextから意味のある複数候補を生成・比較・批評し、制作方法、creative direction、変更可能部分、採択理由を保持したhandoffをProductionへ渡せる。"
+    checks:
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "候補生成・批評・handoffは自律実行する。外部公開、物理制作、同意範囲変更は実行しない。"
+  - id: OI-05
+    milestone: PROTOTYPE-CONTRACT
+    title: "Production #76の決定論的デジタルSVG試作を生成する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/76
+    target_repositories: [agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-04]
+    acceptance: "production-planの寸法・単位・素材・数量からrun/plan/revisionに追跡可能な判断用SVGを04_prototypeへ生成し、実使用値、hash、縮尺外の扱い、Git外asset境界を検証できる。"
+    checks:
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - python3 -m unittest tests.test_bootstrap tests.test_result tests.test_documentation
+    - git diff --check
+    human_gate: "owner PRのmergeとIssue closeは品質gate通過後に実行する。物理制作、購入、公開previewは後続taskへ分離する。"
+    code_candidate: f5253e3
+    pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/78
+    completion: "Candidate implementation and clean 133-test owner gate passed; PR CI and merge are pending."
+  - id: OI-06
+    milestone: PROTOTYPE-CONTRACT
+    title: "Production #77のpreview、attestation、actionability接続を実装する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/77
+    target_repositories: [agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-05]
+    acceptance: "同一prototype bytesがplan本文、公開preview、attestation、plan_actionabilityへ接続され、欠落・改変・本文リンク不整合はPROTOTYPE_OUTPUT_MISSINGとして未完了を返す。"
+    checks:
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "previewは既定の非公開境界で生成する。remote公開、Project catalog write、releaseは別gateを維持する。"
+  - id: OI-07
+    milestone: INSPIRATION
+    title: "Production #242 INSP-03で着想と制作可能性を接続する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-06]
+    acceptance: "採択着想の意味対応、材料・道具・データ・設備・技能・費用・時間・場所の工程対応、修正・再採択、準備開始と制作可能性の分離を検証できる。"
+    checks:
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "制作可能性の判定は自律実行する。物理工程の実行、購入、展示、公開は行わない。"
+  - id: OI-08
+    milestone: PROJECT-RECEIVER
+    title: "Project #31でprototype asset付きrecordを受理する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/31
+    target_repositories: [agentic-art-project]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-06]
+    acceptance: "prototype SVG付きrecordのmetadata、media、ignore、attestation hash、lineage、catalog syncをowner契約に従って検証し、既存P0001-P0008を変更しない。"
+    checks:
+    - python3 tools/catalog_sync.py --check
+    - python3 tools/validate.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "Project receiverのlocal検証は進める。catalog remote write、公開範囲変更、既存record再投影は承認対象として残す。"
+  - id: OI-09
+    milestone: PROJECT-RECEIVER
+    title: "Project #242 INSP-04で作品紹介とlineageを同一revisionへ束ねる"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration, agentic-art-project]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-08]
+    acceptance: "作品紹介、Production plan本文、prototype asset、metadata、lineageが同一revisionで追跡可能となり、Production正本のplan本文はbyte-for-byte投影される。"
+    checks:
+    - python3 tools/validate.py --check
+    - python3 tools/catalog_sync.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "local receiver検証は自律実行する。public catalogへのremote writeとvisibility変更は実行しない。"
+  - id: OI-10
+    milestone: DELIVERY-COMPLETION
+    title: "Parent #243 PRT-04でprototype stageをdelivery completionへ接続する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/243
+    target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project]
+    agent_terminal: DRAFT_PR_READY
+    depends_on: [OI-06]
+    acceptance: "normal/cycle/batch/supervisor入口がqualified prototype_statusとattestation assetをdelivery completionへ接続し、試作欠落・hash不一致をINCOMPLETEとresume command付きで返す。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - .venv/bin/python tools/workspace.py status
+    - git diff --check
+    human_gate: "delivery completionの検証は進める。Project公開、release、remote default branch変更は別gateを維持する。"
+  - id: OI-11
+    milestone: QUALIFICATION
+    title: "Parent #242 INSP-05でowner qualificationと知識境界を確定する"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, agentic-art-project, art-history, marketing-trends, viewer-response-notes, self-model]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [OI-01, OI-07, OI-09, OI-10]
+    acceptance: "全ownerのsource/candidate/merge commit、contract version、native quality gate、knowledge receipt、receiver hashを隔離workspaceで照合し、CLOSEDやPR存在だけでPASSにしない。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --format json
+    - .venv/bin/python tools/audit.py
+    - git diff --check
+    human_gate: "qualification証跡の収集は進める。同意範囲変更、実個人data、公開、merge、releaseは既存gateを維持する。"
+  - id: OI-12
+    milestone: QUALIFICATION
+    title: "qualified integrationを実行し、受入Issueをcloseする"
+    status: BACKLOG
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
+    target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, agentic-art-project, art-history]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [OI-07, OI-09, OI-10, OI-11]
+    acceptance: "テーマ・slug・titleを事前指定しない実agent runが候補生成からProject-local deliveryまで進み、prototype、plan、attestation、receiver receipt、creator/origin、knowledge saveを同一provenance chainで検証し、delivery_completion.status=COMPLETEDになる。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/verify_autonomous_plan_acceptance.py --manifest <absolute-evidence-manifest.json>
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "qualified candidateのmergeとIssue closeはユーザーが許可した操作として実行する。release、公開、物理制作、実個人profile移設は既存gateを維持する。"
+  - id: OI-13
+    milestone: HUMAN-GATE
+    title: "Self Model #82のprofile移設要求をhuman laneで保持する"
+    status: BLOCKED
+    blocker: "destination_root、consent_scope、retention_decisionと明示的なhuman approvalがIssueに記録されるまで、実個人profile移設は開始できない。"
+    issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/82
+    target_repositories: [self-model]
+    agent_terminal: EVIDENCE_READY
+    depends_on: []
+    acceptance: "destination_root、consent_scope、retention_decisionがIssueに明示され、人間が移設範囲を承認するまで実個人profileの読取・copy・move・delete・dry-runを行わず、BLOCKED理由と解除条件をstate/handoffへ保持する。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - git diff --check
+    human_gate: "明示的な同意範囲、保存先、保持判断が揃うまで自律laneでは実行しない。merge、release、外部公開、実データ移設は承認対象である。"
+    completion: "Human-gated supplementary record only; no personal/raw data was read or moved and Issue #82 remains open."

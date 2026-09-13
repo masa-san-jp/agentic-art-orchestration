@@ -1,0 +1,215 @@
+{
+  "contract_version": "issue-intake-report/v1",
+  "issues": [
+    {
+      "number": 242,
+      "queued": false,
+      "recommendation": "REGISTER_BACKLOG",
+      "repository": "masa-san-jp/agentic-art-orchestration",
+      "ssot": {
+        "human_gate": true,
+        "missing": [],
+        "observable_acceptance": true,
+        "qualified": true,
+        "target_repository": true,
+        "verification_commands": true
+      },
+      "title": "feat: 芸術創作のインスピレーションを生成・採択・制作へ保持するハーネス改修（設計仕様・実装計画）",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242"
+    },
+    {
+      "number": 243,
+      "queued": false,
+      "recommendation": "REGISTER_BACKLOG",
+      "repository": "masa-san-jp/agentic-art-orchestration",
+      "ssot": {
+        "human_gate": true,
+        "missing": [],
+        "observable_acceptance": true,
+        "qualified": true,
+        "target_repository": true,
+        "verification_commands": true
+      },
+      "title": "feat: 制作プロトタイプ（デジタル試作出力）を必ず生成し、canonical planの資産としてagentic-art-projectへ投影する（設計仕様・実装計画SSOT）",
+      "url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/243"
+    },
+    {
+      "number": 10,
+      "queued": true,
+      "recommendation": "ALREADY_QUEUED",
+      "repository": "masa-san-jp/agentic-art-production",
+      "ssot": {
+        "human_gate": false,
+        "missing": [
+          "observable_acceptance",
+          "verification_commands",
+          "human_gate"
+        ],
+        "observable_acceptance": false,
+        "qualified": false,
+        "target_repository": true,
+        "verification_commands": false
+      },
+      "title": "要件管理SSOT: Agentic Art Production v1",
+      "url": "https://github.com/masa-san-jp/agentic-art-production/issues/10"
+    },
+    {
+      "number": 76,
+      "queued": false,
+      "recommendation": "REGISTER_BACKLOG",
+      "repository": "masa-san-jp/agentic-art-production",
+      "ssot": {
+        "human_gate": true,
+        "missing": [],
+        "observable_acceptance": true,
+        "qualified": true,
+        "target_repository": true,
+        "verification_commands": true
+      },
+      "title": "制作プロトタイプを、見て採否を判断できる現物として 04_prototype に出力できるようにする",
+      "url": "https://github.com/masa-san-jp/agentic-art-production/issues/76"
+    },
+    {
+      "number": 77,
+      "queued": false,
+      "recommendation": "REGISTER_BACKLOG",
+      "repository": "masa-san-jp/agentic-art-production",
+      "ssot": {
+        "human_gate": true,
+        "missing": [],
+        "observable_acceptance": true,
+        "qualified": true,
+        "target_repository": true,
+        "verification_commands": true
+      },
+      "title": "feat: デジタル試作出力をcanonical planと公開attestationへ接続する（PRT-03、#76の後続）",
+      "url": "https://github.com/masa-san-jp/agentic-art-production/issues/77"
+    },
+    {
+      "number": 31,
+      "queued": false,
+      "recommendation": "REGISTER_BACKLOG",
+      "repository": "masa-san-jp/agentic-art-project",
+      "ssot": {
+        "human_gate": true,
+        "missing": [],
+        "observable_acceptance": true,
+        "qualified": true,
+        "target_repository": true,
+        "verification_commands": true
+      },
+      "title": "fix: 試作preview assetを含むplan recordを受理し、media_policyと.gitignore・文書の矛盾を解消する（PRT-05）",
+      "url": "https://github.com/masa-san-jp/agentic-art-project/issues/31"
+    },
+    {
+      "number": 82,
+      "queued": false,
+      "recommendation": "REGISTER_BACKLOG",
+      "repository": "masa-san-jp/self-model-notes",
+      "ssot": {
+        "human_gate": true,
+        "missing": [],
+        "observable_acceptance": true,
+        "qualified": true,
+        "target_repository": true,
+        "verification_commands": true
+      },
+      "title": "[HUMAN GATE] 既存n=1 profileを承認済み外部rootへ移設し、repo current treeから個人記録を除く",
+      "url": "https://github.com/masa-san-jp/self-model-notes/issues/82"
+    }
+  ],
+  "queue": {
+    "path": "execution/task-queue.yaml",
+    "queued_issue_urls": [
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/1",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/100",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/101",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/102",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/103",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/104",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/105",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/107",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/109",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/110",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/113",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/114",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/115",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/116",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/117",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/124",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/141",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/148",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/149",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/150",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/176",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/187",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/189",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/190",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/193",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/194",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/195",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/196",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/197",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/2",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/203",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/213",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/214",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/217",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/241",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/43",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/47",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/56",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/58",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/67",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/68",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/70",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/71",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/84",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/85",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/91",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/98",
+      "https://github.com/masa-san-jp/agentic-art-orchestration/issues/99",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/10",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/34",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/36",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/52",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/54",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/58",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/61",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/62",
+      "https://github.com/masa-san-jp/agentic-art-production/issues/69",
+      "https://github.com/masa-san-jp/agentic-art-project/issues/10",
+      "https://github.com/masa-san-jp/agentic-art-project/issues/18",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/100",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/45",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/47",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/48",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/49",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/83",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/85",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/89",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/91",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/93",
+      "https://github.com/masa-san-jp/agentic-art-research/issues/94",
+      "https://github.com/masa-san-jp/art-history-notes/issues/386",
+      "https://github.com/masa-san-jp/marketing-trends-notes/issues/86",
+      "https://github.com/masa-san-jp/self-model-notes/issues/40",
+      "https://github.com/masa-san-jp/self-model-notes/issues/83",
+      "https://github.com/masa-san-jp/self-model-notes/issues/93",
+      "https://github.com/masa-san-jp/viewer-response-notes/issues/4",
+      "https://github.com/masa-san-jp/viewer-response-notes/issues/6"
+    ],
+    "sha256": "30bc268e3fb29acd4b4da63e589661af7dd1c812c16360d519a8cb8c92131754"
+  },
+  "source": {
+    "kind": "live",
+    "locator": "gh issue list",
+    "observed_at": "2026-09-14T00:00:00Z"
+  },
+  "summary": {
+    "qualified_unqueued": 6,
+    "queued": 1,
+    "total": 7,
+    "unqueued_needs_ssot": 0
+  }
+}

@@ -2871,3 +2871,15 @@ Commit and push this evidence synchronization, create and merge the parent PR fo
 ### Next exact action
 
 Run `.venv/bin/python tools/issue_intake.py` in read-only mode. Register a future Issue only when all four SSOT minimums are present; retain Issue #242 as `UNQUEUED_NEEDS_SSOT` otherwise.
+
+## 2026-09-14 — OI-00 open-issue implementation plan and intake completed
+
+- The implementation plan is [`docs/20260914-open-issues-autonomous-implementation-plan.md`](../docs/20260914-open-issues-autonomous-implementation-plan.md). It defines the dependency DAG, owner boundaries, required checks, restart commands, merge/close evidence and the separate Self Model #82 human lane.
+- The fixed-time live intake at `2026-09-14T00:00:00Z` observed seven open Issues: six qualified unqueued Issues (#242, #243, Production #76, Production #77, Project #31 and Self Model #82) and Production #10 as an existing queued/persistent requirement. No Issue remained `UNQUEUED_NEEDS_SSOT` after the minimum repairs.
+- Parent #242 now has the parser-recognized verification heading; Production #76 acceptance items now use equivalent checkbox syntax. Project #31 is recognized through `config/repository-relationships.yaml` and remains excluded from the input manifest by design.
+- OI-01 Art History #392 and Research #109 already have merged owner candidates (`d5e6a48d` and `888b2310`). Production #76 has candidate `f5253e3` in PR #78, with the owner clean full suite passing and PR CI still pending/unknown at the last network attempt.
+- OI-00 is recorded as complete in `execution/state.yaml` and `execution/task-queue.yaml`. The parent validator, intake regression suite (22 tests), full suite (638 tests, 1 skipped), and diff check pass. The next selected task is OI-02; its first operation is `.venv/bin/python tools/project_status.py --format json`.
+
+### Next exact action
+
+Claim OI-02, run `.venv/bin/python tools/project_status.py --format json`, and inspect the existing parent AAK contracts and measured call graph before editing parent runtime files.

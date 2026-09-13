@@ -1,5 +1,5 @@
-version: 294
-updated_at: '2026-09-13T21:52:53+09:00'
+version: 295
+updated_at: '2026-09-14T02:00:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -31,29 +31,25 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: AP-07
+  task: OI-00
   repository: agentic-art-orchestration
-  status: DONE_EXTERNAL_OPERATIONS_RECORDED
-  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS. Six child PRs were merged with recorded merge commits, Viewer #12 was merged into its qualified base, Self Model validation-only PRs #99/#100 were closed as superseded, parent PR #244 passed all three CI gates and merged, and Issue #241 was closed.'
-  start_point: 2b76adcbc46ef8826f1604329e2dca62a5614927
-  code_candidate: 66cb176782e61856b7a87db9dcb67841c4e1e5e8
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/244
-  pull_request_state: MERGED
-  merge_commit: 2d15ca8612e12a27f02223db4872e382aef266d2
-  merged_at: '2026-09-13T21:51:31+09:00'
-  evidence: execution/ap-07-final-sync-evidence.json
+  status: DONE
+  result: 'OI-00 completed the fixed-time read-only intake, the minimum SSOT repairs for #242 and #76, export-only Project recognition through repository-relationships.yaml, and dependency-ordered OI-01..OI-13 registration.'
+  start_point: 93fe2d5b9c8f3d8b29020115daf759b8e0b6c9c0
+  code_candidate: 93fe2d5b9c8f3d8b29020115daf759b8e0b6c9c0
+  evidence: execution/issue-intake-20260914.json
   checks:
     validator: PASS
-    readme_status: PASS
-    audit: 'FINDINGS: 1 known nonblocking portfolio-unavailable/marketing freshness finding'
-    full_suite: 'PASS: 637 tests, 1 skipped'
-    parent_pr_checks: 'PASS: PR #244 bootstrap, production-exchange and real-chain'
-    issue_241_close: 'PASS: gh issue view 241 (CLOSED)'
+    issue_intake_tests: PASS
+    issue_intake: 'PASS: 7 open Issues, 6 qualified unqueued, 0 UNQUEUED_NEEDS_SSOT'
+    full_suite: 'PASS: 638 tests, 1 skipped'
     diff_check: PASS
   unresolved:
     - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
     - 'project-local delivery is complete; Git remote synchronization is NOT_RUN/OUTPUT_ONLY_UNCOMMITTED'
-    - 'Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing'
+    - 'Issues #242, #243, #76, #77 and #31 are registered for implementation and remain open until their acceptance evidence is complete'
+    - 'Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision and explicit human approval'
+    - 'Production #10 remains open as a persistent requirement SSOT'
     - 'No release was created because no release target or version was specified'
 
 legacy_recovery_checkpoint:
@@ -76,12 +72,12 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: AP-07
+last_completed_task: OI-00
 resume_from:
-  task: null
+  task: OI-02
   repository: agentic-art-orchestration
-  action: 'Run read-only issue intake. Register only a new Issue that meets all SSOT minimums; preserve Issue #242 as UNQUEUED_NEEDS_SSOT until verification_commands exists.'
-  command: '.venv/bin/python tools/issue_intake.py'
+  action: 'Claim OI-02, inspect #242/#243 against the existing AAK SSOT and measured runtime call graph, then make the smallest parent-only integration change.'
+  command: '.venv/bin/python tools/project_status.py --format json'
 
 aak04_checkpoint:
   task: AAK-04

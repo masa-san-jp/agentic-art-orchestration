@@ -66,6 +66,19 @@ class IssueIntakeTests(unittest.TestCase):
         self.assertEqual("UNQUEUED_NEEDS_SSOT", report["issues"][0]["recommendation"])
         self.assertIn("target_repository", report["issues"][0]["ssot"]["missing"])
 
+    def test_export_only_project_is_known_without_becoming_an_input_repository(self):
+        payload = load_json(FIXTURE)
+        issue = copy.deepcopy(payload["issues"][1])
+        issue["number"] = 996
+        issue["url"] = "https://github.com/masa-san-jp/agentic-art-project/issues/996"
+        issue["repository"] = "masa-san-jp/agentic-art-project"
+        source = {**payload["source"], "repository": payload["repository"]}
+        report = build_report([issue], source, QUEUE)
+        self.assertEqual("REGISTER_BACKLOG", report["issues"][0]["recommendation"])
+        self.assertTrue(report["issues"][0]["ssot"]["target_repository"])
+        manifest = load_yaml(ROOT / "config/repositories.yaml")
+        self.assertNotIn("agentic-art-project", {entry["id"] for entry in manifest["repositories"]})
+
     def test_empty_queue_rule_and_ssot_minimum_are_documented(self):
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
