@@ -3198,7 +3198,7 @@ tasks:
   - id: OI-10
     milestone: DELIVERY-COMPLETION
     title: "Parent #243 PRT-04でprototype stageをdelivery completionへ接続する"
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/243
     target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project]
     agent_terminal: DRAFT_PR_READY
@@ -3211,7 +3211,12 @@ tasks:
     - git diff --check
     human_gate: "delivery completionの検証は進める。Project公開、release、remote default branch変更は別gateを維持する。"
     start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
-    completion: "OI-10実装中。normal/cycle/batch/supervisorのprototype stageとdelivery completionの欠落・hash不一致判定を実装し、親品質ゲートで検証する。"
+    code_status: CODE_VERIFIED
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
+    pull_request_state: OPEN_DRAFT
+    code_candidate: PENDING_FINAL_COMMIT
+    evidence: execution/oi-10-prototype-stage-evidence.json
+    completion: "normal/cycle/supervisor/batchのprototype stage、Production prototype_status、attestation asset参照、delivery completionのPROTOTYPE_OUTPUT欠落判定を実装した。focused 63 tests、親validator、compile、workspace status、diff check、親full 642 tests（既存skip 1）がPASS。prototype失敗は同run ID・project root・validation/resume command付きでINCOMPLETEになる。"
   - id: OI-11
     milestone: QUALIFICATION
     title: "Parent #242 INSP-05でowner qualificationと知識境界を確定する"

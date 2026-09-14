@@ -240,6 +240,19 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
             raise ValueError('COMPLETED_QUERY_CHANGED')
         state['queries'][owner] = query
     b = bindings['agentic-art-production']
+    prototype_command = [b.get('python', sys.executable), str(Path(b['code_root']) / 'tools/build_prototype.py'),
+        '--project-root', str(project), '--format', 'json']
+    prototype = subprocess.run(prototype_command, cwd=b['code_root'], capture_output=True, text=True, timeout=120)
+    if prototype.returncode:
+        state.update(plan_status='PLAN_BUILDING', run_status='INCOMPLETE', stop_reason='PROTOTYPE_BUILD_INCOMPLETE',
+            next_action={'actor': 'agent', 'stage': 'prototype', 'project_root': str(project),
+                'prototype_command': prototype_command,
+                'validation_command': [b.get('python', sys.executable), str(Path(b['code_root']) / 'tools/plan_actionability.py'), '--project-root', str(project)],
+                'resume_command': state.get('resume_command', []),
+                'do': 'Repair only the qualified Production prototype inputs named by the diagnostic, then resume this identical cycle context.'})
+        return
+    state['prototype_stage'] = {'status': 'PASSED', 'command': prototype_command, 'project_root': str(project)}
+    save(run_root / 'cycle.json', state)
     try:
         verified = verify_plan(code_root=b['code_root'], code_commit=b['code_commit'], project_root=project,
             python=b.get('python'), expected=state['plan']['artifacts'] if state['plan'] else None,

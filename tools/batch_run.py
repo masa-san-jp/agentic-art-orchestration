@@ -357,6 +357,12 @@ def _run_project(
             )
             if evidence.get("status") != "PASSED":
                 raise BatchRunError("child exchange did not reach PASSED")
+            prototype_stages = [
+                stage for stage in evidence.get("stages", [])
+                if isinstance(stage, Mapping) and stage.get("stage_id") == "production-prototype"
+            ]
+            if len(prototype_stages) != 1 or prototype_stages[0].get("status") != "PASSED":
+                raise BatchRunError("qualified Production prototype stage did not reach PASSED")
             child_plan_root = child_production_root / "production" / slug
             child_plan_path = child_plan_root / "03_plan" / "production-plan.yaml"
             child_brief_path = research_output_root / "projects" / slug / "05_production" / "production-brief.yaml"
@@ -386,6 +392,7 @@ def _run_project(
                 "project_id": project_id,
                 "candidate_id": str(candidate["candidate_id"]),
                 "status": "PASSED",
+                "prototype_status": "READY",
                 "research_locator": f"run://{batch_run_id}/research/projects/{slug}",
                 "production_locator": f"run://{batch_run_id}/production/{slug}",
                 "production_plan_sha256": plan_hash,
@@ -411,6 +418,7 @@ def _run_project(
                 "project_id": project_id,
                 "candidate_id": str(candidate["candidate_id"]),
                 "status": "FAILED",
+                "prototype_status": "MISSING",
                 "research_locator": f"run://{batch_run_id}/research/projects/{slug}",
                 "production_locator": f"run://{batch_run_id}/production/{slug}",
                 "production_plan_sha256": None,
@@ -430,6 +438,7 @@ def _acceptance_checks(
     report_path: Path,
     requested_count: int,
     expected_tuples: int,
+    project_summaries: list[Mapping[str, Any]] | None = None,
 ) -> tuple[dict[str, bool], dict[str, Any]]:
     production_plans = sorted((output_root / "production").rglob("production-plan.md"))
     g1 = len(production_plans) == requested_count
@@ -488,6 +497,11 @@ def _acceptance_checks(
         and report["duration"]["total_seconds"] is not None
         and report["project_count"] == requested_count
     )
+    projects = project_summaries or []
+    g7 = len(projects) == requested_count and all(
+        isinstance(project, Mapping) and project.get("prototype_status") == "READY"
+        for project in projects
+    )
     checks = {
         "g1_production_plan_count": g1,
         "g2_startable": g2 and len(plan_documents) == requested_count,
@@ -495,6 +509,7 @@ def _acceptance_checks(
         "g4_no_human_authority": g4,
         "g5_agent_recommended_decisions": g5,
         "g6_append_only_report": g6,
+        "g7_prototype_output_ready": g7,
         "no_remote_operations": True,
         "no_child_mutations": True,
         "no_raw_data": True,
@@ -685,7 +700,9 @@ def run_batch(
 
     completed = sum(result["status"] == "PASSED" for result in results)
     failed = len(results) - completed
-    checks, acceptance_detail = _acceptance_checks(output_root, report_path, selection_limit, len(tuples))
+    checks, acceptance_detail = _acceptance_checks(
+        output_root, report_path, selection_limit, len(tuples), project_summaries
+    )
     status = "PASSED" if completed == selection_limit and failed == 0 and all(checks.values()) else "FAILED"
     report_summary = acceptance_detail["report"]
     source_repositories = [

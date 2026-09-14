@@ -1,4 +1,4 @@
-# OI-10 in progress — Parent prototype stage and delivery completion
+# OI-10 complete — Parent prototype stage and delivery completion
 
 OI-06 is complete on Production main at `ba79384daba853b759acaf30fe813f993d9232d9`; its metadata-only evidence is `execution/oi-06-production-preview-evidence.json`.
 
@@ -6,7 +6,7 @@ OI-07 is complete on Production main at merge commit `035492bfd7dc8e79a205411010
 
 OI-08 remains BLOCKED by the pre-existing Project P0004 unlisted JPEGs and unknown attribution. The candidate PR #33 remains draft; do not delete the files, weaken the validator, or invent rights/creator/consent.
 
-OI-10 is now active from parent commit `2d751b5d96c2ea67202ba33d7892b04fe421898d`. The task connects the qualified Production `prototype_status` and attestation asset to normal, knowledge-cycle/supervisor, batch, and delivery completion paths. Missing or hash-mismatched output must remain `INCOMPLETE` with an exact repair command and same-run resume data.
+OI-10 started from parent commit `2d751b5d96c2ea67202ba33d7892b04fe421898d` and is complete on the draft parent PR #246. The implementation connects the qualified Production `prototype_status` and attestation asset to normal, knowledge-cycle/supervisor, batch, and delivery completion paths. Missing or hash-mismatched output remains `INCOMPLETE` with an exact repair command and same-run resume data. The final candidate SHA and metadata-only evidence are recorded in `execution/state.yaml`, `execution/task-queue.yaml`, and `execution/oi-10-prototype-stage-evidence.json`.
 
 Resume command:
 
@@ -14,7 +14,13 @@ Resume command:
 .venv/bin/python -m unittest tests.test_delivery_completion tests.test_run tests.test_batch_run -v
 ```
 
-After implementation, run the parent validator, focused/full parent tests, workspace status, and diff check. Keep public publication, release, physical action, and P0004 attribution unresolved. No private raw data or credentials are included in the execution evidence.
+The parent validator, focused 63-test suite, compile, workspace status, diff check, and full 642-test suite passed with one existing skip. The Project fixture was restored at the pre-recovery-plan commit `ebf4ef3377652e9d688fb7b226a1e10276c65b72` because the current main line contains eight recovered plans while the fixture contract expects the original single P0004 baseline. Keep public publication, release, physical action, and P0004 attribution unresolved. No private raw data or credentials are included in the execution evidence.
+
+Resume at OI-08 only after the Project owner supplies explicit attribution/rights evidence or an owner-approved canonical re-projection for P0004. The current candidate PR #33 remains draft and OI-09, OI-11, and OI-12 cannot pass their dependencies while that blocker remains. First read-only operation:
+
+```bash
+git -C /private/tmp/oi08-project status --short --branch
+```
 
 # AP-05 completed — next AP-06
 

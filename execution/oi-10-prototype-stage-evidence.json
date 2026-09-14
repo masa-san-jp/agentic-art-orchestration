@@ -1,0 +1,81 @@
+{
+  "contract_version": "oi-10-prototype-stage/v1",
+  "task": "OI-10",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/243",
+  "repository": "agentic-art-orchestration",
+  "start_point": "2d751b5d96c2ea67202ba33d7892b04fe421898d",
+  "code_candidate": "PENDING_FINAL_COMMIT",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/246",
+  "status": "CODE_VERIFIED",
+  "protocol": "inspect -> claim -> lock -> edit -> test -> diff -> record",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "result": "PASS",
+      "observation": "The normal run executes the qualified Production build_prototype stage immediately after plan generation and records the stage in the run report."
+    },
+    {
+      "id": "AC2",
+      "result": "PASS",
+      "observation": "The knowledge-cycle/supervisor path executes the pinned Production prototype command before owner plan verification and checkpoints the result."
+    },
+    {
+      "id": "AC3",
+      "result": "PASS",
+      "observation": "The batch path requires exactly one PASSED production-prototype exchange stage per project and exposes g7_prototype_output_ready in the closed batch contract."
+    },
+    {
+      "id": "AC4",
+      "result": "PASS",
+      "observation": "delivery-completion/v1 requires prototype_status READY for a single plan and for every batch project, returning PROTOTYPE_OUTPUT when absent or unqualified."
+    },
+    {
+      "id": "AC5",
+      "result": "PASS",
+      "observation": "Prototype failure persists project_root, prototype command, actionability validation command, and same-run resume command; manual or fixture fallback is forbidden."
+    },
+    {
+      "id": "AC6",
+      "result": "PASS",
+      "observation": "Qualified plan verification preserves prototype asset paths under 03_plan/media/prototype/ for the attestation boundary."
+    }
+  ],
+  "contracts": [
+    "production-prototype exchange stage",
+    "plan-actionability/v1",
+    "batch-run/v1",
+    "delivery-completion/v1"
+  ],
+  "checks": {
+    "focused_tests": "PASS: 63 tests",
+    "parent_validator": "PASS: .venv/bin/python tools/validate.py --check",
+    "parent_full_suite": "PASS: 642 tests, 1 existing skip",
+    "workspace_status": "PASS: all child checkouts clean",
+    "compile": "PASS",
+    "diff_check": "PASS"
+  },
+  "fixture_observation": "The repo-local Project fixture was recreated from ebf4ef3377652e9d688fb7b226a1e10276c65b72, the valid pre-recovery-plan baseline with one P0004 plan. The current Project main line is not used as a clean fixture because its P0004 JPEGs intentionally remain unresolved by OI-08.",
+  "security": {
+    "private_raw": "NOT_PRESENT",
+    "restricted_data": "NOT_PRESENT",
+    "credentials": "NOT_PRESENT",
+    "conversation_text": "NOT_PRESENT",
+    "absolute_local_paths_in_evidence": "NOT_PRESENT"
+  },
+  "external_artifacts": {
+    "drive": "NONE",
+    "issue_or_pr_mutation": "parent draft PR #246 updated only",
+    "public_projection": "NOT_PERFORMED",
+    "release": "NOT_PERFORMED"
+  },
+  "feedback": {
+    "explicit": [],
+    "inferred": []
+  },
+  "unresolved": [
+    "Project OI-08 remains blocked by pre-existing P0004 unlisted JPEGs and unknown attribution.",
+    "OI-09, OI-11, and OI-12 remain pending behind the OI-08 dependency.",
+    "Production #10 remains an open persistent requirement SSOT.",
+    "Self Model #82 remains human-blocked; no personal profile data was read or moved."
+  ]
+}

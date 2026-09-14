@@ -915,6 +915,48 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                                             str(persistent_production_root / "production" / project_slug)], python)
         record("plan", plan)
         plan_path = persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"
+        prototype = _run_child(
+            production_root,
+            ["tools/build_prototype.py", "--project-root",
+             str(persistent_production_root / "production" / project_slug), "--format", "json"],
+            python,
+            allow_failure=True,
+        )
+        record("prototype", prototype)
+        if prototype.get("status") not in {"PASSED", "ALREADY_DONE"}:
+            report = {
+                "run_id": run_id,
+                "status": "AT_PRODUCTION",
+                "plan_status": "PLAN_BUILDING",
+                "completion_status": "INCOMPLETE",
+                "knowledge_status": "PENDING",
+                "projection_status": "NOT_RUN",
+                "run_status": "INCOMPLETE",
+                "steps": steps,
+                "plan": str(plan_path),
+                "production_project": str(plan_path.parent.parent),
+                "stop_reason": "PROTOTYPE_BUILD_INCOMPLETE",
+                "delivery_contract": dict(delivery_contract),
+                "next_action": {
+                    "actor": "agent",
+                    "stage": "prototype",
+                    "project_root": str(plan_path.parent.parent),
+                    "do": [
+                        "Read the qualified Production prototype diagnostic and preserve its explicit missing inputs.",
+                        "Run the prototype validation command after repairing only the accepted project inputs.",
+                        "Resume this same run ID so the prototype stage is rerun before plan verification.",
+                    ],
+                    "prototype_command": [python, str(production_root / "tools/build_prototype.py"),
+                                           "--project-root", str(plan_path.parent.parent), "--format", "json"],
+                    "validation_command": [python, str(production_root / "tools/plan_actionability.py"),
+                                           "--project-root", str(plan_path.parent.parent)],
+                    "resume_command": resume_command,
+                    "manual_fallback": "FORBIDDEN: prototype failure is incomplete; do not substitute a manual or fixture output.",
+                },
+            }
+            report["delivery_completion"] = completion(report, delivery_contract)
+            (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            return report
         production_source_commit = _head(production_root)
         try:
             plan_verification = verify_plan(code_root=production_root, code_commit=production_source_commit,

@@ -46,7 +46,7 @@ class AutonomousPlanContractTests(unittest.TestCase):
             "plan_status": "PLAN_READY",
             "plan": {
                 "artifacts": {"03_plan/production-plan.md": "a" * 64},
-                "owner_verification": {"plan_status": "PLAN_READY"},
+                "owner_verification": {"plan_status": "PLAN_READY", "prototype_status": "READY"},
             },
             "knowledge_status": "COMMITTED",
             "projection_status": "SKIPPED",

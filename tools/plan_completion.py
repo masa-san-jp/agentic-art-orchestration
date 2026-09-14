@@ -82,6 +82,11 @@ def verify_plan(*, code_root, code_commit, project_root, python=None, expected=N
     checked_code(code, code_commit)
     if snapshot() != before:
         raise PlanCompletionError('PLAN_CHANGED_DURING_VALIDATION')
+    prototype_assets = sorted(
+        path for path in before
+        if path.startswith('03_plan/media/prototype/')
+    )
     return {'plan_status': 'PLAN_READY', 'production_code_commit': code_commit,
             'plan': str(plan), 'artifacts': before, 'owner_verification': result,
+            'prototype_assets': prototype_assets,
             'external_effects_authorized': False}

@@ -16,6 +16,7 @@
       "items": {
         "enum": [
           "PRODUCTION_PLAN",
+          "PROTOTYPE_OUTPUT",
           "KNOWLEDGE_COMMIT",
           "PROJECT_LOCAL_DELIVERY",
           "PROJECT_COMMITTED_DELIVERY"
