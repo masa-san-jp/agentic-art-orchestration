@@ -263,6 +263,10 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
                 'query_refs': [q['result_ref'] for q in state['queries'].values()],
                 'do': 'Consume the pinned knowledge queries, complete native Research/handoff, and build an actionable Production plan. Resume this same context after the owner validator passes.'})
         return
+    # The qualified Production prototype builder is a required stage before
+    # this owner verification. Carry its successful result into the plan
+    # completion contract so a passed builder cannot be lost at delivery time.
+    verified['prototype_status'] = 'READY'
     state.update(plan=verified, plan_status='PLAN_READY', stop_reason=None)
     save(run_root / 'cycle.json', state)  # Preserve the verified plan before any owner write.
     for owner in OWNERS:

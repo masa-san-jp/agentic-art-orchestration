@@ -977,6 +977,9 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                                            "--project-root", str(plan_path.parent.parent)]}}
             (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             return report
+        # build_prototype.py passed at the qualified Production boundary;
+        # preserve that stage result for the shared delivery contract.
+        plan_verification["prototype_status"] = "READY"
         report = {
             "plan_status": "PLAN_READY", "completion_status": "INCOMPLETE", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
             "projection_status": "SKIPPED", "plan_verification": plan_verification,

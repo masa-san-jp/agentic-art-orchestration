@@ -503,7 +503,7 @@ class ProductionHistoryTests(unittest.TestCase):
                 patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
                 patch.object(MODULE, "verify_plan", return_value={
                     "plan_status": "PLAN_READY",
-                    "owner_verification": {"plan_status": "PLAN_READY", "prototype_status": "READY"},
+                    "owner_verification": {"plan_status": "PLAN_READY"},
                 }), \
                 patch.object(MODULE, "_handoff_arguments", return_value=[
                     "--generated-at", "2026-08-20T00:00:00+09:00", "--research-commit", "a" * 40,
