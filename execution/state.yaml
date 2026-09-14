@@ -1,12 +1,14 @@
-version: 301
-updated_at: '2026-09-14T17:34:44+09:00'
+version: 302
+updated_at: '2026-09-14T17:42:18+09:00'
 active_task: OI-08
 active_repository: agentic-art-project
 lease:
-  status: active
-  owner: codex-open-issues-20260914
+  status: available
+  owner: unassigned
   acquired_at: '2026-09-14T17:34:44+09:00'
   expires_at: '2026-09-14T23:34:44+09:00'
+  released_at: '2026-09-14T17:42:18+09:00'
+  release_reason: 'OI-10 DONE; OI-08 is the next checkpoint but remains BLOCKED by Project P0004 attribution and rights evidence.'
   lane: AUTONOMY
   execution_id: OI-10:20260914
   scope:
