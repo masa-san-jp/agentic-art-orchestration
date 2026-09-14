@@ -36,7 +36,7 @@ class RetrievalTests(unittest.TestCase):
         )
         for evidence in result["evidence"]:
             self.assertEqual("art-history", evidence["repository"])
-            self.assertEqual("de5a3c3ef2d1cb13f84e522ee73211d70e214f65", evidence["source_commit"])
+            self.assertEqual(manifest()["repositories"][1]["observed_commit"], evidence["source_commit"])
             self.assertTrue(evidence["locator"])
         self.assertFalse(result["interaction_blocking"])
         self.assertEqual([], result["retrieval_operations"])

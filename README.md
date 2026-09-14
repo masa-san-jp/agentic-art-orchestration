@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-14T19:18:49+09:00`.
+Source updated at: `2026-09-15T01:21:02+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 1 | 0 | 1 | 191 | 193 |
+| 0 | 0 | 0 | 1 | 192 | 193 |
 
-Current task: `OI-12`; repository: `agentic-art-orchestration`; checkpoint: `OI-11`.
-Next action: Integrate the qualified parent candidate, run the theme-free Project-local normal entry, and verify final native receipts and delivery completion.
-Ready: `OI-12`.
-Next task: `OI-12`.
+Current task: `OI-13`; repository: `self-model`; checkpoint: `OI-12`.
+Next action: Keep Self Model #82 in the human lane; do not read, copy, move, delete, or dry-run personal profile data until destination_root, consent_scope, retention_decision and explicit approval are recorded.
+Ready: none.
+Next task: `null`.
 Blocked:
 - `OI-13`: destination_root、consent_scope、retention_decisionと明示的なhuman approvalがIssueに記録されるまで、実個人profile移設は開始できない。
 

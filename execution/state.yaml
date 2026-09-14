@@ -1,16 +1,16 @@
-version: 305
-updated_at: '2026-09-14T19:18:49+09:00'
-active_task: OI-12
-active_repository: agentic-art-orchestration
+version: 306
+updated_at: '2026-09-15T01:21:02+09:00'
+active_task: OI-13
+active_repository: self-model
 lease:
-  status: held
-  owner: codex-open-issues
+  status: available
+  owner: null
   acquired_at: '2026-09-14T18:18:38+09:00'
   expires_at: '2026-09-15T01:18:49+09:00'
-  released_at: null
-  release_reason: null
-  lane: AUTONOMY
-  execution_id: OI-11:20260914
+  released_at: '2026-09-15T01:21:02+09:00'
+  release_reason: 'OI-12 completed; OI-13 remains human-gated and blocked.'
+  lane: HUMAN-GATE
+  execution_id: OI12FINAL20260915L
   scope:
     repository: agentic-art-orchestration
     branch: codex/open-issues-autonomous-20260914
@@ -33,25 +33,27 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: OI-11
+  task: OI-12
   repository: agentic-art-orchestration
   status: DONE
-  result: '全6 manifest ownerのexact pin、clean/MATCHED、contract、native quality gate、knowledge receipt境界、Project receiver hashを照合した。'
-  start_point: add2539a52a9066a0bc1d59944058fc6764e6f85
-  code_candidate: null
-  pull_request: null
+  result: '現行6owner pin、親643 tests、Research/Production native knowledge receipt、Production prototype、Project P0009 receiver、delivery_completion=COMPLETEDを同一provenance chainで照合した。'
+  start_point: 7dcdc19aaca396ea8275194b68eac6d890d0dc75
+  code_candidate: fd4f29e3e581a724b2e4dda2a57617d1501d1245
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
   merge_commit: null
-  evidence: execution/oi-11-owner-qualification-evidence.json
+  evidence: execution/oi-12-integration-evidence.json
   checks:
     parent_validator: 'PASS: .venv/bin/python tools/validate.py --check'
-    project_status: 'PASS: 191 DONE, 1 READY, 1 BLOCKED; README projection current'
-    audit: 'PASS: .venv/bin/python tools/audit.py; FINDINGS with 1 nonblocking portfolio warning'
-    child_quality_gates: 'PASS: all six owner gate results PASS across immutable full-manifest and Marketing recheck reports'
-    receiver_hash: 'PASS: Project f583df9, 8 records, receiver manifest 3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147'
+    parent_full_suite: 'PASS: 643 tests, 1 skipped'
+    project_status: 'PASS after queue/state synchronization'
+    audit: 'PASS: nonblocking FINDINGS only; 3 findings retained'
+    child_quality_gates: 'PASS: all six current owner pins and native gates'
+    project_validator: 'PASS: Project f583df9 validator and catalog sync'
+    receiver_hash: 'PASS: Project P0009 lineage/receiver verified'
     diff_check: 'PASS: git diff --check'
   unresolved:
-    - 'OI-10 parent candidate remains OPEN_DRAFT; merge is performed in OI-12 after final qualification.'
-    - 'OI-12 must produce final new-run knowledge receipts and delivery_completion.status=COMPLETED.'
+    - 'Parent PR #246 merge and post-merge remote main read-back remain to be recorded.'
+    - 'Issues #242, #243, #77, #31 remain open until parent merge and evidence read-back; close is the next external operation.'
     - 'Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision and explicit human approval.'
     - 'Production #10 remains open as a persistent requirement SSOT.'
 
@@ -75,11 +77,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-11
+last_completed_task: OI-12
 resume_from:
-  task: OI-12
-  repository: agentic-art-orchestration
-  action: 'Integrate the qualified parent candidate, run the theme-free Project-local normal entry, and verify final native receipts and delivery completion.'
+  task: OI-13
+  repository: self-model
+  action: 'Keep Self Model #82 in the human lane; do not read, copy, move, delete, or dry-run personal profile data until destination_root, consent_scope, retention_decision and explicit approval are recorded.'
   command: '.venv/bin/python tools/validate.py --check'
 
 oi07_progress:

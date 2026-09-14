@@ -2934,3 +2934,15 @@ Claim OI-02, run `.venv/bin/python tools/project_status.py --format json`, and i
 ### Next exact action
 
 Claim OI-03, run `.venv/bin/python tools/project_status.py --format json`, then validate the merged Research #109 candidate against the qualified Production prototype contract.
+
+## 2026-09-15 — OI-12 implementation and integration evidence recorded
+
+OI-12の実装とローカル統合検証を完了した。親のqualified pin fixture、retrieval index、snapshotを現行6owner pinへ生成経路で更新し、親full suiteは643 tests / 1 skip / OKとなった。validator、status、offline audit、security、interaction E2E、offline fixture、diff checkもPASSである。監査は非blocking finding 3件（freshness 2件と親branchのpush前状態）を保持し、正常値へ変換していない。
+
+最終runは`OI12FINAL20260915L`。テーマ・slug・title未指定でResearch候補、Production plan、決定論的SVG prototype、Project P0009投影、receiver/lineage検証まで進み、Research/Productionのnative knowledge receiptを保存した。`delivery_completion.status=COMPLETED`、`target=project-local`、local receiver `VERIFIED`を確認した。prototype assetはopaque locatorとsha256を[`execution/oi-12-integration-evidence.json`](oi-12-integration-evidence.json)へ記録している。Project P0004の`UNKNOWN_ATTRIBUTION`は保持した。
+
+現行owner pinはself-model `96aaf6e`、art-history `97b5325`、marketing `eed3aa1`、Research `a4df0e5`、Production `eec3927`、Viewer `0c198ec`で、Project receiverは`f583df9`。子owner gatesとProject validator/catalog sync/full 53 testsはPASS。親の実装候補は`fd4f29e3e581a724b2e4dda2a57617d1501d1245`、PR [#246](https://github.com/masa-san-jp/agentic-art-orchestration/pull/246)はmerge前のOPEN_DRAFTである。
+
+この時点での次操作は、branchを通常fast-forward pushし、PR #246のrequired checksを確認してready化・mergeすること。merge後にremote mainをread-backし、ACを再確認したうえでProduction #77、Project #31、親 #242、親 #243をcloseする。#109、#76、#392は既にCLOSED、Production #10は要件SSOTとしてOPEN維持、Self Model #82は`destination_root`・`consent_scope`・`retention_decision`・明示承認待ちのBLOCKED human laneである。force push、release、公開範囲変更、実個人profile移設は実施していない。
+
+明示feedbackは、synthetic explicit profileとproject-local targetの実行入力である。inferred feedbackは候補の仮説として保持し、ユーザー事実や同意へ昇格していない。外部artifactはcreate-only・opaque referenceの境界を維持した。
