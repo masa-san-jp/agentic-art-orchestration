@@ -1,16 +1,16 @@
-version: 302
-updated_at: '2026-09-14T17:42:18+09:00'
-active_task: OI-08
+version: 303
+updated_at: '2026-09-14T18:04:00+09:00'
+active_task: OI-09
 active_repository: agentic-art-project
 lease:
-  status: available
-  owner: unassigned
-  acquired_at: '2026-09-14T17:34:44+09:00'
-  expires_at: '2026-09-14T23:34:44+09:00'
-  released_at: '2026-09-14T17:42:18+09:00'
-  release_reason: 'OI-10 DONE; OI-08 is the next checkpoint but remains BLOCKED by Project P0004 attribution and rights evidence.'
+  status: held
+  owner: codex-open-issues
+  acquired_at: '2026-09-14T18:04:00+09:00'
+  expires_at: '2026-09-15T00:04:00+09:00'
+  released_at: null
+  release_reason: null
   lane: AUTONOMY
-  execution_id: OI-10:20260914
+  execution_id: OI-09:20260914
   scope:
     repository: agentic-art-orchestration
     branch: codex/open-issues-autonomous-20260914
@@ -33,26 +33,25 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: OI-10
-  repository: agentic-art-orchestration
+  task: OI-08
+  repository: agentic-art-project
   status: DONE
-  result: 'Parent prototype stage is connected to normal, knowledge-cycle/supervisor, batch and delivery completion paths; failed prototype output remains incomplete with resumable evidence.'
-  start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
-  code_candidate: f144d908d2a2713f5c962f51590bf019e734b622
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
-  evidence: execution/oi-10-prototype-stage-evidence.json
+  result: 'Project receiver now accepts attested prototype media and hash-bound README-only supplemental media; the pre-existing P0004 unlisted-media blocker is resolved without changing canonical plan bytes, hashes, or lineage.'
+  start_point: 818bcd57cf1c95ddfad2dc093f9c6ad23b835421
+  code_candidate: e5d15f4661869c0285b5459eebf2fcded71acb7a
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/33
+  merge_commit: 047a9976b0dea817758d17048891fc626d82c722
+  evidence: execution/oi-08-project-receiver-evidence.json
   checks:
-    parent_validator: 'PASS: .venv/bin/python tools/validate.py --check'
-    focused_suite: 'PASS: 63 tests'
-    parent_full_suite: 'PASS: 642 tests, 1 existing skip'
-    workspace_status: 'PASS: all child checkouts clean'
-    prototype_stage: 'PASS: normal and knowledge-cycle/supervisor boundaries; batch g7 acceptance'
+    owner_validator: 'PASS: python3 tools/validate.py --check'
+    owner_catalog_sync: 'PASS: python3 tools/catalog_sync.py --check'
+    owner_full_suite: 'PASS: 52 tests'
     diff_check: PASS
-    compile: PASS
+    remote_ci: 'PASS: runs 34825590444 and 34825595108'
   unresolved:
-    - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
-    - 'Project #31 candidate remains blocked by pre-existing P0004 unlisted JPEGs and unknown attribution'
-    - 'Issues #242, #243, #77 and #31 remain open until the full cross-repository acceptance evidence and final integration are complete'
+    - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION by design; no creator or origin was inferred'
+    - 'Issue #31 remains open until OI-12 final integration evidence is complete'
+    - 'Issues #242, #243 and #77 remain open until the full cross-repository acceptance evidence and final integration are complete'
     - 'Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision and explicit human approval'
     - 'Production #10 remains open as a persistent requirement SSOT'
     - 'No release was created because no release target or version was specified'
@@ -77,12 +76,12 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-10
+last_completed_task: OI-08
 resume_from:
-  task: OI-08
-  repository: agentic-art-project
-  action: 'Read back the owner validator failure for P0004 and obtain explicit attribution/rights evidence or an owner-approved canonical re-projection before resuming the Project receiver task.'
-  command: 'gh pr view 33 --repo masa-san-jp/agentic-art-project --json state,headRefName,statusCheckRollup'
+  task: OI-09
+  repository: agentic-art-orchestration
+  action: 'Inspect Issue #242 INSP-04 and the merged Project receiver contract, then implement the smallest provenance-preserving introduction update with owner and parent gates.'
+  command: 'gh issue view 242 --repo masa-san-jp/agentic-art-orchestration --json state,title,body,comments'
 
 oi07_progress:
   task: OI-07
@@ -95,6 +94,27 @@ oi07_progress:
   merge_commit: 035492bfd7dc8e79a205411010f289c1c72dde29
   remote_ci: 'PASS: push/PR Python 3.11 and 3.12; runs 34784262150, 34784274290'
   first_resume_operation: 'Update parent OI-07 evidence, then claim OI-10.'
+
+oi08_progress:
+  task: OI-08
+  repository: agentic-art-project
+  start_point: 818bcd57cf1c95ddfad2dc093f9c6ad23b835421
+  status: DONE
+  code_candidate: e5d15f4661869c0285b5459eebf2fcded71acb7a
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/33
+  pull_request_state: MERGED
+  merge_commit: 047a9976b0dea817758d17048891fc626d82c722
+  evidence: execution/oi-08-project-receiver-evidence.json
+  acceptance: 'AC1..AC5 PASS; P0004 plan bytes, existing hashes, Production attestation, and lineage preserved.'
+  checks:
+    owner_validator: 'PASS: python3 tools/validate.py --check'
+    catalog_sync: 'PASS: python3 tools/catalog_sync.py --check'
+    owner_full_suite: 'PASS: 52 tests'
+    diff_check: 'PASS: git diff --check'
+    remote_ci: 'PASS: runs 34825590444 and 34825595108'
+  blocker_resolution: 'P0004 README-only JPEGs are bound by Project supplemental media contract; Production plan attestation remains unchanged.'
+  unresolved: 'P0004 attribution remains UNKNOWN_ATTRIBUTION by design; Issue #31 close is deferred to OI-12 final integration evidence.'
+  first_resume_operation: 'Inspect Issue #242 INSP-04 and the merged Project receiver before implementing OI-09.'
 
 oi10_progress:
   task: OI-10

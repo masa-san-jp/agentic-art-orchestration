@@ -1,0 +1,41 @@
+{
+  "task_id": "OI-08",
+  "issue": "https://github.com/masa-san-jp/agentic-art-project/issues/31",
+  "repository": "masa-san-jp/agentic-art-project",
+  "status": "DONE",
+  "candidate_commit": "e5d15f4661869c0285b5459eebf2fcded71acb7a",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/33",
+  "pull_request_state": "MERGED",
+  "merge_commit": "047a9976b0dea817758d17048891fc626d82c722",
+  "remote_main": "047a9976b0dea817758d17048891fc626d82c722",
+  "acceptance": {
+    "AC1": "PASS: media/prototype regression, receiver, validator, catalog sync, and local delivery coverage",
+    "AC2": "PASS: missing, hash mismatch, ignored extension, and unlisted media remain fail-closed",
+    "AC3": "PASS: public-project.yaml allowed extensions and .gitignore policy are checked",
+    "AC4": "PASS: simulated preview and private 04_prototype/outputs boundary are documented",
+    "AC5": "PASS: existing P0001-P0008 plan bytes, plan hashes, Production attestation hashes, and lineage records are unchanged"
+  },
+  "additional_repair": {
+    "finding": "P0004 README-only sample JPEGs from merged Project PR #32 were not part of the Production plan attestation and caused unlisted public media/PLAN_NOT_CANONICAL.",
+    "resolution": "Added project-supplemental-public-media/v1 for README-only documentation media. It binds exact path, SHA-256, byte length, MIME, PUBLIC_CLEARED rights reference, existing public record commit, and README-only linkage without extending the Production attestation.",
+    "p0004_source_commit": "9421b0019ea84064c5e6828bebd3b8edebee4e0a"
+  },
+  "checks": {
+    "catalog_sync": "PASS: python3 tools/catalog_sync.py --check",
+    "validator": "PASS: python3 tools/validate.py --check",
+    "unit_suite": "PASS: 52 tests",
+    "diff_check": "PASS: git diff --check",
+    "remote_ci": "PASS: runs 34825590444 and 34825595108"
+  },
+  "lineage": "P0004 remains UNKNOWN_ATTRIBUTION by design; no creator or origin was inferred from Git authorship.",
+  "sensitive_information": "none; no credentials, private raw data, conversation, or local absolute path was stored",
+  "external_artifact": "none; no Drive or other external artifact was created",
+  "feedback": {
+    "explicit": "User requested autonomous resolution of the implementation-plan stop condition.",
+    "inferred": "none"
+  },
+  "unresolved": [
+    "Issue #31 remains open until OI-12 records the final cross-repository integration and close evidence.",
+    "P0004 attribution remains unknown and is not a blocker for this receiver contract."
+  ]
+}

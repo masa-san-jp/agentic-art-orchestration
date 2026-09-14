@@ -3164,7 +3164,7 @@ tasks:
   - id: OI-08
     milestone: PROJECT-RECEIVER
     title: "Project #31でprototype asset付きrecordを受理する"
-    status: BLOCKED
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/31
     target_repositories: [agentic-art-project]
     agent_terminal: DRAFT_PR_READY
@@ -3176,14 +3176,17 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "Project receiverのlocal検証は進める。catalog remote write、公開範囲変更、既存record再投影は承認対象として残す。"
-    code_candidate: 818bcd57cf1c95ddfad2dc093f9c6ad23b835421
+    code_candidate: e5d15f4661869c0285b5459eebf2fcded71acb7a
     pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/33
-    blocker: "Project origin/mainの既存P0004にattestation未記載のJPEGと帰属不明状態があり、owner validatorがunlisted public media/PLAN_NOT_CANONICALで失敗する。削除、validator弱体化、権利・creator・同意の捏造では解消できない。"
-    completion: "candidate PR #33はbaseline P0004のowner gate失敗を確認したためdraftのまま保持。明示的な権利・帰属根拠またはowner承認済み再投影が揃うまでmergeしない。"
+    merge_commit: 047a9976b0dea817758d17048891fc626d82c722
+    evidence: execution/oi-08-project-receiver-evidence.json
+    code_status: CODE_VERIFIED
+    integration_status: MERGED
+    completion: "P0004のREADME専用JPEGをProduction attestationへ混ぜず、Projectのproject-supplemental-public-media/v1で公開commit、path、hash、MIME、サイズ、権利参照、README専用リンクを固定した。validator、catalog sync、52 tests、diff check、remote CI 2件がPASSし、PR #33をmergeした。既存P0001-P0008のplan bytes、hash、lineageは変更していない。"
   - id: OI-09
     milestone: PROJECT-RECEIVER
     title: "Project #242 INSP-04で作品紹介とlineageを同一revisionへ束ねる"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-project]
     agent_terminal: DRAFT_PR_READY
