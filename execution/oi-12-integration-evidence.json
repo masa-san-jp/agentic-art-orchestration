@@ -45,12 +45,18 @@
     "merge_commit": "29889b923911edd1de889477d095d4543f1042ab",
     "remote_main": "29889b923911edd1de889477d095d4543f1042ab"
   },
+  "post_merge_evidence": {
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/247",
+    "pull_request_state": "MERGED",
+    "merge_commit": "f3bb66e9ba1adba9907ca1f77f5ac994b79190a2",
+    "remote_main": "f3bb66e9ba1adba9907ca1f77f5ac994b79190a2"
+  },
   "checks": {
     "parent_validator": {"command": ".venv/bin/python tools/validate.py --check", "status": "PASS"},
     "parent_full_suite": {"command": ".venv/bin/python -m unittest discover -s tests -v", "status": "PASS", "tests": 643, "skipped": 1},
     "offline_fixture": {"command": ".venv/bin/python tests/fixtures/build_fixture.py --check", "status": "PASS"},
     "status": {"command": ".venv/bin/python tools/status.py --check --offline-fixture", "status": "PASS"},
-    "audit": {"command": ".venv/bin/python tools/audit.py --check --offline-fixture", "status": "PASS_WITH_NONBLOCKING_FINDINGS", "finding_count": 3},
+    "audit": {"command": ".venv/bin/python tools/audit.py --check --offline-fixture", "status": "PASS_WITH_NONBLOCKING_FINDINGS", "finding_count": 2},
     "security": {"command": ".venv/bin/python tools/security.py --offline-fixture", "status": "PASS"},
     "interaction": {"command": ".venv/bin/python tools/interaction_e2e.py --check", "status": "PASS"},
     "project": {"validator": "PASS", "catalog_sync": "PASS", "full_suite": "PASS", "tests": 53},
