@@ -3214,7 +3214,7 @@ tasks:
     code_status: CODE_VERIFIED
     pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
     pull_request_state: OPEN_DRAFT
-    code_candidate: PENDING_FINAL_COMMIT
+    code_candidate: f144d908d2a2713f5c962f51590bf019e734b622
     evidence: execution/oi-10-prototype-stage-evidence.json
     completion: "normal/cycle/supervisor/batchのprototype stage、Production prototype_status、attestation asset参照、delivery completionのPROTOTYPE_OUTPUT欠落判定を実装した。focused 63 tests、親validator、compile、workspace status、diff check、親full 642 tests（既存skip 1）がPASS。prototype失敗は同run ID・project root・validation/resume command付きでINCOMPLETEになる。"
   - id: OI-11

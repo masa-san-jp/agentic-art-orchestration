@@ -19,7 +19,7 @@ The parent validator, focused 63-test suite, compile, workspace status, diff che
 Resume at OI-08 only after the Project owner supplies explicit attribution/rights evidence or an owner-approved canonical re-projection for P0004. The current candidate PR #33 remains draft and OI-09, OI-11, and OI-12 cannot pass their dependencies while that blocker remains. First read-only operation:
 
 ```bash
-git -C /private/tmp/oi08-project status --short --branch
+gh pr view 33 --repo masa-san-jp/agentic-art-project --json state,headRefName,statusCheckRollup
 ```
 
 # AP-05 completed — next AP-06

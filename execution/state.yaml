@@ -1,7 +1,7 @@
 version: 301
 updated_at: '2026-09-14T17:34:44+09:00'
-active_task: OI-10
-active_repository: agentic-art-orchestration
+active_task: OI-08
+active_repository: agentic-art-project
 lease:
   status: active
   owner: codex-open-issues-20260914
@@ -36,7 +36,7 @@ checkpoint:
   status: DONE
   result: 'Parent prototype stage is connected to normal, knowledge-cycle/supervisor, batch and delivery completion paths; failed prototype output remains incomplete with resumable evidence.'
   start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
-  code_candidate: PENDING_FINAL_COMMIT
+  code_candidate: f144d908d2a2713f5c962f51590bf019e734b622
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
   evidence: execution/oi-10-prototype-stage-evidence.json
   checks:
@@ -80,7 +80,7 @@ resume_from:
   task: OI-08
   repository: agentic-art-project
   action: 'Read back the owner validator failure for P0004 and obtain explicit attribution/rights evidence or an owner-approved canonical re-projection before resuming the Project receiver task.'
-  command: 'git -C /private/tmp/oi08-project status --short --branch'
+  command: 'gh pr view 33 --repo masa-san-jp/agentic-art-project --json state,headRefName,statusCheckRollup'
 
 oi07_progress:
   task: OI-07
@@ -100,7 +100,7 @@ oi10_progress:
   start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
   status: DONE
   first_resume_operation: 'Record the verified prototype stage and delivery completion evidence, then preserve OI-08 as the next blocked resume point.'
-  code_candidate: PENDING_FINAL_COMMIT
+  code_candidate: f144d908d2a2713f5c962f51590bf019e734b622
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
   evidence: execution/oi-10-prototype-stage-evidence.json
 
