@@ -12,6 +12,31 @@ TARGETS = {'internal', 'project-local', 'project-committed'}
 CONTRACT_VERSION = 'delivery-contract/v1'
 
 
+def _prototype_status(value):
+    """Read only the qualified owner result; worker success is insufficient."""
+    if not isinstance(value, dict):
+        return None
+    direct = value.get('prototype_status')
+    if isinstance(direct, str):
+        return direct
+    for key in ('owner_verification', 'plan_verification'):
+        nested = value.get(key)
+        if isinstance(nested, dict):
+            status = _prototype_status(nested)
+            if status is not None:
+                return status
+    return None
+
+
+def _prototype_ready(state):
+    """Require every delivered plan to carry the Production prototype result."""
+    projects = state.get('projects')
+    if isinstance(projects, list):
+        return bool(projects) and all(_prototype_status(project) == 'READY' for project in projects)
+    plan = state.get('plan') if isinstance(state.get('plan'), dict) else state.get('plan_verification')
+    return _prototype_status(plan) == 'READY'
+
+
 def validate_contract(value):
     """Return closed-schema and profile-independent contract findings."""
     if not isinstance(value, dict):
@@ -91,9 +116,11 @@ def completion(state, contract):
                        for project in state.get('projects', []))):
             missing.append('PRODUCTION_PLAN')
     else:
-        plan=state.get('plan')
+        plan = state.get('plan') if isinstance(state.get('plan'), dict) else state.get('plan_verification')
         if state.get('plan_status')!='PLAN_READY' or not isinstance(plan,dict) or not plan.get('artifacts') or plan.get('owner_verification',{}).get('plan_status')!='PLAN_READY':
             missing.append('PRODUCTION_PLAN')
+    if not _prototype_ready(state):
+        missing.append('PROTOTYPE_OUTPUT')
     if state.get('knowledge_status')!='COMMITTED':
         missing.append('KNOWLEDGE_COMMIT')
     if contract['target']!='internal':

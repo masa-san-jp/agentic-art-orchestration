@@ -44,9 +44,10 @@ from pathlib import Path
 p=Path(sys.argv[sys.argv.index('--project-root')+1])
 a=json.loads((p/'03_plan/production-plan.yaml').read_text())
 ok=(p/'03_plan/production-plan.md').read_text()==a['canonical_text'] and (p/'03_plan/media/board.svg').read_text()==a['asset']
-print(json.dumps({'contract_version':'plan-actionability/v1','plan_status':'PLAN_READY' if ok else 'INCOMPLETE','findings':[] if ok else ['TAMPER']}))
+print(json.dumps({'contract_version':'plan-actionability/v1','plan_status':'PLAN_READY' if ok else 'INCOMPLETE','prototype_status':'READY','findings':[] if ok else ['TAMPER']}))
 raise SystemExit(0 if ok else 1)
 ''')
+        (code / 'tools/build_prototype.py').write_text("print('synthetic prototype stage passed')")
         git(code, 'add', '.')
         git(code, 'commit', '-qm', 'synthetic qualified owner')
         project = self.root / 'internal/production/synthetic'

@@ -16,6 +16,7 @@ from typing import Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "config/repositories.yaml"
+RELATIONSHIPS_PATH = ROOT / "config/repository-relationships.yaml"
 QUEUE_PATH = ROOT / "execution/task-queue.yaml"
 SCHEMA_PATH = ROOT / "schemas/issue-intake-report.schema.json"
 URL_PATTERN = re.compile(r"^https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/([1-9][0-9]*)$")
@@ -74,6 +75,14 @@ def _manifest_repositories() -> dict[str, str]:
         and isinstance(entry.get("full_name"), str)
     }
     result["masa-san-jp/agentic-art-orchestration"] = "agentic-art-orchestration"
+    # The public Project is deliberately excluded from the input manifest.
+    # Intake still needs to recognize an Issue owned by that export-only
+    # destination, so use the relationship registry as a separate allowlist.
+    relationships = load_yaml(RELATIONSHIPS_PATH)
+    for relationship in relationships.get("relationships", []) if isinstance(relationships, Mapping) else []:
+        destination = relationship.get("repository") if isinstance(relationship, Mapping) else None
+        if isinstance(destination, Mapping) and isinstance(destination.get("id"), str) and isinstance(destination.get("full_name"), str):
+            result[destination["full_name"]] = destination["id"]
     return result
 
 

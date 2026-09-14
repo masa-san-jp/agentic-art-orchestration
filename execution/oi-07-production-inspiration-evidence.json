@@ -1,0 +1,39 @@
+{
+  "task": "OI-07",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
+  "target_repository": "agentic-art-production",
+  "source_commit": "ba79384daba853b759acaf30fe813f993d9232d9",
+  "code_candidate": "1b73a73a35e1b15fe8189b855a790072eaf96558",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/80",
+  "merge_commit": "035492bfd7dc8e79a205411010f289c1c72dde29",
+  "contract_version": "production-inspiration-alignment/v1",
+  "remote_quality_gates": {
+    "push_python_3_11": "PASS",
+    "push_python_3_12": "PASS",
+    "pull_request_python_3_11": "PASS",
+    "pull_request_python_3_12": "PASS",
+    "runs": ["34784262150", "34784274290"]
+  },
+  "acceptance": {
+    "adopted_hypothesis_semantics_traceable": true,
+    "creative_direction_preserved": true,
+    "prototype_tasks_bound": true,
+    "resource_matrix_bound": true,
+    "completion_path_bound": true,
+    "read_only_only_or_unresolved_stays_incomplete": true,
+    "repair_and_reselection_path_preserved": true
+  },
+  "local_quality_gates": {
+    "focused_tests": "PASS",
+    "clean_checkout_tests": "PASS",
+    "validator": "PASS",
+    "diff_check": "PASS"
+  },
+  "privacy": {
+    "metadata_only": true,
+    "private_raw": false,
+    "restricted": false,
+    "credentials": false,
+    "physical_or_external_effects": false
+  }
+}

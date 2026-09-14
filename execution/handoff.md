@@ -1,3 +1,43 @@
+# OI-11 complete — next OI-12
+
+OI-11 is complete. The exact manifest pins were materialized in a Git-external immutable workspace and all six child repositories were clean and `MATCHED`. Production, Research, Art History, Self Model, Viewer Response, and Marketing each passed every declared native gate; the Marketing result was rechecked after aligning its disposable environment to `PyYAML==6.0.3`. Evidence is `execution/oi-11-owner-qualification-evidence.json`.
+
+Project main is `f583df94786cfa083af8aa2d7be5c3c9fe3a390f`. Its eight record receiver set passed post-merge validator, catalog sync, 53 tests, and diff check. The receiver manifest hash is `3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147`. Knowledge boundaries `knowledge-owner-registry/v1` and `knowledge-write-receipt/v1` were checked against existing native receipt evidence; the final new-run receipts remain an OI-12 acceptance output.
+
+The standard audit currently has one explicit nonblocking warning (`production-signal-portfolio` is unavailable before OI-12 creates a selected completed run); no blocking error was converted to a normal value. No private/raw data, credentials, external artifact, public mutation, or physical effect was created. P0004 attribution remains `UNKNOWN_ATTRIBUTION`; Production #10 remains open; Self Model #82 remains human-blocked.
+
+Resume command:
+
+```bash
+.venv/bin/python tools/validate.py --check
+```
+
+Next task is OI-12. First integrate the qualified parent candidate in PR #246 after its checks are green, then run the theme-free `tools/run.py` Project-local path with an explicit approved instance profile. Preserve the exact run state, native Research/Production knowledge receipts, canonical Production plan and prototype hashes, Project receiver receipt, creator/origin lineage, and require `delivery_completion.status=COMPLETED` before closing Issues #109, #76, #77, #31, #392, #242, and #243. Keep Production #10 and Self Model #82 open under their stated conditions.
+
+# OI-10 complete — Parent prototype stage and delivery completion
+
+OI-06 is complete on Production main at `ba79384daba853b759acaf30fe813f993d9232d9`; its metadata-only evidence is `execution/oi-06-production-preview-evidence.json`.
+
+OI-07 is complete on Production main at merge commit `035492bfd7dc8e79a205411010f289c1c72dde29`. Candidate `1b73a73a35e1b15fe8189b855a790072eaf96558` added `production-inspiration-alignment/v1`, preserving adopted hypothesis semantics, creative-direction hash, prototype task bindings, resource matrix, and completion-path bindings. Unresolved bindings remain `INCOMPLETE` with a blocking alignment gap. PR #80 passed push/PR validation on Python 3.11 and 3.12; evidence is `execution/oi-07-production-inspiration-evidence.json`.
+
+OI-08 remains BLOCKED by the pre-existing Project P0004 unlisted JPEGs and unknown attribution. The candidate PR #33 remains draft; do not delete the files, weaken the validator, or invent rights/creator/consent.
+
+OI-10 started from parent commit `2d751b5d96c2ea67202ba33d7892b04fe421898d` and is complete on the draft parent PR #246. The implementation connects the qualified Production `prototype_status` and attestation asset to normal, knowledge-cycle/supervisor, batch, and delivery completion paths. Missing or hash-mismatched output remains `INCOMPLETE` with an exact repair command and same-run resume data. The final candidate SHA and metadata-only evidence are recorded in `execution/state.yaml`, `execution/task-queue.yaml`, and `execution/oi-10-prototype-stage-evidence.json`.
+
+Resume command:
+
+```bash
+.venv/bin/python -m unittest tests.test_delivery_completion tests.test_run tests.test_batch_run -v
+```
+
+The parent validator, focused 63-test suite, compile, workspace status, diff check, and full 642-test suite passed with one existing skip. The Project fixture was restored at the pre-recovery-plan commit `ebf4ef3377652e9d688fb7b226a1e10276c65b72` because the current main line contains eight recovered plans while the fixture contract expects the original single P0004 baseline. Keep public publication, release, physical action, and P0004 attribution unresolved. No private raw data or credentials are included in the execution evidence.
+
+Resume at OI-08 only after the Project owner supplies explicit attribution/rights evidence or an owner-approved canonical re-projection for P0004. The current candidate PR #33 remains draft and OI-09, OI-11, and OI-12 cannot pass their dependencies while that blocker remains. First read-only operation:
+
+```bash
+gh pr view 33 --repo masa-san-jp/agentic-art-project --json state,headRefName,statusCheckRollup
+```
+
 # AP-05 completed — next AP-06
 
 AP-05 was completed on `docs/ecosystem-readme-20260910` from parent start point
@@ -2871,3 +2911,38 @@ Commit and push this evidence synchronization, create and merge the parent PR fo
 ### Next exact action
 
 Run `.venv/bin/python tools/issue_intake.py` in read-only mode. Register a future Issue only when all four SSOT minimums are present; retain Issue #242 as `UNQUEUED_NEEDS_SSOT` otherwise.
+
+## 2026-09-14 — OI-00 open-issue implementation plan and intake completed
+
+- The implementation plan is [`docs/20260914-open-issues-autonomous-implementation-plan.md`](../docs/20260914-open-issues-autonomous-implementation-plan.md). It defines the dependency DAG, owner boundaries, required checks, restart commands, merge/close evidence and the separate Self Model #82 human lane.
+- The fixed-time live intake at `2026-09-14T00:00:00Z` observed seven open Issues: six qualified unqueued Issues (#242, #243, Production #76, Production #77, Project #31 and Self Model #82) and Production #10 as an existing queued/persistent requirement. No Issue remained `UNQUEUED_NEEDS_SSOT` after the minimum repairs.
+- Parent #242 now has the parser-recognized verification heading; Production #76 acceptance items now use equivalent checkbox syntax. Project #31 is recognized through `config/repository-relationships.yaml` and remains excluded from the input manifest by design.
+- OI-01 Art History #392 and Research #109 already have merged owner candidates (`d5e6a48d` and `888b2310`). Production #76 has candidate `f5253e3` in PR #78, with the owner clean full suite passing and PR CI still pending/unknown at the last network attempt.
+- OI-00 is recorded as complete in `execution/state.yaml` and `execution/task-queue.yaml`. The parent validator, intake regression suite (22 tests), full suite (638 tests, 1 skipped), and diff check pass. The next selected task is OI-02; its first operation is `.venv/bin/python tools/project_status.py --format json`.
+
+### Next exact action
+
+Claim OI-02, run `.venv/bin/python tools/project_status.py --format json`, and inspect the existing parent AAK contracts and measured call graph before editing parent runtime files.
+
+## 2026-09-14 — OI-02 SSOT integration completed
+
+- The two AAK SSOT documents are now version 2 and explicitly link #242/#243 to the existing AAK IDs, measured normal/batch/cycle/worker call graph, owner boundaries, and compatibility rules. The additional open-issue plan remains the execution DAG; child schemas and issue bodies were not copied.
+- `config/aak-task-projection.json` was regenerated from the two SSOT documents. The queue's AAK contract hashes were synchronized and `tools/validate.py --check` passed. The metadata-only evidence is [`execution/oi-02-ssot-integration-evidence.json`](oi-02-ssot-integration-evidence.json).
+- Focused docs, AAK contract, intake and validator checks passed (57 tests). The second parent full suite passed with 638 tests and 1 skipped after the SSOT version/hash change.
+- OI-02 is recorded as DONE and OI-03 is READY. The next operation is `.venv/bin/python tools/project_status.py --format json`, followed by Research #109 owner validation and the Production boundary check.
+
+### Next exact action
+
+Claim OI-03, run `.venv/bin/python tools/project_status.py --format json`, then validate the merged Research #109 candidate against the qualified Production prototype contract.
+
+## 2026-09-15 — OI-12 implementation and integration evidence recorded
+
+OI-12の実装とローカル統合検証を完了した。親のqualified pin fixture、retrieval index、snapshotを現行6owner pinへ生成経路で更新し、親full suiteは643 tests / 1 skip / OKとなった。validator、status、offline audit、security、interaction E2E、offline fixture、diff checkもPASSである。監査は非blocking finding 3件（freshness 2件と親branchのpush前状態）を保持し、正常値へ変換していない。
+
+最終runは`OI12FINAL20260915L`。テーマ・slug・title未指定でResearch候補、Production plan、決定論的SVG prototype、Project P0009投影、receiver/lineage検証まで進み、Research/Productionのnative knowledge receiptを保存した。`delivery_completion.status=COMPLETED`、`target=project-local`、local receiver `VERIFIED`を確認した。prototype assetはopaque locatorとsha256を[`execution/oi-12-integration-evidence.json`](oi-12-integration-evidence.json)へ記録している。Project P0004の`UNKNOWN_ATTRIBUTION`は保持した。
+
+現行owner pinはself-model `96aaf6e`、art-history `97b5325`、marketing `eed3aa1`、Research `a4df0e5`、Production `eec3927`、Viewer `0c198ec`で、Project receiverは`f583df9`。子owner gatesとProject validator/catalog sync/full 53 testsはPASS。親の実装候補は`fd4f29e3e581a724b2e4dda2a57617d1501d1245`、PR [#246](https://github.com/masa-san-jp/agentic-art-orchestration/pull/246)はmerge前のOPEN_DRAFTである。
+
+この時点での次操作は、branchを通常fast-forward pushし、PR #246のrequired checksを確認してready化・mergeすること。merge後にremote mainをread-backし、ACを再確認したうえでProduction #77、Project #31、親 #242、親 #243をcloseする。#109、#76、#392は既にCLOSED、Production #10は要件SSOTとしてOPEN維持、Self Model #82は`destination_root`・`consent_scope`・`retention_decision`・明示承認待ちのBLOCKED human laneである。force push、release、公開範囲変更、実個人profile移設は実施していない。
+
+明示feedbackは、synthetic explicit profileとproject-local targetの実行入力である。inferred feedbackは候補の仮説として保持し、ユーザー事実や同意へ昇格していない。外部artifactはcreate-only・opaque referenceの境界を維持した。

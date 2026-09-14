@@ -1,17 +1,19 @@
-version: 294
-updated_at: '2026-09-13T21:52:53+09:00'
-active_task: null
-active_repository: null
+version: 306
+updated_at: '2026-09-15T01:21:02+09:00'
+active_task: OI-13
+active_repository: self-model
 lease:
   status: available
-  owner: unassigned
-  acquired_at: '2026-09-12T03:27:02+09:00'
-  expires_at: '2026-09-12T06:27:02+09:00'
-  lane: AUTONOMY
-  execution_id: AP-06:20260912
+  owner: null
+  acquired_at: '2026-09-14T18:18:38+09:00'
+  expires_at: '2026-09-15T01:18:49+09:00'
+  released_at: '2026-09-15T01:21:02+09:00'
+  release_reason: 'OI-12 completed; OI-13 remains human-gated and blocked.'
+  lane: HUMAN-GATE
+  execution_id: OI12FINAL20260915L
   scope:
     repository: agentic-art-orchestration
-    branch: chore/record-final-external-ops-20260913
+    branch: codex/open-issues-autonomous-20260914
     paths:
     - config/**
     - schemas/**
@@ -31,30 +33,29 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: AP-07
+  task: OI-12
   repository: agentic-art-orchestration
-  status: DONE_EXTERNAL_OPERATIONS_RECORDED
-  result: 'AP-07 final synchronization recorded 13/13 acceptance matrix entries as PASS. Six child PRs were merged with recorded merge commits, Viewer #12 was merged into its qualified base, Self Model validation-only PRs #99/#100 were closed as superseded, parent PR #244 passed all three CI gates and merged, and Issue #241 was closed.'
-  start_point: 2b76adcbc46ef8826f1604329e2dca62a5614927
-  code_candidate: 66cb176782e61856b7a87db9dcb67841c4e1e5e8
-  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/244
-  pull_request_state: MERGED
-  merge_commit: 2d15ca8612e12a27f02223db4872e382aef266d2
-  merged_at: '2026-09-13T21:51:31+09:00'
-  evidence: execution/ap-07-final-sync-evidence.json
+  status: DONE
+  result: '現行6owner pin、親643 tests、Research/Production native knowledge receipt、Production prototype、Project P0009 receiver、delivery_completion=COMPLETEDを同一provenance chainで照合した。'
+  start_point: 7dcdc19aaca396ea8275194b68eac6d890d0dc75
+  code_candidate: fd4f29e3e581a724b2e4dda2a57617d1501d1245
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
+  merge_commit: null
+  evidence: execution/oi-12-integration-evidence.json
   checks:
-    validator: PASS
-    readme_status: PASS
-    audit: 'FINDINGS: 1 known nonblocking portfolio-unavailable/marketing freshness finding'
-    full_suite: 'PASS: 637 tests, 1 skipped'
-    parent_pr_checks: 'PASS: PR #244 bootstrap, production-exchange and real-chain'
-    issue_241_close: 'PASS: gh issue view 241 (CLOSED)'
-    diff_check: PASS
+    parent_validator: 'PASS: .venv/bin/python tools/validate.py --check'
+    parent_full_suite: 'PASS: 643 tests, 1 skipped'
+    project_status: 'PASS after queue/state synchronization'
+    audit: 'PASS: nonblocking FINDINGS only; 3 findings retained'
+    child_quality_gates: 'PASS: all six current owner pins and native gates'
+    project_validator: 'PASS: Project f583df9 validator and catalog sync'
+    receiver_hash: 'PASS: Project P0009 lineage/receiver verified'
+    diff_check: 'PASS: git diff --check'
   unresolved:
-    - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
-    - 'project-local delivery is complete; Git remote synchronization is NOT_RUN/OUTPUT_ONLY_UNCOMMITTED'
-    - 'Issue #242 remains UNQUEUED_NEEDS_SSOT because verification_commands is missing'
-    - 'No release was created because no release target or version was specified'
+    - 'Parent PR #246 merge and post-merge remote main read-back remain to be recorded.'
+    - 'Issues #242, #243, #77, #31 remain open until parent merge and evidence read-back; close is the next external operation.'
+    - 'Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision and explicit human approval.'
+    - 'Production #10 remains open as a persistent requirement SSOT.'
 
 legacy_recovery_checkpoint:
   task: LEGACY-RECOVERY-20260910
@@ -76,12 +77,91 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: AP-07
+last_completed_task: OI-12
 resume_from:
-  task: null
+  task: OI-13
+  repository: self-model
+  action: 'Keep Self Model #82 in the human lane; do not read, copy, move, delete, or dry-run personal profile data until destination_root, consent_scope, retention_decision and explicit approval are recorded.'
+  command: '.venv/bin/python tools/validate.py --check'
+
+oi07_progress:
+  task: OI-07
+  repository: agentic-art-production
+  start_point: ba79384daba853b759acaf30fe813f993d9232d9
+  branch: codex/issue-242-insp-03-20260914
+  code_candidate: 1b73a73a35e1b15fe8189b855a790072eaf96558
+  pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/80
+  status: MERGED
+  merge_commit: 035492bfd7dc8e79a205411010f289c1c72dde29
+  remote_ci: 'PASS: push/PR Python 3.11 and 3.12; runs 34784262150, 34784274290'
+  first_resume_operation: 'Update parent OI-07 evidence, then claim OI-10.'
+
+oi08_progress:
+  task: OI-08
+  repository: agentic-art-project
+  start_point: 818bcd57cf1c95ddfad2dc093f9c6ad23b835421
+  status: DONE
+  code_candidate: e5d15f4661869c0285b5459eebf2fcded71acb7a
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/33
+  pull_request_state: MERGED
+  merge_commit: 047a9976b0dea817758d17048891fc626d82c722
+  evidence: execution/oi-08-project-receiver-evidence.json
+  acceptance: 'AC1..AC5 PASS; P0004 plan bytes, existing hashes, Production attestation, and lineage preserved.'
+  checks:
+    owner_validator: 'PASS: python3 tools/validate.py --check'
+    catalog_sync: 'PASS: python3 tools/catalog_sync.py --check'
+    owner_full_suite: 'PASS: 52 tests'
+    diff_check: 'PASS: git diff --check'
+    remote_ci: 'PASS: runs 34825590444 and 34825595108'
+  blocker_resolution: 'P0004 README-only JPEGs are bound by Project supplemental media contract; Production plan attestation remains unchanged.'
+  unresolved: 'P0004 attribution remains UNKNOWN_ATTRIBUTION by design; Issue #31 close is deferred to OI-12 final integration evidence.'
+  first_resume_operation: 'Inspect Issue #242 INSP-04 and the merged Project receiver before implementing OI-09.'
+
+oi09_progress:
+  task: OI-09
+  repository: agentic-art-project
+  start_point: 047a9976b0dea817758d17048891fc626d82c722
+  status: DONE
+  code_candidate: 36ee3ac0e1c3491b3e18f569d4144e89a226c50c
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/34
+  pull_request_state: MERGED
+  merge_commit: f583df94786cfa083af8aa2d7be5c3c9fe3a390f
+  evidence: execution/oi-09-project-introduction-evidence.json
+  acceptance: 'AC1..AC6 PASS; P0004 introduction is concrete, all 8 README hashes/revisions are bound in metadata/index, receiver is fail-closed, lineage canonical_revision remains compatible, and Production plan/attestation/asset/lineage bytes are preserved.'
+  checks:
+    owner_validator: 'PASS: python3 tools/validate.py --check'
+    owner_catalog_sync: 'PASS: python3 tools/catalog_sync.py --check'
+    owner_full_suite: 'PASS: 53 tests'
+    diff_check: 'PASS: git diff --check'
+    remote_ci: 'PASS: runs 34826940405 and 34826971694'
+    post_merge_main: 'PASS: f583df9 validator, catalog sync, 53 tests, diff check'
+  blocker_resolution: 'P0004 README now supplies concrete work entry and source/format explanation; README bytes are hash-bound to plan revision without modifying Production canonical bytes.'
+  unresolved: 'P0004 attribution remains UNKNOWN_ATTRIBUTION by design; Issue #31 and #242 close remain deferred to OI-12 final integration.'
+  first_resume_operation: 'Run parent project_status, audit, and exact child pin/native gate qualification for OI-11.'
+
+oi10_progress:
+  task: OI-10
   repository: agentic-art-orchestration
-  action: 'Run read-only issue intake. Register only a new Issue that meets all SSOT minimums; preserve Issue #242 as UNQUEUED_NEEDS_SSOT until verification_commands exists.'
-  command: '.venv/bin/python tools/issue_intake.py'
+  start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
+  status: DONE
+  first_resume_operation: 'Record the verified prototype stage and delivery completion evidence, then preserve OI-08 as the next blocked resume point.'
+  code_candidate: f144d908d2a2713f5c962f51590bf019e734b622
+  pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
+  evidence: execution/oi-10-prototype-stage-evidence.json
+
+oi11_progress:
+  task: OI-11
+  repository: agentic-art-orchestration
+  start_point: add2539a52a9066a0bc1d59944058fc6764e6f85
+  status: DONE
+  evidence: execution/oi-11-owner-qualification-evidence.json
+  manifest_hash: bf8bf604df10d1bf369dab1bbdaf1ebb32e3941d2e247c6688f23a84fe373171
+  immutable_workspace: all six child repositories clean and MATCHED at manifest observed_commit
+  child_quality_gates: 'PASS across full-manifest results plus Marketing exact requirement recheck'
+  project_receiver_manifest_hash: 3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147
+  knowledge_boundary: 'knowledge-owner-registry/v1 and knowledge-write-receipt/v1 verified; final new-run receipt is OI-12 evidence'
+  audit: 'FINDINGS with 1 nonblocking portfolio warning before OI-12 run; no blocking errors'
+  first_resume_operation: 'Run parent validator, project_status JSON, audit, and diff check; then qualify/merge parent OI-10 candidate for OI-12.'
 
 aak04_checkpoint:
   task: AAK-04

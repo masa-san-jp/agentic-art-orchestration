@@ -1,0 +1,41 @@
+{
+  "contract_version": "oi-03-cross-validation/v1",
+  "task": "OI-03",
+  "observed_at": "2026-09-14T03:30:00+09:00",
+  "issue": "https://github.com/masa-san-jp/agentic-art-research/issues/109",
+  "research": {
+    "candidate_commit": "aa74d8fde89598616e0e7e4494d52bb44736be35",
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/110",
+    "merge_commit": "888b23100e50daa73daf83bd8a25bcfd595e52df",
+    "owner_validator": "PASS",
+    "owner_ci": "PASS",
+    "focused_contract_tests": "PASS"
+  },
+  "production_boundary": {
+    "candidate_commit": "f5253e3e350e562906ae3be58334af945624ddf3",
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/78",
+    "merge_commit": "6abbcc0b5d01da5eedfd0e00963675ee6299b4b6",
+    "handoff_acceptance": "PASS: Research schema-valid prototype plan was accepted and derived to a PLANNING plan with readiness.startable=true.",
+    "digital_prototype": {
+      "status": "PASS",
+      "run_id": "PRT001",
+      "plan_id": "PP001",
+      "relative_path": "04_prototype/outputs/PRT001/PRT001-1.svg",
+      "sha256": "sha256:2499cad3cb4e78a8ee9f8011ccec3c38f63328641136a705bd1de9e6f02f9263",
+      "epistemic_status": "simulated",
+      "dimensions": "120 cm",
+      "material": "reclaimed translucent sheet",
+      "quantity": "1 sheet",
+      "validator": "PASS"
+    },
+    "input_missing_behavior": "PASS: renderer returned PROTOTYPE_RENDER_INPUTS when dimensions, materials, or quantity were absent; no placeholder output was emitted."
+  },
+  "acceptance": {
+    "effect_type_required": "PASS",
+    "digital_renderer_plan_required": "PASS",
+    "production_qualified_candidate_not_blocked": "PASS",
+    "immutable_research_bundle_preserved": "PASS",
+    "external_or_physical_action": "NOT_RUN"
+  },
+  "source_scope": "metadata-only; no issue body, raw payload, credential, private data, or generated SVG bytes are stored in the parent"
+}

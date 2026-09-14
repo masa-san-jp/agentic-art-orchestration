@@ -1,3 +1,5 @@
+Open-Issue autonomous implementation: [docs/20260914-open-issues-autonomous-implementation-plan.md](docs/20260914-open-issues-autonomous-implementation-plan.md). This ExecPlan connects the unqueued inspiration/prototype Issues and their owner tasks into one dependency-ordered completion path while preserving Production #10 and the Self Model #82 human gate.
+
 AAK-02 execution: [docs/aak-02-execution.md](docs/aak-02-execution.md). All owner candidates are qualified; the six-run native integration acceptance is complete under the synthetic profile, with the implementation merged; public projection and physical work remain human-gated.
 
 Integration preparation evidence: [execution/aak-integration-readiness.json](execution/aak-integration-readiness.json). PR201/202 repaired and propagated through204/206/207; duplicate alternatives closed with branch history retained. Native AAK05 registration PR94 is merged; feature PR95 is code verified.

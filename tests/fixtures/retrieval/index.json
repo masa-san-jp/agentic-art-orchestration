@@ -4,7 +4,7 @@
     {
       "evidence_id": "evidence:self-model:claim-001",
       "repository": "self-model",
-      "source_commit": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "source_commit": "96aaf6eb6f129ead5c7c5b6811a05205988aaebf",
       "locator": "entities/claim-001",
       "evidence_kind": "observed",
       "freshness_status": "current",
@@ -15,7 +15,7 @@
     {
       "evidence_id": "evidence:art-history:relation-001",
       "repository": "art-history",
-      "source_commit": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+      "source_commit": "97b5325bc2d06249421f0d3fcb5fbd4a6dad31a0",
       "locator": "entities/relation-001",
       "evidence_kind": "scholarly",
       "freshness_status": "current",
@@ -26,7 +26,7 @@
     {
       "evidence_id": "evidence:marketing-trends:trend-001",
       "repository": "marketing-trends",
-      "source_commit": "de1f77730d3856e7e81d591de48da5aed79a983a",
+      "source_commit": "eed3aa1f80e3b163ada1b9381f50fc274ac5329a",
       "locator": "trends/trend-001",
       "evidence_kind": "secondary",
       "freshness_status": "stale",

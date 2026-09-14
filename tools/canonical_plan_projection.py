@@ -164,10 +164,22 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 "content_sha256":b["body_hash"],"attestation_sha256":b["attestation_hash"],"projection_contract":"canonical-plan-projection/v2","projection_mode":"AUTOMATIC_PLAN","body_transform":"none",
                 "plan_state":"canonical","production_state":b["production_state"],"visibility":"public","external_effects_authorized":"false","status":"ready-for-publication","rights_status":"cleared"}
             metadata.update(contract_version='canonical-plan-projection/v2',mode='AUTOMATIC_PLAN',canonical_artifact='production-plan.md',assets=json.dumps(b['assets'],sort_keys=True,separators=(',',':')))
+            readme_bytes = p._generated_readme(metadata, "plan", canonical_body=b["files"]["plan.md"])
+            try:
+                readme_text = readme_bytes.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise ValueError("generated Project introduction must be UTF-8") from exc
+            if p.scan_public_projection(readme_text, f"plans/{public_id}-{slug}/README.md"):
+                raise ValueError("generated Project introduction failed public content policy")
+            metadata.update(
+                introduction_contract=p.PROJECT_PLAN_INTRODUCTION_CONTRACT,
+                introduction_revision=str(b["revision"]),
+                introduction_sha256=p._sha256_bytes(readme_bytes),
+            )
             entry=dict(metadata,path=directory)
             if prior and int(prior["plan_revision"])==b["revision"]:
                 metadata={k:v for k,v in prior.items() if k!="path"};entry=prior
-            files=dict(b["files"],**{"metadata.yaml":p._request_yaml_bytes(metadata),"README.md":p._generated_readme(metadata,"plan")})
+            files=dict(b["files"],**{"metadata.yaml":p._request_yaml_bytes(metadata),"README.md":readme_bytes})
             if prior:
                 files["README.md"]=p._target_regular(target/directory/"README.md","record.README")[0]
                 existing={x.relative_to(target).as_posix() for x in (target/directory).rglob('*') if x.is_file()}

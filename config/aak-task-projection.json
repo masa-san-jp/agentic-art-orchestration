@@ -2,8 +2,8 @@
   "contract_version": "aak-task-projection/v1",
   "source_commit": "b0e7c7f8d0a1f756fa708deef4fb380a62e45e0d",
   "source_hashes": {
-    "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md": "987ab5ef17dfd79b702c6aa12c7430a0802a8112fb836840c5e1b730b70f8bb2",
-    "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md": "13f6e4c51efc723a6388f806498c7a426adb1b9198629db1a9d0dda953d00f41"
+    "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md": "c3830e5a0f837536438bc10f9c8b41645f4800249bbf632c560efc5e420efdf1",
+    "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md": "242b57b47c32c4e6fa8bac13a95cbab5672f794d339a3add0ec5edf559888c51"
   },
   "tasks": [
     {

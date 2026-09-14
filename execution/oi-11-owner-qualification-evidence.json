@@ -1,0 +1,155 @@
+{
+  "contract_version": "oi-11-owner-qualification/v1",
+  "task_id": "OI-11",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
+  "status": "DONE",
+  "qualification_mode": "read-only immutable pin qualification",
+  "workspace": "git-external-immutable-oi11-pinned",
+  "manifest": {
+    "contract_version": "repository-manifest/v1",
+    "sha256": "bf8bf604df10d1bf369dab1bbdaf1ebb32e3941d2e247c6688f23a84fe373171",
+    "workspace_state": "all six child workspaces clean and MATCHED; Project main independently verified"
+  },
+  "owner_pins": [
+    {
+      "repository": "self-model",
+      "source_commit": "a61460d4f9add36b256b2db9a860c53a98bd5fcd",
+      "candidate_commit": null,
+      "merge_commit": null,
+      "candidate_status": "NOT_APPLICABLE: stable input owner; no OI-11 code delta",
+      "contract_versions": ["normalized-research-signal/v1"],
+      "workspace_state": "MATCHED",
+      "native_quality_gate_status": "PASSED"
+    },
+    {
+      "repository": "art-history",
+      "source_commit": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+      "candidate_commit": "33fbc82137e138dfda28a3f53f4605689e168794",
+      "merge_commit": "d5e6a48d134aee3d4b0113f415b224c85b412245",
+      "contract_versions": ["normalized-research-signal/v1"],
+      "workspace_state": "MATCHED",
+      "native_quality_gate_status": "PASSED"
+    },
+    {
+      "repository": "marketing-trends",
+      "source_commit": "de1f77730d3856e7e81d591de48da5aed79a983a",
+      "candidate_commit": null,
+      "merge_commit": null,
+      "candidate_status": "NOT_APPLICABLE: stable input owner; no OI-11 code delta",
+      "contract_versions": ["normalized-research-signal/v1"],
+      "workspace_state": "MATCHED",
+      "native_quality_gate_status": "PASSED"
+    },
+    {
+      "repository": "agentic-art-research",
+      "source_commit": "a4df0e5b4c4f93d01b7f5f403b214469526206c0",
+      "candidate_commit": "c3596373cf542677f7fb78cf0f8e5360a29006c1",
+      "merge_commit": "24122840c8193c0199c23c2b8547464dbe0950ca",
+      "contract_versions": ["normalized-research-signal/v1", "inspiration-pipeline/v1", "prototype-plan/v1"],
+      "workspace_state": "MATCHED",
+      "native_quality_gate_status": "PASSED"
+    },
+    {
+      "repository": "agentic-art-production",
+      "source_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "candidate_commit": "1b73a73a35e1b15fe8189b855a790072eaf96558",
+      "merge_commit": "035492bfd7dc8e79a205411010f289c1c72dde29",
+      "contract_versions": ["production-handoff/v1", "production-result/v1", "production-inspiration-alignment/v1", "production-prototype/v1"],
+      "workspace_state": "MATCHED",
+      "native_quality_gate_status": "PASSED"
+    },
+    {
+      "repository": "viewer-response-notes",
+      "source_commit": "78b6e9a87831eca5a5c20993374b61b8cc61bd0d",
+      "candidate_commit": null,
+      "merge_commit": null,
+      "candidate_status": "NOT_APPLICABLE: stable input owner; no OI-11 code delta",
+      "contract_versions": ["normalized-research-signal/v1"],
+      "workspace_state": "MATCHED",
+      "native_quality_gate_status": "PASSED"
+    }
+  ],
+  "parent_and_project": {
+    "parent_code_candidate": "f144d908d2a2713f5c962f51590bf019e734b622",
+    "parent_pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/246",
+    "parent_merge_status": "OPEN_DRAFT; final parent merge is OI-12",
+    "project_main": "f583df94786cfa083af8aa2d7be5c3c9fe3a390f",
+    "project_pr": "https://github.com/masa-san-jp/agentic-art-project/pull/34",
+    "project_receiver_contract": "project-plan-introduction/v1",
+    "project_receiver_status": "PASSED: 8 records; catalog_sync, validator, 53 tests, and diff check on post-merge main",
+    "project_receiver_manifest_sha256": "3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147",
+    "project_receiver_attestation_hashes": {
+      "P0001": "cf3ebca0f26fcc2168db222a8374cc238acc76b9646fd154a8cee63986dcb4ab",
+      "P0002": "ab90fb3f8166b16bf42e65d28cbe381dc4d2a06f201395fea31d0dccae99293c",
+      "P0003": "a3f4360cbdd9b3d29a590537e6782c8be63893b42b1bfe4224355f469d4be367",
+      "P0004": "cc7da4d1e4a5315dbbfe0360c62c3a67de944fe8d0639787ea3151d7a471f3fa",
+      "P0005": "66f531bc5a073b041f7b4c314687074b893b07215db17530f731b13fc84dd399",
+      "P0006": "1ba8a0edd44a2d2e100c7cdb2d2acfa0d88a0cfc6021dbd7b412b76f78988079",
+      "P0007": "a98fba69b6f441d34e8c3bacfa33ba03493dec9a45b60fb55add923925962272",
+      "P0008": "2986496c124bd3142fa98939b52971b35489f9f4d9270bd82d40322277613d01"
+    }
+  },
+  "child_quality_gates": {
+    "contract_version": "child-quality-gates/v1",
+    "full_manifest_run": {
+      "run_id": "oi11-owner-qualification-20260914",
+      "report_locator": "git-external://oi11-child-quality-gates.json",
+      "report_sha256": "a859e7e194ff5455f85b7ac89506b4152b327644303d6eef44af2d37234e69b8",
+      "passed_repositories": ["agentic-art-production", "agentic-art-research", "art-history", "self-model", "viewer-response-notes"],
+      "all_passed_repositories_workspace_state": "MATCHED"
+    },
+    "marketing_recheck": {
+      "run_id": "oi11-marketing-qualification-20260914",
+      "report_locator": "git-external://oi11-marketing-quality-gates.json",
+      "report_sha256": "ad99ab21ea4737d9f1248aa2d1e9c290b4eb8a084e1b6572bb87a74241595336",
+      "repository": "marketing-trends",
+      "status": "PASSED",
+      "workspace_state": "MATCHED",
+      "reason": "The full run's only non-PASS result was an environment preflight mismatch; the pinned requirement PyYAML==6.0.3 was then installed in the disposable per-child environment and both declared gates passed."
+    },
+    "composite_status": "PASSED: every declared gate has an independent PASS result for the exact manifest commit"
+  },
+  "knowledge_receipt_boundary": {
+    "registry_contract": "knowledge-owner-registry/v1",
+    "receipt_contract": "knowledge-write-receipt/v1",
+    "receipt_schema_sha256": "230725d55fe2e93a12ac86fb2b9aa76cd1a7c07c93c7c37f9297aa96ba096d56",
+    "registry_sha256": "b5dd051d01c3452ab2ccc4d5c4d3160e54e29d2a85d4f46cf838feb5a5025ce8",
+    "native_receipt_evidence": "execution/aak-02-live-acceptance.json",
+    "native_receipt_evidence_sha256": "428bbd04886151ee1501615b711c59e5a2578ca768f823c0a8c6538e813677fe",
+    "native_receipt_result": "Six actual LLM-agent synthetic-profile runs completed with native Research and Production COMMITTED receipts; other owners were explicitly NO_NEW_EVIDENCE. Exact new receipts for the final Project-local run are OI-12 acceptance evidence and are not fabricated here."
+  },
+  "audit": {
+    "status": "FINDINGS",
+    "blocking_errors": 0,
+    "nonblocking_warnings": ["production-signal-portfolio unavailable before a selected completed run"],
+    "interpretation": "The standard audit remains nonblocking before OI-12 creates the selected run portfolio; no failure was converted to a normal value."
+  },
+  "security": {
+    "private_raw": false,
+    "restricted_data": false,
+    "credentials": false,
+    "absolute_local_paths": false,
+    "external_artifacts_created": false,
+    "physical_or_public_side_effects": false,
+    "p0004_attribution": "UNKNOWN_ATTRIBUTION preserved; no creator or origin inferred"
+  },
+  "acceptance": {
+    "exact_source_candidate_merge_matrix": "PASS for changed owner series; stable input owners explicitly marked NOT_APPLICABLE for candidate/merge",
+    "contract_versions": "PASS",
+    "native_quality_gates": "PASS for all six manifest owners",
+    "knowledge_receipt_boundary": "PASS for registry/schema/native receipt path; final new-run receipts deferred to OI-12",
+    "project_receiver_hash": "PASS",
+    "closed_or_pr_only_shortcut": "PASS: exact commits, clean pin workspaces, gate hashes, and receiver hashes were checked",
+    "overall": "PASS"
+  },
+  "unresolved": [
+    "OI-10 parent candidate remains OPEN_DRAFT and must be merged before OI-12 final run.",
+    "OI-12 must produce the exact final run knowledge receipts and delivery_completion.status=COMPLETED.",
+    "Production #10 remains an intentional persistent open requirement SSOT.",
+    "Self Model #82 remains human-blocked; no personal profile data was read or moved."
+  ],
+  "next_task": {
+    "id": "OI-12",
+    "first_operation": "Integrate the qualified parent candidate, then run the theme-free Project-local normal entry and preserve its exact resume state and native receipts."
+  }
+}

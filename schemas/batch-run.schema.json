@@ -83,6 +83,7 @@
         "g4_no_human_authority",
         "g5_agent_recommended_decisions",
         "g6_append_only_report",
+        "g7_prototype_output_ready",
         "no_remote_operations",
         "no_child_mutations",
         "no_raw_data"
@@ -94,6 +95,7 @@
         "g4_no_human_authority": {"type": "boolean"},
         "g5_agent_recommended_decisions": {"type": "boolean"},
         "g6_append_only_report": {"type": "boolean"},
+        "g7_prototype_output_ready": {"type": "boolean"},
         "no_remote_operations": {"type": "boolean"},
         "no_child_mutations": {"type": "boolean"},
         "no_raw_data": {"type": "boolean"}
@@ -128,6 +130,7 @@
         "project_id",
         "candidate_id",
         "status",
+        "prototype_status",
         "research_locator",
         "production_locator",
         "production_plan_sha256",
@@ -138,6 +141,7 @@
         "project_id": {"$ref": "#/$defs/id"},
         "candidate_id": {"type": "string", "pattern": "^candidate:[0-9a-f]{16}$"},
         "status": {"enum": ["PASSED", "FAILED"]},
+        "prototype_status": {"enum": ["READY", "MISSING"]},
         "research_locator": {"$ref": "#/$defs/locator"},
         "production_locator": {"$ref": "#/$defs/locator"},
         "production_plan_sha256": {"oneOf": [{"$ref": "#/$defs/hash64"}, {"type": "null"}]},

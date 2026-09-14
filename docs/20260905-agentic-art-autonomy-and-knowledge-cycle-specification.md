@@ -1,9 +1,11 @@
 # Agentic Art：自律制作と累積知識の統合仕様
 
-作成日: 2026-09-05  
-仕様ID: AAK-SPEC / version: 1  
-実装計画SSOT: [20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md](20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)  
+作成日: 2026-09-05
+仕様ID: AAK-SPEC / version: 2
+実装計画SSOT: [20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md](20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md)
 適用範囲: 本文AAK-01〜AAK-13で明示した追加・変更。これは目標仕様であり、実装済みの宣言ではない。
+
+追加実装系列: [未解消Issueの自律実装完了計画](20260914-open-issues-autonomous-implementation-plan.md)（#242/#243およびowner Issueの実装順・再開・統合を定める）。
 
 ## principles
 
@@ -219,6 +221,41 @@ runのCOMPLETEDは、そのdelivery modeで必須のplan保存・knowledge永続
 | 固有性と探索 | 入力差替え・同機構言換え・根拠なし比喩・自己引用を検出 |
 
 実Masa profileを使う場合は既存同意とアクセス範囲内だけに限定する。使えなければ合成の継続利用ケースと明示し、実本人データ検証済みとしない。LLM providerが利用できない環境はfake回帰のみ実行し、最終live受入は未完了とする。
+
+## open-issue-integration
+
+この節は、#242（インスピレーションから制作可能性まで）と#243（デジタル試作からProject-local deliveryまで）を、AAK-01〜13の既存SSOTへ統合するための境界記録である。新しいdomain schemaや第三の仕様を作らず、Issue本文は実行用の参照、owner schemaは各ownerの正本として扱う。実装順・再開・統合証拠は追加実装計画と親queueに置く。
+
+### authority and compatibility
+
+| 追加Issue | 対応する既存AAK | 担当境界 | 維持する互換性 |
+|---|---|---|---|
+| Orchestration #242 | AAK-02/08/09/10/11/13 | Researchの候補・比較・批評・handoff、Productionの制作可能性、Projectの受信、親の統合受入 | AAKのsource commit、knowledge owner、epistemic state、legacy context、Project export-only |
+| Orchestration #243 | AAK-02/10/11/13 | Production prototype、attestation、Project-local receiver、delivery completion | `delivery-contract/v1`、automatic plan authority、既存P0001-P0008のhash/lineage、human gate |
+| Research #109 / Production #76/#77 / Project #31 | AAK-08/09/10/11/13 | 子repoがeffect、renderer、plan、receiverの内部schemaを所有 | 親は参照、契約version、candidate/merge SHA、hash、receiptだけを保持 |
+
+`config/aak-task-projection.json` はこの仕様と実装計画から生成されるAAK-01〜13の実行用投影であり、domain payloadを保持しない。追加Issueの`OI-*` queue recordは親の実行順と証拠を持つが、子Issueの本文やschemaをAAK projectionへ複製しない。仕様改訂時はこのファイル、実装計画、機械投影、queueの参照hashを同じ変更系列で検証する。
+
+### measured parent call graph
+
+2026-09-14に親 `agentic-art-orchestration` の `89a5c34fd67a1369dc315b249eece1887918c002` と既存child candidateを読み、次の現在経路を確認した。これは実装完了の宣言ではなく、#242/#243の変更点を一意に割り当てるための観測である。
+
+| 段階 | 現在の入口・実装 | 追加Issueで接続する責務 |
+|---|---|---|
+| startup / normal | `tools/run.py` の通常run、workspace preflight、`tools/ingest_signals.py`、`candidate_space.py`、`candidate_gates.py`、`candidate_selection.py`、`proposition_provenance.py` | #242 INSP-01/02の入力根拠、候補比較、批評、制作方法の見通しへ渡す。theme/slug/title未指定入口を維持する |
+| Research handoff | `build_research_request.py`、Researchの`accept_research_request.py`、`complete.py`、`build_handoff.py`、`export_handoff.py` | #242 INSP-02の採択・改訂・handoffと#109のdigital prototype plan契約を使う |
+| Production exchange / plan | 親 `tools/production_exchange.py`、`run.py` の `_production_acceptance`、child `tools/build_plan.py`、親の`verify_plan` | #242 INSP-03の内容保持・制作可能性と#243 PRT-04のprototype stageを、owner検証後のplanへ接続する |
+| automatic projection / receiver | 親 `tools/public_projection.py` のautomatic plan path、Project ownerのreceiver/catalog validator | #243のattestation、preview、Project-local receiptを同一revisionへ接続する。remote公開は行わない |
+| cycle / batch / worker | `tools/autonomous_runner.py`、`tools/batch_run.py`、`tools/knowledge_cycle_run.py`、`tools/purpose_e2e.py` | normal runと同じ完了判定・再開・知識保存・failure terminal stateを再利用し、fixtureをlive証拠へ昇格しない |
+
+現行経路の未接続点は、Research側の制作可能なdigital plan分類、Production側の実試作bytesと本文/attestation接続、親delivery completionのprototype必須判定、Project receiverのmedia整合である。これらは #109、#76/#77、#243、#31のowner taskへ分割し、親が子schemaを再実装しない。`PLAN_READY`、batch `PASSED`、worker `COMPLETED`はいずれも最終deliveryではなく、既存のplan・knowledge・projection状態軸へ変換して判定する。
+
+### change-control for the added series
+
+- Researchは採択した着想、比較・批評、制作方法の見通しを正本として保持し、Productionは寸法・素材・数量・工程・試作をowner schemaで解決する。
+- Productionのdigital prototypeは`simulated`として扱い、物理制作・購入・展示・observed resultへ昇格させない。実作品asset、PRIVATE_RAW、credential、absolute local pathは親へ保存しない。
+- Projectはexport-onlyの公開受信先であり、親の入力知識やruntimeを読み戻さない。Project-local deliveryの完了はGitHub remote merge、release、visibility変更の完了を意味しない。
+- 子candidateが未検証、remote状態が不明、またはhuman gateが必要な場合は`CODE_VERIFIED`、`INCOMPLETE`、`UNKNOWN`、`BLOCKED`のまま記録し、Issue closeやdelivery completionを捏造しない。
 
 ## issue-contracts
 

@@ -12,7 +12,7 @@ class DeliveryCompletionTests(unittest.TestCase):
             self.assertEqual('INCOMPLETE',completion(state,contract)['status'])
 
     def test_internal_and_local_and_committed_evidence_are_distinct(self):
-        state={'plan_status':'PLAN_READY','plan':{'artifacts':{'production-plan.md':'a'*64},'owner_verification':{'plan_status':'PLAN_READY'}},'knowledge_status':'COMMITTED','projection_status':'SKIPPED'}
+        state={'plan_status':'PLAN_READY','plan':{'artifacts':{'production-plan.md':'a'*64},'owner_verification':{'plan_status':'PLAN_READY','prototype_status':'READY'}},'knowledge_status':'COMMITTED','projection_status':'SKIPPED'}
         self.assertEqual('COMPLETED',completion(state,{'target':'internal'})['status'])
         self.assertEqual('INCOMPLETE',completion(state,{'target':'project-local'})['status'])
         state.update(projection_status='PROJECTED',local_delivery_receipt={'contract_version':'local-plan-delivery-receipt/v1','status':'VERIFIED','records':[{'record_id':'P0001'}]})
@@ -20,3 +20,22 @@ class DeliveryCompletionTests(unittest.TestCase):
         self.assertEqual('INCOMPLETE',completion(state,{'target':'project-committed'})['status'])
         state['knowledge_status']='PARTIAL'
         self.assertEqual('INCOMPLETE',completion(state,{'target':'project-local'})['status'])
+
+    def test_missing_or_unqualified_prototype_blocks_completion(self):
+        state = {'plan_status': 'PLAN_READY', 'plan': {
+            'artifacts': {'production-plan.md': 'a' * 64},
+            'owner_verification': {'plan_status': 'PLAN_READY'},
+        }, 'knowledge_status': 'COMMITTED', 'projection_status': 'SKIPPED'}
+        result = completion(state, {'target': 'internal'})
+        self.assertEqual('INCOMPLETE', result['status'])
+        self.assertEqual(['PROTOTYPE_OUTPUT'], result['missing'])
+
+    def test_batch_completion_requires_every_project_prototype(self):
+        state = {'status': 'PASSED', 'requested_count': 2, 'completed_count': 2,
+                 'failed_count': 0, 'projects': [
+                     {'status': 'PASSED', 'prototype_status': 'READY'},
+                     {'status': 'PASSED', 'prototype_status': 'MISSING'},
+                 ], 'knowledge_status': 'COMMITTED'}
+        result = completion(state, {'target': 'internal'})
+        self.assertEqual('INCOMPLETE', result['status'])
+        self.assertIn('PROTOTYPE_OUTPUT', result['missing'])

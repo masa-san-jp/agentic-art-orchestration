@@ -1,0 +1,70 @@
+{
+  "aak_projection_contract_sha256": "90493024d3db2c80eb322ae87af5d43528c7a4aef02b7c186cfecbf1e05abb95",
+  "acceptance": {
+    "child_schema_not_copied": "PASS",
+    "issue_242_and_243_mapped": "PASS",
+    "legacy_contract_preserved": "PASS",
+    "project_export_only_preserved": "PASS",
+    "projection_and_queue_hashes_synchronized": "PASS"
+  },
+  "call_graph": [
+    {
+      "entrypoint": "tools/run.py",
+      "observed": "ingest_signals -> candidate_space -> candidate_gates -> candidate_selection -> proposition_provenance -> build_research_request",
+      "stage": "normal",
+      "target": "OI-04/OI-10"
+    },
+    {
+      "entrypoint": "tools/run.py",
+      "observed": "accept_research_request -> complete -> build_handoff -> export_handoff",
+      "stage": "research",
+      "target": "OI-03/OI-04"
+    },
+    {
+      "entrypoint": "tools/run.py",
+      "observed": "production_exchange -> build_plan -> verify_plan",
+      "stage": "production",
+      "target": "OI-05/OI-06/OI-07/OI-10"
+    },
+    {
+      "entrypoint": "tools/public_projection.py",
+      "observed": "automatic plan projection and Project receiver validation",
+      "stage": "delivery",
+      "target": "OI-08/OI-09/OI-10"
+    },
+    {
+      "entrypoint": "tools/autonomous_runner.py, tools/batch_run.py, tools/knowledge_cycle_run.py, tools/purpose_e2e.py",
+      "observed": "separate entrypoints retain their own terminal evidence and reuse the parent boundary contracts",
+      "stage": "parallel-entrypoints",
+      "target": "OI-10/OI-11/OI-12"
+    }
+  ],
+  "contract_version": "oi-02-ssot-integration/v1",
+  "human_gates": {
+    "merge": "PRESERVED",
+    "physical_work": "PRESERVED",
+    "public_visibility": "PRESERVED",
+    "release": "PRESERVED",
+    "self_model_profile_migration": "PRESERVED"
+  },
+  "issue_refs": [
+    "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
+    "https://github.com/masa-san-jp/agentic-art-orchestration/issues/243"
+  ],
+  "observed_at": "2026-09-14T02:00:00+09:00",
+  "parent_source_commit": "89a5c34fd67a1369dc315b249eece1887918c002",
+  "privacy": {
+    "credentials_stored": false,
+    "issue_bodies_copied": false,
+    "private_raw_stored": false,
+    "raw_conversation_stored": false
+  },
+  "ssot_files": {
+    "config/aak-task-projection.json": "90493024d3db2c80eb322ae87af5d43528c7a4aef02b7c186cfecbf1e05abb95",
+    "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-implementation-plan.md": "242b57b47c32c4e6fa8bac13a95cbab5672f794d339a3add0ec5edf559888c51",
+    "docs/20260905-agentic-art-autonomy-and-knowledge-cycle-specification.md": "c3830e5a0f837536438bc10f9c8b41645f4800249bbf632c560efc5e420efdf1",
+    "execution/task-queue.yaml": "138010d4a77fb85ba11c59cb75709a7bf1780eb031e96e5b9504f1c84d5c2e1c"
+  },
+  "status": "CODE_VERIFIED",
+  "task": "OI-02"
+}

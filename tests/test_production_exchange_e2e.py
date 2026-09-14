@@ -66,10 +66,16 @@ class ProductionExchangeE2ETests(unittest.TestCase):
     def test_unperformed_external_validation_is_required(self) -> None:
         invalid = copy.deepcopy(self.report)
         invalid["normal_exchange"]["result_statuses"] = []
-        invalid["normal_exchange"]["external_validation_required"] = False
+        invalid["normal_exchange"]["external_validation_required"] = True
         errors = "\n".join(validate_exchange_e2e(invalid))
-        self.assertIn("unperformed work", errors)
+        self.assertIn("external validation state", errors)
         self.assertIn("external_validation_required", errors)
+
+    def test_simulated_digital_result_preserves_external_boundary(self) -> None:
+        digital = copy.deepcopy(self.report)
+        digital["normal_exchange"]["result_statuses"] = ["NOT_REQUIRED", "PASS"]
+        digital["normal_exchange"]["external_validation_required"] = False
+        self.assertEqual([], validate_exchange_e2e(digital))
 
     def test_remote_and_child_mutations_are_rejected(self) -> None:
         invalid = copy.deepcopy(self.report)

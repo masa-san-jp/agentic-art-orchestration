@@ -1,0 +1,123 @@
+{
+  "task_id": "OI-12",
+  "status": "IMPLEMENTATION_VERIFIED",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
+  "source": {
+    "plan": "docs/20260914-open-issues-autonomous-implementation-plan.md",
+    "start_commit": "7dcdc19aaca396ea8275194b68eac6d890d0dc75",
+    "parent_code_commits": [
+      "bc64dab9bce8a90c1a8838fe2dfd1c9da25c8849",
+      "fd4f29e3e581a724b2e4dda2a57617d1501d1245"
+    ]
+  },
+  "acceptance": {
+    "count": 9,
+    "passed": 9,
+    "items": [
+      "All six manifest owner pins were revalidated in isolated clean workspaces and their native gates passed.",
+      "Parent current-pin fixtures, retrieval index, and qualified snapshot were regenerated through repository tools.",
+      "The theme-free normal entry ran without theme, slug, or title input.",
+      "Research knowledge was committed and reloaded from target commit 68f6fcd298e64b716cae21a91550a239ccbc98ae.",
+      "Production knowledge was committed and reloaded from target commit 1c86650f1b285953b18f8855c6ada3b3fb11ebc6.",
+      "Production generated and verified a deterministic digital prototype with prototype_status READY.",
+      "Project automatically projected public record P0009 with a README bound to the canonical plan revision.",
+      "Project receiver, lineage, creator, origin, attestation, and asset hashes all passed local verification.",
+      "The final cycle reached delivery_completion.status COMPLETED for target project-local."
+    ],
+    "overall": "PASS"
+  },
+  "owner_pins": [
+    {"repository": "self-model", "source_commit": "96aaf6eb6f129ead5c7c5b6811a05205988aaebf", "pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/95", "main_verified": true},
+    {"repository": "art-history", "source_commit": "97b5325bc2d06249421f0d3fcb5fbd4a6dad31a0", "pull_request": "https://github.com/masa-san-jp/art-history-notes/pull/387", "main_verified": true},
+    {"repository": "marketing-trends", "source_commit": "eed3aa1f80e3b163ada1b9381f50fc274ac5329a", "pull_request": "https://github.com/masa-san-jp/marketing-trends-notes/pull/93", "main_verified": true},
+    {"repository": "agentic-art-research", "source_commit": "a4df0e5b4c4f93d01b7f5f403b214469526206c0", "pull_request": "https://github.com/masa-san-jp/agentic-art-research/pull/106", "main_verified": true},
+    {"repository": "agentic-art-production", "source_commit": "eec39272c5c4827a1caf27fa928de18b58882e96", "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/72", "main_verified": true},
+    {"repository": "viewer-response-notes", "source_commit": "0c198ec38629fb032f778071e35f265286f6566f", "pull_request": "https://github.com/masa-san-jp/viewer-response-notes/pull/8", "main_verified": true},
+    {"repository": "agentic-art-project", "source_commit": "f583df94786cfa083af8aa2d7be5c3c9fe3a390f", "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/34", "main_verified": true}
+  ],
+  "parent": {
+    "repository": "agentic-art-orchestration",
+    "candidate_commit": "fd4f29e3e581a724b2e4dda2a57617d1501d1245",
+    "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/246",
+    "pull_request_state": "OPEN_DRAFT",
+    "merge_status": "PENDING",
+    "remote_main": "PENDING_POST_MERGE_READ_BACK"
+  },
+  "checks": {
+    "parent_validator": {"command": ".venv/bin/python tools/validate.py --check", "status": "PASS"},
+    "parent_full_suite": {"command": ".venv/bin/python -m unittest discover -s tests -v", "status": "PASS", "tests": 643, "skipped": 1},
+    "offline_fixture": {"command": ".venv/bin/python tests/fixtures/build_fixture.py --check", "status": "PASS"},
+    "status": {"command": ".venv/bin/python tools/status.py --check --offline-fixture", "status": "PASS"},
+    "audit": {"command": ".venv/bin/python tools/audit.py --check --offline-fixture", "status": "PASS_WITH_NONBLOCKING_FINDINGS", "finding_count": 3},
+    "security": {"command": ".venv/bin/python tools/security.py --offline-fixture", "status": "PASS"},
+    "interaction": {"command": ".venv/bin/python tools/interaction_e2e.py --check", "status": "PASS"},
+    "project": {"validator": "PASS", "catalog_sync": "PASS", "full_suite": "PASS", "tests": 53},
+    "diff_check": {"command": "git diff --check", "status": "PASS"}
+  },
+  "run": {
+    "run_id": "OI12FINAL20260915L",
+    "mode": "new-clone",
+    "profile_classification": "synthetic explicit profile; no personal data",
+    "delivery_contract": "delivery-contract/v1",
+    "delivery_target": "project-local",
+    "plan_status": "PLAN_READY",
+    "knowledge_status": "COMMITTED",
+    "projection_status": "PROJECTED",
+    "run_status": "COMPLETED",
+    "prototype_status": "READY",
+    "delivery_completion": {"contract_version": "delivery-completion/v1", "target": "project-local", "status": "COMPLETED", "missing": []},
+    "knowledge_receipts": {
+      "research": {"target_commit": "68f6fcd298e64b716cae21a91550a239ccbc98ae", "index_sha256": "8afde2b20439508de0106b1dc5af7af07d21fea0ee71d6fc0f31a265e2a868de", "accepted_id": "oi12-research-candidate-v12"},
+      "production": {"target_commit": "1c86650f1b285953b18f8855c6ada3b3fb11ebc6", "index_sha256": "68a22cdfc532e8647ffb6f9e34321009904fbc2d6a26296a1cbfc70575f0db42", "accepted_id": "oi12-production-memory-v12"}
+    },
+    "production": {
+      "code_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+      "canonical_revision": 1,
+      "plan_sha256": "55dcd474db42fef376b383a198b3783acee9e4aaa557a545a50ae17af7c2e9d8",
+      "plan_yaml_sha256": "be67eaf1d9fb6002b06b7b6938ed8b4d965e8ddd0aaa38184cfa6c6e87d146f4",
+      "method_sha256": "ff5d0b1804d9aa1fbe5d31f3cc9e0ee4bc5079ac2bead55d4d8a4819d80786a9",
+      "owner_verification_method_sha256": "89e114f3ac23365931ba5386259d8ea3da2898dadd22ca92549cea7dbce512be",
+      "prototype_assets": [
+        {"locator": "run://OI12FINAL20260915L/03_plan/media/concept-mockup.svg", "sha256": "03d9569f990e78cea4861ecce872d37482108261b778ccc8d41d301d0a26b9c2"},
+        {"locator": "run://OI12FINAL20260915L/03_plan/media/visual-reference-board.svg", "sha256": "cc5e47097ec4ed949e6bf9f86a970a4e7fe795ae3810e0eb1781d5c74072f866"}
+      ]
+    },
+    "project_record": {
+      "record_id": "P0009",
+      "locator": "project-local://plans/P0009-auto-oi12-autonomous-research-20260914-v8",
+      "production_plan_sha256": "55dcd474db42fef376b383a198b3783acee9e4aaa557a545a50ae17af7c2e9d8",
+      "attestation_sha256": "578fdd5f7781925084574ed878f60d1af787c2ad595164ca47b35d3a12869852",
+      "lineage_sha256": "8a80a06a60ed766049f931b844e91a98ae91c47295a962ea3c3ee5eb20cb3163",
+      "creator_id": "synthetic-oi12-creator",
+      "origin_instance_id": "synthetic-oi12-instance",
+      "target_git_head": "f583df94786cfa083af8aa2d7be5c3c9fe3a390f",
+      "working_tree": "OUTPUT_ONLY_UNCOMMITTED"
+    }
+  },
+  "safety": {
+    "private_raw": false,
+    "restricted_data": false,
+    "credentials": false,
+    "personal_profile_read_or_moved": false,
+    "external_artifact_policy": "create-only; opaque references only",
+    "remote_operations_in_run": [],
+    "physical_or_public_side_effects": false,
+    "existing_project_record_P0004": "UNKNOWN_ATTRIBUTION preserved"
+  },
+  "feedback": {
+    "explicit": "The declared synthetic profile and project-local target are explicit execution inputs.",
+    "inferred": "Research and production candidates remain epistemic proposals; no inferred feedback was promoted to a user fact or consent.",
+    "viewer": "NO_NEW_EVIDENCE was retained as zero new viewer evidence."
+  },
+  "issue_state_observed_before_post_merge_close": {
+    "closed": [109, 76, 392],
+    "open_pending_close": [77, 31, 242, 243],
+    "open_by_design": [10, 82]
+  },
+  "unresolved": [
+    "Parent PR #246 must be merged normally and remote main must be read back before the external close operations are recorded.",
+    "Production #10 remains the persistent requirement SSOT.",
+    "Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision, and explicit human approval.",
+    "Project P0004 attribution remains UNKNOWN_ATTRIBUTION by design."
+  ]
+}

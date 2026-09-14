@@ -74,6 +74,23 @@ class CanonicalPlanProjectionTests(unittest.TestCase):
         self.assertEqual("selected-python", command[0])
         self.assertEqual("tools/public_plan_attestation.py", command[1])
 
+    @patch('tools.canonical_plan_projection._owner_bundle', synthetic_owner_boundary)
+    def test_automatic_plan_projection_binds_project_introduction_to_canonical_revision(self):
+        result = self.project()
+        self.assertEqual('APPLIED', result['status'])
+        record = next((self.target / 'plans').glob('P0001-*'))
+        readme = (record / 'README.md').read_bytes()
+        metadata = yaml.safe_load((record / 'metadata.yaml').read_text(encoding='utf-8'))
+        index = yaml.safe_load((self.target / 'plans/index.yaml').read_text(encoding='utf-8'))['records'][0]
+        self.assertEqual('project-plan-introduction/v1', metadata['introduction_contract'])
+        self.assertEqual('1', metadata['introduction_revision'])
+        self.assertEqual(hashlib.sha256(readme).hexdigest(), metadata['introduction_sha256'])
+        self.assertEqual(metadata['introduction_sha256'], index['introduction_sha256'])
+        for heading in ('作品体験', '主張', '発想の由来', '素材・形式', '制作入口'):
+            self.assertIn(f'## {heading}'.encode('utf-8'), readme)
+        self.assertEqual(self.report['production_plan_sha256'], hashlib.sha256((record / 'plan.md').read_bytes()).hexdigest())
+        self.assertEqual([], p.validate_result(json.loads((self.root / 'state' / self.report['run_id'] / 'public-projection-result.json').read_text())))
+
     def next_run(self, suffix):
         self.report['run_id']='RUN-REVISION-'+suffix
         self.report['destination_resolution']=self.helper._profile_resolution(self.root,self.report['run_id'],public=True)

@@ -1595,9 +1595,104 @@ def _metadata_bytes(record: Mapping[str, object], public_id: str) -> bytes:
     return _request_yaml_bytes(metadata)
 
 
-def _generated_readme(record: Mapping[str, object], kind: str) -> bytes:
+PROJECT_PLAN_INTRODUCTION_CONTRACT = "project-plan-introduction/v1"
+
+
+def _plan_table_value(body: bytes | None, heading: str, labels: tuple[str, ...]) -> str | None:
+    """Extract a bounded value from Production's human plan for the Project intro."""
+    if not body:
+        return None
+    try:
+        text = body.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    heading_marker = f"## {heading}"
+    start = text.find(heading_marker)
+    if start < 0:
+        return None
+    next_heading = text.find("\n## ", start + len(heading_marker))
+    section = text[start:] if next_heading < 0 else text[start:next_heading]
+    for line in section.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or cells[0] not in labels or not cells[1]:
+            continue
+        value = " ".join(cells[1].split())
+        if value and value != "---":
+            return value
+    return None
+
+
+def _plan_bullet_value(body: bytes | None, label: str) -> str | None:
+    if not body:
+        return None
+    try:
+        text = body.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    prefix = f"- {label}:"
+    for line in text.splitlines():
+        if line.startswith(prefix):
+            value = " ".join(line[len(prefix):].split())
+            if value:
+                return value.split(" — ", 1)[0].strip()
+    return None
+
+
+def _generated_readme(record: Mapping[str, object], kind: str, *, canonical_body: bytes | None = None) -> bytes:
     body_name = "plan.md" if kind == "plan" else "record.md"
-    return f"# {str(record['title']).replace(chr(10), ' ').replace(chr(13), ' ')}\n\n[{body_name}]({body_name})\n".encode("utf-8")
+    title = str(record["title"]).replace(chr(10), " ").replace(chr(13), " ")
+    if kind != "plan":
+        return f"# {title}\n\n[{body_name}]({body_name})\n".encode("utf-8")
+
+    experience = _plan_table_value(canonical_body, "1. 完成像", ("experience sequence / encounter",))
+    claim = _plan_table_value(canonical_body, "3. メッセージ", ("claim",))
+    mechanism = _plan_table_value(canonical_body, "4. コンセプト", ("mechanism",))
+    field = _plan_table_value(canonical_body, "2. テーマ", ("field",))
+    format_value = _plan_bullet_value(canonical_body, "format")
+    resolution = _plan_bullet_value(canonical_body, "resolution")
+    experience = experience or "具体的な体験順序は [plan.md](plan.md) の「完成像」に記載されています。"
+    claim = claim or "主張と反証条件は [plan.md](plan.md) の「メッセージ」に記載されています。"
+    mechanism = mechanism or "制作機構と差分は [plan.md](plan.md) の「コンセプト」に記載されています。"
+    field = field or "Production が受理した handoff と調査から導かれた制作上の問いです。"
+    format_line = format_value or "Production の正本 plan に定義された形式"
+    if resolution:
+        format_line += f"（{resolution}）"
+    assets = record.get("assets", "[]")
+    try:
+        asset_rows = json.loads(assets) if isinstance(assets, str) else assets
+    except (TypeError, ValueError, json.JSONDecodeError):
+        asset_rows = []
+    asset_links: list[str] = []
+    if isinstance(asset_rows, list):
+        for asset in asset_rows:
+            if not isinstance(asset, Mapping):
+                continue
+            source_path = asset.get("path")
+            if not isinstance(source_path, str) or not source_path.startswith("03_plan/media/"):
+                continue
+            relative = source_path.removeprefix("03_plan/")
+            name = Path(relative).name
+            asset_links.append(f"- [{name}]({relative})")
+    if not asset_links:
+        asset_links.append("- attestation が列挙する公開 asset はありません。")
+    readme = (
+        f"# {title}\n\n"
+        "## 作品体験\n\n"
+        f"{experience}\n\n"
+        "## 主張\n\n"
+        f"{claim}\n\n"
+        "## 発想の由来\n\n"
+        f"{field} 制作機構は {mechanism}\n\n"
+        "## 素材・形式\n\n"
+        f"形式: {format_line}。正本の本文と、受入済み attestation が列挙する asset を参照します。\n\n"
+        + "\n".join(asset_links)
+        + "\n\n"
+        "## 制作入口\n\n"
+        f"制作判断と受入条件の入口は [{body_name}]({body_name}) です。ここで公開されるのは検証済みの制作計画と紹介であり、物理制作、購入、契約、展示、外部連絡はこの投影から実行されません。\n"
+    )
+    return readme.encode("utf-8")
 
 
 def _source_record_plan(

@@ -27,8 +27,8 @@
         "status": {"const": "PASSED"},
         "evidence_sha256": {"$ref": "#/$defs/hash"},
         "stage_count": {"type": "integer", "minimum": 1},
-        "result_statuses": {"type": "array", "minItems": 1, "items": {"enum": ["NOT_RUN", "EXTERNAL_VALIDATION_REQUIRED"]}},
-        "external_validation_required": {"const": true},
+        "result_statuses": {"type": "array", "minItems": 1, "items": {"enum": ["NOT_RUN", "EXTERNAL_VALIDATION_REQUIRED", "NOT_REQUIRED", "REQUIRED", "PENDING", "PASS", "FAIL", "BLOCKED", "SKIPPED"]}},
+        "external_validation_required": {"type": "boolean"},
         "research_result_dry_run": {"const": true}
       }
     },

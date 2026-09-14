@@ -1,11 +1,11 @@
 [
   {
     "issue_key": "issue:6cc9d132e09b8dda63033afddf4f3633",
-    "base_commit": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+    "base_commit": "97b5325bc2d06249421f0d3fcb5fbd4a6dad31a0",
     "implementation_status": "PASSED",
     "test_status": "PASSED",
     "quality_gate_status": "PASSED",
-    "quality_gate_commit": "de5a3c3ef2d1cb13f84e522ee73211d70e214f65",
+    "quality_gate_commit": "97b5325bc2d06249421f0d3fcb5fbd4a6dad31a0",
     "test_refs": ["art-history-quality-gate", "art-history-unit-tests"],
     "changed_paths": ["entities/proposed-evidence-001"]
   }

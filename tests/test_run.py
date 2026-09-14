@@ -466,6 +466,76 @@ class RequestForwardingTests(unittest.TestCase):
 
 
 class ProductionHistoryTests(unittest.TestCase):
+    def _run_prototype_fixture(self, prototype_outcome: dict) -> tuple[dict, list[list[str]], object]:
+        self.temporary = tempfile.TemporaryDirectory(prefix="run-prototype-stage-")
+        self.addCleanup(self.temporary.cleanup)
+        root = Path(self.temporary.name)
+        captured: list[list[str]] = []
+
+        def fake_tool(args: list[str], python: str) -> dict:
+            if args[0] == "tools/build_research_request.py":
+                output = Path(args[args.index("--output") + 1])
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "RR001.yaml").write_text(
+                    "request_id: RR001\nintent:\n  creative_question: derived\n", encoding="utf-8",
+                )
+            return {"status": "PASSED"}
+
+        def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
+            captured.append(args)
+            if args[0] == "tools/complete.py":
+                return {"status": "COMPLETE"}
+            if args[0] == "tools/new_production.py":
+                project = Path(args[args.index("--output-root") + 1]) / "production" / "run-plan"
+                (project / "05_execution").mkdir(parents=True, exist_ok=True)
+                (project / "05_execution" / "output-versions.yaml").write_text("version: 1\n", encoding="utf-8")
+            if args[0] == "tools/build_plan.py":
+                project = Path(args[args.index("--project-root") + 1])
+                (project / "03_plan").mkdir(parents=True, exist_ok=True)
+                (project / "03_plan" / "production-plan.md").write_text("# plan\n", encoding="utf-8")
+            if args[0] == "tools/build_prototype.py":
+                return prototype_outcome
+            return {"status": "PASSED"}
+
+        with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                patch.object(MODULE, "_run_child", side_effect=fake_child), \
+                patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                patch.object(MODULE, "verify_plan", return_value={
+                    "plan_status": "PLAN_READY",
+                    "owner_verification": {"plan_status": "PLAN_READY"},
+                }), \
+                patch.object(MODULE, "_handoff_arguments", return_value=[
+                    "--generated-at", "2026-08-20T00:00:00+09:00", "--research-commit", "a" * 40,
+                    "--handoff-id", "HO001", "--revision", "1",
+                ]), \
+                patch.object(MODULE, "_head", return_value="d" * 40):
+            report = MODULE._run_orchestration(
+                "調和", root / "workspace", root / "state", "RUN-PROTOTYPE", "artistic-research",
+                "run-plan", "Run plan", "2026-08-20T00:00:00+09:00", sys.executable,
+                research_root=root / "research", production_root=root / "production", offline_fixture=True,
+            )
+        return report, captured, root
+
+    def test_normal_run_executes_prototype_before_owner_verification(self):
+        report, captured, _ = self._run_prototype_fixture({"status": "PASSED"})
+        stages = [args[0] for args in captured]
+        self.assertLess(stages.index("tools/build_plan.py"), stages.index("tools/build_prototype.py"))
+        self.assertIn("prototype", [step["step"] for step in report["steps"]])
+        self.assertNotIn("PROTOTYPE_OUTPUT", report["delivery_completion"]["missing"])
+
+    def test_normal_run_persists_repairable_prototype_failure(self):
+        report, captured, root = self._run_prototype_fixture({
+            "status": "NOT_READY", "detail": "PROTOTYPE_RENDER_INPUTS",
+        })
+        self.assertEqual("AT_PRODUCTION", report["status"])
+        self.assertEqual("INCOMPLETE", report["delivery_completion"]["status"])
+        self.assertEqual("prototype", report["next_action"]["stage"])
+        self.assertIn("--project-root", report["next_action"]["prototype_command"])
+        self.assertIn("--project-root", report["next_action"]["validation_command"])
+        self.assertEqual("PROTOTYPE_RENDER_INPUTS", report["steps"][-1]["detail"])
+        self.assertTrue((root / "state/RUN-PROTOTYPE/run.json").is_file())
+
     def test_production_root_is_stable_when_run_id_changes(self):
         with tempfile.TemporaryDirectory() as temporary:
             state_root = Path(temporary) / "state"
