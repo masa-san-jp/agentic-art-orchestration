@@ -1,0 +1,25 @@
+{
+  "task_id": "OI-06",
+  "target_repository": "masa-san-jp/agentic-art-production",
+  "source_commit": "6abbcc0b5d01da5eedfd0e00963675ee6299b4b6",
+  "code_candidate": "3b80c746d67d9298142164b894fef68860436fb8",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-production/pull/79",
+  "merge_commit": "ba79384daba853b759acaf30fe813f993d9232d9",
+  "checks": {
+    "local_validator": "PASS",
+    "focused_suite": "PASS: 57 tests",
+    "full_suite": "PASS: 184 tests",
+    "evaluation": "PASS: 6/6",
+    "remote_ci_push": "PASS: 3.11 and 3.12",
+    "remote_ci_pull_request": "PASS: 3.11 and 3.12",
+    "diff_check": "PASS"
+  },
+  "acceptance": {
+    "same_preview_bytes": true,
+    "plan_attestation_actionability_hash_bound": true,
+    "missing_or_tampered_preview_blocked": true,
+    "physical_or_external_effect_authorized": false
+  },
+  "sensitivity": "metadata-only; no private raw data, credentials, or external artifact body",
+  "status": "DONE"
+}

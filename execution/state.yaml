@@ -1,14 +1,14 @@
-version: 299
-updated_at: '2026-09-14T02:51:44+09:00'
-active_task: OI-06
-active_repository: agentic-art-production
+version: 300
+updated_at: '2026-09-14T10:54:47+09:00'
+active_task: OI-10
+active_repository: agentic-art-orchestration
 lease:
   status: active
   owner: codex-open-issues-20260914
-  acquired_at: '2026-09-14T02:51:44+09:00'
-  expires_at: '2026-09-14T08:51:44+09:00'
+  acquired_at: '2026-09-14T10:54:47+09:00'
+  expires_at: '2026-09-14T16:54:47+09:00'
   lane: AUTONOMY
-  execution_id: OI-06:20260914
+  execution_id: OI-10:20260914
   scope:
     repository: agentic-art-orchestration
     branch: codex/open-issues-autonomous-20260914
@@ -31,26 +31,25 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: OI-04
-  repository: agentic-art-research
+  task: OI-07
+  repository: agentic-art-production
   status: DONE
-  result: 'Research #242 INSP-02 is merged; typed inspiration candidates are compared, critiqued, revised, reloaded from prior knowledge, and transformed into a traceable Production handoff.'
-  start_point: aa74d8fde89598616e0e7e4494d52bb44736be35
-  code_candidate: c3596373cf542677f7fb78cf0f8e5360a29006c1
-  evidence: execution/oi-04-inspiration-evidence.json
+  result: 'Production #242 INSP-03 preserves adopted inspiration and binds production feasibility; PR #80 passed all remote gates and is merged.'
+  start_point: ba79384daba853b759acaf30fe813f993d9232d9
+  code_candidate: 1b73a73a35e1b15fe8189b855a790072eaf96558
+  merge_commit: 035492bfd7dc8e79a205411010f289c1c72dde29
+  evidence: execution/oi-07-production-inspiration-evidence.json
   checks:
-    research_validator: PASS
-    research_owner_ci: 'PASS: remote run 34772302942'
-    research_full_suite: 'PASS: 333 tests in clean checkout'
-    semantic_candidate_comparison: PASS
-    critique_revision: PASS
-    knowledge_reuse: PASS
-    handoff_preservation: PASS
+    production_validator: 'PASS: tools/validate.py --check'
+    production_owner_ci: 'PASS: PR #80 push/PR runs 34784262150 and 34784274290'
+    production_full_suite: 'PASS: clean checkout on Python 3.11 and 3.12'
+    inspiration_alignment: PASS
+    prototype_and_completion_path: PASS
     diff_check: PASS
   unresolved:
     - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION'
-    - 'project-local delivery is complete; Git remote synchronization is NOT_RUN/OUTPUT_ONLY_UNCOMMITTED'
-    - 'Issues #242, #243, #77 and #31 are registered for implementation and remain open until their acceptance evidence is complete'
+    - 'Project #31 candidate remains blocked by pre-existing P0004 unlisted JPEGs and unknown attribution'
+    - 'Issues #242, #243, #77 and #31 remain open until the full cross-repository acceptance evidence and final integration are complete'
     - 'Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision and explicit human approval'
     - 'Production #10 remains open as a persistent requirement SSOT'
     - 'No release was created because no release target or version was specified'
@@ -75,12 +74,31 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-04
+last_completed_task: OI-07
 resume_from:
-  task: OI-06
+  task: OI-10
+  repository: agentic-art-orchestration
+  action: 'Implement the prototype stage in normal, knowledge-cycle/supervisor, and batch completion paths, then verify missing/hash mismatch recovery evidence.'
+  command: '.venv/bin/python -m unittest tests.test_delivery_completion tests.test_run tests.test_batch_run -v'
+
+oi07_progress:
+  task: OI-07
   repository: agentic-art-production
-  action: 'Implement OI-06 in an isolated Production branch, then run owner gates and record exact preview/attestation evidence.'
-  command: '.venv/bin/python tools/validate.py --check'
+  start_point: ba79384daba853b759acaf30fe813f993d9232d9
+  branch: codex/issue-242-insp-03-20260914
+  code_candidate: 1b73a73a35e1b15fe8189b855a790072eaf96558
+  pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/80
+  status: MERGED
+  merge_commit: 035492bfd7dc8e79a205411010f289c1c72dde29
+  remote_ci: 'PASS: push/PR Python 3.11 and 3.12; runs 34784262150, 34784274290'
+  first_resume_operation: 'Update parent OI-07 evidence, then claim OI-10.'
+
+oi10_progress:
+  task: OI-10
+  repository: agentic-art-orchestration
+  start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
+  status: IN_PROGRESS
+  first_resume_operation: 'Inspect tools/run.py, tools/delivery_completion.py, tools/knowledge_cycle_run.py, and tools/batch_run.py; add one shared prototype readiness boundary.'
 
 aak04_checkpoint:
   task: AAK-04

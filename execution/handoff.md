@@ -1,3 +1,21 @@
+# OI-10 in progress — Parent prototype stage and delivery completion
+
+OI-06 is complete on Production main at `ba79384daba853b759acaf30fe813f993d9232d9`; its metadata-only evidence is `execution/oi-06-production-preview-evidence.json`.
+
+OI-07 is complete on Production main at merge commit `035492bfd7dc8e79a205411010f289c1c72dde29`. Candidate `1b73a73a35e1b15fe8189b855a790072eaf96558` added `production-inspiration-alignment/v1`, preserving adopted hypothesis semantics, creative-direction hash, prototype task bindings, resource matrix, and completion-path bindings. Unresolved bindings remain `INCOMPLETE` with a blocking alignment gap. PR #80 passed push/PR validation on Python 3.11 and 3.12; evidence is `execution/oi-07-production-inspiration-evidence.json`.
+
+OI-08 remains BLOCKED by the pre-existing Project P0004 unlisted JPEGs and unknown attribution. The candidate PR #33 remains draft; do not delete the files, weaken the validator, or invent rights/creator/consent.
+
+OI-10 is now active from parent commit `2d751b5d96c2ea67202ba33d7892b04fe421898d`. The task connects the qualified Production `prototype_status` and attestation asset to normal, knowledge-cycle/supervisor, batch, and delivery completion paths. Missing or hash-mismatched output must remain `INCOMPLETE` with an exact repair command and same-run resume data.
+
+Resume command:
+
+```bash
+.venv/bin/python -m unittest tests.test_delivery_completion tests.test_run tests.test_batch_run -v
+```
+
+After implementation, run the parent validator, focused/full parent tests, workspace status, and diff check. Keep public publication, release, physical action, and P0004 attribution unresolved. No private raw data or credentials are included in the execution evidence.
+
 # AP-05 completed — next AP-06
 
 AP-05 was completed on `docs/ecosystem-readme-20260910` from parent start point

@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-04 完了 / OI-06 READY / ExecPlan SSOT
+状態: OI-07 完了 / OI-10 実装中 / OI-08 baseline blocker保持 / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -22,7 +22,9 @@
 - [x] `OI-03`でResearch #109の試作契約をProduction境界まで検証する。
 - [x] `OI-05`でProduction #76の決定論的SVG試作を実装・merge・closeする。
 - [x] `OI-04`を実装・検証・統合し、Research PR #111をmergeした。
-- [ ] `OI-06`から`OI-12`を依存順に実装・検証・統合する。
+- [x] `OI-06`を実装・検証・Production mainへ統合した。
+- [x] `OI-07`をProduction mainへ統合した。
+- [ ] `OI-08`から`OI-12`を依存順に実装・検証・統合する（OI-08はP0004基線不備のためBLOCKED）。
 - [ ] merge後のqualified mainで最終通常runを実施し、対象Issueをcloseする。
 
 ## Surprises & Discoveries
@@ -35,7 +37,7 @@
 - Self Model #82は実データを扱う前に `destination_root`、`consent_scope`、`retention_decision` が必要である。3項目がない限り、自律実装の完了件数に含めない。
 - Art History #392は制作runtimeとは独立して実装できるが、入力ownerのqualified pinを変える。最終統合前に完了させ、新しいpinを使う。
 - OI-03の横断fixtureは、Researchの正例をProductionへ受け渡すと `PLANNING` かつ `readiness.startable=true` になることを確認した。寸法・素材・数量がProduction planに無い状態でのrenderer停止は、`PROTOTYPE_RENDER_INPUTS` による入力不足の明示であり、placeholder出力を作らない。Production #76はこの境界を実装済みなので、OI-05をOI-03直後の独立taskとして完了記録した。
-- OI-04はResearchにprovider-neutralな `inspiration-pipeline/v1` を追加し、candidateの意味的重複、創作上の飛躍、批評・修正、前回知識の再利用、Production handoffの置換 drift を機械契約と個別テストで検証した。Research PR #111のremote CIとclean checkoutの333 testsがPASSし、次の最小taskはProduction #77のOI-06になった。
+- OI-04はResearchにprovider-neutralな `inspiration-pipeline/v1` を追加し、candidateの意味的重複、創作上の飛躍、批評・修正、前回知識の再利用、Production handoffの置換 drift を機械契約と個別テストで検証した。Research PR #111のremote CIとclean checkoutの333 testsがPASSした。OI-06はProduction PR #79をmergeし、OI-07の候補実装へ進んだ。OI-07はProduction PR #80のpush/PR両CI（3.11/3.12）を確認してmergeした。
 
 ## Decision Log
 
@@ -152,6 +154,8 @@ OI-06のcandidateを基線に、Researchで採択した着想とProduction plan�
 
 PR #74由来の準備開始判定と制作可能性を分離する。READ_ONLY確認taskを追加しただけ、coverageを100%にしただけ、未解決条件をユーザー承認へ送っただけではPASSしない負例を追加する。
 
+2026-09-14時点のOI-07 candidateはProduction commit `1b73a73a35e1b15fe8189b855a790072eaf96558`、PR #80。`production-inspiration-alignment/v1`が、採択仮説、creative direction、prototype task、資源matrix、完了経路をtrace付きで保持する。未結合の資源・経路、READ_ONLYだけの工程は`INCOMPLETE`とblocking gapへ落とす。4 jobのremote CI（push/PRの3.11/3.12）がPASSし、merge commitは`035492bfd7dc8e79a205411010f289c1c72dde29`となった。
+
 ### OI-08 — Project #31 / PRT-05
 
 `media/prototype/*.svg`を含むrecordについて、receiver、local delivery、validator、catalog syncを一貫させる。`metadata.yaml.assets`の存在、media配下、許可拡張子、ignore非該当、attestation hashを検査する。`public-project.yaml`と`.gitignore`の拡張子矛盾を解消し、読者向け文書にsimulatedと非公開原本の境界を記す。
@@ -167,6 +171,8 @@ OI-08のreceiver上で、Project紹介がタイトルとリンクだけになら
 親のnormal/cycle/batch/supervisor入口へprototype stageを追加し、Productionのqualified `prototype_status`とattestation assetをdelivery completionへ接続する。試作欠落/hash不一致は `missing: PROTOTYPE_OUTPUT` で `INCOMPLETE`、修復可能な失敗は同run ID、project root、validation command、resume commandを返す。
 
 offline fixture、purpose E2E、production exchangeも同じstageと判定を使う。fixture SVGを実runの証拠へ昇格させない。
+
+2026-09-14の開始点は親commit `2d751b5d96c2ea67202ba33d7892b04fe421898d`。Production OI-07 merge後の`prototype_status`を、通常run、knowledge-cycle/supervisor、batchの各完了判定へ接続し、欠落・不整合を成功に変換しない。
 
 ### OI-11 — Parent #242 / INSP-05とowner qualification
 

@@ -3126,7 +3126,7 @@ tasks:
   - id: OI-06
     milestone: PROTOTYPE-CONTRACT
     title: "Production #77のpreview、attestation、actionability接続を実装する"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-production/issues/77
     target_repositories: [agentic-art-production]
     agent_terminal: DRAFT_PR_READY
@@ -3137,10 +3137,15 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "previewは既定の非公開境界で生成する。remote公開、Project catalog write、releaseは別gateを維持する。"
+    code_candidate: 3b80c746d67d9298142164b894fef68860436fb8
+    pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/79
+    merge_commit: ba79384daba853b759acaf30fe813f993d9232d9
+    evidence: execution/oi-06-production-preview-evidence.json
+    completion: "Production #77のdigital preview、attestation、plan_actionability接続を実装し、push/PRの3.11・3.12 CIがPASSした。PR #79はmerge済み。"
   - id: OI-07
     milestone: INSPIRATION
     title: "Production #242 INSP-03で着想と制作可能性を接続する"
-    status: BACKLOG
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production]
     agent_terminal: DRAFT_PR_READY
@@ -3151,10 +3156,15 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "制作可能性の判定は自律実行する。物理工程の実行、購入、展示、公開は行わない。"
+    code_candidate: 1b73a73a35e1b15fe8189b855a790072eaf96558
+    pull_request: https://github.com/masa-san-jp/agentic-art-production/pull/80
+    merge_commit: 035492bfd7dc8e79a205411010f289c1c72dde29
+    evidence: execution/oi-07-production-inspiration-evidence.json
+    completion: "ProductionのINSP-03で採択着想、資源、完了経路をProduction planへtraceし、未結合時はINCOMPLETEにする実装を追加した。PR #80のpush/PR 3.11・3.12 CIが全てPASSし、merge済み。"
   - id: OI-08
     milestone: PROJECT-RECEIVER
     title: "Project #31でprototype asset付きrecordを受理する"
-    status: BACKLOG
+    status: BLOCKED
     issue_ssot: https://github.com/masa-san-jp/agentic-art-project/issues/31
     target_repositories: [agentic-art-project]
     agent_terminal: DRAFT_PR_READY
@@ -3166,6 +3176,10 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "Project receiverのlocal検証は進める。catalog remote write、公開範囲変更、既存record再投影は承認対象として残す。"
+    code_candidate: 818bcd57cf1c95ddfad2dc093f9c6ad23b835421
+    pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/33
+    blocker: "Project origin/mainの既存P0004にattestation未記載のJPEGと帰属不明状態があり、owner validatorがunlisted public media/PLAN_NOT_CANONICALで失敗する。削除、validator弱体化、権利・creator・同意の捏造では解消できない。"
+    completion: "candidate PR #33はbaseline P0004のowner gate失敗を確認したためdraftのまま保持。明示的な権利・帰属根拠またはowner承認済み再投影が揃うまでmergeしない。"
   - id: OI-09
     milestone: PROJECT-RECEIVER
     title: "Project #242 INSP-04で作品紹介とlineageを同一revisionへ束ねる"
@@ -3184,7 +3198,7 @@ tasks:
   - id: OI-10
     milestone: DELIVERY-COMPLETION
     title: "Parent #243 PRT-04でprototype stageをdelivery completionへ接続する"
-    status: BACKLOG
+    status: IN_PROGRESS
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/243
     target_repositories: [agentic-art-orchestration, agentic-art-production, agentic-art-project]
     agent_terminal: DRAFT_PR_READY
@@ -3196,6 +3210,8 @@ tasks:
     - .venv/bin/python tools/workspace.py status
     - git diff --check
     human_gate: "delivery completionの検証は進める。Project公開、release、remote default branch変更は別gateを維持する。"
+    start_point: 2d751b5d96c2ea67202ba33d7892b04fe421898d
+    completion: "OI-10実装中。normal/cycle/batch/supervisorのprototype stageとdelivery completionの欠落・hash不一致判定を実装し、親品質ゲートで検証する。"
   - id: OI-11
     milestone: QUALIFICATION
     title: "Parent #242 INSP-05でowner qualificationと知識境界を確定する"
