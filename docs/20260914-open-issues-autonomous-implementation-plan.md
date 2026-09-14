@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-12 実装・検証完了 / 親PR merge・Issue close read-back中 / ExecPlan SSOT
+状態: OI-12 完了 / OI-13 human lane保持 / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -29,7 +29,7 @@
 - [x] `OI-09`でProject紹介を具体化し、README、Production正本、asset、metadata、lineageのcanonical revision整合を実装・検証・mergeした。
 - [x] `OI-11`で全ownerの固定commit、native quality gate、knowledge receipt境界、Project receiver hashを照合した。
 - [x] `OI-12`でqualified mainを統合し、テーマ未指定の実runからProject-local deliveryまで完了する。
-- [ ] 親PR merge後のqualified mainをread-backし、対象Issueをcloseして最終証跡へ記録する。
+- [x] 親PR merge後のqualified mainをread-backし、対象Issueをcloseして最終証跡へ記録する。
 
 ## Surprises & Discoveries
 
@@ -200,7 +200,7 @@ Research、Production、Project、Art History、必要な入力ownerのcandidate
 
 全受入後、依存順に子PRをmergeし、各owner mainを再取得してcandidate一致またはmerge commit包含を確認する。次に親pinと証拠を更新した親PRをmergeし、remote mainで必須checkを再実行する。その後、#109、#76、#77、#31、#392、#242、#243を、各IssueのACとmerge evidenceが揃ったものだけcloseする。Production #10はopen維持する。Self Model #82は3入力がなくても本系列の失敗にはしない。
 
-実装・検証結果として、親branchのcurrent pin fixture/snapshotを生成経路から更新し、親643 tests（既存skip 1）、validator、status、audit、security、interaction E2Eを通過した。`OI12FINAL20260915L`はテーマ・slug・title未指定でResearch/Productionの知識保存、Production prototype、Project P0009投影、receiver検証を経て`delivery_completion.status=COMPLETED`へ到達した。残る作業は親PR #246の通常merge、remote main read-back、#77/#31/#242/#243のIssue close記録である。
+実装・検証結果として、親branchのcurrent pin fixture/snapshotを生成経路から更新し、親643 tests（既存skip 1）、validator、status、audit、security、interaction E2Eを通過した。`OI12FINAL20260915L`はテーマ・slug・title未指定でResearch/Productionの知識保存、Production prototype、Project P0009投影、receiver検証を経て`delivery_completion.status=COMPLETED`へ到達した。親PR #246はrequired checks（bootstrap、production-exchange、real-chain）を通過してmerge commit `29889b9`でorigin/mainへ統合し、remote main read-back後に#77/#31/#242/#243をcloseした。#109/#76/#392は既にCLOSEDで、全対象の状態を証跡へ記録した。
 
 ### OI-13 — Self Model #82 human lane
 

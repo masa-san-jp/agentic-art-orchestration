@@ -3265,8 +3265,11 @@ tasks:
     human_gate: "qualified candidateのmergeとIssue closeはユーザーが許可した操作として実行する。release、公開、物理制作、実個人profile移設は既存gateを維持する。"
     evidence: execution/oi-12-integration-evidence.json
     code_status: CODE_VERIFIED
-    integration_status: MERGE_PENDING
-    completion: "643 parent tests pass after current-pin fixture/snapshot regeneration. The theme-free normal run OI12FINAL20260915L reached PLAN_READY, knowledge COMMITTED, PROJECTED, prototype READY, Project-local receiver VERIFIED, and delivery_completion.status=COMPLETED for P0009. Parent PR #246 and post-merge Issue close/read-back remain the final external integration steps."
+    integration_status: MERGED
+    pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
+    pull_request_state: MERGED
+    merge_commit: 29889b923911edd1de889477d095d4543f1042ab
+    completion: "643 parent tests pass after current-pin fixture/snapshot regeneration. The theme-free normal run OI12FINAL20260915L reached PLAN_READY, knowledge COMMITTED, PROJECTED, prototype READY, Project-local receiver VERIFIED, and delivery_completion.status=COMPLETED for P0009. Parent PR #246 passed bootstrap, production-exchange, and real-chain, merged to origin/main as 29889b9, and the planned Issue close read-back is recorded in the integration evidence."
   - id: OI-13
     milestone: HUMAN-GATE
     title: "Self Model #82のprofile移設要求をhuman laneで保持する"
