@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-09 完了 / OI-11 次task / ExecPlan SSOT
+状態: OI-11 完了 / OI-12 次task / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -27,7 +27,8 @@
 - [x] `OI-10`でnormal/cycle/supervisor/batchのprototype stageとdelivery completionを実装・検証した。
 - [x] `OI-08`をP0004の基線不備を解消する互換契約まで含めて実装・検証・mergeした。
 - [x] `OI-09`でProject紹介を具体化し、README、Production正本、asset、metadata、lineageのcanonical revision整合を実装・検証・mergeした。
-- [ ] `OI-11`から`OI-12`を依存順に実装・検証・統合する。
+- [x] `OI-11`で全ownerの固定commit、native quality gate、knowledge receipt境界、Project receiver hashを照合した。
+- [ ] `OI-12`でqualified mainを統合し、テーマ未指定の実runからProject-local deliveryまで完了する。
 - [ ] merge後のqualified mainで最終通常runを実施し、対象Issueをcloseする。
 
 ## Surprises & Discoveries
@@ -44,6 +45,7 @@
 - OI-10はProductionの`production-prototype` stageを親のnormal入口、knowledge-cycle/supervisor、batchへ接続した。`delivery-completion/v1`はownerの`prototype_status=READY`を必須とし、batchは全projectのprototype readinessをg7として検査する。prototype失敗は同じrun ID、project root、validator、resume commandを保存して`INCOMPLETE`に留める。正規Project fixtureを復元した親full suiteは642 tests PASS（既存skip 1）だった。
 - OI-08の候補PRは、P0004のREADME専用JPEGがProduction attestation外であることを確認した。Production attestationへ後付けせず、Project固有の補助メディアmanifestで既存公開commit、path、hash、MIME、サイズ、README専用リンクを固定した。P0004のplan本文、既存hash、lineageは変更せず、Project PR #33のremote CIをPASSさせてmergeした。
 - OI-09では、P0004のREADMEへ作品体験、主張、発想の由来、素材・形式、制作入口を追加した。8件すべてのREADMEを`project-plan-introduction/v1`のexact SHAと`introduction_revision=plan_revision`でmetadata/indexへ束ね、receiverはREADME、metadata/index、Production attestationの不一致をfail closedする。lineage自体のannotation revisionは既存互換性のため独立して保持し、`canonical_revision`でplan revisionへ結び付けた。PR #34のremote CIとmerge後mainの53 tests、validator、catalog sync、diff checkがPASSし、候補`36ee3ac0e1c3491b3e18f569d4144e89a226c50c`、merge`f583df94786cfa083af8aa2d7be5c3c9fe3a390f`、証拠`execution/oi-09-project-introduction-evidence.json`を記録した。
+- OI-11の初回全owner gateは、ProductionのPyYAML固定版とmacOS `/var` symlink TMP境界、Art HistoryのPython 3.12要件、他ownerの依存環境不足を検出した。子repoを変更せず、各宣言要件に一致する隔離venvと実体TMPDIRを用意して再検証し、6ownerすべての固定commitがMATCHED、native gateがPASSとなった。Marketingは全manifest再実行の唯一の環境不一致を6.0.3へ修復後に同一runner関数で個別再検証した。Project mainの8 record receiver集合hash、knowledge-write-receipt/v1のschema・native receipt evidence、非blocking freshness warningを保存し、`execution/oi-11-owner-qualification-evidence.json`へ記録した。
 
 ## Decision Log
 
@@ -188,7 +190,7 @@ offline fixture、purpose E2E、production exchangeも同じstageと判定を使
 
 通常入口とbatch/recoveryを候補比較、批評、内容修復、知識保存へ接続する。Self Model、Art History、Marketing、Viewerの4入力ownerは現行契約で足りるか実測し、変更が必要なownerだけ別task/commit/PRに分割する。Art HistoryはOI-01のcandidateを採用する。
 
-各owner candidateを隔離したGit外workspaceへ集め、source commit、contract version、acceptance evidence、native gatesを確認する。CLOSED状態やPR存在だけでdependency PASSにしない。
+各owner candidateを隔離したGit外workspaceへ集め、source commit、contract version、acceptance evidence、native gatesを確認する。CLOSED状態やPR存在だけでdependency PASSにしない。固定manifest `bf8bf604df10d1bf369dab1bbdaf1ebb32e3941d2e247c6688f23a84fe373171` の6ownerをclean/MATCHEDで検証し、宣言された全native gateのPASSを `execution/oi-11-owner-qualification-evidence.json` に保存する。Project main `f583df94786cfa083af8aa2d7be5c3c9fe3a390f` の8record receiver集合hash `3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147`、knowledge registry/receipt contract、既存native receiptを照合した。新しい最終runのknowledge receiptと`delivery_completion.status=COMPLETED`はOI-12で実測する。
 
 ### OI-12 — qualified integration、merge、Issue close
 

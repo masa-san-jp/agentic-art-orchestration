@@ -1,3 +1,19 @@
+# OI-11 complete — next OI-12
+
+OI-11 is complete. The exact manifest pins were materialized in a Git-external immutable workspace and all six child repositories were clean and `MATCHED`. Production, Research, Art History, Self Model, Viewer Response, and Marketing each passed every declared native gate; the Marketing result was rechecked after aligning its disposable environment to `PyYAML==6.0.3`. Evidence is `execution/oi-11-owner-qualification-evidence.json`.
+
+Project main is `f583df94786cfa083af8aa2d7be5c3c9fe3a390f`. Its eight record receiver set passed post-merge validator, catalog sync, 53 tests, and diff check. The receiver manifest hash is `3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147`. Knowledge boundaries `knowledge-owner-registry/v1` and `knowledge-write-receipt/v1` were checked against existing native receipt evidence; the final new-run receipts remain an OI-12 acceptance output.
+
+The standard audit currently has one explicit nonblocking warning (`production-signal-portfolio` is unavailable before OI-12 creates a selected completed run); no blocking error was converted to a normal value. No private/raw data, credentials, external artifact, public mutation, or physical effect was created. P0004 attribution remains `UNKNOWN_ATTRIBUTION`; Production #10 remains open; Self Model #82 remains human-blocked.
+
+Resume command:
+
+```bash
+.venv/bin/python tools/validate.py --check
+```
+
+Next task is OI-12. First integrate the qualified parent candidate in PR #246 after its checks are green, then run the theme-free `tools/run.py` Project-local path with an explicit approved instance profile. Preserve the exact run state, native Research/Production knowledge receipts, canonical Production plan and prototype hashes, Project receiver receipt, creator/origin lineage, and require `delivery_completion.status=COMPLETED` before closing Issues #109, #76, #77, #31, #392, #242, and #243. Keep Production #10 and Self Model #82 open under their stated conditions.
+
 # OI-10 complete — Parent prototype stage and delivery completion
 
 OI-06 is complete on Production main at `ba79384daba853b759acaf30fe813f993d9232d9`; its metadata-only evidence is `execution/oi-06-production-preview-evidence.json`.

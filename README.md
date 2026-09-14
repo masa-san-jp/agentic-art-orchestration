@@ -93,16 +93,16 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-09-14T18:18:38+09:00`.
+Source updated at: `2026-09-14T19:18:49+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 1 | 0 | 1 | 190 | 193 |
+| 0 | 1 | 0 | 1 | 191 | 193 |
 
-Current task: `OI-11`; repository: `agentic-art-orchestration`; checkpoint: `OI-09`.
-Next action: Qualify the exact Research, Production, Project, and four input-owner candidate/main pins with native gates and knowledge receipts before final integration.
-Ready: `OI-11`.
-Next task: `OI-11`.
+Current task: `OI-12`; repository: `agentic-art-orchestration`; checkpoint: `OI-11`.
+Next action: Integrate the qualified parent candidate, run the theme-free Project-local normal entry, and verify final native receipts and delivery completion.
+Ready: `OI-12`.
+Next task: `OI-12`.
 Blocked:
 - `OI-13`: destination_root、consent_scope、retention_decisionと明示的なhuman approvalがIssueに記録されるまで、実個人profile移設は開始できない。
 

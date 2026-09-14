@@ -3232,7 +3232,7 @@ tasks:
   - id: OI-11
     milestone: QUALIFICATION
     title: "Parent #242 INSP-05でowner qualificationと知識境界を確定する"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, agentic-art-project, art-history, marketing-trends, viewer-response-notes, self-model]
     agent_terminal: EVIDENCE_READY
@@ -3244,10 +3244,14 @@ tasks:
     - .venv/bin/python tools/audit.py
     - git diff --check
     human_gate: "qualification証跡の収集は進める。同意範囲変更、実個人data、公開、merge、releaseは既存gateを維持する。"
+    evidence: execution/oi-11-owner-qualification-evidence.json
+    completion: "全6 manifest ownerをGit外隔離workspaceでexact observed_commitへ展開し、clean/MATCHEDを確認した。Production、Research、Art History、Self Model、Viewerはfull manifest runnerで全gate PASS、Marketingは要求PyYAML==6.0.3へ環境を修復した同一runner関数で全gate PASS。contract version、knowledge-write-receipt/v1のnative receipt境界、Project main f583df94786cfa083af8aa2d7be5c3c9fe3a390fの8-record receiver manifest hash 3235de895a463eb3e480524477a6c6420368e004bf808dcc715cef2d2dd87147を照合した。"
+    code_status: CODE_VERIFIED
+    integration_status: QUALIFIED
   - id: OI-12
     milestone: QUALIFICATION
     title: "qualified integrationを実行し、受入Issueをcloseする"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, agentic-art-project, art-history]
     agent_terminal: EVIDENCE_READY
@@ -3259,6 +3263,7 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     - git diff --check
     human_gate: "qualified candidateのmergeとIssue closeはユーザーが許可した操作として実行する。release、公開、物理制作、実個人profile移設は既存gateを維持する。"
+    completion: "OI-11 qualification complete; execute exact candidate integration, then the theme-free Project-local normal run and final Issue close evidence."
   - id: OI-13
     milestone: HUMAN-GATE
     title: "Self Model #82のprofile移設要求をhuman laneで保持する"
