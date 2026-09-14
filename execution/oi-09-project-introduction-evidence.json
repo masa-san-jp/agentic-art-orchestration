@@ -1,0 +1,52 @@
+{
+  "task_id": "OI-09",
+  "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
+  "repository": "masa-san-jp/agentic-art-project",
+  "status": "DONE",
+  "start_point": "047a9976b0dea817758d17048891fc626d82c722",
+  "candidate_commit": "36ee3ac0e1c3491b3e18f569d4144e89a226c50c",
+  "pull_request": "https://github.com/masa-san-jp/agentic-art-project/pull/34",
+  "pull_request_state": "MERGED",
+  "merge_commit": "f583df94786cfa083af8aa2d7be5c3c9fe3a390f",
+  "remote_main": "f583df94786cfa083af8aa2d7be5c3c9fe3a390f",
+  "remote_branch_deleted": true,
+  "contract": "project-plan-introduction/v1",
+  "acceptance": {
+    "AC1": "PASS: P0004 README now explains the viewer experience, claim, source of the idea, material/format, first production step, and the unproduced planning state.",
+    "AC2": "PASS: all eight public plan records carry introduction_contract, introduction_revision equal to plan_revision, and the exact README byte SHA in both metadata.yaml and plans/index.yaml.",
+    "AC3": "PASS: the receiver fails closed for missing or mismatched introduction contract, revision, or README bytes while preserving no-transform Production plan and attested asset checks.",
+    "AC4": "PASS: lineage validation continues to bind plan canonical_revision to plan_revision; independent lineage annotation revisions remain compatible with existing preserve workflow.",
+    "AC5": "PASS: the merge diff contains no plan.md, public-plan-attestation.json, lineage.json, or media path; post-merge main validates all eight records and catalog lineage.",
+    "AC6": "PASS: P0004 README supplemental JPEGs remain Project-only README documentation under project-supplemental-public-media/v1 and are not added to Production attestation."
+  },
+  "checks": {
+    "owner_catalog_sync_before_merge": "PASS: python3 tools/catalog_sync.py --check",
+    "owner_validator_before_merge": "PASS: python3 tools/validate.py --check",
+    "owner_full_suite_before_merge": "PASS: 53 tests",
+    "owner_diff_check_before_merge": "PASS: git diff --check",
+    "remote_ci": "PASS: runs 34826940405 and 34826971694",
+    "post_merge_catalog_sync": "PASS: python3 tools/catalog_sync.py --check",
+    "post_merge_validator": "PASS: python3 tools/validate.py --check",
+    "post_merge_full_suite": "PASS: 53 tests",
+    "post_merge_diff_check": "PASS: git diff --check",
+    "post_merge_branch": "PASS: origin/main equals f583df94786cfa083af8aa2d7be5c3c9fe3a390f and candidate branch is deleted"
+  },
+  "preservation": {
+    "production_plan_bytes": "unchanged",
+    "production_attestation_bytes": "unchanged",
+    "production_attested_asset_bytes": "unchanged",
+    "existing_lineage_file_bytes": "unchanged",
+    "p0004_attribution": "UNKNOWN_ATTRIBUTION remains explicit; no creator or origin was inferred"
+  },
+  "sensitive_information": "none; no credentials, private raw data, conversation, or local absolute path was stored",
+  "external_artifact": "none; no Drive or other external artifact was created",
+  "feedback": {
+    "explicit": "User instructed autonomous resolution and completion of the implementation plan.",
+    "inferred": "none"
+  },
+  "unresolved": [
+    "Issue #242 remains open until OI-12 final cross-repository run and acceptance evidence are complete.",
+    "Issue #31 remains open until OI-12 final integration evidence is complete.",
+    "P0004 attribution remains UNKNOWN_ATTRIBUTION by design and is not an introduction-contract blocker."
+  ]
+}

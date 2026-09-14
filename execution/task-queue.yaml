@@ -3186,7 +3186,7 @@ tasks:
   - id: OI-09
     milestone: PROJECT-RECEIVER
     title: "Project #242 INSP-04で作品紹介とlineageを同一revisionへ束ねる"
-    status: READY
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-project]
     agent_terminal: DRAFT_PR_READY
@@ -3198,6 +3198,15 @@ tasks:
     - python3 -m unittest discover -s tests -v
     - git diff --check
     human_gate: "local receiver検証は自律実行する。public catalogへのremote writeとvisibility変更は実行しない。"
+    start_point: 047a9976b0dea817758d17048891fc626d82c722
+    code_candidate: 36ee3ac0e1c3491b3e18f569d4144e89a226c50c
+    pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/34
+    pull_request_state: MERGED
+    merge_commit: f583df94786cfa083af8aa2d7be5c3c9fe3a390f
+    evidence: execution/oi-09-project-introduction-evidence.json
+    code_status: CODE_VERIFIED
+    integration_status: MERGED
+    completion: "P0004の紹介を作品体験、主張、発想の由来、素材・形式、制作入口まで具体化し、8件すべてのREADMEをproject-plan-introduction/v1のexact SHAとplan_revisionでmetadata/indexへ束ねた。receiverはREADME改変・欠落・revision不一致をfail closedし、lineageのcanonical_revisionで正本revisionを保持する。Production plan、attestation、asset、既存lineageの実体を変更せず、53 tests、validator、catalog sync、diff check、remote CI 2件をPASSさせ、Project PR #34をmergeした。"
   - id: OI-10
     milestone: DELIVERY-COMPLETION
     title: "Parent #243 PRT-04でprototype stageをdelivery completionへ接続する"
@@ -3223,7 +3232,7 @@ tasks:
   - id: OI-11
     milestone: QUALIFICATION
     title: "Parent #242 INSP-05でowner qualificationと知識境界を確定する"
-    status: BACKLOG
+    status: READY
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/242
     target_repositories: [agentic-art-orchestration, agentic-art-research, agentic-art-production, agentic-art-project, art-history, marketing-trends, viewer-response-notes, self-model]
     agent_terminal: EVIDENCE_READY

@@ -1,12 +1,12 @@
-version: 303
-updated_at: '2026-09-14T18:04:00+09:00'
-active_task: OI-09
-active_repository: agentic-art-project
+version: 304
+updated_at: '2026-09-14T18:18:38+09:00'
+active_task: OI-11
+active_repository: agentic-art-orchestration
 lease:
   status: held
   owner: codex-open-issues
-  acquired_at: '2026-09-14T18:04:00+09:00'
-  expires_at: '2026-09-15T00:04:00+09:00'
+  acquired_at: '2026-09-14T18:18:38+09:00'
+  expires_at: '2026-09-15T00:18:38+09:00'
   released_at: null
   release_reason: null
   lane: AUTONOMY
@@ -33,21 +33,22 @@ lease:
     - marketing-trends
     - viewer-response-notes
 checkpoint:
-  task: OI-08
+  task: OI-09
   repository: agentic-art-project
   status: DONE
-  result: 'Project receiver now accepts attested prototype media and hash-bound README-only supplemental media; the pre-existing P0004 unlisted-media blocker is resolved without changing canonical plan bytes, hashes, or lineage.'
-  start_point: 818bcd57cf1c95ddfad2dc093f9c6ad23b835421
-  code_candidate: e5d15f4661869c0285b5459eebf2fcded71acb7a
-  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/33
-  merge_commit: 047a9976b0dea817758d17048891fc626d82c722
-  evidence: execution/oi-08-project-receiver-evidence.json
+  result: 'Project紹介、Production正本、attested asset、metadata、lineageのcanonical revisionを結び付け、P0004の紹介不足を解消した。Production plan、attestation、asset、既存lineageの実体は変更していない。'
+  start_point: 047a9976b0dea817758d17048891fc626d82c722
+  code_candidate: 36ee3ac0e1c3491b3e18f569d4144e89a226c50c
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/34
+  merge_commit: f583df94786cfa083af8aa2d7be5c3c9fe3a390f
+  evidence: execution/oi-09-project-introduction-evidence.json
   checks:
     owner_validator: 'PASS: python3 tools/validate.py --check'
     owner_catalog_sync: 'PASS: python3 tools/catalog_sync.py --check'
-    owner_full_suite: 'PASS: 52 tests'
+    owner_full_suite: 'PASS: 53 tests'
     diff_check: PASS
-    remote_ci: 'PASS: runs 34825590444 and 34825595108'
+    remote_ci: 'PASS: runs 34826940405 and 34826971694'
+    post_merge_main: 'PASS: validator, catalog sync, 53 tests, diff check'
   unresolved:
     - 'agentic-art-project P0004 remains UNKNOWN_ATTRIBUTION by design; no creator or origin was inferred'
     - 'Issue #31 remains open until OI-12 final integration evidence is complete'
@@ -76,12 +77,12 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-08
+last_completed_task: OI-09
 resume_from:
-  task: OI-09
+  task: OI-11
   repository: agentic-art-orchestration
-  action: 'Inspect Issue #242 INSP-04 and the merged Project receiver contract, then implement the smallest provenance-preserving introduction update with owner and parent gates.'
-  command: 'gh issue view 242 --repo masa-san-jp/agentic-art-orchestration --json state,title,body,comments'
+  action: 'Qualify the exact Research, Production, Project, and four input-owner candidate/main pins with native gates and knowledge receipts before final integration.'
+  command: '.venv/bin/python tools/project_status.py --format json'
 
 oi07_progress:
   task: OI-07
@@ -115,6 +116,28 @@ oi08_progress:
   blocker_resolution: 'P0004 README-only JPEGs are bound by Project supplemental media contract; Production plan attestation remains unchanged.'
   unresolved: 'P0004 attribution remains UNKNOWN_ATTRIBUTION by design; Issue #31 close is deferred to OI-12 final integration evidence.'
   first_resume_operation: 'Inspect Issue #242 INSP-04 and the merged Project receiver before implementing OI-09.'
+
+oi09_progress:
+  task: OI-09
+  repository: agentic-art-project
+  start_point: 047a9976b0dea817758d17048891fc626d82c722
+  status: DONE
+  code_candidate: 36ee3ac0e1c3491b3e18f569d4144e89a226c50c
+  pull_request: https://github.com/masa-san-jp/agentic-art-project/pull/34
+  pull_request_state: MERGED
+  merge_commit: f583df94786cfa083af8aa2d7be5c3c9fe3a390f
+  evidence: execution/oi-09-project-introduction-evidence.json
+  acceptance: 'AC1..AC6 PASS; P0004 introduction is concrete, all 8 README hashes/revisions are bound in metadata/index, receiver is fail-closed, lineage canonical_revision remains compatible, and Production plan/attestation/asset/lineage bytes are preserved.'
+  checks:
+    owner_validator: 'PASS: python3 tools/validate.py --check'
+    owner_catalog_sync: 'PASS: python3 tools/catalog_sync.py --check'
+    owner_full_suite: 'PASS: 53 tests'
+    diff_check: 'PASS: git diff --check'
+    remote_ci: 'PASS: runs 34826940405 and 34826971694'
+    post_merge_main: 'PASS: f583df9 validator, catalog sync, 53 tests, diff check'
+  blocker_resolution: 'P0004 README now supplies concrete work entry and source/format explanation; README bytes are hash-bound to plan revision without modifying Production canonical bytes.'
+  unresolved: 'P0004 attribution remains UNKNOWN_ATTRIBUTION by design; Issue #31 and #242 close remain deferred to OI-12 final integration.'
+  first_resume_operation: 'Run parent project_status, audit, and exact child pin/native gate qualification for OI-11.'
 
 oi10_progress:
   task: OI-10

@@ -2,7 +2,7 @@
 
 作成日: 2026-09-14  
 対象: `masa-san-jp` 配下の Agentic Art 8 repository  
-状態: OI-08 完了 / OI-09 次task / ExecPlan SSOT
+状態: OI-09 完了 / OI-11 次task / ExecPlan SSOT
 
 この文書は、2026-09-14時点の未解消Issueを、会話履歴に依存しないエージェントが依存順に実装し、owner品質ゲート、親統合、PR、merge後確認、Issue closeまで完了するための実行計画である。domain要件は各Issue本文と各owner repositoryが正本であり、この文書は要件本文やschemaを複製せず、順序、境界、検証、再開方法を定める。
 
@@ -26,7 +26,8 @@
 - [x] `OI-07`をProduction mainへ統合した。
 - [x] `OI-10`でnormal/cycle/supervisor/batchのprototype stageとdelivery completionを実装・検証した。
 - [x] `OI-08`をP0004の基線不備を解消する互換契約まで含めて実装・検証・mergeした。
-- [ ] `OI-09`から`OI-12`を依存順に実装・検証・統合する。
+- [x] `OI-09`でProject紹介を具体化し、README、Production正本、asset、metadata、lineageのcanonical revision整合を実装・検証・mergeした。
+- [ ] `OI-11`から`OI-12`を依存順に実装・検証・統合する。
 - [ ] merge後のqualified mainで最終通常runを実施し、対象Issueをcloseする。
 
 ## Surprises & Discoveries
@@ -42,6 +43,7 @@
 - OI-04はResearchにprovider-neutralな `inspiration-pipeline/v1` を追加し、candidateの意味的重複、創作上の飛躍、批評・修正、前回知識の再利用、Production handoffの置換 drift を機械契約と個別テストで検証した。Research PR #111のremote CIとclean checkoutの333 testsがPASSした。OI-06はProduction PR #79をmergeし、OI-07の候補実装へ進んだ。OI-07はProduction PR #80のpush/PR両CI（3.11/3.12）を確認してmergeした。
 - OI-10はProductionの`production-prototype` stageを親のnormal入口、knowledge-cycle/supervisor、batchへ接続した。`delivery-completion/v1`はownerの`prototype_status=READY`を必須とし、batchは全projectのprototype readinessをg7として検査する。prototype失敗は同じrun ID、project root、validator、resume commandを保存して`INCOMPLETE`に留める。正規Project fixtureを復元した親full suiteは642 tests PASS（既存skip 1）だった。
 - OI-08の候補PRは、P0004のREADME専用JPEGがProduction attestation外であることを確認した。Production attestationへ後付けせず、Project固有の補助メディアmanifestで既存公開commit、path、hash、MIME、サイズ、README専用リンクを固定した。P0004のplan本文、既存hash、lineageは変更せず、Project PR #33のremote CIをPASSさせてmergeした。
+- OI-09では、P0004のREADMEへ作品体験、主張、発想の由来、素材・形式、制作入口を追加した。8件すべてのREADMEを`project-plan-introduction/v1`のexact SHAと`introduction_revision=plan_revision`でmetadata/indexへ束ね、receiverはREADME、metadata/index、Production attestationの不一致をfail closedする。lineage自体のannotation revisionは既存互換性のため独立して保持し、`canonical_revision`でplan revisionへ結び付けた。PR #34のremote CIとmerge後mainの53 tests、validator、catalog sync、diff checkがPASSし、候補`36ee3ac0e1c3491b3e18f569d4144e89a226c50c`、merge`f583df94786cfa083af8aa2d7be5c3c9fe3a390f`、証拠`execution/oi-09-project-introduction-evidence.json`を記録した。
 
 ## Decision Log
 
@@ -180,7 +182,7 @@ offline fixture、purpose E2E、production exchangeも同じstageと判定を使
 
 2026-09-14の開始点は親commit `2d751b5d96c2ea67202ba33d7892b04fe421898d`。Production OI-07 merge後の`prototype_status`を、通常run、knowledge-cycle/supervisor、batchの各完了判定へ接続し、欠落・不整合を成功に変換しない。
 
-実装結果は、`tools/run.py`がplan生成直後にProductionの`tools/build_prototype.py`を実行し、失敗時にprototype専用の再開情報を保存する。`tools/knowledge_cycle_run.py`はowner validatorの前に同じstageを実行し、`tools/batch_run.py`は各projectの`production-prototype` stageとg7を必須化した。`tools/plan_completion.py`はqualified planのprototype asset参照を保持し、`tools/delivery_completion.py`はsingle planとbatchの両方でREADYを検査する。focused 63 tests、validator、compile、workspace status、diff check、parent full 642 tests（既存skip 1）がPASSした。OI-10は親PR #246のdraft更新まで完了し、Project #31のbaseline blockerはOI-08で解消したため、OI-09を開始する。
+実装結果は、`tools/run.py`がplan生成直後にProductionの`tools/build_prototype.py`を実行し、失敗時にprototype専用の再開情報を保存する。`tools/knowledge_cycle_run.py`はowner validatorの前に同じstageを実行し、`tools/batch_run.py`は各projectの`production-prototype` stageとg7を必須化した。`tools/plan_completion.py`はqualified planのprototype asset参照を保持し、`tools/delivery_completion.py`はsingle planとbatchの両方でREADYを検査する。focused 63 tests、validator、compile、workspace status、diff check、parent full 642 tests（既存skip 1）がPASSした。OI-10は親PR #246のdraft更新まで完了し、Project #31のbaseline blockerはOI-08で解消した。OI-09もProject PR #34のmergeと証拠記録まで完了したため、OI-11を開始する。
 
 ### OI-11 — Parent #242 / INSP-05とowner qualification
 
