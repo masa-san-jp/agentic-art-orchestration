@@ -191,10 +191,13 @@ def validate_exchange_e2e(data: dict[str, Any], source: str = "production-exchan
             errors.append(f"{source}.normal_exchange.evidence_sha256: malformed hash; remediation: retain only a summary hash")
         if not isinstance(normal.get("stage_count"), int) or normal["stage_count"] < 1:
             errors.append(f"{source}.normal_exchange.stage_count: must be positive; remediation: record observed stages")
-        if "NOT_RUN" not in normal.get("result_statuses", []) and "EXTERNAL_VALIDATION_REQUIRED" not in normal.get("result_statuses", []):
-            errors.append(f"{source}.normal_exchange.result_statuses: unperformed work was not preserved; remediation: keep NOT_RUN or EXTERNAL_VALIDATION_REQUIRED")
-        if normal.get("external_validation_required") is not True:
-            errors.append(f"{source}.normal_exchange.external_validation_required: must be true; remediation: preserve unperformed external validation")
+        statuses = normal.get("result_statuses", [])
+        if not any(status in statuses for status in ("NOT_RUN", "EXTERNAL_VALIDATION_REQUIRED", "NOT_REQUIRED")):
+            errors.append(f"{source}.normal_exchange.result_statuses: external validation state was not preserved; remediation: keep NOT_RUN, EXTERNAL_VALIDATION_REQUIRED, or NOT_REQUIRED")
+        if not isinstance(normal.get("external_validation_required"), bool):
+            errors.append(f"{source}.normal_exchange.external_validation_required: must be a boolean; remediation: preserve the child external-validation state")
+        elif normal["external_validation_required"] is True and "EXTERNAL_VALIDATION_REQUIRED" not in statuses:
+            errors.append(f"{source}.normal_exchange.external_validation_required: true requires EXTERNAL_VALIDATION_REQUIRED in result_statuses; remediation: preserve the child external-validation state")
         if normal.get("research_result_dry_run") is not True:
             errors.append(f"{source}.normal_exchange.research_result_dry_run: must be true; remediation: do not apply into the child repo")
     scenarios = data.get("scenarios")
@@ -424,14 +427,30 @@ def _run_directory(output_root: Path, run_id: str) -> Path:
 
 def _result_statuses(result_path: Path) -> tuple[list[str], bool]:
     result = _load_yaml(result_path)
+    test_results = [item for item in result.get("test_results", []) if isinstance(item, dict)]
     statuses = {
         item.get("result")
-        for item in result.get("test_results", [])
-        if isinstance(item, dict) and isinstance(item.get("result"), str)
+        for item in test_results
+        if isinstance(item.get("result"), str)
     }
+    external_statuses = {
+        item.get("external_validation_status")
+        for item in test_results
+        if isinstance(item.get("external_validation_status"), str)
+    }
+    statuses.update(external_statuses & {"NOT_REQUIRED", "REQUIRED", "PENDING"})
+    if any(
+        "simulated preview only" in str(item.get("limitations", "")).casefold()
+        or "no physical or external execution" in str(item.get("conditions", "")).casefold()
+        for item in test_results
+    ):
+        # The production result contract flattens prototype-control's
+        # external_validation_status.  Preserve the digital renderer's
+        # explicit boundary from its conditions/limitations text.
+        statuses.add("NOT_REQUIRED")
     required = any(
-        isinstance(item, dict) and item.get("external_validation_status") == "REQUIRED"
-        for item in result.get("test_results", [])
+        item.get("external_validation_status") == "REQUIRED"
+        for item in test_results
     )
     if required:
         statuses.add("EXTERNAL_VALIDATION_REQUIRED")
@@ -598,7 +617,7 @@ def run_exchange_e2e(
             "evidence_sha256": "sha256:" + hashlib.sha256(clean_bytes).hexdigest(),
             "stage_count": len(clean["stages"]),
             "result_statuses": result_statuses,
-            "external_validation_required": external_validation_required or "NOT_RUN" in result_statuses,
+            "external_validation_required": external_validation_required,
             "research_result_dry_run": clean["acceptance"]["research_result_dry_run"],
         },
         "scenarios": [
@@ -687,16 +706,34 @@ def _prepare_research_fixture(
         if isinstance(uncertainty, dict):
             uncertainty["external_validation_reason"] = "Record the required synthetic validation evidence before production completion."
     prototype = json.loads(prototype_path.read_text(encoding="utf-8"))
-    for task in prototype.get("tasks", []):
+    prototype_tasks = [task for task in prototype.get("tasks", []) if isinstance(task, dict)]
+    for index, task in enumerate(prototype_tasks):
         if isinstance(task, dict):
-            # Batch qualification exercises the read-only planning path.  The
-            # source fixture intentionally omits this optional classification,
-            # which would otherwise conservatively create physical approval
-            # requirements for a plan-only batch.
-            task["effect_type"] = "READ_ONLY"
+            # The exchange is still networkless and simulated, but the final
+            # digital renderer writes an internal preview.  Keep that
+            # reversible repository action visible to Production's newer
+            # Research-to-Production alignment gate; classifying every task as
+            # READ_ONLY would make the accepted digital prototype look like a
+            # review-only path and correctly fail that gate.
+            task["effect_type"] = "REPOSITORY_WRITE" if index == len(prototype_tasks) - 1 and prototype.get("executor_capability") == "digital-prototype-renderer" else "READ_ONLY"
     (project / "04_decisions" / "production-hypotheses.yaml").write_text(yaml.safe_dump({"hypotheses": [hypothesis]}, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "04_decisions" / "hypothesis-comparison.yaml").write_text(yaml.safe_dump({"comparisons": []}, sort_keys=False, allow_unicode=True), encoding="utf-8")
     (project / "05_production" / "prototype-plans.yaml").write_text(yaml.safe_dump({"prototype_plans": [prototype]}, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    direction_path = project / "05_production" / "creative-direction.md"
+    direction = direction_path.read_text(encoding="utf-8")
+    proposition = str(hypothesis.get("proposition") or "").strip()
+    included = [str(value).strip() for value in hypothesis.get("includes", []) if str(value).strip()]
+    completion_titles = [str(task.get("title") or task.get("id")) for task in prototype_tasks]
+    direction_addendum = [
+        "",
+        "## 採択内容の実行対応",
+        "命題: " + proposition,
+        "含める要素: " + ", ".join(included),
+        "",
+        "## 制作の完了経路",
+        *[f"{index}. {title}" for index, title in enumerate(completion_titles, start=1)],
+    ]
+    direction_path.write_text(direction.rstrip() + "\n" + "\n".join(direction_addendum) + "\n", encoding="utf-8")
     acceptance_path = project / "05_production" / "acceptance-tests.yaml"
     acceptance = _load_yaml(acceptance_path)
     acceptance_tests = acceptance.get("acceptance_tests")
@@ -751,6 +788,38 @@ def _prepare_research_fixture(
         direction = project / "05_production" / "creative-direction.md"
         if direction.is_file() and project_title:
             direction.write_text(direction.read_text(encoding="utf-8").replace("Harmony Study", project_title), encoding="utf-8")
+
+
+def _augment_digital_prototype_plan(project: Path) -> None:
+    """Supply the bounded numeric inputs required by newer Production renderers."""
+
+    plan_path = project / "03_plan" / "production-plan.yaml"
+    plan = _load_yaml(plan_path)
+    specifications = plan.get("technical_specifications")
+    if not isinstance(specifications, list) or not specifications or not isinstance(specifications[0], dict):
+        raise ExchangeError("digital prototype fixture has no technical specification")
+    target = specifications[0].get("target")
+    if not isinstance(target, dict):
+        raise ExchangeError("digital prototype fixture has no technical specification target")
+    target.update({
+        "kind": "QUANTITY",
+        "statement": "The deterministic simulated preview uses a two metre installation width.",
+        "quantity": {"value": "2", "unit": "m"},
+    })
+    plan["materials"] = [{
+        "id": "MT001",
+        "name": "translucent repeated elements",
+        "specification": "Synthetic material label for a simulated preview; no purchase or fabrication is authorized.",
+        "quantity": {"value": "7", "unit": "item"},
+        "rights_status": "PROJECT_INTERNAL",
+        "safety_status": "CLEAR",
+        "source_prototype_plan_ids": ["PP001"],
+        "status": "CANDIDATE",
+        "trace_refs": ["PP001", "MT001"],
+    }]
+    payload = {key: value for key, value in plan.items() if key != "integrity"}
+    plan["integrity"] = {"content_sha256": "sha256:" + hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()}
+    plan_path.write_text(yaml.safe_dump(plan, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
 
 def run_exchange(
@@ -906,6 +975,8 @@ def run_exchange(
                 ("production-runtime", ["tools/run_execution.py", "--project-root", str(production_project), "init", "--format", "json"], "python3 tools/run_execution.py --project-root PRODUCTION_PROJECT init --format json"),
             ):
                 _run_command([child_python, *args], cwd=production_root, stage_id=stage_id, display=display)
+                if stage_id == "production-plan":
+                    _augment_digital_prototype_plan(production_project)
                 stages.append(_stage(stage_id, "agentic-art-production", production_commit, display, None, None, "PASSED", "PREPARED", _locator(run_id, "production/project")))
             result_id_value = _run_command(
                 [child_python, "tools/build_result.py", "--project-root", str(production_project), "--result-id", result_id, "--generated-at", generated_at, "--target-state", "BLOCKED", "--production-commit", production_commit, "--format", "json"],
