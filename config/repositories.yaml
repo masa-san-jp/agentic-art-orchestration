@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: a61460d4f9add36b256b2db9a860c53a98bd5fcd
+    observed_commit: 96aaf6eb6f129ead5c7c5b6811a05205988aaebf
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:
@@ -45,7 +45,7 @@ repositories:
     role: input-kb
     authority: art-history entities, relations, evidence, and graph
     default_branch: main
-    observed_commit: de5a3c3ef2d1cb13f84e522ee73211d70e214f65
+    observed_commit: 97b5325bc2d06249421f0d3fcb5fbd4a6dad31a0
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
     quality_gates:
@@ -199,7 +199,7 @@ repositories:
     role: input-kb
     authority: aggregate viewer response records, privacy boundary, and conservative requirement assessments
     default_branch: feat/viewer-response-contracts
-    observed_commit: 78b6e9a87831eca5a5c20993374b61b8cc61bd0d
+    observed_commit: 0c198ec38629fb032f778071e35f265286f6566f
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/2
     quality_gates:
