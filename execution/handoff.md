@@ -2958,3 +2958,5 @@ OI-12の実装とローカル統合検証を完了した。親のqualified pin f
 ### Next exact action
 
 OI-13は引き続きhuman laneでBLOCKED。再開時の最初の操作は `.venv/bin/python tools/validate.py --check` とし、#82に4項目が明示されるまで実個人profileへアクセスしない。
+
+追補確認では、`tools/audit.py --check --offline-fixture` の現在の非blocking findingはfreshness 2件であり、証跡の `finding_count` を2へ一致させた。post-merge証跡PR #247は `f3bb66e9ba1adba9907ca1f77f5ac994b79190a2` で `origin/main` に反映済みである。

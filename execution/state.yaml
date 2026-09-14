@@ -1,5 +1,5 @@
-version: 307
-updated_at: '2026-09-15T02:22:16+09:00'
+version: 308
+updated_at: '2026-09-15T03:00:45+09:00'
 active_task: OI-13
 active_repository: self-model
 lease:
@@ -43,12 +43,15 @@ checkpoint:
   pull_request_state: MERGED
   merge_commit: 29889b923911edd1de889477d095d4543f1042ab
   remote_main: 29889b923911edd1de889477d095d4543f1042ab
+  post_merge_evidence_pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/247
+  post_merge_evidence_merge_commit: f3bb66e9ba1adba9907ca1f77f5ac994b79190a2
+  post_merge_evidence_remote_main: f3bb66e9ba1adba9907ca1f77f5ac994b79190a2
   evidence: execution/oi-12-integration-evidence.json
   checks:
     parent_validator: 'PASS: .venv/bin/python tools/validate.py --check'
     parent_full_suite: 'PASS: 643 tests, 1 skipped'
     project_status: 'PASS after queue/state synchronization'
-    audit: 'PASS: nonblocking FINDINGS only; 3 findings retained'
+    audit: 'PASS: nonblocking FINDINGS only; 2 findings retained'
     child_quality_gates: 'PASS: all six current owner pins and native gates'
     project_validator: 'PASS: Project f583df9 validator and catalog sync'
     receiver_hash: 'PASS: Project P0009 lineage/receiver verified'
