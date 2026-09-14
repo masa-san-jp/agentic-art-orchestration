@@ -2946,3 +2946,15 @@ OI-12の実装とローカル統合検証を完了した。親のqualified pin f
 この時点での次操作は、branchを通常fast-forward pushし、PR #246のrequired checksを確認してready化・mergeすること。merge後にremote mainをread-backし、ACを再確認したうえでProduction #77、Project #31、親 #242、親 #243をcloseする。#109、#76、#392は既にCLOSED、Production #10は要件SSOTとしてOPEN維持、Self Model #82は`destination_root`・`consent_scope`・`retention_decision`・明示承認待ちのBLOCKED human laneである。force push、release、公開範囲変更、実個人profile移設は実施していない。
 
 明示feedbackは、synthetic explicit profileとproject-local targetの実行入力である。inferred feedbackは候補の仮説として保持し、ユーザー事実や同意へ昇格していない。外部artifactはcreate-only・opaque referenceの境界を維持した。
+
+## 2026-09-15 — OI-12 parent merge and Issue close completed
+
+親PR [#246](https://github.com/masa-san-jp/agentic-art-orchestration/pull/246) は `bootstrap`、`production-exchange`、`real-chain` のrequired checksをPASSさせ、merge commit `29889b923911edd1de889477d095d4543f1042ab`で `origin/main` へ通常mergeした。`git ls-remote origin refs/heads/main` は同じSHAを返し、remote mainをread-backした。
+
+その後、計画の完了条件に従い Production #77、Project #31、親 #242、親 #243をcloseした。#109、#76、#392は既にCLOSEDであり、対象Issueは全てclose済みである。#10は永続要件SSOTとしてOPEN、Self Model #82はdestination_root・consent_scope・retention_decision・明示承認待ちのBLOCKED human laneとしてOPENを維持した。最終状態とmerge証跡は [`execution/oi-12-integration-evidence.json`](oi-12-integration-evidence.json) と `execution/state.yaml` に反映した。
+
+追加のremote専用停止は、Production remote mainで `inspiration_alignment` とデジタルprototype入力が不足していたこと、親E2E契約が `PASS + NOT_REQUIRED` を表現できなかったことだった。親のnetworkless exchange fixtureへ、可逆な内部renderer書込み、数値寸法・素材・数量、creative directionの対応を追加し、外部検証未実施を明示した。remote main再現と再実行の `real-chain` はPASSした。force push、release、物理制作、実個人profile移設、公開範囲変更は行っていない。
+
+### Next exact action
+
+OI-13は引き続きhuman laneでBLOCKED。再開時の最初の操作は `.venv/bin/python tools/validate.py --check` とし、#82に4項目が明示されるまで実個人profileへアクセスしない。

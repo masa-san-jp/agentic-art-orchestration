@@ -1,13 +1,14 @@
 {
   "task_id": "OI-12",
-  "status": "IMPLEMENTATION_VERIFIED",
+  "status": "COMPLETED",
   "issue": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/242",
   "source": {
     "plan": "docs/20260914-open-issues-autonomous-implementation-plan.md",
     "start_commit": "7dcdc19aaca396ea8275194b68eac6d890d0dc75",
     "parent_code_commits": [
       "bc64dab9bce8a90c1a8838fe2dfd1c9da25c8849",
-      "fd4f29e3e581a724b2e4dda2a57617d1501d1245"
+      "fd4f29e3e581a724b2e4dda2a57617d1501d1245",
+      "a99ff3bbc006bff8eff0836ce37d801bbc51fa12"
     ]
   },
   "acceptance": {
@@ -37,11 +38,12 @@
   ],
   "parent": {
     "repository": "agentic-art-orchestration",
-    "candidate_commit": "fd4f29e3e581a724b2e4dda2a57617d1501d1245",
+    "candidate_commit": "a99ff3bbc006bff8eff0836ce37d801bbc51fa12",
     "pull_request": "https://github.com/masa-san-jp/agentic-art-orchestration/pull/246",
-    "pull_request_state": "OPEN_DRAFT",
-    "merge_status": "PENDING",
-    "remote_main": "PENDING_POST_MERGE_READ_BACK"
+    "pull_request_state": "MERGED",
+    "merge_status": "MERGED",
+    "merge_commit": "29889b923911edd1de889477d095d4543f1042ab",
+    "remote_main": "29889b923911edd1de889477d095d4543f1042ab"
   },
   "checks": {
     "parent_validator": {"command": ".venv/bin/python tools/validate.py --check", "status": "PASS"},
@@ -114,8 +116,11 @@
     "open_pending_close": [77, 31, 242, 243],
     "open_by_design": [10, 82]
   },
+  "issue_state_after_post_merge_close": {
+    "closed": [109, 76, 77, 31, 392, 242, 243],
+    "open_by_design": [10, 82]
+  },
   "unresolved": [
-    "Parent PR #246 must be merged normally and remote main must be read back before the external close operations are recorded.",
     "Production #10 remains the persistent requirement SSOT.",
     "Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision, and explicit human approval.",
     "Project P0004 attribution remains UNKNOWN_ATTRIBUTION by design."

@@ -1,5 +1,5 @@
-version: 306
-updated_at: '2026-09-15T01:21:02+09:00'
+version: 307
+updated_at: '2026-09-15T02:22:16+09:00'
 active_task: OI-13
 active_repository: self-model
 lease:
@@ -13,7 +13,7 @@ lease:
   execution_id: OI12FINAL20260915L
   scope:
     repository: agentic-art-orchestration
-    branch: codex/open-issues-autonomous-20260914
+    branch: codex/oi12-post-merge-evidence
     paths:
     - config/**
     - schemas/**
@@ -38,9 +38,11 @@ checkpoint:
   status: DONE
   result: '現行6owner pin、親643 tests、Research/Production native knowledge receipt、Production prototype、Project P0009 receiver、delivery_completion=COMPLETEDを同一provenance chainで照合した。'
   start_point: 7dcdc19aaca396ea8275194b68eac6d890d0dc75
-  code_candidate: fd4f29e3e581a724b2e4dda2a57617d1501d1245
+  code_candidate: a99ff3bbc006bff8eff0836ce37d801bbc51fa12
   pull_request: https://github.com/masa-san-jp/agentic-art-orchestration/pull/246
-  merge_commit: null
+  pull_request_state: MERGED
+  merge_commit: 29889b923911edd1de889477d095d4543f1042ab
+  remote_main: 29889b923911edd1de889477d095d4543f1042ab
   evidence: execution/oi-12-integration-evidence.json
   checks:
     parent_validator: 'PASS: .venv/bin/python tools/validate.py --check'
@@ -50,12 +52,24 @@ checkpoint:
     child_quality_gates: 'PASS: all six current owner pins and native gates'
     project_validator: 'PASS: Project f583df9 validator and catalog sync'
     receiver_hash: 'PASS: Project P0009 lineage/receiver verified'
+    remote_ci: 'PASS: bootstrap, production-exchange, and real-chain; run 34871977633'
     diff_check: 'PASS: git diff --check'
   unresolved:
-    - 'Parent PR #246 merge and post-merge remote main read-back remain to be recorded.'
-    - 'Issues #242, #243, #77, #31 remain open until parent merge and evidence read-back; close is the next external operation.'
     - 'Self Model #82 remains BLOCKED pending destination_root, consent_scope, retention_decision and explicit human approval.'
     - 'Production #10 remains open as a persistent requirement SSOT.'
+  issue_close_readback:
+    closed:
+    - 'agentic-art-production#77'
+    - 'agentic-art-project#31'
+    - 'agentic-art-orchestration#242'
+    - 'agentic-art-orchestration#243'
+    already_closed:
+    - 'agentic-art-research#109'
+    - 'agentic-art-production#76'
+    - 'art-history-notes#392'
+    open_by_design:
+    - 'agentic-art-production#10'
+    - 'self-model-notes#82'
 
 legacy_recovery_checkpoint:
   task: LEGACY-RECOVERY-20260910
