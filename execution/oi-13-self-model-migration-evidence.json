@@ -1,0 +1,40 @@
+{
+  "schema": "oi-13-self-model-migration-evidence/v1",
+  "task_id": "OI-13",
+  "issue": "https://github.com/masa-san-jp/self-model-notes/issues/82",
+  "repository": "self-model",
+  "status": "DONE",
+  "observed_at": "2026-09-15T14:21:20+09:00",
+  "source_commit": "af687f8c8e8d2f8cc4b63f59a35b4bf0a5d0b5b9",
+  "completion_pull_request": "https://github.com/masa-san-jp/self-model-notes/pull/104",
+  "completion_merge_commit": "4d9cebc972e3c61705764830e50c7e67d12b3b50",
+  "remote_main": "4d9cebc972e3c61705764830e50c7e67d12b3b50",
+  "acceptance": {
+    "approved_external_local_destination_and_retention": "PASS: recorded in local approval metadata; absolute destination omitted",
+    "source_preserving_migration_and_recovery_hash_verification": "PASS",
+    "external_profile_owner_validation": "PASS: graph, self-model, bundle, and audit",
+    "semantic_and_consent_preservation": "PASS",
+    "current_tree_privacy_cleanup": "PASS: tracked personal records and personal-derived data/overviews removed",
+    "history_visibility_public_share_drive_and_force_push_unchanged": "PASS",
+    "issue_readback": "PASS: CLOSED"
+  },
+  "checks": {
+    "task_harness": "PASS: SM-037 declared checks",
+    "repository_validation": "PASS: zero tracked legacy personal records",
+    "full_suite": "PASS: 173 tests",
+    "diff_check": "PASS: git diff --check"
+  },
+  "privacy": {
+    "absolute_destination_in_parent": false,
+    "personal_payload_in_parent": false,
+    "raw_conversation_in_parent": false,
+    "external_artifact": "none"
+  },
+  "feedback": {
+    "explicit": "User-approved migration scope, destination class, and retention decision recorded in local approval metadata",
+    "inferred": "none"
+  },
+  "unresolved": [
+    "agentic-art-production#10 remains open as a persistent requirement SSOT"
+  ]
+}

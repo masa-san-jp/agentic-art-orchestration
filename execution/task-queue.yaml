@@ -1,5 +1,5 @@
-version: 93
-updated_at: "2026-09-14T02:51:44+09:00"
+version: 94
+updated_at: "2026-09-15T14:21:20+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3272,16 +3272,20 @@ tasks:
     completion: "643 parent tests pass after current-pin fixture/snapshot regeneration. The theme-free normal run OI12FINAL20260915L reached PLAN_READY, knowledge COMMITTED, PROJECTED, prototype READY, Project-local receiver VERIFIED, and delivery_completion.status=COMPLETED for P0009. Parent PR #246 passed bootstrap, production-exchange, and real-chain, merged to origin/main as 29889b9, and the planned Issue close read-back is recorded in the integration evidence."
   - id: OI-13
     milestone: HUMAN-GATE
-    title: "Self Model #82のprofile移設要求をhuman laneで保持する"
-    status: BLOCKED
-    blocker: "destination_root、consent_scope、retention_decisionと明示的なhuman approvalがIssueに記録されるまで、実個人profile移設は開始できない。"
+    title: "Self Model #82の承認済みprofile移設とcurrent tree privacy cleanupを完了する"
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/self-model-notes/issues/82
     target_repositories: [self-model]
     agent_terminal: EVIDENCE_READY
     depends_on: []
-    acceptance: "destination_root、consent_scope、retention_decisionがIssueに明示され、人間が移設範囲を承認するまで実個人profileの読取・copy・move・delete・dry-runを行わず、BLOCKED理由と解除条件をstate/handoffへ保持する。"
+    acceptance: "承認済みのexternal-local destination、consent scope、retention decisionを子repoのlocal approval metadataへ記録し、source-preserving migrationとrecovery/hash verificationを完了する。current treeからtracked personal recordsとpersonal-derived data/overviewsを削除し、owner validators、full suite、privacy境界を通過させる。"
     checks:
     - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --check-readme
     - git diff --check
-    human_gate: "明示的な同意範囲、保存先、保持判断が揃うまで自律laneでは実行しない。merge、release、外部公開、実データ移設は承認対象である。"
-    completion: "Human-gated supplementary record only; no personal/raw data was read or moved and Issue #82 remains open."
+    human_gate: "ユーザーが許可した範囲で実行済み。merge、release、外部公開、force pushは個別gateを維持し、実個人profileの絶対パスとpayloadは親証跡へ保存しない。"
+    code_candidate: de10d4602610bef016f48dc4060df464f97fed51
+    pull_request: https://github.com/masa-san-jp/self-model-notes/pull/104
+    pull_request_state: MERGED
+    merge_commit: 4d9cebc972e3c61705764830e50c7e67d12b3b50
+    completion: "SM-037 completed in self-model-notes: external-local profile migration and recovery/hash verification PASS; current-tree privacy cleanup PASS; owner repository validation PASS; 173 tests PASS; PR #104 merged to remote main as 4d9cebc; Issue #82 CLOSED. Evidence: execution/oi-13-self-model-migration-evidence.json. Production #10 remains the only open persistent requirement SSOT."
