@@ -3281,6 +3281,7 @@ tasks:
     acceptance: "承認済みのexternal-local destination、consent scope、retention decisionを子repoのlocal approval metadataへ記録し、source-preserving migrationとrecovery/hash verificationを完了する。current treeからtracked personal recordsとpersonal-derived data/overviewsを削除し、owner validators、full suite、privacy境界を通過させる。"
     checks:
     - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --check-readme
     - git diff --check
     human_gate: "ユーザーが許可した範囲で実行済み。merge、release、外部公開、force pushは個別gateを維持し、実個人profileの絶対パスとpayloadは親証跡へ保存しない。"
     code_candidate: de10d4602610bef016f48dc4060df464f97fed51
