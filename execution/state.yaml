@@ -15,6 +15,7 @@ lease:
     repository: agentic-art-orchestration
     branch: codex/oi13-self-model-completion
     paths:
+    - config/repositories.yaml
     - execution/**
     - execution/oi-13-self-model-migration-evidence.json
     child_repositories:

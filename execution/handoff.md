@@ -2972,3 +2972,5 @@ merge、release、公開範囲変更、Drive upload、force push、履歴書き�
 ### Next exact action
 
 親queueの193 taskはすべてDONE、ready/backlog/blockedは0件である。関連8リポジトリのopen IssueはProduction #10のみで、これは永続要件SSOTとしてOPENを維持する。次の実装taskはない。
+
+追補: 親PR #249のreal-chainでは、移設後のSelf Model current treeに対して旧来のrepo内generated-output freshness gateが残っていたため、Self Modelの`build_graph.py --check`だけが失敗した。親のrepository quality gateを`--check --root entities`へ更新し、current treeのsynthetic entity構造を検証する契約へ合わせた。synthetic external profileの生成物freshnessは子repo CIで引き続き検証する。
