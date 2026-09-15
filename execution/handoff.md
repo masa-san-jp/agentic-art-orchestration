@@ -2960,3 +2960,15 @@ OI-12の実装とローカル統合検証を完了した。親のqualified pin f
 OI-13は引き続きhuman laneでBLOCKED。再開時の最初の操作は `.venv/bin/python tools/validate.py --check` とし、#82に4項目が明示されるまで実個人profileへアクセスしない。
 
 追補確認では、`tools/audit.py --check --offline-fixture` の現在の非blocking findingはfreshness 2件であり、証跡の `finding_count` を2へ一致させた。post-merge証跡PR #247は `f3bb66e9ba1adba9907ca1f77f5ac994b79190a2` で `origin/main` に反映済みである。
+
+## 2026-09-15 — OI-13 / Self Model #82 completed
+
+ユーザー承認済みの範囲で、Self Model #82のSM-037を完了した。external-local profile rootへのsource-preserving migration、recovery/hash verification、graph/self-model/bundle/auditのowner validation、current treeからのtracked personal recordsとpersonal-derived data/overviewsの除去を実施した。保存先の絶対パス、個人payload、raw conversationは親リポジトリへ保存していない。
+
+Self ModelのPR [#104](https://github.com/masa-san-jp/self-model-notes/pull/104) は `4d9cebc972e3c61705764830e50c7e67d12b3b50` としてremote mainへmerge済みである。子repoのtask harness、repository validator、full suite `173 tests`、`git diff --check` はPASSし、Issue [#82](https://github.com/masa-san-jp/self-model-notes/issues/82) はリモートread-backでCLOSEDを確認した。親側の証跡は [`execution/oi-13-self-model-migration-evidence.json`](oi-13-self-model-migration-evidence.json) に記録した。
+
+merge、release、公開範囲変更、Drive upload、force push、履歴書き換えは実施していない。明示feedbackはユーザーが承認した移設範囲・保存先区分・保持判断であり、inferred feedbackは採用していない。外部artifactは作成していない。
+
+### Next exact action
+
+親queueの193 taskはすべてDONE、ready/backlog/blockedは0件である。関連8リポジトリのopen IssueはProduction #10のみで、これは永続要件SSOTとしてOPENを維持する。次の実装taskはない。
