@@ -59,7 +59,8 @@ def _execute(binding, args, *, accepted_failure_statuses=frozenset()):
                              capture_output=True, text=True, timeout=POLICY["step_timeout_seconds"])
     checked_code(binding['code_root'], binding['code_commit'])
     try:
-        result = json.loads(process.stdout)
+        response = process.stdout if process.stdout.strip() else process.stderr
+        result = json.loads(response)
     except ValueError as exc:
         raise NativeKnowledgeError('NATIVE_RESPONSE_INVALID') from exc
     if not isinstance(result, dict):
