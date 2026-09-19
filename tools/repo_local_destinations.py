@@ -71,7 +71,7 @@ def _checks(root: Path) -> dict[str, str]:
     validate = root / "tools" / "validate.py"
     if not validate.is_file():
         raise RepoLocalDestinationError("PROJECT_LAYOUT_INCOMPATIBLE: Project validator is missing")
-    checked = subprocess.run([os.environ.get("PYTHON", sys.executable), str(validate), "--check", "--root", str(root)], cwd=root, text=True, capture_output=True)
+    checked = subprocess.run([os.environ.get("PYTHON", sys.executable), str(validate), "--check"], cwd=root, text=True, capture_output=True)
     if checked.returncode:
         raise RepoLocalDestinationError("PROJECT_LAYOUT_INCOMPATIBLE: Project validator failed")
     ignore = subprocess.run(["git", "check-ignore", "-q", "--no-index", ".agentic-art/probe"], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
