@@ -62,6 +62,20 @@ def validate_receipt(receipt, owner, binding, run_id, operation_id):
     return receipt
 
 
+WRITE_JOB_ACTION = 'Prepare a native write job or an explicit no-new-evidence decision. Research and Production require curated persistence.'
+# art-history-notes theme-research-cycle/v1 (art-history-notes docs/theme-research-cycle.md §6 P1,
+# orchestration#251): the parent names the completion condition only. It does not prescribe search
+# terms or sources; the investigation belongs to Research (agentic-art-research#112).
+THEME_RESEARCH_ACTION = (WRITE_JOB_ACTION + ' For art-history-notes: if Research\'s theme research pass '
+    '(tools/theme_research_pass.py write-job) produced a candidate and source-snapshots, write them; otherwise '
+    'choose no-new-evidence and keep the theme-research-recon summary (themes, hit_count) or the exhausted budget '
+    'limit in reason, so a run that did not search stays distinguishable from one that searched and found nothing.')
+
+
+def write_job_action(owner):
+    return THEME_RESEARCH_ACTION if owner == 'art-history-notes' else WRITE_JOB_ACTION
+
+
 def _bindings(context, profile, local, state_root):
     result = {}
     allowed = {'python', 'profile_root', 'subject', 'catalog_root', 'catalog_repository', 'catalog_snapshot', 'catalog_collection'}
@@ -278,7 +292,7 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
         if not path.is_file():
             state.update(knowledge_status='PARTIAL' if state['owners'] else 'PENDING', run_status='INCOMPLETE',
                 next_action={'actor': 'agent', 'stage': 'knowledge', 'owner': owner, 'input': str(path),
-                    'do': 'Prepare a native write job or an explicit no-new-evidence decision. Research and Production require curated persistence.'})
+                    'do': write_job_action(owner)})
             return
         job = read(path)
         if set(job) != {'action', 'inputs', 'reason'} or job['action'] not in {'write', 'no-new-evidence'} or not isinstance(job['reason'], str) or not job['reason'].strip():
