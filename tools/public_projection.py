@@ -20,6 +20,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -1309,7 +1310,19 @@ def _tree_fingerprint(root: Path) -> str:
             if stat.S_ISDIR(metadata.st_mode):
                 continue
             if metadata.st_nlink != 1:
-                raise _prepare_error("LAYOUT_INVALID", "target.tree", "target files may not be hardlinked")
+                # Some local provider-backed worktrees briefly report a second
+                # link while an atomic replacement settles.  Keep the safety
+                # invariant for persistent aliases, but allow the filesystem
+                # metadata to settle before rejecting the target.
+                settled = False
+                for _ in range(20):
+                    time.sleep(0.05)
+                    metadata = path.lstat()
+                    if metadata.st_nlink == 1:
+                        settled = True
+                        break
+                if not settled:
+                    raise _prepare_error("LAYOUT_INVALID", "target.tree", "target files may not be hardlinked")
             content = path.read_bytes()
             descriptors.append({"path": relative.as_posix(), "sha256": _sha256_bytes(content), "size": len(content)})
     except (OSError, UnicodeError) as exc:
