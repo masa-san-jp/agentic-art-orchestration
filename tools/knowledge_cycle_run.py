@@ -124,7 +124,7 @@ def advance(context, state_root):
     """One bounded checkpoint. The external agent consumes returned next_action."""
     required = {'contract_version', 'run_id', 'instance_profile', 'local_config', 'clock',
                 'production_project_root', 'query_inputs', 'write_inputs'}
-    optional = {'owner_options', 'delivery_contract', 'project_root', 'project_id'}
+    optional = {'owner_options', 'delivery_contract', 'project_root', 'project_id', 'plan_source_research_commit'}
     if not isinstance(context, dict) or set(context) - (required | optional) or not required <= set(context) or context['contract_version'] != 'knowledge-cycle-context/v1':
         raise ValueError('CYCLE_CONTEXT_CONTRACT')
     if not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]{0,100}', context['run_id']):
@@ -267,10 +267,29 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
         return
     state['prototype_stage'] = {'status': 'PASSED', 'command': prototype_command, 'project_root': str(project)}
     save(run_root / 'cycle.json', state)
+    plan_source_research_commit = resolution['code_refs']['agentic-art-research']['commit']
+    requested_source_commit = context.get('plan_source_research_commit')
+    if requested_source_commit is not None:
+        if not re.fullmatch('[0-9a-f]{40}', str(requested_source_commit)):
+            raise ValueError('RESEARCH_PLAN_SOURCE_COMMIT_INVALID')
+        attestation = project / '03_plan/public-plan-attestation.json'
+        if not attestation.is_file() or attestation.is_symlink():
+            raise ValueError('RESEARCH_PLAN_SOURCE_REPLAY_REQUIRES_ATTESTATION')
+        current_source_commit = resolution['code_refs']['agentic-art-research']['commit']
+        ancestry = subprocess.run(
+            ['git', '-C', bindings['agentic-art-research']['code_root'], 'merge-base', '--is-ancestor',
+             str(requested_source_commit), current_source_commit],
+            capture_output=True, text=True,
+        )
+        if ancestry.returncode:
+            raise ValueError('RESEARCH_PLAN_SOURCE_NOT_ANCESTOR')
+        plan_source_research_commit = str(requested_source_commit)
+        state['plan_source_research_commit'] = plan_source_research_commit
+        state['research_execution_commit'] = current_source_commit
     try:
         verified = verify_plan(code_root=b['code_root'], code_commit=b['code_commit'], project_root=project,
             python=b.get('python'), expected=state['plan']['artifacts'] if state['plan'] else None,
-            research_commit=resolution['code_refs']['agentic-art-research']['commit'])
+            research_commit=plan_source_research_commit)
     except (PlanCompletionError, OSError) as exc:
         state.update(plan_status='PLAN_BUILDING', run_status='INCOMPLETE', stop_reason=type(exc).__name__,
             next_action={'actor': 'agent', 'stage': 'plan', 'project_root': str(project),
