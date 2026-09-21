@@ -1,3 +1,11 @@
+# 2026-09-21 — P0017 Project-local delivery completed
+
+ユーザー要求の新規制作プランを、テーマ・slug・titleを事前指定しない公式Project-local laneで最後まで実行した。公式run `PROJECT-LOCAL-PLAN-20260921-16` は `PLAN_READY`、Research/Production knowledge `COMMITTED`、Production automatic attestation `ALREADY_ATTESTED`、canonical Project projection `ALREADY_PROJECTED`、native Project receiver `VERIFIED`、`delivery_completion.status=COMPLETED`、`missing=[]`で終了した。
+
+公開対象は既存のP0017のみであり、P0018は作成していない。P0017のProduction body SHA-256は `d86a0430f0cc7a314dbf8f76c8afd5b67ded2806ce16d679511f7eec84426b84`、attestation SHA-256は `b6d01ebb9ac05acf8f7d13332ebe6780f9994b1f16d00bc2dfbd9cb194db12d7`、lineage SHA-256は `8a68706a0dbc3a5ce1c003bdacd71c75a0ebef40e08cc92b4fb882effaa7b77d`である。Project receiverの検証対象commitは `468cee1fbef3c42a8b8c63640f0309dea866fb87`。既存P0004の `UNKNOWN_ATTRIBUTION` は発明せず保持した。
+
+詳細証跡は `execution/project-local-plan-p0017-evidence.json`。次のtaskはなく、Production #10のみ永続要件SSOTとしてOPENのまま維持する。
+
 # OI-11 complete — next OI-12
 
 OI-11 is complete. The exact manifest pins were materialized in a Git-external immutable workspace and all six child repositories were clean and `MATCHED`. Production, Research, Art History, Self Model, Viewer Response, and Marketing each passed every declared native gate; the Marketing result was rechecked after aligning its disposable environment to `PyYAML==6.0.3`. Evidence is `execution/oi-11-owner-qualification-evidence.json`.

@@ -1,0 +1,63 @@
+{
+  "contract_version": "project-local-plan-delivery-evidence/v1",
+  "task_id": "DELIVERY-P0017-20260921",
+  "run_id": "PROJECT-LOCAL-PLAN-20260921-16",
+  "target": "project-local",
+  "plan": {
+    "record_id": "P0017",
+    "path": "plans/P0017-auto-auto-plan-20260921t152805z-rev1",
+    "source_identity": "production/auto-auto-plan-20260921t152805z-rev1#PL001",
+    "canonical_revision": 1,
+    "content_sha256": "d86a0430f0cc7a314dbf8f76c8afd5b67ded2806ce16d679511f7eec84426b84",
+    "attestation_sha256": "b6d01ebb9ac05acf8f7d13332ebe6780f9994b1f16d00bc2dfbd9cb194db12d7",
+    "lineage_sha256": "8a68706a0dbc3a5ce1c003bdacd71c75a0ebef40e08cc92b4fb882effaa7b77d",
+    "creator_id": "ap06-new-clone-creator",
+    "origin_instance_id": "ap06-new-plan-20260921-instance-v3",
+    "production_commit": "eec39272c5c4827a1caf27fa928de18b58882e96",
+    "project_commit": "468cee1fbef3c42a8b8c63640f0309dea866fb87"
+  },
+  "stages": {
+    "plan_status": "PLAN_READY",
+    "knowledge_status": "COMMITTED",
+    "automatic_attestation": "ALREADY_ATTESTED",
+    "projection_status": "PROJECTED",
+    "projection_receipt": "ALREADY_PROJECTED",
+    "local_receiver": "VERIFIED",
+    "delivery_completion": "COMPLETED"
+  },
+  "knowledge_receipts": {
+    "research_target_commit": "41958db8a5d71e2be2b9c66d73970844f87f0dc9",
+    "production_target_commit": "5fdd72f00c8e5575d967123ff394ad691c307358"
+  },
+  "projection": {
+    "public_ids": ["P0017"],
+    "planned_paths": [],
+    "changed_paths": [],
+    "human_gate": "NOT_REQUIRED",
+    "request_sha256": "2cc24f00dc4afb2db0644a719f535891c57033180ca35fd20cbb866ba2eb9a26"
+  },
+  "checks": {
+    "project_validator": "PASS",
+    "catalog_sync": "PASS",
+    "lineage": "PASS",
+    "production_attestation": "PASS",
+    "private_workspace": "PASS",
+    "project_worktree": "CLEAN"
+  },
+  "existing_project_blocker": {
+    "record_id": "P0004",
+    "status": "UNKNOWN_ATTRIBUTION",
+    "action": "PRESERVED"
+  },
+  "remote_publication": {
+    "branch": "codex/p0016-auto-auto-plan-20260921",
+    "commit": "468cee1fbef3c42a8b8c63640f0309dea866fb87",
+    "status": "PUBLISHED_BEFORE_IDEMPOTENT_REPLAY"
+  },
+  "sensitive_data": "none",
+  "external_artifact": "none",
+  "feedback": {
+    "explicit": "User requested a new production plan and completion through publication.",
+    "inferred": "none"
+  }
+}

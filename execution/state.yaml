@@ -1,5 +1,5 @@
-version: 309
-updated_at: '2026-09-15T14:21:20+09:00'
+version: 310
+updated_at: '2026-09-21T19:45:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -1981,3 +1981,25 @@ current_delivery_checkpoint:
     - provider-backed local Ollama run AAK07-AGENT-20260910-P1 reached PLAN_READY and COMMITTED Research/Production receipts; Project delivery is BLOCKED_REVIEW at exact native public-plan-review
     - required provider-backed acceptance matrix and Project delivery remain NOT_RUN
   next_operation: Resume from saved run://AAK07-AGENT-20260910-P1 context only after native public-plan-review decisions are recorded, then complete the required provider-backed acceptance matrix and Project delivery; no billing or GitHub Actions is required.
+
+project_local_plan_p0017:
+  task: DELIVERY-P0017-20260921
+  repository: agentic-art-project
+  parent_repository: agentic-art-orchestration
+  status: COMPLETED
+  run_id: PROJECT-LOCAL-PLAN-20260921-16
+  public_id: P0017
+  project_branch: codex/p0016-auto-auto-plan-20260921
+  project_commit: 468cee1fbef3c42a8b8c63640f0309dea866fb87
+  production_commit: eec39272c5c4827a1caf27fa928de18b58882e96
+  content_sha256: d86a0430f0cc7a314dbf8f76c8afd5b67ded2806ce16d679511f7eec84426b84
+  attestation_sha256: b6d01ebb9ac05acf8f7d13332ebe6780f9994b1f16d00bc2dfbd9cb194db12d7
+  lineage_sha256: 8a68706a0dbc3a5ce1c003bdacd71c75a0ebef40e08cc92b4fb882effaa7b77d
+  delivery_completion:
+    target: project-local
+    status: COMPLETED
+    missing: []
+  receiver_checks: [project_validator, catalog_sync, lineage, production_attestation, private_workspace]
+  evidence: execution/project-local-plan-p0017-evidence.json
+  existing_blocker_preserved: P0004 UNKNOWN_ATTRIBUTION
+  next_task: null

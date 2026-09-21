@@ -1,5 +1,5 @@
-version: 94
-updated_at: "2026-09-15T14:21:20+09:00"
+version: 95
+updated_at: "2026-09-21T19:45:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3289,3 +3289,18 @@ tasks:
     pull_request_state: MERGED
     merge_commit: 4d9cebc972e3c61705764830e50c7e67d12b3b50
     completion: "SM-037 completed in self-model-notes: external-local profile migration and recovery/hash verification PASS; current-tree privacy cleanup PASS; owner repository validation PASS; 173 tests PASS; PR #104 merged to remote main as 4d9cebc; Issue #82 CLOSED. Evidence: execution/oi-13-self-model-migration-evidence.json. Production #10 remains the only open persistent requirement SSOT."
+  - id: DELIVERY-P0017-20260921
+    milestone: DELIVERY-COMPLETION
+    title: "P0017をProject-local自動制作プランとして正式完了させる"
+    status: DONE
+    depends_on: [OI-13]
+    acceptance: "テーマを事前指定しない公式runがP0017のProduction plan、attestation、native lineage、Project receiver、delivery_completionを同一provenance chainで検証し、COMPLETEDになる。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest tests.test_delivery_entrypoints tests.test_knowledge_cycle_e2e -v
+    - git diff --check
+    human_gate: "automatic plan laneのProject-local投影は承認待ちにせず完了させる。merge、release、物理制作、公開範囲変更は既存gateを維持する。"
+    evidence: execution/project-local-plan-p0017-evidence.json
+    code_status: CODE_VERIFIED
+    integration_status: COMPLETED
+    completion: "公式run PROJECT-LOCAL-PLAN-20260921-16 が PLAN_READY、knowledge COMMITTED、PROJECTED、local receiver VERIFIED、delivery_completion.status=COMPLETED、missing=[]で完了。P0017はProject branch codex/p0016-auto-auto-plan-20260921のcommit 468cee1で公開済み。既存P0004 UNKNOWN_ATTRIBUTIONは保持。"
