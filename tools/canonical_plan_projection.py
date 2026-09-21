@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
 import yaml
@@ -11,6 +12,27 @@ import yaml
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
+
+
+def _replay_regular(path, location):
+    """Read an existing receiver byte without mutating provider-backed files.
+
+    Project-local providers can report a stable nlink count greater than one
+    for already committed files.  This reader is only used for an exact same-
+    revision replay; new writes and all ordinary projection paths retain the
+    strict receiver hardlink check.
+    """
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise ValueError(f"receiver file unavailable: {location}") from exc
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
+        raise ValueError(f"receiver file is not a regular file: {location}")
+    try:
+        content = path.read_bytes()
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"receiver file cannot be read: {location}") from exc
+    return content, digest(content)
 
 
 def source_fields(plan, code):
@@ -181,7 +203,9 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 metadata={k:v for k,v in prior.items() if k!="path"};entry=prior
             files=dict(b["files"],**{"metadata.yaml":p._request_yaml_bytes(metadata),"README.md":readme_bytes})
             if prior:
-                files["README.md"]=p._target_regular(target/directory/"README.md","record.README")[0]
+                same_revision = int(prior["plan_revision"]) == b["revision"]
+                read_existing = _replay_regular if same_revision else p._target_regular
+                files["README.md"]=read_existing(target/directory/"README.md","record.README")[0]
                 existing={x.relative_to(target).as_posix() for x in (target/directory).rglob('*') if x.is_file()}
                 # Project adds receiver-owned lineage after the canonical
                 # projection. Preserve that record on an idempotent replay;
@@ -190,7 +214,7 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 receiver_owned=set()
                 lineage_path=target/directory/'lineage.json'
                 if lineage_path.exists():
-                    p._target_regular(lineage_path, directory+'/lineage.json')
+                    read_existing(lineage_path, directory+'/lineage.json')
                     receiver_owned.add(directory+'/lineage.json')
                 allowed={directory+'/'+name for name in files}|receiver_owned
                 obsolete=existing-allowed
@@ -209,11 +233,14 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 relative=directory+'/'+name;path=target/relative;expected_paths.add(relative)
                 if path.exists():
                     if not prior:raise ValueError("unindexed target record collision")
-                    current,_=p._target_regular(path,relative)
+                    current,_=read_existing(path,relative)
                     if current!=data:
                         if int(prior["plan_revision"])==b["revision"]:status="BLOCKED_CONFLICT";raise ValueError("existing revision bytes conflict")
                         updates[relative]=(current,data)
-                else:writes[relative]=data
+                else:
+                    if prior and same_revision:
+                        raise ValueError("same revision replay requires complete receiver record")
+                    writes[relative]=data
             new_records.append(entry)
         index["records"]=sorted(new_records,key=lambda r:r["id"])
         index_bytes=p._index_bytes(index)
