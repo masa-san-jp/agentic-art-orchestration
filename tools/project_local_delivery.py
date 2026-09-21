@@ -165,7 +165,9 @@ def verify(root: Path, project_code: Path, python: str, expected_path: Path,
     project_code = project_code.resolve()
     expected = read(expected_path)
     projection = read(projection_path)
-    if not isinstance(projection, dict) or projection.get("status") != "APPLIED" or projection.get("projection_id") != run_id:
+    if (not isinstance(projection, dict)
+            or projection.get("status") not in {"APPLIED", "ALREADY_PROJECTED"}
+            or projection.get("projection_id") != run_id):
         raise ValueError("PUBLIC_PROJECTION_NOT_APPLIED")
     ids = projection.get("public_ids")
     if not isinstance(ids, list) or not ids or {item.get("record_id") for item in expected} != set(ids):
