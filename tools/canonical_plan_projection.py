@@ -183,7 +183,16 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
             if prior:
                 files["README.md"]=p._target_regular(target/directory/"README.md","record.README")[0]
                 existing={x.relative_to(target).as_posix() for x in (target/directory).rglob('*') if x.is_file()}
-                allowed={directory+'/'+name for name in files}
+                # Project adds receiver-owned lineage after the canonical
+                # projection. Preserve that record on an idempotent replay;
+                # it is not a generated Production artifact and must not be
+                # treated as an unowned public file.
+                receiver_owned=set()
+                lineage_path=target/directory/'lineage.json'
+                if lineage_path.exists():
+                    p._target_regular(lineage_path, directory+'/lineage.json')
+                    receiver_owned.add(directory+'/lineage.json')
+                allowed={directory+'/'+name for name in files}|receiver_owned
                 obsolete=existing-allowed
                 if obsolete:
                     old_attestation=json.loads((target/directory/'public-plan-attestation.json').read_bytes())
