@@ -392,20 +392,57 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
     # action, never an inferred request for consent.
     binding = bindings['agentic-art-production']
     code = checked_code(binding['code_root'], binding['code_commit'])
-    command = [binding.get('python', sys.executable), str(code/'tools/public_plan_attestation.py'),
-        '--project-root', str(project), '--automatic-plan', '--producer-commit', binding['code_commit'], '--generated-at', context['clock']]
-    result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
-    if result.returncode:
+    python = binding.get('python', sys.executable)
+    attestation_tool = str(code/'tools/public_plan_attestation.py')
+    attestation_path = project / '03_plan/public-plan-attestation.json'
+    command = [python, attestation_tool, '--project-root', str(project),
+        '--automatic-plan', '--producer-commit', binding['code_commit'], '--generated-at', context['clock']]
+
+    # A resumed run must not mint a new timestamp for an already attested,
+    # byte-stable Production plan. Ask the pinned owner CLI to verify the
+    # existing attestation; only successful native verification may take the
+    # idempotent path. This preserves provenance and the existing public ID.
+    result_value = None
+    check_command = [python, attestation_tool, '--project-root', str(project), '--check']
+    if attestation_path.is_file() and not attestation_path.is_symlink():
+        checked = subprocess.run(check_command, cwd=code, capture_output=True, text=True, timeout=120)
+        if checked.returncode == 0:
+            try:
+                checked_value = json.loads(checked.stdout)
+                existing = json.loads(attestation_path.read_bytes())
+            except (json.JSONDecodeError, OSError, TypeError):
+                checked_value = None
+                existing = None
+            if (isinstance(checked_value, dict) and checked_value.get('status') == 'VERIFIED'
+                    and isinstance(existing, dict)
+                    and existing.get('producer', {}).get('commit') == binding['code_commit']):
+                result_value = {
+                    'status': 'ALREADY_ATTESTED',
+                    'generated_at': existing.get('generated_at'),
+                    'production_state': checked_value.get('production_state'),
+                }
+    if result_value is None:
+        result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
+        if result.returncode:
+            try:
+                finding = json.loads(result.stdout)
+            except ValueError:
+                finding = {'status': 'REJECTED', 'reason': result.stderr.strip() or 'automatic attestation failed'}
+            packet = run_root / 'automatic-plan-attestation.json'
+            save(packet, finding)
+            state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_AUTOMATIC_ATTESTATION_FAILED',
+                next_action={'actor':'agent', 'stage':'attestation', 'receipt':str(packet), 'command':command,
+                             'do':'Repair the reported Production plan, renderer, asset, or provenance finding and resume the identical run.'})
+            return
         try:
-            finding = json.loads(result.stdout)
+            result_value = json.loads(result.stdout)
         except ValueError:
-            finding = {'status': 'REJECTED', 'reason': result.stderr.strip() or 'automatic attestation failed'}
-        packet = run_root / 'automatic-plan-attestation.json'
-        save(packet, finding)
-        state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_AUTOMATIC_ATTESTATION_FAILED',
-            next_action={'actor':'agent', 'stage':'attestation', 'receipt':str(packet), 'command':command,
-                         'do':'Repair the reported Production plan, renderer, asset, or provenance finding and resume the identical run.'})
-        return
+            result_value = {'status': 'REJECTED', 'reason': 'automatic attestation response was not JSON'}
+    state['automatic_attestation'] = {
+        'status': result_value.get('status'),
+        'path': str(attestation_path),
+        'generated_at': result_value.get('generated_at'),
+    }
     destinations = resolution['destination_resolution']
     internal = Path(destinations['destinations']['internal_output_root']['path'])
     public = Path(destinations['destinations']['public_projection_root']['path'])
