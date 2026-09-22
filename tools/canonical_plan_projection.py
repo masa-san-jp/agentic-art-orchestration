@@ -166,7 +166,8 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
         if set(r['id'] for r in old)&set(reservations) or len({r['id'] for r in old})!=len(old):
             raise ValueError('reserved or duplicate public ID is in use')
         if any(not re.fullmatch(r"P[0-9]{4}",identifier) for identifier in used):raise ValueError("invalid reserved P ID")
-        next_id=max([int(i[1:]) for i in used],default=0)+1
+        used_numbers={int(i[1:]) for i in used}
+        next_id=1
         writes={};updates={};removals={};expected_paths=set();new_records=list(old)
         for b,slug,title in bundles:
             prior=by_identity.get(b["identity"])
@@ -178,8 +179,11 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 if int(prior["plan_revision"])>b["revision"] or (int(prior["plan_revision"])==b["revision"] and (prior["content_sha256"]!=b["body_hash"] or prior["attestation_sha256"]!=b["attestation_hash"])):
                     status="BLOCKED_CONFLICT";raise ValueError("REVISION_CONFLICT")
             else:
+                while next_id in used_numbers:
+                    next_id+=1
                 if next_id>9999:raise ValueError("public ID range exhausted")
                 public_id=f"P{next_id:04d}";next_id+=1
+                used_numbers.add(int(public_id[1:]))
             directory=f"plans/{public_id}-{slug}";public_ids.append(public_id)
             metadata={"id":public_id,"slug":slug,"title":title,"source_key":"plan:"+b["identity"],"source_identity":b["identity"],"plan_revision":str(b["revision"]),
                 "production_repository":"masa-san-jp/agentic-art-production","production_commit":b["production_commit"],"source_run_id":run_id,

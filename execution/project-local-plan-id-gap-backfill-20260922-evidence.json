@@ -1,0 +1,38 @@
+{
+  "contract_version": "project-local-plan-id-gap-backfill-evidence/v1",
+  "task": "DELIVERY-PUBLIC-ID-GAP-BACKFILL-20260922",
+  "observed_at": "2026-09-22T00:00:00+09:00",
+  "parent_branch": "codex/project-local-idempotent-delivery-20260921",
+  "project_branch": "codex/p0016-auto-auto-plan-20260921",
+  "project_commit": "bc188b5ea4032e9a0e8428f97668985aaafa0e12",
+  "remote_sync": "PASS: project branch and GitHub origin match bc188b5ea4032e9a0e8428f97668985aaafa0e12",
+  "public_ids": ["P0010", "P0011", "P0012", "P0013", "P0014", "P0016"],
+  "catalog_ids": "P0001-P0017 contiguous",
+  "reissue_registry": {
+    "path": "plans/reissue.yaml",
+    "entries": 6,
+    "state": "APPLIED",
+    "scope": "exact ID to source_identity mapping for the six historical gap records"
+  },
+  "source_identities": {
+    "P0010": "production/backfill-gap-0010#PL001",
+    "P0011": "production/backfill-gap-0011#PL001",
+    "P0012": "production/backfill-gap-0012#PL001",
+    "P0013": "production/auto-auto-plan-20260916t125851z-rev4#PL001",
+    "P0014": "production/auto-auto-plan-20260916t125851z-rev5#PL001",
+    "P0016": "production/backfill-gap-0016#PL001"
+  },
+  "checks": {
+    "project_validator": "PASS",
+    "project_catalog_sync": "PASS",
+    "project_lineage": "PASS",
+    "production_attestation": "PASS",
+    "project_private_workspace": "PASS",
+    "project_full_suite": "PASS: 54 tests",
+    "parent_full_suite": "PASS: 648 tests, 1 skipped",
+    "parent_validator": "PASS",
+    "diff_check": "PASS"
+  },
+  "existing_blocker_preserved": "P0004 UNKNOWN_ATTRIBUTION",
+  "external_effects": "none; no merge, release, physical production, or publication-scope change"
+}

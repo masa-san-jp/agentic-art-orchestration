@@ -43,6 +43,30 @@ class PublicProjectionContractTests(unittest.TestCase):
         self.approval = yaml.safe_load((FIXTURE_ROOT / "approval.yaml").read_text(encoding="utf-8"))
         self.result = json.loads((FIXTURE_ROOT / "result.json").read_text(encoding="utf-8"))
 
+    def test_public_id_allocator_fills_the_lowest_available_gap(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="public-id-gap-") as temporary:
+            target = Path(temporary)
+            (target / "plans").mkdir()
+            indexes = {
+                "plans": {
+                    "records": [
+                        {"id": "P0001", "source_key": "plan:one", "path": "plans/P0001-one"},
+                        {"id": "P0003", "source_key": "plan:three", "path": "plans/P0003-three"},
+                    ],
+                    "retired_ids": [],
+                },
+            }
+            plans = [{
+                "kind": "plan",
+                "collection": "plans",
+                "source_key": "plan:new",
+                "slug": "new-plan",
+                "content_sha256": "a" * 64,
+            }]
+            allocated, findings = projection._allocate_public_ids(plans, indexes, target)
+        self.assertEqual([], findings)
+        self.assertEqual("P0002", allocated[0]["public_id"])
+
     def test_closed_schemas_and_synthetic_fixtures_validate(self) -> None:
         expected = {
             "public-project-layout/v1": projection.LAYOUT_SCHEMA_PATH,

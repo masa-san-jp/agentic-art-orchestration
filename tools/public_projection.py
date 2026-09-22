@@ -1821,17 +1821,17 @@ def _allocate_public_ids(
         prefixes.setdefault(collection, "P" if plan.get("kind") == "plan" else "W")
     for collection, index in indexes.items():
         prefixes.setdefault(collection, "P" if collection == "plans" else "W")
-    maximum = {collection: 0 for collection in indexes}
+    used_numbers = {collection: set() for collection in indexes}
     for collection, index in indexes.items():
         prefix = prefixes[collection]
         for retired in index.get("retired_ids", []):
-            maximum[collection] = max(maximum[collection], int(str(retired)[1:]))
+            used_numbers[collection].add(int(str(retired)[1:]))
         for entry in index.get("records", []):
             if isinstance(entry, Mapping):
                 public_id = str(entry["id"])
-                maximum[collection] = max(maximum[collection], int(public_id[1:]))
+                used_numbers[collection].add(int(public_id[1:]))
                 by_source[f"{collection}:{entry['source_key']}"] = dict(entry)
-    new_by_kind: dict[str, int] = dict(maximum)
+    new_by_kind: dict[str, int] = {collection: 1 for collection in indexes}
     for plan in sorted(plans, key=lambda item: (str(item["kind"]), str(item["source_key"]), str(item["slug"]))):
         collection = str(plan["collection"])
         existing = by_source.get(f"{collection}:{plan['source_key']}")
@@ -1843,11 +1843,14 @@ def _allocate_public_ids(
             plan["existing_entry"] = existing
             plan["path"] = str(existing["path"])
             continue
-        new_by_kind[collection] += 1
+        while new_by_kind[collection] in used_numbers[collection]:
+            new_by_kind[collection] += 1
         if new_by_kind[collection] > 9999:
             findings.append(_projection_finding("TARGET_CONFLICT", f"{collection}.index", "the four-digit public ID space is exhausted; choose a new target policy"))
             continue
         public_id = f"{prefixes[collection]}{new_by_kind[collection]:04d}"
+        used_numbers[collection].add(new_by_kind[collection])
+        new_by_kind[collection] += 1
         plan["public_id"] = public_id
         plan["existing_entry"] = None
         path, _ = _target_plan_directory(target, collection, public_id, str(plan["slug"]), f"{collection}.record")

@@ -2982,3 +2982,18 @@ merge、release、公開範囲変更、Drive upload、force push、履歴書き�
 親queueの193 taskはすべてDONE、ready/backlog/blockedは0件である。関連8リポジトリのopen IssueはProduction #10のみで、これは永続要件SSOTとしてOPENを維持する。次の実装taskはない。
 
 追補: 親PR #249のreal-chainでは、移設後のSelf Model current treeに対して旧来のrepo内generated-output freshness gateが残っていたため、Self Modelの`build_graph.py --check`だけが失敗した。親のrepository quality gateを`--check --root entities`へ更新し、current treeのsynthetic entity構造を検証する契約へ合わせた。synthetic external profileの生成物freshnessは子repo CIで引き続き検証する。
+# 2026-09-22 — Project public plan ID gap backfill completed
+
+Projectの歴史上使われたが現行カタログで欠番になっていたP0010〜P0014・P0016を、qualified Production正本から再生成し、Project-local自動投影として完了させた。各レコードはProduction automatic attestation、canonical bodyの無変換投影、Project native lineage、catalog sync、Project validator、private workspace、local receiverを通過した。
+
+Project branch `codex/p0016-auto-auto-plan-20260921` は `bc188b5ea4032e9a0e8428f97668985aaafa0e12` でGitHub remoteと実checkoutが一致している。カタログはP0001〜P0017の連番になり、`plans/reissue.yaml` の6件は各IDと`source_identity`を固定したうえで全て `APPLIED`。既存P0004の `UNKNOWN_ATTRIBUTION` は変更していない。
+
+親側では新規ID割当を最大値+1から最小未使用番号へ変更し、将来の通常投影で欠番が放置されないようにした。再発行台帳は今回の6件の履歴IDだけを対象とする移行証跡であり、一般的な履歴ID再利用許可ではない。親の証跡は [`execution/project-local-plan-id-gap-backfill-20260922-evidence.json`](project-local-plan-id-gap-backfill-20260922-evidence.json) に保存した。
+
+## 検証
+
+- Project: `python3 tools/validate.py --check`、`python3 tools/catalog_sync.py --check`、full `54 tests` PASS
+- Parent: full `648 tests`、既存skip `1`、validator、diff check PASS
+- Remote: Project branch先頭と実checkoutが `bc188b5...` で一致
+
+次のtaskはない。Production #10は永続要件SSOTとしてOPENを維持する。

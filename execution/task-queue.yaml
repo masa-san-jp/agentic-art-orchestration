@@ -1,5 +1,5 @@
-version: 95
-updated_at: "2026-09-21T19:45:00+09:00"
+version: 96
+updated_at: "2026-09-22T00:00:00+09:00"
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3304,3 +3304,24 @@ tasks:
     code_status: CODE_VERIFIED
     integration_status: COMPLETED
     completion: "公式run PROJECT-LOCAL-PLAN-20260921-16 が PLAN_READY、knowledge COMMITTED、PROJECTED、local receiver VERIFIED、delivery_completion.status=COMPLETED、missing=[]で完了。P0017はProject branch codex/p0016-auto-auto-plan-20260921のcommit 468cee1で公開済み。既存P0004 UNKNOWN_ATTRIBUTIONは保持。"
+  - id: DELIVERY-PUBLIC-ID-GAP-BACKFILL-20260922
+    milestone: DELIVERY-COMPLETION
+    title: "Projectの歴史的ID欠番P0010〜P0014・P0016を正規Production正本で埋める"
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/217
+    agent_terminal: EVIDENCE_READY
+    depends_on: [DELIVERY-P0017-20260921]
+    target_repositories: [agentic-art-orchestration, agentic-art-project]
+    acceptance: "P0010〜P0014・P0016がqualified Productionの自動attestation、無変換Project投影、native lineage、Project validator、catalog sync、local receiverで検証され、Project branchとGitHub remoteが同じ先頭commitになる。"
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest discover -s tests -v
+    - python3 tools/validate.py --check
+    - python3 tools/catalog_sync.py --check
+    - python3 -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: "automatic plan laneの投影・lineage初期化は承認待ちにせず完了。履歴ID再発行はplans/reissue.yamlの6件限定記録に束縛し、merge・release・物理制作・公開範囲変更は実施しない。"
+    evidence: execution/project-local-plan-id-gap-backfill-20260922-evidence.json
+    code_status: CODE_VERIFIED
+    integration_status: COMPLETED
+    completion: "P0010〜P0014・P0016を順次project-local投影し、各件のnative lineage、catalog sync、project validator、production attestation、private workspaceをPASS。Project remote branchはbc188b5ea4032e9a0e8428f97668985aaafa0e12、IDはP0001〜P0017の連番、reissue registryは全6件APPLIED。親のlowest-unused allocator修正とテストを含む。"

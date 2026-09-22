@@ -1,5 +1,5 @@
-version: 310
-updated_at: '2026-09-21T19:45:00+09:00'
+version: 311
+updated_at: '2026-09-22T00:00:00+09:00'
 active_task: null
 active_repository: null
 lease:
@@ -70,11 +70,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: OI-13
+last_completed_task: DELIVERY-PUBLIC-ID-GAP-BACKFILL-20260922
 resume_from:
   task: null
   repository: null
-  action: 'No queued implementation task remains; keep Production #10 open as the persistent requirement SSOT.'
+  action: 'No queued implementation task remains; Project public plan IDs are contiguous P0001-P0017. Keep Production #10 open as the persistent requirement SSOT.'
   command: '.venv/bin/python tools/project_status.py --format json'
 
 oi07_progress:
@@ -2002,4 +2002,30 @@ project_local_plan_p0017:
   receiver_checks: [project_validator, catalog_sync, lineage, production_attestation, private_workspace]
   evidence: execution/project-local-plan-p0017-evidence.json
   existing_blocker_preserved: P0004 UNKNOWN_ATTRIBUTION
+  next_task: null
+
+project_local_plan_id_gap_backfill:
+  task: DELIVERY-PUBLIC-ID-GAP-BACKFILL-20260922
+  repository: agentic-art-project
+  parent_repository: agentic-art-orchestration
+  status: COMPLETED
+  project_branch: codex/p0016-auto-auto-plan-20260921
+  project_commit: bc188b5ea4032e9a0e8428f97668985aaafa0e12
+  project_remote: bc188b5ea4032e9a0e8428f97668985aaafa0e12
+  public_ids: [P0010, P0011, P0012, P0013, P0014, P0016]
+  catalog_ids: P0001-P0017 contiguous
+  reissue_registry: plans/reissue.yaml
+  reissue_state: APPLIED for all six entries
+  source_identities:
+    P0010: production/backfill-gap-0010#PL001
+    P0011: production/backfill-gap-0011#PL001
+    P0012: production/backfill-gap-0012#PL001
+    P0013: production/auto-auto-plan-20260916t125851z-rev4#PL001
+    P0014: production/auto-auto-plan-20260916t125851z-rev5#PL001
+    P0016: production/backfill-gap-0016#PL001
+  receiver_checks: [project_validator, catalog_sync, lineage, production_attestation, private_workspace]
+  project_full_suite: 'PASS: 54 tests'
+  parent_full_suite: 'PASS: 648 tests, 1 skipped'
+  existing_blocker_preserved: P0004 UNKNOWN_ATTRIBUTION
+  evidence: execution/project-local-plan-id-gap-backfill-20260922-evidence.json
   next_task: null
