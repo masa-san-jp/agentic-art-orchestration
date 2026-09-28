@@ -10,6 +10,13 @@
 このCLIはremoteへpush・Issue作成・PR作成を行いません。
 `resume` は保存済みsetupの本人・帰属・同意・保存先を照合します。
 
+制作runを実行するagent sessionは、書き込み資格情報を持たない運用環境で起動します。
+専用の外部state root配下に`GH_CONFIG_DIR=<external-state-root>/gh-readonly`を作り、
+Contents: Read-only、Issues/PR: noneのfine-grained tokenで`gh auth login`します。
+`GH_TOKEN`と`GITHUB_TOKEN`はunsetにし、PR作成・mergeを行う開発sessionとは分離します。
+run起動時の資格情報状態は`git_write_credentials`の3値だけで観測し、token、scope本文、会話、
+self-model packet/回答はGit・state・logへ保存しません。`present`でもrunは止めず、次回起動前にsetupを直します。
+
 外部local configは `schemas/instance-local-config.schema.json` に適合させます。
 次は1 owner分だけを示した説明例です。実際には全ownerのstore/code設定が必要です。
 絶対pathを含むlocal configと実行stateを共有Gitへcommitしないでください。

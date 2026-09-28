@@ -372,6 +372,45 @@ class HandoverArgumentTests(unittest.TestCase):
 
 
 class RequestForwardingTests(unittest.TestCase):
+    def test_self_hearing_step_is_metadata_only_and_does_not_change_progress(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = root / "state"
+            hearing = state / "RUN-HEARING" / "hearing.json"
+            hearing.parent.mkdir(parents=True)
+            hearing.write_text(json.dumps({
+                "contract_version": "self-hearing-outcome/v1",
+                "run_id": "RUN-HEARING",
+                "outcome": "answered",
+                "reason": None,
+                "question_id": "avoidance",
+                "ts": "2026-09-20T00:00:00Z",
+            }), encoding="utf-8")
+
+            def fake_tool(args: list[str], python: str) -> dict:
+                if args[0] == "tools/build_research_request.py":
+                    output = Path(args[args.index("--output") + 1])
+                    output.mkdir(parents=True, exist_ok=True)
+                    (output / "RR001.yaml").write_text(
+                        "request_id: RR001\nintent:\n  creative_question: derived\n", encoding="utf-8",
+                    )
+                return {"status": "PASSED"}
+
+            with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                    patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                    patch.object(MODULE, "observe_git_write_credentials", return_value="absent"):
+                report = MODULE._run_orchestration(
+                    None, root / "workspace", state, "RUN-HEARING", "artistic-research",
+                    None, None, "2026-09-20T00:00:00+00:00", sys.executable, offline_fixture=True,
+                )
+
+            hearing_step = next(step for step in report["steps"] if step["step"] == "self-hearing")
+            self.assertEqual("answered", hearing_step["status"])
+            self.assertIsNone(hearing_step["reason"])
+            self.assertEqual("AT_EDGE", report["status"])
+            self.assertEqual("INCOMPLETE", report["delivery_completion"]["status"])
+
     def test_real_run_missing_profile_blocks_before_state_or_child_invocation(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

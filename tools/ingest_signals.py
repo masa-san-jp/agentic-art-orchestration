@@ -29,6 +29,7 @@ try:
         adapt_viewer_response_signal,
     )
     from tools.validate import load_yaml, validate_signal, validate_signal_export
+    from tools.process_policy import child_environment
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from tools.adapters import (
@@ -39,6 +40,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         adapt_viewer_response_signal,
     )
     from tools.validate import load_yaml, validate_signal, validate_signal_export
+    from tools.process_policy import child_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/repositories.yaml"
@@ -62,19 +64,27 @@ class IngestBlocked(IngestError):
 
 
 def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
-            profile_root: Path | None = None) -> dict:
+            profile_root: Path | None = None, requester: str | None = None) -> dict:
     arguments = [python, "tools/export_signals.py", "--purpose", purpose]
+    checkout = workspace_root / repository["path"]
     if repository["id"] == "self-model":
         if profile_root is None:
             raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
-        arguments.extend(["--profile-root", str(profile_root)])
-    checkout = workspace_root / repository["path"]
     exporter = checkout / "tools/export_signals.py"
     if not exporter.is_file():
         raise IngestError(f"{repository['id']} has no tools/export_signals.py at {checkout}")
+    if repository["id"] == "self-model":
+        if requester is not None:
+            help_result = subprocess.run(
+                [python, "tools/export_signals.py", "--help"],
+                cwd=checkout, capture_output=True, text=True, env=child_environment(),
+            )
+            if "--requester" in f"{help_result.stdout}\n{help_result.stderr}":
+                arguments.extend(["--requester", requester])
+        arguments.extend(["--profile-root", str(profile_root)])
     result = subprocess.run(
         arguments,
-        cwd=checkout, capture_output=True, text=True,
+        cwd=checkout, capture_output=True, text=True, env=child_environment(),
     )
     if result.returncode != 0:
         detail = result.stderr.strip().splitlines()[-1:] or ["no stderr"]
@@ -91,7 +101,7 @@ def _observed_head(checkout: Path) -> str | None:
 
 
 def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
-           profile_root: Path | None = None) -> dict:
+           profile_root: Path | None = None, requester: str | None = None) -> dict:
     manifest = load_yaml(MANIFEST)
     inputs = [item for item in manifest["repositories"] if item.get("role") == "input-kb"]
     if profile_root is None and any(item["id"] == "self-model" for item in inputs):
@@ -113,7 +123,7 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
             })
             continue
 
-        payload = _export(repository, workspace_root, purpose, python, profile_root)
+        payload = _export(repository, workspace_root, purpose, python, profile_root, requester)
         errors = validate_signal_export(payload, identifier)
         if errors:
             raise IngestError(f"{identifier} envelope is invalid: {errors[0]}")
@@ -165,9 +175,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--child-python", default=sys.executable)
     parser.add_argument("--profile-root", type=Path,
                         help="explicit external Self Model profile root; forwarded only to that owner")
+    parser.add_argument("--requester",
+                        help="run id forwarded to Self Model when the pinned exporter supports hearing")
     args = parser.parse_args(argv)
     try:
-        report = ingest(args.workspace_root, args.output, args.purpose, args.child_python, args.profile_root)
+        report = ingest(args.workspace_root, args.output, args.purpose, args.child_python, args.profile_root, args.requester)
     except IngestBlocked as exc:
         print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
         return 2

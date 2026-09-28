@@ -48,7 +48,7 @@ Issue SSOTの最低要件は、(1)観測可能な受入条件、(2)対象reposit
 
 ## Production planning mode
 
-このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。起動時にworkspaceがmissingまたはcleanなpin driftだけなら、既存checkoutを変更せずGit外の専用qualified workspaceを作ってResearch/Productionへ継続する。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件と保存済みresume commandを処理する。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`は未完了であり、手動制作案へ置換して完走扱いにしない。
+このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。まず`tools/self_hearing.py open`を実行し、`offered`ならpacketのintent全行、why、anchors、questionを一問だけ会話で示す。回答は子repoのannotated block形式で`tools/self_hearing.py answer`へ標準入力し、断り・無応答は`skip`にする。packetや回答は親のstate・log・Issue・PR・handoffへ保存しない。どのoutcomeでも同じrunの`tools/run.py`を実行し、ヒアリング結果で停止しない。その後READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。起動時にworkspaceがmissingまたはcleanなpin driftだけなら、既存checkoutを変更せずGit外の専用qualified workspaceを作ってResearch/Productionへ継続する。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件と保存済みresume commandを処理する。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`は未完了であり、手動制作案へ置換して完走扱いにしない。制作sessionは`GH_TOKEN`/`GITHUB_TOKEN`を持たないread-only GitHub資格情報環境で起動し、PR作成・mergeは別sessionで行う。
 
 ## Work protocol
 

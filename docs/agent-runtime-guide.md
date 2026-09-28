@@ -70,6 +70,47 @@ test "$BOOTSTRAP_EXIT" -eq 2
 既存の`init`、`fetch`、`status`、`guard`、`snapshot`は後方互換で残る。全manifestを検証後に
 一括配置する場合だけ`bootstrap`を使い、legacy commandへ暗黙に切り替えない。
 
+## 制作run前のself-modelヒアリング
+
+制作runを始めるagentは、`tools/run.py`の前に次のwrapperを一度だけ実行する。これはagentの会話で
+使うpacketをstdoutへ返すが、親repoはpacket、anchors、回答、entity idをstateやlogへ保存しない。
+子CLIが旧pin・非零終了・timeout・不在でもwrapperはexit 0で`HEARING_UNAVAILABLE`を記録する。
+
+~~~bash
+.venv/bin/python tools/self_hearing.py open \
+  --run-id <run-id> --state-root <external-state-root> \
+  --workspace-root <verified-child-workspace> \
+  --profile-root <external-self-model-profile>
+~~~
+
+`outcome: offered`なら、packetの`intent`を全行（言い換え可・省略不可）、`why`、`anchors`（あれば
+「前に『…』と話していたけど」の形）、`question`を一問だけ本人へ示す。テーマ・依頼文・slug・titleは
+聞かない。本人が答えたらself-model-notesの `docs/acquisition-protocol.md` のannotated blockへ構造化し、
+packetの`task_id`を使って次へ標準入力をそのまま渡す。
+
+~~~bash
+.venv/bin/python tools/self_hearing.py answer <task-id> \
+  --run-id <run-id> --state-root <external-state-root> \
+  --workspace-root <verified-child-workspace> \
+  --profile-root <external-self-model-profile> \
+  --expected-queue-sha256 <packet-queue-sha256> < annotated-block.txt
+~~~
+
+断られた、「面倒」等の反応、無応答は次で記録する。どの結果でも、必ず同じrunの`tools/run.py`を実行し、
+ヒアリング結果でrunを止めない。回答文はIssue、PR、commit、handoff、Drive、state、logへ書かない。
+
+~~~bash
+.venv/bin/python tools/self_hearing.py skip <task-id> --reason skipped \
+  --run-id <run-id> --state-root <external-state-root> \
+  --workspace-root <verified-child-workspace> \
+  --profile-root <external-self-model-profile>
+~~~
+
+制作runを行うsessionは、`config/issue-delivery-policy.yaml`のallowlisted repositoryへ書き込める資格情報を
+持たない専用環境で起動する。`GH_TOKEN`/`GITHUB_TOKEN`を設定せず、専用`GH_CONFIG_DIR`のread-only tokenを
+使う。run.jsonには`git_write_credentials: absent|present|unknown`だけが記録され、`present`でもrunは止まらない。
+開発・PR作成・mergeは別sessionで行う。
+
 ## テーマ未指定の制作計画
 
 利用者はテーマ、作品slug、作品titleを指定しなくてよい。制作計画を作るよう依頼されたエージェントは、`--intent`、`--slug`、`--title`を付けずに次を実行する。
