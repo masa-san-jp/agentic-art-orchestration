@@ -4,45 +4,45 @@ aliases:
   - old_path: plans/P0008-aak07-agent-20260910-p4
     new_path: plans/P0008-interrupted-interval-installation
     plan_id: P0008
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0010-backfill-gap-0010
     new_path: plans/P0010-receiving-interval
     plan_id: P0010
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0011-backfill-gap-0011
     new_path: plans/P0011-receiving-interval
     plan_id: P0011
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0012-backfill-gap-0012
     new_path: plans/P0012-receiving-interval
     plan_id: P0012
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0013-auto-auto-plan-20260916t125851z-rev4
     new_path: plans/P0013-review-threshold-as-a-reversible-installation
     plan_id: P0013
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0014-auto-auto-plan-20260916t125851z-rev5
     new_path: plans/P0014-review-threshold-as-a-reversible-installation
     plan_id: P0014
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0015-auto-auto-plan-20260916t125851z-rev6
     new_path: plans/P0015-review-threshold-as-a-reversible-installation
     plan_id: P0015
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0016-backfill-gap-0016
     new_path: plans/P0016-receiving-interval
     plan_id: P0016
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
   - old_path: plans/P0017-auto-auto-plan-20260921t152805z-rev1
     new_path: plans/P0017-receiving-interval
     plan_id: P0017
-    rename_commit: d3c0705
+    rename_commit: d3c070579911e9cb4b690a756f0aed345f90e0bc
     reason: Align the catalog directory slug with the hypothesis title recorded in plan.md.
