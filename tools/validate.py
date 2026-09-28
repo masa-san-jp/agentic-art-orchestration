@@ -77,6 +77,8 @@ PUBLIC_PROJECTION_REQUEST_SCHEMA_PATH = ROOT / "schemas/public-projection-reques
 PUBLIC_PROJECTION_APPROVAL_SCHEMA_PATH = ROOT / "schemas/public-projection-approval.schema.json"
 PUBLIC_PROJECTION_RESULT_SCHEMA_PATH = ROOT / "schemas/public-projection-result.schema.json"
 PUBLIC_PROJECTION_FIXTURE_ROOT = ROOT / "tests/fixtures/public-projection"
+CATALOG_PATH_ALIASES_PATH = ROOT / "config/catalog-path-aliases.yaml"
+CATALOG_PATH_ALIASES_SCHEMA_PATH = ROOT / "schemas/catalog-path-aliases.schema.json"
 KNOWLEDGE_OWNER_REGISTRY_PATH = ROOT / "config/knowledge-owners.yaml"
 KNOWLEDGE_CONTRACT_PATHS = [
     ROOT / "schemas/artifact-record.schema.json",
@@ -84,6 +86,12 @@ KNOWLEDGE_CONTRACT_PATHS = [
     ROOT / "schemas/reuse-trace.schema.json",
 ]
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+CATALOG_PATH_PATTERN = re.compile(r"^plans/P[0-9]{4}-[A-Za-z0-9][A-Za-z0-9._-]*$")
+CATALOG_PLAN_ID_PATTERN = re.compile(r"^P[0-9]{4}$")
+CATALOG_COMMIT_PATTERN = re.compile(r"^[0-9a-f]{7,40}$")
+CATALOG_PATH_REFERENCE_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9_.-])plans/P[0-9]{4}-[A-Za-z0-9][A-Za-z0-9._-]*"
+)
 DATE_TIME = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
     r"(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
@@ -151,6 +159,9 @@ REQUIRED_FILES = [
     "schemas/public-projection-request.schema.json",
     "schemas/public-projection-approval.schema.json",
     "schemas/public-projection-result.schema.json",
+    "config/catalog-path-aliases.yaml",
+    "schemas/catalog-path-aliases.schema.json",
+    "tools/resolve_catalog_path.py",
     "tools/public_projection.py",
     "tools/knowledge_cycle.py",
     "config/knowledge-owners.yaml",
@@ -207,6 +218,7 @@ REQUIRED_FILES = [
     "execution/task-queue.yaml",
     "execution/state.yaml",
     "execution/handoff.md",
+    "execution/README.md",
     "docs/20260811-agentic-art-orchestration-system-design-specification.md",
     "docs/20260811-agentic-art-orchestration-repository-execution-plan.md",
     "docs/cross-repository-contract.md",
@@ -4213,6 +4225,81 @@ def validate_tasks(errors: list[str], queue_path: Path | None = None) -> None:
         visit(task_id, [])
 
 
+def validate_catalog_path_aliases(
+    registry: dict | None = None,
+    schema: dict | None = None,
+    source: str = "config/catalog-path-aliases.yaml",
+) -> list[str]:
+    """Validate the append-only path registry and every execution reference."""
+    registry = registry if registry is not None else load_yaml(CATALOG_PATH_ALIASES_PATH)
+    schema = schema if schema is not None else load_json(CATALOG_PATH_ALIASES_SCHEMA_PATH)
+    errors: list[str] = []
+    schema_errors = _schema_errors(registry, schema, source)
+    errors.extend(schema_errors)
+    if not isinstance(registry, dict) or not isinstance(registry.get("aliases"), list):
+        return errors
+
+    aliases: dict[str, str] = {}
+    for index, entry in enumerate(registry["aliases"]):
+        if not isinstance(entry, dict):
+            continue
+        old_path = entry.get("old_path")
+        new_path = entry.get("new_path")
+        plan_id = entry.get("plan_id")
+        commit = entry.get("rename_commit")
+        reason = entry.get("reason")
+        if isinstance(old_path, str) and old_path in aliases:
+            errors.append(f"{source}: aliases[{index}].old_path duplicates {old_path!r}; remediation: keep one append-only mapping per old path")
+        if not isinstance(old_path, str) or not CATALOG_PATH_PATTERN.fullmatch(old_path or ""):
+            continue
+        if not isinstance(new_path, str) or not CATALOG_PATH_PATTERN.fullmatch(new_path or ""):
+            continue
+        if old_path == new_path:
+            errors.append(f"{source}: aliases[{index}] maps a path to itself; remediation: record only historical-to-current paths")
+        expected_plan_id = old_path.split("/", 1)[1].split("-", 1)[0]
+        if plan_id != expected_plan_id:
+            errors.append(f"{source}: aliases[{index}].plan_id does not match old_path; remediation: preserve the P#### identifier")
+        if new_path.split("/", 1)[1].split("-", 1)[0] != expected_plan_id:
+            errors.append(f"{source}: aliases[{index}].new_path changes plan_id; remediation: aliases may change only the catalog directory slug")
+        if not isinstance(commit, str) or not CATALOG_COMMIT_PATTERN.fullmatch(commit):
+            errors.append(f"{source}: aliases[{index}].rename_commit is not a Git commit identifier; remediation: record a short or full lowercase SHA")
+        if not isinstance(reason, str) or not reason.strip():
+            errors.append(f"{source}: aliases[{index}].reason is empty; remediation: state why the directory was renamed")
+        aliases[old_path] = new_path
+
+    for start in aliases:
+        current = start
+        seen: list[str] = []
+        while current in aliases:
+            if current in seen:
+                errors.append(
+                    f"{source}: CATALOG_PATH_ALIAS_CYCLE {' -> '.join(seen + [current])}; remediation: break the alias cycle"
+                )
+                break
+            seen.append(current)
+            current = aliases[current]
+
+    execution_root = ROOT / "execution"
+    for path in execution_root.rglob("*"):
+        if not path.is_file() or path.is_symlink():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for match in CATALOG_PATH_REFERENCE_PATTERN.finditer(text):
+            current = match.group(0)
+            seen: set[str] = set()
+            while current in aliases and current not in seen:
+                seen.add(current)
+                current = aliases[current]
+            if current in seen:
+                errors.append(
+                    f"{path.relative_to(ROOT)}: catalog path reference {match.group(0)!r} cannot be resolved because its alias cycle is invalid; remediation: repair config/catalog-path-aliases.yaml"
+                )
+    return errors
+
+
 def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
     errors: list[str] = []
     for rel in REQUIRED_FILES:
@@ -4317,6 +4404,7 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
         errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
         errors.extend(validate_knowledge_cycle_contracts())
         errors.extend(validate_repository_relationships_contract())
+        errors.extend(validate_catalog_path_aliases())
         if state.get("last_completed_task") is None:
             errors.append("execution/state.yaml: last_completed_task is required")
     except ValueError as exc:

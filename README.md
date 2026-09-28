@@ -152,6 +152,7 @@ python3 -m venv .venv
 - システムの設計：[`docs/20260811-agentic-art-orchestration-system-design-specification.md`](docs/20260811-agentic-art-orchestration-system-design-specification.md)
 - 実装計画：[`docs/20260811-agentic-art-orchestration-repository-execution-plan.md`](docs/20260811-agentic-art-orchestration-repository-execution-plan.md)
 - 実行手順：[`docs/operator-runbook.md`](docs/operator-runbook.md)
+- 実行証跡から公開カタログを辿る：[`execution/README.md`](execution/README.md)
 - 障害・復旧：[`docs/incident-runbook.md`](docs/incident-runbook.md)
 - interaction改善：[`docs/interaction-improvement-runbook.md`](docs/interaction-improvement-runbook.md)
 - 自律制作の実行入口：[`docs/agent-runtime-guide.md`](docs/agent-runtime-guide.md)
