@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/catalog-path-aliases.schema.json",
+  "title": "Public catalog path aliases v1",
+  "description": "Append-only aliases from historical Project catalog paths to their current paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "source_repository", "aliases"],
+  "properties": {
+    "contract_version": {"const": "catalog-path-aliases/v1"},
+    "source_repository": {"const": "agentic-art-project"},
+    "aliases": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/alias"}
+    }
+  },
+  "$defs": {
+    "catalog_path": {
+      "type": "string",
+      "pattern": "^plans/P[0-9]{4}-[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^P[0-9]{4}$"
+    },
+    "git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "alias": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["old_path", "new_path", "plan_id", "rename_commit", "reason"],
+      "properties": {
+        "old_path": {"$ref": "#/$defs/catalog_path"},
+        "new_path": {"$ref": "#/$defs/catalog_path"},
+        "plan_id": {"$ref": "#/$defs/plan_id"},
+        "rename_commit": {"$ref": "#/$defs/git_commit"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
