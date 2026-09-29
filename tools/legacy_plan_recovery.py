@@ -153,6 +153,9 @@ RECOVERY_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
+REFERENCE_CATEGORIES = ("CONCEPT", "VISUAL", "METHOD", "MATERIAL", "INSTALLATION", "OTHER")
+
+
 def sha256(raw: bytes) -> str:
     return "sha256:" + hashlib.sha256(raw).hexdigest()
 
@@ -192,6 +195,59 @@ def make_brief(title: str, legacy_id: str, old_body: str) -> dict[str, Any]:
     }
 
 
+def make_source_ref_index(
+    legacy_id: str,
+    plan_dir: str,
+    old_body_hash: str,
+    metadata_hash: str,
+) -> dict[str, Any]:
+    """Build the source index without inventing public access URLs.
+
+    The recovered records are internal decision/insight records.  Their
+    historical Project repository is provenance, not a permanent URL for an
+    individual reference, so the record-level reason is INTERNAL_RECORD.
+    Category-level access follows the Research exporter contract: categories
+    with a matching record but no public URL use SOURCE_HAS_NO_PUBLIC_URL;
+    categories with no matching record use NO_SOURCE_FOR_CATEGORY.
+    """
+    references = [
+        {
+            "id": "DC001",
+            "kind": "decision",
+            "source_path": plan_dir + "/plan.md",
+            "reference_categories": ["CONCEPT"],
+            "access_url_reason": "INTERNAL_RECORD",
+            "record_hash": "sha256:" + old_body_hash,
+            "summary": f"Historical Project candidate {legacy_id}; evidence only, not current Production canonical.",
+        },
+        {
+            "id": "IN001",
+            "kind": "insight",
+            "source_path": plan_dir + "/metadata.yaml",
+            "reference_categories": ["METHOD"],
+            "access_url_reason": "INTERNAL_RECORD",
+            "record_hash": "sha256:" + metadata_hash,
+            "summary": "Historical metadata used to preserve provenance while regenerating the plan.",
+        },
+    ]
+    category_access = []
+    for category in REFERENCE_CATEGORIES:
+        matching = [reference for reference in references if category in reference["reference_categories"]]
+        category_access.append(
+            {
+                "category": category,
+                "source_ref_ids": [reference["id"] for reference in matching],
+                "access_url": None,
+                "reason_code": "SOURCE_HAS_NO_PUBLIC_URL" if matching else "NO_SOURCE_FOR_CATEGORY",
+            }
+        )
+    return {
+        "source_project": f"project/legacy-recovery-{legacy_id.lower()}",
+        "references": references,
+        "category_access": category_access,
+    }
+
+
 def make_bundle(legacy_id: str, out_root: Path) -> dict[str, str]:
     slug, title, commit, plan_dir = CANDIDATES[legacy_id]
     old_body = git_show(commit, plan_dir + "/plan.md").decode("utf-8")
@@ -212,12 +268,9 @@ def make_bundle(legacy_id: str, out_root: Path) -> dict[str, str]:
     dump_yaml(artifacts / "prototype-plans.yaml", {"prototype_plans": [{"id": "PP001", "title": profile["prototype_title"], "owner_capability": "artist and venue-safety reviewer", "requirement_ids": ["RQ001"], "deliverable_ids": ["DL001"], "resources": [{"id": "RSRC001", "type": "PERSON_CAPABILITY", "capability": "artist and venue-safety reviewer", "quantity": {"value": "1", "unit": "item"}, "availability": "REQUIRES_CONFIRMATION"}], "materials": [{"id": "MTRL001", "name": profile["prototype_title"], "specification": profile["materials"], "quantity": {"value": "1", "unit": "item"}, "rights_status": "PROJECT_INTERNAL", "safety_status": "REVIEW_REQUIRED", "status": "CANDIDATE"}], "tasks": [{"id": "PT001", "title": profile["task_title"], "effect_type": "PHYSICAL_EXTERNAL", "duration": {"value": "2", "unit": "h"}, "required_resource_ids": ["RSRC001"], "required_material_ids": ["MTRL001"], "acceptance_condition": profile["acceptance_condition"], "status": "READY"}, {"id": "PT002", "title": "Validate the regenerated plan references", "effect_type": "READ_ONLY", "duration": {"value": "10", "unit": "min"}, "acceptance_condition": "The recovered source reference and current plan graph remain traceable.", "status": "READY", "depends_on": ["PT001"]}]}]})
     dump_yaml(artifacts / "acceptance-tests.yaml", {"acceptance_tests": [{"id": "AT001", "target_requirement": "RQ001", "method": "structured-plan-and-prototype-review", "pass_condition": profile["acceptance_condition"], "result": "NOT_RUN"}]})
     dump_yaml(artifacts / "hypothesis-comparison.yaml", {"comparisons": [{"id": "HC001", "hypothesis_ids": ["PH001"], "rationale": "The candidate-specific physical arrangement is retained as the testable proposition; no generic substitute is introduced."}]})
-    # Production's source-reference contract requires HTTPS.  Keep the
-    # commit and locator in the structured provenance fields, while exposing
-    # only the repository root at the public-plan boundary.
-    opaque_ref = "https://github.com/masa-san-jp/agentic-art-project"
-    dump_yaml(artifacts / "source-ref-index.yaml", {"source_project": f"legacy-recovery/{legacy_id.lower()}", "references": [{"id": "DC001", "kind": "decision", "source_path": plan_dir + "/plan.md", "reference_categories": ["CONCEPT"], "access_url": opaque_ref, "record_hash": "sha256:" + old_body_hash, "summary": f"Historical Project candidate {legacy_id}; evidence only, not current Production canonical."}, {"id": "IN001", "kind": "insight", "source_path": plan_dir + "/metadata.yaml", "reference_categories": ["METHOD"], "access_url": opaque_ref, "record_hash": "sha256:" + hashlib.sha256(git_show(commit, plan_dir + "/metadata.yaml")).hexdigest(), "summary": "Historical metadata used to preserve provenance while regenerating the plan."}]})
-    handoff = {"schema_version": "1.0.0", "handoff_id": "HO" + legacy_id[1:], "revision": 1, "status": "READY", "research_project_id": f"legacy-recovery/{legacy_id.lower()}", "research_project_version": "1.0.0", "research_commit": commit, "generated_at": "2026-09-10T16:00:00+09:00", "selection": {"status": "AGENT_RECOMMENDED", "selected_hypothesis_id": "PH001", "alternative_hypothesis_ids": [], "authority": "AGENT", "human_approval_required": False}, "creative_direction_ref": "artifacts/creative-direction.md", "requirements": [{"id": "RQ001", "statement": requirement, "priority": "mandatory", "source_decision_ids": ["DC001"], "acceptance_test_ids": ["AT001"]}], "prototype_plan_ids": ["PP001"], "constraints": {"rights": ["Use only original, non-sensitive plan and prototype material."], "safety": ["No physical or external effect is authorized by plan generation."], "privacy": ["Do not use names, addresses, tracking numbers, or real recipient data."], "prohibited_actions": ["Do not purchase, contract, publish, send, contact, delete, or perform physical work automatically."]}, "open_gaps": [{"id": "GP001", "statement": f"The original accepted Production handoff for {legacy_id} is unavailable; this is an explicitly regenerated recovery plan, not byte-identical recovery.", "impact": "Historical meaning and current Production provenance must remain distinguishable.", "blocking": False, "resolution_owner": "artist and production reviewer", "resolution_condition": "Review the regenerated plan and record any new accepted handoff revision."}], "replan_triggers": ["venue_changed", "rights_or_privacy_change", "new_historical_evidence"], "source_refs": {"decision_ids": ["DC001"], "insight_ids": ["IN001"], "evidence_ids": []}}
+    metadata_hash = hashlib.sha256(git_show(commit, plan_dir + "/metadata.yaml")).hexdigest()
+    dump_yaml(artifacts / "source-ref-index.yaml", make_source_ref_index(legacy_id, plan_dir, old_body_hash, metadata_hash))
+    handoff = {"schema_version": "1.0.0", "handoff_id": "HO" + legacy_id[1:], "revision": 1, "status": "READY", "research_project_id": f"project/legacy-recovery-{legacy_id.lower()}", "research_project_version": "1.0.0", "research_commit": commit, "generated_at": "2026-09-10T16:00:00+09:00", "selection": {"status": "AGENT_RECOMMENDED", "selected_hypothesis_id": "PH001", "alternative_hypothesis_ids": [], "authority": "AGENT", "human_approval_required": False}, "creative_direction_ref": "artifacts/creative-direction.md", "requirements": [{"id": "RQ001", "statement": requirement, "priority": "mandatory", "source_decision_ids": ["DC001"], "acceptance_test_ids": ["AT001"]}], "prototype_plan_ids": ["PP001"], "constraints": {"rights": ["Use only original, non-sensitive plan and prototype material."], "safety": ["No physical or external effect is authorized by plan generation."], "privacy": ["Do not use names, addresses, tracking numbers, or real recipient data."], "prohibited_actions": ["Do not purchase, contract, publish, send, contact, delete, or perform physical work automatically."]}, "open_gaps": [{"id": "GP001", "statement": f"The original accepted Production handoff for {legacy_id} is unavailable; this is an explicitly regenerated recovery plan, not byte-identical recovery.", "impact": "Historical meaning and current Production provenance must remain distinguishable.", "blocking": False, "resolution_owner": "artist and production reviewer", "resolution_condition": "Review the regenerated plan and record any new accepted handoff revision."}], "replan_triggers": ["venue_changed", "rights_or_privacy_change", "new_historical_evidence"], "source_refs": {"decision_ids": ["DC001"], "insight_ids": ["IN001"], "evidence_ids": []}}
     handoff["integrity"] = {"content_sha256": sha256(canonical(handoff))}
     dump_yaml(bundle / "production-handoff.yaml", handoff)
     provenance = {"source_commit": commit, "source_tree_clean": True, "source_schema": {"path": "schemas/production-handoff.schema.json", "sha256": sha256((bundle / "schemas/production-handoff.schema.json").read_bytes())}, "generated_at": handoff["generated_at"], "source_repository": "masa-san-jp/agentic-art-project", "source_locator": plan_dir}
