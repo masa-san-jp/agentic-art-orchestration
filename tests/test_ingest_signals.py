@@ -18,6 +18,68 @@ SPEC.loader.exec_module(MODULE)
 
 
 class IngestConfigurationTests(unittest.TestCase):
+    def _self_model_export_with_help(self, help_result: object, requester: str | None):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            checkout = workspace / "self-model" / "tools"
+            checkout.mkdir(parents=True)
+            (checkout / "export_signals.py").write_text("print('{}')\n", encoding="utf-8")
+            actual = subprocess.CompletedProcess(["python"], 0, stdout="{}", stderr="")
+
+            def fake_run(command, **kwargs):
+                if "--help" in command:
+                    return help_result
+                return actual
+
+            with patch.object(MODULE.subprocess, "run", side_effect=fake_run) as runner:
+                result = MODULE._export(
+                    {"id": "self-model", "path": "self-model"}, workspace,
+                    "artistic-research", sys.executable, workspace / "profile", requester,
+                )
+        return result, runner.call_args_list
+
+    def test_self_model_requester_is_forwarded_when_help_advertises_it(self):
+        result, calls = self._self_model_export_with_help(
+            subprocess.CompletedProcess(["help"], 0, stdout="--requester RUN", stderr=""), "RUN-1",
+        )
+        self.assertEqual({}, result)
+        self.assertIn("--requester", calls[1].args[0])
+        self.assertEqual(30, calls[0].kwargs["timeout"])
+
+    def test_self_model_requester_is_omitted_when_old_help_lacks_it(self):
+        result, calls = self._self_model_export_with_help(
+            subprocess.CompletedProcess(["help"], 0, stdout="--profile-root", stderr=""), "RUN-1",
+        )
+        self.assertEqual({}, result)
+        self.assertNotIn("--requester", calls[1].args[0])
+
+    def test_self_model_requester_none_skips_help_probe(self):
+        result, calls = self._self_model_export_with_help(None, None)
+        self.assertEqual({}, result)
+        self.assertEqual(1, len(calls))
+        self.assertNotIn("--help", calls[0].args[0])
+
+    def test_help_probe_timeout_or_oserror_continues_without_requester(self):
+        for failure in (subprocess.TimeoutExpired("help", 30), OSError("help unavailable")):
+            with self.subTest(failure=type(failure).__name__), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                checkout = workspace / "self-model" / "tools"
+                checkout.mkdir(parents=True)
+                (checkout / "export_signals.py").write_text("print('{}')\n", encoding="utf-8")
+                actual = subprocess.CompletedProcess(["python"], 0, stdout="{}", stderr="")
+
+                def fake_run(command, **kwargs):
+                    if "--help" in command:
+                        raise failure
+                    return actual
+
+                with patch.object(MODULE.subprocess, "run", side_effect=fake_run) as runner:
+                    self.assertEqual({}, MODULE._export(
+                        {"id": "self-model", "path": "self-model"}, workspace,
+                        "artistic-research", sys.executable, workspace / "profile", "RUN-1",
+                    ))
+                self.assertNotIn("--requester", runner.call_args_list[1].args[0])
+
     def test_explicit_profile_is_a_literal_argument_only_for_self_model(self):
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)

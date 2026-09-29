@@ -38,6 +38,7 @@ if str(ROOT) not in sys.path:
 
 from tools.plan_completion import PlanCompletionError, verify_plan
 from tools.delivery_completion import completion, normal_contract_for_destinations
+from tools.process_policy import child_environment, observe_git_write_credentials
 
 from tools.output_destinations import (
     DestinationError,
@@ -63,6 +64,24 @@ HUMAN_OPERATIONS = [
 ]
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 HANDOFF_ID_PATTERN = re.compile(r"^HO(\d{3,})$")
+HEARING_CODE_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,64}$")
+HEARING_OUTCOMES = frozenset(("offered", "answered", "skipped", "unavailable", "not-run"))
+
+
+def _hearing_step(hearing: object) -> dict[str, object]:
+    """Accept only the opaque outcome codes allowed at the run boundary."""
+    if not isinstance(hearing, Mapping):
+        return {"status": "unavailable", "reason": "HEARING_UNAVAILABLE"}
+    outcome = hearing.get("outcome")
+    reason = hearing.get("reason")
+    question_id = hearing.get("question_id")
+    if (
+        outcome not in HEARING_OUTCOMES
+        or (reason is not None and (not isinstance(reason, str) or HEARING_CODE_PATTERN.fullmatch(reason) is None))
+        or (question_id is not None and (not isinstance(question_id, str) or HEARING_CODE_PATTERN.fullmatch(question_id) is None))
+    ):
+        return {"status": "unavailable", "reason": "HEARING_UNAVAILABLE"}
+    return {"status": outcome, "reason": reason}
 
 
 class StepFailure(RuntimeError):
@@ -383,7 +402,7 @@ def _materialize_offline_signals(output: Path) -> dict[str, Any]:
 
 
 def _run_tool(args: list[str], python: str) -> dict:
-    result = subprocess.run([python, *args], cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run([python, *args], cwd=ROOT, capture_output=True, text=True, env=child_environment())
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip().splitlines()[-1:] or ["no output"]
         raise StepFailure(f"{args[0]} failed: {detail[0]}")
@@ -598,7 +617,7 @@ def _promote_research_handoff(research_data_root: Path, project_slug: str) -> No
 def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool = False,
                allow_failure: bool = False) -> dict:
     """Run a child repository's tool. Already-done steps are not failures on a resume."""
-    result = subprocess.run([python, *args], cwd=root, capture_output=True, text=True)
+    result = subprocess.run([python, *args], cwd=root, capture_output=True, text=True, env=child_environment())
     output = (result.stdout or result.stderr).strip()
     if result.returncode != 0:
         if allow_conflict and ("CONFLICT" in output or "already" in output or "in place" in output):
@@ -624,6 +643,7 @@ def _at_research(
     destination_resolution: Mapping[str, object] | None = None,
     resume_command: list[str] | None = None,
     delivery_contract: Mapping[str, object] | None = None,
+    git_write_credentials: str | None = None,
 ) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
@@ -660,6 +680,8 @@ def _at_research(
         },
         "state": str(work),
     }
+    if git_write_credentials is not None:
+        report["git_write_credentials"] = git_write_credentials
     if delivery_contract is not None:
         report["delivery_contract"] = dict(delivery_contract)
         report["delivery_completion"] = completion(report, delivery_contract)
@@ -679,6 +701,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         profile_root: Path | None = None, research_work_root: Path | None = None,
         delivery_contract: Mapping[str, object] | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
+    git_write_credentials = observe_git_write_credentials(cwd=ROOT)
     if delivery_contract is None:
         delivery_contract = normal_contract_for_destinations(
             destination_resolution,
@@ -725,6 +748,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 "knowledge_status": "NOT_STARTED",
                 "projection_status": "NOT_RUN",
                 "run_status": "BLOCKED",
+                "git_write_credentials": git_write_credentials,
                 "steps": [{"step": "workspace-preflight", "status": "BLOCKED"}],
                 "stop_reason": "STARTUP_PRECONDITION",
                 "detail": str(exc),
@@ -782,7 +806,18 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     def record(name: str, detail: dict) -> None:
         steps.append({"step": name, **detail})
 
+    preflight = dict(preflight)
+    preflight["git_write_credentials"] = git_write_credentials
     record("workspace-preflight", preflight)
+    hearing_path = work / "hearing.json"
+    if hearing_path.is_file():
+        try:
+            hearing = json.loads(hearing_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            hearing = {}
+        record("self-hearing", _hearing_step(hearing))
+    else:
+        record("self-hearing", {"status": "not-run"})
     if destination_resolution is not None:
         record("destination-resolution", {"status": "PASSED", "resolution": dict(destination_resolution)})
     if offline_fixture:
@@ -792,6 +827,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             "tools/ingest_signals.py", "--purpose", purpose,
             "--workspace-root", str(workspace_root), "--output", str(signals),
             "--profile-root", str(profile_root),
+            "--requester", run_id,
         ], python))
 
     record("candidates", _run_tool([
@@ -849,6 +885,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         report = {
             "run_id": run_id, "intent": intent, "status": "BATCH_AT_RESEARCH", "completion_status": "INCOMPLETE",
             "plan_status": "NOT_READY", "knowledge_status": "PENDING", "projection_status": "NOT_RUN", "run_status": "INCOMPLETE",
+            "git_write_credentials": git_write_credentials,
             "steps": steps, "accepted": accepted, "state": str(work),
             "delivery_contract": dict(delivery_contract),
             "next_action": {
@@ -874,7 +911,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
             return _at_research(
                 work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
-                destination_resolution, resume_command, delivery_contract,
+                destination_resolution, resume_command, delivery_contract, git_write_credentials,
             )
 
         _promote_research_handoff(research_data_root, project_slug)
@@ -932,6 +969,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 "knowledge_status": "PENDING",
                 "projection_status": "NOT_RUN",
                 "run_status": "INCOMPLETE",
+                "git_write_credentials": git_write_credentials,
                 "steps": steps,
                 "plan": str(plan_path),
                 "production_project": str(plan_path.parent.parent),
@@ -964,6 +1002,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         except (PlanCompletionError, OSError, subprocess.SubprocessError) as exc:
             report = {"run_id": run_id, "status": "AT_PRODUCTION", "plan_status": "PLAN_BUILDING",
                 "completion_status": "INCOMPLETE", "knowledge_status": "PENDING", "projection_status": "SKIPPED", "run_status": "RUNNING",
+                "git_write_credentials": git_write_credentials,
                 "steps": steps, "plan": str(plan_path), "stop_reason": type(exc).__name__,
                 "delivery_contract": dict(delivery_contract),
                 "next_action": {"actor": "agent", "stage": "production",
@@ -983,7 +1022,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         report = {
             "plan_status": "PLAN_READY", "completion_status": "INCOMPLETE", "knowledge_status": "PENDING", "run_status": "INCOMPLETE",
             "projection_status": "SKIPPED", "plan_verification": plan_verification,
-            "run_id": run_id, "intent": intent, "status": "PLAN_READY", "steps": steps,
+            "run_id": run_id, "intent": intent, "status": "PLAN_READY", "git_write_credentials": git_write_credentials, "steps": steps,
             "generated_at": requested_at,
             "project_slug": project_slug,
             "project_title": project_title,
@@ -1074,6 +1113,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     report = {
         "run_id": run_id,
         "intent": intent,
+        "git_write_credentials": git_write_credentials,
         "status": "AT_EDGE",
         "completion_status": "INCOMPLETE",
         "plan_status": "NOT_READY",

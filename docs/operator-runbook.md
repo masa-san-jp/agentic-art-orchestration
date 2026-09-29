@@ -77,6 +77,28 @@ JSON resultの終了codeは機械的に扱う。
 lockやstagingが中断runのものなら、所有者とmanifest hashを確認できるまで次runを止める。復元不能な
 raceは`BLOCKED_RACE`のまま人間へ渡す。
 
+### 制作sessionのread-only GitHub資格情報（Issue #250）
+
+制作run（self-modelヒアリングを含む）を実行するagent sessionは、allowlisted repositoryへpush、Issue/PR作成、
+commentできる資格情報を持たせない。read-only fine-grained token（Contents: Read-only、Issues/PR: none）の
+発行と保存先はownerが決め、値をGit、state、log、Issueへ書かない。専用state rootの外部ディレクトリに
+`GH_CONFIG_DIR`を作り、tokenは対話入力でloginする。
+
+~~~bash
+EXTERNAL_STATE_ROOT="/absolute/external/state"
+export GH_CONFIG_DIR="$EXTERNAL_STATE_ROOT/gh-readonly"
+mkdir -p "$GH_CONFIG_DIR"
+unset GH_TOKEN GITHUB_TOKEN
+gh auth login --hostname github.com --git-protocol https --with-token
+gh auth status --hostname github.com
+gh auth setup-git
+~~~
+
+上記は制作session専用であり、PR作成・mergeを行う開発sessionと共有しない。`tools/run.py`と
+`tools/self_hearing.py open`は`git_write_credentials: absent|present|unknown`をmetadata-onlyで観測して
+run.jsonへ記録する。`present`はsetup逸脱なので次回起動前に直すが、ヒアリングやrunをBLOCKEDにはしない。
+親がspawnするingest・hearing・child toolは`GH_TOKEN`/`GITHUB_TOKEN`を継承せず、Git credential helperを空にして起動する。
+
 networklessの適用証拠は実repoと分ける。default manifestのpinは合成bare remoteのHEADと一致しないことが
 あるため、CLIの初回は`BLOCKED_PIN_DRIFT`/exit 2でも正常である。これはclone後もpinを自動採用しない
 ことの証拠であり、`READY`、reuse、clone failure、placement race、rollbackはtemporary fixtureの
