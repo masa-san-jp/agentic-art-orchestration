@@ -9,7 +9,10 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
+
+from tools import process_policy
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -129,13 +132,85 @@ class SelfHearingWrapperTests(unittest.TestCase):
         self.assertEqual("HEARING_UNAVAILABLE", timeout_outcome["reason"])
 
     def test_child_environment_removes_both_github_tokens_and_helpers(self):
-        with patch.dict(os.environ, {"GH_TOKEN": "write-secret", "GITHUB_TOKEN": "another-secret"}, clear=False):
-            environment = MODULE.child_environment()
+        base = {
+            "GH_TOKEN": "write-secret",
+            "GITHUB_TOKEN": "another-secret",
+            "GIT_CONFIG_COUNT": "2",
+            "GIT_CONFIG_KEY_0": "user.name",
+            "GIT_CONFIG_VALUE_0": "agent",
+            "GIT_CONFIG_KEY_1": "safe.directory",
+            "GIT_CONFIG_VALUE_1": "*",
+        }
+        environment = MODULE.child_environment(base)
 
         self.assertNotIn("GH_TOKEN", environment)
         self.assertNotIn("GITHUB_TOKEN", environment)
-        self.assertEqual("credential.helper", environment["GIT_CONFIG_KEY_0"])
-        self.assertEqual("", environment["GIT_CONFIG_VALUE_0"])
+        self.assertEqual("4", environment["GIT_CONFIG_COUNT"])
+        self.assertEqual("user.name", environment["GIT_CONFIG_KEY_0"])
+        self.assertEqual("safe.directory", environment["GIT_CONFIG_KEY_1"])
+        self.assertEqual("credential.helper", environment["GIT_CONFIG_KEY_2"])
+        self.assertEqual("", environment["GIT_CONFIG_VALUE_2"])
+        self.assertEqual("http.https://github.com/.extraheader", environment["GIT_CONFIG_KEY_3"])
+        self.assertEqual("", environment["GIT_CONFIG_VALUE_3"])
+
+    def test_invalid_child_codes_are_not_recorded(self):
+        self._stub("import json\nprint(json.dumps({'outcome':'offered','reason':'bad value','question_id':'../../secret'}))\n")
+
+        code, _ = self._main("open")
+
+        self.assertEqual(0, code)
+        outcome = self._read_outcome()
+        self.assertEqual("unavailable", outcome["outcome"])
+        self.assertEqual("HEARING_UNAVAILABLE", outcome["reason"])
+        self.assertIsNone(outcome["question_id"])
+
+    def test_usage_filesystem_and_path_errors_still_exit_zero(self):
+        self.assertEqual(0, MODULE.main([]))
+        self.assertEqual(0, MODULE.main(["open", "--run-id", "../escape"]))
+        with patch.object(MODULE, "load_yaml", side_effect=OSError("unreadable")), \
+                patch.object(MODULE, "observe_git_write_credentials", return_value="absent"):
+            code, _, outcome = MODULE.execute(
+                "open", run_id="HEARING-ERROR", state_root=self.state,
+                workspace_root=self.workspace, profile_root=self.profile,
+            )
+        self.assertEqual(0, code)
+        self.assertEqual("HEARING_UNAVAILABLE", outcome["reason"])
+
+
+class CredentialObservationTests(unittest.TestCase):
+    def test_environment_token_is_present_without_printing_its_value(self):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch.dict(os.environ, {"GH_TOKEN": "CLASSIC_WRITE_SECRET"}, clear=True), \
+                redirect_stdout(stdout), redirect_stderr(stderr):
+            status = process_policy.observe_git_write_credentials()
+        self.assertEqual("present", status)
+        self.assertNotIn("CLASSIC_WRITE_SECRET", stdout.getvalue() + stderr.getvalue())
+
+    def test_read_only_scopes_are_absent_and_public_classic_scopes_are_present(self):
+        def fake_run(command, **kwargs):
+            if command[0] == "gh":
+                return subprocess.CompletedProcess(command, 0, stdout="Token scopes: contents:read", stderr="")
+            return subprocess.CompletedProcess(command, 1, stdout="", stderr="")
+
+        with patch.dict(os.environ, {}, clear=True), patch.object(process_policy.subprocess, "run", side_effect=fake_run):
+            self.assertEqual("absent", process_policy.observe_git_write_credentials())
+
+        for scope in ("public_repo", "workflow"):
+            with self.subTest(scope=scope):
+                with patch.dict(os.environ, {}, clear=True), patch.object(
+                    process_policy.subprocess, "run",
+                    return_value=subprocess.CompletedProcess(["gh"], 0, stdout=f"Token scopes: {scope}", stderr=""),
+                ):
+                    self.assertEqual("present", process_policy.observe_git_write_credentials())
+
+    def test_failed_scope_observation_with_helper_is_unknown(self):
+        def fake_run(command, **kwargs):
+            if command[0] == "gh":
+                return subprocess.CompletedProcess(command, 1, stdout="", stderr="auth unavailable")
+            return subprocess.CompletedProcess(command, 0, stdout="osxkeychain", stderr="")
+
+        with patch.dict(os.environ, {}, clear=True), patch.object(process_policy.subprocess, "run", side_effect=fake_run):
+            self.assertEqual("unknown", process_policy.observe_git_write_credentials())
 
 
 if __name__ == "__main__":

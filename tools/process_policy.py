@@ -14,9 +14,14 @@ import subprocess
 from pathlib import Path
 from typing import Mapping
 
+from tools.pinned_workspace import NO_INHERITED_AUTH
+
 
 AUTH_ENV_NAMES = ("GH_TOKEN", "GITHUB_TOKEN")
-WRITE_SCOPE = re.compile(r"(?:^|[\s'\",:])(?:repo|write(?::[^\s'\",]+)?|admin(?::[^\s'\",]+)?|push)(?:$|[\s'\",:])", re.IGNORECASE)
+WRITE_SCOPE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:repo|public_repo|workflow|write(?::[^\s'\",]+)?|admin(?::[^\s'\",]+)?|push)(?![A-Za-z0-9_])",
+    re.IGNORECASE,
+)
 SCOPE_MARKER = re.compile(r"(?:token\s+scopes?|scopes?)\s*[:=]", re.IGNORECASE)
 
 
@@ -32,9 +37,24 @@ def child_environment(base: Mapping[str, str] | None = None) -> dict[str, str]:
     environment = dict(os.environ if base is None else base)
     for name in AUTH_ENV_NAMES:
         environment.pop(name, None)
-    environment["GIT_CONFIG_COUNT"] = "1"
-    environment["GIT_CONFIG_KEY_0"] = "credential.helper"
-    environment["GIT_CONFIG_VALUE_0"] = ""
+    try:
+        config_count = int(environment.get("GIT_CONFIG_COUNT", "0"))
+    except ValueError:
+        config_count = 0
+    config_count = max(config_count, 0)
+    while any(
+        key in environment
+        for key in (f"GIT_CONFIG_KEY_{config_count}", f"GIT_CONFIG_VALUE_{config_count}")
+    ):
+        config_count += 1
+    entries = (
+        ("credential.helper", ""),
+        (NO_INHERITED_AUTH[1].split("=", 1)[0], ""),
+    )
+    for offset, (key, value) in enumerate(entries):
+        environment[f"GIT_CONFIG_KEY_{config_count + offset}"] = key
+        environment[f"GIT_CONFIG_VALUE_{config_count + offset}"] = value
+    environment["GIT_CONFIG_COUNT"] = str(config_count + len(entries))
     return environment
 
 

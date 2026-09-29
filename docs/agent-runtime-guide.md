@@ -89,11 +89,16 @@ test "$BOOTSTRAP_EXIT" -eq 2
 packetの`task_id`を使って次へ標準入力をそのまま渡す。
 
 ~~~bash
-.venv/bin/python tools/self_hearing.py answer <task-id> \
+cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/self_hearing.py answer <task-id> \
   --run-id <run-id> --state-root <external-state-root> \
   --workspace-root <verified-child-workspace> \
   --profile-root <external-self-model-profile> \
-  --expected-queue-sha256 <packet-queue-sha256> < annotated-block.txt
+  --expected-queue-sha256 <packet-queue-sha256>
+type: event
+value: <annotated response block>
+ANNOTATED_BLOCK
+
+回答を一時ファイルに書かず、標準入力から直接渡す。
 ~~~
 
 断られた、「面倒」等の反応、無応答は次で記録する。どの結果でも、必ず同じrunの`tools/run.py`を実行し、

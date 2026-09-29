@@ -411,6 +411,53 @@ class RequestForwardingTests(unittest.TestCase):
             self.assertEqual("AT_EDGE", report["status"])
             self.assertEqual("INCOMPLETE", report["delivery_completion"]["status"])
 
+    def test_run_does_not_project_packet_or_answer_strings_from_hearing_record(self):
+        packet_secret = "PACKET-SECRET-DO-NOT-PUBLISH"
+        answer_secret = "ANSWER-SECRET-DO-NOT-PUBLISH"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = root / "state"
+            work = state / "RUN-REDACT"
+            work.mkdir(parents=True)
+            (work / "hearing.json").write_text(json.dumps({
+                "contract_version": "self-hearing-outcome/v1",
+                "run_id": "RUN-REDACT",
+                "outcome": "offered",
+                "reason": "bad reason with spaces",
+                "question_id": "../../outside",
+                "intent": [packet_secret],
+                "question": packet_secret,
+                "anchors": [packet_secret],
+                "answer": answer_secret,
+            }), encoding="utf-8")
+            for filename in ("state.yaml", "handoff.md", "hearing.log"):
+                (work / filename).write_text("metadata-only\n", encoding="utf-8")
+
+            def fake_tool(args: list[str], python: str) -> dict:
+                if args[0] == "tools/build_research_request.py":
+                    output = Path(args[args.index("--output") + 1])
+                    output.mkdir(parents=True, exist_ok=True)
+                    (output / "RR001.yaml").write_text(
+                        "request_id: RR001\nintent:\n  creative_question: derived\n", encoding="utf-8",
+                    )
+                return {"status": "PASSED"}
+
+            with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                    patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                    patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                    patch.object(MODULE, "observe_git_write_credentials", return_value="absent"):
+                report = MODULE._run_orchestration(
+                    None, root / "workspace", state, "RUN-REDACT", "artistic-research",
+                    None, None, "2026-09-20T00:00:00+00:00", sys.executable, offline_fixture=True,
+                )
+
+            step = next(item for item in report["steps"] if item["step"] == "self-hearing")
+            self.assertEqual({"step": "self-hearing", "status": "unavailable", "reason": "HEARING_UNAVAILABLE"}, step)
+            for filename in ("run.json", "state.yaml", "handoff.md", "hearing.log"):
+                text = (work / filename).read_text(encoding="utf-8")
+                self.assertNotIn(packet_secret, text)
+                self.assertNotIn(answer_secret, text)
+
     def test_real_run_missing_profile_blocks_before_state_or_child_invocation(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -75,11 +75,14 @@ def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
         raise IngestError(f"{repository['id']} has no tools/export_signals.py at {checkout}")
     if repository["id"] == "self-model":
         if requester is not None:
-            help_result = subprocess.run(
-                [python, "tools/export_signals.py", "--help"],
-                cwd=checkout, capture_output=True, text=True, env=child_environment(),
-            )
-            if "--requester" in f"{help_result.stdout}\n{help_result.stderr}":
+            try:
+                help_result = subprocess.run(
+                    [python, "tools/export_signals.py", "--help"],
+                    cwd=checkout, capture_output=True, text=True, timeout=30, env=child_environment(),
+                )
+            except (subprocess.TimeoutExpired, OSError):
+                help_result = None
+            if help_result is not None and "--requester" in f"{help_result.stdout}\n{help_result.stderr}":
                 arguments.extend(["--requester", requester])
         arguments.extend(["--profile-root", str(profile_root)])
     result = subprocess.run(

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -29,10 +30,32 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/repositories.yaml"
 OUTCOME_CONTRACT = "self-hearing-outcome/v1"
 DEFAULT_TIMEOUT = 30
+RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+CODE_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,64}$")
+HEARING_OUTCOMES = frozenset(("offered", "answered", "skipped", "unavailable", "not-run"))
 
 
 class HearingWrapperError(RuntimeError):
     """A wrapper input or local state operation is invalid."""
+
+
+class HearingUsageError(ValueError):
+    """A malformed wrapper invocation, which still has the child contract's exit 0."""
+
+
+class HearingArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        # The wrapper is best-effort: usage errors must not stop the run.  A
+        # valid run-id is required before an unavailable outcome is recorded.
+        raise HearingUsageError(message)
+
+
+def _valid_run_id(run_id: object) -> bool:
+    return isinstance(run_id, str) and RUN_ID_PATTERN.fullmatch(run_id) is not None
+
+
+def _valid_code(value: object) -> bool:
+    return isinstance(value, str) and CODE_PATTERN.fullmatch(value) is not None
 
 
 def _child_checkout(workspace_root: Path) -> Path:
@@ -96,6 +119,17 @@ def _outcome_path(state_root: Path, run_id: str) -> Path:
     return state_root / run_id / "hearing.json"
 
 
+def _safe_unavailable(state_root: Path, run_id: str) -> dict[str, Any] | None:
+    if not _valid_run_id(run_id):
+        return None
+    try:
+        return _write_outcome(
+            state_root, run_id, outcome="unavailable", reason="HEARING_UNAVAILABLE", question_id=None,
+        )
+    except (OSError, TypeError, ValueError):
+        return None
+
+
 def _write_outcome(
     state_root: Path,
     run_id: str,
@@ -104,6 +138,14 @@ def _write_outcome(
     reason: str | None,
     question_id: str | None,
 ) -> dict[str, Any]:
+    if (
+        outcome not in HEARING_OUTCOMES
+        or (reason is not None and not _valid_code(reason))
+        or (question_id is not None and not _valid_code(question_id))
+    ):
+        outcome = "unavailable"
+        reason = "HEARING_UNAVAILABLE"
+        question_id = None
     document = {
         "contract_version": OUTCOME_CONTRACT,
         "run_id": run_id,
@@ -153,9 +195,16 @@ def execute(
     timeout: int = DEFAULT_TIMEOUT,
 ) -> tuple[int, str, dict[str, Any]]:
     """Run one child operation and return ``(exit_code, stdout, outcome)``."""
-    credential_status = observe_git_write_credentials(cwd=ROOT)
-    if operation == "open":
-        _record_credential_observation(state_root, run_id, credential_status)
+    if not _valid_run_id(run_id):
+        # Never resolve an untrusted run id against the state root.
+        return 0, "", {}
+    try:
+        credential_status = observe_git_write_credentials(cwd=ROOT)
+        if operation == "open":
+            _record_credential_observation(state_root, run_id, credential_status)
+    except Exception:
+        outcome = _safe_unavailable(state_root, run_id) or {}
+        return 0, "", outcome
     try:
         checkout = _child_checkout(workspace_root)
         command = _hearing_command(
@@ -168,14 +217,8 @@ def execute(
             reason=reason,
             expected_queue_sha256=expected_queue_sha256,
         )
-    except HearingWrapperError:
-        outcome = _write_outcome(
-            state_root,
-            run_id,
-            outcome="unavailable",
-            reason="HEARING_UNAVAILABLE",
-            question_id=None,
-        )
+    except Exception:
+        outcome = _safe_unavailable(state_root, run_id) or {}
         return 0, "", outcome
 
     try:
@@ -189,24 +232,27 @@ def execute(
             check=False,
             env=child_environment(),
         )
-    except subprocess.TimeoutExpired:
-        outcome = _write_outcome(state_root, run_id, outcome="unavailable", reason="HEARING_UNAVAILABLE", question_id=None)
-        return 0, "", outcome
-    except OSError:
-        outcome = _write_outcome(state_root, run_id, outcome="unavailable", reason="HEARING_UNAVAILABLE", question_id=None)
+    except (subprocess.TimeoutExpired, OSError):
+        outcome = _safe_unavailable(state_root, run_id) or {}
         return 0, "", outcome
 
     child = _parse_child_json(result.stdout)
     if result.returncode != 0 or child is None:
-        outcome = _write_outcome(state_root, run_id, outcome="unavailable", reason="HEARING_UNAVAILABLE", question_id=None)
+        outcome = _safe_unavailable(state_root, run_id) or {}
         return 0, result.stdout, outcome
 
     child_outcome = child.get("outcome")
-    if child_outcome not in {"offered", "answered", "skipped", "unavailable"}:
-        outcome = _write_outcome(state_root, run_id, outcome="unavailable", reason="HEARING_UNAVAILABLE", question_id=None)
+    if child_outcome not in HEARING_OUTCOMES:
+        outcome = _safe_unavailable(state_root, run_id) or {}
         return 0, result.stdout, outcome
     child_reason = child.get("reason") if isinstance(child.get("reason"), str) else None
     question_id = child.get("question_id") if isinstance(child.get("question_id"), str) else None
+    if (
+        (child.get("reason") is not None and not _valid_code(child.get("reason")))
+        or (child.get("question_id") is not None and not _valid_code(child.get("question_id")))
+    ):
+        outcome = _safe_unavailable(state_root, run_id) or {}
+        return 0, result.stdout, outcome
     outcome = _write_outcome(
         state_root,
         run_id,
@@ -218,8 +264,8 @@ def execute(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    sub = parser.add_subparsers(dest="operation", required=True)
+    parser = HearingArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="operation", required=True, parser_class=HearingArgumentParser)
     for operation in ("open", "answer", "skip"):
         command = sub.add_parser(operation)
         command.add_argument("--run-id", required=True)
@@ -235,22 +281,38 @@ def main(argv: list[str] | None = None) -> int:
             command.add_argument("--expected-queue-sha256")
         if operation == "skip":
             command.add_argument("--reason", required=True, choices=("skipped", "no-response"))
-    args = parser.parse_args(argv)
-    task_id = getattr(args, "task_id", None) or getattr(args, "task_id_positional", None)
-    if args.operation in {"answer", "skip"} and not task_id:
-        parser.error(f"{args.operation} requires TASK_ID or --task-id")
-    code, stdout, _ = execute(
-        args.operation,
-        run_id=args.run_id,
-        state_root=args.state_root,
-        workspace_root=args.workspace_root,
-        profile_root=args.profile_root,
-        purpose=args.purpose,
-        task_id=task_id,
-        reason=getattr(args, "reason", None),
-        expected_queue_sha256=getattr(args, "expected_queue_sha256", None),
-        timeout=args.timeout,
-    )
+    try:
+        args = parser.parse_args(argv)
+        task_id = getattr(args, "task_id", None) or getattr(args, "task_id_positional", None)
+        if args.operation in {"answer", "skip"} and not task_id:
+            parser.error(f"{args.operation} requires TASK_ID or --task-id")
+        if not _valid_run_id(args.run_id):
+            raise HearingUsageError("run-id must be a stable path-safe identifier")
+        code, stdout, _ = execute(
+            args.operation,
+            run_id=args.run_id,
+            state_root=args.state_root,
+            workspace_root=args.workspace_root,
+            profile_root=args.profile_root,
+            purpose=args.purpose,
+            task_id=task_id,
+            reason=getattr(args, "reason", None),
+            expected_queue_sha256=getattr(args, "expected_queue_sha256", None),
+            timeout=args.timeout,
+        )
+    except HearingUsageError:
+        # There may be no safely parsed state-root/run-id pair to record.  The
+        # child contract still requires a successful, traceback-free wrapper.
+        return 0
+    except Exception:
+        # YAML/filesystem failures are unavailable infrastructure.  Record only
+        # the sanitized outcome when parsed arguments make that safe.
+        try:
+            if "args" in locals() and _valid_run_id(getattr(args, "run_id", None)):
+                _safe_unavailable(args.state_root, args.run_id)
+        except Exception:
+            pass
+        return 0
     # ``open`` must expose the packet exactly as returned by the child.  The
     # other operations only return the child's structured acknowledgement.
     if stdout:

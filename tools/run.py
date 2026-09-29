@@ -64,6 +64,24 @@ HUMAN_OPERATIONS = [
 ]
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 HANDOFF_ID_PATTERN = re.compile(r"^HO(\d{3,})$")
+HEARING_CODE_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,64}$")
+HEARING_OUTCOMES = frozenset(("offered", "answered", "skipped", "unavailable", "not-run"))
+
+
+def _hearing_step(hearing: object) -> dict[str, object]:
+    """Accept only the opaque outcome codes allowed at the run boundary."""
+    if not isinstance(hearing, Mapping):
+        return {"status": "unavailable", "reason": "HEARING_UNAVAILABLE"}
+    outcome = hearing.get("outcome")
+    reason = hearing.get("reason")
+    question_id = hearing.get("question_id")
+    if (
+        outcome not in HEARING_OUTCOMES
+        or (reason is not None and (not isinstance(reason, str) or HEARING_CODE_PATTERN.fullmatch(reason) is None))
+        or (question_id is not None and (not isinstance(question_id, str) or HEARING_CODE_PATTERN.fullmatch(question_id) is None))
+    ):
+        return {"status": "unavailable", "reason": "HEARING_UNAVAILABLE"}
+    return {"status": outcome, "reason": reason}
 
 
 class StepFailure(RuntimeError):
@@ -797,12 +815,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             hearing = json.loads(hearing_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             hearing = {}
-        outcome = hearing.get("outcome") if isinstance(hearing, Mapping) else None
-        reason = hearing.get("reason") if isinstance(hearing, Mapping) else None
-        record("self-hearing", {
-            "status": outcome if isinstance(outcome, str) else "unavailable",
-            "reason": reason if isinstance(reason, str) else None,
-        })
+        record("self-hearing", _hearing_step(hearing))
     else:
         record("self-hearing", {"status": "not-run"})
     if destination_resolution is not None:
