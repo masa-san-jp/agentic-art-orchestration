@@ -107,7 +107,7 @@ def _input_ref(signal: dict, attribute: str) -> dict:
     }
 
 
-def _personal_anchor_options(signal: dict) -> list[dict]:
+def _personal_anchor_options(signal: dict, attribute: str | None = None) -> list[dict]:
     """Enumerate only valid, export-permitted self-model values as opaque options."""
     if (
         signal.get("signal_kind") != "self"
@@ -118,8 +118,9 @@ def _personal_anchor_options(signal: dict) -> list[dict]:
     if domain.get("export_permitted") is not True or not domain.get("consent_scope"):
         return []
     options: list[dict] = []
-    for attribute in PERSONAL_ANCHOR_ATTRIBUTES:
-        values = domain.get(attribute)
+    attributes = (attribute,) if attribute is not None else PERSONAL_ANCHOR_ATTRIBUTES
+    for attribute_name in attributes:
+        values = domain.get(attribute_name)
         if not isinstance(values, list):
             continue
         for value in sorted(values, key=canonical_json):
@@ -127,8 +128,8 @@ def _personal_anchor_options(signal: dict) -> list[dict]:
                 continue
             options.append(
                 {
-                    "anchor_id": personal_anchor_id(signal["signal_id"], attribute, value),
-                    "attribute": attribute,
+                    "anchor_id": personal_anchor_id(signal["signal_id"], attribute_name, value),
+                    "attribute": attribute_name,
                     "signal": signal,
                 }
             )
@@ -158,7 +159,12 @@ def eligible_personal_anchors(signals: list[dict], source: str = "self-diversity
     return unique
 
 
-def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str, personal_anchor: dict | None = None) -> dict:
+def _candidate(
+    rule: dict,
+    selected: dict[str, dict],
+    snapshot_id: str,
+    personal_anchors: dict[str, dict | None] | None = None,
+) -> dict:
     bindings = rule["attribute_bindings"]
     inputs = {
         kind: [_input_ref(selected[kind], attribute) for attribute in sorted(bindings[kind])]
@@ -168,11 +174,7 @@ def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str, personal
         slot_name: {
             "signal_id": selected[slot["signal_kind"]]["signal_id"],
             "signal_kind": slot["signal_kind"],
-            "attribute": (
-                personal_anchor["attribute"]
-                if slot_name == "personal_tension" and personal_anchor is not None
-                else slot["attribute"]
-            ),
+            "attribute": slot["attribute"],
         }
         for slot_name, slot in sorted(rule["composition"]["slots"].items())
     }
@@ -181,8 +183,14 @@ def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str, personal
         "snapshot_id": snapshot_id,
         "signal_ids": {kind: selected[kind]["signal_id"] for kind in SIGNAL_KINDS},
     }
-    if personal_anchor is not None:
-        identity["personal_anchor_id"] = personal_anchor["anchor_id"]
+    if personal_anchors:
+        anchor_ids = {
+            slot_name: anchor["anchor_id"]
+            for slot_name, anchor in sorted(personal_anchors.items())
+            if anchor is not None
+        }
+        if anchor_ids:
+            identity["personal_anchor_ids"] = anchor_ids
     candidate = {
         "candidate_id": f"candidate:{sha256_hex(identity)[:16]}",
         "rule_id": rule["rule_id"],
@@ -192,6 +200,110 @@ def _candidate(rule: dict, selected: dict[str, dict], snapshot_id: str, personal
     if rule["composition"].get("composition_mode") is not None:
         candidate["composition_mode"] = rule["composition"]["composition_mode"]
     return candidate
+
+
+def resolve_personal_anchor_ids(
+    candidate: dict,
+    candidate_space: dict,
+    signals: list[dict],
+) -> dict[str, str]:
+    """Recover the opaque self-anchor combination used for one candidate."""
+    signal_by_id = {signal["signal_id"]: signal for signal in signals}
+    personal_slots = [
+        (slot_name, slot)
+        for slot_name, slot in sorted(candidate.get("composition", {}).items())
+        if slot.get("signal_kind") == "self"
+        and slot.get("attribute") in PERSONAL_ANCHOR_ATTRIBUTES
+    ]
+    if not personal_slots:
+        return {}
+    signal_ids = {
+        kind: refs[0]["signal_id"]
+        for kind, refs in candidate.get("inputs", {}).items()
+        if refs and isinstance(refs[0], dict)
+    }
+    self_signal_id = personal_slots[0][1].get("signal_id")
+    self_signal = signal_by_id.get(self_signal_id)
+    if not isinstance(self_signal, dict):
+        return {}
+    option_groups = [
+        _personal_anchor_options(self_signal, slot["attribute"]) or [None]
+        for _slot_name, slot in personal_slots
+    ]
+    base_identity = {
+        "rule_id": candidate.get("rule_id"),
+        "snapshot_id": candidate_space.get("snapshot_id"),
+        "signal_ids": {kind: signal_ids[kind] for kind in SIGNAL_KINDS},
+    }
+    for anchors in itertools.product(*option_groups):
+        anchor_ids = {
+            slot_name: anchor["anchor_id"]
+            for (slot_name, _slot), anchor in zip(personal_slots, anchors)
+            if anchor is not None
+        }
+        identity = dict(base_identity)
+        if anchor_ids:
+            identity["personal_anchor_ids"] = anchor_ids
+        if candidate.get("candidate_id") == f"candidate:{sha256_hex(identity)[:16]}":
+            return anchor_ids
+    return {}
+
+
+def build_diversity_report(
+    candidate_space: dict,
+    signals: list[dict] | None = None,
+    source: str = "candidate-diversity",
+) -> dict:
+    """Count deterministic candidate lineages without exposing signal values.
+
+    A lineage is the distinct pair of self-side anchor combination and
+    marketing-side signal/attribute combination used by a candidate.  Self
+    combinations are represented only by opaque anchor IDs; marketing
+    combinations retain only normalized signal IDs and bound attribute names.
+    """
+    errors = validate_candidate_space(candidate_space, f"{source}.candidates")
+    if errors:
+        raise ValueError("\n".join(errors))
+    if signals is not None:
+        _validated_signals(signals, f"{source}.signals")
+    self_combinations: set[tuple] = set()
+    marketing_combinations: set[tuple] = set()
+    lineages: set[tuple[tuple, tuple]] = set()
+    for candidate in candidate_space["candidates"]:
+        if signals is not None:
+            self_ids = resolve_personal_anchor_ids(candidate, candidate_space, signals)
+            self_key = tuple(sorted(self_ids.items())) or tuple(
+                sorted(
+                    (name, slot.get("signal_id"), slot.get("attribute"))
+                    for name, slot in candidate["composition"].items()
+                    if slot.get("signal_kind") == "self"
+                )
+            )
+        else:
+            self_key = tuple(
+                sorted(
+                    (name, slot.get("signal_id"), slot.get("attribute"))
+                    for name, slot in candidate["composition"].items()
+                    if slot.get("signal_kind") == "self"
+                )
+            )
+        marketing_key = tuple(
+            sorted(
+                (name, slot.get("signal_id"), slot.get("attribute"))
+                for name, slot in candidate["composition"].items()
+                if slot.get("signal_kind") == "marketing"
+            )
+        )
+        self_combinations.add(self_key)
+        marketing_combinations.add(marketing_key)
+        lineages.add((self_key, marketing_key))
+    return {
+        "contract_version": "candidate-diversity-report/v1",
+        "candidate_count": candidate_space["candidate_count"],
+        "distinct_self_anchor_combinations": len(self_combinations),
+        "distinct_marketing_anchor_combinations": len(marketing_combinations),
+        "distinct_lineage_count": len(lineages),
+    }
 
 
 def build_candidate_space(signals: list[dict], registry: dict, source: str = "candidate-space") -> dict:
@@ -224,20 +336,32 @@ def build_candidate_space(signals: list[dict], registry: dict, source: str = "ca
                     "provide a validated signal for every required kind or reject the snapshot",
                 )
             )
-        uses_personal_anchors = any(
-            slot.get("signal_kind") == "self"
+        personal_slots = [
+            (slot_name, slot)
+            for slot_name, slot in sorted(rule["composition"]["slots"].items())
+            if slot.get("signal_kind") == "self"
             and slot.get("attribute") in PERSONAL_ANCHOR_ATTRIBUTES
-            for slot in rule["composition"]["slots"].values()
-        )
+        ]
+        uses_personal_anchors = bool(personal_slots)
         eligible_anchor_total = sum(len(_personal_anchor_options(signal)) for signal in by_kind["self"])
         uses_personal_anchors = uses_personal_anchors and eligible_anchor_total >= 1
         if uses_personal_anchors:
-            self_options: list[tuple[dict, dict | None]] = []
+            self_options: list[tuple[dict, dict[str, dict | None]]] = []
             for signal in sorted(by_kind["self"], key=lambda item: item["signal_id"]):
-                options = _personal_anchor_options(signal)
-                self_options.extend((option["signal"], option) for option in options)
-                if not options:
-                    self_options.append((signal, None))
+                slot_options = [
+                    _personal_anchor_options(signal, slot["attribute"]) or [None]
+                    for _slot_name, slot in personal_slots
+                ]
+                for anchors in itertools.product(*slot_options):
+                    self_options.append(
+                        (
+                            signal,
+                            {
+                                slot_name: anchor
+                                for (slot_name, _slot), anchor in zip(personal_slots, anchors)
+                            },
+                        )
+                    )
             ordered_groups = [
                 self_options,
                 *[sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS[1:]],
@@ -246,15 +370,15 @@ def build_candidate_space(signals: list[dict], registry: dict, source: str = "ca
             ordered_groups = [sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS]
         for combination in itertools.product(*ordered_groups):
             if uses_personal_anchors:
-                self_signal, personal_anchor = combination[0]
+                self_signal, personal_anchors = combination[0]
                 selected = {
                     "self": self_signal,
                     **{signal["signal_kind"]: signal for signal in combination[1:]},
                 }
             else:
-                personal_anchor = None
+                personal_anchors = None
                 selected = {signal["signal_kind"]: signal for signal in combination}
-            candidates.append(_candidate(rule, selected, snapshot_id, personal_anchor))
+            candidates.append(_candidate(rule, selected, snapshot_id, personal_anchors))
 
     candidates.sort(key=lambda item: item["candidate_id"])
     result = {
@@ -279,11 +403,16 @@ def main() -> int:
     parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE_DIR)
     parser.add_argument("--rules", type=Path, default=TRANSFORMATION_RULE_CONFIG_PATH)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH)
+    parser.add_argument("--report", choices=("candidate", "diversity"), default="candidate")
     parser.add_argument("--check", action="store_true", help="compare the generated bytes without writing")
     args = parser.parse_args()
 
     try:
-        result = build_candidate_space(load_fixture(args.fixture), load_yaml(args.rules))
+        signals = load_fixture(args.fixture)
+        result = build_candidate_space(signals, load_yaml(args.rules))
+        if args.report == "diversity":
+            print(json.dumps(build_diversity_report(result, signals), ensure_ascii=False, sort_keys=True))
+            return 0
     except (OSError, TypeError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

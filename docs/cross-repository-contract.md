@@ -105,6 +105,12 @@ raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換
 
 reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`PASS_LIMITED_DIVERSITY`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。
 
+## Candidate lineage diversity
+
+`tools/candidate_space.py --report diversity` は `candidate-diversity-report/v1` を出力する。ここでいう系統は、候補が使う self 側の anchor 組と marketing 側の normalized signal/attribute 組の順序付きペアである。self 側は同意済みの値そのものではなく、属性ごとの opaque anchor ID だけを組にし、marketing 側は `signal_id` と束縛属性名だけを使う。
+
+R17 は self の `tensions` と `recurring_patterns`、marketing の `stage` と `counterevidence` をそれぞれ別 slot として組み合わせる。`recurring_patterns` が空でも slot は保持し、候補生成は停止しない。`counterevidence` は marketing-trends-notes の export が実際に出す trend 固有の境界属性であり、未出力の予測本文や別の識別子を仮定しない。
+
 ## 器の名前
 
 境界を渡る成果物は、**中身の形だけでなく、それを束ねる器の名前も契約で定める**。中身だけ定めて器を定めずにいると、独立に実装した両側が別の名前を選び、片側の出力をもう片側が読めなくなる。

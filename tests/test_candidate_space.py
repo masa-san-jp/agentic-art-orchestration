@@ -28,7 +28,7 @@ class CandidateSpaceTests(unittest.TestCase):
     def test_generation_preserves_ids_commits_and_locators(self):
         signals, registry = self.load_inputs()
         result = MODULE.build_candidate_space(signals, registry)
-        self.assertEqual(2, result["candidate_count"])
+        self.assertEqual(1, result["candidate_count"])
         candidate = result["candidates"][0]
         self.assertEqual({"R17"}, {candidate["rule_id"]})
         self.assertEqual({"intersection"}, {item["composition_mode"] for item in result["candidates"]})
@@ -50,6 +50,8 @@ class CandidateSpaceTests(unittest.TestCase):
             {"self:derived-001", "art-history:entity-001", "marketing:trend-001"},
             {slot["signal_id"] for slot in candidate["composition"].values()},
         )
+        self.assertEqual("recurring_patterns", candidate["composition"]["personal_pattern"]["attribute"])
+        self.assertEqual("counterevidence", candidate["composition"]["contemporary_counterevidence"]["attribute"])
 
     def test_art_history_and_marketing_changes_remain_distinct_intersection_mechanisms(self):
         signals, registry = self.load_inputs()
@@ -91,8 +93,31 @@ class CandidateSpaceTests(unittest.TestCase):
         extra["evidence_refs"][0]["entity_id"] = "self-entity-002"
         signals.append(extra)
         result = MODULE.build_candidate_space(signals, registry)
-        self.assertEqual(4, result["candidate_count"])
+        self.assertEqual(2, result["candidate_count"])
         self.assertEqual(sorted(item["candidate_id"] for item in result["candidates"]), [item["candidate_id"] for item in result["candidates"]])
+
+    def test_empty_recurring_patterns_keep_the_optional_slot(self):
+        signals, registry = self.load_inputs()
+        signals[0]["domain"]["self_model"]["recurring_patterns"] = []
+        result = MODULE.build_candidate_space(signals, registry)
+        self.assertEqual(1, result["candidate_count"])
+        self.assertEqual("recurring_patterns", result["candidates"][0]["composition"]["personal_pattern"]["attribute"])
+
+    def test_diversity_report_compares_old_and_multi_attribute_rules(self):
+        signals, registry = self.load_inputs()
+        signals[0]["domain"]["self_model"]["tensions"] = ["tension-1", "tension-2", "tension-3"]
+        signals[0]["domain"]["self_model"]["recurring_patterns"] = ["pattern-1", "pattern-2"]
+        baseline = copy.deepcopy(registry)
+        baseline["rules"][0]["composition"]["slots"].pop("personal_pattern")
+        baseline["rules"][0]["composition"]["slots"].pop("contemporary_counterevidence")
+        baseline["rules"][0]["composition"]["template"] = "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
+        before = MODULE.build_candidate_space(signals, baseline)
+        after = MODULE.build_candidate_space(signals, registry)
+        before_report = MODULE.build_diversity_report(before, signals)
+        after_report = MODULE.build_diversity_report(after, signals)
+        self.assertEqual(3, before_report["distinct_self_anchor_combinations"])
+        self.assertEqual(6, after_report["distinct_self_anchor_combinations"])
+        self.assertGreater(after_report["distinct_lineage_count"], before_report["distinct_lineage_count"])
 
     def test_duplicate_signal_id_and_missing_kind_fail_closed(self):
         signals, registry = self.load_inputs()

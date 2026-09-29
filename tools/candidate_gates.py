@@ -141,20 +141,32 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
         signal_id = slot.get("signal_id")
         return slot, signals.get(signal_id) if isinstance(signal_id, str) else None
 
-    personal_slot, personal_signal = selected("personal_tension")
-    personal_domain = personal_signal.get("domain", {}).get("self_model", {}) if personal_signal else {}
-    personal_attribute = personal_slot.get("attribute") if isinstance(personal_slot, dict) else None
-    personal_evidence = _matching_evidence(candidate, "self", personal_attribute)
-    personal_pass = bool(
-        personal_signal
-        and personal_slot.get("signal_kind") == "self"
-        and personal_attribute in {"tensions", "recurring_patterns"}
-        and personal_signal.get("signal_kind") == "self"
-        and personal_signal.get("validity", {}).get("status") == "valid"
-        and personal_domain.get("export_permitted") is True
-        and personal_domain.get("consent_scope")
-        and personal_domain.get(personal_attribute)
-    )
+    personal_slots = [
+        (slot_name, slot)
+        for slot_name, slot in composition.items()
+        if slot.get("signal_kind") == "self"
+        and slot.get("attribute") in {"tensions", "recurring_patterns"}
+    ]
+    personal_evidence = [
+        evidence
+        for _slot_name, slot in sorted(personal_slots)
+        for evidence in _matching_evidence(candidate, "self", slot.get("attribute"))
+    ]
+    personal_pass = False
+    for _slot_name, personal_slot in personal_slots:
+        personal_signal = signals.get(personal_slot.get("signal_id"))
+        personal_domain = personal_signal.get("domain", {}).get("self_model", {}) if personal_signal else {}
+        personal_attribute = personal_slot.get("attribute")
+        if (
+            personal_signal
+            and personal_signal.get("signal_kind") == "self"
+            and personal_signal.get("validity", {}).get("status") == "valid"
+            and personal_domain.get("export_permitted") is True
+            and personal_domain.get("consent_scope")
+            and personal_domain.get(personal_attribute)
+        ):
+            personal_pass = True
+            break
 
     historical_slot, historical_signal = selected("historical_operation")
     historical_domain = historical_signal.get("domain", {}).get("art_history", {}) if historical_signal else {}
@@ -173,7 +185,18 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     contemporary_slot, contemporary_signal = selected("contemporary_condition")
     contemporary_domain = contemporary_signal.get("domain", {}).get("marketing", {}) if contemporary_signal else {}
-    contemporary_evidence = _matching_evidence(candidate, "marketing", "stage")
+    contemporary_attributes = {
+        slot.get("attribute")
+        for slot in composition.values()
+        if slot.get("signal_kind") == "marketing"
+    }
+    contemporary_evidence = [
+        evidence
+        for attribute in sorted(contemporary_attributes)
+        for evidence in _matching_evidence(candidate, "marketing", attribute)
+    ]
+    if not contemporary_evidence:
+        contemporary_evidence = _matching_evidence(candidate, "marketing")
     contemporary_pass = bool(
         contemporary_signal
         and contemporary_slot.get("signal_kind") == "marketing"
@@ -198,7 +221,7 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
     composition_ids = [slot.get("signal_id") for slot in composition.values()]
     composition_kinds = [slot.get("signal_kind") for slot in composition.values()]
     generic_pass = (
-        len(composition_ids) == len(set(composition_ids)) == 3
+        len(set(composition_ids)) >= len(rule["required_signal_kinds"])
         and set(composition_kinds) == set(rule["required_signal_kinds"])
         and all(isinstance(slot.get("attribute"), str) and slot["attribute"] for slot in composition.values())
     )

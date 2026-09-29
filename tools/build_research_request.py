@@ -126,6 +126,8 @@ def _bound_value(signal: dict, kind: str, attribute: str) -> str:
     value = domain.get(attribute)
     entity = (signal.get("source", {}).get("entity_ids") or [signal.get("signal_id", "")])[0]
 
+    if isinstance(value, list) and not value:
+        return "無し"
     if isinstance(value, list) and value and isinstance(value[0], dict):
         # 関係は種類だけでは読めない。どの括りの、何に対する関係かまで言う
         relation = value[0]

@@ -47,7 +47,7 @@ DEFAULT_GATE_PATH = ROOT / "data/candidate-gates.json"
 DEFAULT_SELECTION_PATH = ROOT / "data/selection.json"
 DEFAULT_OUTPUT_PATH = ROOT / "data/provenance.json"
 SIGNAL_KINDS = ("self", "art-history", "marketing")
-TEMPLATE = "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
+TEMPLATE = "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition} ∩ {contemporary_counterevidence}"
 
 
 def sha256_hex(value: object) -> str:

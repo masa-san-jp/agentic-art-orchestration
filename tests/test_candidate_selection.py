@@ -91,12 +91,9 @@ class CandidateSelectionTests(unittest.TestCase):
             intent="review before reuse",
             signals=signals,
         )
-        self.assertNotEqual(
-            first["selected_candidates"][0]["candidate_id"],
-            second_intent["selected_candidates"][0]["candidate_id"],
-        )
         self.assertEqual("tensions", first["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
-        self.assertEqual("recurring_patterns", second_intent["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
+        self.assertEqual("recurring_patterns", first["selected_candidates"][0]["composition"]["personal_pattern"]["attribute"])
+        self.assertEqual("recurring_patterns", second_intent["selected_candidates"][0]["composition"]["personal_pattern"]["attribute"])
 
     def test_intent_ranking_never_selects_a_gate_failed_top_candidate(self):
         candidate_space, gate_report, signals = self.diverse_inputs()
@@ -282,7 +279,8 @@ class CandidateSelectionTests(unittest.TestCase):
             require_self_diversity=True,
             signals=signals,
         )
-        self.assertEqual("recurring_patterns", selection["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
+        self.assertEqual("tensions", selection["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
+        self.assertEqual("recurring_patterns", selection["selected_candidates"][0]["composition"]["personal_pattern"]["attribute"])
 
     def test_zero_anchors_still_block_strict_selection(self):
         candidate_space, gate_report, signals, registry = self.load_inputs()

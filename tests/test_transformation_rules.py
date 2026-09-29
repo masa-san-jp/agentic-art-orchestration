@@ -101,7 +101,7 @@ class TransformationRuleTests(unittest.TestCase):
         template = registry["rules"][0]["composition"]["template"]
 
         self.assertEqual(
-            "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}",
+            "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition} ∩ {contemporary_counterevidence}",
             template,
         )
         self.assertEqual("intersection", registry["rules"][0]["composition"]["composition_mode"])
