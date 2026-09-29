@@ -386,15 +386,17 @@ pip install --user -r <child-repository-path>/requirements.txt
 ### 確認する
 
 ```bash
-python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン>
+python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン> --python-root <child-environment-root>
 ```
+
+子repoごとに依存の固定版が異なる場合は、あらかじめ `<child-environment-root>/<repository-id>/bin/python` が存在する環境を用意し、その root を `--python-root` で渡す。環境の作成と依存のインストールはこのツールでは行わない。不足する依存は `ENV_UNSATISFIED` のまま記録され、採用は行われない。共有環境で実行できる場合は `--python-root` を省略できる。
 
 リポジトリごとに現在の pin、候補コミット、候補での quality gate、採用可否と理由を出す。`config/repositories.yaml` は書き換えない。
 
 ### 採用する
 
 ```bash
-python3 tools/pin_adopt.py --apply --workspace-root <実クローン>
+python3 tools/pin_adopt.py --apply --workspace-root <実クローン> --python-root <child-environment-root>
 ```
 
 全ての検査が PASS のときだけ書き換える。1つでも塞がっていれば何も書かずに非0で終わる。部分的な採用はしない。`--dry-run` と `--apply` は排他で、どちらも省略するとエラーになる。

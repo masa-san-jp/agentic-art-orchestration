@@ -5,10 +5,11 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools.pin_adopt import PinAdoptError, apply_report, occurrences
+from tools.pin_adopt import PinAdoptError, apply_report, evaluate, main as pin_adopt_main, occurrences
 from tools.validate import validate_pin_adoption
 
 
@@ -119,6 +120,62 @@ class CommandTests(unittest.TestCase):
             capture_output=True, text=True, check=False)
 
         self.assertNotEqual(0, result.returncode)
+
+    def test_python_root_is_forwarded_to_child_quality_gates(self):
+        manifest = {"repositories": [{"id": "child", "path": "child", "observed_commit": COMMIT_A}]}
+        candidate = {"head": COMMIT_B, "reason": None, "commits_ahead": 1}
+        gates = {"results": [{"repository": "child", "status": "PASSED"}]}
+        python_root = Path("/tmp/child-environments")
+
+        with patch("tools.pin_adopt.load_yaml", return_value=manifest), patch(
+            "tools.pin_adopt._candidate", return_value=candidate
+        ), patch("tools.pin_adopt.occurrences", return_value=["config/repositories.yaml"]), patch(
+            "tools.pin_adopt.run_child_quality_gates", return_value=gates
+        ) as run_gates:
+            evaluate(Path("/tmp/repository"), Path("/tmp/workspace"), python_root=python_root)
+
+        self.assertEqual(
+            {
+                "run_id": "pin-adopt",
+                "python_root": python_root,
+            },
+            run_gates.call_args.kwargs,
+        )
+
+    def test_python_root_is_omitted_when_not_configured(self):
+        manifest = {"repositories": [{"id": "child", "path": "child", "observed_commit": COMMIT_A}]}
+        candidate = {"head": COMMIT_B, "reason": None, "commits_ahead": 1}
+        gates = {"results": [{"repository": "child", "status": "PASSED"}]}
+
+        with patch("tools.pin_adopt.load_yaml", return_value=manifest), patch(
+            "tools.pin_adopt._candidate", return_value=candidate
+        ), patch("tools.pin_adopt.occurrences", return_value=["config/repositories.yaml"]), patch(
+            "tools.pin_adopt.run_child_quality_gates", return_value=gates
+        ) as run_gates:
+            evaluate(Path("/tmp/repository"), Path("/tmp/workspace"))
+
+        self.assertEqual({"run_id": "pin-adopt"}, run_gates.call_args.kwargs)
+
+    def test_cli_passes_python_root_to_evaluate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "pin-adoption.json"
+            report = _report("UNCHANGED", False, [])
+            with patch("tools.pin_adopt.evaluate", return_value=report) as run_evaluate:
+                result = pin_adopt_main(
+                    [
+                        "--dry-run",
+                        "--workspace-root",
+                        "workspace",
+                        "--python-root",
+                        "python-root",
+                        "--output",
+                        str(output),
+                    ]
+                )
+
+        self.assertEqual(0, result)
+        self.assertEqual(Path.cwd() / "workspace", run_evaluate.call_args.args[1])
+        self.assertEqual(Path.cwd() / "python-root", run_evaluate.call_args.args[3])
 
 
 if __name__ == "__main__":

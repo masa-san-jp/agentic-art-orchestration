@@ -85,7 +85,12 @@ def occurrences(root: Path, commit: str) -> list[str]:
     return found
 
 
-def evaluate(root: Path, workspace_root: Path, timeout_seconds: int | None = None) -> dict:
+def evaluate(
+    root: Path,
+    workspace_root: Path,
+    timeout_seconds: int | None = None,
+    python_root: Path | None = None,
+) -> dict:
     manifest = load_yaml(MANIFEST_PATH)
     repositories = manifest["repositories"]
     candidates: dict[str, dict] = {}
@@ -101,6 +106,8 @@ def evaluate(root: Path, workspace_root: Path, timeout_seconds: int | None = Non
     kwargs = {"run_id": "pin-adopt"}
     if timeout_seconds is not None:
         kwargs["timeout_seconds"] = timeout_seconds
+    if python_root is not None:
+        kwargs["python_root"] = python_root
     gates = run_child_quality_gates(trial, workspace_root, **kwargs)
     gate_status = {item["repository"]: item["status"] for item in gates["results"]}
 
@@ -168,6 +175,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="report without writing")
     parser.add_argument("--apply", action="store_true", help="write the pins when every check passed")
     parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
+    parser.add_argument(
+        "--python-root",
+        type=Path,
+        help="optional root of pre-provisioned per-child environments; no installation is performed",
+    )
     parser.add_argument("--timeout", type=int)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--root", type=Path, default=ROOT)
@@ -176,8 +188,11 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("choose exactly one of --dry-run and --apply")
 
     root = args.root.resolve()
+    python_root = args.python_root
+    if python_root is not None and not python_root.is_absolute():
+        python_root = Path.cwd() / python_root
     try:
-        report = evaluate(root, args.workspace_root.resolve(), args.timeout)
+        report = evaluate(root, args.workspace_root.resolve(), args.timeout, python_root)
         if args.apply:
             report["written_files"] = apply_report(root, report)
     except (PinAdoptError, OSError, KeyError, ValueError) as exc:
