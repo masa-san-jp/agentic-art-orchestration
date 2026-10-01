@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -47,6 +49,40 @@ SIGNALS = {
 }
 
 
+def _anchor_id(signal_id: str, attribute: str, value: str) -> str:
+    payload = f"{signal_id}\n{attribute}\n{json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'))}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+MULTI_TENSION_SIGNAL = _signal(
+    "self:masa",
+    "self",
+    {"self_model": {"tensions": ["近いのに届かない", "別の緊張"]}},
+    "subject/masa",
+)
+MULTI_TENSION_SIGNALS = {**SIGNALS, "self:masa": MULTI_TENSION_SIGNAL}
+
+
+def _proposition_with_anchor(anchor_id: str | None) -> dict:
+    proposition = {
+        "proposition_id": "proposition:abc",
+        "structured_output": {
+            "template": "{personal_tension} is externalized through {historical_operation} against {contemporary_condition}",
+            "slots": {
+                "personal_tension": {
+                    "signal_id": "self:masa",
+                    "signal_kind": "self",
+                    "attribute": "tensions",
+                    **({"anchor_id": anchor_id} if anchor_id is not None else {}),
+                },
+                "historical_operation": {"signal_id": "art-history:x", "signal_kind": "art-history", "attribute": "relations"},
+                "contemporary_condition": {"signal_id": "marketing:y", "signal_kind": "marketing", "attribute": "stage"},
+            },
+        },
+    }
+    return proposition
+
+
 class CreativeQuestionTests(unittest.TestCase):
     def test_question_uses_the_bound_attribute_not_the_record_summary(self):
         question = MODULE._creative_question(PROPOSITION, SIGNALS)
@@ -59,6 +95,28 @@ class CreativeQuestionTests(unittest.TestCase):
 
         self.assertIn("movement/a", question)
         self.assertIn("movement/b", question)
+
+    def test_different_anchors_yield_different_questions(self):
+        """Two candidates differing only in which tension anchor they bind
+        must produce different creative_question text. Before this fix,
+        _bound_value always read value[0] regardless of which anchor the
+        candidate actually used, so distinct lineages collapsed onto the
+        same wording.
+        """
+        first_anchor = _anchor_id("self:masa", "tensions", "近いのに届かない")
+        second_anchor = _anchor_id("self:masa", "tensions", "別の緊張")
+
+        first_question = MODULE._creative_question(_proposition_with_anchor(first_anchor), MULTI_TENSION_SIGNALS)
+        second_question = MODULE._creative_question(_proposition_with_anchor(second_anchor), MULTI_TENSION_SIGNALS)
+
+        self.assertIn("近いのに届かない", first_question)
+        self.assertIn("別の緊張", second_question)
+        self.assertNotEqual(first_question, second_question)
+
+    def test_missing_anchor_id_falls_back_to_the_first_value(self):
+        question = MODULE._creative_question(_proposition_with_anchor(None), MULTI_TENSION_SIGNALS)
+
+        self.assertIn("近いのに届かない", question)
 
 
 class BoundaryTests(unittest.TestCase):

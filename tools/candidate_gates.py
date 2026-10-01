@@ -185,18 +185,14 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     contemporary_slot, contemporary_signal = selected("contemporary_condition")
     contemporary_domain = contemporary_signal.get("domain", {}).get("marketing", {}) if contemporary_signal else {}
-    contemporary_attributes = {
-        slot.get("attribute")
-        for slot in composition.values()
-        if slot.get("signal_kind") == "marketing"
-    }
-    contemporary_evidence = [
-        evidence
-        for attribute in sorted(contemporary_attributes)
-        for evidence in _matching_evidence(candidate, "marketing", attribute)
-    ]
-    if not contemporary_evidence:
-        contemporary_evidence = _matching_evidence(candidate, "marketing")
+    # R17 binds exactly one marketing attribute ("stage") in composition.
+    # Evidence is read for that declared attribute only; there is no
+    # fallback to every marketing attribute regardless of what the
+    # candidate actually binds (such a fallback would let the
+    # contemporary-specificity gate pass on evidence the proposition never
+    # cites, and would silently mask a candidate whose composition does not
+    # bind any marketing attribute at all).
+    contemporary_evidence = _matching_evidence(candidate, "marketing", "stage")
     contemporary_pass = bool(
         contemporary_signal
         and contemporary_slot.get("signal_kind") == "marketing"
@@ -220,9 +216,24 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     composition_ids = [slot.get("signal_id") for slot in composition.values()]
     composition_kinds = [slot.get("signal_kind") for slot in composition.values()]
+    # A rule may bind more than one slot to the same signal_kind (R17 binds
+    # both personal_tension and personal_pattern to the one self signal), so
+    # counting *all* composition slot signal_ids and requiring them to be
+    # exactly as many as required kinds (the pre-#254 check) rejects a
+    # legitimate multi-attribute candidate. Group signal_ids by kind instead:
+    # each required kind must resolve to exactly one signal_id, and the
+    # signals used across kinds must all be distinct. This keeps the
+    # original genericness guarantee (no two required kinds collapse onto
+    # the same signal, no kind is left unbound) without weakening it to a
+    # bare ">=" count that would also accept extra, unrelated signal_ids.
+    signal_ids_by_kind: dict[str, set[str]] = {}
+    for slot in composition.values():
+        signal_ids_by_kind.setdefault(slot.get("signal_kind"), set()).add(slot.get("signal_id"))
+    distinct_required_signal_ids = {next(iter(ids)) for kind, ids in signal_ids_by_kind.items() if kind in rule["required_signal_kinds"] and len(ids) == 1}
     generic_pass = (
-        len(set(composition_ids)) >= len(rule["required_signal_kinds"])
-        and set(composition_kinds) == set(rule["required_signal_kinds"])
+        set(signal_ids_by_kind) == set(rule["required_signal_kinds"])
+        and all(len(ids) == 1 for ids in signal_ids_by_kind.values())
+        and len(distinct_required_signal_ids) == len(rule["required_signal_kinds"])
         and all(isinstance(slot.get("attribute"), str) and slot["attribute"] for slot in composition.values())
     )
 

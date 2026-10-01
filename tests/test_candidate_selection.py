@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import unittest
 from pathlib import Path
@@ -61,8 +62,43 @@ class CandidateSelectionTests(unittest.TestCase):
         self.assertIn(second["selected_candidates"][0]["candidate_id"], {item["candidate_id"] for item in candidate_space["candidates"]})
         self.assertNotEqual(first["selected_candidates"][0]["selection_score"], second["selected_candidates"][0]["selection_score"])
 
+    def diverse_inputs_with_disjoint_self_anchors(self) -> tuple[dict, dict, list[dict]]:
+        """Two self signals, each eligible on exactly one attribute, so the
+        "specificity versus privacy" tension and the "review before reuse"
+        pattern never co-occur in the same candidate. A rule that binds
+        both personal_tension and personal_pattern to one self signal would
+        otherwise let a single candidate carry both target phrases at once,
+        masking whether an intent change actually moves the top candidate.
+        """
+        signals = MODULE.load_fixture(ROOT / "tests/fixtures/v12-candidates")
+        privacy_signal = signals[0]
+        privacy_signal["domain"]["self_model"]["tensions"] = ["specificity versus privacy"]
+        privacy_signal["domain"]["self_model"]["recurring_patterns"] = []
+        reuse_signal = copy.deepcopy(signals[0])
+        reuse_signal["signal_id"] = "self:derived-002"
+        reuse_signal["source"]["entity_ids"] = ["self-entity-002"]
+        reuse_signal["source"]["locators"] = ["derived/self-entity-002"]
+        reuse_signal["evidence_refs"][0]["entity_id"] = "self-entity-002"
+        reuse_signal["domain"]["self_model"]["tensions"] = []
+        reuse_signal["domain"]["self_model"]["recurring_patterns"] = ["review before reuse"]
+        signals.append(reuse_signal)
+        art_history = signals[1]
+        for index in range(2, 6):
+            extra = copy.deepcopy(art_history)
+            extra["signal_id"] = f"art-history:entity-{index:03d}"
+            extra["source"]["entity_ids"] = [f"art-entity-{index:03d}"]
+            extra["source"]["locators"] = [f"entities/art-entity-{index:03d}"]
+            extra["evidence_refs"][0]["entity_id"] = f"art-entity-{index:03d}"
+            extra["evidence_refs"][0]["locator"] = f"art-history/evidence/source-{index:03d}"
+            signals.append(extra)
+        registry = MODULE.load_yaml(ROOT / "config/transformation-rules.yaml")
+        candidate_space = MODULE.build_candidate_space(signals, registry)
+        gate_report = MODULE.build_gate_report(candidate_space, signals, registry)
+        self.assertGreater(candidate_space["candidate_count"], 1)
+        return candidate_space, gate_report, signals
+
     def test_intent_selection_is_deterministic_and_changes_the_top_candidate(self):
-        candidate_space, gate_report, signals = self.diverse_inputs()
+        candidate_space, gate_report, signals = self.diverse_inputs_with_disjoint_self_anchors()
         first = MODULE.build_selection(
             candidate_space,
             gate_report,
@@ -90,6 +126,11 @@ class CandidateSelectionTests(unittest.TestCase):
             "seed-a",
             intent="review before reuse",
             signals=signals,
+        )
+        # An intent change must change the top candidate, not just its score.
+        self.assertNotEqual(
+            first["selected_candidates"][0]["candidate_id"],
+            second_intent["selected_candidates"][0]["candidate_id"],
         )
         self.assertEqual("tensions", first["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
         self.assertEqual("recurring_patterns", first["selected_candidates"][0]["composition"]["personal_pattern"]["attribute"])
@@ -281,6 +322,32 @@ class CandidateSelectionTests(unittest.TestCase):
         )
         self.assertEqual("tensions", selection["selected_candidates"][0]["composition"]["personal_tension"]["attribute"])
         self.assertEqual("recurring_patterns", selection["selected_candidates"][0]["composition"]["personal_pattern"]["attribute"])
+
+    def test_self_diversity_report_replays_pre_254_legacy_selected_candidates(self):
+        """A selection recorded before #254 carried candidates whose identity
+        used a single ``personal_tension`` slot and a legacy singular
+        ``personal_anchor_id`` string rather than today's
+        ``personal_anchor_ids`` dict. build_self_diversity_report must still
+        resolve such a candidate's anchor instead of raising ValueError.
+        """
+        candidate_space, _gate_report, signals, _registry = self.load_inputs()
+        legacy_candidate = copy.deepcopy(candidate_space["candidates"][0])
+        del legacy_candidate["composition"]["personal_pattern"]
+        self_signal_id = legacy_candidate["composition"]["personal_tension"]["signal_id"]
+        anchor = hashlib.sha256(
+            f"{self_signal_id}\ntensions\n{MODULE.canonical_json('specificity versus privacy')}".encode("utf-8")
+        ).hexdigest()
+        legacy_identity = {
+            "rule_id": legacy_candidate["rule_id"],
+            "snapshot_id": candidate_space["snapshot_id"],
+            "signal_ids": {kind: refs[0]["signal_id"] for kind, refs in legacy_candidate["inputs"].items()},
+            "personal_anchor_id": anchor,
+        }
+        legacy_candidate["candidate_id"] = f"candidate:{MODULE.sha256_hex(legacy_identity)[:16]}"
+
+        report = MODULE.build_self_diversity_report(signals, candidate_space, [legacy_candidate], 1)
+        self.assertEqual([anchor], report["selected_anchor_ids"])
+        self.assertIn(report["status"], {"PASS", "PASS_LIMITED_DIVERSITY"})
 
     def test_zero_anchors_still_block_strict_selection(self):
         candidate_space, gate_report, signals, registry = self.load_inputs()

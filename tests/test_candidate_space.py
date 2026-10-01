@@ -51,7 +51,8 @@ class CandidateSpaceTests(unittest.TestCase):
             {slot["signal_id"] for slot in candidate["composition"].values()},
         )
         self.assertEqual("recurring_patterns", candidate["composition"]["personal_pattern"]["attribute"])
-        self.assertEqual("counterevidence", candidate["composition"]["contemporary_counterevidence"]["attribute"])
+        self.assertEqual("stage", candidate["composition"]["contemporary_condition"]["attribute"])
+        self.assertNotIn("contemporary_counterevidence", candidate["composition"])
 
     def test_art_history_and_marketing_changes_remain_distinct_intersection_mechanisms(self):
         signals, registry = self.load_inputs()
@@ -104,12 +105,27 @@ class CandidateSpaceTests(unittest.TestCase):
         self.assertEqual("recurring_patterns", result["candidates"][0]["composition"]["personal_pattern"]["attribute"])
 
     def test_diversity_report_compares_old_and_multi_attribute_rules(self):
+        """Compare a single-attribute R17 baseline against the multi-attribute rule.
+
+        Comparison condition (deliberately *not* a replay of origin/main):
+        origin/main's R17 had one ``personal_tension`` slot whose attribute
+        could dynamically be either ``tensions`` or ``recurring_patterns``,
+        so both attributes' values were enumerated as alternative anchors on
+        that single slot. With 3 tensions and 2 recurring_patterns, main
+        would report 5 distinct self anchors (3 + 2, one slot, one value
+        each), not 3. The ``before`` baseline here instead keeps a single
+        slot bound only to ``tensions`` (``recurring_patterns`` is dropped
+        from composition entirely, not folded into the same slot), to show
+        plainly what adding a second, separately-bound attribute changes.
+        To keep the "after is larger" claim honest against actual
+        origin/main behavior too, not just against this simplified
+        baseline, the test also checks 6 (after) > 5 (the real main count).
+        """
         signals, registry = self.load_inputs()
         signals[0]["domain"]["self_model"]["tensions"] = ["tension-1", "tension-2", "tension-3"]
         signals[0]["domain"]["self_model"]["recurring_patterns"] = ["pattern-1", "pattern-2"]
         baseline = copy.deepcopy(registry)
         baseline["rules"][0]["composition"]["slots"].pop("personal_pattern")
-        baseline["rules"][0]["composition"]["slots"].pop("contemporary_counterevidence")
         baseline["rules"][0]["composition"]["template"] = "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
         before = MODULE.build_candidate_space(signals, baseline)
         after = MODULE.build_candidate_space(signals, registry)
@@ -118,6 +134,61 @@ class CandidateSpaceTests(unittest.TestCase):
         self.assertEqual(3, before_report["distinct_self_anchor_combinations"])
         self.assertEqual(6, after_report["distinct_self_anchor_combinations"])
         self.assertGreater(after_report["distinct_lineage_count"], before_report["distinct_lineage_count"])
+        # Honesty check against actual origin/main semantics (5 anchors from
+        # one dynamically-bound slot), not just against the simplified
+        # single-attribute baseline built above.
+        ACTUAL_ORIGIN_MAIN_SELF_ANCHOR_COUNT = 3 + 2
+        self.assertGreater(after_report["distinct_self_anchor_combinations"], ACTUAL_ORIGIN_MAIN_SELF_ANCHOR_COUNT)
+
+    def test_resolve_personal_anchor_ids_replays_pre_254_legacy_candidates(self):
+        """A candidate space built before #254 used one ``personal_tension``
+        slot and a singular ``personal_anchor_id`` string identity (instead
+        of today's ``personal_anchor_ids`` dict keyed by slot name). Replaying
+        such a candidate must still resolve its anchor rather than silently
+        returning nothing, or callers like build_self_diversity_report raise
+        ValueError on data generated before this change.
+        """
+        signals, registry = self.load_inputs()
+        candidate_space = MODULE.build_candidate_space(signals, registry)
+        candidate = copy.deepcopy(candidate_space["candidates"][0])
+        # Reshape to the pre-#254 single-slot form: drop personal_pattern.
+        del candidate["composition"]["personal_pattern"]
+
+        self_signal_id = candidate["composition"]["personal_tension"]["signal_id"]
+        anchor = MODULE.personal_anchor_id(self_signal_id, "tensions", "specificity versus privacy")
+        legacy_identity = {
+            "rule_id": candidate["rule_id"],
+            "snapshot_id": candidate_space["snapshot_id"],
+            "signal_ids": {kind: refs[0]["signal_id"] for kind, refs in candidate["inputs"].items()},
+            "personal_anchor_id": anchor,
+        }
+        candidate["candidate_id"] = f"candidate:{MODULE.sha256_hex(legacy_identity)[:16]}"
+
+        resolved = MODULE.resolve_personal_anchor_ids(candidate, candidate_space, signals)
+        self.assertEqual({"personal_tension": anchor}, resolved)
+
+    def test_resolve_personal_anchor_ids_replays_legacy_candidates_with_no_anchor_field(self):
+        """An even older candidate space never recorded a personal anchor at
+        all; its identity hash has no personal_anchor_id/ids field. When
+        exactly one eligible anchor matches the slot's signal and attribute
+        unambiguously, that anchor must still be recoverable.
+        """
+        signals, registry = self.load_inputs()
+        candidate_space = MODULE.build_candidate_space(signals, registry)
+        candidate = copy.deepcopy(candidate_space["candidates"][0])
+        del candidate["composition"]["personal_pattern"]
+
+        self_signal_id = candidate["composition"]["personal_tension"]["signal_id"]
+        base_identity = {
+            "rule_id": candidate["rule_id"],
+            "snapshot_id": candidate_space["snapshot_id"],
+            "signal_ids": {kind: refs[0]["signal_id"] for kind, refs in candidate["inputs"].items()},
+        }
+        candidate["candidate_id"] = f"candidate:{MODULE.sha256_hex(base_identity)[:16]}"
+
+        anchor = MODULE.personal_anchor_id(self_signal_id, "tensions", "specificity versus privacy")
+        resolved = MODULE.resolve_personal_anchor_ids(candidate, candidate_space, signals)
+        self.assertEqual({"personal_tension": anchor}, resolved)
 
     def test_duplicate_signal_id_and_missing_kind_fail_closed(self):
         signals, registry = self.load_inputs()

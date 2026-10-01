@@ -25,9 +25,6 @@ rules:
         contemporary_condition:
           signal_kind: marketing
           attribute: stage
-        contemporary_counterevidence:
-          signal_kind: marketing
-          attribute: counterevidence
-      template: "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition} ∩ {contemporary_counterevidence}"
+      template: "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition}"
     constraints: [require_all_inputs, require_source_provenance, no_unproven_concepts]
     rejection_reasons: [missing-required-signal, unknown-attribute, missing-provenance, constraint-failure]

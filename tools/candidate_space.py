@@ -207,7 +207,17 @@ def resolve_personal_anchor_ids(
     candidate_space: dict,
     signals: list[dict],
 ) -> dict[str, str]:
-    """Recover the opaque self-anchor combination used for one candidate."""
+    """Recover the opaque self-anchor combination used for one candidate.
+
+    Tries the current multi-attribute identity first (``personal_anchor_ids``
+    keyed by slot name). A candidate space or selection generated before
+    #254 used a single ``personal_tension`` slot and a singular
+    ``personal_anchor_id`` string (or, for an even older candidate space
+    with no personal-anchor tracking at all, no anchor field whenever
+    exactly one eligible anchor was unambiguous). Both legacy forms are
+    retried so an existing candidate space or selection can still be
+    replayed without raising.
+    """
     signal_by_id = {signal["signal_id"]: signal for signal in signals}
     personal_slots = [
         (slot_name, slot)
@@ -246,6 +256,15 @@ def resolve_personal_anchor_ids(
             identity["personal_anchor_ids"] = anchor_ids
         if candidate.get("candidate_id") == f"candidate:{sha256_hex(identity)[:16]}":
             return anchor_ids
+    if len(personal_slots) == 1:
+        slot_name = personal_slots[0][0]
+        legacy_options = [anchor for anchor in option_groups[0] if anchor is not None]
+        for anchor in legacy_options:
+            identity = {**base_identity, "personal_anchor_id": anchor["anchor_id"]}
+            if candidate.get("candidate_id") == f"candidate:{sha256_hex(identity)[:16]}":
+                return {slot_name: anchor["anchor_id"]}
+        if len(legacy_options) == 1 and candidate.get("candidate_id") == f"candidate:{sha256_hex(base_identity)[:16]}":
+            return {slot_name: legacy_options[0]["anchor_id"]}
     return {}
 
 
@@ -260,6 +279,30 @@ def build_diversity_report(
     marketing-side signal/attribute combination used by a candidate.  Self
     combinations are represented only by opaque anchor IDs; marketing
     combinations retain only normalized signal IDs and bound attribute names.
+
+    Limits of this definition: the marketing-side (and the ``signals is
+    None`` self-side) combination keys on which *signal* and *attribute
+    name* are bound, not on the attribute's textual value. Two different
+    marketing signals bound to the same attribute therefore always count
+    as two distinct lineages even if their attribute values are identical
+    (e.g. two trends both at ``stage: growing``), and a single attribute
+    whose values repeat heavily across many signals (as marketing-trends-
+    notes' ``stage`` does: 46 of 65 trends are ``growing``) still yields
+    one lineage per distinct signal, not per distinct value. Conversely,
+    an attribute that is empty on every signal (``counterevidence`` is
+    empty on all 65 marketing-trends-notes trends as of 2026-09-28) adds
+    no lineages at all if it were bound as a slot, because every candidate
+    built from it would share the same empty value. R17 does not bind
+    ``counterevidence`` as a composition slot for this reason (see
+    docs/cross-repository-contract.md, "Candidate lineage diversity");
+    removing that dead slot does not change this count's definition,
+    because the count already discriminated marketing lineages by distinct
+    marketing *signal* (``contemporary_condition``'s ``signal_id``), not by
+    ``stage``'s three-word vocabulary. Raising the textual diversity of the
+    generated proposition itself is a separate concern, handled in
+    ``tools/build_research_request.py`` by reading the bound attribute's
+    actual value (and, for self anchors, the specific opaque anchor
+    selected) rather than a fixed index into it.
     """
     errors = validate_candidate_space(candidate_space, f"{source}.candidates")
     if errors:
