@@ -1,0 +1,28 @@
+contract_version: pin-adoption-scope/v1
+# tools/pin_adopt.py --apply searches the whole tree for every occurrence of
+# the current pin (see the comment in that file: the same commit is repeated
+# in the manifest, fixtures, retrieval index, a test module and the handoff
+# record). Only occurrences whose relative path matches one of the globs
+# below are locations that represent the CURRENT pin; --apply rewrites
+# those and reports every other occurrence, unwritten, as
+# `preserved_occurrences`.
+#
+# This is an allowlist, not a denylist keyed on `execution/`, because the
+# 2026-10-02 incident that prompted this file (Issue 261, observed during the
+# SH-04 pin adoption) showed a historical record living outside execution/
+# too: docs/aak-02-execution.md states "...merged as <commit>" in past tense,
+# exactly like execution/handoff.md. A denylist keyed on a directory name
+# would have missed it. An allowlist only ever rewrites a path it names, so
+# adding a new "current pin" location later is an explicit, reviewed opt-in
+# instead of an implicit default -- the same shape of error (an evidence file
+# living in an unexpected directory) fails closed here instead of failing
+# open.
+#
+# A test module that happens to hardcode the pin (the "test module" the
+# pin_adopt.py comment mentions) is deliberately NOT covered by a blanket
+# `tests/**` entry: whether such a literal is a fixture value or an assertion
+# about a specific historical run is ambiguous without reading it, so it is
+# left to `preserved_occurrences` and a human decision, same as execution/.
+rewritable_paths:
+  - config/repositories.yaml
+  - tests/fixtures/**

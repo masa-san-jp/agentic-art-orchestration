@@ -9,8 +9,15 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools.pin_adopt import PinAdoptError, apply_report, evaluate, main as pin_adopt_main, occurrences
-from tools.validate import validate_pin_adoption
+from tools.pin_adopt import (
+    PinAdoptError,
+    apply_report,
+    evaluate,
+    main as pin_adopt_main,
+    occurrences,
+    rewritable_globs,
+)
+from tools.validate import validate_pin_adoption, validate_pin_adoption_scope
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,20 +74,26 @@ class OccurrenceTests(unittest.TestCase):
 
 
 class ApplyTests(unittest.TestCase):
+    """--apply writes only occurrences inside the config/pin-adoption-scope.yaml allowlist."""
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         (self.root / "config").mkdir()
         self.manifest = self.root / "config/repositories.yaml"
         self.manifest.write_text(f"observed_commit: {COMMIT_A}\n", encoding="utf-8")
-        self.fixture = self.root / "fixture.json"
+        (self.root / "tests/fixtures").mkdir(parents=True)
+        self.fixture = self.root / "tests/fixtures/fixture.json"
         self.fixture.write_text(f'{{"commit": "{COMMIT_A}"}}\n', encoding="utf-8")
         self.addCleanup(self.temporary.cleanup)
 
     def test_adoption_rewrites_every_place_the_pin_appears(self):
-        written = apply_report(self.root, _report("READY", True, ["config/repositories.yaml", "fixture.json"]))
+        written, preserved = apply_report(
+            self.root, _report("READY", True, ["config/repositories.yaml", "tests/fixtures/fixture.json"])
+        )
 
-        self.assertEqual(["config/repositories.yaml", "fixture.json"], written)
+        self.assertEqual(["config/repositories.yaml", "tests/fixtures/fixture.json"], written)
+        self.assertEqual([], preserved)
         self.assertIn(COMMIT_B, self.manifest.read_text(encoding="utf-8"))
         self.assertIn(COMMIT_B, self.fixture.read_text(encoding="utf-8"))
 
@@ -89,6 +102,96 @@ class ApplyTests(unittest.TestCase):
             apply_report(self.root, _report("BLOCKED", False, []))
 
         self.assertIn(COMMIT_A, self.manifest.read_text(encoding="utf-8"))
+
+
+class ApplyPreservesHistoricalEvidenceTests(unittest.TestCase):
+    """execution/ records what a past run actually observed; --apply must leave it byte-identical.
+
+    Regression test for Issue 261: pin_adopt.py --apply previously rewrote
+    execution/handoff.md and friends, turning a past observation ("merged as
+    a4df0e5...") into a record of something that never happened.
+    """
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        (self.root / "config").mkdir()
+        self.manifest = self.root / "config/repositories.yaml"
+        self.manifest.write_text(f"observed_commit: {COMMIT_A}\n", encoding="utf-8")
+
+        (self.root / "tests/fixtures/retrieval").mkdir(parents=True)
+        self.fixture = self.root / "tests/fixtures/retrieval/index.json"
+        self.fixture.write_text(f'{{"source_commit": "{COMMIT_A}"}}\n', encoding="utf-8")
+
+        (self.root / "execution").mkdir()
+        self.handoff = self.root / "execution/handoff.md"
+        self.handoff_text = f"Research PR #106 is merged as {COMMIT_A}.\n"
+        self.handoff.write_text(self.handoff_text, encoding="utf-8")
+        self.handoff_bytes_before = self.handoff.read_bytes()
+
+        self.state = self.root / "execution/state.yaml"
+        self.state_text = f"last_completed_task: T1\nobserved_commit: {COMMIT_A}\n"
+        self.state.write_text(self.state_text, encoding="utf-8")
+        self.state_bytes_before = self.state.read_bytes()
+
+        self.addCleanup(self.temporary.cleanup)
+
+    def test_execution_evidence_is_left_byte_identical_and_fixtures_are_updated(self):
+        occurrences_found = occurrences(self.root, COMMIT_A)
+        self.assertIn("tests/fixtures/retrieval/index.json", occurrences_found)
+        self.assertIn("execution/handoff.md", occurrences_found)
+        self.assertIn("execution/state.yaml", occurrences_found)
+
+        written, preserved = apply_report(self.root, _report("READY", True, occurrences_found))
+
+        self.assertEqual(["config/repositories.yaml", "tests/fixtures/retrieval/index.json"], written)
+        self.assertEqual(["execution/handoff.md", "execution/state.yaml"], preserved)
+
+        # Historical evidence is untouched, byte for byte.
+        self.assertEqual(self.handoff_bytes_before, self.handoff.read_bytes())
+        self.assertEqual(self.handoff_text, self.handoff.read_text(encoding="utf-8"))
+        self.assertEqual(self.state_bytes_before, self.state.read_bytes())
+        self.assertEqual(self.state_text, self.state.read_text(encoding="utf-8"))
+
+        # The current-pin fixture is updated.
+        self.assertIn(COMMIT_B, self.fixture.read_text(encoding="utf-8"))
+        self.assertNotIn(COMMIT_A, self.fixture.read_text(encoding="utf-8"))
+
+
+class RewritableGlobsTests(unittest.TestCase):
+    def test_the_real_allowlist_covers_manifest_and_fixtures_only(self):
+        globs = rewritable_globs()
+
+        self.assertIn("config/repositories.yaml", globs)
+        self.assertIn("tests/fixtures/**", globs)
+        for pattern in globs:
+            self.assertFalse(pattern.startswith("execution"), pattern)
+            self.assertFalse(pattern.startswith("docs"), pattern)
+
+    def test_a_missing_allowlist_is_refused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            missing = Path(temporary) / "config/pin-adoption-scope.yaml"
+            with self.assertRaises(PinAdoptError):
+                rewritable_globs(missing)
+
+
+class PinAdoptionScopeContractTests(unittest.TestCase):
+    def test_the_real_scope_config_validates(self):
+        self.assertEqual([], validate_pin_adoption_scope())
+
+    def test_naming_execution_in_the_allowlist_is_refused(self):
+        errors = validate_pin_adoption_scope(
+            {"contract_version": "pin-adoption-scope/v1", "rewritable_paths": ["execution/handoff.md"]}
+        )
+
+        self.assertTrue(errors)
+
+    def test_naming_docs_in_the_allowlist_is_refused(self):
+        errors = validate_pin_adoption_scope(
+            {"contract_version": "pin-adoption-scope/v1", "rewritable_paths": ["docs/aak-02-execution.md"]}
+        )
+
+        self.assertTrue(errors)
 
 
 class ReportContractTests(unittest.TestCase):
@@ -102,6 +205,38 @@ class ReportContractTests(unittest.TestCase):
 
     def test_adopting_without_recording_where_the_pin_lives_is_refused(self):
         errors = validate_pin_adoption(_report("READY", True, []))
+
+        self.assertTrue(errors)
+
+    def test_an_applied_report_with_preserved_occurrences_validates(self):
+        report = _report("READY", True, ["config/repositories.yaml", "execution/handoff.md"])
+        report["written_files"] = ["config/repositories.yaml"]
+        report["preserved_occurrences"] = ["execution/handoff.md"]
+
+        self.assertEqual([], validate_pin_adoption(report))
+
+    def test_rewriting_execution_evidence_is_refused(self):
+        report = _report("READY", True, ["config/repositories.yaml", "execution/handoff.md"])
+        report["written_files"] = ["config/repositories.yaml", "execution/handoff.md"]
+
+        errors = validate_pin_adoption(report)
+
+        self.assertTrue(errors)
+
+    def test_rewriting_a_docs_narrative_record_is_refused(self):
+        report = _report("READY", True, ["config/repositories.yaml", "docs/aak-02-execution.md"])
+        report["written_files"] = ["config/repositories.yaml", "docs/aak-02-execution.md"]
+
+        errors = validate_pin_adoption(report)
+
+        self.assertTrue(errors)
+
+    def test_a_file_reported_as_both_written_and_preserved_is_refused(self):
+        report = _report("READY", True, ["config/repositories.yaml"])
+        report["written_files"] = ["config/repositories.yaml"]
+        report["preserved_occurrences"] = ["config/repositories.yaml"]
+
+        errors = validate_pin_adoption(report)
 
         self.assertTrue(errors)
 

@@ -45,6 +45,15 @@
       "uniqueItems": true,
       "$comment": "--apply のときだけ現れる。pin は1行ではないので、書き換えた全ファイルを残す。"
     },
+    "preserved_occurrences": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "$comment": "--apply のときだけ現れる。occurrences のうち config/pin-adoption-scope.yaml の allowlist に無く書き換えなかった箇所。execution/ の実行証跡を書き換えて過去の観測を捏造しないための記録。"
+    },
     "repositories": {
       "type": "array",
       "minItems": 1,
