@@ -16,12 +16,34 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class V12E2ETests(unittest.TestCase):
     def test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary(self):
+        # candidate_count is 1, not 2 (pre-#254's count for this same fixture).
+        # #254 replaced R17's single ``personal_tension`` slot -- whose
+        # declared attribute was ``tensions`` but whose implementation
+        # silently substituted in ``recurring_patterns`` values too,
+        # mislabeling them under the ``personal_tension`` slot name -- with
+        # two explicit, separately-declared slots (``personal_tension`` and
+        # ``personal_pattern``) composed together via the registry's
+        # intersection template ("{personal_tension} ∩ {personal_pattern} ∩
+        # ..."). That is the fix for #254's point 3: the same tension now
+        # combines with another attribute into one theme instead of either
+        # attribute alternately filling a single mislabeled slot. For this
+        # fixture's single self-model signal, which has exactly one
+        # ``tensions`` value and one ``recurring_patterns`` value, combining
+        # them yields exactly one candidate (1x1), not the two the old
+        # alternation bug produced. This is not a diversity regression: with
+        # realistic multi-valued self-model data the combined slots produce
+        # *more* lineages than the old single/alternating slot, not fewer
+        # -- see test_candidate_space.py::
+        # test_diversity_report_compares_old_and_multi_attribute_rules,
+        # which checks 3 tensions x 2 recurring_patterns -> 6 self-anchor
+        # combinations, versus 5 for origin/main's actual alternation
+        # behavior and 3 for a single-attribute baseline.
         result = run_v12_e2e("V12-E2E-001:test-clean")
         manifest = load_yaml(ROOT / "config/repositories.yaml")
         self.assertEqual("v12-e2e/v1", result["contract_version"])
         self.assertEqual("disabled", result["network"])
         self.assertEqual(3, result["pipeline"]["signal_count"])
-        self.assertEqual(2, result["pipeline"]["candidate_count"])
+        self.assertEqual(1, result["pipeline"]["candidate_count"])
         self.assertEqual(1, result["pipeline"]["selection"]["selected_count"])
         self.assertEqual("research-provenance/v1", result["pipeline"]["provenance"]["contract_version"])
         self.assertEqual(len(manifest["repositories"]), result["child_quality_gates"]["repository_count"])
