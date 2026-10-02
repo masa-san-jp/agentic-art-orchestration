@@ -1,6 +1,6 @@
 {
   "signal_id": "self:derived-001",
-  "commit": "96aaf6eb6f129ead5c7c5b6811a05205988aaebf",
+  "commit": "909e73e6aee420d53fb35f98a14b253c36069926",
   "entity_id": "self-entity-001",
   "source_locator": "derived/self-entity-001",
   "evidence_locator": "self-model/claims/claim-001",
