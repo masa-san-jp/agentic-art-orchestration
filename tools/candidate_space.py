@@ -275,8 +275,9 @@ def build_diversity_report(
 ) -> dict:
     """Count deterministic candidate lineages without exposing signal values.
 
-    A lineage is the distinct pair of self-side anchor combination and
-    marketing-side signal/attribute combination used by a candidate.  Self
+    A v2 lineage is the distinct triple of self-side anchor combination,
+    art-history operation and marketing-side signal/attribute combination.
+    The v1 pair count remains distinct_self_marketing_lineage_count. Self
     combinations are represented only by opaque anchor IDs; marketing
     combinations retain only normalized signal IDs and bound attribute names.
 
@@ -310,8 +311,10 @@ def build_diversity_report(
     if signals is not None:
         _validated_signals(signals, f"{source}.signals")
     self_combinations: set[tuple] = set()
+    art_history_combinations: set[tuple] = set()
     marketing_combinations: set[tuple] = set()
-    lineages: set[tuple[tuple, tuple]] = set()
+    legacy_lineages: set[tuple] = set()
+    lineages: set[tuple] = set()
     for candidate in candidate_space["candidates"]:
         if signals is not None:
             self_ids = resolve_personal_anchor_ids(candidate, candidate_space, signals)
@@ -338,13 +341,22 @@ def build_diversity_report(
             )
         )
         self_combinations.add(self_key)
+        art_history_key = tuple(sorted(
+            (name, slot.get("signal_id"), slot.get("attribute"))
+            for name, slot in candidate["composition"].items()
+            if slot.get("signal_kind") == "art-history"
+        ))
+        art_history_combinations.add(art_history_key)
         marketing_combinations.add(marketing_key)
-        lineages.add((self_key, marketing_key))
+        legacy_lineages.add((self_key, marketing_key))
+        lineages.add((self_key, art_history_key, marketing_key))
     return {
-        "contract_version": "candidate-diversity-report/v1",
+        "contract_version": "candidate-diversity-report/v2",
         "candidate_count": candidate_space["candidate_count"],
         "distinct_self_anchor_combinations": len(self_combinations),
+        "distinct_art_history_anchor_combinations": len(art_history_combinations),
         "distinct_marketing_anchor_combinations": len(marketing_combinations),
+        "distinct_self_marketing_lineage_count": len(legacy_lineages),
         "distinct_lineage_count": len(lineages),
     }
 
@@ -379,6 +391,20 @@ def build_candidate_space(signals: list[dict], registry: dict, source: str = "ca
                     "provide a validated signal for every required kind or reject the snapshot",
                 )
             )
+        # Different art-history operations are alternatives, never fabricated
+        # empty slots. R17 keeps relations; a method-bound rule only sees
+        # methods. The original three-kind missing-input check still applies.
+        # A method signal with relations still belongs to the method lane:
+        # Research rejects duplicate studies resting on the same signal set.
+        art_attributes = [slot["attribute"] for slot in rule["composition"]["slots"].values()
+                          if slot["signal_kind"] == "art-history"]
+        art_options = [signal for signal in by_kind["art-history"]
+                       if all(signal["domain"]["art_history"].get(attribute) for attribute in art_attributes)
+                       and not ("relations" in art_attributes and "method" not in art_attributes
+                                and signal["domain"]["art_history"].get("method"))]
+        if not art_options:
+            continue
+        rule_groups = {**by_kind, "art-history": art_options}
         personal_slots = [
             (slot_name, slot)
             for slot_name, slot in sorted(rule["composition"]["slots"].items())
@@ -407,10 +433,10 @@ def build_candidate_space(signals: list[dict], registry: dict, source: str = "ca
                     )
             ordered_groups = [
                 self_options,
-                *[sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS[1:]],
+                *[sorted(rule_groups[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS[1:]],
             ]
         else:
-            ordered_groups = [sorted(by_kind[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS]
+            ordered_groups = [sorted(rule_groups[kind], key=lambda signal: signal["signal_id"]) for kind in SIGNAL_KINDS]
         for combination in itertools.product(*ordered_groups):
             if uses_personal_anchors:
                 self_signal, personal_anchors = combination[0]

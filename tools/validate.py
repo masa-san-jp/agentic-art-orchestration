@@ -1368,7 +1368,7 @@ def validate_transformation_rule_registry(data: dict, source: str = "transformat
     expected_rejections = {"missing-required-signal", "unknown-attribute", "missing-provenance", "constraint-failure"}
     allowed_attributes = {
         "self": {"tensions", "recurring_patterns", "seeks", "protects", "avoids", "traits", "states", "contexts"},
-        "art-history": {"relations", "canonical_graph_locator", "entity_kind", "time", "geo"},
+        "art-history": {"relations", "method", "source_refs", "canonical_graph_locator", "entity_kind", "time", "geo"},
         "marketing": {"stage", "freshness", "vendor_interest", "counterevidence", "prediction_status"},
     }
     seen_rule_ids: set[str] = set()
@@ -2811,6 +2811,25 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
     if signal_kind == "art-history" and isinstance(domain, dict):
         art_history = domain.get("art_history")
         if isinstance(art_history, dict):
+            if not art_history.get("relations") and "method" not in art_history:
+                errors.append(_signal_error(
+                    source, "art-history requires sourced relations or a method",
+                    "retain relation evidence or export a sourced method concept",
+                ))
+            if "method" in art_history:
+                refs = art_history.get("source_refs")
+                evidence = {ref["locator"] for ref in data.get("evidence_refs", [])
+                            if isinstance(ref, dict) and isinstance(ref.get("locator"), str)}
+                if not isinstance(refs, list) or not refs or any(
+                    not isinstance(ref, str) or not re.fullmatch(r"https?://[^\s/]+(?:/[^\s]*)?", ref)
+                    or ref not in evidence for ref in refs
+                ):
+                    errors.append(_signal_error(
+                        source, "method requires source_refs URLs retained in evidence_refs",
+                        "export actual source URLs; a graph or entity locator is not a method source",
+                    ))
+            elif "source_refs" in art_history:
+                errors.append(_signal_error(source, "source_refs requires a method", "retain the method description"))
             source_entity_ids = source_data.get("entity_ids", []) if isinstance(source_data, dict) else []
             for index, relation in enumerate(art_history.get("relations", [])):
                 if isinstance(relation, dict) and relation.get("target_entity_id") in source_entity_ids:
