@@ -3083,3 +3083,15 @@ Review cleanup verification (Python: `/Users/masa/aa-work/venv/bin/python`):
 confirms two released leases, zero held records under execution YAML/JSON,
 active_repository null, and append-only handoff content. No completion condition
 remains unmet for this cleanup.
+
+
+## 2026-10-04 — Issue #269 local documentation handoff
+
+- README separates production runs from development tasks, with environment setup, retained offline plan outputs, pinned live workspace, one-question hearing, direct-stdin answer/skip, credential-free run/resume, output and BLOCKED guidance. Runtime guide and live purpose/cycle examples agree with that entry.
+- Documentation checks cover each shell/inline invocation, including indented fences and neighbouring commands. The offline route uses an explicitly synthetic fixture gate report, not live child qualification.
+- Fresh local clone at `da47148b08e9df5d6f4bfecb511ddc8b36b447d5` ran README steps 1/2 without added commands: networkless PLAN_READY, evidence PASSED, plan/board/mockup links displayed. All README developer bootstrap preparation commands also exit 0.
+- Parent code commits: `da47148b08e9df5d6f4bfecb511ddc8b36b447d5` and `1d65a1da2de889a44876fbe386bea540d2599c8f`. Child commit: `1232689021f1882718d80524f2691a7d49e18867`, changing only `docs/for-other-personas.md`.
+- Parent 47 related tests, 15 documentation tests and 36 final execution-metadata/validator tests pass. Full parent suite: Ran 717 tests in 2113.992s; FAILED (failures=8, errors=35, skipped=5); named failures exactly equal clean origin/main, with no new or removed failures. Child clean full suite passes all 264 tests; repository validator PASS. The initial child dirty-worktree consent failures were corrected by the authorized local commit before revalidation, without changing tests or contracts.
+- Evidence: [issue-269-verification.json](issue-269-verification.json). No real profile, hearing answer, inferred feedback, credential or Drive artifact was saved. No lease was acquired and no held lease remains. All commits remain local by explicit instruction.
+
+Next operation: `git show --stat HEAD` and review both local branches plus the evidence. The orchestrator owns push, PR creation, merge and Issue closure. No next implementation task is selected in this scoped handoff.

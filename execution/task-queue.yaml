@@ -1,5 +1,5 @@
-version: 99
-updated_at: '2026-10-04T01:09:13+09:00'
+version: 100
+updated_at: '2026-10-04T03:01:16+09:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3326,3 +3326,23 @@ tasks:
     integration_status: ORCHESTRATOR_HANDOFF_PENDING
     evidence: execution/issue-250-s4-verification.json
     completion: Local S4 implementation and verification complete; no push, PR, merge, issue closure, child change, publication or consent expansion. Lease released by explicit review instruction for orchestrator PR review and merge.
+
+  - id: ISSUE-269
+    milestone: DOCUMENTATION
+    title: Document the first production run separately from development tasks
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/269
+    target_repositories: [agentic-art-orchestration, self-model]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-250-S4]
+    acceptance: Fresh-clone offline plan completion; credential-free live commands; regression checks across README, AGENTS and docs; a short child-to-parent entry link.
+    checks: [python tools/validate.py --check, python tools/project_status.py --check-readme, python -m unittest tests.test_docs tests.test_purpose_e2e tests.test_credential_free tests.test_self_hearing -v, python -m unittest discover -s tests -v, git diff --check]
+    human_gate: The orchestrator owns push, PR, merge and issue closure; this agent performs local commits only. No lease was acquired.
+    code_status: CODE_VERIFIED
+    code_candidate: 1d65a1da2de889a44876fbe386bea540d2599c8f
+    child_candidate: 1232689021f1882718d80524f2691a7d49e18867
+    acceptance_result: '4/4'
+    verification_result: Fresh-clone README offline route and bootstrap PASS; 47 related tests and 15 docs tests PASS; child 264 tests and repository privacy validator PASS; parent full-suite failure set exactly matches clean origin/main.
+    integration_status: ORCHESTRATOR_HANDOFF_PENDING
+    evidence: execution/issue-269-verification.json
+    completion: Local documentation implementation and validation complete; existing parent full-suite failures retained. No held lease remains; remote operations await the orchestrator.

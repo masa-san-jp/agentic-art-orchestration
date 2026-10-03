@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-04T01:09:13+09:00`.
+Source updated at: `2026-10-04T03:01:16+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 195 | 195 |
+| 0 | 0 | 0 | 0 | 196 | 196 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-250-S4`.
-Next action: Review Issue-250 S4 local commit and verification evidence; orchestrator owns remote synchronization; lease released for review. Issue #250 is not closed by this scoped implementation.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-269`.
+Next action: Review Issue-269 local commits and verification evidence; orchestrator owns push, PR, merge and issue closure; no lease is held.
 Ready: none.
 Next task: `null`.
 Blocked:
