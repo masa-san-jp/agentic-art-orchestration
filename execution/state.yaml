@@ -1,30 +1,33 @@
-version: 311
-updated_at: '2026-10-03T22:12:45+09:00'
+version: 314
+updated_at: '2026-10-04T01:09:13+09:00'
 active_task: null
 active_repository: null
 lease:
   status: available
   owner: null
-  acquired_at: '2026-10-03T19:39:29+09:00'
+  acquired_at: '2026-10-04T00:15:12+09:00'
   expires_at: null
-  released_at: '2026-10-03T21:50:00+09:00'
+  released_at: '2026-10-04T01:09:13+09:00'
   release_reason: handed off to orchestrator for PR review and merge
   lane: LOCAL-IMPLEMENTATION
-  execution_id: ISSUE262LOCAL
+  execution_id: ISSUE250S4LOCAL
   scope:
     repository: agentic-art-orchestration
-    branch: agent/262-method-seeds
+    branch: agent/250-credential-free-run-entry
     paths:
-    - config/transformation-rules.yaml
-    - schemas/normalized-research-signal.schema.json
-    - tools/**
-    - tests/**
-    - docs/cross-repository-contract.md
+    - tools/credential_free.py
+    - tools/process_policy.py
+    - tests/test_credential_free.py
+    - tests/test_docs.py
+    - docs/agent-runtime-guide.md
+    - docs/operator-runbook.md
+    - docs/instance-setup.md
+    - AGENTS.md
     - README.md
+    - PLANS.md
     - execution/**
-    child_repositories:
-    - art-history
-checkpoint:
+    child_repositories: []
+issue262_checkpoint:
   task: ISSUE-262
   repository: agentic-art-orchestration
   status: DONE
@@ -36,11 +39,37 @@ checkpoint:
   checks:
     parent_validator: PASS
     parent_related_suite: 'PASS: 99 tests'
-    parent_full_suite: 'FAILED_BASELINE_MATCHED: 699 tests; 8 failures, 35 errors, 5 skips; zero new failures'
-    child_canonical_verification: 'PASS: 184 tests without skips, graph, context, source audits and generated diff'
-  acceptance: '4/4 observable issue conditions achieved; parent full-suite baseline failures remain explicit'
+    parent_full_suite: 'FAILED_BASELINE_MATCHED: 699 tests; 8 failures, 35 errors,
+      5 skips; zero new failures'
+    child_canonical_verification: 'PASS: 184 tests without skips, graph, context,
+      source audits and generated diff'
+  acceptance: 4/4 observable issue conditions achieved; parent full-suite baseline
+    failures remain explicit
   remote_sync: NOT_RUN_BY_INSTRUCTION
-  next_operation: Review both local commits and verification evidence; orchestrator owns push, PR, merge, issue closure and qualified owner-pin adoption.
+  next_operation: Review both local commits and verification evidence; orchestrator
+    owns push, PR, merge, issue closure and qualified owner-pin adoption.
+checkpoint:
+  task: ISSUE-250-S4
+  repository: agentic-art-orchestration
+  status: DONE
+  start_point: 5737d65492ef3b13a273be4424578596a76f2078
+  expected_changes: Credential-free command/session launcher, conservative absence
+    observation and production entry documentation.
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  code_status: CODE_VERIFIED
+  evidence: execution/issue-250-s4-verification.json
+  checks:
+    parent_validator: PASS
+    related_bootstrapped: 'PASS: 75 tests'
+    focused: 'PASS: 39 tests'
+    parent_full_suite: 'FAILED_BASELINE_MATCHED: 715 tests; 8 failures, 35 errors,
+      5 skips; zero new or removed failures'
+    offline_cli: 'PASS: exit 0; AT_EDGE; run.json and preflight git_write_credentials
+      absent'
+    diff: PASS
+  acceptance: 4/4 scoped S4 conditions achieved
+  next_operation: Review the local branch HEAD and verification evidence; orchestrator
+    owns push, PR, merge and issue closure; lease released for review.
 completed_checkpoint_oi13:
   task: OI-13
   repository: self-model
@@ -91,12 +120,14 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: ISSUE-262
+last_completed_task: ISSUE-250-S4
 resume_from:
   task: null
-  repository: null
-  action: 'Issue-262 handed off to orchestrator for PR review and merge; merge commit is to be read from main history. Production #10 remains open.'
-  command: '.venv/bin/python tools/project_status.py --format json'
+  repository: agentic-art-orchestration
+  action: 'Review Issue-250 S4 local commit and verification evidence; orchestrator
+    owns remote synchronization; lease released for review. Issue #250 is not closed by this
+    scoped implementation.'
+  command: git show --stat HEAD
 
 oi07_progress:
   task: OI-07
@@ -232,10 +263,12 @@ takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection
   previous_lease:
-    status: held
-    owner: codex-aak-repair
+    status: available
+    owner: null
     acquired_at: '2026-09-05T04:27:59+00:00'
     expires_at: null
+    released_at: '2026-10-04T01:09:13+09:00'
+    release_reason: handed off to orchestrator for PR review and merge
     lane: AAK_IMPLEMENTATION
     execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260905
     scope:

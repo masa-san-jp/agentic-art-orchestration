@@ -17,7 +17,7 @@ from typing import Mapping
 from tools.pinned_workspace import NO_INHERITED_AUTH
 
 
-AUTH_ENV_NAMES = ("GH_TOKEN", "GITHUB_TOKEN")
+AUTH_ENV_NAMES = ("GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN")
 WRITE_SCOPE = re.compile(
     r"(?<![A-Za-z0-9_])(?:repo|public_repo|workflow|write(?::[^\s'\",]+)?|admin(?::[^\s'\",]+)?|push)(?![A-Za-z0-9_])",
     re.IGNORECASE,
@@ -69,6 +69,25 @@ def _run_observation(command: list[str], *, cwd: Path | None = None) -> subproce
     )
 
 
+def _empty_gh_configuration(*, cwd: Path | None = None) -> bool:
+    """An explicit empty gh config has no account for gh/keychain to resolve.
+
+    Do not infer absence from failed auth status alone. The credential-free
+    entry creates a fresh directory; existing, unreadable and symlink configs
+    continue through the ordinary conservative scope observation.
+    """
+    directory = os.environ.get("GH_CONFIG_DIR")
+    if not directory:
+        return False
+    try:
+        path = Path(directory)
+        if not path.is_absolute() and cwd is not None:
+            path = cwd / path
+        return not path.is_symlink() and path.is_dir() and not any(path.iterdir())
+    except (OSError, ValueError):
+        return False
+
+
 def observe_git_write_credentials(*, cwd: Path | None = None) -> str:
     """Classify ambient write-capable credentials without returning their value."""
 
@@ -77,21 +96,30 @@ def observe_git_write_credentials(*, cwd: Path | None = None) -> str:
 
     observation_failed = False
     scope_output = ""
-    try:
-        gh = _run_observation(["gh", "auth", "status", "--hostname", "github.com"], cwd=cwd)
-        scope_output = f"{gh.stdout}\n{gh.stderr}"
-        if WRITE_SCOPE.search(scope_output):
-            return "present"
-        gh_has_scope_metadata = bool(SCOPE_MARKER.search(scope_output))
-        if gh.returncode != 0 and not gh_has_scope_metadata:
+    if not _empty_gh_configuration(cwd=cwd):
+        try:
+            gh = _run_observation(["gh", "auth", "status", "--hostname", "github.com"], cwd=cwd)
+            scope_output = f"{gh.stdout}\n{gh.stderr}"
+            if WRITE_SCOPE.search(scope_output):
+                return "present"
+            gh_has_scope_metadata = bool(SCOPE_MARKER.search(scope_output))
+            if gh.returncode != 0 and not gh_has_scope_metadata:
+                observation_failed = True
+        except (OSError, subprocess.SubprocessError):
             observation_failed = True
-    except (OSError, subprocess.SubprocessError):
-        observation_failed = True
 
     helper_output = ""
     try:
         helper = _run_observation(["git", "config", "--get-all", "credential.helper"], cwd=cwd)
-        helper_output = helper.stdout.strip()
+        # Git's multivalued helper list is reset by an empty entry. In
+        # particular, osxkeychain followed by credential.helper= is disabled.
+        effective_helpers: list[str] = []
+        for value in helper.stdout.splitlines():
+            if value == "":
+                effective_helpers.clear()
+            else:
+                effective_helpers.append(value)
+        helper_output = "\n".join(effective_helpers)
         if helper.returncode not in (0, 1):
             observation_failed = True
     except (OSError, subprocess.SubprocessError):

@@ -8,6 +8,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_production_entry_requires_no_public_token_and_keeps_private_fallback(self):
+        for name in ("AGENTS.md", "docs/agent-runtime-guide.md", "docs/operator-runbook.md", "docs/instance-setup.md"):
+            with self.subTest(document=name):
+                text = (ROOT / name).read_text(encoding="utf-8")
+                for requirement in ("tools/credential_free.py", "--state-root", "PUBLIC", "private", "GH_CONFIG_DIR"):
+                    self.assertIn(requirement, text)
+        runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
+        standard, private = runbook.split("#### privateに戻した場合の代替：read-only token", 1)
+        self.assertNotIn("gh auth login", standard)
+        self.assertIn("gh auth login", private)
+        self.assertIn("gh-readonly", private)
+        self.assertIn("GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN", private)
+
     def test_fresh_clone_bootstrap_is_canonical_and_venv_based(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")

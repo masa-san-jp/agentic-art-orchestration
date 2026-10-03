@@ -10,11 +10,23 @@
 このCLIはremoteへpush・Issue作成・PR作成を行いません。
 `resume` は保存済みsetupの本人・帰属・同意・保存先を照合します。
 
-制作runを実行するagent sessionは、書き込み資格情報を持たない運用環境で起動します。
-専用の外部state root配下に`GH_CONFIG_DIR=<external-state-root>/gh-readonly`を作り、
-Contents: Read-only、Issues/PR: noneのfine-grained tokenで`gh auth login`します。
-`GH_TOKEN`と`GITHUB_TOKEN`はunsetにし、PR作成・mergeを行う開発sessionとは分離します。
-run起動時の資格情報状態は`git_write_credentials`の3値だけで観測し、token、scope本文、会話、
+制作run（ヒアリングを含む）を実行するagent sessionは、資格情報なしの入口で起動します。
+PUBLIC 子repoにはGitHub token発行・loginなどのownerの手作業は不要です。
+
+```bash
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- <command...>
+```
+
+`<command...>`へagentの起動コマンド、`tools/self_hearing.py`、`tools/run.py`、保存済みresume commandを渡します。
+入口はstate root配下に呼び出しごとの空の`GH_CONFIG_DIR`（700）、Git global config、HOME/XDG設定を作り、
+GitHub/Enterprise token、helper、extraheader、askpass、SSH鍵/agent、`~/.netrc`の継承を防ぎます。
+既存login・設定は変更せず、標準入出力と終了コードを渡し、実行後に一時領域を片付けます。
+profile・workspace・必要なagent設定は明示した絶対pathを使います。Project-owned v2の初回起動は、
+入口用に別の外部一時rootを使い、Project配下の作成は既存resolverの検証後に行います。
+PR作成・mergeを行う開発sessionとは分離します。
+子repoをprivateへ戻した場合だけ、専用`GH_CONFIG_DIR=<external-state-root>/gh-readonly`と
+Contents: Read-only、Issues/PR: noneのtokenを使う[代替手順](operator-runbook.md#privateに戻した場合の代替read-only-token)へ進みます。
+run起動時の資格情報状態は従来の`git_write_credentials`の3値だけで観測し、token、scope本文、会話、
 self-model packet/回答はGit・state・logへ保存しません。`present`でもrunは止めず、次回起動前にsetupを直します。
 
 外部local configは `schemas/instance-local-config.schema.json` に適合させます。

@@ -14,17 +14,38 @@ state、handoff、ExecPlanを更新し、次のREADYタスクへ進んでくだ�
 該当する場合だけBLOCKEDにし、観測事実、選択肢、推奨、影響、解除条件を残してください。
 ~~~
 
+## 資格情報なしの制作session（Issue #250 S4）
+
+PUBLIC の子repoを読む制作runには、GitHub tokenの発行やloginは不要である。
+ヒアリング、制作run、返されたagent action・resume commandは、次の入口から実行する。
+agent session自体も、同じ入口の `--` 後にagentの起動コマンドを渡して起動できる。
+
+~~~bash
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- <command...>
+~~~
+
+入口はstate root配下に呼び出しごとに空の`GH_CONFIG_DIR`（700）、空の`GIT_CONFIG_GLOBAL`、
+空の`HOME`/`XDG_CONFIG_HOME`を作る。GitHub/Enterprise token、継承Git config、askpass、SSH agentを
+除き、system config・credential helper・extraheader・SSH鍵/対話認証を無効にする。
+`~/.netrc`も継承せず、既存のlogin・keychain・Git設定は変更しない。profile、workspace、必要な
+agent設定は明示した絶対pathを使う。標準入出力と終了コードはそのまま渡し、一時設定は実行後に片付ける。
+Project-owned v2のrun stateを初めて作る場合、入口のstate rootには別の外部一時rootを使い、
+Project配下の作成は既存resolverの検証後に行う。
+
+子repoをprivateへ戻した場合だけ、[operator runbook §2](operator-runbook.md#privateに戻した場合の代替read-only-token)の
+専用`GH_CONFIG_DIR`とread-only tokenを使う。開発・PR作成・mergeは別sessionで行う。
+
 ## Fresh cloneから全repository workspaceを準備する
 
 会話履歴がなく、child workspaceがまだ無い場合は、repo名を質問したり個別cloneしたりせず、
-manifest駆動の`bootstrap`を一回実行する。実repoではcredential本文を扱わず、GitHubの既存
-credential helperだけを使う。認証確認の出力をstate、Issue、Gitへ貼り付けない。
+manifest駆動の`bootstrap`を一回実行する。PUBLIC の実repoは資格情報なしで読み、
+credential本文や認証確認の出力をstate、Issue、Gitへ貼り付けない。
 
 ~~~bash
-gh auth status --hostname github.com
-gh auth setup-git
+EXTERNAL_STATE_ROOT="/absolute/path/outside/credential-free-state"
 WORKSPACE_ROOT="/absolute/path/outside/agentic-art-orchestration"
-.venv/bin/python tools/workspace.py bootstrap \
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/workspace.py bootstrap \
   --workspace-root "$WORKSPACE_ROOT" --json
 ~~~
 
@@ -77,7 +98,8 @@ test "$BOOTSTRAP_EXIT" -eq 2
 子CLIが旧pin・非零終了・timeout・不在でもwrapperはexit 0で`HEARING_UNAVAILABLE`を記録する。
 
 ~~~bash
-.venv/bin/python tools/self_hearing.py open \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/self_hearing.py open \
   --run-id <run-id> --state-root <external-state-root> \
   --workspace-root <verified-child-workspace> \
   --profile-root <external-self-model-profile>
@@ -89,7 +111,8 @@ test "$BOOTSTRAP_EXIT" -eq 2
 packetの`task_id`を使って次へ標準入力をそのまま渡す。
 
 ~~~bash
-cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/self_hearing.py answer <task-id> \
+cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/credential_free.py \
+  --state-root <external-state-root> -- .venv/bin/python tools/self_hearing.py answer <task-id> \
   --run-id <run-id> --state-root <external-state-root> \
   --workspace-root <verified-child-workspace> \
   --profile-root <external-self-model-profile> \
@@ -97,31 +120,33 @@ cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/self_hearing.py answer <task-id
 type: event
 value: <annotated response block>
 ANNOTATED_BLOCK
+~~~
 
 回答を一時ファイルに書かず、標準入力から直接渡す。
-~~~
 
 断られた、「面倒」等の反応、無応答は次で記録する。どの結果でも、必ず同じrunの`tools/run.py`を実行し、
 ヒアリング結果でrunを止めない。回答文はIssue、PR、commit、handoff、Drive、state、logへ書かない。
 
 ~~~bash
-.venv/bin/python tools/self_hearing.py skip <task-id> --reason skipped \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/self_hearing.py skip <task-id> --reason skipped \
   --run-id <run-id> --state-root <external-state-root> \
   --workspace-root <verified-child-workspace> \
   --profile-root <external-self-model-profile>
 ~~~
 
 制作runを行うsessionは、`config/issue-delivery-policy.yaml`のallowlisted repositoryへ書き込める資格情報を
-持たない専用環境で起動する。`GH_TOKEN`/`GITHUB_TOKEN`を設定せず、専用`GH_CONFIG_DIR`のread-only tokenを
-使う。run.jsonには`git_write_credentials: absent|present|unknown`だけが記録され、`present`でもrunは止まらない。
-開発・PR作成・mergeは別sessionで行う。
+持たないよう、`tools/credential_free.py`で起動する。PUBLIC の子repoにはtokenもloginも不要である。
+run.jsonには従来どおり`git_write_credentials: absent|present|unknown`だけを記録し、`present`でもrunは止めない。
+保存済みresume commandも同じ入口の`--`後へ渡す。
 
 ## テーマ未指定の制作計画
 
 利用者はテーマ、作品slug、作品titleを指定しなくてよい。制作計画を作るよう依頼されたエージェントは、`--intent`、`--slug`、`--title`を付けずに次を実行する。
 
 ~~~bash
-.venv/bin/python tools/run.py \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/run.py \
   --workspace-root <verified-child-workspace> \
   --profile-root <external-self-model-profile> \
   --state-root <external-state-root>
@@ -147,7 +172,8 @@ Productionまで進んだ後の再開では、`<state-root>/production/productio
 実repoを読めない環境では、合成signalだけを使うnetworkless確認として次を明示実行できる。
 
 ~~~bash
-.venv/bin/python tools/run.py \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/run.py \
   --offline-fixture \
   --state-root <external-state-root>
 ~~~
@@ -160,7 +186,7 @@ Productionまで進んだ後の再開では、`<state-root>/production/productio
 したがって、別エージェントへ渡す最小指示は次の一文で足りる。
 
 ~~~text
-このrepoのAGENTS.mdとREADME.mdに従い、テーマ・slug・titleを質問せず、pin済みworkspaceで`tools/run.py`を実行してPLAN_READYまで自律的に進める。
+このrepoのAGENTS.mdとREADME.mdに従い、テーマ・slug・titleを質問せず、pin済みworkspaceで`tools/credential_free.py`から`tools/run.py`を実行してPLAN_READYまで自律的に進める。
 ~~~
 
 startupが`BLOCKED`またはpin済みworkspaceを読めない場合は、テーマやPLAN_READYを捏造せず、`<state-root>/<run-id>/run.json`へ未完了状態・観測済み解除条件・保存済みの`resume_command`を記録して返す。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`はすべて`completion_status: INCOMPLETE`であり、手動制作案へ自動fallbackしてはならない。外部CREATE、merge、releaseなどのhuman gateは別途必要である。
@@ -181,7 +207,8 @@ DESTINATIONS_FILE="$DESTINATIONS_DIR/profile.yaml"
 cp config/output-destinations.example.yaml "$DESTINATIONS_FILE"
 $EDITOR "$DESTINATIONS_FILE"
 .venv/bin/python tools/validate.py --check
-.venv/bin/python tools/run.py --offline-fixture --run-id DEST-AGENT-001 \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/run.py --offline-fixture --run-id DEST-AGENT-001 \
   --destinations-file "$DESTINATIONS_FILE"
 ~~~
 
@@ -365,7 +392,8 @@ kind別score、total scoreだけを残す。CLIの実行結果とselectionのdig
 確認し、空白だけのintentは入力エラーとして扱う。intent付き実行の再現確認は次の形で行う。
 
 ~~~bash
-python3 tools/run.py --bundle <normalized-bundle.json> --project-id <project-id> \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/run.py --bundle <normalized-bundle.json> --project-id <project-id> \
   --seed-input <seed> --intent <intent-text> --output <run.json> --check
 ~~~
 
@@ -417,7 +445,7 @@ batch driverが作成するJSONLは`batch-report-event/v1`のmetadata-only close
 
 ## Requested delivery completion (Issue 217)
 
-For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+In a session launched through `tools/credential_free.py`, for a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
 
 Continue the returned agent actions through Production plan generation, the closed automatic plan attestation, canonical projection, native Project lineage initialization and local receiver validation. The automatic plan lane performs Production's renderer, content, asset and provenance checks and records `publication_review.authority: AUTOMATIC_PLAN`; it never waits for human approval and never authorizes an external effect. Work/manual requests use the separate native review lane. If an automatic check fails, the agent receives the exact repair finding and resumes the same run. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait applies only to a separately requested work/manual publication and does not consume the no-progress retry budget.
 
@@ -442,7 +470,8 @@ observed blocker and resume command. Do not close the Issue or promote AP-07.
 clone/fork利用者は、明示した`agentic-art-project` checkoutを次のように指定できます。
 
 ```bash
-.venv/bin/python tools/run.py --project-root /path/to/agentic-art-project \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/run.py --project-root /path/to/agentic-art-project \
   --workspace-root /path/to/pinned-workspace --profile-root /path/to/profile
 ```
 

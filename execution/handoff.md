@@ -1,3 +1,41 @@
+# Issue #250 S4 — local credential-free entry
+
+Assigned repository: agentic-art-orchestration; branch: `agent/250-credential-free-run-entry`.
+Start point: `5737d65492ef3b13a273be4424578596a76f2078` (origin/main).
+The orchestrator owns push, PR, merge and issue closure. The lease is held for
+local implementation and remains held until orchestrator synchronization.
+
+The new entry isolates empty gh/Git/HOME configuration, removes token/askpass/SSH
+sources, streams command I/O and preserves exit status. Empty gh configuration
+and an effective empty helper list are observed as absent; failed or ambiguous
+observations remain unknown. PUBLIC reads need no token; private read-only login
+remains a separate documented alternative. No child schema, pin, profile or
+production output contract is changed.
+
+Verification evidence: `execution/issue-250-s4-verification.json`.
+Pre-edit origin/main: 699 tests, 8 failures, 35 errors, 5 skips, exit 1.
+Changed full suite: 715 tests, 8 failures, 35 errors, 5 skips, exit 1; the 43
+(kind, test ID) failure records are identical, with zero added or removed failure.
+Focused suite: 39 tests PASS. Related suite with the documented offline snapshot:
+75 tests PASS; before bootstrap its one failure was the same baseline snapshot
+missing case. Validator, compile, README status and diff checks PASS.
+
+The actual credential-free `run.py --offline-fixture --run-id cf-check --state-root
+<temporary-state> --check` exits 0 at AT_EDGE; run.json and preflight both record
+`git_write_credentials: absent`. This is an offline stage check, not PLAN_READY
+or completed delivery. Native fixture init and snapshot generation exit 0.
+Only the two smoke-generated snapshot files were removed afterward, restoring
+the pre-test absence. Their hashes and the run.json hash are in the evidence.
+PUBLIC `git ls-remote` succeeds without login/token. No credential value, real
+hearing packet/answer, child data/schema/pin or external artifact was recorded.
+Explicit input is the assigned S4 requirement; inferred feedback is none.
+
+Acceptance: 4/4 scoped S4 conditions. Remote synchronization, PR, merge and issue
+closure remain NOT_RUN_BY_INSTRUCTION, and the implementation lease stays held.
+Next operation: `git show --stat HEAD`, then review the local commit/evidence and
+perform orchestrator-owned synchronization before releasing the lease. Do not
+close all of Issue #250 solely from this S4 implementation.
+
 # Issue #262 — local implementation and verification
 
 The assigned scope is Orchestration branch `agent/262-method-seeds` and Art History
@@ -3022,3 +3060,26 @@ validator. The parent full suite ran 699 tests with the same 8 failures, 35 erro
 and 5 skips as the saved clean origin/main baseline; there are no new failures.
 The updated owner export also preserves the 1→2 lineage comparison and method
 source references through Research. Both repositories retain local commits only.
+
+
+## 2026-10-04 — Issue #250 S4 review handoff correction
+
+The review approves the implementation commit `e378b460261087304dc68991749c4933e0e62e7a`
+and explicitly authorizes lease release before PR review and merge. At `2026-10-04T01:09:13+09:00`,
+both `lease` and `takeover.previous_lease` in `execution/state.yaml` were made
+available with owner null and release reason `handed off to orchestrator for PR review and merge`.
+Active task/repository remain null. This entry supersedes earlier lease-holding
+instructions without changing the existing handoff text. The queue now records
+the released lease; README project status is regenerated from execution SSOT.
+
+Next action: `git show --stat HEAD` for orchestrator review. Push, PR creation,
+merge and issue closure remain the orchestrator's responsibility; this agent
+performs local commits only. No code, child repository, credentials, private
+payload or external artifact has been changed by this correction.
+
+Review cleanup verification (Python: `/Users/masa/aa-work/venv/bin/python`):
+`tools/project_status.py --update-readme`, `tools/project_status.py --check-readme`,
+`tools/validate.py --check` and `git diff --check` all exit 0. Structural inspection
+confirms two released leases, zero held records under execution YAML/JSON,
+active_repository null, and append-only handoff content. No completion condition
+remains unmet for this cleanup.

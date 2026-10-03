@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-03T22:12:45+09:00`.
+Source updated at: `2026-10-04T01:09:13+09:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 194 | 194 |
+| 0 | 0 | 0 | 0 | 195 | 195 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-262`.
-Next action: Issue-262 handed off to orchestrator for PR review and merge; merge commit is to be read from main history. Production #10 remains open.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-250-S4`.
+Next action: Review Issue-250 S4 local commit and verification evidence; orchestrator owns remote synchronization; lease released for review. Issue #250 is not closed by this scoped implementation.
 Ready: none.
 Next task: `null`.
 Blocked:
@@ -135,7 +135,7 @@ python3 -m venv .venv
 
 1. [`AGENTS.md`](AGENTS.md)と入口のrunbookを読む。
 2. `execution/task-queue.yaml`から依存関係を満たすtaskを選ぶ。
-3. `tools/run.py`またはtaskが指定する入口を実行する。
+3. 制作runは`tools/credential_free.py --state-root <external-state-root> -- <command...>`から`tools/self_hearing.py`と`tools/run.py`を実行する。PUBLIC 子repoの読取にtoken発行・loginは不要。開発taskは指定する入口に従う。
 4. 検証、handoff、stateを更新し、再開可能な状態を残す。
 
 テーマ未指定で制作計画を始める場合も、`--intent`、`--slug`、`--title`を付けずにこの入口を実行します。入力済みのknowledge signalからテーマを自動提案し、必要な検査に失敗した場合はBLOCKEDで停止します。
@@ -174,7 +174,8 @@ Issue #217の受入条件、CLI、失敗分類、再開方法は、一般読者�
 clone/fork利用者は、自分の`agentic-art-project` checkoutを明示して、内部state・中間出力・公開投影先を一つの所有境界へまとめられます。
 
 ```bash
-.venv/bin/python tools/run.py --project-root /absolute/path/to/agentic-art-project \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/run.py --project-root /absolute/path/to/agentic-art-project \
   --workspace-root /absolute/path/to/pinned-workspace --profile-root /absolute/path/to/profile
 ```
 

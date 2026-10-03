@@ -1,0 +1,304 @@
+{
+  "issue": "masa-san-jp/agentic-art-orchestration#250",
+  "scope": "S4 credential-free production entry",
+  "repository": "agentic-art-orchestration",
+  "branch": "agent/250-credential-free-run-entry",
+  "start_point": "5737d65492ef3b13a273be4424578596a76f2078",
+  "baseline": {
+    "source_commit": "5737d65492ef3b13a273be4424578596a76f2078",
+    "summary": [
+      "Ran 699 tests in 2326.789s",
+      "FAILED (failures=8, errors=35, skipped=5)"
+    ],
+    "failures": [
+      {
+        "kind": "ERROR",
+        "test": "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+      },
+      {
+        "kind": "ERROR",
+        "test": "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+      },
+      {
+        "kind": "FAIL",
+        "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+      }
+    ],
+    "log_sha256": "80ef4b077cfc0229471089018cce8185409dcfea233cf81b3ecb2386e1b7ccf2",
+    "exit_code": 1
+  },
+  "changed_full_suite": {
+    "summary": [
+      "Ran 715 tests in 1632.906s",
+      "FAILED (failures=8, errors=35, skipped=5)"
+    ],
+    "same_failure_set": true,
+    "new_failures": [],
+    "removed_failures": [],
+    "log_sha256": "fd2c5f2939eb0baa13e10239b7f5509a2571d90e284a5af50e1a43489da6fbb5",
+    "exit_code": 1,
+    "failure_count": 43,
+    "failure_set_sha256": "9d53fcdf1fbb1feb0774ff2bc933851c54f2d463b1b1b93ad4caeeefd24290e5"
+  },
+  "failure_set_sha256": "9d53fcdf1fbb1feb0774ff2bc933851c54f2d463b1b1b93ad4caeeefd24290e5",
+  "checks": {
+    "focused": {
+      "exit_code": 0,
+      "summary": [
+        "Ran 39 tests in 14.658s",
+        "OK"
+      ],
+      "log_sha256": "bb4d6b9e5d41b69bc5182b789d6b5d5210c3295b077f7e7ea505cf342fe8b23f"
+    },
+    "related_unbootstrapped": {
+      "exit_code": 1,
+      "summary": [
+        "Ran 75 tests in 29.949s",
+        "FAILED (failures=1)"
+      ],
+      "log_sha256": "2138e297dfa4564102d65289a524c768fad562c596546eb91fabaa036589a1ab"
+    },
+    "docs": {
+      "exit_code": 0,
+      "summary": [
+        "Ran 13 tests in 0.016s",
+        "OK"
+      ],
+      "log_sha256": "da36b840157a9ca20d2380564e3f31102075eea1f37c128e65632e7bf13c3feb"
+    },
+    "related_bootstrapped": {
+      "exit_code": 0,
+      "summary": [
+        "Ran 75 tests in 20.096s",
+        "OK"
+      ],
+      "log_sha256": "ee95e4ee38e18123ab2128eda31ecec7c03aac7cc4482342b50e2d733148fdf5",
+      "environment": "documented synthetic offline snapshot present"
+    },
+    "validator": {
+      "command": "python tools/validate.py --check",
+      "exit_code": 0
+    },
+    "compile": {
+      "command": "python -m py_compile tools/credential_free.py tools/process_policy.py tests/test_credential_free.py tests/test_docs.py",
+      "exit_code": 0
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "project_status": {
+      "command": "python tools/project_status.py --check-readme",
+      "exit_code": 0
+    }
+  },
+  "offline_smoke": {
+    "fixture_init_exit_code": 0,
+    "snapshot_exit_code": 0,
+    "offline-run_exit_code": 0,
+    "run_status": "AT_EDGE",
+    "git_write_credentials": "absent",
+    "run_json_sha256": "b14efc3467ba2cd9d59feb65de21eeabf3ec2d54580daec56466bfd1af4f8e79",
+    "workspace_preflight_credentials": "absent"
+  },
+  "offline_smoke_locator": "opaque://issue-250-s4/offline/cf-check",
+  "public_read": {
+    "command": "git ls-remote https://github.com/masa-san-jp/self-model-notes",
+    "status": "PASSED",
+    "exit_code": 0,
+    "source": "real credential-free integration test; no token/login"
+  },
+  "decisions": [
+    "Fresh temporary gh/Git configuration per invocation prevents reuse of stored login and concurrent contamination.",
+    "Empty HOME/XDG also excludes netrc; profile/workspace/agent settings use explicit paths.",
+    "Only verified empty gh configuration bypasses failed/missing gh observation; active helpers and Git observation failure remain unknown.",
+    "Baseline comparison precedes smoke bootstrap so missing generated artifacts are not repaired into a false pass.",
+    "Initial Project v2 uses an external launcher root; native destination validation still precedes private Project creation."
+  ],
+  "privacy": {
+    "credential_values_recorded": false,
+    "real_hearing_packet_or_answer_recorded": false,
+    "child_repository_or_pin_changed": false,
+    "external_artifact": "NOT_CREATED",
+    "feedback": "explicit assigned requirement; no inferred feedback"
+  },
+  "remote_sync": "NOT_RUN_BY_INSTRUCTION",
+  "orchestrator_actions": [
+    "review",
+    "push",
+    "PR",
+    "merge",
+    "issue closure"
+  ],
+  "acceptance": "4/4 scoped S4 conditions achieved",
+  "snapshot_cleanup": {
+    "data/snapshot.json": "72e1fe5488b2798253d15d5eff5c18c6792e9d2acfdc077908489493bce0f6a4",
+    "data/snapshot.md": "7fb98bfaab451aba3db83b64950b2557f6cc0df418a7ec91a337e13d5eb8020c",
+    "status": "Removed only the two smoke-generated files; pre-test absence restored."
+  },
+  "updated_at": "2026-10-04T00:48:04+09:00",
+  "unresolved": [
+    "Unbootstrapped full suite retains the same 43 origin/main failures; no new failure.",
+    "Remote synchronization/review/merge/issue closure belong to the orchestrator."
+  ]
+}
