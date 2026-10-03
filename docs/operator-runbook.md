@@ -103,7 +103,7 @@ EXTERNAL_STATE_ROOT="/absolute/external/state"
 profile・workspace・必要なagent設定は明示した絶対pathを使う。Project-owned v2の初回起動では、
 入口用には別の外部一時state rootを使い、Projectのprivate rootはresolverが検証後に作る。
 
-`tools/run.py`と`tools/self_hearing.py open`は従来どおり`git_write_credentials: absent|present|unknown`を
+`tools/run.py`と`tools/self_hearing.py`のopen操作は従来どおり`git_write_credentials: absent|present|unknown`を
 metadata-onlyでrun.jsonへ記録する。空のgh設定と無効なhelperを確認できる標準入口では`absent`になる。
 観測失敗を成功へ変換せず、`present`でもヒアリングやrunをBLOCKEDにはしない。
 開発・PR作成・mergeは別sessionで行う。親がspawnするingest・hearing・child toolも4種のGitHub tokenを継承しない。

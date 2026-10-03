@@ -20,6 +20,8 @@ python3 tools/child_quality_gates.py \
 
 The report must have `PASSED` for every repository. A `NOT_RUN`, `ENV_UNSATISFIED`, `FAILED`, dirty, stale, or mismatched result is retained as a blocker and cannot be converted to a pass.
 
+The `--offline-fixture` lane is synthetic and may run without `credential_free.py`. For the no-real-data first run, use the explicitly labelled fixture gate report in [README](../README.md#利用者向けの最短ルート); it is never live child-gate evidence.
+
 Run the deterministic fixture three times with separate Git-external state roots. Reusing a validated gate report is explicit:
 
 ```bash
@@ -43,10 +45,13 @@ Each successful production output now includes the child-owned visual package be
 
 ## Live-private qualification
 
+All live production commands, agent actions and saved resume commands must pass through `tools/credential_free.py`; PUBLIC children need no token or login. The legacy `--live-private` name describes data access, not repository visibility.
+
 Use a clean workspace whose six repository heads exactly match `config/repositories.yaml`. The workspace and per-child Python environments are supplied by the operator; no checkout is repaired by this tool:
 
 ```bash
-python3 tools/purpose_e2e.py --live-private \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/purpose_e2e.py --live-private \
   --attempt-id live-1 \
   --workspace-root <verified-child-workspace> \
   --child-python <production-child-python> \
