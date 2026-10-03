@@ -47,6 +47,8 @@ SELECTION_V2_SCHEMA_PATH = ROOT / "schemas/research-selection-v2.schema.json"
 SELF_DIVERSITY_SCHEMA_PATH = ROOT / "schemas/self-diversity-report.schema.json"
 CHILD_QUALITY_GATES_SCHEMA_PATH = ROOT / "schemas/child-quality-gates.schema.json"
 PIN_ADOPTION_SCHEMA_PATH = ROOT / "schemas/pin-adoption-report.schema.json"
+PIN_ADOPTION_SCOPE_PATH = ROOT / "config/pin-adoption-scope.yaml"
+PIN_ADOPTION_SCOPE_SCHEMA_PATH = ROOT / "schemas/pin-adoption-scope.schema.json"
 RESEARCH_PROVENANCE_SCHEMA_PATH = ROOT / "schemas/research-provenance.schema.json"
 V12_E2E_SCHEMA_PATH = ROOT / "schemas/v12-e2e.schema.json"
 PROJECT_STATUS_SCHEMA_PATH = ROOT / "schemas/project-status.schema.json"
@@ -189,6 +191,8 @@ REQUIRED_FILES = [
     "tools/child_quality_gates.py",
     "tools/pinned_workspace.py",
     "schemas/pin-adoption-report.schema.json",
+    "config/pin-adoption-scope.yaml",
+    "schemas/pin-adoption-scope.schema.json",
     "tools/pin_adopt.py",
     "schemas/research-provenance.schema.json",
     "tools/proposition_provenance.py",
@@ -2314,6 +2318,15 @@ def validate_self_diversity_report(data: dict, source: str = "self-diversity") -
     return errors
 
 
+# Historical evidence under these prefixes must never be in written_files,
+# and must never be named as rewritable in config/pin-adoption-scope.yaml.
+# docs/ is listed too, not only execution/: the Issue 261 incident that
+# prompted this file found a historical record (docs/aak-02-execution.md)
+# outside execution/, which is exactly why the rewrite scope is an allowlist
+# rather than a denylist keyed on one directory name.
+PIN_ADOPTION_HISTORICAL_PREFIXES = ("execution/", "docs/")
+
+
 def validate_pin_adoption(data: dict, source: str = "pin-adoption") -> list[str]:
     """Validate an adoption report. A partly-adopted manifest describes a workspace that never existed."""
     errors: list[str] = []
@@ -2335,6 +2348,55 @@ def validate_pin_adoption(data: dict, source: str = "pin-adoption") -> list[str]
             if not item.get("occurrences"):
                 errors.append(_signal_error(source, f"{item.get('repository')} is adoptable with no occurrences recorded",
                                             "record every file that repeats the pin"))
+    written = data.get("written_files")
+    if isinstance(written, list):
+        for relative in written:
+            if isinstance(relative, str) and relative.startswith(PIN_ADOPTION_HISTORICAL_PREFIXES):
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"written_files rewrote historical record {relative!r}",
+                        "never rewrite execution/ or docs/ evidence; keep it in preserved_occurrences",
+                    )
+                )
+        preserved = data.get("preserved_occurrences")
+        if isinstance(preserved, list) and set(written) & set(x for x in preserved if isinstance(x, str)):
+            errors.append(
+                _signal_error(
+                    source,
+                    "written_files and preserved_occurrences overlap",
+                    "report each occurrence as written or preserved, never both",
+                )
+            )
+    return errors
+
+
+def validate_pin_adoption_scope(
+    data: dict | None = None,
+    schema: dict | None = None,
+    source: str = "config/pin-adoption-scope.yaml",
+) -> list[str]:
+    """Validate the rewrite-scope allowlist that tools/pin_adopt.py --apply obeys."""
+    data = data if data is not None else load_yaml(PIN_ADOPTION_SCOPE_PATH)
+    schema = schema if schema is not None else load_json(PIN_ADOPTION_SCOPE_SCHEMA_PATH)
+    errors: list[str] = []
+    errors.extend(
+        _signal_error(source, schema_error, "correct the pin-adoption-scope field")
+        for schema_error in _schema_errors(data, schema)
+    )
+    if not isinstance(data, dict):
+        return errors
+    paths = data.get("rewritable_paths")
+    if isinstance(paths, list):
+        for path in paths:
+            if isinstance(path, str) and path.startswith(PIN_ADOPTION_HISTORICAL_PREFIXES):
+                errors.append(
+                    _signal_error(
+                        source,
+                        f"rewritable_paths names historical location {path!r}",
+                        "keep execution/ and docs/ out of the rewrite allowlist",
+                    )
+                )
     return errors
 
 
@@ -4402,6 +4464,7 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
         )
         state = load_yaml(ROOT / "execution/state.yaml")
         errors.extend(validate_execution_state(state, _source_label(ROOT / "execution/state.yaml")))
+        errors.extend(validate_pin_adoption_scope())
         errors.extend(validate_knowledge_cycle_contracts())
         errors.extend(validate_repository_relationships_contract())
         errors.extend(validate_catalog_path_aliases())

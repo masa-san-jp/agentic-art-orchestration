@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/masa-san-jp/agentic-art-orchestration/schemas/pin-adoption-scope.schema.json",
+  "title": "Pin adoption rewrite scope v1",
+  "description": "The allowlist of path globs that `tools/pin_adopt.py --apply` is permitted to rewrite. Everything else that repeats the pin is historical observation and is reported as preserved_occurrences instead.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "rewritable_paths"],
+  "properties": {
+    "contract_version": {"const": "pin-adoption-scope/v1"},
+    "rewritable_paths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

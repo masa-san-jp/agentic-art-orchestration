@@ -39,15 +39,6 @@ class RealChainCITests(unittest.TestCase):
             },
             checkout_repositories,
         )
-        credential_index = next(
-            index
-            for index, step in enumerate(real_chain["steps"])
-            if step.get("name") == "Verify read-only private child repository credential"
-        )
-        first_checkout_index = next(
-            index for index, step in enumerate(real_chain["steps"]) if step.get("uses") == "actions/checkout@v4"
-        )
-        self.assertLess(credential_index, first_checkout_index)
         expected_refs = {
             "masa-san-jp/self-model-notes": "main",
             "masa-san-jp/art-history-notes": "main",
@@ -61,6 +52,7 @@ class RealChainCITests(unittest.TestCase):
                 self.assertEqual(expected_refs[step["with"]["repository"]], step["with"]["ref"])
                 self.assertEqual(0, step["with"]["fetch-depth"])
                 self.assertFalse(step["with"]["persist-credentials"])
+                self.assertNotIn("token", step["with"])
         qualification = next(step for step in real_chain["steps"] if step.get("name") == "Qualify the real immutable exchange chain")
         command = qualification["run"]
         self.assertIn("tools/qualify_pin_update.py", command)
@@ -85,16 +77,16 @@ class RealChainCITests(unittest.TestCase):
         self.assertIn("agentic-art-production|repos/agentic-art-production", provisioning_command)
         self.assertNotIn('python3 -m pip install -r "$child/requirements.txt"', provisioning_command)
 
-    def test_private_child_access_requires_an_external_actions_secret(self):
+    def test_public_child_checkouts_use_the_default_github_token(self):
         workflow = self.workflow()
         real_chain = workflow["jobs"]["real-chain"]
-        credential_step = next(step for step in real_chain["steps"] if step.get("name") == "Verify read-only private child repository credential")
-        self.assertIn("AAP_CHILD_REPOS_TOKEN", credential_step["env"]["AAP_CHILD_REPOS_TOKEN"])
-        self.assertIn("MISSING_EXTERNAL_SECRET", credential_step["run"])
-        self.assertIn("AAP_CHILD_REPOS_TOKEN", credential_step["run"])
+        self.assertNotIn(
+            "Verify read-only private child repository credential",
+            {step.get("name") for step in real_chain["steps"]},
+        )
         for step in real_chain["steps"]:
             if step.get("uses") == "actions/checkout@v4" and "repository" in step.get("with", {}):
-                self.assertIn("AAP_CHILD_REPOS_TOKEN", step["with"]["token"])
+                self.assertNotIn("token", step["with"])
                 self.assertFalse(step["with"]["persist-credentials"])
 
     def test_real_chain_does_not_log_secret_or_apply_pin_changes(self):
@@ -102,13 +94,14 @@ class RealChainCITests(unittest.TestCase):
         real_chain = workflow["jobs"]["real-chain"]
         serialized = str(real_chain)
         self.assertNotIn("echo $AAP_CHILD_REPOS_TOKEN", serialized)
+        self.assertNotIn("MISSING_EXTERNAL_SECRET", serialized)
         qualification = next(step for step in real_chain["steps"] if step.get("name") == "Qualify the real immutable exchange chain")
         self.assertNotIn("--apply", qualification["run"])
 
     def test_production_exchange_materializes_all_exchange_children(self):
         production = self.workflow()["jobs"]["production-exchange"]
         materialize = next(step for step in production["steps"] if step.get("name") == "Materialize the manifest-pinned children")
-        self.assertEqual("${{ secrets.AAP_CHILD_REPOS_TOKEN }}", materialize["env"]["CHILD_REPOS_TOKEN"])
+        self.assertNotIn("env", materialize)
         command = materialize["run"]
         self.assertIn("--repository agentic-art-research", command)
         self.assertIn("--repository agentic-art-production", command)

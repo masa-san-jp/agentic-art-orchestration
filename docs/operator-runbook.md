@@ -386,20 +386,36 @@ pip install --user -r <child-repository-path>/requirements.txt
 ### 確認する
 
 ```bash
-python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン>
+python3 tools/pin_adopt.py --dry-run --workspace-root <実クローン> --python-root <child-environment-root>
 ```
+
+子repoごとに依存の固定版が異なる場合は、あらかじめ `<child-environment-root>/<repository-id>/bin/python` が存在する環境を用意し、その root を `--python-root` で渡す。環境の作成と依存のインストールはこのツールでは行わない。不足する依存は `ENV_UNSATISFIED` のまま記録され、採用は行われない。共有環境で実行できる場合は `--python-root` を省略できる。
 
 リポジトリごとに現在の pin、候補コミット、候補での quality gate、採用可否と理由を出す。`config/repositories.yaml` は書き換えない。
 
 ### 採用する
 
 ```bash
-python3 tools/pin_adopt.py --apply --workspace-root <実クローン>
+python3 tools/pin_adopt.py --apply --workspace-root <実クローン> --python-root <child-environment-root>
 ```
 
 全ての検査が PASS のときだけ書き換える。1つでも塞がっていれば何も書かずに非0で終わる。部分的な採用はしない。`--dry-run` と `--apply` は排他で、どちらも省略するとエラーになる。
 
-同じコミットが manifest 以外にも fixture、retrieval index、test module、handoff record などへ繰り返し書かれている場合、`--apply` は全ての出現箇所を書き換え、`written_files` に残す。child checkout が dirty、候補が remote より古い、または候補の gate が FAILED の場合は `BLOCKED` として停止し、pin を書き換えない。
+同じコミットは manifest 以外にも fixture、retrieval index、test module、handoff record などへ繰り返し書かれている。しかし、それらは同じ種類のものではない。`config/repositories.yaml` と `tests/fixtures/**` は**現在の pin**を表し、`execution/` 配下と、ナラティブな実行記録（例: `docs/aak-02-execution.md`）は**過去にその回の実行が観測した値**を述べた記録である。後者を後から書き換えると、存在しなかった観測を主張する記録になる（2026-10-02、Issue 261、SH-04 の pin 採用で観測: `execution/handoff.md` の「Research PR #106 is merged as a4df0e5…」が新しい pin に書き換わり、事実と異なる記録になった）。
+
+`--apply` は `config/pin-adoption-scope.yaml`（`pin-adoption-scope/v1`）に列挙された path glob の allowlist だけを書き換え対象とする。既定値は次の2つである。
+
+```yaml
+rewritable_paths:
+  - config/repositories.yaml
+  - tests/fixtures/**
+```
+
+`execution/` をディレクトリ名で弾く denylist ではなく allowlist にしているのは、Issue 261 の事例で execution/ の外（`docs/aak-02-execution.md`）にも過去の観測記録が見つかったため。denylist はディレクトリ名を1つ知っていれば防げるが、知らない置き場所は防げない。allowlist は、挙げた場所だけを書き換えるので、新しい「現在の pin」置き場所を増やすときは明示的にこのファイルへ追記する。`tools/validate.py --check` は、この allowlist に `execution/` や `docs/` 始まりの path が紛れ込んでいないかを検査する。
+
+書き換えた全ファイルは `written_files` に残る。allowlist の外にあり書き換えなかった出現箇所は `preserved_occurrences` に別枠で残る（`pin-adoption/v1` contract の任意フィールドで後方互換）。`written_files` に `execution/` または `docs/` で始まるパスが含まれる場合、または `written_files` と `preserved_occurrences` が重複する場合、`validate_pin_adoption` はそれを拒否する。
+
+child checkout が dirty、候補が remote より古い、または候補の gate が FAILED の場合は `BLOCKED` として停止し、pin を書き換えない。
 
 書き換えたあとの PR 作成と merge は人間が行う。manifest に関わる操作が人間の関門であることは変わらない。
 
