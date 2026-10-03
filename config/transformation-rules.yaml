@@ -16,12 +16,15 @@ rules:
         personal_tension:
           signal_kind: self
           attribute: tensions
+        personal_pattern:
+          signal_kind: self
+          attribute: recurring_patterns
         historical_operation:
           signal_kind: art-history
           attribute: relations
         contemporary_condition:
           signal_kind: marketing
           attribute: stage
-      template: "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
+      template: "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition}"
     constraints: [require_all_inputs, require_source_provenance, no_unproven_concepts]
     rejection_reasons: [missing-required-signal, unknown-attribute, missing-provenance, constraint-failure]

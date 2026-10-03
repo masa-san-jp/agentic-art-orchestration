@@ -58,7 +58,7 @@
         },
         "composition": {
           "type": "object",
-          "additionalProperties": false,
+          "additionalProperties": {"$ref": "#/$defs/slot_ref"},
           "required": ["personal_tension", "historical_operation", "contemporary_condition"],
           "properties": {
             "personal_tension": {"$ref": "#/$defs/slot_ref"},

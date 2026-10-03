@@ -22,6 +22,7 @@ try:
         canonical_json,
         eligible_personal_anchors,
         load_fixture,
+        resolve_personal_anchor_ids,
     )
     from tools.validate import (
         ROOT,
@@ -46,6 +47,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
         canonical_json,
         eligible_personal_anchors,
         load_fixture,
+        resolve_personal_anchor_ids,
     )
     from tools.validate import (
         ROOT,
@@ -233,60 +235,31 @@ def _copy_candidate(candidate: dict, rank: int, score: str, intent_scores: dict 
     return result
 
 
-def _signal_ids_by_kind(candidate: dict) -> dict[str, str]:
-    """Extract the one selected signal ID per required kind from a candidate."""
-    result: dict[str, str] = {}
-    for kind in SIGNAL_KINDS:
-        refs = candidate.get("inputs", {}).get(kind, [])
-        ids = sorted({ref.get("signal_id") for ref in refs if isinstance(ref, dict) and isinstance(ref.get("signal_id"), str)})
-        if len(ids) == 1:
-            result[kind] = ids[0]
-    return result
-
-
 def _resolve_personal_anchor_id(
     candidate: dict,
     candidate_space: dict,
     signals: list[dict],
-    anchors: list[dict] | None = None,
 ) -> str | None:
     """Resolve an anchor by replaying candidate identity without exposing its value."""
-    slot = candidate.get("composition", {}).get("personal_tension", {})
-    signal_id = slot.get("signal_id")
-    attribute = slot.get("attribute")
-    if attribute not in {"tensions", "recurring_patterns"} or not isinstance(signal_id, str):
+    anchor_ids = resolve_personal_anchor_ids(candidate, candidate_space, signals)
+    if not anchor_ids:
         return None
-    anchor_pool = anchors if anchors is not None else eligible_personal_anchors(signals)
-    anchor_candidates = [
-        anchor
-        for anchor in anchor_pool
-        if anchor["signal_id"] == signal_id and anchor["attribute"] == attribute
-    ]
-    signal_ids = _signal_ids_by_kind(candidate)
-    if set(signal_ids) != set(SIGNAL_KINDS):
-        return None
-    base_identity = {
-        "rule_id": candidate.get("rule_id"),
-        "snapshot_id": candidate_space.get("snapshot_id"),
-        "signal_ids": signal_ids,
-    }
-    for anchor in anchor_candidates:
-        identity = {**base_identity, "personal_anchor_id": anchor["anchor_id"]}
-        if candidate.get("candidate_id") == f"candidate:{sha256_hex(identity)[:16]}":
-            return anchor["anchor_id"]
-    if len(anchor_candidates) == 1 and candidate.get("candidate_id") == f"candidate:{sha256_hex(base_identity)[:16]}":
-        return anchor_candidates[0]["anchor_id"]
-    return None
+    # Keep the long-standing report semantics: one selected candidate is
+    # attributed to one opaque anchor, preferring the tension slot when both
+    # self attributes participate in the same candidate.
+    for slot_name in ("personal_tension", "personal_pattern"):
+        if slot_name in anchor_ids:
+            return anchor_ids[slot_name]
+    return sorted(anchor_ids.values())[0]
 
 
 def _selection_anchor_key(
     candidate: dict,
     candidate_space: dict,
     signals: list[dict] | None,
-    anchors: list[dict] | None = None,
 ) -> str:
     if signals is not None:
-        resolved = _resolve_personal_anchor_id(candidate, candidate_space, signals, anchors)
+        resolved = _resolve_personal_anchor_id(candidate, candidate_space, signals)
         if resolved is not None:
             return resolved
     slot = candidate.get("composition", {}).get("personal_tension", {})
@@ -300,9 +273,8 @@ def _fair_order(
 ) -> list[tuple[str, dict]]:
     """Schedule candidates round-robin by anchor, retaining hash order per anchor."""
     groups: dict[str, list[tuple[str, dict]]] = {}
-    anchors = eligible_personal_anchors(signals) if signals is not None else None
     for score, candidate in passing:
-        key = _selection_anchor_key(candidate, candidate_space, signals, anchors)
+        key = _selection_anchor_key(candidate, candidate_space, signals)
         groups.setdefault(key, []).append((score, candidate))
     for values in groups.values():
         values.sort(key=lambda item: (item[0], item[1]["candidate_id"]), reverse=True)
@@ -338,9 +310,11 @@ def build_self_diversity_report(
     anchors = eligible_personal_anchors(signals, source)
     selected = selected_candidates if selected_candidates is not None else []
     selected_anchor_ids: list[str] = []
+    selected_anchor_frequencies: dict[str, int] = {}
     for index, candidate in enumerate(selected):
-        anchor_id = _resolve_personal_anchor_id(candidate, candidate_space, signals, anchors)
-        if anchor_id is None:
+        anchor_ids = resolve_personal_anchor_ids(candidate, candidate_space, signals)
+        eligible_candidate_anchors = sorted(set(anchor_ids.values()).intersection({anchor["anchor_id"] for anchor in anchors}))
+        if not eligible_candidate_anchors:
             raise ValueError(
                 _error(
                     source,
@@ -348,7 +322,12 @@ def build_self_diversity_report(
                     "select only candidates generated from consented tensions or recurring_patterns",
                 )
             )
+        anchor_id = min(
+            eligible_candidate_anchors,
+            key=lambda value: (selected_anchor_frequencies.get(value, 0), value),
+        )
         selected_anchor_ids.append(anchor_id)
+        selected_anchor_frequencies[anchor_id] = selected_anchor_frequencies.get(anchor_id, 0) + 1
     counts = {attribute: 0 for attribute in ("tensions", "recurring_patterns")}
     for anchor in anchors:
         counts[anchor["attribute"]] += 1

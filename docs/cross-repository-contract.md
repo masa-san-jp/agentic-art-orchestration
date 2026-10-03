@@ -99,11 +99,19 @@ raw voice本文、直接識別情報、Drive/Telegram locatorはfixtureと変換
 
 ## Self-model diversity report
 
-`self-diversity-report/v1` は、利用許可済みnormalized signalの`domain.self_model.tensions`と`recurring_patterns`のunionだけを対象にする。各値は`signal_id`、属性名、canonical valueを改行で連結したSHA-256のopaque anchor IDへ変換し、reportには生のstatement、voice本文、属性値、直接識別情報を保存しない。同一signal内の重複値はanchor IDで一つにまとめる。適格アンカーが1個以上あれば候補の`personal_tension`へその属性を結線し、0個の場合は候補を個人アンカー付きとして生成しない。
+`self-diversity-report/v1` は、利用許可済みnormalized signalの`domain.self_model.tensions`と`recurring_patterns`のunionだけを対象にする。各値は`signal_id`、属性名、canonical valueを改行で連結したSHA-256のopaque anchor IDへ変換し、reportには生のstatement、voice本文、属性値、直接識別情報を保存しない。同一signal内の重複値はanchor IDで一つにまとめる。R17は`tensions`を`personal_tension`、`recurring_patterns`を`personal_pattern`という別々のslotへそれぞれ結線する。各slotは自分の属性に適格アンカーが1個以上あれば候補へ入り、その属性の適格アンカーが0個ならそのslotだけ値なしのまま保持する（`無し`として扱い、候補生成を止めない）。両属性とも0個（`eligible_anchor_count`が0）の場合にのみ、候補を個人アンカー付きとして生成しない。
 
 `eligible_anchor_count`が0の場合は`INSUFFICIENT_SELF_DIVERSITY`として停止し、候補を複製したり選択数を水増ししたりしない。1〜2個の場合は`PASS_LIMITED_DIVERSITY`として実行を許可するが、3個未満であることを証跡に残す。3個以上の場合は`PASS`とし、明示的な多様性要求でselection limitが10以上の場合は、少なくとも3つのdistinct anchorを含み、各anchorのshareを40%以下にする。1〜2個の場合はこの完全多様性条件を適用せず、限定的な多様性として扱う。passing candidateがselection limitに満たない場合も、limitを下げずに拒否する。候補の選択順はanchor単位の決定的round-robinとし、各anchor内では既存のseeded SHA-256 score順を保持する。
 
 reportは`self-model`のsignal IDとsource commitを保持し、候補・選択の既存v1 schemaへ個人情報やanchor生値を追加しない。`status`は`PASS`、`PASS_LIMITED_DIVERSITY`、`INSUFFICIENT_SELF_DIVERSITY`、`REJECT`のいずれかで、counts・distinct count・最大shareから再計算できなければならない。
+
+## Candidate lineage diversity
+
+`tools/candidate_space.py --report diversity` は `candidate-diversity-report/v1` を出力する。ここでいう系統は、候補が使う self 側の anchor 組と marketing 側の normalized signal/attribute 組の順序付きペアである。self 側は同意済みの値そのものではなく、属性ごとの opaque anchor ID だけを組にし、marketing 側は `signal_id` と束縛属性名だけを使う。
+
+R17 は self の `tensions` と `recurring_patterns` を `personal_tension` / `personal_pattern` の別 slot として組み合わせる。`recurring_patterns` が空でも slot は保持し、候補生成は停止しない。marketing 側は `stage` だけを composition slot として束縛する。`counterevidence` は `attribute_bindings.marketing` に宣言済みで provenance（`inputs.marketing`）には残るが、composition slot としては使わない — marketing-trends-notes の read-only clone（2026-09-28 観測）で全65 trend の `counterevidence` が空配列であることを確認しており、これを slot にしても取りうる値が増えないため（本節末尾の限界を参照）。
+
+**この指標の限界**: 系統は `(signal_id, 属性名)` の組の distinct 数であり、属性の**値**の distinct 数ではない。異なる marketing signal が同じ `stage` 値（例: `growing`）を持っていても、`signal_id` が違えば別系統として数える。逆に、全 signal で値が空の属性を slot にしても系統は増えない（`counterevidence` を外した理由）。したがって、この指標で measure される marketing 側の「解像度」は、スナップショットに含まれる distinct な marketing signal の数であり、`stage` の語彙数（marketing-trends-notes 全体では3語）ではない。生成される `creative_question` の文言そのものの多様性は別の層の問題で、`tools/build_research_request.py` が bound attribute の実際の値（self 側は選ばれた opaque anchor に対応する具体的な値）を読むことで担保する。
 
 ## 器の名前
 

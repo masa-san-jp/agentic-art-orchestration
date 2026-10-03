@@ -25,9 +25,11 @@ import sys
 from pathlib import Path
 
 try:
+    from tools.candidate_space import personal_anchor_id
     from tools.validate import load_json, load_yaml
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from tools.candidate_space import personal_anchor_id
     from tools.validate import load_json, load_yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -115,22 +117,36 @@ def _next_request_id(output: Path, *, research_root: Path | None = None) -> str:
 DOMAIN_BY_KIND = {"self": "self_model", "art-history": "art_history", "marketing": "marketing"}
 
 
-def _bound_value(signal: dict, kind: str, attribute: str) -> str:
+def _bound_value(signal: dict, kind: str, attribute: str, anchor_id: str | None = None) -> str:
     """Read the attribute the slot binds, not the record's own summary.
 
     The slot names which attribute it spends. Falling back to the record's
     statement would put a description of the export into the question instead of
     what the export says.
+
+    When ``anchor_id`` is given (the opaque self-model anchor the candidate
+    actually selected), the matching list entry is resolved by recomputing
+    each candidate value's anchor hash rather than always taking the first
+    entry. Without this, candidates that differ only in which tension or
+    recurring-pattern value they anchor to would all read ``value[0]`` and
+    produce the identical creative_question text.
     """
     domain = (signal.get("domain") or {}).get(DOMAIN_BY_KIND.get(kind, ""), {})
     value = domain.get(attribute)
     entity = (signal.get("source", {}).get("entity_ids") or [signal.get("signal_id", "")])[0]
 
+    if isinstance(value, list) and not value:
+        return "無し"
     if isinstance(value, list) and value and isinstance(value[0], dict):
         # 関係は種類だけでは読めない。どの括りの、何に対する関係かまで言う
         relation = value[0]
         return f"{entity} の {relation.get('relation')} 関係（{relation.get('target_entity_id')}）"
     if isinstance(value, list) and value and isinstance(value[0], str):
+        if anchor_id is not None:
+            signal_id = signal.get("signal_id", "")
+            for candidate_value in value:
+                if personal_anchor_id(signal_id, attribute, candidate_value) == anchor_id:
+                    return candidate_value
         return value[0]
     if isinstance(value, str) and value:
         # 段階のような単語は、何がその段階にあるのかを添える
@@ -143,7 +159,11 @@ def _creative_question(proposition: dict, signals: dict) -> str:
     template = proposition["structured_output"]["template"]
     for slot, binding in proposition["structured_output"]["slots"].items():
         signal = signals.get(binding["signal_id"])
-        value = _bound_value(signal, binding["signal_kind"], binding["attribute"]) if signal else binding["signal_id"]
+        value = (
+            _bound_value(signal, binding["signal_kind"], binding["attribute"], binding.get("anchor_id"))
+            if signal
+            else binding["signal_id"]
+        )
         template = template.replace("{" + slot + "}", value)
     return template
 

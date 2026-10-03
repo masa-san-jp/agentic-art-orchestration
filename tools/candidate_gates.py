@@ -141,20 +141,32 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
         signal_id = slot.get("signal_id")
         return slot, signals.get(signal_id) if isinstance(signal_id, str) else None
 
-    personal_slot, personal_signal = selected("personal_tension")
-    personal_domain = personal_signal.get("domain", {}).get("self_model", {}) if personal_signal else {}
-    personal_attribute = personal_slot.get("attribute") if isinstance(personal_slot, dict) else None
-    personal_evidence = _matching_evidence(candidate, "self", personal_attribute)
-    personal_pass = bool(
-        personal_signal
-        and personal_slot.get("signal_kind") == "self"
-        and personal_attribute in {"tensions", "recurring_patterns"}
-        and personal_signal.get("signal_kind") == "self"
-        and personal_signal.get("validity", {}).get("status") == "valid"
-        and personal_domain.get("export_permitted") is True
-        and personal_domain.get("consent_scope")
-        and personal_domain.get(personal_attribute)
-    )
+    personal_slots = [
+        (slot_name, slot)
+        for slot_name, slot in composition.items()
+        if slot.get("signal_kind") == "self"
+        and slot.get("attribute") in {"tensions", "recurring_patterns"}
+    ]
+    personal_evidence = [
+        evidence
+        for _slot_name, slot in sorted(personal_slots)
+        for evidence in _matching_evidence(candidate, "self", slot.get("attribute"))
+    ]
+    personal_pass = False
+    for _slot_name, personal_slot in personal_slots:
+        personal_signal = signals.get(personal_slot.get("signal_id"))
+        personal_domain = personal_signal.get("domain", {}).get("self_model", {}) if personal_signal else {}
+        personal_attribute = personal_slot.get("attribute")
+        if (
+            personal_signal
+            and personal_signal.get("signal_kind") == "self"
+            and personal_signal.get("validity", {}).get("status") == "valid"
+            and personal_domain.get("export_permitted") is True
+            and personal_domain.get("consent_scope")
+            and personal_domain.get(personal_attribute)
+        ):
+            personal_pass = True
+            break
 
     historical_slot, historical_signal = selected("historical_operation")
     historical_domain = historical_signal.get("domain", {}).get("art_history", {}) if historical_signal else {}
@@ -173,6 +185,13 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     contemporary_slot, contemporary_signal = selected("contemporary_condition")
     contemporary_domain = contemporary_signal.get("domain", {}).get("marketing", {}) if contemporary_signal else {}
+    # R17 binds exactly one marketing attribute ("stage") in composition.
+    # Evidence is read for that declared attribute only; there is no
+    # fallback to every marketing attribute regardless of what the
+    # candidate actually binds (such a fallback would let the
+    # contemporary-specificity gate pass on evidence the proposition never
+    # cites, and would silently mask a candidate whose composition does not
+    # bind any marketing attribute at all).
     contemporary_evidence = _matching_evidence(candidate, "marketing", "stage")
     contemporary_pass = bool(
         contemporary_signal
@@ -197,9 +216,24 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     composition_ids = [slot.get("signal_id") for slot in composition.values()]
     composition_kinds = [slot.get("signal_kind") for slot in composition.values()]
+    # A rule may bind more than one slot to the same signal_kind (R17 binds
+    # both personal_tension and personal_pattern to the one self signal), so
+    # counting *all* composition slot signal_ids and requiring them to be
+    # exactly as many as required kinds (the pre-#254 check) rejects a
+    # legitimate multi-attribute candidate. Group signal_ids by kind instead:
+    # each required kind must resolve to exactly one signal_id, and the
+    # signals used across kinds must all be distinct. This keeps the
+    # original genericness guarantee (no two required kinds collapse onto
+    # the same signal, no kind is left unbound) without weakening it to a
+    # bare ">=" count that would also accept extra, unrelated signal_ids.
+    signal_ids_by_kind: dict[str, set[str]] = {}
+    for slot in composition.values():
+        signal_ids_by_kind.setdefault(slot.get("signal_kind"), set()).add(slot.get("signal_id"))
+    distinct_required_signal_ids = {next(iter(ids)) for kind, ids in signal_ids_by_kind.items() if kind in rule["required_signal_kinds"] and len(ids) == 1}
     generic_pass = (
-        len(composition_ids) == len(set(composition_ids)) == 3
-        and set(composition_kinds) == set(rule["required_signal_kinds"])
+        set(signal_ids_by_kind) == set(rule["required_signal_kinds"])
+        and all(len(ids) == 1 for ids in signal_ids_by_kind.values())
+        and len(distinct_required_signal_ids) == len(rule["required_signal_kinds"])
         and all(isinstance(slot.get("attribute"), str) and slot["attribute"] for slot in composition.values())
     )
 

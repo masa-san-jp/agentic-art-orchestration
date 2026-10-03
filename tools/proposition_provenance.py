@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 try:
-    from tools.candidate_space import DEFAULT_FIXTURE_DIR, canonical_json, load_fixture
+    from tools.candidate_space import DEFAULT_FIXTURE_DIR, canonical_json, load_fixture, resolve_personal_anchor_ids
     from tools.validate import (
         ROOT,
         TRANSFORMATION_RULE_CONFIG_PATH,
@@ -27,7 +27,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     ROOT = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(ROOT))
-    from tools.candidate_space import DEFAULT_FIXTURE_DIR, canonical_json, load_fixture
+    from tools.candidate_space import DEFAULT_FIXTURE_DIR, canonical_json, load_fixture, resolve_personal_anchor_ids
     from tools.validate import (
         ROOT,
         TRANSFORMATION_RULE_CONFIG_PATH,
@@ -47,7 +47,6 @@ DEFAULT_GATE_PATH = ROOT / "data/candidate-gates.json"
 DEFAULT_SELECTION_PATH = ROOT / "data/selection.json"
 DEFAULT_OUTPUT_PATH = ROOT / "data/provenance.json"
 SIGNAL_KINDS = ("self", "art-history", "marketing")
-TEMPLATE = "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"
 
 
 def sha256_hex(value: object) -> str:
@@ -82,9 +81,9 @@ def _ref_matches_signal(ref: dict, signal: dict) -> bool:
     )
 
 
-def _slot_provenance(slot: dict, signal: dict) -> dict:
+def _slot_provenance(slot: dict, signal: dict, anchor_id: str | None = None) -> dict:
     source = _source_ref(signal)
-    return {
+    result = {
         "signal_id": slot["signal_id"],
         "signal_kind": slot["signal_kind"],
         "attribute": slot["attribute"],
@@ -92,6 +91,14 @@ def _slot_provenance(slot: dict, signal: dict) -> dict:
         "source_commit": source["source_commit"],
         "evidence_locator": source["evidence_locators"][0],
     }
+    if anchor_id is not None:
+        # Carry the opaque self-anchor ID so a later stage (e.g.
+        # tools/build_research_request.py) can resolve the specific
+        # consented value this slot used instead of guessing an index into
+        # the attribute's list. The anchor ID is opaque; it never exposes
+        # the underlying self-model value.
+        result["anchor_id"] = anchor_id
+    return result
 
 
 def _signal_trace(signal: dict, attributes: list[str]) -> dict:
@@ -202,10 +209,12 @@ def build_provenance(
             _signal_trace(signal_by_id[signal_id], attributes_by_signal[signal_id])
             for signal_id in sorted(attributes_by_signal)
         ]
+        anchor_ids = resolve_personal_anchor_ids(candidate, candidate_space, signals)
         slots = {
             slot_name: _slot_provenance(
                 candidate["composition"][slot_name],
                 signal_by_id[candidate["composition"][slot_name]["signal_id"]],
+                anchor_ids.get(slot_name),
             )
             for slot_name in sorted(candidate["composition"])
         }

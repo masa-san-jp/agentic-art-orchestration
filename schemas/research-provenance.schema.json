@@ -116,7 +116,7 @@
     },
     "composition": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": {"$ref": "#/$defs/slot_ref"},
       "required": ["personal_tension", "historical_operation", "contemporary_condition"],
       "properties": {
         "personal_tension": {"$ref": "#/$defs/slot_ref"},
@@ -143,7 +143,7 @@
         "rule_set_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "output_type": {"const": "research_proposition"},
         "composition_mode": {"enum": ["intersection"]},
-        "template": {"enum": ["{personal_tension} is externalized through {historical_operation} against {contemporary_condition}", "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"]},
+        "template": {"enum": ["{personal_tension} is externalized through {historical_operation} against {contemporary_condition}", "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}", "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition}"]},
         "constraints": {
           "type": "array",
           "minItems": 3,
@@ -159,10 +159,10 @@
       "properties": {
         "output_type": {"const": "research_proposition"},
         "composition_mode": {"enum": ["intersection"]},
-        "template": {"enum": ["{personal_tension} is externalized through {historical_operation} against {contemporary_condition}", "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}"]},
+        "template": {"enum": ["{personal_tension} is externalized through {historical_operation} against {contemporary_condition}", "{personal_tension} ∩ {historical_operation} ∩ {contemporary_condition}", "{personal_tension} ∩ {personal_pattern} ∩ {historical_operation} ∩ {contemporary_condition}"]},
         "slots": {
           "type": "object",
-          "additionalProperties": false,
+          "additionalProperties": {"$ref": "#/$defs/provenance_ref"},
           "required": ["personal_tension", "historical_operation", "contemporary_condition"],
           "properties": {
             "personal_tension": {"$ref": "#/$defs/provenance_ref"},
@@ -182,7 +182,8 @@
         "attribute": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
         "source_repository": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "evidence_locator": {"type": "string", "minLength": 1}
+        "evidence_locator": {"type": "string", "minLength": 1},
+        "anchor_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }
     },
     "signal_trace": {
