@@ -1,5 +1,5 @@
-version: 98
-updated_at: '2026-10-04T00:48:04+09:00'
+version: 99
+updated_at: '2026-10-04T01:09:13+09:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3325,4 +3325,4 @@ tasks:
     verification_result: Validator, 39 focused tests, 75 bootstrapped related tests and offline CLI PASS; full 715-test suite retains exactly the 43 origin/main failures (8 failures, 35 errors, 5 skips), with no new or removed failure.
     integration_status: ORCHESTRATOR_HANDOFF_PENDING
     evidence: execution/issue-250-s4-verification.json
-    completion: Local S4 implementation and verification complete; no push, PR, merge, issue closure, child change, publication or consent expansion. Lease remains held for orchestrator synchronization.
+    completion: Local S4 implementation and verification complete; no push, PR, merge, issue closure, child change, publication or consent expansion. Lease released by explicit review instruction for orchestrator PR review and merge.

@@ -1,12 +1,14 @@
-version: 313
-updated_at: '2026-10-04T00:48:04+09:00'
+version: 314
+updated_at: '2026-10-04T01:09:13+09:00'
 active_task: null
 active_repository: null
 lease:
-  status: held
-  owner: codex-250-local
+  status: available
+  owner: null
   acquired_at: '2026-10-04T00:15:12+09:00'
   expires_at: null
+  released_at: '2026-10-04T01:09:13+09:00'
+  release_reason: handed off to orchestrator for PR review and merge
   lane: LOCAL-IMPLEMENTATION
   execution_id: ISSUE250S4LOCAL
   scope:
@@ -67,7 +69,7 @@ checkpoint:
     diff: PASS
   acceptance: 4/4 scoped S4 conditions achieved
   next_operation: Review the local branch HEAD and verification evidence; orchestrator
-    owns push, PR, merge, issue closure and lease release.
+    owns push, PR, merge and issue closure; lease released for review.
 completed_checkpoint_oi13:
   task: OI-13
   repository: self-model
@@ -123,7 +125,7 @@ resume_from:
   task: null
   repository: agentic-art-orchestration
   action: 'Review Issue-250 S4 local commit and verification evidence; orchestrator
-    owns remote synchronization and lease release. Issue #250 is not closed by this
+    owns remote synchronization; lease released for review. Issue #250 is not closed by this
     scoped implementation.'
   command: git show --stat HEAD
 
@@ -261,10 +263,12 @@ takeover:
   source_commit: b107b6db84c58e2fed4a952b7cf693211c7cf377
   source_branch: agent/issue-193-attested-projection
   previous_lease:
-    status: held
-    owner: codex-aak-repair
+    status: available
+    owner: null
     acquired_at: '2026-09-05T04:27:59+00:00'
     expires_at: null
+    released_at: '2026-10-04T01:09:13+09:00'
+    release_reason: handed off to orchestrator for PR review and merge
     lane: AAK_IMPLEMENTATION
     execution_id: PUBLIC-PROJECTION-ATTESTATION-001:20260905
     scope:

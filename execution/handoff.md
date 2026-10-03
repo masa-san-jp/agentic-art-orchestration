@@ -3060,3 +3060,26 @@ validator. The parent full suite ran 699 tests with the same 8 failures, 35 erro
 and 5 skips as the saved clean origin/main baseline; there are no new failures.
 The updated owner export also preserves the 1→2 lineage comparison and method
 source references through Research. Both repositories retain local commits only.
+
+
+## 2026-10-04 — Issue #250 S4 review handoff correction
+
+The review approves the implementation commit `e378b460261087304dc68991749c4933e0e62e7a`
+and explicitly authorizes lease release before PR review and merge. At `2026-10-04T01:09:13+09:00`,
+both `lease` and `takeover.previous_lease` in `execution/state.yaml` were made
+available with owner null and release reason `handed off to orchestrator for PR review and merge`.
+Active task/repository remain null. This entry supersedes earlier lease-holding
+instructions without changing the existing handoff text. The queue now records
+the released lease; README project status is regenerated from execution SSOT.
+
+Next action: `git show --stat HEAD` for orchestrator review. Push, PR creation,
+merge and issue closure remain the orchestrator's responsibility; this agent
+performs local commits only. No code, child repository, credentials, private
+payload or external artifact has been changed by this correction.
+
+Review cleanup verification (Python: `/Users/masa/aa-work/venv/bin/python`):
+`tools/project_status.py --update-readme`, `tools/project_status.py --check-readme`,
+`tools/validate.py --check` and `git diff --check` all exit 0. Structural inspection
+confirms two released leases, zero held records under execution YAML/JSON,
+active_repository null, and append-only handoff content. No completion condition
+remains unmet for this cleanup.
