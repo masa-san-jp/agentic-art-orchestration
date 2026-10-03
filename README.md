@@ -179,3 +179,8 @@ clone/fork利用者は、自分の`agentic-art-project` checkoutを明示して�
 ```
 
 `AGENTIC_ART_PROJECT_ROOT`でも選択できます。resolverはProject ownerのvalidator、`/.agentic-art/` ignore、tracked-private、symlink、tracked変更を先に検査し、合格後だけ`.agentic-art/state`、`.agentic-art/internal`、`.agentic-art/staging`を導出します。`--destinations-file`や個別rootとの混在は`AMBIGUOUS_DESTINATION_MODE`で拒否します。`.agentic-art`はGitへ追跡せず、公開昇格は検証済みのplan/assetだけです。Git commit、push、remote公開、権利・同意承認は別のゲートです。
+
+
+## 用語としての用例
+
+「Orchestrationでテーマから制作プランまでを進める」とは、入力知識の固定参照、Research、Production、公開可能性の検査を接続して実行することです。例えば「鑑賞者の反応を次の制作案へ反映する」場合も、反応の正本は viewer-response-notes に置き、このrepoは境界形式と実行順を管理します。「公開投影が完了した」はローカルの受取検証を含む意味で使い、GitHubへmerge済みという意味には使いません。具体的な操作は上記の実行入口と [runtime guide](docs/agent-runtime-guide.md) を参照してください。
