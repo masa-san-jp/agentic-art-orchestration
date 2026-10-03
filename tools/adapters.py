@@ -197,7 +197,7 @@ def adapt_art_history_signal(record: dict) -> dict:
             f"art-history required input field(s) missing: {missing!r}",
             "provide stable entity, relation, evidence, and graph locator fields",
         )
-    if not isinstance(record["relations"], list) or not record["relations"]:
+    if not isinstance(record["relations"], list) or (not record["relations"] and "method" not in record):
         raise _fail(
             "relations must be a non-empty list",
             "include each exported relation with its stable target ID, evidence, and certainty",
@@ -272,6 +272,15 @@ def adapt_art_history_signal(record: dict) -> dict:
             }
         },
     }
+    art_history = signal["domain"]["art_history"]
+    for field in ("method", "source_refs"):
+        if field in record:
+            art_history[field] = copy.deepcopy(record[field])
+    if "method" in record and isinstance(record.get("source_refs"), list):
+        for locator in record["source_refs"]:
+            signal["evidence_refs"].append({
+                "locator": locator, "kind": record["evidence_kind"], "entity_id": record["entity_id"],
+            })
     errors = validate_signal(signal, "art-history adapter output")
     if errors:
         raise AdapterError("\n".join(errors))

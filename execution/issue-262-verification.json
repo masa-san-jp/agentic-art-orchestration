@@ -1,0 +1,884 @@
+{
+  "issue": "masa-san-jp/agentic-art-orchestration#262",
+  "code_status": "CODE_VERIFIED",
+  "delivery_scope": "local commits; orchestrator owns remote synchronization and integration",
+  "source_contracts": {
+    "export": "research-signal-export/v1",
+    "normalized_signal": "normalized-research-signal/v1",
+    "diversity_report": "candidate-diversity-report/v2"
+  },
+  "repositories": {
+    "agentic-art-orchestration": {
+      "branch": "agent/262-method-seeds",
+      "start_point": "f2972e43a6f19bc9a15830197864b19ddcd7b549"
+    },
+    "art-history-notes": {
+      "branch": "agent/262-export-method-signals",
+      "start_point": "75dccd5d03fd8cbb7a3534280f748b311db6660a",
+      "commit": "aab903446190450adb0a630d28539352ff82fe74"
+    }
+  },
+  "decisions": [
+    "Use the owner method-concept shelf and the existing art-history signal kind; add no fourth kind.",
+    "R17 keeps relation seeds. R18 handles method signals, including methods with relations, without duplicate studies on the same signal set.",
+    "Accept sourced draft methods as seeds while preserving unknown validity and inferred certainty. Do not certify artistic use or historical influence.",
+    "Version lineage counting as v2 to include art-history operations. Preserve the original two-axis count separately; do not claim semantic text diversity.",
+    "Keep the baseline fixture environment unchanged for the orchestrator-requested failure-set comparison. No snapshot/audit bootstrap or manifest pin adoption."
+  ],
+  "acceptance": {
+    "achieved": 4,
+    "total": 4,
+    "sourced_material_retained_and_exported": "Owner method concept exists; native export and clean graph/context/181-test gates verify it.",
+    "material_reaches_candidates_and_research": "R18 method composition passes six gates, selection and provenance, and supplies all three method descriptions and origin domain to the Research question.",
+    "unsourced_material_rejected": "Owner excludes unsourced/stub/incomplete methods; adapter/schema reject missing or invalid source_refs; source URLs must also occur in evidence_refs; gate rejects unsourced/stale methods.",
+    "lineage_increase_measured_without_breaking_existing_inputs": "Same fixture changes from one to two three-axis lineages; the two-axis count remains one and R17 composition/input refs are preserved. Actual owner export repeats the comparison."
+  },
+  "verification": {
+    "parent_validator": {
+      "command": "python tools/validate.py --check",
+      "exit_code": 0
+    },
+    "parent_origin_full_suite": {
+      "exit_code": 1,
+      "tests": 691,
+      "seconds": 1752.621,
+      "failures": 8,
+      "errors": 35,
+      "skipped": 5,
+      "failure_records": [
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_output_is_deterministic",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace",
+          "count": 1
+        }
+      ],
+      "log_sha256": "e6690ebaef09482e69a5e1c185041d6b6dd6601abc0f77bf35850e462282d725"
+    },
+    "parent_clean_origin_failure_replay": {
+      "exit_code": 1,
+      "tests": 43,
+      "seconds": 140.865,
+      "failures": 8,
+      "errors": 35,
+      "skipped": 0,
+      "failure_records": [
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_output_is_deterministic",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace",
+          "count": 1
+        }
+      ],
+      "log_sha256": "234a0b467cba6a3c1fc947fa2aeeeea2f8d515b68792ca7b2b1105626f779060"
+    },
+    "parent_clean_origin_tree_verified": true,
+    "parent_related_suite": {
+      "exit_code": 0,
+      "tests": 99,
+      "seconds": 153.548,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failure_records": [],
+      "log_sha256": "ccc75a8f2d53adbbe1de0203ad433eef75b08692f3642b3544ddbc77ba66b826"
+    },
+    "parent_full_suite": {
+      "exit_code": 1,
+      "tests": 699,
+      "seconds": 1834.722,
+      "failures": 8,
+      "errors": 35,
+      "skipped": 5,
+      "failure_records": [
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_output_is_deterministic",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates",
+          "count": 1
+        },
+        {
+          "kind": "ERROR",
+          "test_id": "test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed",
+          "count": 1
+        },
+        {
+          "kind": "FAIL",
+          "test_id": "test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace",
+          "count": 1
+        }
+      ],
+      "log_sha256": "d55a00272dffed60c7ee488792134466be1d924fd171684b536c6a4fd31ff1ac"
+    },
+    "failure_records_match_origin_main": true,
+    "new_failures": [],
+    "gate_regression_suite": {
+      "exit_code": 0,
+      "tests": 14,
+      "seconds": 4.667,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failure_records": [],
+      "log_sha256": "a6268e2c0f85e3f339afaa3ffdd5cb673f382155f606a6142071ab8617cd3c66"
+    },
+    "owner_focused_suite": {
+      "exit_code": 0,
+      "tests": 10,
+      "seconds": 14.519,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failure_records": [],
+      "log_sha256": "d0bf147a158a2f69767ffc255a513944b6d924aac2c49aebbe57f7a0a90cc964"
+    },
+    "owner_graph_check": {
+      "command": "python tools/build_graph.py --check",
+      "exit_code": 0,
+      "entities": 1613,
+      "relations": 4949
+    },
+    "owner_context_check": {
+      "command": "python tools/build_context_vectors.py --check",
+      "exit_code": 0,
+      "contexts": 4
+    },
+    "owner_canonical_check": {
+      "command": "python tools/verify.py",
+      "exit_code": 0,
+      "full_suite": {
+        "exit_code": 0,
+        "tests": 181,
+        "seconds": 427.674,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "failure_records": [],
+        "log_sha256": "ae401d6ce8e6fd61d9e5a28836a2f07af8cd3eb8c1f5d35d23680c7ae015e86b"
+      },
+      "source_audits": "all configured types passed",
+      "generated_diff": "unchanged"
+    },
+    "compileall": {
+      "command": "python -m compileall -q tools tests",
+      "exit_code": 0
+    },
+    "diff_checks": "Both repositories passed git diff --check; owner generated data/coverage diff is empty."
+  },
+  "actual_owner_export_integration": {
+    "after": {
+      "candidate_count": 2,
+      "contract_version": "candidate-diversity-report/v2",
+      "distinct_art_history_anchor_combinations": 2,
+      "distinct_lineage_count": 2,
+      "distinct_marketing_anchor_combinations": 1,
+      "distinct_self_anchor_combinations": 1,
+      "distinct_self_marketing_lineage_count": 1
+    },
+    "before": {
+      "candidate_count": 1,
+      "contract_version": "candidate-diversity-report/v2",
+      "distinct_art_history_anchor_combinations": 1,
+      "distinct_lineage_count": 1,
+      "distinct_marketing_anchor_combinations": 1,
+      "distinct_self_anchor_combinations": 1,
+      "distinct_self_marketing_lineage_count": 1
+    },
+    "gates": [
+      {
+        "rule_id": "R17",
+        "status": "PASS"
+      },
+      {
+        "rule_id": "R18",
+        "status": "PASS"
+      }
+    ],
+    "source_commit": "aab903446190450adb0a630d28539352ff82fe74",
+    "validity": "unknown"
+  },
+  "owner_export_sha256": "7e492af8f8a4208ca67f13bbf0be5722db47598f0bb45ff0fc373f5bf13a7a24",
+  "intermediate_checks": {
+    "owner_uncommitted_full_suite": {
+      "exit_code": 0,
+      "tests": 180,
+      "seconds": 184.082,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 11,
+      "failure_records": [],
+      "log_sha256": "1c51df01e87e528f7d2df05bc0a76978e590fe4649d54b0148847fe4188d76ab"
+    },
+    "owner_editing_during_scope_check": {
+      "exit_code": 1,
+      "tests": 181,
+      "seconds": 177.445,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 11,
+      "failure_records": [
+        {
+          "kind": "FAIL",
+          "test_id": "test_agent_verify.AgentVerifyTests.test_no_change_task_is_verified_without_remote_side_effects",
+          "count": 1
+        }
+      ],
+      "log_sha256": "7e4afa7c300eae4ccba67efa4ad0220dfe7a032e74f535435d20f6d4e8cf6195"
+    },
+    "owner_scope_failure_resolution": "Run canonical verification on the clean local commit; all 181 tests then passed without skips.",
+    "parent_focused_before_gate_fix": {
+      "exit_code": 1,
+      "tests": 98,
+      "seconds": 144.573,
+      "failures": 0,
+      "errors": 1,
+      "skipped": 0,
+      "failure_records": [
+        {
+          "kind": "ERROR",
+          "test_id": "test_candidate_gates.CandidateGateTests.test_generic_candidate_is_rejected_with_explicit_evidence",
+          "count": 1
+        }
+      ],
+      "log_sha256": "367f916e058b58f38bfa88ba4f762a90680053a2a46f1b6bb6691fcd98126b08"
+    },
+    "parent_gate_failure_resolution": "Preserve source evidence in rejection reports even when a candidate binds the wrong attribute; the 14-test regression and 99-test related suites pass.",
+    "parent_intermediate_full_suite": {
+      "exit_code": 130,
+      "status": "interrupted after known focused failure; not used as completion evidence"
+    }
+  },
+  "limitations": [
+    "Parent full suite remains FAILED: the same 8 failures and 35 errors as clean origin/main. Missing snapshot/audit and qualified fixture evidence was not converted to a successful gate.",
+    "The same five parent environment skips remain; all eight new method tests execute successfully.",
+    "Remote push, PR, merge, issue closure and owner-pin adoption belong to the orchestrator and were not performed."
+  ],
+  "privacy_and_authority": {
+    "reports_include_self_wording": false,
+    "parent_contains_child_canonical_body_copy": false,
+    "real_personal_inputs_used": false,
+    "conversation_or_credentials_saved": false,
+    "external_artifacts_created": [],
+    "inferred_feedback_created": false,
+    "permission_or_public_scope_expanded": false,
+    "git_remote_writes": [],
+    "lease_release": "held pending orchestrator synchronization; explicit instruction forbids agent push"
+  }
+}

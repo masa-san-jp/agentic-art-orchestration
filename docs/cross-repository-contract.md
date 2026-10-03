@@ -107,7 +107,37 @@ reportは`self-model`のsignal IDとsource commitを保持し、候補・選択�
 
 ## Candidate lineage diversity
 
-`tools/candidate_space.py --report diversity` は `candidate-diversity-report/v1` を出力する。ここでいう系統は、候補が使う self 側の anchor 組と marketing 側の normalized signal/attribute 組の順序付きペアである。self 側は同意済みの値そのものではなく、属性ごとの opaque anchor ID だけを組にし、marketing 側は `signal_id` と束縛属性名だけを使う。
+`tools/candidate_space.py --report diversity` は `candidate-diversity-report/v2` を出力する。
+`distinct_lineage_count` は、候補が使う self 側の anchor 組、art-history 側の操作の組、
+marketing 側の normalized signal/attribute 組の順序付き三つ組の数である。
+v1 の二軸の数は `distinct_self_marketing_lineage_count` として残す。
+`distinct_art_history_anchor_combinations` は歴史操作の組の数を示す。self 側は同意済みの値
+そのものではなく属性ごとの opaque anchor ID だけを使い、他の二軸は slot 名、`signal_id`、
+束縛属性名だけを使う。report に本人の文言・方法本文・出典本文を出さない。
+
+### 出典付き方法の候補入口（Issue #262）
+
+art-history owner の method concept を、4つめの signal kind を増やさず
+`domain.art_history.method`（`fixes / varies / requires / origin_domain`）と
+`source_refs`（実際の出典URL）で受け取る。正準グラフや source 本文を複製しない。
+方法は各記述が空でなく、出典URLが common `evidence_refs` にも存在することを adapter と
+normalized validator で検証する。関係が空の signal はこの方法経路だけに許可する。
+
+R17 の歴史操作は従来どおり `relations` を使い、R18 は `method` を使う。
+方法 signal に関係もある場合は R18 へ割り当て、同じ3入力から重複した研究を生成しない。
+関係 metadata は signal 内に保持する。
+各ルールは束縛した歴史操作がある signal のみを候補にする。method がなければ R18 は
+候補を作らず、既存の3入力による R17 の composition と input provenance を保つ。
+どちらも self / art-history / marketing の3入力が必要である。
+出典付き draft 方法は `validity: unknown` と解釈の不確実性を保持したまま、方法候補として
+gate を通せる。これは verified な歴史的影響や美術への適用の認定ではない。
+stale な方法は gate を通さない。Research の問いには method の3記述と起源領域を使い、
+出典URLはそのまま参照へ渡す。源のない思いつきを方法へ変換しない。
+
+v2 の系統数は、同じ self / marketing の fixture に方法 signal を1件加えると1→2となる。
+その際、従来の二軸数は1のままである。同内容の方法でも別の signal ID は別系統となるため、
+この数はテキストの意味的多様性の測定ではない。契約と前後比較は
+`tests/test_method_seeds.py` で検証する。
 
 R17 は self の `tensions` と `recurring_patterns` を `personal_tension` / `personal_pattern` の別 slot として組み合わせる。`recurring_patterns` が空でも slot は保持し、候補生成は停止しない。marketing 側は `stage` だけを composition slot として束縛する。`counterevidence` は `attribute_bindings.marketing` に宣言済みで provenance（`inputs.marketing`）には残るが、composition slot としては使わない — marketing-trends-notes の read-only clone（2026-09-28 観測）で全65 trend の `counterevidence` が空配列であることを確認しており、これを slot にしても取りうる値が増えないため（本節末尾の限界を参照）。
 

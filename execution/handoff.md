@@ -1,3 +1,31 @@
+# Issue #262 — local implementation and verification
+
+The assigned scope is Orchestration branch `agent/262-method-seeds` and Art History
+branch `agent/262-export-method-signals`. The orchestrator owns push, PR, merge and
+issue closure. Keep the lease held until that handoff is synchronized; this agent
+must not push. No manifest pin is adopted by this implementation.
+
+Sourced method concepts use the existing art-history signal kind. R18 binds the
+method as historical_operation; R17 retains relations. Draft method validity stays
+unknown. Diversity report v2 counts self, art-history and marketing axes, retaining
+the old two-axis count separately. Evidence: `execution/issue-262-verification.json`.
+
+The parent origin/main baseline is `f2972e43a6f19bc9a15830197864b19ddcd7b549`:
+691 tests, 8 failures, 35 errors, 5 skips. All 43 failure/error records were also
+reproduced on its exact clean tree (43 tests; 8 failures, 35 errors). Missing
+snapshot/audit artifacts remain visible; they are not normalized to successful gates.
+Art History candidate `aab903446190450adb0a630d28539352ff82fe74` passed its clean
+canonical verification, including all 181 tests without skips, graph/context checks,
+source audits and generated-file diff. The parent final suite ran all 699 tests:
+8 failures, 35 errors, 5 skips, with exactly the same failure records as clean
+origin/main and no new failure. All 99 related tests and the validator pass.
+The real owner export also increases candidate lineages from 1 to 2; the preserved
+two-axis count remains 1. The four observable issue conditions are achieved;
+the parent full-suite environment failures remain unresolved.
+
+Next operation: review the verification evidence and the two local commits. Adopt
+the owner pin only through the existing qualification workflow after owner merge.
+
 # OI-11 complete — next OI-12
 
 OI-11 is complete. The exact manifest pins were materialized in a Git-external immutable workspace and all six child repositories were clean and `MATCHED`. Production, Research, Art History, Self Model, Viewer Response, and Marketing each passed every declared native gate; the Marketing result was rechecked after aligning its disposable environment to `PyYAML==6.0.3`. Evidence is `execution/oi-11-owner-qualification-evidence.json`.
@@ -2974,3 +3002,23 @@ merge、release、公開範囲変更、Drive upload、force push、履歴書き�
 親queueの193 taskはすべてDONE、ready/backlog/blockedは0件である。関連8リポジトリのopen IssueはProduction #10のみで、これは永続要件SSOTとしてOPENを維持する。次の実装taskはない。
 
 追補: 親PR #249のreal-chainでは、移設後のSelf Model current treeに対して旧来のrepo内generated-output freshness gateが残っていたため、Self Modelの`build_graph.py --check`だけが失敗した。親のrepository quality gateを`--check --root entities`へ更新し、current treeのsynthetic entity構造を検証する契約へ合わせた。synthetic external profileの生成物freshnessは子repo CIで引き続き検証する。
+
+# Issue #262 — review handoff correction
+
+The review explicitly authorizes release of the local lease before PR review and
+merge. The lease is available, active task/repository are null, and ISSUE-262 is
+DONE as a local implementation handoff. This entry supersedes the earlier lease
+holding instruction without rewriting it. PR 経由で merge 予定、merge commit は main の履歴を参照。
+No merge, push, PR creation or GitHub write has been performed by this agent.
+
+PRIVATE_RAW / RESTRICTED / credential / direct identifier を含めていない。
+Art History implementation commit: `aab903446190450adb0a630d28539352ff82fe74`.
+Review verification: `execution/issue-262-review-verification.json`.
+
+Art History review correction commit: `636c01036415040fb9bcf8f86d3d1fd89a04f18b`.
+The review rerun passed 13 owner export tests, all 184 owner canonical tests
+without skips, 99 parent related tests, 14 parent regression tests and the parent
+validator. The parent full suite ran 699 tests with the same 8 failures, 35 errors
+and 5 skips as the saved clean origin/main baseline; there are no new failures.
+The updated owner export also preserves the 1→2 lineage comparison and method
+source references through Research. Both repositories retain local commits only.

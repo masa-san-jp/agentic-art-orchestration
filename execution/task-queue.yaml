@@ -1,5 +1,5 @@
-version: 94
-updated_at: "2026-09-15T14:21:20+09:00"
+version: 96
+updated_at: '2026-10-03T22:12:45+09:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3289,3 +3289,22 @@ tasks:
     pull_request_state: MERGED
     merge_commit: 4d9cebc972e3c61705764830e50c7e67d12b3b50
     completion: "SM-037 completed in self-model-notes: external-local profile migration and recovery/hash verification PASS; current-tree privacy cleanup PASS; owner repository validation PASS; 173 tests PASS; PR #104 merged to remote main as 4d9cebc; Issue #82 CLOSED. Evidence: execution/oi-13-self-model-migration-evidence.json. Production #10 remains the only open persistent requirement SSOT."
+
+  - id: ISSUE-262
+    milestone: v1.2
+    title: Compose sourced cross-domain methods through art-history signals
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/262
+    target_repositories: [agentic-art-orchestration, art-history]
+    agent_terminal: EVIDENCE_READY
+    depends_on: []
+    acceptance: Export sourced draft-or-verified method concepts; reject unsourced methods; compose methods using the existing three signal kinds; compare proposition lineages before and after without exposing self wording; preserve R17 generation.
+    checks: [python tools/validate.py --check, python -m unittest tests.test_method_seeds -v, python -m unittest discover -s tests -v, git diff --check]
+    human_gate: The orchestrator owns push, PR, merge and issue closure; this agent is authorized for local commits only. No pin adoption, public projection, release or consent expansion.
+    code_status: CODE_VERIFIED
+    acceptance_result: '4/4'
+    verification_result: Parent validator and 99 related tests PASS; full suite FAILED_BASELINE_MATCHED with 699 tests, 8 failures, 35 errors, 5 skips; clean owner canonical verification PASS with 184 tests without skips.
+    integration_status: ORCHESTRATOR_HANDOFF_PENDING
+    evidence: execution/issue-262-verification.json
+    completion: "ローカル実装・検証を完了してオーケストレーターへ引継ぎ。PR 経由で merge 予定、merge commit は main の履歴を参照。merge 済みとは記録しない。"
+    review_evidence: execution/issue-262-review-verification.json

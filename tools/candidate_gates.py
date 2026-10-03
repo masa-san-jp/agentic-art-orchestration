@@ -7,6 +7,7 @@ import argparse
 import copy
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -170,17 +171,48 @@ def evaluate_candidate(candidate: dict, signals: dict[str, dict], rule: dict, so
 
     historical_slot, historical_signal = selected("historical_operation")
     historical_domain = historical_signal.get("domain", {}).get("art_history", {}) if historical_signal else {}
-    historical_evidence = _matching_evidence(candidate, "art-history", "relations")
+    historical_attribute = historical_slot.get("attribute")
+    historical_evidence = (
+        _matching_evidence(candidate, "art-history", historical_attribute)
+        or _matching_evidence(candidate, "art-history", rule["composition"]["slots"]["historical_operation"]["attribute"])
+        or _matching_evidence(candidate, "art-history")
+    )
     relations = historical_domain.get("relations", [])
     historical_pass = bool(
         historical_signal
         and historical_slot.get("signal_kind") == "art-history"
-        and historical_slot.get("attribute") == "relations"
+        and historical_attribute == "relations"
         and historical_signal.get("signal_kind") == "art-history"
         and historical_signal.get("validity", {}).get("status") == "valid"
         and historical_domain.get("canonical_graph_locator")
         and relations
         and all(isinstance(relation, dict) and relation.get("evidence_refs") for relation in relations)
+    )
+    if historical_attribute == "method":
+        # Draft methods are usable seeds with explicitly unknown validity;
+        # this does not certify a historical influence or verified fact.
+        method = historical_domain.get("method")
+        refs = historical_domain.get("source_refs")
+        evidence_urls = {ref["locator"] for ref in historical_signal.get("evidence_refs", [])
+                         if isinstance(ref, dict) and isinstance(ref.get("locator"), str)} if historical_signal else set()
+        historical_pass = bool(
+            historical_signal
+            and historical_slot.get("signal_kind") == "art-history"
+            and historical_signal.get("signal_kind") == "art-history"
+            and historical_signal.get("validity", {}).get("status") in {"valid", "unknown"}
+            and historical_signal.get("freshness", {}).get("status") == "current"
+            and historical_domain.get("canonical_graph_locator")
+            and isinstance(method, dict)
+            and all(isinstance(method.get(field), list) and method[field]
+                    and all(isinstance(value, str) and value.strip() for value in method[field])
+                    for field in ("fixes", "varies", "requires"))
+            and isinstance(method.get("origin_domain"), str) and method["origin_domain"].strip()
+            and isinstance(refs, list) and refs
+            and all(isinstance(ref, str) and re.fullmatch(r"https?://[^\s/]+(?:/[^\s]*)?", ref)
+                    and ref in evidence_urls for ref in refs)
+        )
+    historical_pass = historical_pass and (
+        historical_attribute == rule["composition"]["slots"]["historical_operation"]["attribute"]
     )
 
     contemporary_slot, contemporary_signal = selected("contemporary_condition")

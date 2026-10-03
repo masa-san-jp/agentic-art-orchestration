@@ -135,6 +135,11 @@ def _bound_value(signal: dict, kind: str, attribute: str, anchor_id: str | None 
     value = domain.get(attribute)
     entity = (signal.get("source", {}).get("entity_ids") or [signal.get("signal_id", "")])[0]
 
+    if kind == "art-history" and attribute == "method" and isinstance(value, dict):
+        return (f"{entity} の方法（起源領域: {value['origin_domain']}）: "
+                f"固定: {' / '.join(value['fixes'])}; "
+                f"変化: {' / '.join(value['varies'])}; "
+                f"成立条件: {' / '.join(value['requires'])}")
     if isinstance(value, list) and not value:
         return "無し"
     if isinstance(value, list) and value and isinstance(value[0], dict):
@@ -174,6 +179,8 @@ def _reference_uri(signal: dict, locator: str, full_names: dict) -> str:
     The knowledge bases carry repository-relative locators. The research repository
     requires a URI, and a reference nobody can open is not a reference.
     """
+    if locator.startswith(("https://", "http://")):
+        return locator
     source = signal.get("source", {})
     full_name = full_names.get(source.get("repository"))
     if not full_name or not source.get("commit"):
