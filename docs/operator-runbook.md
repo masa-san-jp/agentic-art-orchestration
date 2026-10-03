@@ -12,7 +12,7 @@ git status --short
 
 次に必ず [AGENTS.md](../AGENTS.md)、設計仕様、実行計画、`PLANS.md`、`execution/task-queue.yaml`、`execution/state.yaml`、[handoff](../execution/handoff.md)を読む。`state.yaml`の`active_task`とleaseが自分の作業範囲と一致しない場合、同じpathを編集しない。
 
-Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstrap](../README.md#ブートストラップ検証)を上から実行する。GitHub認証がない環境では、実repoを操作せずREADME記載の`--offline-fixture`経路を使う。
+Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstrap](../README.md#ブートストラップ検証)を上から実行する。PUBLIC repoの読取はGitHub認証なしで§2の入口を使う。ネットワークなしの検証にはREADME記載の`--offline-fixture`経路を使う。
 
 ## 1. 正本と安全境界
 
@@ -37,14 +37,14 @@ Fresh cloneで依存関係が未準備なら、先に[README.mdの正準bootstra
 
 fresh cloneからmanifest全entryを展開する場合は、個別repoのcloneやlegacy `init`を組み合わせず、
 `bootstrap`を一回実行する。対象repoは`config/repositories.yaml`だけから読み、コマンド・README・
-Issue本文へ複製しない。実repoではGitHubのambient credential helperを使い、credential値を引数・
+Issue本文へ複製しない。PUBLIC の実repoは資格情報なしの入口で読み、credential値を引数・
 remote URL・ログ・resultへ入れない。
 
 ~~~bash
-gh auth status --hostname github.com
-gh auth setup-git
+EXTERNAL_STATE_ROOT="/absolute/path/outside/credential-free-state"
 WORKSPACE_ROOT="/absolute/path/outside/agentic-art-orchestration"
-.venv/bin/python tools/workspace.py bootstrap \
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/workspace.py bootstrap \
   --workspace-root "$WORKSPACE_ROOT" --json
 ~~~
 
@@ -77,27 +77,55 @@ JSON resultの終了codeは機械的に扱う。
 lockやstagingが中断runのものなら、所有者とmanifest hashを確認できるまで次runを止める。復元不能な
 raceは`BLOCKED_RACE`のまま人間へ渡す。
 
-### 制作sessionのread-only GitHub資格情報（Issue #250）
+### 制作sessionの資格情報なし入口（Issue #250 S4）
 
-制作run（self-modelヒアリングを含む）を実行するagent sessionは、allowlisted repositoryへpush、Issue/PR作成、
-commentできる資格情報を持たせない。read-only fine-grained token（Contents: Read-only、Issues/PR: none）の
-発行と保存先はownerが決め、値をGit、state、log、Issueへ書かない。専用state rootの外部ディレクトリに
-`GH_CONFIG_DIR`を作り、tokenは対話入力でloginする。
+制作run（self-modelヒアリングを含む）は、allowlisted repositoryへpush、Issue/PR作成、commentできる
+資格情報を持たないsessionで実行する。現在のPUBLIC 子repoは認証なしで読めるため、ownerによる
+GitHub token発行・login・設定変更は不要である。任意のコマンド、またはagent sessionの起動コマンドを渡す。
+
+~~~bash
+EXTERNAL_STATE_ROOT="/absolute/external/state"
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/self_hearing.py open --run-id <run-id> \
+  --state-root "$EXTERNAL_STATE_ROOT" --workspace-root <verified-child-workspace> \
+  --profile-root <external-self-model-profile>
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/run.py --run-id <run-id> --state-root "$EXTERNAL_STATE_ROOT" \
+  --workspace-root <verified-child-workspace> --profile-root <external-self-model-profile>
+~~~
+
+`answer`（回答は標準入力）、`skip`、agent action、保存済みresume commandも同じ入口の`--`後へ渡す。
+入口はstate root配下へ一意な一時領域と空の`GH_CONFIG_DIR`（700）を作り、GitHub/Enterprise token、
+継承Git config、askpass、SSH agentを除去する。空の`GIT_CONFIG_GLOBAL`、`GIT_CONFIG_NOSYSTEM=1`、
+`GIT_TERMINAL_PROMPT=0`、空のcredential helper/extraheader、鍵・agent・対話認証を使わない
+`GIT_SSH_COMMAND`を渡す。HOME/XDG設定も空にし、`~/.netrc`を継承しない。
+既存login・keychain・設定ファイルを変更せず、標準入出力と終了コードを引き継ぎ、実行後に一時領域を片付ける。
+profile・workspace・必要なagent設定は明示した絶対pathを使う。Project-owned v2の初回起動では、
+入口用には別の外部一時state rootを使い、Projectのprivate rootはresolverが検証後に作る。
+
+`tools/run.py`と`tools/self_hearing.py open`は従来どおり`git_write_credentials: absent|present|unknown`を
+metadata-onlyでrun.jsonへ記録する。空のgh設定と無効なhelperを確認できる標準入口では`absent`になる。
+観測失敗を成功へ変換せず、`present`でもヒアリングやrunをBLOCKEDにはしない。
+開発・PR作成・mergeは別sessionで行う。親がspawnするingest・hearing・child toolも4種のGitHub tokenを継承しない。
+
+#### privateに戻した場合の代替：read-only token
+
+子repoをprivateへ戻し、匿名readが使えない場合だけ、ownerがContents: Read-only、Issues/PR: noneの
+fine-grained tokenを用意する。専用`GH_CONFIG_DIR`を開発sessionと共有せず、値をGit・state・log・Issueへ残さない。
+この代替sessionは資格情報なし入口を使わない（入口はread-only tokenも除去する）。
 
 ~~~bash
 EXTERNAL_STATE_ROOT="/absolute/external/state"
 export GH_CONFIG_DIR="$EXTERNAL_STATE_ROOT/gh-readonly"
 mkdir -p "$GH_CONFIG_DIR"
-unset GH_TOKEN GITHUB_TOKEN
+chmod 700 "$GH_CONFIG_DIR"
+unset GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN
 gh auth login --hostname github.com --git-protocol https --with-token
 gh auth status --hostname github.com
 gh auth setup-git
 ~~~
 
-上記は制作session専用であり、PR作成・mergeを行う開発sessionと共有しない。`tools/run.py`と
-`tools/self_hearing.py open`は`git_write_credentials: absent|present|unknown`をmetadata-onlyで観測して
-run.jsonへ記録する。`present`はsetup逸脱なので次回起動前に直すが、ヒアリングやrunをBLOCKEDにはしない。
-親がspawnするingest・hearing・child toolは`GH_TOKEN`/`GITHUB_TOKEN`を継承せず、Git credential helperを空にして起動する。
+tokenは標準入力から対話的に渡す。観測は従来の3値を保ち、scope本文やtokenを記録しない。
 
 networklessの適用証拠は実repoと分ける。default manifestのpinは合成bare remoteのHEADと一致しないことが
 あるため、CLIの初回は`BLOCKED_PIN_DRIFT`/exit 2でも正常である。これはclone後もpinを自動採用しない
@@ -154,7 +182,8 @@ $EDITOR "$DESTINATIONS_FILE"
 新しいagentの最小dry runは次である。
 
 ~~~bash
-.venv/bin/python tools/run.py --offline-fixture \
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/run.py --offline-fixture \
   --run-id DEST-RUNBOOK-001 --destinations-file "$DESTINATIONS_FILE"
 ~~~
 

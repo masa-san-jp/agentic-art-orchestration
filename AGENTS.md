@@ -48,7 +48,7 @@ Issue SSOTの最低要件は、(1)観測可能な受入条件、(2)対象reposit
 
 ## Production planning mode
 
-このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。まず`tools/self_hearing.py open`を実行し、`offered`ならpacketのintent全行、why、anchors、questionを一問だけ会話で示す。回答は子repoのannotated block形式で`tools/self_hearing.py answer`へ標準入力し、断り・無応答は`skip`にする。packetや回答は親のstate・log・Issue・PR・handoffへ保存しない。どのoutcomeでも同じrunの`tools/run.py`を実行し、ヒアリング結果で停止しない。その後READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。起動時にworkspaceがmissingまたはcleanなpin driftだけなら、既存checkoutを変更せずGit外の専用qualified workspaceを作ってResearch/Productionへ継続する。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件と保存済みresume commandを処理する。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`は未完了であり、手動制作案へ置換して完走扱いにしない。制作sessionは`GH_TOKEN`/`GITHUB_TOKEN`を持たないread-only GitHub資格情報環境で起動し、PR作成・mergeは別sessionで行う。
+このrepoを利用するエージェントとして起動された場合、ユーザーにテーマ・repo名・slug・titleを質問しない。まず`tools/self_hearing.py open`を実行し、`offered`ならpacketのintent全行、why、anchors、questionを一問だけ会話で示す。回答は子repoのannotated block形式で`tools/self_hearing.py answer`へ標準入力し、断り・無応答は`skip`にする。packetや回答は親のstate・log・Issue・PR・handoffへ保存しない。どのoutcomeでも同じrunの`tools/run.py`を実行し、ヒアリング結果で停止しない。その後READMEと`docs/agent-runtime-guide.md`のテーマ未指定入口を実行し、pin済みsignalからgate通過候補を選び、候補由来の`creative_question`をテーマ案としてResearchへ渡す。明示intentは任意の順位付け入力であり、必須ではない。起動時にworkspaceがmissingまたはcleanなpin driftだけなら、既存checkoutを変更せずGit外の専用qualified workspaceを作ってResearch/Productionへ継続する。startupがBLOCKEDの場合はテーマやPLAN_READYを捏造せず、観測された解除条件と保存済みresume commandを処理する。`AT_EDGE`、`RESEARCH_PENDING`、`AT_PRODUCTION`は未完了であり、手動制作案へ置換して完走扱いにしない。制作session、ヒアリングの全操作、runと保存済みresume commandは`.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- <command...>`で起動する。PUBLIC 子repoにはtoken発行・loginは不要であり、入口が空の`GH_CONFIG_DIR`（700）、Git設定、HOMEとSSH認証の隔離を行う。必要なprofile・workspace・agent設定は絶対pathで明示する。Project-owned v2の初回起動は入口用の外部一時rootを別に使い、Project配下はresolver検証後に作る。子をprivateへ戻した場合だけ、[operator runbook §2](docs/operator-runbook.md#privateに戻した場合の代替read-only-token)の専用`GH_CONFIG_DIR`/read-only tokenを使う。PR作成・mergeは別sessionで行う。
 
 ## Work protocol
 
@@ -108,7 +108,7 @@ inspect → claim → lock → edit → test → child-gates → diff → record
 
 ## Required checks
 
-Fresh cloneでは、まず[README.mdの正準bootstrap](README.md#ブートストラップ検証)を上から実行する。READMEにはrepo内`.venv`の作成と依存関係準備を含める。full suiteまで行う場合は、同じ節のoffline fixture生成を先に完了する。GitHub認証がない場合の子repo確認はREADME記載の`--offline-fixture`経路を使い、システムPythonへ依存関係をインストールしない。
+Fresh cloneでは、まず[README.mdの正準bootstrap](README.md#ブートストラップ検証)を上から実行する。READMEにはrepo内`.venv`の作成と依存関係準備を含める。full suiteまで行う場合は、同じ節のoffline fixture生成を先に完了する。PUBLIC 子repoの読取はGitHub認証なしで`tools/credential_free.py`を使う。ネットワークなしの検証はREADME記載の`--offline-fixture`経路を使い、システムPythonへ依存関係をインストールしない。
 
 ~~~bash
 .venv/bin/python tools/validate.py --check
@@ -140,7 +140,7 @@ interaction実装後はnetworkless fake Drive、append-only artifact、feedback 
 
 ## Requested delivery completion (Issue 217)
 
-For a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+In a session launched through `tools/credential_free.py`, for a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
 
 Continue the returned agent actions through Production plan generation, native automatic attestation, canonical projection, native Project lineage initialization and local receiver validation. The normal automatic plan lane does not call the manual review API or wait for approval. Reuse existing native approvals only for a separately requested manual/work publication; missing approvals return the prepared target and precise remaining review decisions for that lane. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait preserves successful work and does not consume the no-progress retry budget.
 

@@ -1,3 +1,41 @@
+# Issue #250 S4 — local credential-free entry
+
+Assigned repository: agentic-art-orchestration; branch: `agent/250-credential-free-run-entry`.
+Start point: `5737d65492ef3b13a273be4424578596a76f2078` (origin/main).
+The orchestrator owns push, PR, merge and issue closure. The lease is held for
+local implementation and remains held until orchestrator synchronization.
+
+The new entry isolates empty gh/Git/HOME configuration, removes token/askpass/SSH
+sources, streams command I/O and preserves exit status. Empty gh configuration
+and an effective empty helper list are observed as absent; failed or ambiguous
+observations remain unknown. PUBLIC reads need no token; private read-only login
+remains a separate documented alternative. No child schema, pin, profile or
+production output contract is changed.
+
+Verification evidence: `execution/issue-250-s4-verification.json`.
+Pre-edit origin/main: 699 tests, 8 failures, 35 errors, 5 skips, exit 1.
+Changed full suite: 715 tests, 8 failures, 35 errors, 5 skips, exit 1; the 43
+(kind, test ID) failure records are identical, with zero added or removed failure.
+Focused suite: 39 tests PASS. Related suite with the documented offline snapshot:
+75 tests PASS; before bootstrap its one failure was the same baseline snapshot
+missing case. Validator, compile, README status and diff checks PASS.
+
+The actual credential-free `run.py --offline-fixture --run-id cf-check --state-root
+<temporary-state> --check` exits 0 at AT_EDGE; run.json and preflight both record
+`git_write_credentials: absent`. This is an offline stage check, not PLAN_READY
+or completed delivery. Native fixture init and snapshot generation exit 0.
+Only the two smoke-generated snapshot files were removed afterward, restoring
+the pre-test absence. Their hashes and the run.json hash are in the evidence.
+PUBLIC `git ls-remote` succeeds without login/token. No credential value, real
+hearing packet/answer, child data/schema/pin or external artifact was recorded.
+Explicit input is the assigned S4 requirement; inferred feedback is none.
+
+Acceptance: 4/4 scoped S4 conditions. Remote synchronization, PR, merge and issue
+closure remain NOT_RUN_BY_INSTRUCTION, and the implementation lease stays held.
+Next operation: `git show --stat HEAD`, then review the local commit/evidence and
+perform orchestrator-owned synchronization before releasing the lease. Do not
+close all of Issue #250 solely from this S4 implementation.
+
 # Issue #262 — local implementation and verification
 
 The assigned scope is Orchestration branch `agent/262-method-seeds` and Art History

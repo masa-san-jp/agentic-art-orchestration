@@ -1,5 +1,56 @@
 Open-Issue autonomous implementation: [docs/20260914-open-issues-autonomous-implementation-plan.md](docs/20260914-open-issues-autonomous-implementation-plan.md). This ExecPlan connects the unqueued inspiration/prototype Issues and their owner tasks into one dependency-ordered completion path while preserving Production #10 and the Self Model #82 human gate.
 
+## Issue #250 S4 — Credential-free production entry
+
+### Purpose / Big Picture
+
+Launch hearing and production commands without ambient GitHub write credentials; PUBLIC child reads require no owner token provisioning. The assigned branch is `agent/250-credential-free-run-entry`; push/PR/merge/close belong to the orchestrator.
+
+### Progress
+
+- [x] Observe the clean origin/main tracked tree and available implementation lease.
+- [x] Add temporary gh/Git/HOME isolation, token/askpass/SSH removal and exit/stdin/stdout propagation.
+- [x] Keep absence observation conservative and document the PUBLIC standard/private fallback.
+- [x] Finish focused/full verification, compare baseline failures and run the offline CLI smoke check.
+- [x] Record verified evidence; prepare the local commit handoff with the lease retained for orchestrator synchronization.
+
+### Surprises & Discoveries
+
+Unauthenticated gh previously returned `unknown`; an explicitly empty configuration proves no stored gh account even if gh is missing. Git's last empty helper resets earlier osxkeychain entries. URL-specific local headers and ~/.netrc are independent auth sources. origin/main ran 699 tests with 8 failures, 35 errors and 5 skips; the missing generated artifacts are not repaired as part of S4.
+
+### Decision Log
+
+Use a unique temporary directory under the supplied state root for every invocation, rather than reusing a possibly logged-in directory. Isolate HOME/XDG to exclude netrc, preserve existing files, and require explicit profile/agent paths. Keep the 3-value run metadata and the nonblocking `present` behavior. Use an external launcher state root for initial Project v2 startup so the native Project resolver still validates before creating private roots.
+
+### Outcomes & Retrospective
+
+S4 achieves 4/4 scoped conditions. Validator, 39 focused tests, 75 bootstrapped related tests, compile/diff/status and actual offline run pass. The changed full suite ran 715 tests with exactly the 43 origin/main failure records (8 failures, 35 errors, 5 skips); no failure was added or removed. Offline run exits 0 at AT_EDGE and records absent in run.json and preflight. The two smoke-generated snapshots were removed to restore the original environment. S4 is not completion of every part of Issue #250 or a remote delivery receipt.
+
+### Context and Orientation
+
+`tools/process_policy.py` owns metadata-only observation and child environment removal. `tools/self_hearing.py` and `tools/run.py` retain their contracts. No owner code, schema, manifest pin or personal profile changes are needed.
+
+### Plan of Work
+
+Add `tools/credential_free.py`, integration/regression tests, and update AGENTS/runtime/operator/instance entry documentation. Preserve the private read-only login alternative and all existing human gates.
+
+### Concrete Steps
+
+Use the supplied external venv for validator, focused tests and full discovery. Compare all `(kind, test ID)` failure records against the pre-edit origin/main run. After full comparison, generate the documented offline fixture/snapshot, run `credential_free.py -- ... run.py --offline-fixture --run-id cf-check --state-root <temporary-state> --check`, then remove only smoke-generated snapshot files.
+
+### Validation and Acceptance
+
+Four scope conditions: isolated launch/exit behavior; `absent` observation plus optional public read; executable standard/private documentation; unchanged contracts and no new baseline failure. Record counts, exit codes and opaque hashes in `execution/issue-250-s4-verification.json`. Related tests include credential-free, self-hearing, run and docs; full discovery and diff checks remain required.
+
+### Idempotence and Recovery
+
+Reuse the caller's state without changing existing run files. Each invocation gets a fresh empty auth directory, cleaned after child completion. Failed setup reports sanitized errors; existing credentials/settings are never deleted. Retain the lease and local-only status until orchestrator handoff is synchronized.
+
+### Interfaces and Dependencies
+
+`python tools/credential_free.py --state-root <root> -- <command...>` wraps arbitrary argv without a shell. Reuse `child_environment` and `NO_INHERITED_AUTH`; no new package, provider, token or output schema is introduced.
+
+
 AAK-02 execution: [docs/aak-02-execution.md](docs/aak-02-execution.md). All owner candidates are qualified; the six-run native integration acceptance is complete under the synthetic profile, with the implementation merged; public projection and physical work remain human-gated.
 
 Integration preparation evidence: [execution/aak-integration-readiness.json](execution/aak-integration-readiness.json). PR201/202 repaired and propagated through204/206/207; duplicate alternatives closed with branch history retained. Native AAK05 registration PR94 is merged; feature PR95 is code verified.
