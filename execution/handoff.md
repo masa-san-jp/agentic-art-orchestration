@@ -3002,3 +3002,23 @@ merge、release、公開範囲変更、Drive upload、force push、履歴書き�
 親queueの193 taskはすべてDONE、ready/backlog/blockedは0件である。関連8リポジトリのopen IssueはProduction #10のみで、これは永続要件SSOTとしてOPENを維持する。次の実装taskはない。
 
 追補: 親PR #249のreal-chainでは、移設後のSelf Model current treeに対して旧来のrepo内generated-output freshness gateが残っていたため、Self Modelの`build_graph.py --check`だけが失敗した。親のrepository quality gateを`--check --root entities`へ更新し、current treeのsynthetic entity構造を検証する契約へ合わせた。synthetic external profileの生成物freshnessは子repo CIで引き続き検証する。
+
+# Issue #262 — review handoff correction
+
+The review explicitly authorizes release of the local lease before PR review and
+merge. The lease is available, active task/repository are null, and ISSUE-262 is
+DONE as a local implementation handoff. This entry supersedes the earlier lease
+holding instruction without rewriting it. PR 経由で merge 予定、merge commit は main の履歴を参照。
+No merge, push, PR creation or GitHub write has been performed by this agent.
+
+PRIVATE_RAW / RESTRICTED / credential / direct identifier を含めていない。
+Art History implementation commit: `aab903446190450adb0a630d28539352ff82fe74`.
+Review verification: `execution/issue-262-review-verification.json`.
+
+Art History review correction commit: `636c01036415040fb9bcf8f86d3d1fd89a04f18b`.
+The review rerun passed 13 owner export tests, all 184 owner canonical tests
+without skips, 99 parent related tests, 14 parent regression tests and the parent
+validator. The parent full suite ran 699 tests with the same 8 failures, 35 errors
+and 5 skips as the saved clean origin/main baseline; there are no new failures.
+The updated owner export also preserves the 1→2 lineage comparison and method
+source references through Research. Both repositories retain local commits only.

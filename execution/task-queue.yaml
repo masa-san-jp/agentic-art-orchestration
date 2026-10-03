@@ -1,5 +1,5 @@
-version: 95
-updated_at: '2026-10-03T20:18:20+09:00'
+version: 96
+updated_at: '2026-10-03T22:12:45+09:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3293,7 +3293,7 @@ tasks:
   - id: ISSUE-262
     milestone: v1.2
     title: Compose sourced cross-domain methods through art-history signals
-    status: IN_PROGRESS
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/262
     target_repositories: [agentic-art-orchestration, art-history]
     agent_terminal: EVIDENCE_READY
@@ -3303,6 +3303,8 @@ tasks:
     human_gate: The orchestrator owns push, PR, merge and issue closure; this agent is authorized for local commits only. No pin adoption, public projection, release or consent expansion.
     code_status: CODE_VERIFIED
     acceptance_result: '4/4'
-    verification_result: Parent validator and 99 related tests PASS; full suite FAILED_BASELINE_MATCHED with 699 tests, 8 failures, 35 errors, 5 skips; clean owner canonical verification PASS with 181 tests without skips.
+    verification_result: Parent validator and 99 related tests PASS; full suite FAILED_BASELINE_MATCHED with 699 tests, 8 failures, 35 errors, 5 skips; clean owner canonical verification PASS with 184 tests without skips.
     integration_status: ORCHESTRATOR_HANDOFF_PENDING
     evidence: execution/issue-262-verification.json
+    completion: "ローカル実装・検証を完了してオーケストレーターへ引継ぎ。PR 経由で merge 予定、merge commit は main の履歴を参照。merge 済みとは記録しない。"
+    review_evidence: execution/issue-262-review-verification.json
