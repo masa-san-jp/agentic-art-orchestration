@@ -10,12 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def unwrapped_production_commands(markdown: str) -> list[str]:
     """Inspect each shell/inline invocation, never borrow a wrapper from a neighbour."""
-    target = re.compile(r"tools/(run|self_hearing|purpose_e2e)\.py(?=\s|$)")
+    target = re.compile(r"(?<![\w])(?:tools/)?(run|self_hearing|purpose_e2e)\.py(?=\s|$)")
     problems = []
 
     def check(command: str) -> None:
         for match in target.finditer(command):
-            arguments = command[match.end():]
+            arguments = re.split(r";|&&|\|", command[match.end():], maxsplit=1)[0]
             if not re.match(r"\s+(?:--|open\b|answer\b|skip\b)", arguments):
                 continue  # Bare filenames are references, not invocations.
             if match.group(1) == "purpose_e2e" and "--live-private" not in arguments:
@@ -26,9 +26,9 @@ def unwrapped_production_commands(markdown: str) -> list[str]:
             if not re.search(r"tools/credential_free\.py\s+.*?--state-root\s+\S+\s+--\s+\S*python(?:3)?\s+$", prefix):
                 problems.append(command.strip())
 
-    fence = re.compile(r"^(```|~~~)([^\n]*)\n(.*?)^\1[ \t]*$", re.M | re.S)
+    fence = re.compile(r"^[ \t]*(```|~~~)([^\n]*)\n(.*?)^[ \t]*\1[ \t]*$", re.M | re.S)
     for block in fence.finditer(markdown):
-        if block.group(2).strip() not in {"bash", "sh", "shell", "zsh"}:
+        if block.group(2).strip() not in {"", "bash", "sh", "shell", "zsh"}:
             continue
         joined = re.sub(r"\\[ \t]*\n[ \t]*", " ", block.group(3))
         heredoc = None
@@ -70,6 +70,10 @@ class DocumentationTests(unittest.TestCase):
                 self.assertTrue(unwrapped_production_commands(f"```bash\n{wrapped} | python3 {invocation}\n```"))
         self.assertEqual([], unwrapped_production_commands("```sh\npython3 tools/run.py --offline-fixture\n```"))
         self.assertTrue(unwrapped_production_commands("```sh\npython3 tools/run.py --offline-fixture\npython3 tools/run.py --run-id LIVE\n```"))
+        self.assertTrue(unwrapped_production_commands("```sh\npython3 tools/run.py --run-id LIVE | python3 tools/run.py --offline-fixture\n```"))
+        self.assertTrue(unwrapped_production_commands("   ```bash\n   python3 tools/run.py --run-id LIVE\n   ```"))
+        self.assertTrue(unwrapped_production_commands("`run.py --run-id LIVE`"))
+        self.assertEqual([], unwrapped_production_commands("`tools/batch_run.py --help`"))
         self.assertEqual([], unwrapped_production_commands("`tools/run.py` owns run state."))
 
     def test_production_entry_requires_no_public_token_and_keeps_private_fallback(self):

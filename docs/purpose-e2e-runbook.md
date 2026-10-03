@@ -9,7 +9,8 @@ The theme used by this run is `透明な境界を往復する光`. It is a synth
 First produce a fresh child-gate report against a clean, exact manifest-pinned workspace. The gate runner uses temporary immutable clones and never writes to a child checkout:
 
 ```bash
-python3 tools/child_quality_gates.py \
+.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
+  .venv/bin/python tools/child_quality_gates.py \
   --manifest config/repositories.yaml \
   --workspace-root <verified-child-workspace> \
   --python-root <child-environment-root> \
