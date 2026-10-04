@@ -14,12 +14,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tools import ingest_signals, run, security, self_export
+from tools.signal_fixtures import synthetic_self_export
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def portable(*, empty=False):
-    source = json.loads((ROOT / "tests/fixtures/signal/self_export_bundle.json").read_text())
+    source = synthetic_self_export()
     now = datetime.now(timezone.utc).replace(microsecond=0)
     source["generated_at"] = now.isoformat()
     if empty:
@@ -148,8 +149,20 @@ class PortableSelfExportTests(unittest.TestCase):
             for options in ({"profile_root": root / "profile"}, {"self_export": path}):
                 with patch.object(ingest_signals, "load_yaml", return_value=manifest), \
                         patch.object(ingest_signals, "_export", return_value=value["payload"]):
-                    with self.assertRaisesRegex(ingest_signals.IngestBlocked, "SELF_MODEL_EMPTY"):
+                    with self.assertRaisesRegex(ingest_signals.IngestBlocked, "SELF_MODEL_EMPTY") as blocked:
                         ingest_signals.ingest(root, root / "signals", "artistic-research", sys.executable, **options)
+                remediation = blocked.exception.remediation
+                self.assertIn("Event", remediation)
+                self.assertIn("Claim", remediation)
+                self.assertIn("育成 session", remediation)
+                self.assertIn("確認して", remediation)
+                self.assertIn(self_export.GROWTH_GUIDE, remediation)
+                if "self_export" in options:
+                    self.assertNotIn("ヒアリング", remediation)
+                    self.assertIn("再書き出し", remediation)
+                    self.assertIn("本人記録のある機械", remediation)
+                else:
+                    self.assertIn("ヒアリング", remediation)
                 self.assertFalse((root / "signals").exists())
             checkout = root / "self-model/tools"
             checkout.mkdir(parents=True)
@@ -237,6 +250,52 @@ class PortableSelfExportTests(unittest.TestCase):
             target.write_text(json.dumps(portable()["payload"]))
             subprocess.run(["git", "-C", str(root), "add", "."], check=True)
             self.assertEqual("TRACKED_SELF_EXPORT", security.tracked_self_exports(root)[0]["code"])
+
+    def test_self_ingest_requires_explicit_git_external_output_before_exporters(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            export = root / "export.json"
+            export.write_text(json.dumps(portable()))
+            foreign = root / "foreign"
+            subprocess.run(["git", "init", "-q", str(foreign)], check=True)
+            alias = root / "alias"
+            alias.symlink_to(foreign, target_is_directory=True)
+            for options in ({"profile_root": root / "profile"}, {"self_export": export}):
+                for output in (None, ROOT / "data/signals", foreign, alias / "signals"):
+                    with self.subTest(options=list(options), output=output), \
+                            patch.object(ingest_signals, "_export") as exporter:
+                        code = "SELF_SIGNAL_OUTPUT_REQUIRED" if output is None else "SELF_SIGNAL_OUTPUT_REPOSITORY_OVERLAP"
+                        with self.assertRaisesRegex(ingest_signals.IngestBlocked, code):
+                            ingest_signals.ingest(root, output, "artistic-research", sys.executable, **options)
+                        exporter.assert_not_called()
+            self.assertFalse((foreign / "signals").exists())
+            ignored = subprocess.run(["git", "check-ignore", "data/signals/self-model/generated.json"], cwd=ROOT, capture_output=True)
+            self.assertEqual(0, ignored.returncode)
+
+    def test_self_ingest_cli_without_output_blocks_and_does_not_write_defaults(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            export = root / "export.json"
+            export.write_text(json.dumps(portable()))
+            stderr = io.StringIO()
+            with patch.object(ingest_signals, "_export") as exporter, redirect_stderr(stderr):
+                code = ingest_signals.main(["--purpose", "artistic-research", "--self-export", str(export)])
+            self.assertEqual(2, code)
+            self.assertEqual("SELF_SIGNAL_OUTPUT_REQUIRED", json.loads(stderr.getvalue())["stop_reason"])
+            exporter.assert_not_called()
+
+    def test_tracked_template_is_fictional_and_contract_is_instantiated_in_memory(self):
+        template = json.loads((ROOT / "tests/fixtures/signal/self_export_bundle.json").read_text())
+        self.assertEqual("subject/fixture", template["subject"])
+        self.assertEqual("synthetic-self-signal-template/v1", template["fixture_version"])
+        self.assertNotIn("contract_version", template)
+        bundle = synthetic_self_export()
+        self_export.validate_payload(bundle, "artistic-research")
+        self.assertEqual("0" * 40, bundle["source_commit"])
+        self.assertEqual(3, bundle["signal_count"])
+        for record in bundle["signals"]:
+            self.assertIn("架空の subject/fixture", record["statement"])
+            self.assertTrue(record["entity_id"].startswith("claim/fixture-fiction-"))
 
 
 if __name__ == "__main__":

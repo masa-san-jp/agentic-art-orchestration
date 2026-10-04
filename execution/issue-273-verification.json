@@ -1,11 +1,11 @@
 {
   "acceptance": {
     "A1": {
-      "observed": "Minimal synthetic subject plus consent Source returns BLOCKED / SELF_MODEL_EMPTY, remediation and same-run resume; exit 2",
+      "observed": "Minimal synthetic subject plus consent returns BLOCKED / SELF_MODEL_EMPTY, same-run resume and explicit hearing Event -> growth-session Claim -> owner-machine export signal verification; receiver empty export instead asks owner-machine growth/re-export without hearing.",
       "status": "PASSED"
     },
     "A2": {
-      "observed": "README links owner README, for-other-personas and Issue 136 without copying init commands",
+      "observed": "README/runbook link owner for-other-personas.md#何回で-signal-が出るか and describe Event-to-Claim growth plus nonempty export verification before resume; init commands are not copied.",
       "status": "PASSED"
     },
     "B3": {
@@ -22,47 +22,48 @@
       "status": "PASSED"
     },
     "B6": {
-      "compatibility_exception": {
-        "path": "tests/fixtures/signal/self_export_bundle.json",
-        "reason": "Existing pinned owner-export regression semantics must not be silently changed; only exact existing bytes in this checkout are excepted, not a fixture-directory exemption",
-        "sha256": "4fe5da5077f42a3cbcd2627d2fee711ef7ff90a40921030a52003bb511067161"
-      },
-      "observed": "Index and tracked working bytes reject new native/portable exports, including renamed and nested payloads; repository-local input/output rejected",
-      "status": "PARTIAL"
+      "observed": "All tracked native/portable exports are rejected, including renamed/nested payloads, fixture paths and staged-only blobs, without hash or path exceptions. Fixture is a fictional subject/fixture template instantiated as the existing owner envelope only in memory. Self ingest requires explicit Git-external --output before exporter calls; ignored/symlink/foreign Git paths reject; data/signals/ is ignored.",
+      "status": "PASSED"
     },
     "B7": {
       "observed": "Mac sender and portable receiver commands in README/runbook are credential-free; sender is create-only with mode 0600",
       "status": "PASSED"
     }
   },
-  "acceptance_result": "6/7 strict; B6 retains the exact pre-existing owner contract fixture",
+  "acceptance_result": "7/7; B6 achieved without tracked-export exceptions",
   "base_commit": "a36ed6052b9540db00fb2ca7043ba3101d162427",
   "branch": "agent/273-cold-start-and-portable-export",
   "child_repository_mutation": false,
   "code_file_sha256": {
-    "tests/test_portable_self_export.py": "164b99a8bbdd17717283a9ffe8ac3077a0a737d8afd1f07c2bd677458bd869dc",
-    "tools/ingest_signals.py": "e3f57cec4d1366e6ca5e6ead12fe623f76a52747345997ab963bf343ccfaa7e9",
+    "tests/fixtures/signal/self_export_bundle.json": "ad2a6a0827c4a09f24b0dad8b873225569591dc681cba6f5f1d1c8901fb95849",
+    "tests/test_portable_self_export.py": "1520a03813310a27f8d118dcf62a5622afc842ab927a94930c6b4bfea12de170",
+    "tests/test_self_model_export_e2e.py": "77ff269965efdd046f2d99d8e737f852408abaeadcc55c568133e6ddd9c0185b",
+    "tools/ingest_signals.py": "b56dcb3220f8949edf9bbeb16929946eb889b125b30ba747174bf13479f63f57",
+    "tools/purpose_e2e.py": "66c927baa5c5c6c528e73315661f07f809987fe04360b019d14e88075b74a5b6",
     "tools/run.py": "5b34cd5c1bf6ba5de783d4bba10dc970bb94f6ab651f6c20bb81c4bc9c21b0d7",
-    "tools/security.py": "7ed37d235d8760319f002399bd5b0fc20a9aef7e55947d2b13daad108013c0c4",
-    "tools/self_export.py": "e49bd6ae9da4d8ba1c753d9989dfce66d7426ab983061e9b353e01b4c91fa8e1",
+    "tools/security.py": "09d9701472f340485b40ef6b3f42c9a63517a09d76cd475bfe30793291173ef9",
+    "tools/self_export.py": "5a8c64d6d83cfebb7c49e1f4c068ab98963f9aa54d07470a82e42976a33de0cd",
+    "tools/signal_fixtures.py": "d98cd7537e20e5f4a07f6e6fda597bd0b03fffc1ef7c8829a06a495eef50fc14",
     "tools/validate.py": "23c04e898fcbf7c429d6d9be20a2166f522c8d019f822d36ddd0f885f56786db"
   },
   "decisions": [
     "Use a parent portable envelope and separate metadata-only receipt; preserve research-signal-export/v1 and validate_signal_export.",
     "Owner chooses RFC3339 expiry; no arbitrary lifetime or consent extension is inferred. Hash verifies content integrity, not authentication or remote revocation.",
     "Normal run/ingest support portable input; incompatible cycle-context/bundle modes explicitly block instead of silently ignoring it.",
-    "Keep one byte-pinned historical regression fixture for compatibility and report the literal B6 gap rather than claiming all tracked exports are prohibited."
+    "Replace the suspect fixture with fictional subject/fixture data in a test-only template; instantiate the existing owner export envelope only in memory. Preserve validation, count, provenance and domain-field assertions without exemptions; do not rewrite Git history.",
+    "Require explicit Git-external --output for any ingest containing self-model; retain existing missing-profile and invalid-export rejection precedence, and reject output before owner exporter calls.",
+    "Hearing only records Event. Native remediation requires owner-machine Event-to-Claim growth and a nonempty consent-approved export before resume; portable receiver remediation requires growth/re-export at the owner machine instead of hearing locally."
   ],
   "external_artifact": {
     "drive": "NONE",
     "local_exports": "CREATE_ONLY; mode 0600",
     "reference": {
-      "content_sha256": "sha256:f6685f2d91d864b82db46d98522db6cb2cb8de2804450a896f0fdc69b0d443e9",
-      "export_id": "synthetic-single-273"
+      "content_sha256": "sha256:f2670e7f26972b80ef22791fa241c20f70ad2239fc5f879f0e578ae9bdcf0f97",
+      "export_id": "synthetic-review-single-273"
     }
   },
   "feedback": {
-    "explicit": "Assigned Issue 273 and orchestrator supplement",
+    "explicit": "Assigned Issue 273, orchestrator supplement and four review corrections",
     "inferred": "NONE"
   },
   "interpreter": "orchestrator-provided Python virtual environment; absolute paths omitted",
@@ -73,11 +74,11 @@
     "controlled_stop": "AFTER_REQUESTED_CANDIDATE_STAGE",
     "interrupted_process_exit_code": -2,
     "self_export": {
-      "content_sha256": "sha256:f6685f2d91d864b82db46d98522db6cb2cb8de2804450a896f0fdc69b0d443e9",
+      "content_sha256": "sha256:f2670e7f26972b80ef22791fa241c20f70ad2239fc5f879f0e578ae9bdcf0f97",
       "contract_version": "portable-self-export-receipt/v1",
-      "expires_at": "2026-10-05T00:00:00Z",
-      "export_id": "synthetic-single-273",
-      "generated_at": "2026-10-04T19:53:28+09:00",
+      "expires_at": "2026-10-04T15:35:14+00:00",
+      "export_id": "synthetic-review-single-273",
+      "generated_at": "2026-10-04T20:35:17+09:00",
       "source_commit": "429ff1a955972466919848a3a960c6a90dc4972b"
     },
     "self_hearing": {
@@ -87,37 +88,101 @@
     "stage": "candidates",
     "status": "PASSED"
   },
-  "next_operation": "git show --stat HEAD, then orchestrator review of local code and the strict B6 compatibility gap; no next task claimed",
+  "next_operation": "git show --stat HEAD; orchestrator reviews local commits and evidence, then handles publication; no next task claimed",
+  "previous_implementation_commit": "883c5611c13398d672969c71d14f121b0b5db963",
   "remote_sync": "NOT_RUN_BY_INSTRUCTION",
   "repository": "agentic-art-orchestration",
-  "sensitive_data": "Only synthetic profiles and existing contract fixtures; no real personal records, credentials, hearing content or local absolute paths stored in evidence",
-  "unresolved": [
-    {
-      "code": "LEGACY_EXPORT_FIXTURE_COMPATIBILITY",
-      "impact": "New personal exports are protected; one already-tracked historical fixture remains.",
-      "observed": "Strict B6 prohibits the existing regression export, while the assigned instructions require retaining existing test/contract meaning.",
-      "options": [
-        "Keep the exact legacy-fixture hash exception as an explicit scope decision",
-        "Retire the tracked fixture through an owner-evidence migration that preserves the regression contract"
-      ],
-      "recommended": "Review the existing fixed-fixture exception explicitly; do not claim strict B6 acceptance until an owner-evidence migration removes it or the Issue scope explicitly allows it.",
-      "release_condition": "Orchestrator resolves fixed-fixture compatibility and reviews local commit; no publication is authorized by this implementation."
-    }
-  ],
-  "verification": {
-    "baseline_setup_note": "Initial source archive lacked Git metadata and produced 13 setup-only extra failures. After restoring isolated Git refs/index with a read-only object reference, those 13 tests pass and a fresh complete origin/main suite confirms the same 43 failures.",
-    "baseline_setup_recheck": {
-      "command": "$PYTHON -m unittest <13 Git-metadata-dependent origin/main cases> -v",
+  "sensitive_data": "Current changes and smoke tests use explicitly fictional subject/fixture only. No real personal records, credentials, hearing content or local absolute paths in evidence. Suspect fixture replaced; Git history left to owner without rewriting.",
+  "smoke_tests": {
+    "candidate_receiver": {
+      "candidate_count": 9165,
+      "command": "$PYTHON <external bounded candidate probe using credential_free.py -- run.py --self-export <external-export> --state-root <external-state> --workspace-root <qualified-workspace>>",
+      "controlled_stop": "AFTER_REQUESTED_CANDIDATE_STAGE; not PLAN_READY or delivery acceptance",
       "exit_code": 0,
-      "tests": 13
+      "native_interrupted_exit_code": -2
     },
+    "empty": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --run-id <empty-profile-run> --workspace-root <qualified-workspace> --profile-root <minimal-synthetic-profile> --state-root <external-state>",
+      "exit_code": 2,
+      "remediation": "入口のヒアリングに答える／self-model-notes の初回手順（init と同意）へ。回答だけでは signal は出ない。本人記録のある機械の育成 session で回答の Event から根拠付き Claim を作り、同意済み export に self signal が出ることを確認してから、同じ run を再開する。手順: https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md#何回で-signal-が出るか",
+      "saved_resume_command": true,
+      "status": "BLOCKED",
+      "stop_reason": "SELF_MODEL_EMPTY"
+    },
+    "empty_receiver": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --run-id <empty-receiver-run> --workspace-root <qualified-workspace> --self-export <empty-export> --state-root <external-state>",
+      "exit_code": 2,
+      "remediation": "本人記録のある機械へ戻り、育成 session で記録済みの Event から根拠付き Claim を作る。同意済み export に self signal が出ることを確認して再書き出しし、新しい --self-export で同じ run を再開する。受信側では自己モデルは育たない。手順: https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md#何回で-signal-が出るか",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_MODEL_EMPTY"
+    },
+    "expired": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --run-id <expired-input-run> --workspace-root <qualified-workspace> --self-export <expired-export> --state-root <external-state>",
+      "exit_code": 2,
+      "remediation": "export again on the machine holding the owner profile and consent",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_EXPORT_EXPIRED"
+    },
+    "ingest_missing_output": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/ingest_signals.py --purpose artistic-research --self-export <external-export>",
+      "exit_code": 2,
+      "remediation": "pass --output to a location outside repositories accessible only to the owner",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_SIGNAL_OUTPUT_REQUIRED"
+    },
+    "ingest_repo_output": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/ingest_signals.py --purpose artistic-research --self-export <external-export> --output data/signals",
+      "exit_code": 2,
+      "remediation": "pass --output to a location outside repositories accessible only to the owner",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_SIGNAL_OUTPUT_REPOSITORY_OVERLAP"
+    },
+    "sender": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/self_export.py --workspace-root <qualified-workspace> --profile-root <synthetic-profile> --output <external-export> --expires-at <owner-selected-expiry>",
+      "exit_code": 0,
+      "mode": "0o600",
+      "self_export": {
+        "content_sha256": "sha256:4c19213ab951f582296b74b7f3aa242a62f29ca668de23589cb3ee3dea87184f",
+        "contract_version": "portable-self-export-receipt/v1",
+        "expires_at": "2026-10-04T15:35:14+00:00",
+        "export_id": "self-export:bc507289dcab40f783253bd78d458534",
+        "generated_at": "2026-10-04T20:35:17+09:00",
+        "source_commit": "429ff1a955972466919848a3a960c6a90dc4972b"
+      },
+      "status": "PASSED"
+    }
+  },
+  "unresolved": [],
+  "verification": {
+    "baseline_setup_note": "Exact origin/main source at base_commit in an isolated verification tree with matching Git refs/index and a read-only object reference; both complete suites freshly rerun after review fixes.",
     "compile": {
-      "command": "$PYTHON -m compileall -q tools/self_export.py tools/ingest_signals.py tools/run.py tools/security.py tests/test_portable_self_export.py",
+      "command": "$PYTHON -m compileall -q tools/self_export.py tools/ingest_signals.py tools/run.py tools/security.py tools/signal_fixtures.py tools/purpose_e2e.py tests/test_portable_self_export.py tests/test_self_model_export_e2e.py",
       "exit_code": 0
     },
     "diff": {
       "command": "git diff --check",
       "exit_code": 0
+    },
+    "docs_and_status_final": {
+      "command": "$PYTHON -m unittest tests.test_docs tests.test_project_status -v",
+      "exit_code": 0,
+      "log_sha256": "60aa9bb046b0667658701cf7925649ff792e48b64f8d341af357f3c0c912b2bb",
+      "summary": [
+        "Ran 22 tests in 0.105s",
+        "OK"
+      ],
+      "tests": 22
+    },
+    "docs_and_status_tests": {
+      "command": "$PYTHON -m unittest tests.test_docs tests.test_project_status -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "b567b0039a3ea5d6f9cbde6b9cdf939f1746ae6b0a58e48b82e82624146b9f4e",
+      "summary": [
+        "Ran 22 tests in 0.026s",
+        "OK"
+      ],
+      "tests": 22
     },
     "failure_comparison": {
       "added": [],
@@ -129,7 +194,13 @@
     "focused": {
       "command": "$PYTHON -m unittest tests.test_portable_self_export tests.test_ingest_signals tests.test_signal_export tests.test_self_model_export_e2e tests.test_security_boundary tests.test_docs -v",
       "exit_code": 0,
-      "tests": 56
+      "failures": [],
+      "log_sha256": "e8c61e0ec58a1e337874ce17d3b0b2ca20316394855e1bc2767701d43415e20a",
+      "summary": [
+        "Ran 59 tests in 4.689s",
+        "OK"
+      ],
+      "tests": 59
     },
     "full_suite": {
       "command": "$PYTHON -m unittest discover -s tests -v",
@@ -308,41 +379,15 @@
           "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
         }
       ],
-      "log_sha256": "9b52666be176e68fa1c599ce8312e7895026a65fb85121eb8c6e37c8ff90a981",
+      "log_sha256": "b65a41c627c989421c193bfa5fa3caaf4134f85f9f84d41d67c1f60a6999dead",
       "summary": [
-        "Ran 729 tests in 236.404s",
+        "Ran 732 tests in 972.846s",
         "FAILED (failures=8, errors=35, skipped=5)"
-      ]
-    },
-    "native_candidate_probe": {
-      "candidate_count": 9165,
-      "controlled_stop": "Native run intentionally interrupted only after requested candidate stage; not PLAN_READY or delivery completion",
-      "exit_code": 0
-    },
-    "native_empty_profile": {
-      "exit_code": 2,
-      "next_action_present": true,
-      "status": "BLOCKED",
-      "stop_reason": "SELF_MODEL_EMPTY"
-    },
-    "native_expired_export": {
-      "exit_code": 2,
-      "status": "BLOCKED",
-      "stop_reason": "SELF_EXPORT_EXPIRED",
-      "workspace_and_exporters_not_called": true
-    },
-    "native_sender": {
-      "exit_code": 0,
-      "mode": "0600",
-      "overwrite": "REJECTED_BY_EXCLUSIVE_CREATE_TEST"
-    },
-    "operational_record_tests": {
-      "command": "$PYTHON -m unittest tests.test_docs tests.test_project_status -v",
-      "exit_code": 0,
-      "tests": 22
+      ],
+      "tests": 732
     },
     "origin_main_full_suite": {
-      "command": "$PYTHON -m unittest discover -s tests -v",
+      "command": "$PYTHON -m unittest discover -s tests -v (exact origin/main)",
       "exit_code": 1,
       "failures": [
         {
@@ -518,34 +563,76 @@
           "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
         }
       ],
-      "log_sha256": "3d03d119db43cd598e7b58b4a686c40e2bd1374b39153d221de9e831057796c7",
+      "log_sha256": "07068a22ddb0ab312295e9d4e65696a1fa5463450fb57e63ddb938d9a0859ce4",
       "summary": [
-        "Ran 717 tests in 232.569s",
+        "Ran 717 tests in 936.009s",
         "FAILED (failures=8, errors=35, skipped=5)"
-      ]
+      ],
+      "tests": 717
     },
     "privacy": {
       "command": "$PYTHON tools/security.py --output <external-report>",
       "exit_code": 0,
       "findings": 0
     },
+    "purpose_e2e": {
+      "command": "$PYTHON -m unittest tests.test_purpose_e2e -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "71a74a2ba308a202f11a6308a61ac6d169fd93358315cfaf0fd40222e1f861e1",
+      "summary": [
+        "Ran 6 tests in 26.384s",
+        "OK"
+      ],
+      "tests": 6
+    },
+    "queue_related": {
+      "command": "$PYTHON -m unittest tests.test_portable_self_export tests.test_ingest_signals tests.test_run tests.test_security_boundary -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (tests.test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        }
+      ],
+      "log_sha256": "7a4140fb898ed74028036aaeb9139863ff3e99e0417e463a795aef21dc2e7480",
+      "summary": [
+        "Ran 68 tests in 33.616s",
+        "FAILED (failures=1)"
+      ],
+      "tests": 68
+    },
     "readme": {
       "command": "$PYTHON tools/project_status.py --check-readme",
       "exit_code": 0
     },
     "run_module": {
-      "baseline_failure": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (missing generated snapshot)",
+      "baseline_failure": "Existing missing generated snapshot; same test fails in exact origin/main full suite",
       "command": "$PYTHON -m unittest tests.test_run -v",
       "exit_code": 1,
-      "failures": 1,
+      "failures": [
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (tests.test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        }
+      ],
+      "log_sha256": "664d227b073a340eff6daf94cf6dff002437d9049aaf1a36ffdcea0e511e07e2",
+      "summary": [
+        "Ran 36 tests in 5.362s",
+        "FAILED (failures=1)"
+      ],
       "tests": 36
+    },
+    "staged_diff": {
+      "command": "git diff --cached --check",
+      "exit_code": 0
     },
     "staged_privacy": {
       "command": "$PYTHON tools/security.py --output <external-report>",
       "exit_code": 0,
       "findings": 0
     },
-    "status": "CODE_VERIFIED; strict B6 compatibility remains BLOCKED",
+    "status": "CODE_VERIFIED; all seven issue conditions observed, baseline full-suite failures explicitly matched",
     "validator": {
       "command": "$PYTHON tools/validate.py --check",
       "exit_code": 0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the input knowledge bases' exporters and normalize what they hand over.
 
-    python3 tools/ingest_signals.py --purpose artistic-research --profile-root <external-profile>
+    python3 tools/ingest_signals.py --purpose artistic-research --profile-root <external-profile> --output <external-signals>
 
 Until now the adapters were called only from tests, so nothing carried a
 knowledge base's records into the candidate space. This runs each declared input
@@ -46,7 +46,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/repositories.yaml"
 DEFAULT_OUTPUT = ROOT / "data/signals"
 
-from tools.self_export import read_export, SelfExportError, EMPTY_REMEDIATION
+from tools.self_export import (read_export, external_path, SelfExportError,
+                               EMPTY_REMEDIATION, PORTABLE_EMPTY_REMEDIATION)
 
 ADAPTERS = {
     "self-model": adapt_self_model_signal,
@@ -119,7 +120,7 @@ def _observed_head(checkout: Path) -> str | None:
     return head.stdout.strip() if head.returncode == 0 else None
 
 
-def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
+def ingest(workspace_root: Path, output: Path | None, purpose: str, python: str,
            profile_root: Path | None = None, requester: str | None = None,
            self_export: Path | None = None) -> dict:
     manifest = load_yaml(MANIFEST)
@@ -135,6 +136,16 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
             raise IngestBlocked(str(exc), exc.remediation) from exc
     if profile_root is None and portable is None and any(item["id"] == "self-model" for item in inputs):
         raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+    if any(item["id"] == "self-model" for item in inputs):
+        remediation = "pass --output to a location outside repositories accessible only to the owner"
+        if output is None:
+            raise IngestBlocked("SELF_SIGNAL_OUTPUT_REQUIRED: self-model ingest requires explicit --output", remediation)
+        try:
+            output = external_path(output)
+        except SelfExportError as exc:
+            raise IngestBlocked("SELF_SIGNAL_OUTPUT_REPOSITORY_OVERLAP: self-model output must be Git-external", remediation) from exc
+    elif output is None:
+        output = DEFAULT_OUTPUT
     normalized: list[dict] = []
     warnings: list[str] = []
     deferred_boundaries: list[dict[str, str]] = []
@@ -159,7 +170,8 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
             raise IngestError(f"{identifier} envelope is invalid: {errors[0]}")
 
         if identifier == "self-model" and not payload["signals"]:
-            raise IngestBlocked("SELF_MODEL_EMPTY: no exportable self signal", EMPTY_REMEDIATION)
+            raise IngestBlocked("SELF_MODEL_EMPTY: no exportable self signal",
+                                PORTABLE_EMPTY_REMEDIATION if portable is not None else EMPTY_REMEDIATION)
 
         # The pin is what the exchange is qualified against, so a drift is worth
         # saying out loud. It does not stop an ingest: reading is not qualifying.
@@ -207,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--purpose", required=True)
     parser.add_argument("--workspace-root", type=Path, default=ROOT / "repos")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--output", type=Path, help="explicit Git-external directory required for self-model ingest")
     parser.add_argument("--child-python", default=sys.executable)
     parser.add_argument("--profile-root", type=Path,
                         help="explicit external Self Model profile root; forwarded only to that owner")

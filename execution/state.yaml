@@ -1,5 +1,5 @@
-version: 316
-updated_at: '2026-10-04T20:08:40+09:00'
+version: 317
+updated_at: '2026-10-04T11:34:39.645517+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -124,7 +124,7 @@ last_completed_task: ISSUE-269
 resume_from:
   task: null
   repository: agentic-art-orchestration
-  action: Review Issue-273 local commit and strict B6 legacy-fixture compatibility gap; orchestrator owns publication; no lease is held.
+  action: Review Issue-273 local commits and verification evidence; orchestrator owns publication; no lease is held.
   command: git show --stat HEAD
 
 oi07_progress:
@@ -2089,10 +2089,10 @@ issue_273_local_implementation:
   repository: agentic-art-orchestration
   branch: agent/273-cold-start-and-portable-export
   start_point: a36ed6052b9540db00fb2ca7043ba3101d162427
-  status: BLOCKED
+  status: DONE
   code_status: CODE_VERIFIED
   evidence: execution/issue-273-verification.json
-  acceptance: 6/7 strict; B6 new-export protection passes, existing fixed fixture remains an explicit exception
+  acceptance: 7/7; no tracked-export exceptions; fictional template preserves contract validation
   expected_changes:
   - Block empty self exports before candidate generation with remediation
   - Receive consent-approved portable exports without owner profile access
@@ -2103,24 +2103,24 @@ issue_273_local_implementation:
 checkpoint:
   task: ISSUE-273
   repository: agentic-art-orchestration
-  status: BLOCKED
+  status: DONE
   code_status: CODE_VERIFIED
   start_point: a36ed6052b9540db00fb2ca7043ba3101d162427
   branch: agent/273-cold-start-and-portable-export
   evidence: execution/issue-273-verification.json
-  acceptance: 6/7 strict; existing owner regression fixture conflicts with literal B6
+  acceptance: 7/7; review corrections implemented; B6 achieved without exceptions
   checks:
     validator: PASS
     project_status_readme: PASS
-    focused_suite: 'PASS: 56 tests'
+    focused_suite: 'PASS: 59 tests'
     run_module: '36 tests; one existing missing-snapshot failure'
-    full_suite: '729 tests; 8 failures, 35 errors, 5 skips; exactly matches origin/main 717-test suite'
+    full_suite: '732 tests; 8 failures, 35 errors, 5 skips; exactly matches origin/main 717-test suite'
     new_or_removed_failures: 0
-    privacy: 'PASS: new exports and staged blobs rejected; exact existing fixture compatibility exception'
+    privacy: 'PASS: all tracked exports and staged blobs rejected without fixture exceptions; self ingest requires Git-external output'
     child_quality_gates: NOT_APPLICABLE; no child changed
   sensitive_data: Synthetic fixtures only; no real personal data, credentials, hearing body or absolute path in verification evidence
   external_artifact: No Drive artifact; local portable export create-only, 0600, opaque ID/hash only in evidence
   remote_sync: NOT_RUN_BY_INSTRUCTION
   lease: NOT_ACQUIRED; none retained
-  unresolved: Strict B6 is not accepted while the byte-pinned legacy fixture exception remains
-  next_operation: git show --stat HEAD, then orchestrator review of strict B6 compatibility; no next task claimed
+  unresolved: None; existing baseline failures remain explicit
+  next_operation: git show --stat HEAD, then orchestrator review of local commits and evidence; no next task claimed

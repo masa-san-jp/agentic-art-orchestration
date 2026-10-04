@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import subprocess
 import copy
 import json
@@ -208,14 +207,7 @@ def audit_boundary(payloads: Mapping[str, object], signals: Mapping[str, Mapping
 
 
 def tracked_self_exports(repository_root: Path = ROOT) -> list[dict]:
-    """Detect personal exports in index blobs and tracked working files, independent of filename.
-
-    The immutable pre-existing owner contract regression fixture is the only
-    compatibility exception. Its exact bytes are pinned; editing it or adding
-    any other export is rejected, including underneath tests/fixtures/.
-    """
-    legacy = "tests/fixtures/signal/self_export_bundle.json"
-    legacy_hash = "4fe5da5077f42a3cbcd2627d2fee711ef7ff90a40921030a52003bb511067161"
+    """Detect exports in index blobs and tracked working files, without fixture exceptions."""
     result = subprocess.run(["git", "ls-files", "-z"], cwd=repository_root,
                             capture_output=True)
     if result.returncode != 0:
@@ -243,9 +235,6 @@ def tracked_self_exports(repository_root: Path = ROOT) -> list[dict]:
         if target.is_file() and not target.is_symlink():
             candidates.append(target.read_bytes())
         for raw in candidates:
-            if (repository_root.resolve() == ROOT.resolve() and path == legacy
-                    and hashlib.sha256(raw).hexdigest() == legacy_hash):
-                continue
             try:
                 value = json.loads(raw)
             except (ValueError, UnicodeError):

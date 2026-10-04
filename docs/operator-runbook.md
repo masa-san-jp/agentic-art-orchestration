@@ -685,8 +685,12 @@ human gate対象は`merge`、`release`、`public_share`、`consent_expansion`、
 の初期化・同意手順を使う（[self-model-notes#136](https://github.com/masa-san-jp/self-model-notes/issues/136)）。
 本人 profile を作成し、[README の制作 run 手順](../README.md#制作-run-を回す人エージェント向け)
 から入口ヒアリングを行う。`SELF_MODEL_EMPTY` は必須の自己モデルがまだ無いことを示す。
-ヒアリングに答え、同意済みの exportable signal ができたら保存された同じ run の command を
-`credential_free.py` 経由で再開する。subject と同意 Source だけを正常な self signal にしない。
+ヒアリング回答だけでは Event が記録されても `signal_count: 0` のままである。本人記録のある
+機械の育成 session で回答の Event から根拠付き Claim を作り、同意済み export に
+self signal が出ることを確認してから、保存された同じ run の command を
+`credential_free.py` 経由で再開する。[何回で signal が出るか](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md#何回で-signal-が出るか)
+の調査・記録・育成手順に従い、同じ profile への制作と育成の同時書き込みを避ける。
+subject と同意 Source だけを正常な self signal にしない。signal 1件で全候補の成功は保証しない。
 
 本人記録を持つ Mac では、README の環境変数を用意してから次を実行する。
 `SELF_EXPORT` はリポジトリ外の、本人だけがアクセスできる場所を本人が選ぶ。
@@ -713,7 +717,10 @@ export は create-only、ファイル権限は本人 read/write のみ。子の�
 
 受信側は `--profile-root` とヒアリングの open/answer/skip を実行しない。run はヒアリングを
 `unavailable / PROFILE_ROOT_UNAVAILABLE` と記録して続ける。他の機械では自己モデルは育たない。
-更新は本人記録のある機械へ戻り、期限切れ・同意変更時には新しいファイルとして書き出す。
+受信側の `SELF_MODEL_EMPTY` ではヒアリングを求めず、本人記録のある機械へ戻るよう案内する。
+その機械の育成 session で Event から Claim を作り、export に self signal が出ることを
+確認して再書き出しし、新しい `--self-export` で同じ run を再開する。
+更新や期限切れ・同意変更時も、本人記録のある機械で新しいファイルとして書き出す。
 期限切れは `SELF_EXPORT_EXPIRED`、hash 不一致は `SELF_EXPORT_HASH_MISMATCH`、
 用途違反は `SELF_EXPORT_SCOPE_MISMATCH`、形式違反は `SELF_EXPORT_INVALID`、
 Git 配下は `SELF_EXPORT_REPOSITORY_OVERLAP`、profile と export の併用は `SELF_EXPORT_AMBIGUOUS`。
@@ -723,6 +730,10 @@ hash は署名ではなく、コピーの整合性を検査する。遠隔の同
 本人は撤回後のコピーを使用しない。公開projection、commit/push、同意拡張の権限は追加しない。
 
 privacy gate は tracked working bytes と staged index blobs の構造を検査する。
-既存 owner 契約 fixture の固定 hash 1件以外には tests/fixtures を含め例外はない。
+tests/fixtures を含め例外はない。合成テンプレートはメモリ内でだけ契約 envelope へ変換する。
+self-model を含む `ingest_signals.py` の直接実行には、リポジトリ外の、本人だけが
+アクセスできる場所を `--output` で明示する。指定なしは `SELF_SIGNAL_OUTPUT_REQUIRED`、
+Git 配下（ignore・symlink を含む）は `SELF_SIGNAL_OUTPUT_REPOSITORY_OVERLAP` で
+exporter 実行前に拒否する。`data/signals/` も ignore し、run は外部 state root を指定する。
 検証ログには export 本文・本人の言葉・ローカルの絶対 path を保存しない。
 この入口は通常の run/ingest 向けで、別契約の `--cycle-context` へ export を黙って適用しない。

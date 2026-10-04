@@ -18,9 +18,16 @@ if str(ROOT) not in sys.path:
 
 CONTRACT = "portable-self-export/v1"
 RECEIPT_CONTRACT = "portable-self-export-receipt/v1"
+GROWTH_GUIDE = "https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md#何回で-signal-が出るか"
 EMPTY_REMEDIATION = (
     "入口のヒアリングに答える／self-model-notes の初回手順（init と同意）へ。"
-    "同意済みの self signal が育ってから、同じ run を再開する。"
+    "回答だけでは signal は出ない。本人記録のある機械の育成 session で回答の Event から根拠付き Claim を作り、"
+    "同意済み export に self signal が出ることを確認してから、同じ run を再開する。手順: " + GROWTH_GUIDE
+)
+PORTABLE_EMPTY_REMEDIATION = (
+    "本人記録のある機械へ戻り、育成 session で記録済みの Event から根拠付き Claim を作る。"
+    "同意済み export に self signal が出ることを確認して再書き出しし、新しい --self-export で同じ run を再開する。"
+    "受信側では自己モデルは育たない。手順: " + GROWTH_GUIDE
 )
 
 
@@ -67,7 +74,7 @@ def timestamp(value: object) -> datetime:
 def external_path(path: Path) -> Path:
     resolved = path.expanduser().resolve()
     # Reject any Git checkout, including a foreign checkout and ignored paths.
-    probe = resolved.parent
+    probe = resolved if resolved.is_dir() else resolved.parent
     while not probe.exists():
         probe = probe.parent
     result = subprocess.run(["git", "-C", str(probe), "rev-parse", "--show-toplevel"],

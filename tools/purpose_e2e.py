@@ -23,6 +23,7 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
 try:
+    from tools.signal_fixtures import synthetic_self_export
     from tools.adapters import adapt_self_model_signal
     from tools.autonomous_runner import run_autonomous, validate_autonomous_state
     from tools.batch_run import _load_export
@@ -38,6 +39,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     ROOT = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(ROOT))
+    from tools.signal_fixtures import synthetic_self_export
     from tools.adapters import adapt_self_model_signal
     from tools.autonomous_runner import run_autonomous, validate_autonomous_state
     from tools.batch_run import _load_export
@@ -152,7 +154,7 @@ def _source_observations(manifest: Mapping[str, Any], workspace_root: Path | Non
 def _offline_signals(manifest: Mapping[str, Any]) -> list[dict[str, Any]]:
     """Build a test-only signal bundle; fixture anchors never enter live evidence."""
     repositories = _manifest_map(manifest)
-    source = load_json(ROOT / "tests" / "fixtures" / "signal" / "self_export_bundle.json")
+    source = synthetic_self_export()
     self_records: list[dict[str, Any]] = []
     for record in source["signals"]:
         self_records.append(adapt_self_model_signal({**record, "commit": repositories["self-model"]["observed_commit"]}))

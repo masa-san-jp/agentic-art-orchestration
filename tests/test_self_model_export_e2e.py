@@ -8,12 +8,13 @@ from pathlib import Path
 
 from tools.adapters import adapt_self_model_signal
 from tools.consumer import import_signals
-from tools.validate import validate_signal
+from tools.validate import validate_signal, validate_signal_export
+from tools.signal_fixtures import synthetic_self_export
 
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/signal/self_export_bundle.json"
-SOURCE_COMMIT = "04095bfa4115ef4fde8a8f475bf31743ecdff962"
+SOURCE_COMMIT = "0" * 40  # Explicitly fictional provenance, not an owner pin.
 FIXED_RECORD_FIELDS = {
     "signal_id",
     "repository",
@@ -58,14 +59,14 @@ DOMAIN_FIELDS = {
 
 
 def load_bundle() -> dict:
-    with FIXTURE.open(encoding="utf-8") as handle:
-        return json.load(handle)
+    return synthetic_self_export()
 
 
 class SelfModelExportE2ETests(unittest.TestCase):
-    def test_fixture_is_the_pinned_child_envelope(self):
+    def test_synthetic_fixture_instantiates_the_child_envelope(self):
         bundle = load_bundle()
 
+        self.assertEqual(validate_signal_export(bundle, "synthetic fixture"), [])
         self.assertEqual(bundle["contract_version"], "research-signal-export/v1")
         self.assertEqual(bundle["source_repository"], "self-model")
         self.assertEqual(bundle["source_commit"], SOURCE_COMMIT)
