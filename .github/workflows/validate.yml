@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: masa-san-jp/viewer-response-notes
-          ref: feat/viewer-response-contracts
+          ref: main
           path: repos/viewer-response-notes
           fetch-depth: 0
           persist-credentials: false
