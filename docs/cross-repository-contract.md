@@ -89,9 +89,9 @@ qualificationはpinを専用workspaceへmaterializeして実行し、source chec
 - 原典未読のURLを読了済みとして扱う。
 - source repositoryまたはcommitを落とす。
 
-## Self-model export E2E pin
+## Self-model export E2E fixture
 
-`tests/fixtures/signal/self_export_bundle.json` は、self-model-notes Issue #40 の完了記録を含む固定commit `04095bfa4115ef4fde8a8f475bf31743ecdff962` から `tools/export_signals.py --purpose artistic-research --limit 0` で生成した `research-signal-export/v1` envelopeである。これは親manifestのqualification pinを浮動参照へ置換するものではなく、E2E fixtureが参照するchild source pinを固定する。
+`tests/fixtures/signal/self_export_bundle.json` は `subject/fixture` の明らかに架空の文言だけを持つ `synthetic-self-signal-template/v1` テンプレートで、本人記録の export ではない。 `tools/signal_fixtures.py` が offline テストのメモリ内でのみ既存の `research-signal-export/v1` envelope を作る。 40文字のゼロ commit は合成 provenance の placeholder であり、実在の child commit や qualification の証拠にしない。 実際の export envelope は合成データでも tracked-file privacy gate に例外なく拒否される。
 
 E2Eでは、envelopeの`signal_count`・一意な`signal_id`・全recordの`commit`一致を確認した後、全recordを`adapt_self_model_signal()`へ個別に渡し、`validate_signal()`を通してから1回の`import_signals()`へ渡す。入力・normalized・imported・provenanceの件数、ID順、source commit、entity/evidence locator、certainty、unknowns、constraints、freshness、self-model domain fieldsは一致しなければならない。
 

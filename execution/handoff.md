@@ -3095,3 +3095,54 @@ remains unmet for this cleanup.
 - Evidence: [issue-269-verification.json](issue-269-verification.json). No real profile, hearing answer, inferred feedback, credential or Drive artifact was saved. No lease was acquired and no held lease remains. All commits remain local by explicit instruction.
 
 Next operation: `git show --stat HEAD` and review both local branches plus the evidence. The orchestrator owns push, PR creation, merge and Issue closure. No next implementation task is selected in this scoped handoff.
+
+
+# Issue #273 — cold starts and portable Self Model exports (review corrections)
+
+Repository: agentic-art-orchestration; branch: `agent/273-cold-start-and-portable-export`.
+Base: `a36ed6052b9540db00fb2ca7043ba3101d162427`; first local implementation:
+`883c5611c13398d672969c71d14f121b0b5db963`. The orchestrator owns push, PR, merge
+and issue closure. No lease was acquired or retained; lease remains released.
+Evidence: `execution/issue-273-verification.json` (no local absolute paths).
+
+Acceptance: 7/7, including B6 without any tracked-export exception. Native empty
+profile returns BLOCKED / SELF_MODEL_EMPTY (exit 2) and now requires hearing Event
+-> owner-machine growth session deriving an evidence-backed Claim -> verifying a
+consent-approved export has self signal -> same-run resume. Portable empty input
+instead directs owner-machine growth/re-export without local hearing. Both link
+the owner Issue 136 section explaining why hearing alone leaves signal_count zero.
+
+The suspect fixture is replaced with subject/fixture and clearly fictional text.
+Its test-only template is instantiated as research-signal-export/v1 only in memory;
+existing envelope, adapter, consumer, count, domain and provenance checks remain.
+The fixed-hash exemption is deleted. Native/portable exports, even synthetic ones
+under tests/fixtures, are rejected in tracked working files and index blobs.
+Git history is not rewritten; historical-data handling remains the owner's decision.
+
+Self-model ingest requires explicit Git-external --output before any exporter call,
+including native profile and portable input; Git roots, ignored paths and symlink
+aliases reject. data/signals/ is additionally ignored. Real CLI missing-output and
+repo-output probes both BLOCK (exit 2). README, runbook, queue and generated README
+status reflect completion while the lease remains available.
+
+Fresh native Mac sender succeeds create-only with mode 0600. Profile-free receiver
+reaches 9,165 native candidates, records original ID/hash and unavailable /
+PROFILE_ROOT_UNAVAILABLE hearing. Probe deliberately interrupts its own process
+group after valid candidates are observed (native exit -2; probe exit 0), as required
+for the candidate-stage acceptance; it does not claim PLAN_READY or delivery.
+Expired input returns SELF_EXPORT_EXPIRED before owner invocation (exit 2).
+
+Validator, README status, privacy, compile and diff checks pass. Related suite:
+59 tests PASS; docs/status: 22 PASS; changed offline purpose lane: 6 PASS. Run module:
+36 tests with one existing missing-snapshot failure. Queue-related command has the
+same existing run failure. Complete changed suite: 732 tests, 8 failures, 35 errors,
+5 skips. Complete exact origin/main: 717 tests with exactly the same 43 named failure
+records; zero additions/removals. Full logs stay outside Git; evidence keeps only
+counts, test names and hashes. No failed quality gate is reported as green.
+
+No child repository changed; child gates are not applicable. No Drive artifact,
+real profile, hearing response or credential was saved. Local exports are create-only;
+parent evidence holds opaque ID/hash/provenance only. Explicit feedback: Issue 273
+and review corrections; inferred feedback: none. No unmet issue condition remains.
+Next operation: `git show --stat HEAD`, then orchestrator review and publication.
+No next task is claimed and no remote operation is performed.

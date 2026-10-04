@@ -4389,6 +4389,9 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
     if errors:
         return errors
     try:
+        from tools.security import tracked_self_exports
+        errors.extend(f"{finding['source']}: {finding['code']}; remediation: {finding['remediation']}"
+                      for finding in tracked_self_exports(ROOT))
         validate_repositories(errors, manifest_path)
         validate_tasks(errors)
         errors.extend(

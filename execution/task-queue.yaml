@@ -1,5 +1,5 @@
-version: 100
-updated_at: '2026-10-04T03:01:16+09:00'
+version: 101
+updated_at: '2026-10-04T20:08:40+09:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3346,3 +3346,23 @@ tasks:
     integration_status: ORCHESTRATOR_HANDOFF_PENDING
     evidence: execution/issue-269-verification.json
     completion: Local documentation implementation and validation complete; existing parent full-suite failures retained. No held lease remains; remote operations await the orchestrator.
+
+  - id: ISSUE-273
+    milestone: AAK
+    title: Explain Self Model cold starts and support portable approved exports
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/273
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [PROFILE-ROOT-FORWARD-001]
+    acceptance: Empty self signals block with remediation; portable approved exports retain ID, hash, timestamps and commit; expiry and tracked-file privacy violations block; sender and receiver procedures are documented.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --check-readme
+    - .venv/bin/python -m unittest tests.test_portable_self_export tests.test_ingest_signals tests.test_run tests.test_security_boundary -v
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge and issue closure; only local implementation and commit are authorized.
+    code_status: CODE_VERIFIED
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    completion: 7/7; explicit Event-to-Claim growth and owner-machine re-export remediation, synthetic fixture without privacy exceptions, external-only self ingest output. Full verification and exact origin/main failure comparison in execution/issue-273-verification.json; no lease held and no remote write.

@@ -10,3 +10,4 @@ data/*.md
 
 # Run state written by tools/run.py. Generated per run id, never reviewed.
 data/runs/
+data/signals/

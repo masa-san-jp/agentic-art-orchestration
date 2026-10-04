@@ -236,6 +236,7 @@ def _resume_command(
     research_root: Path | None, production_root: Path | None, research_work_root: Path | None,
     profile_root: Path | None, purpose: str, intent: str | None, slug: str | None,
     title: str | None, offline_fixture: bool, project_root: Path | None = None,
+    self_export: Path | None = None,
 ) -> list[str]:
     """Build the exact same-run invocation for a checkpoint report."""
     command = [python, str(ROOT / "tools/run.py"), "--run-id", run_id,
@@ -250,6 +251,8 @@ def _resume_command(
         command += ["--research-work-root", str(research_work_root)]
     if profile_root is not None and not offline_fixture:
         command += ["--profile-root", str(profile_root)]
+    if self_export is not None and not offline_fixture:
+        command += ["--self-export", str(self_export)]
     if purpose != "artistic-research":
         command += ["--purpose", purpose]
     if intent is not None:
@@ -405,6 +408,15 @@ def _run_tool(args: list[str], python: str) -> dict:
     result = subprocess.run([python, *args], cwd=ROOT, capture_output=True, text=True, env=child_environment())
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip().splitlines()[-1:] or ["no output"]
+        if args[0] == "tools/ingest_signals.py":
+            try:
+                blocked = json.loads(result.stderr)
+            except (ValueError, TypeError):
+                blocked = {}
+            if isinstance(blocked, dict) and blocked.get("status") == "BLOCKED":
+                failure = BlockedPrecondition(str(blocked.get("detail", "INPUT_BLOCKED")))
+                failure.report = blocked
+                raise failure
         raise StepFailure(f"{args[0]} failed: {detail[0]}")
     try:
         return json.loads(result.stdout)
@@ -699,8 +711,19 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         destination_resolution: Mapping[str, object] | None = None,
         internal_output_root: Path | None = None,
         profile_root: Path | None = None, research_work_root: Path | None = None,
-        delivery_contract: Mapping[str, object] | None = None) -> dict:
+        delivery_contract: Mapping[str, object] | None = None,
+        self_export: Path | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
+    if not offline_fixture and self_export is not None:
+        from tools.self_export import read_export, SelfExportError
+        if profile_root is not None:
+            raise BlockedPrecondition("SELF_EXPORT_AMBIGUOUS: choose profile root or portable export")
+        try:
+            read_export(self_export, purpose)
+        except SelfExportError as exc:
+            failure = BlockedPrecondition(str(exc))
+            failure.report = {"status": "BLOCKED", "stop_reason": exc.code, "detail": str(exc), "remediation": exc.remediation}
+            raise failure from exc
     git_write_credentials = observe_git_write_credentials(cwd=ROOT)
     if delivery_contract is None:
         delivery_contract = normal_contract_for_destinations(
@@ -733,7 +756,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 python=python, run_id=run_id, workspace_root=workspace_root,
                 state_root=state_root, research_root=research_root,
                 production_root=production_root, research_work_root=research_work_root,
-                profile_root=profile_root, purpose=purpose, intent=intent,
+                profile_root=profile_root, self_export=self_export, purpose=purpose, intent=intent,
                 slug=slug, title=title, offline_fixture=False,
                 project_root=(Path(destination_resolution["project_root"])
                               if isinstance(destination_resolution, Mapping)
@@ -773,7 +796,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         # Resolve after recovery so child tools use the newly materialized
         # qualified workspace, never the drifted source checkout.
         research_root, production_root = _manifest_runtime_roots(workspace_root)
-    if not offline_fixture and profile_root is None:
+    if not offline_fixture and profile_root is None and self_export is None:
         raise BlockedPrecondition("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
     # Keep native Research project files outside the read-only code checkout.
     # The default is deterministic and run-scoped, so a caller need not invent
@@ -794,7 +817,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     resume_command = _resume_command(
         python=python, run_id=run_id, workspace_root=workspace_root, state_root=state_root,
         research_root=research_root, production_root=production_root,
-        research_work_root=research_work_root, profile_root=profile_root,
+        research_work_root=research_work_root, profile_root=profile_root, self_export=self_export,
         purpose=purpose, intent=intent, slug=slug, title=title,
         offline_fixture=offline_fixture,
         project_root=(Path(destination_resolution["project_root"])
@@ -810,7 +833,9 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     preflight["git_write_credentials"] = git_write_credentials
     record("workspace-preflight", preflight)
     hearing_path = work / "hearing.json"
-    if hearing_path.is_file():
+    if self_export is not None and not offline_fixture:
+        record("self-hearing", {"status": "unavailable", "reason": "PROFILE_ROOT_UNAVAILABLE"})
+    elif hearing_path.is_file():
         try:
             hearing = json.loads(hearing_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -823,12 +848,37 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     if offline_fixture:
         record("ingest", _materialize_offline_signals(signals))
     else:
-        record("ingest", _run_tool([
-            "tools/ingest_signals.py", "--purpose", purpose,
-            "--workspace-root", str(workspace_root), "--output", str(signals),
-            "--profile-root", str(profile_root),
-            "--requester", run_id,
-        ], python))
+        ingest_args = ["tools/ingest_signals.py", "--purpose", purpose,
+                       "--workspace-root", str(workspace_root), "--output", str(signals),
+                       "--requester", run_id]
+        ingest_args += (["--self-export", str(self_export)] if self_export is not None
+                        else ["--profile-root", str(profile_root)])
+        try:
+            record("ingest", _run_tool(ingest_args, python))
+        except BlockedPrecondition as exc:
+            detail = getattr(exc, "report", {"status": "BLOCKED", "detail": str(exc)})
+            record("ingest", detail)
+            report = {**detail, "run_id": run_id, "run_status": "BLOCKED",
+                      "completion_status": "INCOMPLETE", "plan_status": "NOT_READY",
+                      "knowledge_status": "NOT_STARTED", "projection_status": "NOT_RUN",
+                      "steps": steps, "delivery_contract": dict(delivery_contract),
+                      "git_write_credentials": git_write_credentials,
+                      "next_action": {"actor": "user", "stage": "self-model",
+                                      "remediation": detail.get("remediation"),
+                                      "acceptance": "consent-approved self export contains validated self signals",
+                                      "resume_command": resume_command}}
+            report["delivery_completion"] = completion(report, delivery_contract)
+            (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            exc.report = report
+            raise
+
+    if self_export is not None and not offline_fixture:
+        receipt = steps[-1].get("self_export")
+        if isinstance(receipt, dict):
+            (work / "self-export-receipt.json").write_text(json.dumps({
+                "self_export": receipt,
+                "self_hearing": {"status": "unavailable", "reason": "PROFILE_ROOT_UNAVAILABLE"},
+            }, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     record("candidates", _run_tool([
         "tools/candidate_space.py", "--fixture", str(signals), "--output", str(work / "candidates.json"),
@@ -1251,6 +1301,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--production-root", type=Path)
     parser.add_argument("--profile-root", type=Path,
                         help="explicit external Self Model profile root for real signal ingestion")
+    parser.add_argument("--self-export", type=Path, help="Git-external portable self-model export JSON instead of profile root")
     parser.add_argument("--offline-fixture", action="store_true",
                         help="use the checked-in synthetic signal fixture; do not read child checkouts")
     parser.add_argument("--limit", type=int, default=1,
@@ -1260,6 +1311,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.self_export is not None and (args.cycle_context is not None or args.bundle is not None):
+            raise BlockedPrecondition("SELF_EXPORT_UNSUPPORTED_MODE: use the normal run/ingest entry with --self-export")
         if args.cycle_context is not None:
             if args.state_root is None:
                 raise StepFailure("--cycle-context requires --state-root")
@@ -1368,9 +1421,9 @@ def main(argv: list[str] | None = None) -> int:
                                     args.research_root, args.production_root, args.limit, args.offline_fixture,
                                     destination_resolution=destination_resolution,
                                     internal_output_root=internal_output_root,
-                                    profile_root=args.profile_root, research_work_root=args.research_work_root)
+                                    profile_root=args.profile_root, research_work_root=args.research_work_root, self_export=args.self_export)
     except BlockedPrecondition as exc:
-        print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        print(json.dumps(getattr(exc, "report", {"status": "BLOCKED", "detail": str(exc)}), ensure_ascii=False), file=sys.stderr)
         return 2
     except (StepFailure, OSError, IndexError, TypeError, ValueError, KeyError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False), file=sys.stderr)

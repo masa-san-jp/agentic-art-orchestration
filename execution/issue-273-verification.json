@@ -1,0 +1,641 @@
+{
+  "acceptance": {
+    "A1": {
+      "observed": "Minimal synthetic subject plus consent returns BLOCKED / SELF_MODEL_EMPTY, same-run resume and explicit hearing Event -> growth-session Claim -> owner-machine export signal verification; receiver empty export instead asks owner-machine growth/re-export without hearing.",
+      "status": "PASSED"
+    },
+    "A2": {
+      "observed": "README/runbook link owner for-other-personas.md#何回で-signal-が出るか and describe Event-to-Claim growth plus nonempty export verification before resume; init commands are not copied.",
+      "status": "PASSED"
+    },
+    "B3": {
+      "candidate_count": 9165,
+      "observed": "Portable owner-approved export without profile reaches native candidate generation",
+      "status": "PASSED"
+    },
+    "B4": {
+      "observed": "Original ID, canonical payload hash, generation, expiry and 40-character source commit verify; invalid and expired inputs block before workspace/owner calls",
+      "status": "PASSED"
+    },
+    "B5": {
+      "observed": "Receiver records unavailable / PROFILE_ROOT_UNAVAILABLE and does not invoke Self Model exporter or hearing; docs explain no remote growth",
+      "status": "PASSED"
+    },
+    "B6": {
+      "observed": "All tracked native/portable exports are rejected, including renamed/nested payloads, fixture paths and staged-only blobs, without hash or path exceptions. Fixture is a fictional subject/fixture template instantiated as the existing owner envelope only in memory. Self ingest requires explicit Git-external --output before exporter calls; ignored/symlink/foreign Git paths reject; data/signals/ is ignored.",
+      "status": "PASSED"
+    },
+    "B7": {
+      "observed": "Mac sender and portable receiver commands in README/runbook are credential-free; sender is create-only with mode 0600",
+      "status": "PASSED"
+    }
+  },
+  "acceptance_result": "7/7; B6 achieved without tracked-export exceptions",
+  "base_commit": "a36ed6052b9540db00fb2ca7043ba3101d162427",
+  "branch": "agent/273-cold-start-and-portable-export",
+  "child_repository_mutation": false,
+  "code_file_sha256": {
+    "tests/fixtures/signal/self_export_bundle.json": "ad2a6a0827c4a09f24b0dad8b873225569591dc681cba6f5f1d1c8901fb95849",
+    "tests/test_portable_self_export.py": "1520a03813310a27f8d118dcf62a5622afc842ab927a94930c6b4bfea12de170",
+    "tests/test_self_model_export_e2e.py": "77ff269965efdd046f2d99d8e737f852408abaeadcc55c568133e6ddd9c0185b",
+    "tools/ingest_signals.py": "b56dcb3220f8949edf9bbeb16929946eb889b125b30ba747174bf13479f63f57",
+    "tools/purpose_e2e.py": "66c927baa5c5c6c528e73315661f07f809987fe04360b019d14e88075b74a5b6",
+    "tools/run.py": "5b34cd5c1bf6ba5de783d4bba10dc970bb94f6ab651f6c20bb81c4bc9c21b0d7",
+    "tools/security.py": "09d9701472f340485b40ef6b3f42c9a63517a09d76cd475bfe30793291173ef9",
+    "tools/self_export.py": "5a8c64d6d83cfebb7c49e1f4c068ab98963f9aa54d07470a82e42976a33de0cd",
+    "tools/signal_fixtures.py": "d98cd7537e20e5f4a07f6e6fda597bd0b03fffc1ef7c8829a06a495eef50fc14",
+    "tools/validate.py": "23c04e898fcbf7c429d6d9be20a2166f522c8d019f822d36ddd0f885f56786db"
+  },
+  "decisions": [
+    "Use a parent portable envelope and separate metadata-only receipt; preserve research-signal-export/v1 and validate_signal_export.",
+    "Owner chooses RFC3339 expiry; no arbitrary lifetime or consent extension is inferred. Hash verifies content integrity, not authentication or remote revocation.",
+    "Normal run/ingest support portable input; incompatible cycle-context/bundle modes explicitly block instead of silently ignoring it.",
+    "Replace the suspect fixture with fictional subject/fixture data in a test-only template; instantiate the existing owner export envelope only in memory. Preserve validation, count, provenance and domain-field assertions without exemptions; do not rewrite Git history.",
+    "Require explicit Git-external --output for any ingest containing self-model; retain existing missing-profile and invalid-export rejection precedence, and reject output before owner exporter calls.",
+    "Hearing only records Event. Native remediation requires owner-machine Event-to-Claim growth and a nonempty consent-approved export before resume; portable receiver remediation requires growth/re-export at the owner machine instead of hearing locally."
+  ],
+  "external_artifact": {
+    "drive": "NONE",
+    "local_exports": "CREATE_ONLY; mode 0600",
+    "reference": {
+      "content_sha256": "sha256:f2670e7f26972b80ef22791fa241c20f70ad2239fc5f879f0e578ae9bdcf0f97",
+      "export_id": "synthetic-review-single-273"
+    }
+  },
+  "feedback": {
+    "explicit": "Assigned Issue 273, orchestrator supplement and four review corrections",
+    "inferred": "NONE"
+  },
+  "interpreter": "orchestrator-provided Python virtual environment; absolute paths omitted",
+  "issue": "masa-san-jp/agentic-art-orchestration#273",
+  "lease": "NOT_ACQUIRED; no overlapping active lease observed, none retained",
+  "native_probe": {
+    "candidate_count": 9165,
+    "controlled_stop": "AFTER_REQUESTED_CANDIDATE_STAGE",
+    "interrupted_process_exit_code": -2,
+    "self_export": {
+      "content_sha256": "sha256:f2670e7f26972b80ef22791fa241c20f70ad2239fc5f879f0e578ae9bdcf0f97",
+      "contract_version": "portable-self-export-receipt/v1",
+      "expires_at": "2026-10-04T15:35:14+00:00",
+      "export_id": "synthetic-review-single-273",
+      "generated_at": "2026-10-04T20:35:17+09:00",
+      "source_commit": "429ff1a955972466919848a3a960c6a90dc4972b"
+    },
+    "self_hearing": {
+      "reason": "PROFILE_ROOT_UNAVAILABLE",
+      "status": "unavailable"
+    },
+    "stage": "candidates",
+    "status": "PASSED"
+  },
+  "next_operation": "git show --stat HEAD; orchestrator reviews local commits and evidence, then handles publication; no next task claimed",
+  "previous_implementation_commit": "883c5611c13398d672969c71d14f121b0b5db963",
+  "remote_sync": "NOT_RUN_BY_INSTRUCTION",
+  "repository": "agentic-art-orchestration",
+  "sensitive_data": "Current changes and smoke tests use explicitly fictional subject/fixture only. No real personal records, credentials, hearing content or local absolute paths in evidence. Suspect fixture replaced; Git history left to owner without rewriting.",
+  "smoke_tests": {
+    "candidate_receiver": {
+      "candidate_count": 9165,
+      "command": "$PYTHON <external bounded candidate probe using credential_free.py -- run.py --self-export <external-export> --state-root <external-state> --workspace-root <qualified-workspace>>",
+      "controlled_stop": "AFTER_REQUESTED_CANDIDATE_STAGE; not PLAN_READY or delivery acceptance",
+      "exit_code": 0,
+      "native_interrupted_exit_code": -2
+    },
+    "empty": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --run-id <empty-profile-run> --workspace-root <qualified-workspace> --profile-root <minimal-synthetic-profile> --state-root <external-state>",
+      "exit_code": 2,
+      "remediation": "入口のヒアリングに答える／self-model-notes の初回手順（init と同意）へ。回答だけでは signal は出ない。本人記録のある機械の育成 session で回答の Event から根拠付き Claim を作り、同意済み export に self signal が出ることを確認してから、同じ run を再開する。手順: https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md#何回で-signal-が出るか",
+      "saved_resume_command": true,
+      "status": "BLOCKED",
+      "stop_reason": "SELF_MODEL_EMPTY"
+    },
+    "empty_receiver": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --run-id <empty-receiver-run> --workspace-root <qualified-workspace> --self-export <empty-export> --state-root <external-state>",
+      "exit_code": 2,
+      "remediation": "本人記録のある機械へ戻り、育成 session で記録済みの Event から根拠付き Claim を作る。同意済み export に self signal が出ることを確認して再書き出しし、新しい --self-export で同じ run を再開する。受信側では自己モデルは育たない。手順: https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md#何回で-signal-が出るか",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_MODEL_EMPTY"
+    },
+    "expired": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --run-id <expired-input-run> --workspace-root <qualified-workspace> --self-export <expired-export> --state-root <external-state>",
+      "exit_code": 2,
+      "remediation": "export again on the machine holding the owner profile and consent",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_EXPORT_EXPIRED"
+    },
+    "ingest_missing_output": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/ingest_signals.py --purpose artistic-research --self-export <external-export>",
+      "exit_code": 2,
+      "remediation": "pass --output to a location outside repositories accessible only to the owner",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_SIGNAL_OUTPUT_REQUIRED"
+    },
+    "ingest_repo_output": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/ingest_signals.py --purpose artistic-research --self-export <external-export> --output data/signals",
+      "exit_code": 2,
+      "remediation": "pass --output to a location outside repositories accessible only to the owner",
+      "status": "BLOCKED",
+      "stop_reason": "SELF_SIGNAL_OUTPUT_REPOSITORY_OVERLAP"
+    },
+    "sender": {
+      "command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/self_export.py --workspace-root <qualified-workspace> --profile-root <synthetic-profile> --output <external-export> --expires-at <owner-selected-expiry>",
+      "exit_code": 0,
+      "mode": "0o600",
+      "self_export": {
+        "content_sha256": "sha256:4c19213ab951f582296b74b7f3aa242a62f29ca668de23589cb3ee3dea87184f",
+        "contract_version": "portable-self-export-receipt/v1",
+        "expires_at": "2026-10-04T15:35:14+00:00",
+        "export_id": "self-export:bc507289dcab40f783253bd78d458534",
+        "generated_at": "2026-10-04T20:35:17+09:00",
+        "source_commit": "429ff1a955972466919848a3a960c6a90dc4972b"
+      },
+      "status": "PASSED"
+    }
+  },
+  "unresolved": [],
+  "verification": {
+    "baseline_setup_note": "Exact origin/main source at base_commit in an isolated verification tree with matching Git refs/index and a read-only object reference; both complete suites freshly rerun after review fixes.",
+    "compile": {
+      "command": "$PYTHON -m compileall -q tools/self_export.py tools/ingest_signals.py tools/run.py tools/security.py tools/signal_fixtures.py tools/purpose_e2e.py tests/test_portable_self_export.py tests/test_self_model_export_e2e.py",
+      "exit_code": 0
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "docs_and_status_final": {
+      "command": "$PYTHON -m unittest tests.test_docs tests.test_project_status -v",
+      "exit_code": 0,
+      "log_sha256": "60aa9bb046b0667658701cf7925649ff792e48b64f8d341af357f3c0c912b2bb",
+      "summary": [
+        "Ran 22 tests in 0.105s",
+        "OK"
+      ],
+      "tests": 22
+    },
+    "docs_and_status_tests": {
+      "command": "$PYTHON -m unittest tests.test_docs tests.test_project_status -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "b567b0039a3ea5d6f9cbde6b9cdf939f1746ae6b0a58e48b82e82624146b9f4e",
+      "summary": [
+        "Ran 22 tests in 0.026s",
+        "OK"
+      ],
+      "tests": 22
+    },
+    "failure_comparison": {
+      "added": [],
+      "baseline_count": 43,
+      "changed_count": 43,
+      "removed": [],
+      "same_collection": true
+    },
+    "focused": {
+      "command": "$PYTHON -m unittest tests.test_portable_self_export tests.test_ingest_signals tests.test_signal_export tests.test_self_model_export_e2e tests.test_security_boundary tests.test_docs -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "e8c61e0ec58a1e337874ce17d3b0b2ca20316394855e1bc2767701d43415e20a",
+      "summary": [
+        "Ran 59 tests in 4.689s",
+        "OK"
+      ],
+      "tests": 59
+    },
+    "full_suite": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+        }
+      ],
+      "log_sha256": "b65a41c627c989421c193bfa5fa3caaf4134f85f9f84d41d67c1f60a6999dead",
+      "summary": [
+        "Ran 732 tests in 972.846s",
+        "FAILED (failures=8, errors=35, skipped=5)"
+      ],
+      "tests": 732
+    },
+    "origin_main_full_suite": {
+      "command": "$PYTHON -m unittest discover -s tests -v (exact origin/main)",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+        }
+      ],
+      "log_sha256": "07068a22ddb0ab312295e9d4e65696a1fa5463450fb57e63ddb938d9a0859ce4",
+      "summary": [
+        "Ran 717 tests in 936.009s",
+        "FAILED (failures=8, errors=35, skipped=5)"
+      ],
+      "tests": 717
+    },
+    "privacy": {
+      "command": "$PYTHON tools/security.py --output <external-report>",
+      "exit_code": 0,
+      "findings": 0
+    },
+    "purpose_e2e": {
+      "command": "$PYTHON -m unittest tests.test_purpose_e2e -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "71a74a2ba308a202f11a6308a61ac6d169fd93358315cfaf0fd40222e1f861e1",
+      "summary": [
+        "Ran 6 tests in 26.384s",
+        "OK"
+      ],
+      "tests": 6
+    },
+    "queue_related": {
+      "command": "$PYTHON -m unittest tests.test_portable_self_export tests.test_ingest_signals tests.test_run tests.test_security_boundary -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (tests.test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        }
+      ],
+      "log_sha256": "7a4140fb898ed74028036aaeb9139863ff3e99e0417e463a795aef21dc2e7480",
+      "summary": [
+        "Ran 68 tests in 33.616s",
+        "FAILED (failures=1)"
+      ],
+      "tests": 68
+    },
+    "readme": {
+      "command": "$PYTHON tools/project_status.py --check-readme",
+      "exit_code": 0
+    },
+    "run_module": {
+      "baseline_failure": "Existing missing generated snapshot; same test fails in exact origin/main full suite",
+      "command": "$PYTHON -m unittest tests.test_run -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (tests.test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        }
+      ],
+      "log_sha256": "664d227b073a340eff6daf94cf6dff002437d9049aaf1a36ffdcea0e511e07e2",
+      "summary": [
+        "Ran 36 tests in 5.362s",
+        "FAILED (failures=1)"
+      ],
+      "tests": 36
+    },
+    "staged_diff": {
+      "command": "git diff --cached --check",
+      "exit_code": 0
+    },
+    "staged_privacy": {
+      "command": "$PYTHON tools/security.py --output <external-report>",
+      "exit_code": 0,
+      "findings": 0
+    },
+    "status": "CODE_VERIFIED; all seven issue conditions observed, baseline full-suite failures explicitly matched",
+    "validator": {
+      "command": "$PYTHON tools/validate.py --check",
+      "exit_code": 0
+    }
+  }
+}
