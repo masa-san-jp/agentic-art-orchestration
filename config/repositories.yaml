@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: 909e73e6aee420d53fb35f98a14b253c36069926
+    observed_commit: 429ff1a955972466919848a3a960c6a90dc4972b
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:
@@ -45,7 +45,7 @@ repositories:
     role: input-kb
     authority: art-history entities, relations, evidence, and graph
     default_branch: main
-    observed_commit: d0462e26a871b8aa4f88a7eb5a64751d25c14ea9
+    observed_commit: d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/art-history-notes/issues/1
     quality_gates:
@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: 236830bb261561be2bd02ae71576c9f80ff397b8
+    observed_commit: ba1f2d2426073fd2dcb4d235fb5bf72d558de6ea
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:

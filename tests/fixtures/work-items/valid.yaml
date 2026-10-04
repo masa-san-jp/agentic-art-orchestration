@@ -20,8 +20,8 @@ context:
   contracts:
     - normalized-research-signal/v1
   source_commits:
-    self-model: 909e73e6aee420d53fb35f98a14b253c36069926
-    art-history: d0462e26a871b8aa4f88a7eb5a64751d25c14ea9
+    self-model: 429ff1a955972466919848a3a960c6a90dc4972b
+    art-history: d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7
     marketing-trends: 1a02e5aaca120614cba5cd1bbb687a836706530f
     agentic-art-research: 9bfa07d80c7962840031e0607f431c3bb997245f
 acceptance:
