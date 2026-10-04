@@ -198,8 +198,8 @@ repositories:
     path: viewer-response-notes
     role: input-kb
     authority: aggregate viewer response records, privacy boundary, and conservative requirement assessments
-    default_branch: feat/viewer-response-contracts
-    observed_commit: 0c198ec38629fb032f778071e35f265286f6566f
+    default_branch: main
+    observed_commit: bc228ce5ff376f6eeacb14cee6ca0e0acd92ca6d
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/viewer-response-notes/issues/2
     quality_gates:

@@ -45,7 +45,7 @@ class RealChainCITests(unittest.TestCase):
             "masa-san-jp/marketing-trends-notes": "main",
             "masa-san-jp/agentic-art-research": "main",
             "masa-san-jp/agentic-art-production": "main",
-            "masa-san-jp/viewer-response-notes": "feat/viewer-response-contracts",
+            "masa-san-jp/viewer-response-notes": "main",
         }
         for step in real_chain["steps"]:
             if step.get("uses") == "actions/checkout@v4" and "repository" in step.get("with", {}):
