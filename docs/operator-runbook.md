@@ -676,3 +676,53 @@ human gate対象は`merge`、`release`、`public_share`、`consent_expansion`、
 `external_cost_over_declared_budget`、`physical_action`である。workerが要求しても実行せず、観測事実・
 影響・解除条件を保持した`BLOCKED_HUMAN`で停止する。worker契約失敗は同じstageとerror fingerprint
 で3回まで再試行し、4回目は`FAILED_RETRY_EXHAUSTED`とする。
+
+
+## Self Model の初回利用と持ち運び
+
+初回は [self-model-notes README](https://github.com/masa-san-jp/self-model-notes#readme) と
+[for-other-personas](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/for-other-personas.md)
+の初期化・同意手順を使う（[self-model-notes#136](https://github.com/masa-san-jp/self-model-notes/issues/136)）。
+本人 profile を作成し、[README の制作 run 手順](../README.md#制作-run-を回す人エージェント向け)
+から入口ヒアリングを行う。`SELF_MODEL_EMPTY` は必須の自己モデルがまだ無いことを示す。
+ヒアリングに答え、同意済みの exportable signal ができたら保存された同じ run の command を
+`credential_free.py` 経由で再開する。subject と同意 Source だけを正常な self signal にしない。
+
+本人記録を持つ Mac では、README の環境変数を用意してから次を実行する。
+`SELF_EXPORT` はリポジトリ外の、本人だけがアクセスできる場所を本人が選ぶ。
+`EXPORT_EXPIRES_AT` は本人が決めた RFC3339 時刻で、生成時刻より後にする。
+
+```bash
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/self_export.py --workspace-root "$WORKSPACE_ROOT" \
+  --profile-root "$PROFILE_ROOT" --output "$SELF_EXPORT" --expires-at "$EXPORT_EXPIRES_AT"
+```
+
+export は create-only、ファイル権限は本人 read/write のみ。子の既存
+`research-signal-export/v1` は変更せず、親 envelope に元の時刻・commit と新規 export ID・
+期限・canonical payload hash を付ける。受信後は元の ID と hash を使い、再ラベルしない。
+子の同意・adapter・`validate_signal_export`・normalized signal の検査を通った派生情報だけを運ぶ。
+
+本人が JSON を運んだ受信側では、同じ pin 済み code workspace と環境を用意して次を実行する。
+
+```bash
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/run.py --run-id "$RUN_ID" --workspace-root "$WORKSPACE_ROOT" \
+  --state-root "$EXTERNAL_STATE_ROOT" --self-export "$SELF_EXPORT"
+```
+
+受信側は `--profile-root` とヒアリングの open/answer/skip を実行しない。run はヒアリングを
+`unavailable / PROFILE_ROOT_UNAVAILABLE` と記録して続ける。他の機械では自己モデルは育たない。
+更新は本人記録のある機械へ戻り、期限切れ・同意変更時には新しいファイルとして書き出す。
+期限切れは `SELF_EXPORT_EXPIRED`、hash 不一致は `SELF_EXPORT_HASH_MISMATCH`、
+用途違反は `SELF_EXPORT_SCOPE_MISMATCH`、形式違反は `SELF_EXPORT_INVALID`、
+Git 配下は `SELF_EXPORT_REPOSITORY_OVERLAP`、profile と export の併用は `SELF_EXPORT_AMBIGUOUS`。
+owner が export を拒否した場合は `SELF_MODEL_EXPORT_BLOCKED` として profile 検証と同意を案内する。
+これらは BLOCKED であり、本人記録を推測・転用して続行しない。
+hash は署名ではなく、コピーの整合性を検査する。遠隔の同意失効確認はしないため、
+本人は撤回後のコピーを使用しない。公開projection、commit/push、同意拡張の権限は追加しない。
+
+privacy gate は tracked working bytes と staged index blobs の構造を検査する。
+既存 owner 契約 fixture の固定 hash 1件以外には tests/fixtures を含め例外はない。
+検証ログには export 本文・本人の言葉・ローカルの絶対 path を保存しない。
+この入口は通常の run/ingest 向けで、別契約の `--cycle-context` へ export を黙って適用しない。

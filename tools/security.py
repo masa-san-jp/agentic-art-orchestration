@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import subprocess
 import copy
 import json
 import os
@@ -204,6 +206,78 @@ def audit_boundary(payloads: Mapping[str, object], signals: Mapping[str, Mapping
     }
 
 
+
+def tracked_self_exports(repository_root: Path = ROOT) -> list[dict]:
+    """Detect personal exports in index blobs and tracked working files, independent of filename.
+
+    The immutable pre-existing owner contract regression fixture is the only
+    compatibility exception. Its exact bytes are pinned; editing it or adding
+    any other export is rejected, including underneath tests/fixtures/.
+    """
+    legacy = "tests/fixtures/signal/self_export_bundle.json"
+    legacy_hash = "4fe5da5077f42a3cbcd2627d2fee711ef7ff90a40921030a52003bb511067161"
+    result = subprocess.run(["git", "ls-files", "-z"], cwd=repository_root,
+                            capture_output=True)
+    if result.returncode != 0:
+        return [_finding("TRACKED_FILES_UNKNOWN", "repository", "$", "run privacy validation in a Git checkout")]
+    paths = sorted(set(result.stdout.decode("utf-8").split("\0")) - {""})
+    if any("\n" in path or "\r" in path for path in paths):
+        return [_finding("TRACKED_FILES_UNKNOWN", "repository", "$", "use newline-free tracked paths for privacy validation")]
+    # Read index blobs in one Git process. A staged export remains forbidden
+    # even when the working file was replaced with harmless content.
+    indexed = subprocess.run(["git", "cat-file", "--batch"], cwd=repository_root,
+                             input="".join(":" + path + "\n" for path in paths).encode(), capture_output=True)
+    if indexed.returncode != 0:
+        return [_finding("TRACKED_FILES_UNKNOWN", "repository", "$", "repair the Git index before privacy validation")]
+    import io
+    stream = io.BytesIO(indexed.stdout)
+    findings = []
+    for path in paths:
+        header = stream.readline().rstrip(b"\n").split()
+        blob = b""
+        if len(header) == 3 and header[1] == b"blob":
+            blob = stream.read(int(header[2]))
+            stream.read(1)
+        candidates = [blob]
+        target = repository_root / path
+        if target.is_file() and not target.is_symlink():
+            candidates.append(target.read_bytes())
+        for raw in candidates:
+            if (repository_root.resolve() == ROOT.resolve() and path == legacy
+                    and hashlib.sha256(raw).hexdigest() == legacy_hash):
+                continue
+            try:
+                value = json.loads(raw)
+            except (ValueError, UnicodeError):
+                if Path(path).suffix not in {".yaml", ".yml"}:
+                    continue
+                # Most tracked YAML is unrelated configuration or execution
+                # metadata. Parse only possible contract-bearing content;
+                # escapes still force parsing so escaped markers cannot bypass.
+                if not any(marker in raw for marker in (b"portable-self-export/v1", b"research-signal-export/v1", b"\\")):
+                    continue
+                try:
+                    value = yaml.safe_load(raw)
+                except (yaml.YAMLError, UnicodeError):
+                    continue
+            for item in _structured_values(value):
+                if (item.get("contract_version") == "portable-self-export/v1"
+                        or (item.get("contract_version") == "research-signal-export/v1"
+                            and item.get("source_repository") == "self-model")):
+                    findings.append(_finding("TRACKED_SELF_EXPORT", path, "$", "keep Self Model exports outside repositories in an owner-only location"))
+                    break
+    return _dedupe_findings(findings)
+
+
+def _structured_values(value: object):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from _structured_values(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _structured_values(child)
+
 def _load_json(path: Path) -> object:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
@@ -243,6 +317,9 @@ def main() -> int:
             resolved = path if path.is_absolute() else Path.cwd() / path
             signals[str(resolved.relative_to(ROOT)) if resolved.is_relative_to(ROOT) else str(resolved)] = _load_json(resolved)
         result = audit_boundary(payloads, signals)
+        result["findings"] = _dedupe_findings(result["findings"] + tracked_self_exports())
+        result["blocking"] = bool(result["findings"])
+        result["status"] = "FAILED" if result["blocking"] else "PASSED"
         _write_atomic(args.output.resolve(), json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, yaml.YAMLError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

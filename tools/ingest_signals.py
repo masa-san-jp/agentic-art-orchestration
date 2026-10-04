@@ -46,6 +46,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/repositories.yaml"
 DEFAULT_OUTPUT = ROOT / "data/signals"
 
+from tools.self_export import read_export, SelfExportError, EMPTY_REMEDIATION
+
 ADAPTERS = {
     "self-model": adapt_self_model_signal,
     "art-history": adapt_art_history_signal,
@@ -61,6 +63,15 @@ class IngestError(RuntimeError):
 
 class IngestBlocked(IngestError):
     """An explicit input is required before any real exporter may run."""
+
+    def __init__(self, detail: str, remediation: str | None = None):
+        super().__init__(detail)
+        self.code = detail.split(":", 1)[0]
+        self.remediation = remediation or "pass --profile-root or a valid Git-external --self-export"
+
+    def report(self) -> dict:
+        return {"status": "BLOCKED", "stop_reason": self.code,
+                "detail": str(self), "remediation": self.remediation}
 
 
 def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
@@ -90,6 +101,11 @@ def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
         cwd=checkout, capture_output=True, text=True, env=child_environment(),
     )
     if result.returncode != 0:
+        if repository["id"] == "self-model" and "Export denied" in result.stderr:
+            raise IngestBlocked(
+                "SELF_MODEL_EXPORT_BLOCKED: the owner refused signal export",
+                "self-model-notes の profile 検証・初回手順（init と同意）を確認し、本人記録のある機械で再書き出しする。",
+            )
         detail = result.stderr.strip().splitlines()[-1:] or ["no stderr"]
         raise IngestError(f"{repository['id']} export failed: {detail[0]}")
     try:
@@ -104,10 +120,20 @@ def _observed_head(checkout: Path) -> str | None:
 
 
 def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
-           profile_root: Path | None = None, requester: str | None = None) -> dict:
+           profile_root: Path | None = None, requester: str | None = None,
+           self_export: Path | None = None) -> dict:
     manifest = load_yaml(MANIFEST)
     inputs = [item for item in manifest["repositories"] if item.get("role") == "input-kb"]
-    if profile_root is None and any(item["id"] == "self-model" for item in inputs):
+    if profile_root is not None and self_export is not None:
+        raise IngestBlocked("SELF_EXPORT_AMBIGUOUS: choose profile root or portable export")
+    portable = None
+    receipt = None
+    if self_export is not None:
+        try:
+            portable, receipt = read_export(self_export, purpose)
+        except SelfExportError as exc:
+            raise IngestBlocked(str(exc), exc.remediation) from exc
+    if profile_root is None and portable is None and any(item["id"] == "self-model" for item in inputs):
         raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
     normalized: list[dict] = []
     warnings: list[str] = []
@@ -126,10 +152,14 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
             })
             continue
 
-        payload = _export(repository, workspace_root, purpose, python, profile_root, requester)
+        payload = (portable if identifier == "self-model" and portable is not None
+                   else _export(repository, workspace_root, purpose, python, profile_root, requester))
         errors = validate_signal_export(payload, identifier)
         if errors:
             raise IngestError(f"{identifier} envelope is invalid: {errors[0]}")
+
+        if identifier == "self-model" and not payload["signals"]:
+            raise IngestBlocked("SELF_MODEL_EMPTY: no exportable self signal", EMPTY_REMEDIATION)
 
         # The pin is what the exchange is qualified against, so a drift is worth
         # saying out loud. It does not stop an ingest: reading is not qualifying.
@@ -160,7 +190,7 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
     (output / "portfolio.json").write_text(
         json.dumps(portfolio, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    return {
+    report = {
         "status": "PASSED",
         "signal_count": len(normalized),
         "by_kind": {kind: sum(1 for s in normalized if s["signal_kind"] == kind) for kind in sorted({s["signal_kind"] for s in normalized})},
@@ -168,6 +198,9 @@ def ingest(workspace_root: Path, output: Path, purpose: str, python: str,
         "warnings": warnings,
         "deferred_boundaries": deferred_boundaries,
     }
+    if receipt is not None:
+        report["self_export"] = receipt
+    return report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -178,13 +211,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--child-python", default=sys.executable)
     parser.add_argument("--profile-root", type=Path,
                         help="explicit external Self Model profile root; forwarded only to that owner")
+    parser.add_argument("--self-export", type=Path, help="Git-external portable self-model export JSON")
     parser.add_argument("--requester",
                         help="run id forwarded to Self Model when the pinned exporter supports hearing")
     args = parser.parse_args(argv)
     try:
-        report = ingest(args.workspace_root, args.output, args.purpose, args.child_python, args.profile_root, args.requester)
+        report = ingest(args.workspace_root, args.output, args.purpose, args.child_python, args.profile_root, args.requester, args.self_export)
     except IngestBlocked as exc:
-        print(json.dumps({"status": "BLOCKED", "detail": str(exc)}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        print(json.dumps(exc.report(), ensure_ascii=False, sort_keys=True), file=sys.stderr)
         return 2
     except (IngestError, OSError, KeyError) as exc:
         print(json.dumps({"status": "FAILED", "detail": str(exc)}, ensure_ascii=False, sort_keys=True), file=sys.stderr)

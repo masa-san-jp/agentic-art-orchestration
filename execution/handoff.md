@@ -3095,3 +3095,46 @@ remains unmet for this cleanup.
 - Evidence: [issue-269-verification.json](issue-269-verification.json). No real profile, hearing answer, inferred feedback, credential or Drive artifact was saved. No lease was acquired and no held lease remains. All commits remain local by explicit instruction.
 
 Next operation: `git show --stat HEAD` and review both local branches plus the evidence. The orchestrator owns push, PR creation, merge and Issue closure. No next implementation task is selected in this scoped handoff.
+
+
+# Issue #273 — cold starts and portable Self Model exports
+
+Repository: agentic-art-orchestration; branch: `agent/273-cold-start-and-portable-export`.
+Base: `a36ed6052b9540db00fb2ca7043ba3101d162427`. The orchestrator owns push,
+PR, merge and issue closure; only local commit is authorized. No lease was acquired
+or retained. Evidence: `execution/issue-273-verification.json`.
+
+Native minimal synthetic subject + consent now returns BLOCKED / SELF_MODEL_EMPTY,
+remediation and same-run resume (exit 2). A portable export without profile root
+reaches 9,165 native candidates and records the original ID/hash with hearing
+unavailable / PROFILE_ROOT_UNAVAILABLE. The bounded probe deliberately stops after
+candidate generation; it is not PLAN_READY or completed delivery. Expired input
+blocks at entry (exit 2). Native Mac-side export succeeds create-only with mode 0600.
+The child research-signal-export/v1 contract, self requirement, owner pins and consent
+are unchanged; parent portable envelope and metadata-only receipt add ID/hash/expiry.
+
+Final checks: validator, README status, privacy, compile and diff pass. Related suite:
+56 tests PASS. Run module: 36 tests, one existing missing-snapshot failure. Complete
+changed suite: 729 tests, 8 failures, 35 errors, 5 skips. Complete exact origin/main
+suite: 717 tests, the same 43 failure records; zero additions/removals. The initial
+comparison archive omitted Git metadata, causing 13 setup-only extra failures;
+restoring isolated Git metadata makes all 13 pass and the final full comparison
+confirms the original baseline. Full logs remain outside Git; only hashes and test
+names are retained. No quality gate is skipped or reported as fully green.
+
+Acceptance is 6/7 strictly. B6 protects all new tracked exports, including staged
+blobs, renamed/nested payloads and fixtures. It retains one exact historical owner
+regression fixture hash to avoid silently changing the existing pinned-child test.
+Literal all-tracked-export rejection is therefore still unaccepted. Options are an
+explicit scope decision for that existing fixture, or retiring it through an owner
+regression-evidence migration. Preserve the narrow exception pending review; do not
+claim strict B6 completion or fabricate public consent. The queue/checkpoint remains
+BLOCKED for this compatibility decision, with implementation CODE_VERIFIED.
+
+Only synthetic profiles and existing contract fixtures were used. No real personal
+records, credentials, hearing content or local absolute paths are stored in evidence.
+No child repository changed; child quality gates are not applicable. No Drive artifact
+was created. Portable local exports are create-only, and parent evidence keeps only
+opaque ID/hash/provenance. Feedback is the explicit assigned Issue; inferred feedback
+is none. Next operation: `git show --stat HEAD`, then orchestrator review of the local
+commit and strict B6 compatibility gap. No next task is claimed.
