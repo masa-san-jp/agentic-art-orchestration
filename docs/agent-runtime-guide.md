@@ -1,6 +1,14 @@
 # Agent runtime guide
 
-## 共通起動プロンプト
+## READMEからの最短ルート
+
+fresh cloneの環境準備と、実データ不要で合成制作プランまで完走するコマンド列は
+[READMEの最短ルート](../README.md#利用者向けの最短ルート)を正準入口とする。
+`--offline-fixture`だけの例は入口なしでもよい。合成ゲート報告はfixture専用であり、
+実childの品質確認やProject納品の証拠には使わない。
+制作runは開発taskを選ばず、下のヒアリング → テーマ未指定run → agent action → 再開へ進む。
+
+## 開発用の共通起動プロンプト
 
 ~~~text
 このメタ・リポジトリを自律的に完成させてください。
@@ -58,7 +66,7 @@ agentはresultの`status`とexit codeだけで次を決める。
 
 | status / exit | 自律agentの動作 |
 | --- | --- |
-| `READY` / 0 | 全entryが`cloned`または`reused`、guard PASS、pin MATCHED。`status`/startupを再確認してtaskへ進む |
+| `READY` / 0 | 全entryが`cloned`または`reused`、guard PASS、pin MATCHED。`status`/startupを再確認し、制作ならヒアリングへ、開発ならtaskへ進む |
 | `BLOCKED_PIN_DRIFT` / 2 | clean checkoutを変更せず、`tools/pin_adopt.py --dry-run`の候補確認か`tools/pinned_workspace.py`のqualificationへ進む。pin採用はhuman gate後 |
 | `BLOCKED_EXISTING_WORKSPACE` / 2 | dirty/untracked/detached/remote/upstream/ahead/behind/diverged等を記録し、既存checkoutを修復せず停止する |
 | `BLOCKED_REMOTE_ACCESS` / 2 | sanitized findingだけを記録し、credential/networkを人間が解消するまでcloneもpartial配置もしない |
@@ -108,7 +116,7 @@ test "$BOOTSTRAP_EXIT" -eq 2
 `outcome: offered`なら、packetの`intent`を全行（言い換え可・省略不可）、`why`、`anchors`（あれば
 「前に『…』と話していたけど」の形）、`question`を一問だけ本人へ示す。テーマ・依頼文・slug・titleは
 聞かない。本人が答えたらself-model-notesの `docs/acquisition-protocol.md` のannotated blockへ構造化し、
-packetの`task_id`を使って次へ標準入力をそのまま渡す。
+packetの`task_id`を使って次へ標準入力をそのまま渡す。下は`answer_format: event-block`用のtemplateで、`slot-values`の場合は子ownerの`docs/operations.md`の形式を同じheredocで渡す。
 
 ~~~bash
 cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/credential_free.py \
@@ -117,12 +125,29 @@ cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/credential_free.py \
   --workspace-root <verified-child-workspace> \
   --profile-root <external-self-model-profile> \
   --expected-queue-sha256 <packet-queue-sha256>
-type: event
-value: <annotated response block>
+[event: hearing-response]
+observed_at: "<observed RFC3339 timestamp>"
+precision: minute
+domain: creative-practice
+social: null
+uncertainty: null
+control: null
+fatigue: null
+stress: null
+trigger: null
+observed_fact: <observed fact from response>
+raw_voice: "<minimal response quote>"
+appraisal: null
+emotion: null
+body: null
+cognition: null
+action: null
+immediate_outcome: null
+delayed_outcome: null
 ANNOTATED_BLOCK
 ~~~
 
-回答を一時ファイルに書かず、標準入力から直接渡す。
+回答を一時ファイルに書かず、標準入力から直接渡す。placeholderは実回答・観測で置き換え、未取得は`null`、確認済み空は`[]`、評価不能は`unknown`とする。
 
 断られた、「面倒」等の反応、無応答は次で記録する。どの結果でも、必ず同じrunの`tools/run.py`を実行し、
 ヒアリング結果でrunを止めない。回答文はIssue、PR、commit、handoff、Drive、state、logへ書かない。
@@ -381,7 +406,7 @@ checkpointにはtask、repo、branch、HEAD、dirty state、checks、未完了ac
 
 ## Intent付き実行
 
-候補順位へ人のintentを反映する場合は `tools/run.py --intent` を使う。intentは
+候補順位へ人のintentを反映する場合は `.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- .venv/bin/python tools/run.py --intent` を使う。intentは
 hard filterではなく、既存の安全・鮮度・根拠gateを通過した候補の順位付けだけに使う。
 実行は `intent-rank/v1` のローカル決定的処理で、Unicode NFKC、casefold、空白圧縮を
 行った文字bigramのmultiset weighted Jaccardを計算する。intentがない実行は既存の
@@ -441,11 +466,11 @@ batch driverが作成するJSONLは`batch-report-event/v1`のmetadata-only close
 
 ## 知識を次回へ残す統合実行
 
-`tools/run.py --cycle-context <external-context.json> --state-root <external-state-root>` は、AAK04 profileの隔離code/knowledge pin、全owner検索、Production正本検証、owner別保存・索引・再開を接続する。返された`next_action`をエージェントが処理し、`resume_command`で継続する。構成と状態の意味は [knowledge-cycle-runtime.md](knowledge-cycle-runtime.md) を読む。実エージェント受入とfake回帰を区別する。
+`.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- .venv/bin/python tools/run.py --cycle-context <external-context.json> --state-root <external-state-root>` は、AAK04 profileの隔離code/knowledge pin、全owner検索、Production正本検証、owner別保存・索引・再開を接続する。返された`next_action`をエージェントが処理し、`resume_command`で継続する。構成と状態の意味は [knowledge-cycle-runtime.md](knowledge-cycle-runtime.md) を読む。実エージェント受入とfake回帰を区別する。
 
 ## Requested delivery completion (Issue 217)
 
-In a session launched through `tools/credential_free.py`, for a request to output to Project, run `tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
+In a session launched through `tools/credential_free.py`, for a request to output to Project, run `.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- .venv/bin/python tools/run.py --cycle-context <external-context.json> --project-root <project-checkout> --state-root <project-checkout>/.agentic-art/state --delivery-target project-local`. The context/profile must explicitly authorize public-catalog projection and select the Project root; an internal profile mismatch is an error, never silent SKIPPED success. The saved context records `project_root`, `delivery_contract: {contract_version: delivery-contract/v1, target: project-local}`, the repo-local `destination-resolution/v2` in run state, and the exact resume command. Legacy contexts keep their existing internal/committed-catalog semantics; no profile is silently migrated.
 
 Continue the returned agent actions through Production plan generation, the closed automatic plan attestation, canonical projection, native Project lineage initialization and local receiver validation. The automatic plan lane performs Production's renderer, content, asset and provenance checks and records `publication_review.authority: AUTOMATIC_PLAN`; it never waits for human approval and never authorizes an external effect. Work/manual requests use the separate native review lane. If an automatic check fails, the agent receives the exact repair finding and resumes the same run. Run the native runtime bootstrap when a freshly built plan has not yet initialized its event log. Do not fabricate approvals. A human wait applies only to a separately requested work/manual publication and does not consume the no-progress retry budget.
 

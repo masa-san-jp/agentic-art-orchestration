@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
@@ -7,7 +8,74 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def unwrapped_production_commands(markdown: str) -> list[str]:
+    """Inspect each shell/inline invocation, never borrow a wrapper from a neighbour."""
+    target = re.compile(r"(?<![\w])(?:tools/)?(run|self_hearing|purpose_e2e)\.py(?=\s|$)")
+    problems = []
+
+    def check(command: str) -> None:
+        for match in target.finditer(command):
+            arguments = re.split(r";|&&|\|", command[match.end():], maxsplit=1)[0]
+            if not re.match(r"\s+(?:--|open\b|answer\b|skip\b)", arguments):
+                continue  # Bare filenames are references, not invocations.
+            if match.group(1) == "purpose_e2e" and "--live-private" not in arguments:
+                continue
+            if "--offline-fixture" in arguments and "--live-private" not in arguments:
+                continue
+            prefix = command[:match.start()]
+            if not re.search(r"tools/credential_free\.py\s+.*?--state-root\s+\S+\s+--\s+\S*python(?:3)?\s+$", prefix):
+                problems.append(command.strip())
+
+    fence = re.compile(r"^[ \t]*(```|~~~)([^\n]*)\n(.*?)^[ \t]*\1[ \t]*$", re.M | re.S)
+    for block in fence.finditer(markdown):
+        if block.group(2).strip() not in {"", "bash", "sh", "shell", "zsh"}:
+            continue
+        joined = re.sub(r"\\[ \t]*\n[ \t]*", " ", block.group(3))
+        heredoc = None
+        for line in joined.splitlines():
+            if heredoc:
+                if line.strip() == heredoc:
+                    heredoc = None
+                continue
+            for command in re.split(r";|&&|\|\|", line):
+                check(command)
+            delimiter = re.search(r"<<[ \t]*['\"]?(\w+)['\"]?", line)
+            if delimiter:
+                heredoc = delimiter.group(1)
+    prose = fence.sub("", markdown)
+    for command in re.findall(r"`([^`\n]+)`", prose):
+        check(command)
+    return problems
+
+
 class DocumentationTests(unittest.TestCase):
+    def test_live_documented_commands_use_credential_free_entry(self):
+        documents = [ROOT / "README.md", ROOT / "AGENTS.md", *sorted((ROOT / "docs").glob("*.md"))]
+        for document in documents:
+            with self.subTest(document=str(document.relative_to(ROOT))):
+                self.assertEqual([], unwrapped_production_commands(document.read_text(encoding="utf-8")))
+
+    def test_command_guard_rejects_unwrapped_invocations_individually(self):
+        for invocation in ("tools/run.py --state-root /external/state",
+                           "tools/self_hearing.py open --run-id TEST",
+                           "tools/self_hearing.py answer TASK --run-id TEST",
+                           "tools/self_hearing.py skip TASK --reason skipped",
+                           "tools/purpose_e2e.py --live-private --attempt-id live"):
+            with self.subTest(invocation=invocation):
+                self.assertTrue(unwrapped_production_commands(f"`{invocation}`"))
+                wrapped = f".venv/bin/python tools/credential_free.py --state-root /external/state -- \\\n  .venv/bin/python {invocation}"
+                self.assertEqual([], unwrapped_production_commands(f"```bash\n{wrapped}\n```"))
+                self.assertTrue(unwrapped_production_commands(f"```bash\n{wrapped}\npython3 {invocation}\n```"))
+                self.assertTrue(unwrapped_production_commands(f"```bash\n{wrapped}; python3 {invocation}\n```"))
+                self.assertTrue(unwrapped_production_commands(f"```bash\n{wrapped} | python3 {invocation}\n```"))
+        self.assertEqual([], unwrapped_production_commands("```sh\npython3 tools/run.py --offline-fixture\n```"))
+        self.assertTrue(unwrapped_production_commands("```sh\npython3 tools/run.py --offline-fixture\npython3 tools/run.py --run-id LIVE\n```"))
+        self.assertTrue(unwrapped_production_commands("```sh\npython3 tools/run.py --run-id LIVE | python3 tools/run.py --offline-fixture\n```"))
+        self.assertTrue(unwrapped_production_commands("   ```bash\n   python3 tools/run.py --run-id LIVE\n   ```"))
+        self.assertTrue(unwrapped_production_commands("`run.py --run-id LIVE`"))
+        self.assertEqual([], unwrapped_production_commands("`tools/batch_run.py --help`"))
+        self.assertEqual([], unwrapped_production_commands("`tools/run.py` owns run state."))
+
     def test_production_entry_requires_no_public_token_and_keeps_private_fallback(self):
         for name in ("AGENTS.md", "docs/agent-runtime-guide.md", "docs/operator-runbook.md", "docs/instance-setup.md"):
             with self.subTest(document=name):
@@ -25,15 +93,21 @@ class DocumentationTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         runbook = (ROOT / "docs/operator-runbook.md").read_text(encoding="utf-8")
-        canonical = "\n".join(
-            (
-                "python3 -m venv .venv",
-                ".venv/bin/pip install -r requirements-dev.txt",
-                ".venv/bin/python tools/validate.py --check",
-                ".venv/bin/python -m unittest discover -s tests -v",
-            )
-        )
-        self.assertIn(canonical, readme)
+        prepare = readme.index("python3 -m venv .venv")
+        install = readme.index(".venv/bin/pip install -r requirements-dev.txt", prepare)
+        bootstrap = readme.index("#### ブートストラップ検証", install)
+        snapshot = readme.index("tools/workspace.py snapshot", bootstrap)
+        suite = readme.index(".venv/bin/python -m unittest discover -s tests -v", snapshot)
+        self.assertLess(prepare, install)
+        self.assertLess(snapshot, suite)
+        self.assertIn("### 制作 run を回す人／エージェント向け", readme)
+        self.assertIn("### このリポジトリを開発する人向け", readme)
+        self.assertIn("Python 3.11", readme)
+        for command in ("tools/purpose_e2e.py --offline-fixture", "tools/self_hearing.py open",
+                        "tools/self_hearing.py answer", "tools/self_hearing.py skip", "tools/run.py --run-id"):
+            self.assertIn(command, readme)
+        self.assertIn("回答を一時ファイルに書かず", readme)
+        self.assertIn("テーマ・repo名・slug・titleを質問しません", readme)
         self.assertIn("tools/workspace.py init --offline-fixture --fixture-root", readme)
         self.assertIn("tools/interaction_e2e.py", readme)
         self.assertIn("README.md#ブートストラップ検証", agents)
