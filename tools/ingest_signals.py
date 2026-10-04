@@ -49,6 +49,8 @@ DEFAULT_OUTPUT = ROOT / "data/signals"
 from tools.self_export import (read_export, external_path, SelfExportError,
                                EMPTY_REMEDIATION, PORTABLE_EMPTY_REMEDIATION)
 
+from tools.profile_root_config import REMEDIATION, redact
+
 ADAPTERS = {
     "self-model": adapt_self_model_signal,
     "art-history": adapt_art_history_signal,
@@ -68,7 +70,8 @@ class IngestBlocked(IngestError):
     def __init__(self, detail: str, remediation: str | None = None):
         super().__init__(detail)
         self.code = detail.split(":", 1)[0]
-        self.remediation = remediation or "pass --profile-root or a valid Git-external --self-export"
+        self.remediation = remediation or (REMEDIATION if self.code == "PROFILE_ROOT_REQUIRED"
+                                          else "pass --profile-root or a valid Git-external --self-export")
 
     def report(self) -> dict:
         return {"status": "BLOCKED", "stop_reason": self.code,
@@ -81,7 +84,7 @@ def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
     checkout = workspace_root / repository["path"]
     if repository["id"] == "self-model":
         if profile_root is None:
-            raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+            raise IngestBlocked("PROFILE_ROOT_REQUIRED: owner local profile configuration is required")
     exporter = checkout / "tools/export_signals.py"
     if not exporter.is_file():
         raise IngestError(f"{repository['id']} has no tools/export_signals.py at {checkout}")
@@ -108,7 +111,8 @@ def _export(repository: dict, workspace_root: Path, purpose: str, python: str,
                 "self-model-notes の profile 検証・初回手順（init と同意）を確認し、本人記録のある機械で再書き出しする。",
             )
         detail = result.stderr.strip().splitlines()[-1:] or ["no stderr"]
-        raise IngestError(f"{repository['id']} export failed: {detail[0]}")
+        raise IngestError(redact(f"{repository['id']} export failed: {detail[0]}",
+                                profile_root if repository["id"] == "self-model" else None))
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
@@ -135,7 +139,7 @@ def ingest(workspace_root: Path, output: Path | None, purpose: str, python: str,
         except SelfExportError as exc:
             raise IngestBlocked(str(exc), exc.remediation) from exc
     if profile_root is None and portable is None and any(item["id"] == "self-model" for item in inputs):
-        raise IngestBlocked("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+        raise IngestBlocked("PROFILE_ROOT_REQUIRED: owner local profile configuration is required")
     if any(item["id"] == "self-model" for item in inputs):
         remediation = "pass --output to a location outside repositories accessible only to the owner"
         if output is None:

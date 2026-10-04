@@ -3146,3 +3146,43 @@ parent evidence holds opaque ID/hash/provenance only. Explicit feedback: Issue 2
 and review corrections; inferred feedback: none. No unmet issue condition remains.
 Next operation: `git show --stat HEAD`, then orchestrator review and publication.
 No next task is claimed and no remote operation is performed.
+
+
+## Issue #275 — owner-local profile root discovery
+
+Repository: agentic-art-orchestration; branch: `agent/275-profile-root-discovery`.
+Base: `8437fdc95986ac328ca7ce03ebc1b621b18e3aad`. The orchestrator owns push,
+PR creation, merge and Issue closure; this agent makes local commits only.
+No lease was acquired and none remains held. Evidence:
+[issue-275-verification.json](issue-275-verification.json).
+
+Acceptance: 6/6 plus portable-export independence. Normal run and hearing resolve
+argument -> environment -> private owner-local config. The new set/show/clear CLI
+uses the native Self Model resolver, atomic 0600 settings and Git/symlink checks.
+Credential-free launch resolves the caller setting before HOME isolation and
+forwards only private environment values plus source metadata. Reports store
+`profile_root_source` and redact profile paths, including child errors; resume
+commands omit them. Agent docs ask for one-time owner setup, never the path.
+Hearing keeps its best-effort exit-0 contract, and explicit portable/profile
+ambiguity remains rejected; portable and offline lanes bypass discovery.
+
+The native probe uses only the pinned owner's synthetic layout and temporary
+HOME. Without a profile argument, the real credential-free run records user-config
+and reaches the owner exporter; missing synthetic consent remains a legitimate
+SELF_MODEL_EXPORT_BLOCKED / exit 2. No approval or successful plan is fabricated.
+Clearing the setting returns PROFILE_ROOT_REQUIRED / exit 2 with the new owner
+setup remediation. Profile bytes are absent from output and every run-state file.
+
+Validation: 17 focused, 121 related and 36 execution metadata/docs tests PASS; all 17 README bootstrap
+commands exit 0. Validator, README status, compile, privacy and diff checks PASS.
+Full changed suite runs 749 tests. Exact origin/main runs 732 tests and retains
+the same 43 named failures without generated data (8 failures, 35 errors, 5 skips),
+and the same 5 named errors after bootstrap (5 skips). Both comparisons have zero
+new or removed failures. Full logs stay outside Git; evidence stores summaries,
+names and hashes only. No failed gate is described as green.
+
+No real profile, private payload, hearing answer, credential, inferred feedback,
+child code change, Drive artifact or public delivery is involved. Explicit
+feedback is the provided Issue and orchestrator supplement. Existing full-suite
+errors remain baseline limitations; no scoped acceptance is unmet.
+Next operation: `git show --stat HEAD` for orchestrator review. No next task is claimed.

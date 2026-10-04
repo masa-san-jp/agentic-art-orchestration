@@ -1,5 +1,5 @@
-version: 317
-updated_at: '2026-10-04T11:34:39.645517+00:00'
+version: 318
+updated_at: '2026-10-04T15:40:19.012823+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -2101,26 +2101,46 @@ issue_273_local_implementation:
   remote_sync: NOT_RUN_BY_INSTRUCTION; orchestrator owns publication
 
 checkpoint:
-  task: ISSUE-273
+  task: ISSUE-275
   repository: agentic-art-orchestration
   status: DONE
   code_status: CODE_VERIFIED
-  start_point: a36ed6052b9540db00fb2ca7043ba3101d162427
-  branch: agent/273-cold-start-and-portable-export
-  evidence: execution/issue-273-verification.json
-  acceptance: 7/7; review corrections implemented; B6 achieved without exceptions
+  start_point: 8437fdc95986ac328ca7ce03ebc1b621b18e3aad
+  branch: agent/275-profile-root-discovery
+  evidence: execution/issue-275-verification.json
+  acceptance: 6/6 plus portable-export independence
   checks:
     validator: PASS
     project_status_readme: PASS
-    focused_suite: 'PASS: 59 tests'
-    run_module: '36 tests; one existing missing-snapshot failure'
-    full_suite: '732 tests; 8 failures, 35 errors, 5 skips; exactly matches origin/main 717-test suite'
+    focused: 'PASS: 17 tests'
+    related: 'PASS: 121 tests'
+    execution_metadata: 'PASS: 36 tests'
+    full_clean: '749 tests; 8 failures, 35 errors, 5 skips; exactly matches origin/main 732-test failure set'
+    full_bootstrapped: '749 tests; 5 errors, 5 skips; exactly matches origin/main 732-test error set'
     new_or_removed_failures: 0
-    privacy: 'PASS: all tracked exports and staged blobs rejected without fixture exceptions; self ingest requires Git-external output'
-    child_quality_gates: NOT_APPLICABLE; no child changed
-  sensitive_data: Synthetic fixtures only; no real personal data, credentials, hearing body or absolute path in verification evidence
-  external_artifact: No Drive artifact; local portable export create-only, 0600, opaque ID/hash only in evidence
+    privacy: PASS; no profile path in synthetic native output or state
+    child_quality_gates: NOT_APPLICABLE; no child code changed
+  sensitive_data: Synthetic fixtures and temporary HOME only; no real profile, credential, hearing body or local absolute path in evidence
+  external_artifact: None; no Drive or public delivery
+  feedback: Provided Issue and orchestrator instructions only; no inferred feedback
   remote_sync: NOT_RUN_BY_INSTRUCTION
   lease: NOT_ACQUIRED; none retained
-  unresolved: None; existing baseline failures remain explicit
-  next_operation: git show --stat HEAD, then orchestrator review of local commits and evidence; no next task claimed
+  unresolved: No issue condition remains unmet; existing full-suite errors remain explicit
+  next_operation: git show --stat HEAD, then orchestrator review and publication; no next task claimed
+
+issue_275_local_implementation:
+  task: ISSUE-275
+  repository: agentic-art-orchestration
+  branch: agent/275-profile-root-discovery
+  start_point: 8437fdc95986ac328ca7ce03ebc1b621b18e3aad
+  status: DONE
+  expected_changes:
+  - Add private owner-validated profile-root settings and discovery
+  - Resolve caller config before HOME isolation and redact profile paths
+  - Preserve portable export and offline behavior; document one-time setup
+  lease: NOT_ACQUIRED; assigned isolated clone has no overlapping active lease
+  remote_sync: NOT_RUN_BY_INSTRUCTION; orchestrator owns publication
+  sensitive_data: Synthetic fixtures and temporary HOME only; no real profile accessed
+  evidence: execution/issue-275-verification.json
+  acceptance: 6/6 plus portable-export independence
+  code_status: CODE_VERIFIED

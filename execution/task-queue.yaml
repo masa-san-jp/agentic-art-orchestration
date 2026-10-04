@@ -1,5 +1,5 @@
-version: 101
-updated_at: '2026-10-04T20:08:40+09:00'
+version: 102
+updated_at: '2026-10-04T15:40:19.013672+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3366,3 +3366,26 @@ tasks:
     code_status: CODE_VERIFIED
     integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
     completion: 7/7; explicit Event-to-Claim growth and owner-machine re-export remediation, synthetic fixture without privacy exceptions, external-only self ingest output. Full verification and exact origin/main failure comparison in execution/issue-273-verification.json; no lease held and no remote write.
+
+  - id: ISSUE-275
+    milestone: AAK
+    title: Discover an owner-configured external Self Model profile root
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/275
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [PROFILE-ROOT-FORWARD-001, ISSUE-273, ISSUE-250-S4]
+    acceptance: Argument, environment and private user-config precedence; owner-validated external-only settings; no profile path in output or run metadata; credential-free pre-HOME discovery; one-time owner setup remediation and agent documentation; portable export remains independent.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python tools/project_status.py --check-readme
+    - .venv/bin/python -m unittest tests.test_profile_root_config tests.test_self_hearing tests.test_credential_free tests.test_run tests.test_portable_self_export tests.test_ingest_signals tests.test_docs -v
+    - .venv/bin/python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge and issue closure; only local implementation and commit are authorized. Synthetic fixtures only; no lease acquired in the assigned isolated clone.
+    code_status: CODE_VERIFIED
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    evidence: execution/issue-275-verification.json
+    acceptance_result: '6/6 plus portable-export independence'
+    verification_result: '17 focused and 121 related tests PASS; bootstrap 17/17 PASS. Full changed suite 749 tests exactly matches origin/main 732 tests: 43 named failures without generated data, 5 named errors after bootstrap; no new or removed failures.'
+    completion: Local implementation and verification complete; no personal profile touched, no child code changed, no lease held and no remote write. Orchestrator review and publication remain pending.

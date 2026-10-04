@@ -1,0 +1,477 @@
+{
+  "acceptance": {
+    "AC1": {
+      "observed": "Argument > environment > private user config > none; source enum recorded without paths.",
+      "status": "PASSED"
+    },
+    "AC2": {
+      "observed": "set invokes the native Self Model resolver; settings are an atomic 0600 absolute-path single line outside Git; show always redacts; clear removes the setting; symlink, Git, nonregular, wrong-permission and malformed settings fail closed.",
+      "status": "PASSED"
+    },
+    "AC3": {
+      "observed": "No profile path in native stdout/stderr/run state; child diagnostics and OSError filenames redacted; resume commands omit profile paths.",
+      "status": "PASSED"
+    },
+    "AC4": {
+      "observed": "Credential-free entry reads the caller setting before replacing HOME and passes root plus source metadata through environment; native run.json reports user-config.",
+      "status": "PASSED"
+    },
+    "AC5": {
+      "observed": "After clearing the temporary setting, native run exits 2 with PROFILE_ROOT_REQUIRED and one-time owner setup remediation without asking for the path.",
+      "status": "PASSED"
+    },
+    "AC6": {
+      "observed": "AGENTS.md, README production steps and agent-runtime-guide prohibit asking for the profile path and explain owner-local setup.",
+      "status": "PASSED"
+    }
+  },
+  "acceptance_result": "6/6 plus portable-export independence",
+  "base_commit": "8437fdc95986ac328ca7ce03ebc1b621b18e3aad",
+  "baseline_ref": "origin/main",
+  "branch": "agent/275-profile-root-discovery",
+  "checks": {
+    "baseline_bootstrap": {
+      "all_exit_codes": 0,
+      "commands": 17,
+      "same_commands_as": "bootstrap"
+    },
+    "baseline_bootstrapped": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        }
+      ],
+      "log_sha256": "93033f837395110df248b95bcb12b642ce589ce5c0871ba2fd4cf842a723bd7e",
+      "summary": [
+        "Ran 732 tests in 275.640s",
+        "FAILED (errors=5, skipped=5)"
+      ],
+      "tests": 732
+    },
+    "baseline_clean": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        }
+      ],
+      "log_sha256": "6ec4a8823e53c462979e9db60e24148b6aee58fcb4e384ee02cf25a40ed7dbe0",
+      "summary": [
+        "Ran 732 tests in 223.561s",
+        "FAILED (failures=8, errors=35, skipped=5)"
+      ],
+      "tests": 732
+    },
+    "bootstrap": [
+      {
+        "command": "$PYTHON tools/workspace.py init --offline-fixture --fixture-root <external-fixture>",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/workspace.py snapshot --fixture-root <external-fixture>",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/status.py --offline-fixture",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/audit.py --offline-fixture",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/startup.py --offline-fixture",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/startup.py --offline-fixture --check",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/retrieval.py",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/issue_router.py",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/github_issue_adapter.py --fixture",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/github_issue_adapter.py --fixture --check",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/drive_live_check.py --plan",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/drive_live_check.py --plan --check",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/improvement_loop.py",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/interaction_e2e.py",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/interaction_e2e.py --check",
+        "exit_code": 0
+      },
+      {
+        "command": "$PYTHON tools/security.py --offline-fixture",
+        "exit_code": 0
+      }
+    ],
+    "changed_bootstrapped": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failure_set_reference": "baseline_bootstrapped",
+      "log_sha256": "6bc3aeb9b240c131cbe5ee77f277d18082ee5e7905a73b7753150ea067f10a57",
+      "summary": [
+        "Ran 749 tests in 288.489s",
+        "FAILED (errors=5, skipped=5)"
+      ],
+      "tests": 749
+    },
+    "changed_clean": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failure_set_reference": "baseline_clean",
+      "log_sha256": "1be24de07ef411e17b716e6685cd11fa1f8a8a33a6444092b2418891defb25f6",
+      "summary": [
+        "Ran 749 tests in 218.576s",
+        "FAILED (failures=8, errors=35, skipped=5)"
+      ],
+      "tests": 749
+    },
+    "compile": {
+      "command": "$PYTHON -m py_compile tools/profile_root_config.py tools/run.py tools/self_hearing.py tools/credential_free.py tools/ingest_signals.py tests/test_profile_root_config.py",
+      "exit_code": 0
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "focused": {
+      "command": "$PYTHON -m unittest tests.test_profile_root_config -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "2b23b41dd4a8c01926a6d874ad25660c408ffb7e46fa33d39d3061ff910e0257",
+      "summary": [
+        "Ran 17 tests in 3.145s",
+        "OK"
+      ],
+      "tests": 17
+    },
+    "metadata": {
+      "command": "$PYTHON -m unittest tests.test_project_status tests.test_validate tests.test_docs -v",
+      "exit_code": 0,
+      "log_sha256": "e32ce253a12acff8c8b3410605f5b8f56a8e82353bd6b6042aadd5d7e91b30c6",
+      "summary": [
+        "Ran 36 tests in 2.443s",
+        "OK"
+      ],
+      "tests": 36
+    },
+    "readme_status": {
+      "command": "$PYTHON tools/project_status.py --check-readme",
+      "exit_code": 0
+    },
+    "related_bootstrapped": {
+      "command": "$PYTHON -m unittest tests.test_profile_root_config tests.test_self_hearing tests.test_credential_free tests.test_run tests.test_portable_self_export tests.test_ingest_signals tests.test_docs -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "35b75ffe3b1f18fcc2bd1728ac97ab165b6c3d59f6a0f873bc7c68f2865ca5cb",
+      "summary": [
+        "Ran 121 tests in 11.207s",
+        "OK"
+      ],
+      "tests": 121
+    },
+    "security": {
+      "command": "$PYTHON tools/security.py --output <external-report>",
+      "exit_code": 0,
+      "findings": 0
+    },
+    "validator": {
+      "command": "$PYTHON tools/validate.py --check",
+      "exit_code": 0
+    }
+  },
+  "child_quality_gates": "NOT_APPLICABLE; no child code changed; native owner resolver and exporter were exercised with synthetic data.",
+  "child_repository_mutation": false,
+  "code_file_sha256": {
+    "tests/test_profile_root_config.py": "aea6107a103f14b8634f869305113f1ffb1b29de6b34f55016532da209894f6f",
+    "tools/credential_free.py": "43e6497426859b4392bf3d5b88c5c14813426cc472551b9fd718a96bd66d9df6",
+    "tools/ingest_signals.py": "04c63ec225f00ff47abc975deb8271eec4ff49404ef9bae60853b772b787b85e",
+    "tools/profile_root_config.py": "9aee2bfafa91bdda995c9433324fb41f7c7fa983b5a5b5abccf107eb5dd92b09",
+    "tools/run.py": "387af7bcd897c823872dd9291f6a16658081b5a21dd46e072a98f3cdb1eeda0f",
+    "tools/self_hearing.py": "de91e1c656437012276a9c76dcda81cf9b8841a633fc9d4b4c9b0ba38a3736ea"
+  },
+  "decisions": [
+    "Delegate profile schema and consent authority to the existing owner resolver; require an explicit qualified workspace for set when the default child checkout is unavailable, rather than copy owner schema into the parent.",
+    "show is always redacted, even without its flag, because stdout must never disclose a profile path.",
+    "Treat malformed or unsafe settings as BLOCKED without trying a lower-priority profile or repository fallback.",
+    "Preserve the best-effort hearing exit-0 contract; missing root is unavailable with remediation, while normal run remains BLOCKED / exit 2.",
+    "Do not discover local config/environment in portable-export or offline runs; preserve the existing explicit --profile-root plus --self-export ambiguity rejection.",
+    "Do not persist explicit profile paths in resume commands. Separate-session resumption uses owner config or environment; no private path is written to a public/state record.",
+    "The caller HOME is canonicalized for standard platform HOME aliases; profile-root and settings symlinks remain rejected."
+  ],
+  "diagnostics": "Initial report redaction aliased the report dictionary for profile-free runs; corrected by copying before mutation. An initial subprocess test double omitted stdout; corrected the double. Final stable suites supersede runs executed during corrections/bootstrap.",
+  "existing_gate_limitations": "Full unittest is not green: all remaining named failures/errors exactly equal origin/main in both generated-data states.",
+  "external_artifact": "No Drive artifact or delivery publication. Owner-local configuration is intentionally editable and separate from create-only artifact delivery.",
+  "failure_comparison": {
+    "bootstrapped": {
+      "baseline_count": 5,
+      "changed_count": 5,
+      "identical": true,
+      "new_failures": [],
+      "removed_failures": []
+    },
+    "clean": {
+      "baseline_count": 43,
+      "changed_count": 43,
+      "identical": true,
+      "new_failures": [],
+      "removed_failures": []
+    }
+  },
+  "feedback": {
+    "explicit": "Provided Issue 275 and orchestrator instructions",
+    "inferred": "NONE"
+  },
+  "lease": "NOT_ACQUIRED; no lease retained",
+  "native_probe": {
+    "owner_gate": "Configured native run reaches Self Model exporter and preserves SELF_MODEL_EXPORT_BLOCKED because this synthetic layout has no granted export consent; this proves discovery, not plan completion or fabricated consent.",
+    "path_scan": "Profile bytes absent from stdout, stderr and all files below the synthetic run state.",
+    "results": {
+      "clear": {
+        "exit_code": 0
+      },
+      "configured_run": {
+        "exit_code": 2,
+        "profile_path_absent": true,
+        "profile_root_source": "user-config",
+        "stop_reason": "SELF_MODEL_EXPORT_BLOCKED"
+      },
+      "missing_run": {
+        "exit_code": 2,
+        "owner_setup_remediation": true,
+        "profile_root_source": "none",
+        "stop_reason": "PROFILE_ROOT_REQUIRED"
+      },
+      "set": {
+        "exit_code": 0
+      }
+    },
+    "run_command": "$PYTHON tools/credential_free.py --state-root <external-state> -- $PYTHON tools/run.py --workspace-root <qualified-workspace> --state-root <external-state> --run-id SYNTHETIC-CONFIG",
+    "set_command": "$PYTHON tools/profile_root_config.py set <synthetic-absolute-root> --workspace-root <qualified-workspace>",
+    "setting_mode": "0600",
+    "setup": "Temporary HOME and Git-external synthetic profile copied from the pinned owner tests/fixtures/profile-root/valid; six code-only local clones at manifest pins; no network materialization or personal profile access."
+  },
+  "next_operation": "git show --stat HEAD; orchestrator reviews and owns push, PR, merge and Issue closure; no next task claimed.",
+  "remote_sync": "NOT_RUN_BY_INSTRUCTION; local commit only",
+  "repository": "agentic-art-orchestration",
+  "sensitive_data": "No real profile, hearing response, credential, inferred feedback, local absolute path or raw log is stored in this evidence.",
+  "task": "ISSUE-275",
+  "unmet_issue_conditions": []
+}

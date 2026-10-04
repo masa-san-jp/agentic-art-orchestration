@@ -26,6 +26,8 @@ except ModuleNotFoundError:  # pragma: no cover - direct CLI fallback
     from tools.process_policy import child_environment, observe_git_write_credentials
     from tools.validate import load_yaml
 
+from tools.profile_root_config import discover, redact, ProfileConfigError, REMEDIATION
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/repositories.yaml"
 OUTCOME_CONTRACT = "self-hearing-outcome/v1"
@@ -160,7 +162,7 @@ def _write_outcome(
     return document
 
 
-def _record_credential_observation(state_root: Path, run_id: str, status: str) -> None:
+def _record_credential_observation(state_root: Path, run_id: str, status: str, source: str = "none") -> None:
     """Create only a metadata stub for a pre-run hearing invocation.
 
     ``run.py`` replaces/extends this record with the real run report and keeps
@@ -178,6 +180,7 @@ def _record_credential_observation(state_root: Path, run_id: str, status: str) -
             existing = {}
     existing["run_id"] = run_id
     existing["git_write_credentials"] = status
+    existing["profile_root_source"] = source
     path.write_text(json.dumps(existing, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
 
 
@@ -187,7 +190,7 @@ def execute(
     run_id: str,
     state_root: Path,
     workspace_root: Path,
-    profile_root: Path,
+    profile_root: Path | None = None,
     purpose: str = "artistic-research",
     task_id: str | None = None,
     reason: str | None = None,
@@ -199,12 +202,18 @@ def execute(
         # Never resolve an untrusted run id against the state root.
         return 0, "", {}
     try:
+        profile_root, source = discover(profile_root)
         credential_status = observe_git_write_credentials(cwd=ROOT)
         if operation == "open":
-            _record_credential_observation(state_root, run_id, credential_status)
+            _record_credential_observation(state_root, run_id, credential_status, source)
     except Exception:
         outcome = _safe_unavailable(state_root, run_id) or {}
         return 0, "", outcome
+    if profile_root is None:
+        outcome = _write_outcome(state_root, run_id, outcome="unavailable",
+                                 reason="PROFILE_ROOT_REQUIRED", question_id=None)
+        return 0, json.dumps({"outcome": "unavailable", "reason": "PROFILE_ROOT_REQUIRED",
+                              "remediation": REMEDIATION}, ensure_ascii=False) + "\n", outcome
     try:
         checkout = _child_checkout(workspace_root)
         command = _hearing_command(
@@ -236,6 +245,7 @@ def execute(
         outcome = _safe_unavailable(state_root, run_id) or {}
         return 0, "", outcome
 
+    result.stdout = redact(result.stdout, profile_root)
     child = _parse_child_json(result.stdout)
     if result.returncode != 0 or child is None:
         outcome = _safe_unavailable(state_root, run_id) or {}
@@ -271,7 +281,7 @@ def main(argv: list[str] | None = None) -> int:
         command.add_argument("--run-id", required=True)
         command.add_argument("--state-root", type=Path, required=True)
         command.add_argument("--workspace-root", type=Path, required=True)
-        command.add_argument("--profile-root", type=Path, required=True)
+        command.add_argument("--profile-root", type=Path, help="external profile; defaults to environment or owner local config")
         command.add_argument("--purpose", default="artistic-research")
         command.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT)
         if operation in {"answer", "skip"}:

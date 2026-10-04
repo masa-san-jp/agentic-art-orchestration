@@ -16,6 +16,8 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tools.process_policy import child_environment
+from tools.profile_root_config import discover, ENV, SOURCE_ENV, ProfileConfigError, REMEDIATION
+import json
 
 
 SSH_COMMAND = (
@@ -83,6 +85,11 @@ def isolated_environment(
 
 
 def launch(command: list[str], *, state_root: Path) -> int:
+    # Resolve in the caller's HOME before replacing it. Portable/offline inputs
+    # and explicit arguments must not depend on the caller's local config.
+    bypass = any(item == "--offline-fixture" or item.split("=", 1)[0] in
+                 {"--self-export", "--profile-root"} for item in command)
+    profile, source = (None, "none") if bypass else discover()
     state_root = state_root.expanduser().resolve()
     state_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="credential-free-", dir=state_root) as directory:
@@ -97,6 +104,8 @@ def launch(command: list[str], *, state_root: Path) -> int:
         # libcurl also reads ~/.netrc, outside Git's credential helper/config.
         # Start with a private empty home rather than copying cached credentials.
         environment.update(HOME=str(home), XDG_CONFIG_HOME=str(home / ".config"))
+        if profile is not None:
+            environment.update({ENV: str(profile), SOURCE_ENV: source})
         # Inherit stdin/stdout/stderr directly, including annotated hearing
         # answers; never capture or persist the command's output.
         return subprocess.run(
@@ -117,6 +126,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("a command after -- is required")
     try:
         returncode = launch(command, state_root=args.state_root)
+    except ProfileConfigError:
+        print(json.dumps({"status": "BLOCKED", "stop_reason": "PROFILE_CONFIG_INVALID",
+                          "remediation": REMEDIATION}, ensure_ascii=False), file=sys.stderr)
+        return 2
     except FileNotFoundError:
         print("credential-free launch failed: command or state root unavailable", file=sys.stderr)
         return 127
