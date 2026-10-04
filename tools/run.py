@@ -36,6 +36,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from tools.profile_root_config import discover, redact, ProfileConfigError, REMEDIATION
+
 from tools.plan_completion import PlanCompletionError, verify_plan
 from tools.delivery_completion import completion, normal_contract_for_destinations
 from tools.process_policy import child_environment, observe_git_write_credentials
@@ -249,8 +251,6 @@ def _resume_command(
         command += ["--research-root", str(research_root), "--production-root", str(production_root)]
     if research_work_root is not None:
         command += ["--research-work-root", str(research_work_root)]
-    if profile_root is not None and not offline_fixture:
-        command += ["--profile-root", str(profile_root)]
     if self_export is not None and not offline_fixture:
         command += ["--self-export", str(self_export)]
     if purpose != "artistic-research":
@@ -656,6 +656,7 @@ def _at_research(
     resume_command: list[str] | None = None,
     delivery_contract: Mapping[str, object] | None = None,
     git_write_credentials: str | None = None,
+    profile_root_source: str = "none", profile_root: Path | None = None,
 ) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
@@ -700,8 +701,16 @@ def _at_research(
     work.mkdir(parents=True, exist_ok=True)
     if destination_resolution is not None:
         report["destination_resolution"] = dict(destination_resolution)
-    (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_run_report(work, report, profile_root_source, profile_root)
     return report
+
+
+def _write_run_report(work: Path, report: dict, source: str, root: Path | None) -> None:
+    report["profile_root_source"] = source
+    safe = dict(redact(report, root))
+    report.clear()
+    report.update(safe)
+    (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
@@ -713,6 +722,47 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         profile_root: Path | None = None, research_work_root: Path | None = None,
         delivery_contract: Mapping[str, object] | None = None,
         self_export: Path | None = None) -> dict:
+    options = locals().copy()
+    root = profile_root
+    source = "none"
+    if not offline_fixture and self_export is None:
+        try:
+            root, source = discover(root)
+        except (ProfileConfigError, OSError, ValueError, subprocess.SubprocessError):
+            failure = BlockedPrecondition("PROFILE_CONFIG_INVALID: " + REMEDIATION)
+            failure.report = {"status": "BLOCKED", "stop_reason": "PROFILE_CONFIG_INVALID",
+                              "profile_root_source": "none", "remediation": REMEDIATION}
+            raise failure from None
+    options["profile_root"] = root
+    options["profile_root_source"] = source
+    try:
+        return _run_orchestration_impl(**options)
+    except Exception as exc:
+        # Preserve existing exception contracts, but do not relay private child
+        # paths in the CLI error or a stored BLOCKED report.
+        exc.args = tuple(redact(item, root) for item in exc.args)
+        if isinstance(exc, OSError):
+            exc.filename = redact(exc.filename, root)
+            exc.filename2 = redact(exc.filename2, root)
+            exc.strerror = redact(exc.strerror, root)
+        if isinstance(exc, BlockedPrecondition):
+            report = getattr(exc, "report", {"status": "BLOCKED", "detail": str(exc)})
+            report["profile_root_source"] = source
+            if "PROFILE_ROOT_REQUIRED" in str(exc):
+                report.update(stop_reason="PROFILE_ROOT_REQUIRED", remediation=REMEDIATION)
+            exc.report = redact(report, root)
+        raise
+
+
+def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root: Path, run_id: str, purpose: str,
+        slug: str | None, title: str | None, requested_at: str, python: str,
+        research_root: Path | None = None, production_root: Path | None = None,
+        limit: int = 1, offline_fixture: bool = False,
+        destination_resolution: Mapping[str, object] | None = None,
+        internal_output_root: Path | None = None,
+        profile_root: Path | None = None, research_work_root: Path | None = None,
+        delivery_contract: Mapping[str, object] | None = None,
+        self_export: Path | None = None, profile_root_source: str = "none") -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if not offline_fixture and self_export is not None:
         from tools.self_export import read_export, SelfExportError
@@ -786,10 +836,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 },
             }
             blocked_report["delivery_completion"] = completion(blocked_report, delivery_contract)
-            (blocked_work / "run.json").write_text(
-                json.dumps(blocked_report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-                encoding="utf-8",
-            )
+            _write_run_report(blocked_work, blocked_report, profile_root_source, profile_root)
             raise
     if (not offline_fixture and research_root is None and production_root is None
             and workspace_root.is_dir()):
@@ -797,7 +844,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         # qualified workspace, never the drifted source checkout.
         research_root, production_root = _manifest_runtime_roots(workspace_root)
     if not offline_fixture and profile_root is None and self_export is None:
-        raise BlockedPrecondition("PROFILE_ROOT_REQUIRED: pass --profile-root for real self-model exports")
+        raise BlockedPrecondition("PROFILE_ROOT_REQUIRED: " + REMEDIATION)
     # Keep native Research project files outside the read-only code checkout.
     # The default is deterministic and run-scoped, so a caller need not invent
     # a second path just to use the standard entrypoint.
@@ -827,7 +874,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     )
 
     def record(name: str, detail: dict) -> None:
-        steps.append({"step": name, **detail})
+        steps.append(redact({"step": name, **detail}, profile_root))
 
     preflight = dict(preflight)
     preflight["git_write_credentials"] = git_write_credentials
@@ -868,7 +915,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                                       "acceptance": "consent-approved self export contains validated self signals",
                                       "resume_command": resume_command}}
             report["delivery_completion"] = completion(report, delivery_contract)
-            (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            _write_run_report(work, report, profile_root_source, profile_root)
             exc.report = report
             raise
 
@@ -947,7 +994,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             },
         }
         report["delivery_completion"] = completion(report, delivery_contract)
-        (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _write_run_report(work, report, profile_root_source, profile_root)
         return report
 
     if research_root is not None:
@@ -962,6 +1009,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
             return _at_research(
                 work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
                 destination_resolution, resume_command, delivery_contract, git_write_credentials,
+                profile_root_source, profile_root,
             )
 
         _promote_research_handoff(research_data_root, project_slug)
@@ -1043,7 +1091,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                 },
             }
             report["delivery_completion"] = completion(report, delivery_contract)
-            (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            _write_run_report(work, report, profile_root_source, profile_root)
             return report
         production_source_commit = _head(production_root)
         try:
@@ -1064,7 +1112,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                     "resume_command": resume_command,
                     "validation_command": [python, str(production_root / "tools/plan_actionability.py"),
                                            "--project-root", str(plan_path.parent.parent)]}}
-            (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            _write_run_report(work, report, profile_root_source, profile_root)
             return report
         # build_prototype.py passed at the qualified Production boundary;
         # preserve that stage result for the shared delivery contract.
@@ -1133,7 +1181,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
                     report["projection_status"] = projection_status
             except (OSError, TypeError, ValueError, KeyError) as exc:
                 raise StepFailure("automatic public plan projection failed") from exc
-        (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _write_run_report(work, report, profile_root_source, profile_root)
         return report
 
     # The repositories stop here on their own. Conducting the research is not a
@@ -1179,7 +1227,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
     report["delivery_completion"] = completion(report, delivery_contract)
     if destination_resolution is not None:
         report["destination_resolution"] = dict(destination_resolution)
-    (work / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_run_report(work, report, profile_root_source, profile_root)
     return report
 
 
@@ -1300,7 +1348,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--research-work-root", type=Path, help="external native Research work tree; keep qualified code clean")
     parser.add_argument("--production-root", type=Path)
     parser.add_argument("--profile-root", type=Path,
-                        help="explicit external Self Model profile root for real signal ingestion")
+                        help="external Self Model profile; otherwise use AGENTIC_ART_PROFILE_ROOT or owner local config")
     parser.add_argument("--self-export", type=Path, help="Git-external portable self-model export JSON instead of profile root")
     parser.add_argument("--offline-fixture", action="store_true",
                         help="use the checked-in synthetic signal fixture; do not read child checkouts")

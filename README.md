@@ -93,13 +93,13 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-04T11:34:39.645517+00:00`.
+Source updated at: `2026-10-04T15:40:19.012823+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 197 | 197 |
+| 0 | 0 | 0 | 0 | 198 | 198 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-273`.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-275`.
 Next action: Review Issue-273 local commits and verification evidence; orchestrator owns publication; no lease is held.
 Ready: none.
 Next task: `null`.
@@ -164,20 +164,32 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
    `BLOCKED / SELF_MODEL_EMPTY` と remediation、同じ run の resume command を返します。
    推測で自己モデルを補わず、self signal の必須性も変えません。
 
-4. **実データで回す。** 使用が認められた外部Self Model profileの絶対pathを指定します。新しいpin済みworkspaceをmanifestから用意し、全ヒアリング操作・制作run・返されたagent actionとresume commandを`credential_free.py`経由で実行します。PUBLIC 子repoにはtoken発行・login不要です。profileを作り話で補わず、テーマ・repo名・slug・titleを質問しません。
+4. **実データで回す。** profile root のパスを人に聞かない。未設定ならオーナーに設定コマンドを本人の機械で1回実行してもらいます。パスを会話・Issue・ログへ書きません。
+   解決順は `--profile-root` → `AGENTIC_ART_PROFILE_ROOT` → `${XDG_CONFIG_HOME:-~/.config}/agentic-art/profile-root` です。
+   設定コマンドは HOME を隔離する入口の外で実行します。
+
+   ```bash
+   .venv/bin/python tools/profile_root_config.py set <絶対パス> --workspace-root <pin済みworkspace>
+   .venv/bin/python tools/profile_root_config.py show --redacted
+   # 設定を削除する場合のみ
+   .venv/bin/python tools/profile_root_config.py clear
+   ```
+
+   `set` は Self Model owner の `profile_root.py resolve` で検査した外部profileだけを0600の1行設定へ保存し、Git配下やsymlinkを拒否します。`show`はパスを表示しません。
+   `credential_free.py` は元の利用者設定を解決してから HOME を隔離し、子へ環境変数で渡します。runには `profile_root_source: argument|env|user-config|none` だけを記録します。
+   明示引数のパスも再開コマンドへ保存しません。別sessionで再開する場合は、オーナーが設定するか環境変数を用意します。
+   新しいpin済みworkspaceをmanifestから用意し、全ヒアリング操作・制作run・返されたagent actionとresume commandを`credential_free.py`経由で実行します。PUBLIC 子repoにはtoken発行・login不要です。profileを作り話で補わず、テーマ・repo名・slug・titleを質問しません。
 
    ```bash
    EXTERNAL_STATE_ROOT="$(mktemp -d /tmp/agentic-art-live-state.XXXXXX)"
    EXTERNAL_STATE_ROOT="$(cd "$EXTERNAL_STATE_ROOT" && pwd -P)"
    WORKSPACE_ROOT="$EXTERNAL_STATE_ROOT/pinned-workspace"
-   PROFILE_ROOT="/absolute/path/to/authorized-self-model-profile"
    RUN_ID="FIRST-LIVE-001"
    .venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
      .venv/bin/python tools/pinned_workspace.py --output "$WORKSPACE_ROOT"
    .venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
      .venv/bin/python tools/self_hearing.py open --run-id "$RUN_ID" \
-     --state-root "$EXTERNAL_STATE_ROOT" --workspace-root "$WORKSPACE_ROOT" \
-     --profile-root "$PROFILE_ROOT"
+     --state-root "$EXTERNAL_STATE_ROOT" --workspace-root "$WORKSPACE_ROOT"
    ```
 
    `outcome: offered`なら、packetの`intent`全行 → `why` → `anchors`（あれば本人の過去の言葉として）→ `question`を会話で本人へ**一問だけ**提示します。packetをファイルやlogへ保存しません。答えたら子ownerの [annotated block形式](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/acquisition-protocol.md)に構造化し、packetの`task_id`と`queue_sha256`を下のplaceholderへ入れます。回答を一時ファイルに書かず、heredocから標準入力へ直接渡します。下のblockはpacketの`answer_format: event-block`用です。`slot-values`の場合は子ownerの [hearing操作](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/operations.md)の形式を同じheredocで渡します。block内の値は実回答・観測に基づいて置き換え、未取得は`null`、確認済み空は`[]`、評価不能は`unknown`とします。
@@ -186,7 +198,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
    cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/credential_free.py \
      --state-root "$EXTERNAL_STATE_ROOT" -- .venv/bin/python tools/self_hearing.py answer <task-id> \
      --run-id "$RUN_ID" --state-root "$EXTERNAL_STATE_ROOT" \
-     --workspace-root "$WORKSPACE_ROOT" --profile-root "$PROFILE_ROOT" \
+     --workspace-root "$WORKSPACE_ROOT" \
      --expected-queue-sha256 <packet-queue-sha256>
    [event: hearing-response]
    observed_at: "<observed RFC3339 timestamp>"
@@ -216,7 +228,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
    .venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
      .venv/bin/python tools/self_hearing.py skip <task-id> --reason skipped \
      --run-id "$RUN_ID" --state-root "$EXTERNAL_STATE_ROOT" \
-     --workspace-root "$WORKSPACE_ROOT" --profile-root "$PROFILE_ROOT"
+     --workspace-root "$WORKSPACE_ROOT"
    ```
 
    どのoutcomeでも、ヒアリング結果で停止せず**同じrun**を続けます。
@@ -224,7 +236,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
    ```bash
    .venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
      .venv/bin/python tools/run.py --run-id "$RUN_ID" \
-     --workspace-root "$WORKSPACE_ROOT" --profile-root "$PROFILE_ROOT" \
+     --workspace-root "$WORKSPACE_ROOT" \
      --state-root "$EXTERNAL_STATE_ROOT"
    ```
 
@@ -248,6 +260,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
 期限は本人が RFC3339 形式で指定します。既存 export を上書きしません。
 
 ```bash
+PROFILE_ROOT="<authorized profile root selected locally by the owner>"
 SELF_EXPORT="<absolute path selected by the owner>"
 EXPORT_EXPIRES_AT="<owner-selected RFC3339 expiration timestamp>"
 .venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
@@ -350,7 +363,7 @@ clone/fork利用者は、自分の`agentic-art-project` checkoutを明示して�
 ```bash
 .venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
   .venv/bin/python tools/run.py --project-root /absolute/path/to/agentic-art-project \
-  --workspace-root /absolute/path/to/pinned-workspace --profile-root /absolute/path/to/profile
+  --workspace-root /absolute/path/to/pinned-workspace
 ```
 
 `AGENTIC_ART_PROJECT_ROOT`でも選択できます。resolverはProject ownerのvalidator、`/.agentic-art/` ignore、tracked-private、symlink、tracked変更を先に検査し、合格後だけ`.agentic-art/state`、`.agentic-art/internal`、`.agentic-art/staging`を導出します。`--destinations-file`や個別rootとの混在は`AMBIGUOUS_DESTINATION_MODE`で拒否します。`.agentic-art`はGitへ追跡せず、公開昇格は検証済みのplan/assetだけです。Git commit、push、remote公開、権利・同意承認は別のゲートです。

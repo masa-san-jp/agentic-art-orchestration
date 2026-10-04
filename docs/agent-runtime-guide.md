@@ -109,8 +109,7 @@ test "$BOOTSTRAP_EXIT" -eq 2
 .venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
   .venv/bin/python tools/self_hearing.py open \
   --run-id <run-id> --state-root <external-state-root> \
-  --workspace-root <verified-child-workspace> \
-  --profile-root <external-self-model-profile>
+  --workspace-root <verified-child-workspace>
 ~~~
 
 `outcome: offered`なら、packetの`intent`を全行（言い換え可・省略不可）、`why`、`anchors`（あれば
@@ -123,7 +122,6 @@ cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/credential_free.py \
   --state-root <external-state-root> -- .venv/bin/python tools/self_hearing.py answer <task-id> \
   --run-id <run-id> --state-root <external-state-root> \
   --workspace-root <verified-child-workspace> \
-  --profile-root <external-self-model-profile> \
   --expected-queue-sha256 <packet-queue-sha256>
 [event: hearing-response]
 observed_at: "<observed RFC3339 timestamp>"
@@ -156,8 +154,7 @@ ANNOTATED_BLOCK
 .venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
   .venv/bin/python tools/self_hearing.py skip <task-id> --reason skipped \
   --run-id <run-id> --state-root <external-state-root> \
-  --workspace-root <verified-child-workspace> \
-  --profile-root <external-self-model-profile>
+  --workspace-root <verified-child-workspace>
 ~~~
 
 制作runを行うsessionは、`config/issue-delivery-policy.yaml`のallowlisted repositoryへ書き込める資格情報を
@@ -173,7 +170,6 @@ run.jsonには従来どおり`git_write_credentials: absent|present|unknown`だ�
 .venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
   .venv/bin/python tools/run.py \
   --workspace-root <verified-child-workspace> \
-  --profile-root <external-self-model-profile> \
   --state-root <external-state-root>
 ~~~
 
@@ -186,11 +182,28 @@ Projectの受取検証までが同じ通常経路に含まれる。保存済みl
 
 ResearchとProductionの`--research-root`/`--production-root`はmanifestから自動解決される。引数を省略した通常runでも、workspaceがmissingまたはcleanなpin driftだけなら、run state配下に`pinned-workspace`を新規作成し、全manifest entryを宣言済みのqualified commitへ展開してから同じrunを継続する。元のcheckout、manifest、remote refは変更しない。展開されたworkspaceには`manifest-pinned-workspace/v1`マーカーが付き、detached checkoutでも各commit、clean state、workspace所有証拠を再検証する。dirty、symlink、破損、権限不足、既存tree修復が必要な場合はBLOCKEDのまま停止する。
 
-実Self Modelを読む場合、`--profile-root`には利用が認められた外部profileの絶対パスを明示する。
-これは出力先の`--destinations-file`とは別の入力であり、Self Modelのexportだけへ渡される。
-profileの内容・同意・外部保存境界はSelf Model自身が検証する。親はパスを補完せず、未指定なら
-実exportやrun stateの作成前に`BLOCKED`（`PROFILE_ROOT_REQUIRED`、exit 2）を返す。
-既存のprofileが使えない場合にrepository内の自己モデルを採用したり、本人データを生成したりしない。
+実Self Modelの profile root のパスを人に聞かない。未設定ならオーナーに次の設定コマンドを
+本人の機械で1回実行してもらう。パスを会話・Issue・ログに書かない。設定は HOME を隔離する
+`credential_free.py` の外で行う。
+
+~~~bash
+.venv/bin/python tools/profile_root_config.py set <絶対パス> --workspace-root <pin済みworkspace>
+.venv/bin/python tools/profile_root_config.py show --redacted
+# 設定を削除する場合のみ
+.venv/bin/python tools/profile_root_config.py clear
+~~~
+
+解決順は `--profile-root` → `AGENTIC_ART_PROFILE_ROOT` → 利用者設定
+`${XDG_CONFIG_HOME:-~/.config}/agentic-art/profile-root`。設定は絶対パス1行・0600であり、
+Git配下やsymlinkを拒否して owner の `profile_root.py resolve` に検証を委ねる。
+これは出力先の `--destinations-file` と別の入力で、profileの内容・同意はSelf Modelが検証する。
+`credential_free.py` は HOME 差し替え前に設定を解決し、子へ環境変数と解決元を渡す。
+stdout/stderr/run stateには `profile_root_source: argument|env|user-config|none` だけを記録する。
+再開コマンドにもパスを保存しない。引数だけで開始した別sessionの再開は、オーナーが設定するか
+環境変数を用意する。未設定の通常runは `BLOCKED / PROFILE_ROOT_REQUIRED`（exit 2）と上記の
+remediationを返す。ヒアリングは従来のbest-effort契約どおり unavailable / exit 0 のままrunへ進む。
+`--self-export` と offline経路では profile root を解決しない。既存profileが使えない場合に
+repository内の自己モデルを採用したり、本人データを生成したりしない。
 
 Productionまで進んだ後の再開では、`<state-root>/production/production/<slug>/`がrun-idをまたぐ同一プロジェクトの出力rootになる。各runの`<state-root>/<run-id>/`は実行ごとのcheckpointであり、`<state-root>/production-history.jsonl`はrun-idとproject-idだけを結ぶGit外の追記型メタデータ台帳である。既存プロジェクトを別run-idで続けるときは、初回と同じ`--slug`を明示する。handoffが変わった場合はProduction childのrevision受理へ進み、過去のexecution、quality、resultを新しいrunの空ディレクトリへリセットしない。
 
@@ -497,7 +510,7 @@ clone/fork利用者は、明示した`agentic-art-project` checkoutを次のよ�
 ```bash
 .venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
   .venv/bin/python tools/run.py --project-root /path/to/agentic-art-project \
-  --workspace-root /path/to/pinned-workspace --profile-root /path/to/profile
+  --workspace-root /path/to/pinned-workspace
 ```
 
 または`AGENTIC_ART_PROJECT_ROOT=/path/to/agentic-art-project`を設定します。v2は`.agentic-art/state`、`.agentic-art/internal`、`.agentic-art/staging`を導出し、公開rootはProject checkout自身です。既存の`--destinations-file`や個別rootと同時に指定すると`AMBIGUOUS_DESTINATION_MODE`で書込み前に停止します。Projectのvalidator、ignore、tracked-private、symlink、tracked変更を先に検査し、失敗時にworkspaceを作成しません。v1のGit外profile方式はそのまま利用できます。
