@@ -4,7 +4,7 @@
     {
       "evidence_id": "evidence:self-model:claim-001",
       "repository": "self-model",
-      "source_commit": "909e73e6aee420d53fb35f98a14b253c36069926",
+      "source_commit": "429ff1a955972466919848a3a960c6a90dc4972b",
       "locator": "entities/claim-001",
       "evidence_kind": "observed",
       "freshness_status": "current",
@@ -15,7 +15,7 @@
     {
       "evidence_id": "evidence:art-history:relation-001",
       "repository": "art-history",
-      "source_commit": "d0462e26a871b8aa4f88a7eb5a64751d25c14ea9",
+      "source_commit": "d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7",
       "locator": "entities/relation-001",
       "evidence_kind": "scholarly",
       "freshness_status": "current",
@@ -37,7 +37,7 @@
     {
       "evidence_id": "evidence:agentic-art-research:requirement-001",
       "repository": "agentic-art-research",
-      "source_commit": "236830bb261561be2bd02ae71576c9f80ff397b8",
+      "source_commit": "ba1f2d2426073fd2dcb4d235fb5bf72d558de6ea",
       "locator": "requirements/requirement-001",
       "evidence_kind": "derived",
       "freshness_status": "current",

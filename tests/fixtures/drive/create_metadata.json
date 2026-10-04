@@ -11,7 +11,7 @@
   "source_snapshots": [
     {
       "repository": "self-model",
-      "commit": "909e73e6aee420d53fb35f98a14b253c36069926"
+      "commit": "429ff1a955972466919848a3a960c6a90dc4972b"
     }
   ],
   "evidence_refs": ["signal:self:drive-test"],
