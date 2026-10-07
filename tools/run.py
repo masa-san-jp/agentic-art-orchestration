@@ -108,7 +108,7 @@ def _project_identity(run_id: str, slug: str | None = None, title: str | None = 
 
 
 def _theme_proposal(request_path: Path, *, explicit_intent: bool) -> dict[str, str]:
-    """Expose the candidate-derived question without storing conversation text."""
+    """Expose the sourced question without storing conversation text."""
     try:
         request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
@@ -119,8 +119,8 @@ def _theme_proposal(request_path: Path, *, explicit_intent: bool) -> dict[str, s
         raise StepFailure("research request has no derived creative question")
     return {
         "status": "PROPOSED",
-        "mode": "INTENT_RANKED" if explicit_intent else "REPOSITORY_DERIVED",
-        "source": "gate-passing-candidate",
+        "mode": "ELEMENT_INFERRED" if request.get("source", {}).get("artifact_uri", "").startswith("urn:orchestration:phase-a:") else "INTENT_RANKED" if explicit_intent else "REPOSITORY_DERIVED",
+        "source": "phase-a-elements" if request.get("source", {}).get("artifact_uri", "").startswith("urn:orchestration:phase-a:") else "gate-passing-candidate",
         "creative_question": question,
         "request": str(request_path),
     }
@@ -894,6 +894,8 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         record("destination-resolution", {"status": "PASSED", "resolution": dict(destination_resolution)})
     if offline_fixture:
         record("ingest", _materialize_offline_signals(signals))
+    elif (work / "element-state.json").exists():
+        record("ingest", {"status": "PINNED_RESUME"})
     else:
         ingest_args = ["tools/ingest_signals.py", "--purpose", purpose,
                        "--workspace-root", str(workspace_root), "--output", str(signals),
@@ -927,39 +929,78 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 "self_hearing": {"status": "unavailable", "reason": "PROFILE_ROOT_UNAVAILABLE"},
             }, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    record("candidates", _run_tool([
-        "tools/candidate_space.py", "--fixture", str(signals), "--output", str(work / "candidates.json"),
-    ], python))
+    if not offline_fixture:
+        if limit != 1:
+            raise StepFailure("PHASE_A_SINGLE_THEME: use one independent run ID per theme")
+        from tools.element import Engine
+        from tools.theme_elements import start, write_request
+        engine = Engine(run_id, state_root, project_root=(
+            Path(destination_resolution['project_root']) if isinstance(destination_resolution, Mapping)
+            and destination_resolution.get('contract_version') == 'destination-resolution/v2' else None))
+        try:
+            rows = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(signals.glob("*/*.json"))] if not engine.path.exists() else []
+            phase_report = start(engine, rows, requested_at=requested_at, workspace_root=workspace_root, intent=intent)
+        except ValueError as exc:
+            phase_report = {"status": "BLOCKED", "blocked": {"element_id": "A2.material", "detail": str(exc)}, "next_action": None}
+        if engine.path.exists() and "--intent" in resume_command:
+            # Material selection is frozen; its hash/score suffice on resume.
+            # Keep the optional text out of subsequent parent run records.
+            position = resume_command.index("--intent")
+            del resume_command[position:position + 2]
+        record("theme-elements", {"status": phase_report["status"], "accepted_count": phase_report.get("accepted_count", 0)})
+        if phase_report["status"] != "COMPLETED":
+            report = {"run_id": run_id, "status": phase_report["status"], "run_status": "INCOMPLETE",
+                      "completion_status": "INCOMPLETE", "plan_status": "NOT_READY",
+                      "knowledge_status": "NOT_STARTED", "projection_status": "NOT_RUN", "steps": steps,
+                      "git_write_credentials": git_write_credentials, "delivery_contract": dict(delivery_contract),
+                      "resume_command": resume_command, "blocked": ({key: value for key, value in phase_report['blocked'].items()
+                          if key in {'element_id', 'attempt', 'last_failure', 'detail'}} if phase_report.get('blocked') else None)}
+            report["delivery_completion"] = completion(report, delivery_contract)
+            # Consent-approved material stays in the protected element state;
+            # requests and answer values do not enter the general parent run log.
+            _write_run_report(work, report, profile_root_source, profile_root)
+            report["blocked"] = phase_report.get("blocked")
+            report["next_action"] = phase_report.get("next_action")
+            if report["next_action"]:
+                report["next_action"]["resume_command"] = resume_command
+            return report
+        request = write_request(engine, work / "requests", slug=project_slug, title=project_title, research_root=research_data_root)
+        record("research-request", {"status": "PASSED", "request_count": 1})
+    else:
+        record("candidates", _run_tool([
+            "tools/candidate_space.py", "--fixture", str(signals), "--output", str(work / "candidates.json"),
+        ], python))
 
-    record("gates", _run_tool([
-        "tools/candidate_gates.py", "--candidates", str(work / "candidates.json"),
-        "--fixture", str(signals), "--output", str(work / "gates.json"),
-    ], python))
+        record("gates", _run_tool([
+            "tools/candidate_gates.py", "--candidates", str(work / "candidates.json"),
+            "--fixture", str(signals), "--output", str(work / "gates.json"),
+        ], python))
 
-    selection_args = [
-        "tools/candidate_selection.py", "--candidates", str(work / "candidates.json"),
-        "--fixture", str(signals), "--project-id", project_slug, "--limit", str(limit),
-        "--output", str(work / "selection.json"),
-    ]
-    if intent is not None:
-        selection_args.extend(["--intent", intent])
-    record("selection", _run_tool(selection_args, python))
+        selection_args = [
+            "tools/candidate_selection.py", "--candidates", str(work / "candidates.json"),
+            "--fixture", str(signals), "--project-id", project_slug, "--limit", str(limit),
+            "--output", str(work / "selection.json"),
+        ]
+        if intent is not None:
+            selection_args.extend(["--intent", intent])
+        record("selection", _run_tool(selection_args, python))
 
-    record("propositions", _run_tool([
-        "tools/proposition_provenance.py", "--selection", str(work / "selection.json"),
-        "--candidates", str(work / "candidates.json"), "--gates", str(work / "gates.json"),
-        "--fixture", str(signals), "--output", str(work / "propositions.json"),
-    ], python))
+        record("propositions", _run_tool([
+            "tools/proposition_provenance.py", "--selection", str(work / "selection.json"),
+            "--candidates", str(work / "candidates.json"), "--gates", str(work / "gates.json"),
+            "--fixture", str(signals), "--output", str(work / "propositions.json"),
+        ], python))
 
-    request_args = [
-        "tools/build_research_request.py", "--propositions", str(work / "propositions.json"),
-        "--signals", str(signals), "--title", project_title,
-        "--requested-at", requested_at, "--output", str(work / "requests"),
-    ]
-    if research_root is not None:
-        request_args.extend(["--research-root", str(research_root)])
-    request_args += ["--all", "--slug", project_slug] if limit > 1 else ["--slug", project_slug]
-    record("research-request", _run_tool(request_args, python))
+        request_args = [
+            "tools/build_research_request.py", "--propositions", str(work / "propositions.json"),
+            "--signals", str(signals), "--title", project_title,
+            "--requested-at", requested_at, "--output", str(work / "requests"),
+        ]
+        if research_root is not None:
+            request_args.extend(["--research-root", str(research_root)])
+        request_args += ["--all", "--slug", project_slug] if limit > 1 else ["--slug", project_slug]
+        record("research-request", _run_tool(request_args, python))
+
 
     requests = sorted((work / "requests").glob("RR*.yaml"))
     request = requests[-1]
@@ -1496,6 +1537,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    if report.get("status") == "BLOCKED":
+        return 2
     projection = report.get("public_projection") if isinstance(report, Mapping) else None
     projection_status = projection.get("status") if isinstance(projection, Mapping) else None
     if projection_status in {"BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}:

@@ -192,7 +192,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
      --state-root "$EXTERNAL_STATE_ROOT" --workspace-root "$WORKSPACE_ROOT"
    ```
 
-   `outcome: offered`なら、packetの`intent`全行 → `why` → `anchors`（あれば本人の過去の言葉として）→ `question`を会話で本人へ**一問だけ**提示します。packetをファイルやlogへ保存しません。答えたら子ownerの [annotated block形式](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/acquisition-protocol.md)に構造化し、packetの`task_id`と`queue_sha256`を下のplaceholderへ入れます。回答を一時ファイルに書かず、heredocから標準入力へ直接渡します。下のblockはpacketの`answer_format: event-block`用です。`slot-values`の場合は子ownerの [hearing操作](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/operations.md)の形式を同じheredocで渡します。block内の値は実回答・観測に基づいて置き換え、未取得は`null`、確認済み空は`[]`、評価不能は`unknown`とします。
+   `next_action.private: true`なら、[privateな子ヒアリング](docs/agent-runtime-guide.md#privateな子ヒアリング)の要素をownerへ返し、依頼・答えを親へ保存しません。packetが返った`outcome: offered`なら、packetの`intent`全行 → `why` → `anchors`（あれば本人の過去の言葉として）→ `question`を会話で本人へ**一問だけ**提示します。packetをファイルやlogへ保存しません。答えたら子ownerの [annotated block形式](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/acquisition-protocol.md)に構造化し、packetの`task_id`と`queue_sha256`を下のplaceholderへ入れます。回答を一時ファイルに書かず、heredocから標準入力へ直接渡します。下のblockはpacketの`answer_format: event-block`用です。`slot-values`の場合は子ownerの [hearing操作](https://github.com/masa-san-jp/self-model-notes/blob/main/docs/operations.md)の形式を同じheredocで渡します。block内の値は実回答・観測に基づいて置き換え、未取得は`null`、確認済み空は`[]`、評価不能は`unknown`とします。
 
    ```bash
    cat <<'ANNOTATED_BLOCK' | .venv/bin/python tools/credential_free.py \
@@ -240,7 +240,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
      --state-root "$EXTERNAL_STATE_ROOT"
    ```
 
-   pin済みsignalから候補由来の`creative_question`をResearchへ渡します。返された`next_action`を外部エージェントが実行し、保存済み`resume_command`も同じ入口の`--`後へ渡して継続します。入口はLLM/daemonを内蔵せず、最初のコマンドだけで実Researchを完了するわけではありません。`--live-private`の資格確認も [purpose E2E runbook](docs/purpose-e2e-runbook.md#live-private-qualification)の入口を使います。
+   通常runは本人の素材を一件選び、操作語 → 接続判定 → 中心の問いを`next_action.kind: element`で一件ずつ依頼します。答えを`tools/element.py answer`のstdinへ渡して同じrunを再開すると、中心の問いをResearchの`creative_question`へ渡します。答え方とprivateヒアリング中継は [段階Aの要素](docs/agent-runtime-guide.md#段階aの要素)を参照してください。返された`next_action`を外部エージェントが実行し、保存済み`resume_command`も同じ入口の`--`後へ渡して継続します。入口はLLM/daemonを内蔵せず、最初のコマンドだけで実Researchを完了するわけではありません。`--live-private`の資格確認も [purpose E2E runbook](docs/purpose-e2e-runbook.md#live-private-qualification)の入口を使います。
 
 4. **出力と完了を確認する。** offline出力は2の`$OFFLINE_ROOT`、通常runのcheckpointは`$EXTERNAL_STATE_ROOT/$RUN_ID/run.json`、Production出力は`$EXTERNAL_STATE_ROOT/production/production/<slug>/`です。Projectへの納品を求める場合は初回runから`--project-root <absolute agentic-art-project checkout>`を指定し、上のrun側の`--state-root`を省略します（入口側は外部一時rootのまま）。resolver検証後にProject配下の`.agentic-art/state`・`.agentic-art/internal`・`.agentic-art/staging`を導出し、公開projectionだけをcatalogへ渡します。v1出力profileとの混在は拒否されます。
 

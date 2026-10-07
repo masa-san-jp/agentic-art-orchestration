@@ -190,7 +190,7 @@ def _reference_uri(signal: dict, locator: str, full_names: dict) -> str:
 
 def build_request(proposition: dict, signals: dict, *, request_id: str, slug: str, title: str,
                   requested_at: str, commit: str, deadline: str | None, creator_id: str | None,
-                  full_names: dict | None = None) -> dict:
+                  full_names: dict | None = None, creative_question: str | None = None) -> dict:
     kinds = {binding["signal_kind"] for binding in proposition["structured_output"]["slots"].values()}
     used = [signals[binding["signal_id"]] for binding in proposition["structured_output"]["slots"].values()
             if binding["signal_id"] in signals]
@@ -218,7 +218,7 @@ def build_request(proposition: dict, signals: dict, *, request_id: str, slug: st
         "project": {"slug": slug, "title": title, "creator_id": creator_id},
         "intent": {
             "purpose": f"命題 {proposition['proposition_id']} が制作に耐えるかを確かめ、作るべきものを定める。",
-            "creative_question": _creative_question(proposition, signals),
+            "creative_question": creative_question if creative_question is not None else _creative_question(proposition, signals),
             "intended_use": "制作プランの作成に用いる。外部公開・提出は行わない。",
             # 鑑賞体験は調査の結果として決まる。ここで決めない
             "audience_experience": None,

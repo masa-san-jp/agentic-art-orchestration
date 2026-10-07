@@ -2175,3 +2175,13 @@ checkpoint:
   unresolved: No issue condition unmet; existing full-suite errors remain explicit
   next_operation: git show --stat HEAD; orchestrator reviews and owns publication;
     no next task claimed
+
+issue280_checkpoint:
+  task: ISSUE-280
+  repository: agentic-art-orchestration
+  status: IN_PROGRESS
+  start_point: 5f7e186944cf2331ba9eb55dc02619d5f833b139
+  branch: agent/280-phase-a-theme
+  expected_changes: Shared Phase A element driver, deterministic matching, structured RR provenance and private owner hearing relay.
+  lease: NOT_ACQUIRED_ISOLATED_CLONE
+  remote_sync: NOT_RUN_BY_INSTRUCTION

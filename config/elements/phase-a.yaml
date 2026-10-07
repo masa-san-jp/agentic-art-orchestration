@@ -1,0 +1,30 @@
+contract_version: element-sequence/v1
+max_attempts: 5
+driver: phase-a
+elements:
+  - kind: element
+    element_id: A3.operation
+    instruction: 本人の素材から、どんな操作・状態かを表す短い語を一つ返してください。
+    inputs:
+      material: {context: material}
+    answer_format: {type: text, max_chars: 20, min_chars: 2}
+    checks: [non_empty, 'not_similar_to:material', 'not_similar:0.8', 'forbidden:無し,未記入,∩']
+  - kind: element
+    element_id: A5.connection
+    instruction: 本人の素材と参照素材はつながりますか。はい／いいえと、両方の語を含む理由一文を返してください。
+    inputs:
+      self: {context: self}
+      signal: {context: signal}
+    answer_format: {type: boolean_with_reason, max_chars: 120}
+    checks: [non_empty, one_sentence, 'contains_source_terms:self,signal']
+  - kind: element
+    element_id: A7.central-question
+    instruction: 本人の素材・美術史・市場と接続理由から、中心の問いを一文で返してください。それぞれの素材の語を含めてください。
+    inputs:
+      self: {context: self}
+      art_history: {context: art_history}
+      market: {context: market}
+      art_reason: {context: art_reason}
+      market_reason: {context: market_reason}
+    answer_format: {type: text, max_chars: 120}
+    checks: [non_empty, one_sentence, ends_with_question, 'contains_source_terms:self,art_history,market', 'forbidden:∩,無し,未記入']

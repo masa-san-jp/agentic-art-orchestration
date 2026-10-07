@@ -216,6 +216,32 @@ def execute(
                               "remediation": REMEDIATION}, ensure_ascii=False) + "\n", outcome
     try:
         checkout = _child_checkout(workspace_root)
+        from tools.hearing_elements import supports, relay
+        progress_path = state_root / run_id / "hearing-element.json"
+        if operation == "skip" and progress_path.is_file():
+            progress = json.loads(progress_path.read_text(encoding="utf-8"))
+            if progress.get("private") is True:
+                progress["status"] = "SKIPPED"
+                progress_path.write_text(json.dumps(progress, sort_keys=True) + "\n", encoding="utf-8")
+                outcome = _write_outcome(state_root, run_id, outcome="skipped", reason=reason,
+                                         question_id=progress.get("element_id"))
+                return 0, json.dumps(outcome, ensure_ascii=False) + "\n", outcome
+        use_element = operation == "open" and supports(checkout, timeout)
+        if operation == "answer" and progress_path.is_file():
+            use_element = json.loads(progress_path.read_text(encoding="utf-8")).get("private") is True
+        if use_element:
+            try:
+                public, progress = relay(checkout, "next" if operation == "open" else "answer",
+                                         profile_root=profile_root, run_id=run_id, purpose=purpose, timeout=timeout)
+                progress_path.parent.mkdir(parents=True, exist_ok=True)
+                progress_path.write_text(json.dumps(progress, sort_keys=True) + "\n", encoding="utf-8")
+                progress_path.chmod(0o600)
+                outcome = _write_outcome(state_root, run_id,
+                        outcome="offered" if progress["status"] == "WAITING" else "answered" if progress["status"] == "COMPLETED" else "unavailable",
+                        reason=None, question_id=progress.get("element_id"))
+                return 0, json.dumps(public, ensure_ascii=False) + "\n", outcome
+            except (ValueError, OSError, subprocess.TimeoutExpired):
+                return 0, "", _safe_unavailable(state_root, run_id) or {}
         command = _hearing_command(
             checkout,
             operation,
@@ -295,7 +321,9 @@ def main(argv: list[str] | None = None) -> int:
         args = parser.parse_args(argv)
         task_id = getattr(args, "task_id", None) or getattr(args, "task_id_positional", None)
         if args.operation in {"answer", "skip"} and not task_id:
-            parser.error(f"{args.operation} requires TASK_ID or --task-id")
+            progress = args.state_root / args.run_id / "hearing-element.json" if _valid_run_id(args.run_id) else None
+            if progress is None or not progress.is_file() or json.loads(progress.read_text(encoding="utf-8")).get("private") is not True:
+                parser.error(f"{args.operation} requires TASK_ID or --task-id")
         if not _valid_run_id(args.run_id):
             raise HearingUsageError("run-id must be a stable path-safe identifier")
         code, stdout, _ = execute(

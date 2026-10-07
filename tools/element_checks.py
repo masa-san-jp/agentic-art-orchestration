@@ -38,9 +38,9 @@ def valid_url(value: object) -> bool:
 
 def parse_check(spec: str) -> tuple[str, str]:
     name, _, arg = spec.partition(':')
-    plain = {'non_empty', 'ends_with_question', 'url_shape', 'url_in_ledger'}
-    lists = {'contains_terms', 'forbidden', 'one_of'}
-    keyed = {'reference_exists', 'exact_excerpt'}
+    plain = {'non_empty', 'ends_with_question', 'url_shape', 'url_in_ledger', 'one_sentence'}
+    lists = {'contains_terms', 'contains_source_terms', 'forbidden', 'one_of'}
+    keyed = {'reference_exists', 'exact_excerpt', 'not_similar_to'}
     if name in plain and not arg and ':' not in spec:
         return name, arg
     if name in lists and arg and all(item.strip() for item in arg.split(',')):
@@ -61,6 +61,26 @@ def parse_check(spec: str) -> tuple[str, str]:
 def _grams(value: str) -> set[str]:
     text = ' '.join(unicodedata.normalize('NFKC', value).casefold().split())
     return {text[i:i + 2] for i in range(len(text) - 1)} or {text}
+
+
+def source_terms(value: str) -> set[str]:
+    """Literal lexical anchors: Latin words and Japanese 2/3-character shingles.
+
+    No morphological model or language-dependent external service is needed.
+    Generic connective terms never suffice as source evidence.
+    """
+    stop = {'a', 'an', 'of', 'to', 'in', 'as', 'is', 'it', 'on', 'at', 'by', 'or', 'i',
+            'the', 'and', 'for', 'with', 'from', 'that', 'this', 'ある', 'いる',
+            'する', 'した', 'して', 'こと', 'もの', 'ため', 'れる', 'たい', 'いう',
+            'という', 'できる', 'による', 'として'}
+    text = unicodedata.normalize('NFKC', value)
+    terms = set(re.findall(r"[A-Za-z][A-Za-z0-9_-]*", text.casefold()))
+    for token in re.findall(r'[\u3040-\u30ff\u3400-\u9fff]+', text):
+        if len(token) == 1:
+            terms.add(token)
+        for size in (2, 3):
+            terms.update(token[i:i + size] for i in range(len(token) - size + 1))
+    return {term for term in terms - stop if re.search(r'[A-Za-z\u30a0-\u30ff\u3400-\u9fff]', term)}
 
 
 def too_similar(left: str, right: str, threshold: str) -> bool:
@@ -93,6 +113,13 @@ def check_value(value: object, checks: list[str], *, inputs: dict,
         elif name == 'ends_with_question':
             ok = text.rstrip().endswith(('?', '？'))
             reason = 'End the question with ? or ？.'
+        elif name == 'one_sentence':
+            ok = '\n' not in text.strip() and '\r' not in text.strip() and len(re.findall(r'[。!?！？]|(?<!\d)\.(?!\d)', text)) <= 1
+            reason = 'Return one sentence only.'
+        elif name == 'contains_source_terms':
+            groups = [inputs.get(key) for key in arg.split(',')]
+            ok = all(isinstance(body, str) and any(term in source_terms(text) or (len(term) == 1 and re.search(r'[\u30a0-\u30ff\u3400-\u9fff]', term) and term in unicodedata.normalize('NFKC', text)) for term in source_terms(body)) for body in groups)
+            reason = 'Include at least one literal content term from each named source.'
         elif name == 'contains_terms':
             terms = [inputs.get(item, item) for item in arg.split(',')]
             ok = all(isinstance(term, str) and term.strip() and term in text for term in terms)
@@ -117,6 +144,11 @@ def check_value(value: object, checks: list[str], *, inputs: dict,
             # A quotation is an exact contiguous substring; no normalization.
             ok = bool(body) and text in body
             reason = 'Copy an exact contiguous passage from the retrieved body.'
+        elif name == 'not_similar_to':
+            prior = inputs.get(arg)
+            prior = prior if isinstance(prior, list) else [prior]
+            ok = all(isinstance(v, str) and not too_similar(text, v, '0.8') for v in prior)
+            reason = 'Use an operation distinct from the supplied material.'
         elif name == 'not_similar':
             old = [v.get('reason', '') if isinstance(v, dict) else v for v in previous_answers.values()]
             ok = all(not too_similar(text, v, arg) for v in old if isinstance(v, str) and v.strip())

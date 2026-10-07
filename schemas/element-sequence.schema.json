@@ -216,6 +216,9 @@
                   "maxLength": 256
                 },
                 "uniqueItems": true
+              },
+              "private": {
+                "type": "boolean"
               }
             }
           },
@@ -323,6 +326,11 @@
           }
         ]
       }
+    },
+    "driver": {
+      "enum": [
+        "phase-a"
+      ]
     }
   }
 }
