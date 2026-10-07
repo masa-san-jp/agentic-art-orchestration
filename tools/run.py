@@ -1316,6 +1316,10 @@ def _run_input_pipeline(
 
 def run(*args: Any, **kwargs: Any) -> dict[str, Any]:
     """Support both the v1 input pipeline and the full agent orchestration entrypoint."""
+    if kwargs.pop("element_demo", False):
+        from tools.element import Engine
+
+        return Engine(kwargs.pop("run_id"), kwargs.pop("state_root")).next(**kwargs)
     if args and isinstance(args[0], dict):
         return _run_input_pipeline(*args, **kwargs)
     return _run_orchestration(*args, **kwargs)
@@ -1323,6 +1327,8 @@ def run(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--element-demo", action="store_true",
+                        help="run the synthetic element sequence without replacing production stages")
     parser.add_argument("--cycle-context", type=Path, help="external knowledge-cycle-context/v1; advance the same profile/run checkpoint")
     parser.add_argument("--project-root", type=Path, help="explicit agentic-art-project checkout for output-destinations/v2")
     parser.add_argument("--delivery-target", choices=("internal", "project-local", "project-committed"), help="Bind the requested delivery goal to --cycle-context; never silently downgrade")
@@ -1359,6 +1365,18 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.element_demo:
+            if args.run_id is None or args.state_root is None:
+                raise StepFailure("--element-demo requires --run-id and --state-root")
+            if any(value is not None for value in (
+                args.cycle_context, args.bundle, args.project_root, args.delivery_target,
+                args.destinations_file, args.self_export, args.profile_root, args.research_root,
+                args.production_root, args.output, args.intent,
+            )):
+                raise StepFailure("--element-demo cannot be combined with production inputs or destinations")
+            report = run(element_demo=True, run_id=args.run_id, state_root=args.state_root)
+            print(canonical_json(report))
+            return 2 if report["status"] == "BLOCKED" else 0
         if args.self_export is not None and (args.cycle_context is not None or args.bundle is not None):
             raise BlockedPrecondition("SELF_EXPORT_UNSUPPORTED_MODE: use the normal run/ingest entry with --self-export")
         if args.cycle_context is not None:

@@ -1,5 +1,5 @@
-version: 102
-updated_at: '2026-10-04T15:40:19.013672+00:00'
+version: 104
+updated_at: '2026-10-07T06:46:53.844011+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3389,3 +3389,26 @@ tasks:
     acceptance_result: '6/6 plus portable-export independence'
     verification_result: '17 focused and 121 related tests PASS; bootstrap 17/17 PASS. Full changed suite 749 tests exactly matches origin/main 732 tests: 43 named failures without generated data, 5 named errors after bootstrap; no new or removed failures.'
     completion: Local implementation and verification complete; no personal profile touched, no child code changed, no lease held and no remote write. Orchestrator review and publication remain pending.
+
+  - id: ISSUE-278
+    milestone: ELEMENT-HARNESS
+    title: Add the common one-element harness foundation
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/278
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: []
+    acceptance: Closed element/search contracts; declarative registration; mechanical checks; retry, BLOCKED and byte-identical resume; credential-free CLI; fake/local answerers; opt-in run demo; runtime instructions. Existing A-D stages stay unchanged.
+    checks:
+    - python tools/validate.py --check
+    - python tools/project_status.py --check-readme
+    - python -m unittest tests.test_element -v
+    - python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge and issue closure; local implementation and commit only. No execution lease acquired in the assigned isolated clone.
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    evidence: execution/issue-278-verification.json
+    code_status: CODE_VERIFIED
+    acceptance_result: '8/8 observable foundation conditions'
+    verification_result: Both full-suite named failure sets exactly match pristine origin/main; new tests and bootstrap PASS.
+    completion: Local foundation complete with demo, finite retries and durable replay; no A-D replacement, child change, lease or remote write. Orchestrator review and publication remain pending.

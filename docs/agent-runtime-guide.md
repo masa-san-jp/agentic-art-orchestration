@@ -514,3 +514,108 @@ clone/fork利用者は、明示した`agentic-art-project` checkoutを次のよ�
 ```
 
 または`AGENTIC_ART_PROJECT_ROOT=/path/to/agentic-art-project`を設定します。v2は`.agentic-art/state`、`.agentic-art/internal`、`.agentic-art/staging`を導出し、公開rootはProject checkout自身です。既存の`--destinations-file`や個別rootと同時に指定すると`AMBIGUOUS_DESTINATION_MODE`で書込み前に停止します。Projectのvalidator、ignore、tracked-private、symlink、tracked変更を先に検査し、失敗時にworkspaceを作成しません。v1のGit外profile方式はそのまま利用できます。
+
+## 要素の依頼への答え方（Issue #278）
+
+要素ハーネスは、短い指示と、その答えに必要な材料だけを一件ずつ渡します。
+答える人・エージェント・ローカルモデルは、一つの値だけを返してください。
+次の要素へ進めるかどうかはプログラムが確認します。現在はデモ専用の入口で、
+既存の候補生成・選定・研究・制作の工程はこの入口へ置き換えていません。
+
+まず、Git checkoutの外に専用の保存場所を作り、同じrun IDで始めます。
+以下の`EXTERNAL_STATE_ROOT`は、その保存場所の絶対pathを表します。
+
+~~~bash
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/run.py --element-demo \
+  --run-id element-demo --state-root "$EXTERNAL_STATE_ROOT"
+~~~
+
+出力の`next_action.kind`が`element`なら、`next_action.request`を読みます。
+`instruction`が指示、`inputs`が材料、`answer_format`が答えの形です。
+`text`は指定文字数以内の文字列、`choice`は選択肢そのものを一つ、
+`boolean_with_reason`は`{"answer": true, "reason": "理由を一文。"}`
+（否定なら`false`）、`url`はHTTP(S) URLの文字列です。
+答えの`run_id`、`element_id`、`attempt`は依頼からそのまま写します。
+
+例えばデモの最初の依頼への答えは、次のように標準入力で渡します。
+
+~~~bash
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/element.py answer \
+  --run-id element-demo --state-root "$EXTERNAL_STATE_ROOT" <<'JSON'
+{"contract_version":"element-answer/v1","run_id":"element-demo","element_id":"demo.operation","attempt":1,"value":"先送り"}
+JSON
+~~~
+
+通れば次の依頼が返ります。落ちれば同じ要素の`attempt`が増え、
+`previous_failure`に検査名と短い修正理由が返ります。その要素だけを答え直してください。
+空の文字列・空白だけの値や理由は受理されません。既定では五回目の答えも検査に
+落ちると`BLOCKED`（exit 2）になり、要素名と最後の失敗検査を返します。
+五回目に通れば進めます。保存した答えと完全に同じ答えの再送は、試行数を増やさず
+現在の状態を返します（通常はexit 0、`BLOCKED`ならexit 2）。
+値の違う古いattemptの答えや別のrunの答え、形式の壊れたJSONは
+入力エラー（exit 1）で、保存済みの依頼も試行数も変えません。
+
+中断後は最初と同じ入口で`run.py`の`--element-demo`を再実行すれば再開できます。
+`tools/element.py next`でも次の依頼を取得でき、`status`でも保存済みの進行を確認できます。
+どちらも`--run-id`と`--state-root`を指定し、同じ資格情報なしの入口で実行します。
+再開では材料・登録定義を読み直さず、保存済み依頼のbyteを再現します。
+`COMPLETED`はこのデモ列の完了です。制作プランやProject納品の完了を表しません。
+BLOCKEDになったrunを書き換えて続けず、原因を直した定義で新しいrunを開始してください。
+
+### 検索の依頼と根拠の抜き書き
+
+`request.contract_version`が`search-request/v1`なら、`query`で検索し、
+上位から`limit`件までのURL・題名・取得本文を返してください。
+答えは`search-answer/v1`で、同じ識別子とattempt、
+`results: [{"url": "…", "title": "…", "body": "取得した本文そのまま"}]`を持ちます。
+少なくとも一件必要です。返した本文をハーネスがhash化してrunの台帳に固定します。
+根拠の抜き書きはその本文の連続した部分と完全一致する必要があり、空白の変更も通りません。
+URLの実在検査はこの取得台帳との照合です。ハーネス自身によるウェブの独立確認ではありません。
+同じURLへ異なる本文を返して既存の根拠を上書きすることはできません。
+
+### ローカルの答え手で試す
+
+`tools/element_answerer.py --fake`は依頼JSON一件をstdinで読み、
+デモ用の決定的な答えJSON一件をstdoutへ返します。
+この答えを上と同じ`element.py answer`へ渡せば、同じ検査を受けられます。
+実際のローカルモデルでは`--config <absolute-config-file>`を使います。
+[設定例](../config/element-answerer.example.yaml)の`command`を自分のモデル用ラッパーの
+引数列に替えてください。ラッパーはstdinに依頼一件、stdoutに答え一件を出す必要があります。
+ログはstderrへ出します。shell式は使わず、呼び出し方とタイムアウトだけを設定で指定します。
+adapter自体も`credential_free.py`経由で起動します。モデルの起動失敗やタイムアウトでは
+答えを受理せず、保存された同じ依頼を再度使えます。
+
+### 要素を登録する開発者向け
+
+`config/elements/*.yaml`へ`element-sequence/v1`の列を宣言すると、
+`tools/validate.py --check`がschema・重複ID・入力参照順・検査名を検証します。
+`element.py next --registry <file>`で新規runに選択できます（保存済みrunの定義は変更しません）。
+`max_attempts`はデモの既定値5から変更できます。
+入力は`{literal: 値}`、`{answer: 先に受理された要素ID}`、`{context: キー}`、
+または`{search_result: {element_id: 検索ID, index: 0, field: url}}`で組み立てます。
+検索のfieldは`url`・`title`・`body`です。contextはプログラムAPIで渡す固定材料で、
+必要なキーだけが依頼へ入ります。入力の組み立て失敗は空値で埋めず`input_build`で止まり、
+すでに受理した答えを保持します。指示は一〜二文、最大400文字、組み立てたinputsは
+最大4096 UTF-8 byteに収め、長い原文全体を一度にモデルへ渡さないでください。
+
+検査は以下の文字列を宣言します。すべてプログラムによる判定です。
+
+| 検査 | 意味 |
+| --- | --- |
+| `non_empty` | 空白だけの値も拒否（宣言なしでも必須） |
+| `min_chars:N` / `max_chars:N` | Unicode文字数の下限・上限 |
+| `ends_with_question` | 末尾が`?`か`？` |
+| `contains_terms:a,b` | inputsキーの文字列、または文字通りの語を全部含む |
+| `forbidden:a,b` | 指定語を一つも含まない |
+| `one_of:a,b` | 列挙値のどれかと完全一致 |
+| `reference_exists:key` | inputsのkeyが指すIDリスト・辞書に値が存在 |
+| `url_shape` / `url_in_ledger` | HTTP(S) URLの形 / 取得台帳に存在 |
+| `exact_excerpt:key` | inputsのkeyのURLが指す台帳本文から完全一致の抜き書き |
+| `not_similar:0.8` | 既出の受理済み答えとの類似度が指定値未満 |
+
+類似度はNFKC・大文字小文字・連続空白を正規化した文字bigramのJaccard比です。
+閾値と同じ比も拒否します。文字数と引用は正規化せず元の文字列で判定します。
+booleanの検査は理由文へ適用します。不明な検査や入力参照は黙って無視しません。
+材料・答え・取得本文の保存先は外部stateのみで、親のGit証跡へ転記しません。

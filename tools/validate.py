@@ -99,6 +99,13 @@ DATE_TIME = re.compile(
     r"(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
 )
 REQUIRED_FILES = [
+    "schemas/element-request.schema.json",
+    "schemas/element-answer.schema.json",
+    "schemas/search-request.schema.json",
+    "schemas/search-answer.schema.json",
+    "schemas/element-sequence.schema.json",
+    "config/elements/demo.yaml",
+    "tools/element.py",
     "README.md",
     "AGENTS.md",
     "PLANS.md",
@@ -4381,6 +4388,26 @@ def validate_catalog_path_aliases(
     return errors
 
 
+def validate_element_request(data: dict, source: str = "element-request") -> list[str]:
+    from tools.element_contracts import validate_message
+    return [f"{source}: {error}" for error in validate_message(data, "element-request")]
+
+
+def validate_element_answer(data: dict, source: str = "element-answer") -> list[str]:
+    from tools.element_contracts import validate_message
+    return [f"{source}: {error}" for error in validate_message(data, "element-answer")]
+
+
+def validate_search_request(data: dict, source: str = "search-request") -> list[str]:
+    from tools.element_contracts import validate_message
+    return [f"{source}: {error}" for error in validate_message(data, "search-request")]
+
+
+def validate_search_answer(data: dict, source: str = "search-answer") -> list[str]:
+    from tools.element_contracts import validate_message
+    return [f"{source}: {error}" for error in validate_message(data, "search-answer")]
+
+
 def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
     errors: list[str] = []
     for rel in REQUIRED_FILES:
@@ -4389,6 +4416,8 @@ def validate(manifest_path: Path = MANIFEST_PATH) -> list[str]:
     if errors:
         return errors
     try:
+        from tools.element_contracts import validate_contracts
+        errors.extend(validate_contracts())
         from tools.security import tracked_self_exports
         errors.extend(f"{finding['source']}: {finding['code']}; remediation: {finding['remediation']}"
                       for finding in tracked_self_exports(ROOT))

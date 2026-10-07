@@ -1,5 +1,5 @@
-version: 318
-updated_at: '2026-10-04T15:40:19.012823+00:00'
+version: 320
+updated_at: '2026-10-07T06:46:53.844011+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -120,11 +120,11 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: ISSUE-269
+last_completed_task: ISSUE-278
 resume_from:
   task: null
   repository: agentic-art-orchestration
-  action: Review Issue-273 local commits and verification evidence; orchestrator owns publication; no lease is held.
+  action: Review Issue-278 local commit and verification evidence; orchestrator owns publication; no lease is held.
   command: git show --stat HEAD
 
 oi07_progress:
@@ -2100,7 +2100,7 @@ issue_273_local_implementation:
   lease: NOT_ACQUIRED; assigned isolated clone has no overlapping active lease
   remote_sync: NOT_RUN_BY_INSTRUCTION; orchestrator owns publication
 
-checkpoint:
+previous_issue275_checkpoint:
   task: ISSUE-275
   repository: agentic-art-orchestration
   status: DONE
@@ -2144,3 +2144,34 @@ issue_275_local_implementation:
   evidence: execution/issue-275-verification.json
   acceptance: 6/6 plus portable-export independence
   code_status: CODE_VERIFIED
+
+checkpoint:
+  task: ISSUE-278
+  repository: agentic-art-orchestration
+  status: DONE
+  code_status: CODE_VERIFIED
+  start_point: 65afb2eb77dc0e5b2db2ef7262b1bfe6ec4c8787
+  branch: agent/278-element-harness-core
+  evidence: execution/issue-278-verification.json
+  acceptance: 8/8 observable foundation conditions; synthetic demo only
+  checks:
+    validator: PASS
+    project_status_readme: PASS
+    focused: 'PASS: 35 tests'
+    related: Ran 122 tests in 16.200s; FAILED (errors=1); only an existing baseline
+      error
+    full_clean: Ran 784 tests in 1195.753s; FAILED (failures=8, errors=36, skipped=5);
+      exact origin/main failure set
+    full_bootstrapped: Ran 784 tests in 294.663s; FAILED (errors=6, skipped=5); exact
+      origin/main failure set
+    new_or_removed_failures: 0
+    child_quality_gates: NOT_APPLICABLE; no child source changed
+  sensitive_data: Synthetic materials only; no credential, real profile, hearing body,
+    retrieved real text or local absolute path in evidence
+  external_artifact: None; no Drive or public delivery
+  feedback: Assigned issue and orchestrator instructions; no inferred feedback
+  lease: NOT_ACQUIRED; none retained
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  unresolved: No issue condition unmet; existing full-suite errors remain explicit
+  next_operation: git show --stat HEAD; orchestrator reviews and owns publication;
+    no next task claimed
