@@ -163,6 +163,15 @@ class Engine:
     def answer(self, answer: object) -> dict:
         with self._locked():
             state = self._read()
+            # A sender may lose stdout after the checkpoint was saved. Replay
+            # its exact recorded answer without checking or advancing it again.
+            if isinstance(answer, dict) and answer.get('run_id') == self.run_id:
+                answer_sha256 = hashlib.sha256(canonical(answer).encode()).hexdigest()
+                if any(saved['element_id'] == answer.get('element_id')
+                       and saved['attempt'] == answer.get('attempt')
+                       and saved['answer_sha256'] == answer_sha256
+                       for saved in state['history']):
+                    return self._report(state)
             if state['status'] != 'WAITING':
                 raise ValueError('Run is not waiting for an answer')
             request = json.loads(state['pending'])

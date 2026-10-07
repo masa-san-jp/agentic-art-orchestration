@@ -58,8 +58,7 @@ class ElementEngineTests(unittest.TestCase):
         self.assertEqual('COMPLETED', report['status'])
         self.assertIsNone(report['next_action'])
         self.assertEqual(report, Engine('fixture', self.root).next())
-        with self.assertRaisesRegex(ValueError, 'not waiting'):
-            self.engine.answer(fake.answer(request))
+        self.assertEqual(report, self.engine.answer(fake.answer(request)))
 
     def test_fake_retries_only_failed_element_and_preserves_answer(self):
         fake = FakeAnswerer({'demo.operation': ['先送り'], 'demo.question': ['', '先送りを変えられるか？'], 'demo.category': ['時間']})
@@ -123,7 +122,46 @@ class ElementEngineTests(unittest.TestCase):
         good = answer(request, '先送り')
         self.engine.answer(good)
         with self.assertRaises(ValueError):
-            self.engine.answer(good)
+            self.engine.answer({**good, 'value': '別の操作'})
+
+    def test_saved_answer_replay_returns_current_report_without_mutating_state(self):
+        accepted = answer(self.request(self.engine.next()), '先送り')
+        report = self.engine.answer(accepted)
+        failed = answer(self.request(report), '')
+        report = self.engine.answer(failed)
+        self.assertEqual(2, self.request(report)['attempt'])
+        cases = [('accepted', self.engine, accepted, report, 0),
+                 ('failed', self.engine, failed, report, 0)]
+        for name, value, exit_code in [('blocked', '', 2), ('completed', '答え', 0)]:
+            engine = Engine(name, self.root)
+            saved = answer(self.request(engine.next(sequence=single(attempts=1))), value)
+            cases.append((name, engine, saved, engine.answer(saved), exit_code))
+        search_engine = Engine('search-replay', self.root)
+        sequence = single()
+        sequence['elements'].insert(0, {'kind': 'search', 'element_id': 'lookup',
+                                        'query': {'literal': '時間'}, 'limit': 1})
+        saved_search = answer(self.request(search_engine.next(sequence=sequence)), [
+            {'url': 'https://example.invalid/source', 'title': '資料', 'body': '時間の記録。'}])
+        cases.append(('search', search_engine, saved_search, search_engine.answer(saved_search), 0))
+        for name, engine, saved, expected, exit_code in cases:
+            with self.subTest(name=name):
+                checkpoint = engine.path.read_bytes()
+                command = [sys.executable, 'tools/element.py', 'answer', '--run-id', engine.run_id,
+                           '--state-root', str(self.root)]
+                replay = subprocess.run(command, cwd=ROOT, input=canonical(saved),
+                                        capture_output=True, text=True, timeout=30)
+                self.assertEqual(exit_code, replay.returncode, replay.stderr)
+                self.assertEqual(expected, json.loads(replay.stdout))
+                self.assertEqual(checkpoint, engine.path.read_bytes())
+                changed = deepcopy(saved)
+                if 'results' in changed:
+                    changed['results'][0]['title'] = '別の資料'
+                else:
+                    changed['value'] = '別の答え'
+                rejected = subprocess.run(command, cwd=ROOT, input=canonical(changed),
+                                          capture_output=True, text=True, timeout=30)
+                self.assertEqual(1, rejected.returncode)
+                self.assertEqual(checkpoint, engine.path.read_bytes())
 
     def test_format_failures_retry_instead_of_accepting(self):
         cases = [({'type': 'text', 'max_chars': 2}, '長すぎる'),
@@ -200,8 +238,9 @@ class ElementEngineTests(unittest.TestCase):
         b = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         a.communicate(payload, timeout=30)
         b.communicate(payload, timeout=30)
-        self.assertEqual([0, 1], sorted([a.returncode, b.returncode]))
+        self.assertEqual([0, 0], sorted([a.returncode, b.returncode]))
         self.assertEqual(1, self.engine.status()['accepted_count'])
+        self.assertEqual(1, len(json.loads(self.engine.path.read_text())['history']))
 
 
 class MechanicalChecksTests(unittest.TestCase):

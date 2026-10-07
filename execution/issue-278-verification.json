@@ -749,6 +749,36 @@
   },
   "remote_sync": "NOT_RUN_BY_INSTRUCTION; local commit only",
   "repository": "agentic-art-orchestration",
+  "review_followup": {
+    "base_commit": "b22820736754730f8f91bb131bad476b4c958a29",
+    "change": "Return the current report for an exact saved (element_id, attempt, answer_sha256); reject changed stale answers without mutating the checkpoint.",
+    "checks": {
+      "diff": {
+        "command": "git diff --check",
+        "exit_code": 0
+      },
+      "focused": {
+        "command": "$PYTHON -m unittest tests.test_element -v",
+        "exit_code": 0,
+        "summary": [
+          "Ran 36 tests in 10.589s",
+          "OK"
+        ],
+        "tests": 36
+      },
+      "validator": {
+        "command": "$PYTHON tools/validate.py --check",
+        "exit_code": 0
+      }
+    },
+    "code_file_sha256": {
+      "docs/agent-runtime-guide.md": "46ed9de9408b7eb412087de6fd55024cde6379ed7497dda64aa1cd30e7a9ac66",
+      "tests/test_element.py": "13cee618fc5af5c472aae1b9999c876e90089a13abda45aeecaebc3f4a7d9ed6",
+      "tools/element.py": "9b5f8e4171c7ad6311caa761187fe1d8a749f0066e22b80e5fe93778e7a4ae33"
+    },
+    "full_suite": "NOT_RERUN; review requests focused gates; previous full-suite evidence describes the base implementation.",
+    "unmet_review_conditions": []
+  },
   "sensitive_data": "Only synthetic fixtures; no real profile, credential, hearing body, real retrieved text, raw log or local absolute path in evidence.",
   "task": "ISSUE-278",
   "unmet_issue_conditions": []
