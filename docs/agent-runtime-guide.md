@@ -655,7 +655,7 @@ RRの`creative_question`はA7の答えそのものです。`requests/phase-a-pro
 
 ### privateな子ヒアリング
 
-pin済みSelf Modelが`growth_tasks.py element`を持つ場合、`run.py`と`self_hearing.py open|next`が
+pin済みSelf Modelが`growth_tasks.py element`を持つ場合、`run.py`と`self_hearing.py`のopen/next操作が
 その依頼を`private: true`としてstdoutへ中継します。旧pinは従来のhearingへ戻ります。
 子の`agent_runtime.py`を経由し、同じ`--run-id`を各操作へ渡します。複数Subjectの場合は
 `self_hearing.py`各操作の`--subject subject/<id>`で対象を明示します。

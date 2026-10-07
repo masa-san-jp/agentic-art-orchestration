@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
-"""Carry a repository-derived theme all the way to a production plan, without asking anyone.
+"""Carry private hearing and theme elements through research to a production plan.
 
     python3 tools/run.py --workspace-root <実クローン> --profile-root <外部profile>
 
-An explicit --intent may rank candidates, but it is optional. Without it, the
-repository snapshot supplies the first gate-passing candidate and its derived
-creative question becomes the working theme. Everything after startup runs
-without asking: ingest, compose, gate, select, trace, request, accept, hand
-over, and build the plan.
-
-One step is not a tool call. Conducting the research means reading, searching,
-and writing records, and the agent driving this repository does it. When the
-research is not yet done the run returns what is left and how it is judged
-done; calling the same entry again with the same run id carries on to the plan.
-It waits for the agent, never for a person.
+An optional intent ranks equally used materials. The direct entry returns private
+owner hearing actions before ingest and common A3/A5/A7 element requests after it.
+The driving agent answers one action at a time and resumes the same run. Research
+and Production retain their native acceptance, provenance and delivery contracts.
 """
 
 from __future__ import annotations
@@ -905,6 +898,14 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 state_root=state_root, workspace_root=workspace_root, profile_root=profile_root, purpose=purpose)
             private_report = json.loads(transient) if transient else {}
             action = private_report.get("next_action")
+            if (action is None and private_report.get("outcome") == "offered"
+                    and isinstance(private_report.get("question"), str)):
+                # Old pins still offer their native packet. Expose its single
+                # question and routing fields transiently at the direct entry.
+                action = {"kind": "hearing", "private": True, "legacy": True, "operation": "answer",
+                          **{key: private_report.get(key) for key in (
+                              "question", "why", "intent", "anchors", "answer_format", "task_id", "question_id", "queue_sha256")}}
+                private_report["status"] = "HEARING"
             if pending and private_report.get("status") not in {
                     "WAITING", "HEARING", "CONFIRMATION", "SEED_REQUIRED", "COMPLETED", "SKIPPED", "BLOCKED"}:
                 # A failed reacquisition does not discard an already active

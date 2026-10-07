@@ -287,3 +287,22 @@ class RunPrivateHearingTests(unittest.TestCase):
             self.assertEqual('BLOCKED', report['status'])
             self.assertEqual('PRIVATE_ELEMENT_UNAVAILABLE', report['blocked']['reason'])
             ingest.assert_not_called()
+
+    def test_direct_entry_returns_legacy_packet_question_without_retaining_body(self):
+        from tools.run import _run_orchestration
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            packet = {'outcome': 'offered', 'question': 'PRIVATE_LEGACY_QUESTION？',
+                      'intent': ['PRIVATE_INTENT'], 'anchors': ['PRIVATE_ANCHOR'],
+                      'task_id': 'GT001', 'queue_sha256': 'a' * 64, 'answer_format': 'event-block'}
+            with patch('tools.run._prepare_runtime_workspace', return_value=({'status': 'PASSED'}, root / 'workspace')), \
+                 patch('tools.self_hearing.execute', return_value=(0, json.dumps(packet), {'outcome': 'offered'})), \
+                 patch('tools.run._run_tool') as ingest:
+                report = _run_orchestration(None, root / 'workspace', root / 'state', 'old',
+                    'artistic-research', None, None, '2026-10-08T00:00:00Z', sys.executable,
+                    research_root=root / 'research', production_root=root / 'production', profile_root=root / 'profile')
+            self.assertTrue(report['next_action']['legacy'])
+            self.assertEqual(packet['question'], report['next_action']['question'])
+            self.assertEqual('GT001', report['next_action']['task_id'])
+            self.assertNotIn('PRIVATE_', (root / 'state/old/run.json').read_text())
+            ingest.assert_not_called()
