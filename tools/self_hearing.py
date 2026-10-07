@@ -196,6 +196,8 @@ def execute(
     reason: str | None = None,
     expected_queue_sha256: str | None = None,
     timeout: int = DEFAULT_TIMEOUT,
+    owner_answer: str | None = None,
+    subject: str | None = None,
 ) -> tuple[int, str, dict[str, Any]]:
     """Run one child operation and return ``(exit_code, stdout, outcome)``."""
     if not _valid_run_id(run_id):
@@ -218,33 +220,28 @@ def execute(
         checkout = _child_checkout(workspace_root)
         from tools.hearing_elements import supports, relay
         progress_path = state_root / run_id / "hearing-element.json"
-        if operation == "skip" and progress_path.is_file():
-            progress = json.loads(progress_path.read_text(encoding="utf-8"))
-            if progress.get("private") is True:
-                progress["status"] = "SKIPPED"
-                progress_path.write_text(json.dumps(progress, sort_keys=True) + "\n", encoding="utf-8")
-                outcome = _write_outcome(state_root, run_id, outcome="skipped", reason=reason,
-                                         question_id=progress.get("element_id"))
-                return 0, json.dumps(outcome, ensure_ascii=False) + "\n", outcome
-        use_element = operation == "open" and supports(checkout, timeout)
-        if operation == "answer" and progress_path.is_file():
+        use_element = operation in {"open", "next", "respond", "confirm"} and supports(checkout, timeout)
+        if operation in {"answer", "skip"} and progress_path.is_file():
             use_element = json.loads(progress_path.read_text(encoding="utf-8")).get("private") is True
         if use_element:
             try:
-                public, progress = relay(checkout, "next" if operation == "open" else "answer",
-                                         profile_root=profile_root, run_id=run_id, purpose=purpose, timeout=timeout)
+                public, progress = relay(checkout, "next" if operation == "open" else operation,
+                                         profile_root=profile_root, run_id=run_id, purpose=purpose, timeout=timeout,
+                                         owner_answer=owner_answer, subject=subject)
                 progress_path.parent.mkdir(parents=True, exist_ok=True)
                 progress_path.write_text(json.dumps(progress, sort_keys=True) + "\n", encoding="utf-8")
                 progress_path.chmod(0o600)
                 outcome = _write_outcome(state_root, run_id,
-                        outcome="offered" if progress["status"] == "WAITING" else "answered" if progress["status"] == "COMPLETED" else "unavailable",
-                        reason=None, question_id=progress.get("element_id"))
-                return 0, json.dumps(public, ensure_ascii=False) + "\n", outcome
+                        outcome=public["outcome"],
+                        reason="PRIVATE_ELEMENT_BLOCKED" if progress["status"] == "BLOCKED" else reason if progress["status"] == "SKIPPED" else None, question_id=progress.get("element_id"))
+                return (2 if progress["status"] == "BLOCKED" else 0), json.dumps(public, ensure_ascii=False) + "\n", outcome
             except (ValueError, OSError, subprocess.TimeoutExpired):
                 return 0, "", _safe_unavailable(state_root, run_id) or {}
+        if operation in {"respond", "confirm"}:
+            raise ValueError("PRIVATE_ELEMENT_UNAVAILABLE")
         command = _hearing_command(
             checkout,
-            operation,
+            "open" if operation == "next" else operation,
             profile_root=profile_root,
             requester=run_id,
             purpose=purpose,
@@ -302,13 +299,16 @@ def execute(
 def main(argv: list[str] | None = None) -> int:
     parser = HearingArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="operation", required=True, parser_class=HearingArgumentParser)
-    for operation in ("open", "answer", "skip"):
+    for operation in ("open", "next", "answer", "respond", "confirm", "skip"):
         command = sub.add_parser(operation)
         command.add_argument("--run-id", required=True)
         command.add_argument("--state-root", type=Path, required=True)
         command.add_argument("--workspace-root", type=Path, required=True)
         command.add_argument("--profile-root", type=Path, help="external profile; defaults to environment or owner local config")
         command.add_argument("--purpose", default="artistic-research")
+        command.add_argument("--subject")
+        if operation == "confirm":
+            command.add_argument("--owner-answer", required=True, choices=("yes", "no"))
         command.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT)
         if operation in {"answer", "skip"}:
             command.add_argument("task_id_positional", nargs="?")
@@ -337,6 +337,8 @@ def main(argv: list[str] | None = None) -> int:
             reason=getattr(args, "reason", None),
             expected_queue_sha256=getattr(args, "expected_queue_sha256", None),
             timeout=args.timeout,
+            owner_answer=getattr(args, "owner_answer", None),
+            subject=args.subject,
         )
     except HearingUsageError:
         # There may be no safely parsed state-root/run-id pair to record.  The

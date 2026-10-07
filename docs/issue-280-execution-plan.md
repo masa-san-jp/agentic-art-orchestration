@@ -53,3 +53,20 @@ both synthetic questions. No next implementation task is claimed. Do not mark
 Issue 280 fully complete until the owner accepts a meaningful real-profile question.
 
 Native verification found that a real public ARK URL was rejected by the pinned receiver's absolute-path rule. Alias only clean public HTTP(S) references with colon/slash in their path to a hash URN, retain the exact original/alias mapping in the structured sidecar, preserve rights status, and leave query/fragment references for native security checking. Use a new run/artifact after this fix; never overwrite the failed probe's create-only outputs. Freeze optional intent after material selection and remove its text from subsequent run reports.
+
+
+## Child hearing contract integration (follow-up)
+
+Use the finalized Self Model Issue 138 owner contract, without copying its schemas or
+private state into the parent. Relay next/answer/respond/confirm/skip through the child
+runtime with run-id, purpose and optional Subject. HEARING, CONFIRMATION and
+SEED_REQUIRED expose one private owner question; WAITING exposes one private element.
+Save only private/status/run-id/element-id/attempt. Child skip is authoritative; a
+rejected operation reacquires next rather than fabricating a transition. BLOCKED
+remains a resumable stop. COMPLETED or SKIPPED resumes the same run through Phase A.
+
+The direct credential-free run entry opens/reacquires private hearing before ingest.
+Write metadata before adding the transient next_action to stdout. Test the child
+branch in a temporary exact-pin workspace using a temporary manifest Self Model pin;
+restore the production manifest before quality gates. Original owner clones are
+read-only. Record both owner question and A7 only from synthetic inputs.

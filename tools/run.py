@@ -890,6 +890,41 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         record("self-hearing", _hearing_step(hearing))
     else:
         record("self-hearing", {"status": "not-run"})
+    # The private owner flow runs before ingest. Its body is returned only after
+    # the metadata-only run report has been written; the parent Engine never sees it.
+    progress_path = work / "hearing-element.json"
+    if not offline_fixture and self_export is None and not (work / "element-state.json").exists():
+        pending = False
+        if progress_path.is_file():
+            progress = json.loads(progress_path.read_text(encoding="utf-8"))
+            pending = progress.get("private") is True and progress.get("status") in {
+                "WAITING", "HEARING", "CONFIRMATION", "SEED_REQUIRED", "BLOCKED"}
+        if pending or not hearing_path.exists():
+            from tools.self_hearing import execute as hearing_execute
+            _, transient, outcome = hearing_execute("next" if pending else "open", run_id=run_id,
+                state_root=state_root, workspace_root=workspace_root, profile_root=profile_root, purpose=purpose)
+            private_report = json.loads(transient) if transient else {}
+            action = private_report.get("next_action")
+            if pending and private_report.get("status") not in {
+                    "WAITING", "HEARING", "CONFIRMATION", "SEED_REQUIRED", "COMPLETED", "SKIPPED", "BLOCKED"}:
+                # A failed reacquisition does not discard an already active
+                # private owner flow or permit ingest of unconfirmed material.
+                private_report = {"status": "BLOCKED", "blocked": {
+                    "element_id": "A1.hearing", "reason": "PRIVATE_ELEMENT_UNAVAILABLE"}}
+            if (isinstance(action, dict) and action.get("private") is True) or private_report.get("status") == "BLOCKED":
+                record("self-hearing-progress", {"status": private_report["status"]})
+                report = {"run_id": run_id, "status": private_report["status"], "run_status": "INCOMPLETE",
+                          "completion_status": "INCOMPLETE", "plan_status": "NOT_READY",
+                          "knowledge_status": "NOT_STARTED", "projection_status": "NOT_RUN", "steps": steps,
+                          "git_write_credentials": git_write_credentials, "delivery_contract": dict(delivery_contract),
+                          "resume_command": resume_command}
+                report["delivery_completion"] = completion(report, delivery_contract)
+                _write_run_report(work, report, profile_root_source, profile_root)
+                report["next_action"] = action
+                if action:
+                    action["resume_command"] = resume_command
+                report["blocked"] = private_report.get("blocked")
+                return report
     if destination_resolution is not None:
         record("destination-resolution", {"status": "PASSED", "resolution": dict(destination_resolution)})
     if offline_fixture:

@@ -655,8 +655,10 @@ RRの`creative_question`はA7の答えそのものです。`requests/phase-a-pro
 
 ### privateな子ヒアリング
 
-pin済みSelf Modelが`growth_tasks.py element next|answer`を持つ場合、`self_hearing.py`のopen操作が
+pin済みSelf Modelが`growth_tasks.py element`を持つ場合、`run.py`と`self_hearing.py open|next`が
 その依頼を`private: true`としてstdoutへ中継します。旧pinは従来のhearingへ戻ります。
+子の`agent_runtime.py`を経由し、同じ`--run-id`を各操作へ渡します。複数Subjectの場合は
+`self_hearing.py`各操作の`--subject subject/<id>`で対象を明示します。
 private依頼は`element.py`の永続Engineへ渡さず、子ownerへ直接答えます。
 
 ~~~bash
@@ -670,7 +672,8 @@ JSON
 
 親が保存するのはprivate/status/識別子/attemptだけです。本人のEvent、質問、packet、回答本文、
 子の診断文は親のstate・log・Issue・PR・handoffに保存しません。ヒアリングのoutcomeに
-かかわらず制作runを継続します。本人の実profileで意味のある問いかを確認するオーナー判定は、
+かかわらず、子の完了・skip・利用不可の後は同じ制作runを継続します。待機中は同じrunを
+再実行すると現在の私的依頼を取り直します。本人の実profileで意味のある問いかを確認するオーナー判定は、
 合成テスト・要素形式検査・PLAN_READYで代用しません。
 
 追加検査 `one_sentence` は改行・複数文を拒否します。
@@ -687,8 +690,17 @@ Project repo-local契約で始めたrunの要素回答は、入口側の外部ro
 
 privateヒアリングで断り・無応答を受けた場合、同じ入口から
 `self_hearing.py`のskip操作（reasonはskippedまたはno-response）（同じrun/state/workspace指定、task ID不要）を
-呼びます。親は進行metadataをSKIPPEDにし、子の未完了要素・本人の記録は削除しません。
-制作runはどのoutcomeでも続けます。
+呼びます。`HEARING`・`CONFIRMATION`・`SEED_REQUIRED`でのみ子のskipを実行し、
+子が返した進行metadataを保存します。要素待機`WAITING`へのskipは子が拒否します。
+拒否された操作は`next`で現在位置を取り直し、依頼を捨てません。
+
+`HEARING`・`SEED_REQUIRED`の`next_action.kind: hearing`は、`question`一つだけを本人に
+示し、Event blockを`self_hearing.py respond`のstdinへ直接渡します。
+`CONFIRMATION`は過去runの主張について本人に一問だけ確認し、
+`self_hearing.py confirm --owner-answer yes|no`で本人の選択を渡します。
+`answer`は推論要素専用です。`respond`・`confirm`にも同じrun/state/workspace指定を使います。
+`COMPLETED`の推論draftはそのrunでは本人確認済みにならず、次runの確認後にのみexportへ進みます。
+`BLOCKED`は理由をstdoutへ返してexit 2になり、親は本文を保存せず状態だけを保持します。
 
 Researchの受入契約はfile URI・絶対パスを拒否するため、sidecarはRRの隣にcreate-onlyで保存し、名前とhash付きURNで結びます。研究を担うエージェントはその出所artifactも参照します。
 
