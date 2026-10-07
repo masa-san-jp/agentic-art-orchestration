@@ -3412,3 +3412,39 @@ tasks:
     acceptance_result: '8/8 observable foundation conditions'
     verification_result: Both full-suite named failure sets exactly match pristine origin/main; new tests and bootstrap PASS.
     completion: Local foundation complete with demo, finite retries and durable replay; no A-D replacement, child change, lease or remote write. Orchestrator review and publication remain pending.
+
+  - id: ISSUE-280
+    milestone: ELEMENT-HARNESS
+    title: Generate meaningful themes through shared Phase A elements
+    status: BLOCKED
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/280
+    target_repositories:
+    - agentic-art-orchestration
+    agent_terminal: EVIDENCE_READY
+    depends_on:
+    - ISSUE-278
+    acceptance: A2-A7 common elements; full material enumeration, deterministic matching/selection,
+      source-linked RR and private hearing relay; meaningful real-profile question requires
+      owner confirmation.
+    checks:
+    - python tools/validate.py --check
+    - python tools/project_status.py --check-readme
+    - python -m unittest tests.test_element tests.test_theme_elements tests.test_theme_sources
+      tests.test_hearing_elements tests.test_self_hearing tests.test_run tests.test_docs
+      tests.test_build_research_request tests.test_auto_plan tests.test_portable_self_export
+      -v
+    - python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge and closure. Real-profile owner confirmation
+      remains required; synthetic-only task, local commits only.
+    blocker: Masa real-profile run and owner recognition of a meaningful question; supplement
+      restricts this task to synthetic profiles
+    code_status: CODE_VERIFIED
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    evidence: execution/issue-280-verification.json
+    acceptance_result: 9/9 observable implementation conditions; real-profile owner
+      acceptance NOT_RUN
+    verification_result: Full changed suite 826 tests exactly matches pristine origin/main
+      named failure set; native fake/authored probes accepted by Research.
+    completion: Implementation verified locally; Issue completion remains gated on the
+      real owner. No child change, lease or remote write.

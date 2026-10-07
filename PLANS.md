@@ -1159,3 +1159,7 @@ The local chapter-3 implementation and verification plan is
 The assigned scope adds an opt-in synthetic element sequence; it does not replace
 A–D or authorize remote writes. Evidence and next operation are recorded in
 `execution/issue-278-verification.json`, state and handoff.
+
+## Issue 280: Phase A theme elements
+
+[Execution plan](docs/issue-280-execution-plan.md) and [verification](execution/issue-280-verification.json). Local code verified; real-profile owner acceptance remains BLOCKED.

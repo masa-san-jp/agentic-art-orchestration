@@ -3203,3 +3203,11 @@ configurable argv and timeout. Evidence and final results will be recorded in
 `execution/issue-278-verification.json`; see `docs/issue-278-execution-plan.md`.
 
 Issue #278 final: 8/8 observable conditions; 35 focused tests PASS. Full clean suite: 784 tests with exactly 44 named origin/main failures. Full bootstrapped suite: 784 tests with exactly 6 named origin/main errors; five skips retained. All 17 README preparation commands PASS. The baseline was verified with pristine source in this same clone, with implementation files durably backed up and restored. No child source, private data, Drive artifact, inferred feedback, execution lease or remote write. Next: `git show --stat HEAD`, then orchestrator review/publication.
+
+## Issue 280 — local implementation handoff
+
+Code commit: `2afe057b94c427b648cf5a58d6488f90375c9bcc`. A2–A7 now reuse the common element Engine; RR carries the exact inferred question and an adjacent create-only source artifact. The private Self Model relay stores progression only and falls back on old pins.
+
+Full suite: 826 tests, the same 6 named origin/main failures, no new failing test IDs. Five remain ERROR; the existing missing-profile case changes ERROR → FAIL because the element path returns a structured empty-input stop. Two legacy candidate-call tests retain their acceptance goals through the new element boundary. Native synthetic fake and authored answers reached Research acceptance; pinned children unchanged. See [evidence](issue-280-verification.json) for every command, count and both questions. No real profile, child modification, lease, remote write or external Drive artifact.
+
+Issue 280 remains BLOCKED on real-profile owner confirmation, which synthetic tests do not replace. First operation: `git show --stat HEAD`; orchestrator review and owner confirmation, then orchestrator controls publication.
