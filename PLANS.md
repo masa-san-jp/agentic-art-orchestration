@@ -1151,3 +1151,11 @@ DELIVERY-01 validation: parent validator PASS; 35 contract/docs tests PASS with 
 - Parent evidence PR [#222](https://github.com/masa-san-jp/agentic-art-orchestration/pull/222) merged to main as `b1ecafd13d65798f4958a9595b83a8869c31f481`. The repo-local v2 issue #213 is code-complete with AC1–AC13 PASS in `execution/repo-local-v2-evidence.json`; the parent suite is 615 tests with 1 skip under `TMPDIR=/private/tmp`.
 - Project reader-facing README/local-delivery reconciliation merged as PR [#21](https://github.com/masa-san-jp/agentic-art-project/pull/21), merge `17767752630282f0ab6e9f75077a8ba6c86740f6`.
 - DELIVERY-05 remains BLOCKED only at the explicitly declared provider-backed external-agent acceptance. No account billing, GitHub Actions, new rights, or consent is required for the code and local test completion. The lease is released; resume from the recorded context when that external boundary is genuinely available.
+
+## Issue 278 — element harness core
+
+The local chapter-3 implementation and verification plan is
+[`docs/issue-278-execution-plan.md`](docs/issue-278-execution-plan.md).
+The assigned scope adds an opt-in synthetic element sequence; it does not replace
+A–D or authorize remote writes. Evidence and next operation are recorded in
+`execution/issue-278-verification.json`, state and handoff.

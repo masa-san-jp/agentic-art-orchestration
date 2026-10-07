@@ -1,0 +1,6 @@
+# Replace command with your local model wrapper. It reads one request JSON from
+# stdin and writes one answer JSON to stdout. Logs belong on stderr.
+# This example is networkless and uses the synthetic demo fake.
+contract_version: element-answerer/v1
+command: [.venv/bin/python, tools/element_answerer.py, --fake]
+timeout_seconds: 60

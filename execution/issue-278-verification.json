@@ -1,0 +1,755 @@
+{
+  "acceptance": "8/8 observable foundation conditions",
+  "acceptance_mapping": {
+    "1": "Five closed schemas; all four boundary validators plus sequence/schema validation in validate --check",
+    "2": "Declarative demo.yaml, pinned registry/context and explicit build_inputs bindings",
+    "3": "Programmatic checks for every requested predicate; exact integer similarity threshold comparison",
+    "4": "Fake retry, fifth-failure BLOCKED, per-element preservation, stale-answer rejection, atomic crash replay and concurrent duplicate checks",
+    "5": "Real credential_free wrapper next/answer/status CLI tests",
+    "6": "Fake and configured subprocess answerer; one JSON request/answer, timeout and failed transport leave state intact",
+    "7": "run --element-demo end-to-end next_action.kind element, answer and same-run resumption",
+    "8": "Japanese runtime guide with answer, search, retry, resume, registration and local adapter instructions"
+  },
+  "baseline_commit": "65afb2eb77dc0e5b2db2ef7262b1bfe6ec4c8787",
+  "branch": "agent/278-element-harness-core",
+  "checks": {
+    "baseline_bootstrap": [
+      {
+        "command": "$PYTHON tools/workspace.py init --offline-fixture --fixture-root <external-fixture>",
+        "exit_code": 0,
+        "log_sha256": "2eb550fe72fc275b90e4dae586fef95d87453a541af43cd31881744a00440779"
+      },
+      {
+        "command": "$PYTHON tools/workspace.py snapshot --fixture-root <external-fixture>",
+        "exit_code": 0,
+        "log_sha256": "9aeeb8a6d6498851c9890929c42be93794e2467a4988fe2132b66adf90f4351a"
+      },
+      {
+        "command": "$PYTHON tools/status.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "d908382b417e3b8bf3b6277817ac29d315cdaa80f21cdb499e6035ae8e415c13"
+      },
+      {
+        "command": "$PYTHON tools/audit.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "051d41d12ab3934eac8422945ad9b029d63d8b967dadd97581a64abc024b82ab"
+      },
+      {
+        "command": "$PYTHON tools/startup.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "d72fdc7cee9e959e88809dca2efe4268609ba2f8bdd6d8be56528556c02056ee"
+      },
+      {
+        "command": "$PYTHON tools/startup.py --offline-fixture --check",
+        "exit_code": 0,
+        "log_sha256": "b9e2a705add46f40cdf359be3aee671c47379c6bae8742db584fa4d193c06c9e"
+      },
+      {
+        "command": "$PYTHON tools/retrieval.py",
+        "exit_code": 0,
+        "log_sha256": "a8cfbb934ee81645e63bcc4f14d784aa31daa9e4e37255c78d0a0ec41fe06689"
+      },
+      {
+        "command": "$PYTHON tools/issue_router.py",
+        "exit_code": 0,
+        "log_sha256": "b8c267224009a40e4cb184a6c972f6db6961035bd3258309c26bc701494c46b5"
+      },
+      {
+        "command": "$PYTHON tools/github_issue_adapter.py --fixture",
+        "exit_code": 0,
+        "log_sha256": "4b22b29adf417618705dde248e2042f7adbefdf2dd6d753eabfa85a0a1c5cb8f"
+      },
+      {
+        "command": "$PYTHON tools/github_issue_adapter.py --fixture --check",
+        "exit_code": 0,
+        "log_sha256": "2fbc9660e4a7b4cd6f136a4ddc60b7d7f66a98004e8d23f3ec7cba2e21c75036"
+      },
+      {
+        "command": "$PYTHON tools/drive_live_check.py --plan",
+        "exit_code": 0,
+        "log_sha256": "f9daa0f8deca7c5f00254ff883e1049ac85cdf2e9f0877242ba5b7349b69462a"
+      },
+      {
+        "command": "$PYTHON tools/drive_live_check.py --plan --check",
+        "exit_code": 0,
+        "log_sha256": "16b5bd677dc7aab40e011b72f73ec828cbc648de50a00cc89fcf23af6a627581"
+      },
+      {
+        "command": "$PYTHON tools/improvement_loop.py",
+        "exit_code": 0,
+        "log_sha256": "a80106a646f2e7485a068029509f162ffd99912d9755899f675626373c0c6b13"
+      },
+      {
+        "command": "$PYTHON tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml",
+        "exit_code": 0,
+        "log_sha256": "19facfcedfd7264048f283e476d3762367d908216bba6d8c68684c41df47c23f"
+      },
+      {
+        "command": "$PYTHON tools/interaction_e2e.py",
+        "exit_code": 0,
+        "log_sha256": "65d53475068a314a645dadc980a04f46d634714d4cd4e54370a1c51cbde6e42e"
+      },
+      {
+        "command": "$PYTHON tools/interaction_e2e.py --check",
+        "exit_code": 0,
+        "log_sha256": "1760845d404ce324d2a051e7d4c190523f00f4802df5adcb555689fbc4c215de"
+      },
+      {
+        "command": "$PYTHON tools/security.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "22b32aa1a1d5276d812bc0b09a0ae22a6dcd91bf0416724b39ab876c16444ddf"
+      }
+    ],
+    "baseline_bootstrapped": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        }
+      ],
+      "log_sha256": "6970856bffee8dbfee58e7b8e4e5659381157c4e5fffb695749b9eed50d3755b",
+      "summary": [
+        "Ran 749 tests in 316.338s",
+        "FAILED (errors=6, skipped=5)"
+      ],
+      "tests": 749
+    },
+    "baseline_clean": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+        }
+      ],
+      "log_sha256": "ec072b2bb836d4a7609c1d0648e341ae54f49006b5f46ade020eb2692ee11ede",
+      "summary": [
+        "Ran 749 tests in 407.590s",
+        "FAILED (failures=8, errors=36, skipped=5)"
+      ],
+      "tests": 749
+    },
+    "bootstrap": [
+      {
+        "command": "$PYTHON tools/workspace.py init --offline-fixture --fixture-root <external-fixture>",
+        "exit_code": 0,
+        "log_sha256": "f0b8dc67b323da36ced72ba6d9af36d4c1aaeb4e4bbad48bb4c5eb0fc15c54d6"
+      },
+      {
+        "command": "$PYTHON tools/workspace.py snapshot --fixture-root <external-fixture>",
+        "exit_code": 0,
+        "log_sha256": "ee01c1fb54129e3d9574f102518ad91e1e015e0a2d302a56545a0d44539ce7a5"
+      },
+      {
+        "command": "$PYTHON tools/status.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "d908382b417e3b8bf3b6277817ac29d315cdaa80f21cdb499e6035ae8e415c13"
+      },
+      {
+        "command": "$PYTHON tools/audit.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "051d41d12ab3934eac8422945ad9b029d63d8b967dadd97581a64abc024b82ab"
+      },
+      {
+        "command": "$PYTHON tools/startup.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "b9e2a705add46f40cdf359be3aee671c47379c6bae8742db584fa4d193c06c9e"
+      },
+      {
+        "command": "$PYTHON tools/startup.py --offline-fixture --check",
+        "exit_code": 0,
+        "log_sha256": "b9e2a705add46f40cdf359be3aee671c47379c6bae8742db584fa4d193c06c9e"
+      },
+      {
+        "command": "$PYTHON tools/retrieval.py",
+        "exit_code": 0,
+        "log_sha256": "a8cfbb934ee81645e63bcc4f14d784aa31daa9e4e37255c78d0a0ec41fe06689"
+      },
+      {
+        "command": "$PYTHON tools/issue_router.py",
+        "exit_code": 0,
+        "log_sha256": "b8c267224009a40e4cb184a6c972f6db6961035bd3258309c26bc701494c46b5"
+      },
+      {
+        "command": "$PYTHON tools/github_issue_adapter.py --fixture",
+        "exit_code": 0,
+        "log_sha256": "4b22b29adf417618705dde248e2042f7adbefdf2dd6d753eabfa85a0a1c5cb8f"
+      },
+      {
+        "command": "$PYTHON tools/github_issue_adapter.py --fixture --check",
+        "exit_code": 0,
+        "log_sha256": "2fbc9660e4a7b4cd6f136a4ddc60b7d7f66a98004e8d23f3ec7cba2e21c75036"
+      },
+      {
+        "command": "$PYTHON tools/drive_live_check.py --plan",
+        "exit_code": 0,
+        "log_sha256": "f9daa0f8deca7c5f00254ff883e1049ac85cdf2e9f0877242ba5b7349b69462a"
+      },
+      {
+        "command": "$PYTHON tools/drive_live_check.py --plan --check",
+        "exit_code": 0,
+        "log_sha256": "16b5bd677dc7aab40e011b72f73ec828cbc648de50a00cc89fcf23af6a627581"
+      },
+      {
+        "command": "$PYTHON tools/improvement_loop.py",
+        "exit_code": 0,
+        "log_sha256": "a80106a646f2e7485a068029509f162ffd99912d9755899f675626373c0c6b13"
+      },
+      {
+        "command": "$PYTHON tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml",
+        "exit_code": 0,
+        "log_sha256": "19facfcedfd7264048f283e476d3762367d908216bba6d8c68684c41df47c23f"
+      },
+      {
+        "command": "$PYTHON tools/interaction_e2e.py",
+        "exit_code": 0,
+        "log_sha256": "65d53475068a314a645dadc980a04f46d634714d4cd4e54370a1c51cbde6e42e"
+      },
+      {
+        "command": "$PYTHON tools/interaction_e2e.py --check",
+        "exit_code": 0,
+        "log_sha256": "1760845d404ce324d2a051e7d4c190523f00f4802df5adcb555689fbc4c215de"
+      },
+      {
+        "command": "$PYTHON tools/security.py --offline-fixture",
+        "exit_code": 0,
+        "log_sha256": "620874aa610c6273addc847c45a92b0b380cbaed6aebaf65743da48711f70e58"
+      }
+    ],
+    "changed_bootstrapped": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        }
+      ],
+      "log_sha256": "e382e2f0f94157dc82c74912a34a8a26f36f28e951cc9a227539e3f0b3f15225",
+      "summary": [
+        "Ran 784 tests in 294.663s",
+        "FAILED (errors=6, skipped=5)"
+      ],
+      "tests": 784
+    },
+    "changed_clean": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+        }
+      ],
+      "log_sha256": "2d3c8fa4adffb05b83453a6bc0d9ed49d6536b4dd17068899436181ecb858d4a",
+      "summary": [
+        "Ran 784 tests in 1195.753s",
+        "FAILED (failures=8, errors=36, skipped=5)"
+      ],
+      "tests": 784
+    },
+    "compile": {
+      "command": "$PYTHON -m py_compile tools/element.py tools/element_checks.py tools/element_contracts.py tools/element_answerer.py tools/run.py tools/validate.py tests/test_element.py",
+      "exit_code": 0
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "execution_metadata": {
+      "command": "$PYTHON -m unittest tests.test_project_status tests.test_validate tests.test_docs -v",
+      "exit_code": 0,
+      "log_sha256": "ade34361a067253ea8f3ca48c5d5044e9dbeb2e47fde92ed1cc63d4b537f4be6",
+      "summary": [
+        "Ran 36 tests in 2.572s",
+        "OK"
+      ],
+      "tests": 36
+    },
+    "focused": {
+      "command": "$PYTHON -m unittest tests.test_element -v",
+      "exit_code": 0,
+      "failures": [],
+      "log_sha256": "284bd51ade2510e1f457518c4ef2f7fde9bf845dff267132a91dae2cb47e80a7",
+      "summary": [
+        "Ran 35 tests in 6.270s",
+        "OK"
+      ],
+      "tests": 35
+    },
+    "readme_status": {
+      "command": "$PYTHON tools/project_status.py --check-readme",
+      "exit_code": 0
+    },
+    "related": {
+      "command": "$PYTHON -m unittest tests.test_element tests.test_run tests.test_validate tests.test_project_status tests.test_docs tests.test_credential_free -v",
+      "exit_code": 1,
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (tests.test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        }
+      ],
+      "log_sha256": "16545b4b1b2c04f6ae92c29322f2c051f025eed85203deb884895c2f0afe0da8",
+      "summary": [
+        "Ran 122 tests in 16.200s",
+        "FAILED (errors=1)"
+      ],
+      "tests": 122
+    },
+    "staged_security": {
+      "command": "$PYTHON tools/security.py --offline-fixture",
+      "exit_code": 0,
+      "findings": 0,
+      "log_sha256": "620874aa610c6273addc847c45a92b0b380cbaed6aebaf65743da48711f70e58",
+      "status": "PASSED"
+    },
+    "validator": {
+      "command": "$PYTHON tools/validate.py --check",
+      "exit_code": 0
+    }
+  },
+  "child_quality_gates": "NOT_APPLICABLE; no child source changed; offline checkouts are synthetic fixtures",
+  "code_file_sha256": {
+    "tests/test_element.py": "303037ec349582ba9ef3b55d0e5e9e353d87116eda7a600f0d5301bb3c396a71",
+    "tools/element.py": "b34172459d20b290cced6349795d69332d70ed39d7ca456f5657b9dc1662ae5e",
+    "tools/element_answerer.py": "362a426722ee2f838d8787c7dbf80f8bac9d77d51d21e72a109473acc08acb21",
+    "tools/element_checks.py": "4c2840acce08a94a8660c2a0d570eb5633af50e7a0aa4950409c5b95990e9873",
+    "tools/element_contracts.py": "ca601a9846d60aaa73567896b86fd357ad208bfbfe413ddf1de11892a3b6a73a",
+    "tools/run.py": "aa835a7e36985d2e0cc18c2b721c70b35fb5893f310d07cda3010f0c19a5dc07",
+    "tools/validate.py": "40c8daeab65d210aee60648e938af90b8c5c709cc77640d342d6a89b7aba5f45"
+  },
+  "decisions": [
+    "Keep --element-demo explicit; do not replace existing A-D production stages.",
+    "Five attempts means block after the fifth failed well-formed answer; protocol/transport errors do not consume attempts.",
+    "Quote matching is exact contiguous substring matching against pinned retrieved body, without normalization.",
+    "URL existence is ledger membership, not independent network verification.",
+    "Similarity is normalized character-bigram Jaccard with exact integer comparison to a decimal threshold.",
+    "400-character instructions and 4096-byte assembled inputs are explicit engineering budgets.",
+    "Failed construction of a later request blocks and preserves accepted work; never fill empty inputs.",
+    "Local adapter config selects argv and timeout, without a shell or built-in provider.",
+    "No lease is acquired in this assigned isolated clone; all remote operations belong to the orchestrator."
+  ],
+  "diagnostics": "An intermediate documentation check rejected bare inline run invocations. Fixed the prose without relaxing the test; focused/docs and final full reruns supersede that diagnostic run. The clean baseline here has 44 named failures (8 failures, 36 errors), including the existing missing-profile IndexError, rather than the approximate 43 in the task supplement.",
+  "external_artifact": "NONE; no Drive or public projection; search ledger is external run state only",
+  "failure_comparison": {
+    "bootstrapped": {
+      "baseline_count": 6,
+      "changed_count": 6,
+      "identical": true,
+      "new_failures": [],
+      "removed_failures": []
+    },
+    "clean": {
+      "baseline_count": 44,
+      "changed_count": 44,
+      "identical": true,
+      "new_failures": [],
+      "removed_failures": []
+    }
+  },
+  "feedback": {
+    "explicit": "Provided Issue 278 and orchestrator instructions",
+    "inferred": "NONE"
+  },
+  "lease": "NOT_ACQUIRED; none retained",
+  "next_operation": "git show --stat HEAD; orchestrator review and publication",
+  "pristine_baseline_proof": {
+    "baseline_commit": "65afb2eb77dc0e5b2db2ef7262b1bfe6ec4c8787",
+    "tracked_diff_exit_code": 0,
+    "unittest_exit_code": 1,
+    "untracked_source_count": 0
+  },
+  "remote_sync": "NOT_RUN_BY_INSTRUCTION; local commit only",
+  "repository": "agentic-art-orchestration",
+  "sensitive_data": "Only synthetic fixtures; no real profile, credential, hearing body, real retrieved text, raw log or local absolute path in evidence.",
+  "task": "ISSUE-278",
+  "unmet_issue_conditions": []
+}

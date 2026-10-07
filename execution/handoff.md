@@ -3186,3 +3186,20 @@ child code change, Drive artifact or public delivery is involved. Explicit
 feedback is the provided Issue and orchestrator supplement. Existing full-suite
 errors remain baseline limitations; no scoped acceptance is unmet.
 Next operation: `git show --stat HEAD` for orchestrator review. No next task is claimed.
+
+# Issue #278 — element harness core (local implementation)
+
+Assigned branch: `agent/278-element-harness-core`; starting point:
+`65afb2eb77dc0e5b2db2ef7262b1bfe6ec4c8787` (origin/main at assignment).
+The orchestrator owns push, PR, merge and Issue closure. No execution lease was
+acquired in this isolated clone, and no lease is retained.
+
+The implementation adds closed request/answer contracts, declarative demo inputs,
+mechanical checks, durable per-run state and a retrieved-text ledger. The explicit
+`run.py --element-demo` entry emits one `next_action.kind: element`; accepted answers
+advance only that sequence. Existing A-D production behavior is unchanged.
+Local-command answerers exchange one request/answer over stdin/stdout with a
+configurable argv and timeout. Evidence and final results will be recorded in
+`execution/issue-278-verification.json`; see `docs/issue-278-execution-plan.md`.
+
+Issue #278 final: 8/8 observable conditions; 35 focused tests PASS. Full clean suite: 784 tests with exactly 44 named origin/main failures. Full bootstrapped suite: 784 tests with exactly 6 named origin/main errors; five skips retained. All 17 README preparation commands PASS. The baseline was verified with pristine source in this same clone, with implementation files durably backed up and restored. No child source, private data, Drive artifact, inferred feedback, execution lease or remote write. Next: `git show --stat HEAD`, then orchestrator review/publication.

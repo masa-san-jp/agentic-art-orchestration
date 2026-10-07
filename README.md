@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-04T15:40:19.012823+00:00`.
+Source updated at: `2026-10-07T06:46:53.844011+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 198 | 198 |
+| 0 | 0 | 0 | 0 | 199 | 199 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-275`.
-Next action: Review Issue-273 local commits and verification evidence; orchestrator owns publication; no lease is held.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-278`.
+Next action: Review Issue-278 local commit and verification evidence; orchestrator owns publication; no lease is held.
 Ready: none.
 Next task: `null`.
 Blocked:

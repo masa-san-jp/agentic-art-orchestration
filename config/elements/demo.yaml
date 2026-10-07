@@ -1,0 +1,24 @@
+contract_version: element-sequence/v1
+max_attempts: 5
+elements:
+  - kind: element
+    element_id: demo.operation
+    instruction: 材料から、操作を表す短い語を一つ返してください。
+    inputs:
+      material: {literal: 決定を後に回す}
+    answer_format: {type: text, max_chars: 20}
+    checks: [non_empty, 'min_chars:2', 'forbidden:無し,未記入,∩']
+  - kind: element
+    element_id: demo.question
+    instruction: 操作について、問いを一文で返してください。
+    inputs:
+      operation: {answer: demo.operation}
+    answer_format: {type: text, max_chars: 120}
+    checks: [non_empty, ends_with_question, 'contains_terms:operation', 'forbidden:無し,未記入,∩']
+  - kind: element
+    element_id: demo.category
+    instruction: 問いが扱うものを選択肢から一つ選んでください。
+    inputs:
+      question: {answer: demo.question}
+    answer_format: {type: choice, choices: [時間, 空間]}
+    checks: [non_empty]
