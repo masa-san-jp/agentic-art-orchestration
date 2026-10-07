@@ -14,10 +14,11 @@ import unicodedata
 from pathlib import Path
 
 import yaml
+from urllib.parse import urlsplit
 
 from tools.element import canonical
 from tools.element_contracts import load_sequence
-from tools.element_checks import source_terms
+from tools.element_checks import source_terms, valid_url
 from tools.validate import validate_signal
 
 REGISTRY = Path(__file__).resolve().parents[1] / 'config/elements/phase-a.yaml'
@@ -266,6 +267,29 @@ def provenance(state: dict) -> dict:
                          for kind, row in selected.items()}}
 
 
+def reference_aliases(request: dict) -> list[dict]:
+    """Retain real public ARK-like URLs without the receiver's path ambiguity.
+
+    Other references continue through the native security checker unchanged.
+    Never hide a query/signed URL or a public-boundary finding behind a hash.
+    """
+    from tools.security import scan_public_projection
+    aliases = []
+    for reference in request['references']:
+        uri = reference['uri']
+        if not uri.startswith(('https://', 'http://')):
+            continue
+        parsed = urlsplit(uri)
+        if ':/' not in parsed.path or parsed.query or parsed.fragment:
+            continue
+        if not valid_url(uri) or scan_public_projection({'uri': uri}):
+            raise ValueError('UNSAFE_PUBLIC_REFERENCE_ALIAS')
+        alias = 'urn:orchestration:phase-a-reference:sha256:' + hashlib.sha256(uri.encode('utf-8')).hexdigest()
+        aliases.append({**deepcopy(reference), 'request_uri': alias})
+        reference['uri'] = alias
+    return aliases
+
+
 def write_request(engine, output: Path, *, slug: str, title: str, research_root: Path | None) -> Path:
     """Use the native closed RR schema and reference structured provenance by URI."""
     from tools.build_research_request import build_request, _next_request_id
@@ -275,9 +299,7 @@ def write_request(engine, output: Path, *, slug: str, title: str, research_root:
             raise ValueError('Phase A is not completed')
         output.mkdir(parents=True, exist_ok=True)
         origin = provenance(state)
-        origin_bytes = canonical(origin)
         origin_path = output / 'phase-a-provenance.json'
-        origin_uri = f"urn:orchestration:phase-a:{engine.run_id}:sha256:{digest(origin)}"
         selected = origin['selected']
         source_signals = {signal['signal_id']: signal for signal in state['context']['phase_a']['signals']}
         ids = [('self', origin['material']['signal_id'])] + [(kind, selected[kind]['signal']['signal_id']) for kind in DOMAINS]
@@ -292,6 +314,9 @@ def write_request(engine, output: Path, *, slug: str, title: str, research_root:
                                 commit=state['source_commit'], deadline=None, creator_id=None, creative_question=origin['creative_question'])
         # Never invoke the legacy slot/template formatter on inferred question text.
         request['intent']['creative_question'] = origin['creative_question']
+        origin['reference_aliases'] = reference_aliases(request)
+        origin_bytes = canonical(origin)
+        origin_uri = f"urn:orchestration:phase-a:{engine.run_id}:sha256:{digest(origin)}"
         request['source']['artifact_uri'] = origin_uri
         request['references'].append({'label': 'phase-a-provenance.json: material, selected signals and connection reasons',
                                       'uri': origin_uri, 'rights_status': 'APPROVED_REFERENCE'})

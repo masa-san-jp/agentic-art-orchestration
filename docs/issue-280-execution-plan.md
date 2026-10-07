@@ -51,3 +51,5 @@ status before/after. Verification evidence contains no local absolute paths.
 First operation after handoff: inspect `git show --stat HEAD`; review evidence and
 both synthetic questions. No next implementation task is claimed. Do not mark
 Issue 280 fully complete until the owner accepts a meaningful real-profile question.
+
+Native verification found that a real public ARK URL was rejected by the pinned receiver's absolute-path rule. Alias only clean public HTTP(S) references with colon/slash in their path to a hash URN, retain the exact original/alias mapping in the structured sidecar, preserve rights status, and leave query/fragment references for native security checking. Use a new run/artifact after this fix; never overwrite the failed probe's create-only outputs. Freeze optional intent after material selection and remove its text from subsequent run reports.

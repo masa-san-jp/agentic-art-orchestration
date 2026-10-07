@@ -212,6 +212,25 @@ class ThemeElementsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             write_request(self.engine, output, slug='synthetic', title='合成テーマ', research_root=None)
 
+    def test_real_public_ark_uri_has_a_reversible_opaque_reference(self):
+        from tools.theme_elements import reference_aliases
+        uri = 'https://example.invalid/ark:/synthetic-source'
+        reference = {'label': 'synthetic-source', 'uri': uri, 'rights_status': 'UNKNOWN'}
+        request = {'references': [deepcopy(reference)]}
+        aliases = reference_aliases(request)
+        self.assertEqual(uri, aliases[0]['uri'])
+        self.assertEqual('UNKNOWN', request['references'][0]['rights_status'])
+        self.assertEqual(aliases[0]['request_uri'], request['references'][0]['uri'])
+        self.assertTrue(request['references'][0]['uri'].startswith('urn:orchestration:phase-a-reference:sha256:'))
+        for unsafe in (uri + '?token=synthetic', uri + '#synthetic'):
+            request = {'references': [{**reference, 'uri': unsafe}]}
+            self.assertEqual([], reference_aliases(request))
+            self.assertEqual(unsafe, request['references'][0]['uri'])
+        for unsafe in ('https://user:pass@example.invalid/ark:/synthetic',
+                       'https://example.invalid/ark:/PRIVATE_RAW'):
+            with self.assertRaisesRegex(ValueError, 'UNSAFE_PUBLIC_REFERENCE_ALIAS'):
+                reference_aliases({'references': [{**reference, 'uri': unsafe}]})
+
     def test_invalid_export_diagnostics_do_not_disclose_rejected_values(self):
         rows = signals()
         rows[0]['domain']['self_model']['tensions'] = {'PRIVATE_REJECTED_EXPORT': 'PRIVATE_REJECTED_EXPORT'}
@@ -255,13 +274,14 @@ class ThemeElementsTests(unittest.TestCase):
             return {'status': 'NOT_READY' if arguments[0] == 'tools/complete.py' else 'APPLIED'}
         with patch('tools.run._prepare_runtime_workspace', return_value=({'status': 'PASSED'}, self.root)), \
              patch('tools.run._run_tool') as tool, patch('tools.run._run_child', side_effect=child):
-            report = run(None, self.root, self.root, 'phase-test', 'artistic-research', None, None, NOW,
+            report = run('PRIVATE_RESUME_INTENT', self.root, self.root, 'phase-test', 'artistic-research', None, None, NOW,
                          sys.executable, profile_root=self.root / 'synthetic-profile',
                          research_root=self.root / 'research-code', production_root=self.root / 'production-code',
                          research_work_root=self.root / 'research-work')
         self.assertEqual('RESEARCH_PENDING', report['status'])
         self.assertEqual('ELEMENT_INFERRED', report['theme_proposal']['mode'])
         self.assertTrue((self.root / 'phase-test/requests/RR092.yaml').is_file())
+        self.assertNotIn('PRIVATE_RESUME_INTENT', (self.root / 'phase-test/run.json').read_text())
         tool.assert_not_called()
 
     def test_run_live_default_returns_element_and_omits_legacy_candidate_steps(self):

@@ -947,6 +947,8 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             # Keep the optional text out of subsequent parent run records.
             position = resume_command.index("--intent")
             del resume_command[position:position + 2]
+        if engine.path.exists():
+            intent = None  # Frozen selection retains only the optional input hash.
         record("theme-elements", {"status": phase_report["status"], "accepted_count": phase_report.get("accepted_count", 0)})
         if phase_report["status"] != "COMPLETED":
             report = {"run_id": run_id, "status": phase_report["status"], "run_status": "INCOMPLETE",

@@ -21,6 +21,10 @@ from tools.run import (
     _theme_proposal,
 )
 import tools.run as run_module
+from tools.candidate_selection import load_fixture
+from tools.element import Engine
+from tools.element_answerer import FakeAnswerer
+from tools.element_checks import source_terms
 
 
 class AutomaticPlanEntryTests(unittest.TestCase):
@@ -78,41 +82,47 @@ class AutomaticPlanEntryTests(unittest.TestCase):
 
             def fake_tool(args: list[str], python: str) -> dict:
                 calls.append(args)
-                if args[0].endswith("build_research_request.py"):
+                if args[0].endswith("ingest_signals.py"):
                     output = Path(args[args.index("--output") + 1])
                     output.mkdir(parents=True, exist_ok=True)
-                    (output / "RR001.yaml").write_text(
-                        yaml.safe_dump(
-                            {"intent": {"creative_question": "Derived from the passing candidate"}},
-                            sort_keys=False,
-                        ),
-                        encoding="utf-8",
-                    )
+                    for signal in load_fixture(run_module.ROOT / "tests/fixtures/v12-candidates"):
+                        destination = output / signal["signal_kind"]
+                        destination.mkdir(exist_ok=True)
+                        (destination / "signal.json").write_text(json.dumps(signal), encoding="utf-8")
                 return {"status": "PASSED"}
 
             with patch("tools.run._guard_pinned_workspace", return_value={"status": "PASSED"}), \
-                    patch("tools.run._run_tool", side_effect=fake_tool):
-                report = _run_orchestration(
-                    None,
-                    root / "workspace",
-                    root / "state",
-                    "AUTO-PLAN-001",
-                    "artistic-research",
-                    None,
-                    None,
-                    "2026-09-02T00:00:00+00:00",
-                    "python3",
-                    profile_root=root / "synthetic-profile",
-                )
+                    patch("tools.run._run_tool", side_effect=fake_tool), \
+                    patch("tools.theme_sources.projections", return_value={"evidence": {}, "targets": {}}):
+                arguments = (None, root / "workspace", root / "state", "AUTO-PLAN-001",
+                             "artistic-research", None, None, "2026-08-15T00:00:00+09:00", sys.executable)
+                report = _run_orchestration(*arguments, profile_root=root / "synthetic-profile")
+                self.assertEqual("A3.operation", report["next_action"]["request"]["element_id"])
+                engine = Engine("AUTO-PLAN-001", root / "state")
+                while (report.get("next_action") or {}).get("kind") == "element":
+                    request = report["next_action"]["request"]
+                    identifier = request["element_id"]
+                    def anchor(key):
+                        return min(source_terms(request["inputs"][key]), key=lambda term: (-len(term), term))
+                    if identifier == "A3.operation":
+                        value = "保留"
+                    elif identifier.startswith("A5."):
+                        value = {"answer": True, "reason": f"{anchor('self')}と{anchor('signal')}の関係を検討する。"}
+                    else:
+                        value = f"{anchor('self')}は、{anchor('art_history')}と{anchor('market')}の関係をどう変えるか？"
+                    report = engine.answer(FakeAnswerer({identifier: [value]}).answer(request))
+                self.assertEqual("COMPLETED", report["status"])
+                report = _run_orchestration(*arguments, profile_root=root / "synthetic-profile")
+                request = yaml.safe_load((root / "state/AUTO-PLAN-001/requests/RR001.yaml").read_text())
 
         self.assertEqual("AT_EDGE", report["status"])
-        self.assertEqual("REPOSITORY_DERIVED", report["theme_proposal"]["mode"])
-        self.assertEqual("Derived from the passing candidate", report["theme_proposal"]["creative_question"])
+        self.assertEqual("ELEMENT_INFERRED", report["theme_proposal"]["mode"])
+        self.assertEqual(value, report["theme_proposal"]["creative_question"])
         self.assertTrue(any(step["step"] == "workspace-preflight" for step in report["steps"]))
-        request_call = next(args for args in calls if args[0].endswith("build_research_request.py"))
-        self.assertIn("--slug", request_call)
-        self.assertTrue(request_call[request_call.index("--slug") + 1].startswith("auto-auto-plan-001-"))
-        self.assertIn("--title", request_call)
+        self.assertTrue(request["project"]["slug"].startswith("auto-auto-plan-001-"))
+        self.assertTrue(request["project"]["title"])
+        self.assertEqual(1, len(calls))
+        self.assertTrue(calls[0][0].endswith("ingest_signals.py"))
 
     def test_stale_workspace_is_blocked_before_child_export(self) -> None:
         with patch(

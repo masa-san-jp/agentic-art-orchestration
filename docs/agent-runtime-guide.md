@@ -695,3 +695,8 @@ Researchの受入契約はfile URI・絶対パスを拒否するため、sidecar
 通常の段階Aで返すtheme_proposalのmodeは`ELEMENT_INFERRED`です。明示offline fixtureでintent未指定の場合は、従来の`REPOSITORY_DERIVED`を維持します。
 
 通常runは一つの素材・中心の問いを扱うため、`--limit`は1です。複数テーマは同じstate rootに独立run IDで起動します。旧bundle APIの複数選定は維持します。
+
+実在する公開参照URLのpath内に`ark:/`のような表記がある場合、native receiverが絶対パスと
+誤認するため、当該参照だけhash URNにします。元URLとRRのURNの対応はsidecarの
+`reference_aliases`に保持し、権利状態は変えません。query/fragment付きURLはこの変換をせず、
+既存のnative検査へ渡します。素材固定後は任意intentの生文をrun reportにも残しません。
