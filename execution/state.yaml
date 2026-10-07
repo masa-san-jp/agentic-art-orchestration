@@ -1,5 +1,5 @@
-version: 321
-updated_at: '2026-10-07T12:02:04.453877+00:00'
+version: 322
+updated_at: '2026-10-07T15:38:32.864992+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -2199,3 +2199,13 @@ checkpoint:
   remote_sync: NOT_RUN_BY_INSTRUCTION
   next_operation: git show --stat HEAD; orchestrator review, then arrange real-profile
     owner confirmation
+
+issue280_hearing_follow_up:
+  status: CODE_VERIFIED_OWNER_GATE_PENDING
+  implementation_commits:
+  - f7099b108b11849bc6d05ad5ef22dbb80e2c23ae
+  - 5b29383f3559f12b561b9c91553bea71b245f700
+  evidence: execution/issue-280-hearing-verification.json
+  child_contract_commit: 2e4a02952d6d17bc22b6b540c24ad2913f9aaea4
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  lease: NOT_ACQUIRED

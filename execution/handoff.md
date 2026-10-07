@@ -3211,3 +3211,22 @@ Code commit: `2afe057b94c427b648cf5a58d6488f90375c9bcc`. A2–A7 now reuse the c
 Full suite: 826 tests, the same 6 named origin/main failures, no new failing test IDs. Five remain ERROR; the existing missing-profile case changes ERROR → FAIL because the element path returns a structured empty-input stop. Two legacy candidate-call tests retain their acceptance goals through the new element boundary. Native synthetic fake and authored answers reached Research acceptance; pinned children unchanged. See [evidence](issue-280-verification.json) for every command, count and both questions. No real profile, child modification, lease, remote write or external Drive artifact.
 
 Issue 280 remains BLOCKED on real-profile owner confirmation, which synthetic tests do not replace. First operation: `git show --stat HEAD`; orchestrator review and owner confirmation, then orchestrator controls publication.
+
+
+## Issue 280 finalized hearing follow-up
+
+Native next/answer/respond/confirm/skip and HEARING/CONFIRMATION/SEED_REQUIRED
+are relayed privately through the Self Model runtime. Direct run entry pauses
+before ingest and reacquires the same private flow. Child transitions remain
+authoritative, including rejection, BLOCKED and skip. Parent stores progress only.
+
+Evidence: `execution/issue-280-hearing-verification.json`. Fake and authored
+synthetic runs completed the question, Event response, claim draft, next-run
+owner confirmation, Phase A and native Research APPLIED. Production manifest was
+restored; source child clones were read-only. Old pin returns legacy offered
+packet. Full-suite named failures match origin/main; no failed gate is called PASS.
+
+Local implementation: `f7099b1` and `5b29383`; publication remains orchestrator-owned. No lease
+was acquired. Issue 280 remains BLOCKED only on the real-profile meaningful
+question owner acceptance. Next: review this evidence and local commits, then
+arrange that owner acceptance without treating synthetic results as a substitute.

@@ -799,5 +799,6 @@
     "4117fc25f3c3ffa8ef52a1b856cea84972b0e257",
     "2afe057b94c427b648cf5a58d6488f90375c9bcc"
   ],
-  "execution_checkpoint": "ISSUE-280; previous Issue-278 checkpoint retained; last_completed_task remains Issue-278"
+  "execution_checkpoint": "ISSUE-280; previous Issue-278 checkpoint retained; last_completed_task remains Issue-278",
+  "finalized_hearing_follow_up": "execution/issue-280-hearing-verification.json"
 }

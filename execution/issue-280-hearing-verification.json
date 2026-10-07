@@ -1,0 +1,1033 @@
+{
+  "issue": "masa-san-jp/agentic-art-orchestration#280",
+  "scope": "Finalized Self Model Issue 138 hearing relay follow-up",
+  "branch": "agent/280-phase-a-theme",
+  "implementation_commit": "f7099b108b11849bc6d05ad5ef22dbb80e2c23ae",
+  "implementation_commits": [
+    "f7099b108b11849bc6d05ad5ef22dbb80e2c23ae",
+    "5b29383f3559f12b561b9c91553bea71b245f700"
+  ],
+  "origin_main": "5f7e186944cf2331ba9eb55dc02619d5f833b139",
+  "owner_contract": "Self Model docs/element-hearing.md at 2e4a02952d6d17bc22b6b540c24ad2913f9aaea4",
+  "checks": {
+    "origin_main_full": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "tests": 785,
+      "summary": [
+        "Ran 785 tests in 300.755s",
+        "FAILED (errors=6, skipped=5)"
+      ],
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        }
+      ],
+      "log_sha256": "c9f68312aaf762891dc57d8b8fa7d1ffbf5d24fa5a76a1fa0c7f48df40c3fc39"
+    },
+    "changed_full": {
+      "command": "$PYTHON -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "tests": 834,
+      "summary": [
+        "Ran 834 tests in 304.658s",
+        "FAILED (failures=1, errors=5, skipped=5)"
+      ],
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        }
+      ],
+      "log_sha256": "5f25ffb40eb685ddfffa0682b66585fd281f8e6092369971ec296586318801b6"
+    },
+    "focused": {
+      "command": "$PYTHON -m unittest tests.test_theme_elements tests.test_theme_sources tests.test_hearing_elements tests.test_auto_plan tests.test_portable_self_export -v",
+      "exit_code": 0,
+      "tests": 71,
+      "summary": [
+        "Ran 71 tests in 9.726s",
+        "OK"
+      ],
+      "failures": [],
+      "log_sha256": "6dd00e2a6148d89d207286488aeb2e46dc3b2ef402255690a8aaa11b821e3132"
+    },
+    "hearing": {
+      "command": "$PYTHON -m unittest tests.test_hearing_elements tests.test_self_hearing -v",
+      "exit_code": 0,
+      "tests": 29,
+      "summary": [
+        "Ran 29 tests in 1.624s",
+        "OK"
+      ],
+      "failures": [],
+      "log_sha256": "416647fac8eb5aa2230adf133a76bae888e6da42ee91edbce4daa18da91fa9aa"
+    },
+    "related": {
+      "command": "$PYTHON -m unittest tests.test_element tests.test_theme_elements tests.test_theme_sources tests.test_hearing_elements tests.test_self_hearing tests.test_run tests.test_docs tests.test_build_research_request tests.test_auto_plan tests.test_portable_self_export -v",
+      "exit_code": 1,
+      "tests": 182,
+      "summary": [
+        "Ran 182 tests in 23.171s",
+        "FAILED (failures=1)"
+      ],
+      "failures": [
+        {
+          "kind": "FAIL",
+          "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (tests.test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+        }
+      ],
+      "log_sha256": "cff6b4f6ff755b19aed1913c3e221ca692ab86251ef8d97a50b2961da4d9adbd"
+    }
+  },
+  "bootstrap": [
+    {
+      "command": "$PYTHON tools/workspace.py init --offline-fixture --fixture-root <external-fixture>",
+      "exit_code": 0,
+      "log_sha256": "ca436c1a8c3d08bdca0e4f49cae7cfdf1b0ef4c85d90b9210068b8939a6b9112"
+    },
+    {
+      "command": "$PYTHON tools/workspace.py snapshot --fixture-root <external-fixture>",
+      "exit_code": 0,
+      "log_sha256": "91d1a104bf5e25d34445a5eb8bde6c7ba66d98a81d2f75b0fad1323bae6ba2c6"
+    },
+    {
+      "command": "$PYTHON tools/status.py --offline-fixture",
+      "exit_code": 0,
+      "log_sha256": "62415a0e0637350350ad6d42ee8eb60348b5fbda55d11562189a76ccaea1ce71"
+    },
+    {
+      "command": "$PYTHON tools/audit.py --offline-fixture",
+      "exit_code": 0,
+      "log_sha256": "051d41d12ab3934eac8422945ad9b029d63d8b967dadd97581a64abc024b82ab"
+    },
+    {
+      "command": "$PYTHON tools/startup.py --offline-fixture",
+      "exit_code": 0,
+      "log_sha256": "5f95d441f95118c5d27e50cbebf6cd6cd2b62cfbb22051538dadcf8e6afcf885"
+    },
+    {
+      "command": "$PYTHON tools/startup.py --offline-fixture --check",
+      "exit_code": 0,
+      "log_sha256": "9e44809c09161961ddbe7a89db3783c53a79ae444a02abf29e3182ecf2c9e3a3"
+    },
+    {
+      "command": "$PYTHON tools/retrieval.py",
+      "exit_code": 0,
+      "log_sha256": "a8cfbb934ee81645e63bcc4f14d784aa31daa9e4e37255c78d0a0ec41fe06689"
+    },
+    {
+      "command": "$PYTHON tools/issue_router.py",
+      "exit_code": 0,
+      "log_sha256": "b8c267224009a40e4cb184a6c972f6db6961035bd3258309c26bc701494c46b5"
+    },
+    {
+      "command": "$PYTHON tools/github_issue_adapter.py --fixture",
+      "exit_code": 0,
+      "log_sha256": "4b22b29adf417618705dde248e2042f7adbefdf2dd6d753eabfa85a0a1c5cb8f"
+    },
+    {
+      "command": "$PYTHON tools/github_issue_adapter.py --fixture --check",
+      "exit_code": 0,
+      "log_sha256": "2fbc9660e4a7b4cd6f136a4ddc60b7d7f66a98004e8d23f3ec7cba2e21c75036"
+    },
+    {
+      "command": "$PYTHON tools/drive_live_check.py --plan",
+      "exit_code": 0,
+      "log_sha256": "f9daa0f8deca7c5f00254ff883e1049ac85cdf2e9f0877242ba5b7349b69462a"
+    },
+    {
+      "command": "$PYTHON tools/drive_live_check.py --plan --check",
+      "exit_code": 0,
+      "log_sha256": "16b5bd677dc7aab40e011b72f73ec828cbc648de50a00cc89fcf23af6a627581"
+    },
+    {
+      "command": "$PYTHON tools/improvement_loop.py",
+      "exit_code": 0,
+      "log_sha256": "a80106a646f2e7485a068029509f162ffd99912d9755899f675626373c0c6b13"
+    },
+    {
+      "command": "$PYTHON tools/async_auditor.py --state tests/fixtures/async-audit/state.yaml",
+      "exit_code": 0,
+      "log_sha256": "19facfcedfd7264048f283e476d3762367d908216bba6d8c68684c41df47c23f"
+    },
+    {
+      "command": "$PYTHON tools/interaction_e2e.py",
+      "exit_code": 0,
+      "log_sha256": "65d53475068a314a645dadc980a04f46d634714d4cd4e54370a1c51cbde6e42e"
+    },
+    {
+      "command": "$PYTHON tools/interaction_e2e.py --check",
+      "exit_code": 0,
+      "log_sha256": "1760845d404ce324d2a051e7d4c190523f00f4802df5adcb555689fbc4c215de"
+    },
+    {
+      "command": "$PYTHON tools/security.py --offline-fixture",
+      "exit_code": 0,
+      "log_sha256": "620874aa610c6273addc847c45a92b0b380cbaed6aebaf65743da48711f70e58"
+    },
+    {
+      "command": "$PYTHON tools/validate.py --check",
+      "exit_code": 0,
+      "log_sha256": "1a60c9eadb0458bc14af4f328673c87fde8519db5a908cfc8b33d895d28d93f2"
+    },
+    {
+      "command": "$PYTHON tools/project_status.py --check-readme",
+      "exit_code": 0,
+      "log_sha256": "9c6029365aaacb96443a10bdff29ba9a6b96381720c1c42aacb7d42b2d7397fc"
+    }
+  ],
+  "failure_comparison": {
+    "identical_test_ids": true,
+    "baseline_count": 6,
+    "changed_count": 6,
+    "new_failures": [],
+    "removed_failures": [],
+    "classification_changes": [
+      {
+        "test": "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)",
+        "baseline": "ERROR",
+        "changed": "FAIL"
+      }
+    ],
+    "explanation": "The same named failing tests remain; the missing-profile test reaches structured BLOCKED rather than the legacy empty-request IndexError. Existing Project fixture clone errors remain. No gate failure is hidden."
+  },
+  "native_synthetic_integration": {
+    "runs": [
+      {
+        "mode": "fake",
+        "owner_question": "予定を迷っていたとき、休みたい気持ちと両立しにくかったことは？",
+        "confirmation_questions": [
+          "「予定の変更に合わせたい思いと、自分の判断を守りたい思いがぶつかる可能性がある。」は、あなたの実感に合っていますか？"
+        ],
+        "owner_elements": [
+          "A1.hearing-question",
+          "A1.claim-statement",
+          "A1.claim-scope",
+          "A1.alternative-1",
+          "A1.alternative-2"
+        ],
+        "theme_elements": [
+          {
+            "element_id": "A3.operation",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.1",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.2",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.3",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.4",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.5",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.1",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.2",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.3",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.4",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.5",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.6",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.7",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.8",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.9",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.10",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.6",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.7",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.8",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.9",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.10",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.11",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.12",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.13",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.14",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.15",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.16",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.17",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.18",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.19",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.20",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.21",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.22",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.23",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.24",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.25",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.26",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.27",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.28",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.29",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.30",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.31",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.32",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.33",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.34",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.35",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.36",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.37",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.38",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.39",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.40",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.41",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.42",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.43",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.44",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.45",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.46",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.47",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.48",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.49",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.50",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.51",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.52",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.53",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.54",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.55",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.56",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.57",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.58",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.59",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.60",
+            "attempt": 1
+          },
+          {
+            "element_id": "A7.central-question",
+            "attempt": 1
+          }
+        ],
+        "creative_question": "判断の保留とオートマティスムは、不安の多重化にどんな余白を開くか？",
+        "research_acceptance": [
+          "APPLIED"
+        ],
+        "source_commit": "5b29383f3559f12b561b9c91553bea71b245f700",
+        "selected_signals": {
+          "art-history": "art-history:method:automatism",
+          "marketing": "marketing:anxiety-multiplication"
+        },
+        "a7_equals_native_rr_and_source": true,
+        "request_file_sha256": "3c7c1f95300b1819afd11fa344a2707deac3e891b1cd6b86d10842641334f6f6",
+        "source_file_sha256": "691093425b974c4857f24bb5cb2791725c534dbbeb3b0c332a404a0c12b061a4",
+        "run_status": "RESEARCH_PENDING",
+        "parent_private_words_saved": false
+      },
+      {
+        "mode": "authored",
+        "owner_question": "予定を迷っていたとき、休みたい気持ちと両立しにくかったことは？",
+        "confirmation_questions": [
+          "「予定の変更に合わせたい思いと、自分の判断を守りたい思いがぶつかる可能性がある。」は、あなたの実感に合っていますか？"
+        ],
+        "owner_elements": [
+          "A1.hearing-question",
+          "A1.claim-statement",
+          "A1.claim-scope",
+          "A1.alternative-1",
+          "A1.alternative-2"
+        ],
+        "theme_elements": [
+          {
+            "element_id": "A3.operation",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.1",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.2",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.3",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.4",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.5",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.1",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.2",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.3",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.4",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.5",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.6",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.7",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.8",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.9",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.10",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.6",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.7",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.8",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.9",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.marketing.10",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.11",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.12",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.13",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.14",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.15",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.16",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.17",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.18",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.19",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.20",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.21",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.22",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.23",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.24",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.25",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.26",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.27",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.28",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.29",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.30",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.31",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.32",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.33",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.34",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.35",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.36",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.37",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.38",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.39",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.40",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.41",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.42",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.43",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.44",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.45",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.46",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.47",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.48",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.49",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.50",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.51",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.52",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.53",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.54",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.55",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.56",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.57",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.58",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.59",
+            "attempt": 1
+          },
+          {
+            "element_id": "A5.art-history.60",
+            "attempt": 1
+          },
+          {
+            "element_id": "A7.central-question",
+            "attempt": 1
+          }
+        ],
+        "creative_question": "判断を保留するとき、オートマティスムは、不安の多重化を引き受ける余白になるか？",
+        "research_acceptance": [
+          "APPLIED"
+        ],
+        "source_commit": "5b29383f3559f12b561b9c91553bea71b245f700",
+        "selected_signals": {
+          "art-history": "art-history:method:automatism",
+          "marketing": "marketing:anxiety-multiplication"
+        },
+        "a7_equals_native_rr_and_source": true,
+        "request_file_sha256": "c2c1064d88df5c1644dfe306ce1d3ff2ebb9ba75cd446e04b2997d9257acf595",
+        "source_file_sha256": "bdb27508d7f1362415b11085a50138bc089f59c1023fbaa2ccb06b1dd49c1eff",
+        "run_status": "RESEARCH_PENDING",
+        "parent_private_words_saved": false
+      }
+    ],
+    "self_model_pin": "2e4a02952d6d17bc22b6b540c24ad2913f9aaea4",
+    "pinned_children": {
+      "marketing-trends-notes": {
+        "head": "1a02e5aaca120614cba5cd1bbb687a836706530f",
+        "status": ""
+      },
+      "agentic-art-research": {
+        "head": "ba1f2d2426073fd2dcb4d235fb5bf72d558de6ea",
+        "status": ""
+      },
+      "agentic-art-production": {
+        "head": "ccf932e1bd6864089ae370d7fcb98dd8dc5dfa2d",
+        "status": ""
+      },
+      "art-history-notes": {
+        "head": "d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7",
+        "status": ""
+      },
+      "viewer-response-notes": {
+        "head": "bc228ce5ff376f6eeacb14cee6ca0e0acd92ca6d",
+        "status": ""
+      },
+      "self-model-notes": {
+        "head": "2e4a02952d6d17bc22b6b540c24ad2913f9aaea4",
+        "status": ""
+      }
+    },
+    "child_state_unchanged": true,
+    "manifest_restored": true,
+    "fixture_initialization": "owner agent_runtime.py and synthetic owner test fixture",
+    "commands": [
+      {
+        "tool": "tools/run.py",
+        "operation": "run",
+        "exit_code": 0,
+        "count": 8
+      },
+      {
+        "tool": "tools/self_hearing.py",
+        "operation": "answer",
+        "exit_code": 0,
+        "count": 12
+      },
+      {
+        "tool": "tools/self_hearing.py",
+        "operation": "respond",
+        "exit_code": 0,
+        "count": 2
+      },
+      {
+        "tool": "tools/self_hearing.py",
+        "operation": "confirm",
+        "exit_code": 0,
+        "count": 2
+      },
+      {
+        "tool": "tools/self_hearing.py",
+        "operation": "skip",
+        "exit_code": 0,
+        "count": 2
+      },
+      {
+        "tool": "tools/element.py",
+        "operation": "answer",
+        "exit_code": 0,
+        "count": 144
+      }
+    ],
+    "entry": "$PYTHON tools/credential_free.py --state-root <external-entry> -- <parent-command>",
+    "procedure": [
+      "Clone the supplied immutable workspace into an external temporary workspace; replace Self Model with the exact finalized Issue 138 branch commit.",
+      "Temporarily set only the Self Model manifest pin and write the exact-pin workspace marker; use the normal runtime preflight. Restore production manifest bytes in finally.",
+      "Build a synthetic Subject, consent and one recent Event using the owner fixture. No canonical Claim initially exists.",
+      "Run credential_free.py -- run.py with a fresh run ID; answer A1.hearing-question through self_hearing.py answer stdin; display one returned HEARING question.",
+      "Send an Event block to self_hearing.py respond stdin; answer one claim statement/scope/alternative element per answer call. COMPLETED leaves the Claim a private draft.",
+      "Start a new run via credential_free.py -- run.py; display the one CONFIRMATION question and send the synthetic owner yes with self_hearing.py confirm --owner-answer yes.",
+      "Answer the new hearing-question element, then explicitly decline the new owner hearing with native self_hearing.py skip --reason skipped.",
+      "Resume the same run; answer A3, A5 pairs including next-k expansions, and A7 through element.py answer stdin. Resume run.py to native Research APPLIED.",
+      "Repeat with FakeAnswerer and hand-authored element-answer frames. Check private parent metadata, immutable child Git state, manifest restoration and exact A7 in native RR."
+    ]
+  },
+  "old_pin": {
+    "exit_code": 0,
+    "outcome": "offered",
+    "reason": null,
+    "legacy_packet_returned": true,
+    "private_element_progress_created": false,
+    "run_first_status": "HEARING",
+    "run_legacy_action": true,
+    "skip_outcome": "skipped",
+    "run_resume_status": "WAITING",
+    "run_resume_element": "A3.operation",
+    "parent_question_saved": false
+  },
+  "decisions": [
+    "Map open to owner next, retain legacy open/answer/skip on unsupported pins and transiently expose the old packet question at the direct run entry, and add native next/respond/confirm. Use --run-id, child agent_runtime and optional Subject.",
+    "Treat WAITING as an agent inference element and HEARING/CONFIRMATION/SEED_REQUIRED as one owner question. Add private:true only to transient stdout; persist only progress metadata.",
+    "Replace parent-only skip with owner skip. The owner rejects skip of WAITING; reacquire next after a rejected operation without inventing a refusal or consuming an attempt.",
+    "Open/reacquire private hearing at the direct run entry before ingest, and return its action after writing metadata. A failed reacquisition of an active private flow stays BLOCKED; never discard it.",
+    "Keep COMPLETED drafts unconfirmed until a different run obtains explicit synthetic owner confirmation. Skip the next offered hearing only after an explicit synthetic decline.",
+    "Use temporary exact-pin manifest qualification for integration instead of changing production pins or weakening workspace guards."
+  ],
+  "initial_setup_retry": {
+    "exit_code": 1,
+    "reason": "A newly allocated offline fixture root conflicted with the existing checkout remote. Reused its existing fixture root and reran all 19 commands; no checkout reset or replacement."
+  },
+  "acceptance": "All requested mechanical integration paths verified; real-profile artistic owner acceptance remains NOT_RUN.",
+  "unmet_conditions": [
+    "Masa actual-profile run and recognition that the resulting question is meaningful; this task authorizes synthetic data only."
+  ],
+  "privacy": "Synthetic records only. No real owner data, private hearing body or local absolute path in parent tracked evidence. Parent state/log retain metadata only.",
+  "child_changes": "NONE; only temporary clones used. Source checkouts read-only and production manifest restored.",
+  "lease": "NOT_ACQUIRED; none retained",
+  "remote_sync": "NOT_RUN_BY_INSTRUCTION; local commits only",
+  "external_artifacts": "NONE; no Drive or publication. Local RR/provenance create-only.",
+  "feedback": {
+    "explicit": "Issue 280 additional finalized hearing contract integration request",
+    "inferred": "NONE"
+  },
+  "post_record_checks": {
+    "validate": {
+      "command": "$PYTHON tools/validate.py --check",
+      "exit_code": 0,
+      "log_sha256": "1a60c9eadb0458bc14af4f328673c87fde8519db5a908cfc8b33d895d28d93f2",
+      "summary": "OK: orchestration bootstrap is valid"
+    },
+    "project_status": {
+      "command": "$PYTHON tools/project_status.py --check-readme",
+      "exit_code": 0,
+      "log_sha256": "9c6029365aaacb96443a10bdff29ba9a6b96381720c1c42aacb7d42b2d7397fc",
+      "summary": "OK: README project status matches queue/state"
+    },
+    "metadata_tests": {
+      "command": "$PYTHON -m unittest tests.test_docs tests.test_project_status -v",
+      "exit_code": 0,
+      "tests": 22,
+      "summary": [
+        "Ran 22 tests in 0.024s",
+        "OK"
+      ],
+      "failures": [],
+      "log_sha256": "ca65a30e4f3894832472a4ef502dafcd860534ccae4c75adb1cc82b6f37fd7a1"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "readme_update": {
+      "command": "$PYTHON tools/project_status.py --update-readme",
+      "exit_code": 0
+    },
+    "privacy_record_scan": {
+      "command": "Scan added evidence for machine absolute paths",
+      "exit_code": 0,
+      "matches": 0
+    }
+  }
+}
