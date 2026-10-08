@@ -1,5 +1,5 @@
-version: 105
-updated_at: '2026-10-08T08:51:02.255760+00:00'
+version: 106
+updated_at: '2026-10-08T12:23:04.805398+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3452,7 +3452,7 @@ tasks:
   - id: ISSUE-283
     milestone: ELEMENT-HARNESS
     title: Match owner material against sourced movement and method content
-    status: DONE
+    status: BLOCKED
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/283
     target_repositories: [agentic-art-orchestration, art-history]
     agent_terminal: EVIDENCE_READY
@@ -3470,6 +3470,7 @@ tasks:
     evidence: execution/issue-283-verification.json
     code_status: CODE_VERIFIED
     integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
-    acceptance_result: 4/4 plus actual export and supplied authorized material matching; method ranks first at 9 points.
-    verification_result: Parent 845 tests exactly matches the pristine origin/main six-failure set; related 183 tests pass; child canonical 190 tests pass without skips.
-    completion: Local implementation and verification complete. No profile access, publication, pin adoption, held lease or remote write. Existing parent failures remain explicit.
+    acceptance_result: Review code requirements implemented. Actual accepted 確定の保留 yields 176 zero-score candidates, including four below-minimum matches; native A3.operation.2 requested. Positive meaningful real-material ranking is not proven.
+    blocker: The next actual A3 answer is not available; do not invent it to improve the observed ranking.
+    verification_result: Parent 852 tests exactly matches pristine origin/main 834 tests six-failure set, with five skips; related 190 and core 59 tests pass; unchanged child canonical 190 tests pass without skips.
+    completion: Local review fixes implemented; real matching waits for one more A3 value. No profile access, publication, pin adoption, held lease or remote write. Existing parent failures remain explicit.

@@ -66,7 +66,7 @@ class PublicThemeSourceTests(unittest.TestCase):
         rows = signals()
         public = {'evidence': {rows[2]['signal_id']: {'text': '保留の観測', 'source': {'commit': 'a' * 40}}},
                   'targets': {'artist-entity-001': {'text': '合成対象', 'source': {'commit': 'c' * 40}}}}
-        market = ranked('保留', rows, 'marketing', public)[0]
+        market = ranked('保留の観測', rows, 'marketing', public)[0]
         self.assertGreater(market['score'], 0)
         art = ranked('合成対象', rows, 'art-history', public)[0]
         self.assertEqual(art['score'], 0)

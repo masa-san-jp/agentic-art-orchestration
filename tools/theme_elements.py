@@ -82,15 +82,127 @@ def excerpt(body: str, limit=900) -> str:
     return body.encode('utf-8')[:limit].decode('utf-8', errors='ignore')
 
 
+def matching_words(value: str) -> list[tuple[str, int, int]]:
+    """Literal words with offsets; particles separate Japanese lexical anchors."""
+    text = unicodedata.normalize('NFKC', value).casefold()
+    result = []
+    start = 0
+    boundaries = [*re.finditer(r'まで|から|[のをがにはとでな]', text)]
+    for stop, following in [(m.start(), m.end()) for m in boundaries] + [(len(text), len(text))]:
+        for match in re.finditer(r'[a-z][a-z0-9_-]*|[\u3040-\u30ff\u3400-\u9fff]+', text[start:stop]):
+            word = match.group()
+            if len(word) >= 2 and source_terms(word):
+                result.append((word, start + match.start(), start + match.end()))
+        start = following
+    return result
+
+
 def matching_terms(value: str) -> set[str]:
-    """Do not reward shingles spanning common Japanese grammatical boundaries."""
-    text = unicodedata.normalize('NFKC', value)
-    return set().union(*(source_terms(part) for part in re.split(r'まで|から|[のをがにはとでな]', text)))
+    """Include longer literal fragments, without grammatical boundary shingles."""
+    terms = set()
+    for word, _, _ in matching_words(value):
+        if word.isascii():
+            terms.add(word)
+        else:
+            for size in range(2, len(word) + 1):
+                terms.update(word[start:start + size] for start in range(len(word) - size + 1)
+                             if (word[start:start + size] in source_terms(word[start:start + size])
+                                 or size > 3 and source_terms(word[start:start + size])))
+    return terms
+
+
+def content_matches(operations: list[str], body: str) -> dict:
+    """Longest non-overlapping literal anchors in both body and query words.
+
+    A repeated occurrence never increases the score. Query spans are reserved
+    too, so two fragments of one word cannot masquerade as independent words.
+    Offsets refer to normalized text, not to the exported original Markdown.
+    """
+    words = [(operation_index, word_index, word)
+             for operation_index, operation in enumerate(operations)
+             for word_index, (word, _, _) in enumerate(matching_words(operation))]
+    query = {}
+    for operation_index, word_index, word in words:
+        for term in matching_terms(word):
+            for match in re.finditer(r'(?=' + re.escape(term) + ')', word):
+                query.setdefault(term, []).append((operation_index, word_index, match.start(), match.start() + len(term)))
+    candidates = set()
+    for word, offset, _ in matching_words(body):
+        for term in query:
+            if word.isascii() and word != term:
+                continue
+            for match in re.finditer(r'(?=' + re.escape(term) + ')', word):
+                candidates.add((offset + match.start(), offset + match.start() + len(term), term))
+    occupied = []
+    covered = {}
+    matches = []
+    seen = set()
+    for start, end, term in sorted(candidates, key=lambda item: (-len(item[2]), item[0], item[2])):
+        if term in seen or any(start < right and left < end for left, right in occupied):
+            continue
+        available = []
+        for operation_index, word_index, left, right in query[term]:
+            key = (operation_index, word_index)
+            spans = covered.get(key, [])
+            if not any(left < other_right and other_left < right for other_left, other_right in spans):
+                available.append((operation_index, word_index, left, right))
+        if not available:
+            continue
+        occupied.append((start, end))
+        seen.add(term)
+        # Multiple identical occurrences in one query word may overlap too.
+        accepted = []
+        assigned = set()
+        for operation_index, word_index, left, right in available:
+            key = (operation_index, word_index)
+            if key in assigned:
+                continue
+            assigned.add(key)
+            spans = covered.setdefault(key, [])
+            if any(left < other_right and other_left < right for other_left, other_right in spans):
+                continue
+            spans.append((left, right))
+            accepted.append({'operation_index': operation_index, 'word_index': word_index, 'span': [left, right]})
+        matches.append({'term': term, 'body_span': [start, end], 'operation_spans': accepted})
+    terms = sorted(seen)
+    longest = max(map(len, terms), default=0)
+    word_count = len({word for operation_index, word_index, word in words
+                      if (operation_index, word_index) in covered})
+    qualifies = longest >= 3 or len(terms) >= 2 and word_count >= 2
+    raw_breakdown = {term: len(term) for term in terms}
+    total = sum(len(word) for _, _, word in words)
+    coverage = sum(right - left for spans in covered.values() for left, right in spans)
+    return {'score': sum(raw_breakdown.values()) if qualifies else 0,
+            'raw_score': sum(raw_breakdown.values()),
+            'matched_terms': terms,
+            'score_breakdown': {term: len(term) if qualifies else 0 for term in terms},
+            'raw_score_breakdown': raw_breakdown,
+            'matches': sorted(matches, key=lambda match: match['body_span']),
+            'matched_word_count': word_count,
+            'matched_operation_count': len({index for index, _ in covered}),
+            'operation_coverage': coverage / total if total else 0,
+            'longest_match': longest,
+            'match_status': ('MATCHED' if qualifies else 'BELOW_MINIMUM_CONTENT_MATCH' if terms
+                             else 'NO_CONTENT_TERM_OVERLAP' if body.strip() else 'MISSING_SOURCED_CONTENT')}
+
+
+MATCHING_FIELDS = ('signal_id', 'score', 'raw_score', 'matched_terms', 'score_breakdown',
+                   'raw_score_breakdown', 'matches', 'matched_word_count',
+                   'matched_operation_count', 'operation_coverage', 'longest_match', 'match_status')
+
+
+def matching_diagnostic(rows: list[dict]) -> dict:
+    positive = sum(row['score'] > 0 for row in rows)
+    below = sum(row['match_status'] == 'BELOW_MINIMUM_CONTENT_MATCH' for row in rows)
+    content = sum(bool(row['text'].strip()) for row in rows)
+    return {'candidate_count': len(rows), 'content_count': content,
+            'positive_score_count': positive, 'below_minimum_count': below,
+            'reason': (None if positive else 'MISSING_SOURCED_CONTENT' if not content
+                       else 'BELOW_MINIMUM_CONTENT_MATCH' if below else 'NO_CONTENT_TERM_OVERLAP')}
 
 
 def ranked(operation: str | list[str], signals: list[dict], kind: str, public: dict | None = None) -> list[dict]:
     operations = [operation] if isinstance(operation, str) else operation
-    terms = set().union(*(matching_terms(word) for word in operations))
     targets = {entity: signal for signal in sorted(signals, key=lambda s: s['signal_id'], reverse=True)
                if signal['signal_kind'] == 'art-history' for entity in signal['source']['entity_ids']}
     rows = []
@@ -114,15 +226,18 @@ def ranked(operation: str | list[str], signals: list[dict], kind: str, public: d
             scoring_body = unicodedata.normalize('NFKC', scoring_body).casefold()
             for label in signal['domain']['art_history'].get('entity_labels', []):
                 scoring_body = scoring_body.replace(unicodedata.normalize('NFKC', label).casefold(), ' ')
-        overlap = terms & matching_terms(scoring_body)
+        matching = content_matches(operations, scoring_body)
         evidence = {(ref['locator'], ref['kind']) for ref in signal['evidence_refs']}
         rows.append({'signal_id': signal['signal_id'], 'text': body,
-                     'score': sum(len(term) for term in overlap),
-                     'matched_terms': sorted(overlap),
-                     'score_breakdown': {term: len(term) for term in sorted(overlap)},
+                     **matching, '_content_order': unicodedata.normalize('NFKC', scoring_body).casefold(),
                      'evidence_strength': sum(kind == 'primary' for _, kind in evidence),
                      'evidence_count': len(evidence), 'relation_sources': relation_sources, 'public_source_refs': public_refs})
-    return sorted(rows, key=lambda row: (-row['score'], row['signal_id']))
+    rows.sort(key=lambda row: (-row['score'], -row['matched_operation_count'],
+                               -row['operation_coverage'], -row['longest_match'],
+                               -row['matched_word_count'], row['_content_order']))
+    for row in rows:
+        del row['_content_order']
+    return rows
 
 
 def initial_context(signals: list[dict], state_root: Path, run_id: str, *, k=5,
@@ -218,18 +333,16 @@ def advance(state: dict) -> None:
         rankings = {kind: ranked(operations, phase['signals'], kind, phase.get('public_sources')) for kind in DOMAINS}
         zero = [kind for kind, rows in rankings.items() if not any(row['score'] > 0 for row in rows)]
         history = phase.setdefault('matching_history', [])
+        diagnostics = {kind: matching_diagnostic(rows) for kind, rows in rankings.items()}
+        reasons = {diagnostics[kind]['reason'] for kind in zero}
+        reason = next(iter(reasons)) if len(reasons) == 1 else 'MULTIPLE_CONTENT_MATCH_FAILURES' if reasons else None
         history.append({'operations': operations, 'zero_score_domains': zero,
-                        'diagnostics': {kind: {'candidate_count': len(rows),
-                                              'content_count': sum(bool(row['text']) for row in rows),
-                                              'reason': ('MISSING_SOURCED_CONTENT' if not any(row['text'] for row in rows)
-                                                         else 'NO_CONTENT_TERM_OVERLAP') if kind in zero else None}
-                                        for kind, rows in rankings.items()},
-                        'reason': 'NO_CONTENT_TERM_OVERLAP' if zero else None,
-                        'rankings': {kind: [{key: row[key] for key in ('signal_id', 'score', 'matched_terms', 'score_breakdown')}
+                        'diagnostics': diagnostics, 'reason': reason,
+                        'rankings': {kind: [{key: row[key] for key in MATCHING_FIELDS}
                                             for row in rows] for kind, rows in rankings.items()}})
         if zero:
             failure = [{'check': 'content_match_required',
-                        'reason': 'All content scores are zero in: ' + ', '.join(zero)}]
+                        'reason': '; '.join(f"{kind}: {diagnostics[kind]['reason']}" for kind in zero)}]
             if len(operations) >= state['sequence']['max_attempts']:
                 state.update(status='BLOCKED', pending=None, blocked={
                     'element_id': 'A4.matching', 'attempt': len(operations), 'last_failure': failure})
@@ -238,7 +351,7 @@ def advance(state: dict) -> None:
             added = _definition({'operation': template}, 'operation', f'A3.operation.{len(operations) + 1}', {
                 'material': excerpt(phase['material']['text']),
                 'prior_operations': '、'.join(operations)})
-            added['instruction'] = '本文との一致が全件0点でした。本人の素材から、前の語とは異なる操作・状態を表す短い語をもう一つ返してください。'
+            added['instruction'] = '本文との一致が全件0点、または一致の下限未満でした。本人の素材から、前の語とは異なる操作・状態を表す短い語をもう一つ返してください。'
             state['previous_failure'] = failure
             state['sequence']['elements'].append(added)
             return
@@ -318,6 +431,8 @@ def provenance(state: dict) -> dict:
                                 'matching_text': row['text'], 'public_source_refs': deepcopy(row['public_source_refs']), 'relation_sources': deepcopy(row['relation_sources']),
                                 'score': row['score'], 'matched_terms': deepcopy(row.get('matched_terms', [])),
                                 'score_breakdown': deepcopy(row.get('score_breakdown', {})),
+                                **{key: deepcopy(row[key]) for key in MATCHING_FIELDS
+                                   if key not in ('signal_id', 'score', 'matched_terms', 'score_breakdown') and key in row},
                                 'connection': deepcopy(state['answers'][row['judgement_id']])}
                          for kind, row in selected.items()}}
 

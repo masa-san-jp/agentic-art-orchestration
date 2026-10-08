@@ -1,5 +1,6 @@
 {
   "task": "ISSUE-283",
+  "scope": "Orchestration review revision only; approved Art History implementation unchanged",
   "repositories": [
     "agentic-art-orchestration",
     "art-history-notes"
@@ -7,48 +8,14 @@
   "parent_branch": "agent/283-content-matching",
   "child_branch": "agent/283-export-entity-content",
   "baseline_commit": "337c33211d6048d934b2db0dcf749cd25cb2e617",
-  "child_baseline_commit": "d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7",
+  "previous_parent_commit": "f70ce42e35a8d2d9caa0aeb7ef280d52233a4304",
   "child_candidate_commit": "360eb99bc8c5deab45c9e607653f61decc17dceb",
-  "parent_candidate_reference": "agent/283-content-matching HEAD after the final local commit; final report supplies its SHA",
+  "parent_candidate_reference": "Assigned branch HEAD after the final local commit; final report supplies its SHA",
   "pristine_baseline_proof": {
-    "procedure": "Temporarily preserve only this task edits outside Git; restore every tracked edit byte-for-byte from origin/main; verify clean source status; bootstrap offline fixture; run full discovery; restore task edits after completion",
+    "procedure": "Verify main equals origin/main and the assigned branch is clean; switch to existing main for read-only offline bootstrap/full discovery; verify no tracked or untracked source changes; switch back to the assigned branch before edits",
     "tracked_diff_exit_code": 0,
     "untracked_source_count": 0
   },
-  "baseline_comparison": {
-    "same_named_failure_set": true,
-    "added_failures": [],
-    "removed_failures": [],
-    "named_failure_count": 6,
-    "skips_baseline": 5,
-    "skips_changed": 5
-  },
-  "changed_files": [
-    "PLANS.md",
-    "README.md",
-    "docs/issue-283-content-matching.md",
-    "execution/handoff.md",
-    "execution/issue-283-matching-probe.py",
-    "execution/issue-283-matching.json",
-    "execution/issue-283-verification.json",
-    "execution/state.yaml",
-    "execution/task-queue.yaml",
-    "schemas/normalized-research-signal.schema.json",
-    "tests/test_adapter_art_history.py",
-    "tests/test_auto_plan.py",
-    "tests/test_theme_elements.py",
-    "tests/test_theme_sources.py",
-    "tools/adapters.py",
-    "tools/element.py",
-    "tools/theme_elements.py",
-    "tools/validate.py"
-  ],
-  "child_changed_files": [
-    "README.md",
-    "docs/export-entity-content.md",
-    "tests/test_export_signals.py",
-    "tools/export_signals.py"
-  ],
   "bootstrap": [
     {
       "command": "python tools/workspace.py init --offline-fixture --fixture-root <fixture-root>",
@@ -131,185 +98,115 @@
     "parent_pristine_origin_main": {
       "command": "python -m unittest discover -s tests -v",
       "exit_code": 1,
+      "log_sha256": "cb87ece246f053cbaef7b107a9ce1ca385e6f0ae0da004448e4a7056e177df6b",
       "tests": 834,
-      "duration_seconds": 307.687,
+      "duration_seconds": 345.798,
       "summary": "FAILED (failures=1, errors=5, skipped=5)",
       "failures": [
         {
           "kind": "ERROR",
-          "test": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays"
+          "test": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays"
         },
         {
           "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight"
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight"
         },
         {
           "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected.test_forced_tracking_and_symlink_are_rejected"
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected"
         },
         {
           "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private.test_resolution_evidence_is_create_only_and_private"
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private"
         },
         {
           "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout.test_two_clone_paths_have_the_same_fixed_relative_layout"
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout"
         },
         {
           "kind": "FAIL",
-          "test": "test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation.test_real_run_missing_profile_blocks_before_state_or_child_invocation"
+          "test": "test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation"
         }
-      ],
-      "log_sha256": "818117024a04be1207374c16692af68fd31ce003b0eacb953068cad3ca3dfe88"
-    },
-    "parent_full_changed": {
-      "command": "python -m unittest discover -s tests -v",
-      "exit_code": 1,
-      "tests": 845,
-      "duration_seconds": 523.009,
-      "summary": "FAILED (failures=1, errors=5, skipped=5)",
-      "failures": [
-        {
-          "kind": "ERROR",
-          "test": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays"
-        },
-        {
-          "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight"
-        },
-        {
-          "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected.test_forced_tracking_and_symlink_are_rejected"
-        },
-        {
-          "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private.test_resolution_evidence_is_create_only_and_private"
-        },
-        {
-          "kind": "ERROR",
-          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout.test_two_clone_paths_have_the_same_fixed_relative_layout"
-        },
-        {
-          "kind": "FAIL",
-          "test": "test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation.test_real_run_missing_profile_blocks_before_state_or_child_invocation"
-        }
-      ],
-      "log_sha256": "269cda21f92be1807ec9a733b833e8262d224142afed931e07637b9f2387f72f"
-    },
-    "parent_core": {
-      "command": "python -m unittest tests.test_theme_elements tests.test_theme_sources tests.test_adapter_art_history tests.test_signal_contract -v",
-      "exit_code": 0,
-      "tests": 52,
-      "duration_seconds": 3.108,
-      "summary": "OK",
-      "failures": [],
-      "log_sha256": "a6936462c3656b4491fe4570d3d9bba4e382261897b7259ceb266484bdda9212"
-    },
-    "parent_related": {
-      "command": "python -m unittest tests.test_element tests.test_theme_elements tests.test_theme_sources tests.test_hearing_elements tests.test_self_hearing tests.test_docs tests.test_build_research_request tests.test_auto_plan tests.test_portable_self_export tests.test_adapter_art_history tests.test_signal_contract tests.test_ingest_signals tests.test_signal_bundle -v",
-      "exit_code": 0,
-      "tests": 183,
-      "duration_seconds": 18.557,
-      "summary": "OK",
-      "failures": [],
-      "log_sha256": "093d5d2469087e8a44294bb2689c46d70f9477773024d9563d1726583e5d6e8f"
+      ]
     },
     "parent_run_related": {
       "command": "python -m unittest tests.test_run -v",
       "exit_code": 1,
+      "log_sha256": "8cf7d2903e52f1f5b77ee8050c487618111348a06b04eb49221aae54add3ab66",
       "tests": 36,
-      "duration_seconds": 6.063,
+      "duration_seconds": 38.777,
       "summary": "FAILED (failures=1)",
       "failures": [
         {
           "kind": "FAIL",
-          "test": "tests.test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation.test_real_run_missing_profile_blocks_before_state_or_child_invocation"
+          "test": "tests.test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation"
         }
-      ],
-      "log_sha256": "d95784e3f51a104d95d5f48f22c44e46f0c52751c6cf0646ac891d0b1082d30d"
+      ]
     },
-    "child_focused": {
-      "command": "python -m unittest discover -s tests -p test_export_signals.py -v",
+    "parent_record_docs": {
+      "command": "python -m unittest tests.test_docs tests.test_project_status -v",
       "exit_code": 0,
-      "tests": 19,
-      "duration_seconds": 7.054,
-      "summary": "OK",
+      "log_sha256": "2488f776407c0eedea2560a327bf9872aaf541a98b20106a3731fb77353fda7d",
       "failures": [],
-      "log_sha256": "035ec8f750d73d5bb18aeb9d5b65ef1f93327280feac0fa94027a1ce3384086e"
+      "tests": 22,
+      "duration_seconds": 0.077,
+      "summary": "OK"
     },
-    "child_canonical": {
-      "command": "python tools/verify.py",
+    "parent_related": {
+      "command": "python -m unittest tests.test_element tests.test_theme_elements tests.test_theme_sources tests.test_hearing_elements tests.test_self_hearing tests.test_docs tests.test_build_research_request tests.test_auto_plan tests.test_portable_self_export tests.test_adapter_art_history tests.test_signal_contract tests.test_ingest_signals tests.test_signal_bundle -v",
       "exit_code": 0,
+      "log_sha256": "dfc073a3180beb424e057ccb98cbaa321c8ca9231a51d751c202c74619055cbe",
       "tests": 190,
-      "duration_seconds": 97.4,
+      "duration_seconds": 120.058,
       "summary": "OK",
-      "failures": [],
-      "log_sha256": "08bb67bc99029f56b6949cccf810f7ea2da6cd44c118fd31b05bcabc299c6996"
+      "failures": []
     },
-    "child_agent_related": {
-      "command": "python -m unittest discover -s tests -p 'test_agent_*.py' -v",
+    "parent_core": {
+      "command": "python -m unittest tests.test_theme_elements tests.test_theme_sources tests.test_adapter_art_history tests.test_signal_contract -v",
       "exit_code": 0,
-      "tests": 27,
-      "duration_seconds": 16.625,
+      "log_sha256": "fdb43ee2044fa81568a85eeeecfd1d87b697f2f95f43a7535ff8a64a0e7612f1",
+      "tests": 59,
+      "duration_seconds": 41.733,
       "summary": "OK",
-      "failures": [],
-      "log_sha256": "df56ff7ee3d29f83d10af2039de024c03eaafdda43ef1780440f164cb56a4212"
-    },
-    "child_graph": {
-      "command": "python tools/build_graph.py --check",
-      "exit_code": 0,
-      "entities": 1613,
-      "relations": 4949
-    },
-    "child_context": {
-      "command": "python tools/build_context_vectors.py --check",
-      "exit_code": 0,
-      "contexts": 4
-    },
-    "child_export": {
-      "command": "python tools/export_signals.py --purpose artistic-research --output <external-export>",
-      "exit_code": 0,
-      "signals": 182,
-      "with_content": 162,
-      "methods": 4
-    },
-    "child_doctor": {
-      "command": "python tools/agent_doctor.py --json",
-      "exit_code": 0,
-      "checks": 15
-    },
-    "child_generated_diff": {
-      "command": "git diff --exit-code -- data/ overviews/coverage.md",
-      "exit_code": 0
+      "failures": []
     },
     "parent_validator": {
       "command": "python tools/validate.py --check",
-      "exit_code": 0
+      "exit_code": 0,
+      "log_sha256": "1a60c9eadb0458bc14af4f328673c87fde8519db5a908cfc8b33d895d28d93f2",
+      "failures": []
     },
     "parent_readme": {
       "command": "python tools/project_status.py --check-readme",
-      "exit_code": 0
+      "exit_code": 0,
+      "log_sha256": "9c6029365aaacb96443a10bdff29ba9a6b96381720c1c42aacb7d42b2d7397fc",
+      "failures": []
     },
     "parent_security": {
       "command": "python tools/security.py --offline-fixture",
       "exit_code": 0,
-      "findings": 0
+      "log_sha256": "620874aa610c6273addc847c45a92b0b380cbaed6aebaf65743da48711f70e58",
+      "failures": [],
+      "findings": 0,
+      "blocking": false
     },
     "parent_compile": {
       "command": "python -m py_compile tools/adapters.py tools/theme_elements.py tools/element.py tools/validate.py execution/issue-283-matching-probe.py",
-      "exit_code": 0
-    },
-    "diff": {
-      "command": "git diff --check (both repositories)",
-      "exit_code": 0
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": []
     },
     "parent_status": {
       "command": "python tools/status.py --offline-fixture",
-      "exit_code": 0
+      "exit_code": 0,
+      "log_sha256": "574c935ef08abd1d568ae500f4cb5121198b4868c66396cfc3f0ba13769485d0",
+      "failures": []
     },
     "parent_audit": {
       "command": "python tools/audit.py --offline-fixture",
       "exit_code": 0,
+      "log_sha256": "051d41d12ab3934eac8422945ad9b029d63d8b967dadd97581a64abc024b82ab",
+      "failures": [],
       "blocking": false,
       "warning_codes": [
         "PARENT_SSOT_UNPUSHED",
@@ -317,95 +214,194 @@
         "freshness"
       ]
     },
-    "matching": {
-      "command": "python execution/issue-283-matching-probe.py --export <external-export> --operation 意識的な決定を留保 < <authorized-material>",
+    "parent_diff": {
+      "command": "git diff --check",
       "exit_code": 0,
-      "eligible": 176,
-      "positive": 5,
-      "evidence": "execution/issue-283-matching.json"
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": []
+    },
+    "child_canonical": {
+      "command": "python tools/verify.py",
+      "exit_code": 0,
+      "log_sha256": "52f4d40319bcf1de1dd359d1ab67a87f61ec7004c4139ea56241d94078b408b2",
+      "tests": 190,
+      "duration_seconds": 103.431,
+      "summary": "OK",
+      "failures": []
+    },
+    "child_focused": {
+      "command": "python -m unittest discover -s tests -p test_export_signals.py -v",
+      "exit_code": 0,
+      "log_sha256": "43e9e77b3fe57ee939f5b3de59add57589a240b13b5017960bbcd1992331a327",
+      "tests": 19,
+      "duration_seconds": 7.138,
+      "summary": "OK",
+      "failures": []
+    },
+    "child_agent_related": {
+      "command": "python -m unittest discover -s tests -p test_agent_*.py -v",
+      "exit_code": 0,
+      "log_sha256": "f93a4d04a00002599e5f29be7212caa8b33d8df9f4f1a68245220cebc9e1d7f4",
+      "tests": 27,
+      "duration_seconds": 18.081,
+      "summary": "OK",
+      "failures": []
+    },
+    "child_graph": {
+      "command": "python tools/build_graph.py --check",
+      "exit_code": 0,
+      "log_sha256": "1b9cf3266843390ed4eb5d9ba2825322be36593f4c5045f74ce0154170c6b830",
+      "failures": [],
+      "entities": 1613,
+      "relations": 4949
+    },
+    "child_context": {
+      "command": "python tools/build_context_vectors.py --check",
+      "exit_code": 0,
+      "log_sha256": "529a0692cd2d000da5a0b771199879423a1cdc48524028fe13e48ee34f4011fc",
+      "failures": [],
+      "contexts": 4
+    },
+    "child_doctor": {
+      "command": "python tools/agent_doctor.py --json",
+      "exit_code": 0,
+      "log_sha256": "c42986c061fb0d3d6ebacbf1ca4b9da60d5b66a8ede39839ad7a25e5235ce8fc",
+      "failures": [],
+      "checks": 15
+    },
+    "child_export": {
+      "command": "python tools/export_signals.py --purpose artistic-research --output <external-export>",
+      "exit_code": 0,
+      "log_sha256": "0a62f597ce1f61cf9ec92fe29fe55e872f108daf7b2d69b5c573378f94ab0c3f",
+      "failures": [],
+      "signals": 182,
+      "with_content": 162,
+      "methods": 4
+    },
+    "child_generated_diff": {
+      "command": "git diff --exit-code -- data/ overviews/coverage.md",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": []
+    },
+    "child_diff": {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": []
+    },
+    "child_status": {
+      "command": "git status --short",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failures": []
+    },
+    "matching": {
+      "command": "python execution/issue-283-matching-probe.py --export <external-export> --operation 確定の保留 < <authorized-material>",
+      "exit_code": 0,
+      "evidence": "execution/issue-283-matching.json",
+      "matching_status": "BELOW_MINIMUM_CONTENT_MATCH",
+      "engine_status": "WAITING",
+      "qualified_candidates": 0,
+      "below_minimum_candidates": 4
     },
     "matching_assertions": {
-      "command": "Verify source commit, movement/method coverage, all score sums and non-ID top candidate",
-      "exit_code": 0
-    },
-    "parent_record_docs": {
-      "command": "python -m unittest tests.test_docs tests.test_project_status -v",
+      "command": "Verify actual accepted A3, native checkpoint, method/movement coverage, 176 score sums and disjoint spans, plus final-code byte-identical replay",
       "exit_code": 0,
-      "tests": 22,
-      "summary": "OK",
-      "log_sha256": "65ac09a52936bc1fefc0626a9eed8018c6b68f6ce29a5d66c626e861e1d455ed"
+      "score_records": 176
+    },
+    "parent_full_changed": {
+      "command": "python -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "tests": 852,
+      "duration_seconds": 1045.695,
+      "summary": "FAILED (failures=1, errors=5, skipped=5)",
+      "failures": [
+        {
+          "kind": "ERROR",
+          "test": "test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private"
+        },
+        {
+          "kind": "ERROR",
+          "test": "test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation"
+        }
+      ],
+      "log_sha256": "e7735b9f93988688e9f0e6012e503eb9f6e05dbf293de14ad10b34cf79ac8d07"
+    },
+    "baseline_comparison_assertion": {
+      "command": "Compare exact named ERROR/FAIL sets from both completed full unittest runs",
+      "exit_code": 0,
+      "named_failures": 6,
+      "added": 0,
+      "removed": 0
+    },
+    "parent_staged_security": {
+      "command": "python tools/security.py --offline-fixture",
+      "exit_code": 0,
+      "findings": 0,
+      "blocking": false,
+      "log_sha256": "620874aa610c6273addc847c45a92b0b380cbaed6aebaf65743da48711f70e58",
+      "scope": "Staged correction blobs included in the tracked-export boundary scan"
     }
   },
-  "earlier_attempts": [
-    {
-      "command": "Parent full discovery before offline bootstrap",
-      "exit_code": 1,
-      "tests": 834,
-      "result": "NONCANONICAL: missing generated fixtures and concurrent task edits affected CLI checks; not used as the pristine baseline"
-    },
-    {
-      "command": "Parent focused discovery including nonexistent tests.test_adapters",
-      "exit_code": 1,
-      "tests": 37,
-      "result": "Corrected module name; one legacy zero-score fixture corrected"
-    },
-    {
-      "command": "Parent focused discovery after the first corrections",
-      "exit_code": 0,
-      "tests": 47
-    },
-    {
-      "command": "Parent core discovery before final grammatical-boundary and draft-content regressions",
-      "exit_code": 0,
-      "tests": 50
-    },
-    {
-      "command": "Parent focused discovery before the last draft-content regression",
-      "exit_code": 0,
-      "tests": 51
-    },
-    {
-      "command": "Parent related discovery before the legacy auto-plan fixture correction",
-      "exit_code": 1,
-      "tests": 217,
-      "failures": 1,
-      "errors": 1,
-      "result": "Existing test_run failure plus auto-plan fixture lacking cited content; fixture corrected"
-    },
-    {
-      "command": "Child focused discovery before CLI-body regression",
-      "exit_code": 0,
-      "tests": 18
-    },
-    {
-      "command": "Child preliminary canonical verification while edits were being made",
-      "exit_code": 0,
-      "tests": 184,
-      "skipped": 4,
-      "result": "Final clean candidate canonical verification reran all 190 tests without skips"
-    },
-    {
-      "command": "python tools/project_status.py --check-readme before projection refresh",
-      "exit_code": 1,
-      "result": "README refreshed using --update-readme; final check passes"
-    }
-  ],
+  "baseline_comparison": {
+    "same_named_failure_set": true,
+    "added_failures": [],
+    "removed_failures": [],
+    "named_failure_count": 6,
+    "skips_baseline": 5,
+    "skips_changed": 5,
+    "baseline_tests": 834,
+    "changed_tests": 852
+  },
+  "matching": {
+    "evidence": "execution/issue-283-matching.json",
+    "operation_source": "Actual run accepted A3 supplied in review",
+    "operations": [
+      "確定の保留"
+    ],
+    "eligible": 176,
+    "positive": 0,
+    "below_minimum": 4,
+    "zero": 176,
+    "native_checkpoint": "WAITING A3.operation.2; accepted_count 1; no added answer or A5 judgement"
+  },
+  "review_requirements": {
+    "positive_floor": "3-character-or-longer anchor, or two different lexical query words and two distinct anchors",
+    "overlaps": "Longest disjoint body and query spans; duplicate terms counted once",
+    "ties": "Distinct A3 count, query-character coverage, longest match, distinct lexical-word count, then normalized content; never ID",
+    "reason": "Derive overall reason from per-domain diagnostics; preserve all domain reasons in the retry",
+    "probe": "Use only actual accepted 確定の保留; record below-minimum and zero results plus native retry request"
+  },
   "acceptance": {
-    "achieved": 4,
-    "total": 4,
-    "sourced_bounded_content": true,
-    "content_only_matching_and_breakdown": true,
-    "zero_score_single_element_retry": true,
+    "review_implementation": "CODE_VERIFIED",
+    "sourced_bounded_content": "APPROVED_CHILD_UNCHANGED",
     "movement_and_method_same_pool": true,
-    "actual_export_authorized_material_probe": true
+    "actual_positive_meaningful_ranking": "NOT_DEMONSTRATED; actual accepted word yields no qualifying candidate"
   },
   "decisions": [
-    "Extract cited paragraphs and immediately attached quotes, not inferential summaries; declared method fields use the existing owner source contract",
-    "Keep positive ties deterministic by ID; all-zero results request one additional A3 operation and never advance to A5",
-    "Accumulate distinct operations in the same run; cap matching rounds at the shared maximum, default five",
-    "Retain cited draft movement content as a seed without promoting certainty or validity",
-    "The supplied authorized material is the real matching input; the A3 operation was authored for this probe, not claimed to be the original run answer",
-    "Split common grammatical boundaries only for A4 matching so particle shingles do not outscore semantic anchors"
+    "Interpret separate words conservatively as distinct particle/space-separated lexical query words with distinct matched anchors; repeated fragments and one lexical word do not satisfy the two-word floor",
+    "Keep effective score_breakdown summing to score; expose longest weak matches separately in raw_score_breakdown",
+    "Use full normalized scoring content for the final mechanical tie, with no ID or hash selection",
+    "Replay real Art History with existing synthetic self transport and unchanged synthetic market fixture at its fixture timestamp; do not claim full owner-profile Production",
+    "Record native A3.operation.2 without inventing its answer; withdraw previous favorable agent-selected operation and 4/4 completion claim",
+    "Keep existing completed-row provenance compatible when new metrics are absent"
   ],
   "privacy": {
     "self_material_recorded": "SHA256 only",
@@ -417,18 +413,121 @@
   },
   "external_artifact": "No Drive or service write; temporary owner export used only as read-only verification input",
   "feedback": {
-    "explicit": "Assigned Issue, orchestrator supplement and authorized material",
+    "explicit": "Assigned Issue, authorized material, review correction and actual accepted A3",
     "inferred_feedback": "none",
-    "inferred_value": "One A3 operation authored from the authorized material; not promoted to a user fact"
+    "additional_a3_answer": "NOT_AUTHORED"
   },
   "lease": "NOT_ACQUIRED; none held",
   "remote_sync": "NOT_RUN_BY_INSTRUCTION",
-  "unmet_issue_conditions": [],
-  "remaining": [
-    "Six exact parent origin/main failures remain visible: five Project destination/projection errors and one profile-root test failure",
-    "Current manifest owner pin unchanged; orchestrator review and qualified pin adoption required before normal production use",
-    "Twenty owner exports have no locally attributable prose; do not fill uncited text",
-    "This A3/A4 probe is not a full owner-profile Production run or an A5 connection approval"
+  "unmet_issue_conditions": [
+    "Demonstrate meaningful positive top candidates with the real material; no candidate qualifies for actual accepted A3 and no next actual A3 value is supplied"
   ],
-  "next_operation": "git show --stat HEAD in both repositories; orchestrator reviews local commits, then owns publication and qualified child pin adoption"
+  "remaining": [
+    "Existing six parent origin/main failures remain explicit",
+    "Qualified owner-pin adoption remains orchestrator-owned",
+    "Native actual-word replay waits for the next A3 rather than advancing zero candidates",
+    "No full owner-profile Production or A5 approval is claimed"
+  ],
+  "next_operation": "Review corrected local HEAD and native addition request; apply corrected A4 in the actual run and continue with its requested A3 addition. Orchestrator owns publication and pin adoption.",
+  "child_canonical_steps": [
+    {
+      "command": "python tools/build_graph.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/build_context_vectors.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type movement --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type context --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type person --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type work --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type place --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type event --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type org --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type concept --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit_source_migration.py --check-type source --quiet",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m unittest discover -s tests -p test*.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/build_graph.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/build_context_vectors.py",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --exit-code -- data/ overviews/coverage.md",
+      "exit_code": 0
+    }
+  ],
+  "changed_files": [
+    "PLANS.md",
+    "README.md",
+    "docs/issue-283-content-matching.md",
+    "execution/handoff.md",
+    "execution/issue-283-matching-probe.py",
+    "execution/issue-283-matching.json",
+    "execution/issue-283-verification.json",
+    "execution/state.yaml",
+    "execution/task-queue.yaml",
+    "tests/test_auto_plan.py",
+    "tests/test_theme_elements.py",
+    "tests/test_theme_sources.py",
+    "tools/theme_elements.py"
+  ],
+  "child_changed_files": [],
+  "implementation_sha256": {
+    "tools/theme_elements.py": "82d5d77effdbf4705fcd736151d08774f10640f24cfabe23f33f31be97134f3f",
+    "execution/issue-283-matching-probe.py": "e489b0d90d78e1b6c483b413602f1a48cf4a894a163f848871c59d9856f0ee1e"
+  },
+  "earlier_review_checks": [
+    {
+      "command": "python -m unittest tests.test_theme_elements tests.test_theme_sources tests.test_adapter_art_history tests.test_signal_contract -v",
+      "exit_code": 0,
+      "tests": 58,
+      "reason": "Rerun on the final code after adding legacy provenance compatibility coverage"
+    },
+    {
+      "command": "python -m unittest tests.test_element tests.test_theme_elements tests.test_theme_sources tests.test_hearing_elements tests.test_self_hearing tests.test_docs tests.test_build_research_request tests.test_auto_plan tests.test_portable_self_export tests.test_adapter_art_history tests.test_signal_contract tests.test_ingest_signals tests.test_signal_bundle -v",
+      "exit_code": 0,
+      "tests": 189,
+      "reason": "Rerun on the final code after adding legacy provenance compatibility coverage"
+    }
+  ],
+  "review_requirements_verified": "4/4 code corrections; original meaningful positive real-material ranking remains unproven"
 }

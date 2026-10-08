@@ -62,6 +62,20 @@ class ThemeElementsTests(unittest.TestCase):
         self.assertEqual('COMPLETED', report['status'])
         return report
 
+    def test_completed_legacy_selected_rows_still_export_provenance(self):
+        from tools.theme_elements import MATCHING_FIELDS, provenance
+        self.finish()
+        state = json.loads(self.engine.path.read_text())
+        for row in state['context']['phase_a']['selected'].values():
+            for key in MATCHING_FIELDS:
+                if key not in ('signal_id', 'score'):
+                    row.pop(key, None)
+        result = provenance(state)
+        for row in result['selected'].values():
+            self.assertGreater(row['score'], 0)
+            self.assertEqual([], row['matched_terms'])
+            self.assertEqual({}, row['score_breakdown'])
+
     def test_source_term_check_requires_declared_source_keys(self):
         from tools.element_contracts import load_sequence, validate_sequence
         sequence = load_sequence()
@@ -116,15 +130,100 @@ class ThemeElementsTests(unittest.TestCase):
         self.assertIn('準備', signal_body(rows[1]))
         self.assertNotIn('未来', signal_body(rows[1]))
         self.assertGreater(ranked('先送り', rows, 'art-history')[0]['score'], 0)
-        self.assertGreater(ranked('選択', rows, 'marketing')[0]['score'], 0)
+        self.assertGreater(ranked('時間の選択', rows, 'marketing')[0]['score'], 0)
 
-    def test_equal_match_scores_use_signal_id_not_hash(self):
+    def ranking_pair(self, operation, first, second):
         rows = signals()
+        rows[1]['signal_id'] = 'a-candidate'
+        rows[1]['domain']['art_history']['content'][0]['text'] = first
         clone = deepcopy(rows[1])
-        clone['signal_id'] += '-b'
+        clone['signal_id'] = 'z-candidate'
+        clone['domain']['art_history']['content'][0]['text'] = second
         rows.append(clone)
-        ranked_rows = ranked('先送り', rows, 'art-history')
-        self.assertEqual(sorted(row['signal_id'] for row in ranked_rows), [row['signal_id'] for row in ranked_rows])
+        result = ranked(operation, rows, 'art-history')
+        self.assertEqual(result, ranked(operation, list(reversed(rows)), 'art-history'))
+        self.assertEqual(result[0]['score'], result[1]['score'])
+        return result
+
+    def test_equal_scores_prefer_distinct_matching_operations(self):
+        result = self.ranking_pair(['alpha omega', 'gamma'], 'alpha omega', 'alpha gamma')
+        self.assertEqual('z-candidate', result[0]['signal_id'])
+        self.assertEqual([2, 1], [row['matched_operation_count'] for row in result])
+
+    def test_equal_scores_and_operation_counts_prefer_query_coverage(self):
+        result = self.ranking_pair(['alpha gamma', 'alpha delta'], 'gamma delta', 'alpha gamma')
+        self.assertEqual('z-candidate', result[0]['signal_id'])
+        self.assertEqual([2, 2], [row['matched_operation_count'] for row in result])
+        self.assertEqual([0.75, 0.5], [row['operation_coverage'] for row in result])
+
+    def test_equal_scores_and_coverage_prefer_longest_match(self):
+        result = self.ranking_pair('abc def ghij kl', 'abc def', 'ghij kl')
+        self.assertEqual('z-candidate', result[0]['signal_id'])
+        self.assertEqual([0.5, 0.5], [row['operation_coverage'] for row in result])
+        self.assertEqual([4, 3], [row['longest_match'] for row in result])
+
+    def test_remaining_content_ties_are_not_ordered_by_identifier(self):
+        result = self.ranking_pair('先送り', '先送りの時間', '先送りの余白')
+        self.assertEqual('z-candidate', result[0]['signal_id'])
+        rows = signals()
+        rows[1]['domain']['art_history']['content'][0]['text'] = result[0]['text']
+        clone = deepcopy(rows[1])
+        clone['domain']['art_history']['content'][0]['text'] = result[1]['text']
+        clone['signal_id'] = '0-new-id'
+        rows.append(clone)
+        self.assertEqual([row['text'] for row in result], [row['text'] for row in ranked('先送り', rows, 'art-history')])
+
+    def test_longest_non_overlapping_fragments_are_counted_once(self):
+        rows = signals()
+        for operation, body, expected in (
+            ('意識的', '意識的な即興と意識的な表現と美意識', {'意識的': 3}),
+            ('意識的決定', '意識的決定と意識的決定', {'意識的決定': 5}),
+            ('変形操作', '変形操と形操作', {'変形操': 3})):
+            with self.subTest(operation=operation):
+                rows[1]['domain']['art_history']['content'][0]['text'] = body
+                row = ranked(operation, rows, 'art-history')[0]
+                self.assertEqual(expected, row['score_breakdown'])
+                self.assertEqual(expected, row['raw_score_breakdown'])
+                self.assertEqual(sum(expected.values()), row['score'])
+                spans = [match['body_span'] for match in row['matches']]
+                self.assertTrue(all(left[1] <= right[0] for left, right in zip(spans, spans[1:])))
+
+    def test_short_single_fragments_are_zero_but_separate_words_can_qualify(self):
+        rows = signals()
+        for body in ('未確定', '書簡を送り', '美意識'):
+            with self.subTest(body=body):
+                rows[1]['domain']['art_history']['content'][0]['text'] = body
+                row = ranked('確定の送りと意識', rows, 'art-history')[0]
+                self.assertEqual(0, row['score'])
+                self.assertEqual(2, row['raw_score'])
+                self.assertEqual('BELOW_MINIMUM_CONTENT_MATCH', row['match_status'])
+                self.assertEqual(0, sum(row['score_breakdown'].values()))
+        rows[1]['domain']['art_history']['content'][0]['text'] = '確定を避けて保留する'
+        row = ranked('確定の保留', rows, 'art-history')[0]
+        self.assertEqual(4, row['score'])
+        self.assertEqual(['保留', '確定'], row['matched_terms'])
+        self.assertEqual(2, row['matched_word_count'])
+        for operation in ('保留の保留', '確定保留', '文と字'):
+            with self.subTest(operation=operation):
+                rows[1]['domain']['art_history']['content'][0]['text'] = '確定と保留と文と字'
+                self.assertEqual(0, ranked(operation, rows, 'art-history')[0]['score'])
+
+    def test_accepted_real_operation_requests_addition_on_weak_overlap(self):
+        rows = signals()
+        rows[1]['domain']['art_history']['content'][0]['text'] = '年代は未確定'
+        report = self.answer(self.open(rows), '確定の保留')
+        request = report['next_action']['request']
+        self.assertEqual('A3.operation.2', request['element_id'])
+        self.assertEqual('確定の保留', request['inputs']['prior_operations'])
+        self.assertEqual(report, self.engine.next())
+        phase = json.loads(self.engine.path.read_text())['context']['phase_a']
+        history = phase['matching_history'][0]
+        self.assertEqual('BELOW_MINIMUM_CONTENT_MATCH', history['diagnostics']['art-history']['reason'])
+        self.assertEqual('NO_CONTENT_TERM_OVERLAP', history['diagnostics']['marketing']['reason'])
+        self.assertEqual('MULTIPLE_CONTENT_MATCH_FAILURES', history['reason'])
+        self.assertEqual({}, phase['rankings'])
+        self.assertEqual({}, phase['judgements'])
+        self.assertIn('BELOW_MINIMUM_CONTENT_MATCH', request['previous_failure'][0]['reason'])
 
     def test_names_ids_urls_and_boilerplate_do_not_score(self):
         rows = signals()
@@ -194,7 +293,10 @@ class ThemeElementsTests(unittest.TestCase):
         report = self.answer(self.open(rows), '先送り')
         self.assertEqual('A3.operation.2', report['next_action']['request']['element_id'])
         phase = json.loads(self.engine.path.read_text())['context']['phase_a']
-        self.assertEqual(['art-history'], phase['matching_history'][0]['zero_score_domains'])
+        history = phase['matching_history'][0]
+        self.assertEqual(['art-history'], history['zero_score_domains'])
+        self.assertEqual('MISSING_SOURCED_CONTENT', history['reason'])
+        self.assertEqual('MISSING_SOURCED_CONTENT', history['diagnostics']['art-history']['reason'])
 
     def test_unsourced_legacy_method_does_not_score(self):
         rows = signals()
@@ -209,7 +311,8 @@ class ThemeElementsTests(unittest.TestCase):
         self.assertNotIn('の言', row['matched_terms'])
         self.assertNotIn('の言語', row['matched_terms'])
         self.assertEqual(['言語'], row['matched_terms'])
-        self.assertEqual(2, row['score'])
+        self.assertEqual(0, row['score'])
+        self.assertEqual(2, row['raw_score'])
 
     def test_later_definitions_are_frozen_in_the_same_run(self):
         report = self.open()

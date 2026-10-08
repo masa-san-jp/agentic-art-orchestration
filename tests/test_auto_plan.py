@@ -117,6 +117,10 @@ class AutomaticPlanEntryTests(unittest.TestCase):
                         return min(source_terms(request["inputs"][key]), key=lambda term: (-len(term), term))
                     if identifier == "A3.operation":
                         value = "保留"
+                    elif identifier.startswith("A3.operation."):
+                        self.assertEqual("A3.operation.2", identifier)
+                        self.assertIn("BELOW_MINIMUM_CONTENT_MATCH", request["previous_failure"][0]["reason"])
+                        value = "構造と選択"
                     elif identifier.startswith("A5."):
                         value = {"answer": True, "reason": f"{anchor('self')}と{anchor('signal')}の関係を検討する。"}
                     else:

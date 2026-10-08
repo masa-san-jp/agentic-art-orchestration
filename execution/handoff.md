@@ -1,37 +1,40 @@
-# Issue #283 — local content matching implementation
+# Issue #283 — review correction and actual accepted-A3 evidence
 
-Assigned branches: `agent/283-content-matching` and `agent/283-export-entity-content`.
-The orchestrator owns push, PR, merge, Issue closure and qualified child pin adoption.
+Only orchestration changed in this review. The approved child candidate remains
+`360eb99bc8c5deab45c9e607653f61decc17dceb`. Parent branch is
+`agent/283-content-matching`; the orchestrator owns publication and pin adoption.
 No lease acquired; none held. No remote write or private profile access.
 
-Child candidate: `360eb99bc8c5deab45c9e607653f61decc17dceb`.
-Parent candidate is the final local branch HEAD; inspect `git show --stat HEAD`.
-Source paragraphs and attached quotes are extracted deterministically with native
-citations and a 2400-character aggregate bound. A4 scores cited content, excludes
-names/IDs/URLs and grammatical-boundary shingles, retains matched terms and points,
-and asks for one additional distinct A3 operation on zero content overlap.
-Matching retries preserve accepted work and stop at the shared finite limit.
+A4 keeps longest non-overlapping literal matches in both body and query, counts
+repeated terms once, and requires a 3-character match or two distinct lexical
+words with distinct anchors. Weak single fragments have score 0. Positive ties
+use matching operation count, query coverage, longest match and lexical-word
+count, then normalized content; never signal ID. History and retry requests
+retain domain-specific missing-content, no-overlap and below-minimum reasons.
 
-Evidence: `execution/issue-283-verification.json`, `execution/issue-283-matching.json`
-and `docs/issue-283-content-matching.md`. The supplied authorized material is not
-stored: only its hash is retained. It produced automatism at 9 points for the
-agent-authored operation 意識的な決定を留保; other positive candidates score 2.
-Actual owner export has 182 records, 162 with prose and 4 methods; 176 eligible
-candidates enter matching. This is an A3/A4 probe, not a full Production run or A5
-approval. Uncited prose remains absent and unknown/draft evidence stays unknown.
+Actual accepted A3 確定の保留 was replayed against 176 eligible owner art exports.
+All effective scores are zero; four 確定 matches have raw score 2 and fall below
+the floor. Native Engine accepts one A3 and waits at A3.operation.2; no added
+operation or A5 judgement was invented. The market and self transport envelopes
+are explicit synthetic fixtures, so this is not a full owner-profile run.
+The previous agent-authored 9-point example is withdrawn as acceptance evidence.
 
-Parent validator/core 52/related 183/security/compile/diff pass. Full 845 tests
-has exactly pristine origin/main's six named failures (1 failure, 5 errors, 5
-skips; baseline 834 tests); none added or removed. Run-related 36 tests retains
-its same existing failure. Child canonical verification passes all 190 tests
-without skips, graph/context checks, source audits and generated-file diff;
-child focused 19 and agent-related 27 tests pass. Acceptance: 4/4 scoped issue
-conditions. Audit warnings remain nonblocking, including the intentional local
-unpushed SSOT. No Drive artifact or inferred feedback was created.
+Evidence: execution/issue-283-matching.json, execution/issue-283-verification.json,
+and docs/issue-283-content-matching.md. Parent core 59, related 190, docs/status 22 and child canonical 190 tests pass.
+Parent full 852 tests has exactly baseline six failures and five skips; no added
+or removed failures. Run-related 36 retains its one baseline failure. Validator,
+compile, security and diff pass; audit has three nonblocking existing warnings.
+Pristine origin/main rerun: 834 tests, six named failures, five skips.
 
-Next operation: review both local branch HEADs and evidence, then orchestrator
-publication and qualification of the new Art History pin. Existing Issue-280
-owner confirmation remains separately BLOCKED; no next task has been claimed.
+Implementation review requirements are addressed; meaningful positive ranking
+for the actual material remains unproven. ISSUE-283 is BLOCKED on the next real
+A3 value; last_completed_task is restored to ISSUE-278. ISSUE-280's separate
+owner gate remains BLOCKED. No private self prose or owner paragraphs are stored.
+No Drive artifact, inferred additional answer, public consent or remote write.
+
+Next operation: review corrected local HEAD and the native request evidence;
+apply corrected A4 in the actual run and continue with its A3 addition rather
+than selecting a favorable word.
 
 # Issue #250 S4 — local credential-free entry
 
