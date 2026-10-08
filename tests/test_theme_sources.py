@@ -61,15 +61,15 @@ class PublicThemeSourceTests(unittest.TestCase):
             projections(rows, Path('/not-used'))
         git.assert_not_called()
 
-    def test_source_matching_uses_actual_evidence_prose_and_target_label(self):
+    def test_source_matching_uses_actual_evidence_prose_and_excludes_target_label(self):
         from tools.theme_elements import ranked
         rows = signals()
         public = {'evidence': {rows[2]['signal_id']: {'text': '保留の観測', 'source': {'commit': 'a' * 40}}},
                   'targets': {'artist-entity-001': {'text': '合成対象', 'source': {'commit': 'c' * 40}}}}
-        market = ranked('保留', rows, 'marketing', public)[0]
+        market = ranked('保留の観測', rows, 'marketing', public)[0]
         self.assertGreater(market['score'], 0)
         art = ranked('合成対象', rows, 'art-history', public)[0]
-        self.assertGreater(art['score'], 0)
+        self.assertEqual(art['score'], 0)
         self.assertTrue(art['public_source_refs'])
 
 

@@ -86,6 +86,17 @@ class AutomaticPlanEntryTests(unittest.TestCase):
                     output = Path(args[args.index("--output") + 1])
                     output.mkdir(parents=True, exist_ok=True)
                     for signal in load_fixture(run_module.ROOT / "tests/fixtures/v12-candidates"):
+                        # Phase A requires cited content overlap; legacy v12
+                        # envelope names alone must not advance its A4 step.
+                        if signal['signal_kind'] == 'art-history':
+                            signal['domain']['art_history']['content'] = [{
+                                'text': '保留の構造を描く合成作品。',
+                                'source_locator': signal['source']['locators'][0] + '#定義',
+                                'source_refs': ['https://example.invalid/synthetic-art']}]
+                            signal['evidence_refs'].append({'locator': 'https://example.invalid/synthetic-art',
+                                'kind': 'primary', 'entity_id': signal['source']['entity_ids'][0]})
+                        elif signal['signal_kind'] == 'marketing':
+                            signal['certainty']['basis'] = '保留の選択についての合成観測。'
                         destination = output / signal["signal_kind"]
                         destination.mkdir(exist_ok=True)
                         (destination / "signal.json").write_text(json.dumps(signal), encoding="utf-8")
@@ -106,6 +117,10 @@ class AutomaticPlanEntryTests(unittest.TestCase):
                         return min(source_terms(request["inputs"][key]), key=lambda term: (-len(term), term))
                     if identifier == "A3.operation":
                         value = "保留"
+                    elif identifier.startswith("A3.operation."):
+                        self.assertEqual("A3.operation.2", identifier)
+                        self.assertIn("BELOW_MINIMUM_CONTENT_MATCH", request["previous_failure"][0]["reason"])
+                        value = "構造と選択"
                     elif identifier.startswith("A5."):
                         value = {"answer": True, "reason": f"{anchor('self')}と{anchor('signal')}の関係を検討する。"}
                     else:

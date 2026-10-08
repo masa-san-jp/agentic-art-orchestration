@@ -1,3 +1,41 @@
+# Issue #283 — review correction and actual accepted-A3 evidence
+
+Only orchestration changed in this review. The approved child candidate remains
+`360eb99bc8c5deab45c9e607653f61decc17dceb`. Parent branch is
+`agent/283-content-matching`; the orchestrator owns publication and pin adoption.
+No lease acquired; none held. No remote write or private profile access.
+
+A4 keeps longest non-overlapping literal matches in both body and query, counts
+repeated terms once, and requires a 3-character match or two distinct lexical
+words with distinct anchors. Weak single fragments have score 0. Positive ties
+use matching operation count, query coverage, longest match and lexical-word
+count, then normalized content; never signal ID. History and retry requests
+retain domain-specific missing-content, no-overlap and below-minimum reasons.
+
+Actual accepted A3 確定の保留 was replayed against 176 eligible owner art exports.
+All effective scores are zero; four 確定 matches have raw score 2 and fall below
+the floor. Native Engine accepts one A3 and waits at A3.operation.2; no added
+operation or A5 judgement was invented. The market and self transport envelopes
+are explicit synthetic fixtures, so this is not a full owner-profile run.
+The previous agent-authored 9-point example is withdrawn as acceptance evidence.
+
+Evidence: execution/issue-283-matching.json, execution/issue-283-verification.json,
+and docs/issue-283-content-matching.md. Parent core 59, related 190, docs/status 22 and child canonical 190 tests pass.
+Parent full 852 tests has exactly baseline six failures and five skips; no added
+or removed failures. Run-related 36 retains its one baseline failure. Validator,
+compile, security and diff pass; audit has three nonblocking existing warnings.
+Pristine origin/main rerun: 834 tests, six named failures, five skips.
+
+Implementation review requirements are addressed; meaningful positive ranking
+for the actual material remains unproven. ISSUE-283 is BLOCKED on the next real
+A3 value; last_completed_task is restored to ISSUE-278. ISSUE-280's separate
+owner gate remains BLOCKED. No private self prose or owner paragraphs are stored.
+No Drive artifact, inferred additional answer, public consent or remote write.
+
+Next operation: review corrected local HEAD and the native request evidence;
+apply corrected A4 in the actual run and continue with its A3 addition rather
+than selecting a favorable word.
+
 # Issue #250 S4 — local credential-free entry
 
 Assigned repository: agentic-art-orchestration; branch: `agent/250-credential-free-run-entry`.

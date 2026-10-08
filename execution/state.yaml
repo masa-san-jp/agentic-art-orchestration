@@ -1,7 +1,31 @@
-version: 322
-updated_at: '2026-10-07T15:38:32.864992+00:00'
+version: 324
+updated_at: '2026-10-08T12:23:04.805398+00:00'
 active_task: null
 active_repository: null
+issue283_checkpoint:
+  task: ISSUE-283
+  repositories: [agentic-art-orchestration, art-history-notes]
+  status: BLOCKED
+  code_status: CODE_VERIFIED
+  start_point: 337c33211d6048d934b2db0dcf749cd25cb2e617
+  child_start_point: d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7
+  expected_changes: Non-overlapping longest literal matches, minimum positive evidence, content tie metrics and native accepted-A3 retry evidence.
+  child_candidate: 360eb99bc8c5deab45c9e607653f61decc17dceb
+  evidence: execution/issue-283-verification.json
+  acceptance: Review code requirements implemented; actual accepted A3 has zero qualifying candidates and requests A3.operation.2. Meaningful real-material ranking remains unproven.
+  checks:
+    parent_validator: PASS
+    parent_related: PASS; 190 tests
+    parent_core: PASS; 59 tests
+    parent_full: FAILED_BASELINE_MATCHED; 852 tests; 1 failure, 5 errors, 5 skips; zero new or removed failures
+    child_canonical: PASS; 190 tests without skips; graph, context, source audits and generated diff
+  sensitive_data: Material and owner prose hashes only; no private profile or credential
+  external_artifact: No Drive or service write
+  feedback: Explicit review provides actual accepted A3 確定の保留; no added operation inferred or answered.
+  unresolved: Actual A3 addition remains unanswered; positive real-material ranking not yet demonstrated; existing six parent failures and separate qualified owner-pin adoption.
+  lease: NOT_ACQUIRED_ASSIGNED_ISOLATED_CLONES
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  next_operation: Review both local branch HEADs and verification evidence; orchestrator owns publication and qualified pin adoption.
 lease:
   status: available
   owner: null
@@ -122,9 +146,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: ISSUE-278
 resume_from:
-  task: ISSUE-280
+  task: ISSUE-283
   repository: agentic-art-orchestration
-  action: Review Issue-280 local commits and verification evidence; arrange real-profile owner confirmation; orchestrator owns publication; no lease is held.
+  action: Review the corrected Issue-283 commit and the native A3.operation.2 checkpoint; obtain the next actual A3 answer in the real run before claiming meaningful ranked candidates. Orchestrator owns publication and pin adoption; no lease is held.
   command: git show --stat HEAD
 
 oi07_progress:
@@ -2176,7 +2200,7 @@ previous_issue278_checkpoint:
   next_operation: git show --stat HEAD; orchestrator reviews and owns publication;
     no next task claimed
 
-checkpoint:
+issue280_checkpoint:
   task: ISSUE-280
   repository: agentic-art-orchestration
   status: BLOCKED
@@ -2209,3 +2233,12 @@ issue280_hearing_follow_up:
   child_contract_commit: 2e4a02952d6d17bc22b6b540c24ad2913f9aaea4
   remote_sync: NOT_RUN_BY_INSTRUCTION
   lease: NOT_ACQUIRED
+
+checkpoint:
+  task: ISSUE-283
+  repository: agentic-art-orchestration
+  status: BLOCKED
+  code_status: CODE_VERIFIED
+  start_point: 337c33211d6048d934b2db0dcf749cd25cb2e617
+  evidence: execution/issue-283-verification.json
+  next_operation: Review corrected code and actual accepted-A3 evidence; apply corrected A4 in the actual run and continue with its requested A3 addition. Publication and pin adoption remain orchestrator-owned.
