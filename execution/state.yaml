@@ -1,5 +1,5 @@
-version: 320
-updated_at: '2026-10-07T06:46:53.844011+00:00'
+version: 322
+updated_at: '2026-10-07T15:38:32.864992+00:00'
 active_task: null
 active_repository: null
 lease:
@@ -122,9 +122,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: ISSUE-278
 resume_from:
-  task: null
+  task: ISSUE-280
   repository: agentic-art-orchestration
-  action: Review Issue-278 local commit and verification evidence; orchestrator owns publication; no lease is held.
+  action: Review Issue-280 local commits and verification evidence; arrange real-profile owner confirmation; orchestrator owns publication; no lease is held.
   command: git show --stat HEAD
 
 oi07_progress:
@@ -2145,7 +2145,7 @@ issue_275_local_implementation:
   acceptance: 6/6 plus portable-export independence
   code_status: CODE_VERIFIED
 
-checkpoint:
+previous_issue278_checkpoint:
   task: ISSUE-278
   repository: agentic-art-orchestration
   status: DONE
@@ -2175,3 +2175,37 @@ checkpoint:
   unresolved: No issue condition unmet; existing full-suite errors remain explicit
   next_operation: git show --stat HEAD; orchestrator reviews and owns publication;
     no next task claimed
+
+checkpoint:
+  task: ISSUE-280
+  repository: agentic-art-orchestration
+  status: BLOCKED
+  code_status: CODE_VERIFIED
+  start_point: 5f7e186944cf2331ba9eb55dc02619d5f833b139
+  branch: agent/280-phase-a-theme
+  code_commit: 2afe057b94c427b648cf5a58d6488f90375c9bcc
+  evidence: execution/issue-280-verification.json
+  acceptance: 9/9 observable implementation conditions; real-profile owner acceptance
+    NOT_RUN
+  checks:
+    full_suite: 'FAILED_BASELINE_MATCHED: 826 tests; 6 named baseline failures; zero
+      new failures'
+    parent_gates: See evidence for exact commands, exits and counts
+    native_synthetic: fake and authored answers; native Research accepted; pinned
+      children unchanged
+  blocker: Masa real-profile run and owner recognition of a meaningful question; supplement
+    restricts this task to synthetic profiles
+  lease: NOT_ACQUIRED_ISOLATED_CLONE
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  next_operation: git show --stat HEAD; orchestrator review, then arrange real-profile
+    owner confirmation
+
+issue280_hearing_follow_up:
+  status: CODE_VERIFIED_OWNER_GATE_PENDING
+  implementation_commits:
+  - f7099b108b11849bc6d05ad5ef22dbb80e2c23ae
+  - 5b29383f3559f12b561b9c91553bea71b245f700
+  evidence: execution/issue-280-hearing-verification.json
+  child_contract_commit: 2e4a02952d6d17bc22b6b540c24ad2913f9aaea4
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  lease: NOT_ACQUIRED

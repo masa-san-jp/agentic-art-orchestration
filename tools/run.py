@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
-"""Carry a repository-derived theme all the way to a production plan, without asking anyone.
+"""Carry private hearing and theme elements through research to a production plan.
 
     python3 tools/run.py --workspace-root <実クローン> --profile-root <外部profile>
 
-An explicit --intent may rank candidates, but it is optional. Without it, the
-repository snapshot supplies the first gate-passing candidate and its derived
-creative question becomes the working theme. Everything after startup runs
-without asking: ingest, compose, gate, select, trace, request, accept, hand
-over, and build the plan.
-
-One step is not a tool call. Conducting the research means reading, searching,
-and writing records, and the agent driving this repository does it. When the
-research is not yet done the run returns what is left and how it is judged
-done; calling the same entry again with the same run id carries on to the plan.
-It waits for the agent, never for a person.
+An optional intent ranks equally used materials. The direct entry returns private
+owner hearing actions before ingest and common A3/A5/A7 element requests after it.
+The driving agent answers one action at a time and resumes the same run. Research
+and Production retain their native acceptance, provenance and delivery contracts.
 """
 
 from __future__ import annotations
@@ -108,7 +101,7 @@ def _project_identity(run_id: str, slug: str | None = None, title: str | None = 
 
 
 def _theme_proposal(request_path: Path, *, explicit_intent: bool) -> dict[str, str]:
-    """Expose the candidate-derived question without storing conversation text."""
+    """Expose the sourced question without storing conversation text."""
     try:
         request = yaml.safe_load(request_path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
@@ -119,8 +112,8 @@ def _theme_proposal(request_path: Path, *, explicit_intent: bool) -> dict[str, s
         raise StepFailure("research request has no derived creative question")
     return {
         "status": "PROPOSED",
-        "mode": "INTENT_RANKED" if explicit_intent else "REPOSITORY_DERIVED",
-        "source": "gate-passing-candidate",
+        "mode": "ELEMENT_INFERRED" if request.get("source", {}).get("artifact_uri", "").startswith("urn:orchestration:phase-a:") else "INTENT_RANKED" if explicit_intent else "REPOSITORY_DERIVED",
+        "source": "phase-a-elements" if request.get("source", {}).get("artifact_uri", "").startswith("urn:orchestration:phase-a:") else "gate-passing-candidate",
         "creative_question": question,
         "request": str(request_path),
     }
@@ -890,10 +883,55 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         record("self-hearing", _hearing_step(hearing))
     else:
         record("self-hearing", {"status": "not-run"})
+    # The private owner flow runs before ingest. Its body is returned only after
+    # the metadata-only run report has been written; the parent Engine never sees it.
+    progress_path = work / "hearing-element.json"
+    if not offline_fixture and self_export is None and not (work / "element-state.json").exists():
+        pending = False
+        if progress_path.is_file():
+            progress = json.loads(progress_path.read_text(encoding="utf-8"))
+            pending = progress.get("private") is True and progress.get("status") in {
+                "WAITING", "HEARING", "CONFIRMATION", "SEED_REQUIRED", "BLOCKED"}
+        if pending or not hearing_path.exists():
+            from tools.self_hearing import execute as hearing_execute
+            _, transient, outcome = hearing_execute("next" if pending else "open", run_id=run_id,
+                state_root=state_root, workspace_root=workspace_root, profile_root=profile_root, purpose=purpose)
+            private_report = json.loads(transient) if transient else {}
+            action = private_report.get("next_action")
+            if (action is None and private_report.get("outcome") == "offered"
+                    and isinstance(private_report.get("question"), str)):
+                # Old pins still offer their native packet. Expose its single
+                # question and routing fields transiently at the direct entry.
+                action = {"kind": "hearing", "private": True, "legacy": True, "operation": "answer",
+                          **{key: private_report.get(key) for key in (
+                              "question", "why", "intent", "anchors", "answer_format", "task_id", "question_id", "queue_sha256")}}
+                private_report["status"] = "HEARING"
+            if pending and private_report.get("status") not in {
+                    "WAITING", "HEARING", "CONFIRMATION", "SEED_REQUIRED", "COMPLETED", "SKIPPED", "BLOCKED"}:
+                # A failed reacquisition does not discard an already active
+                # private owner flow or permit ingest of unconfirmed material.
+                private_report = {"status": "BLOCKED", "blocked": {
+                    "element_id": "A1.hearing", "reason": "PRIVATE_ELEMENT_UNAVAILABLE"}}
+            if (isinstance(action, dict) and action.get("private") is True) or private_report.get("status") == "BLOCKED":
+                record("self-hearing-progress", {"status": private_report["status"]})
+                report = {"run_id": run_id, "status": private_report["status"], "run_status": "INCOMPLETE",
+                          "completion_status": "INCOMPLETE", "plan_status": "NOT_READY",
+                          "knowledge_status": "NOT_STARTED", "projection_status": "NOT_RUN", "steps": steps,
+                          "git_write_credentials": git_write_credentials, "delivery_contract": dict(delivery_contract),
+                          "resume_command": resume_command}
+                report["delivery_completion"] = completion(report, delivery_contract)
+                _write_run_report(work, report, profile_root_source, profile_root)
+                report["next_action"] = action
+                if action:
+                    action["resume_command"] = resume_command
+                report["blocked"] = private_report.get("blocked")
+                return report
     if destination_resolution is not None:
         record("destination-resolution", {"status": "PASSED", "resolution": dict(destination_resolution)})
     if offline_fixture:
         record("ingest", _materialize_offline_signals(signals))
+    elif (work / "element-state.json").exists():
+        record("ingest", {"status": "PINNED_RESUME"})
     else:
         ingest_args = ["tools/ingest_signals.py", "--purpose", purpose,
                        "--workspace-root", str(workspace_root), "--output", str(signals),
@@ -927,39 +965,80 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 "self_hearing": {"status": "unavailable", "reason": "PROFILE_ROOT_UNAVAILABLE"},
             }, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    record("candidates", _run_tool([
-        "tools/candidate_space.py", "--fixture", str(signals), "--output", str(work / "candidates.json"),
-    ], python))
+    if not offline_fixture:
+        if limit != 1:
+            raise StepFailure("PHASE_A_SINGLE_THEME: use one independent run ID per theme")
+        from tools.element import Engine
+        from tools.theme_elements import start, write_request
+        engine = Engine(run_id, state_root, project_root=(
+            Path(destination_resolution['project_root']) if isinstance(destination_resolution, Mapping)
+            and destination_resolution.get('contract_version') == 'destination-resolution/v2' else None))
+        try:
+            rows = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(signals.glob("*/*.json"))] if not engine.path.exists() else []
+            phase_report = start(engine, rows, requested_at=requested_at, workspace_root=workspace_root, intent=intent)
+        except ValueError as exc:
+            phase_report = {"status": "BLOCKED", "blocked": {"element_id": "A2.material", "detail": str(exc)}, "next_action": None}
+        if engine.path.exists() and "--intent" in resume_command:
+            # Material selection is frozen; its hash/score suffice on resume.
+            # Keep the optional text out of subsequent parent run records.
+            position = resume_command.index("--intent")
+            del resume_command[position:position + 2]
+        if engine.path.exists():
+            intent = None  # Frozen selection retains only the optional input hash.
+        record("theme-elements", {"status": phase_report["status"], "accepted_count": phase_report.get("accepted_count", 0)})
+        if phase_report["status"] != "COMPLETED":
+            report = {"run_id": run_id, "status": phase_report["status"], "run_status": "INCOMPLETE",
+                      "completion_status": "INCOMPLETE", "plan_status": "NOT_READY",
+                      "knowledge_status": "NOT_STARTED", "projection_status": "NOT_RUN", "steps": steps,
+                      "git_write_credentials": git_write_credentials, "delivery_contract": dict(delivery_contract),
+                      "resume_command": resume_command, "blocked": ({key: value for key, value in phase_report['blocked'].items()
+                          if key in {'element_id', 'attempt', 'last_failure', 'detail'}} if phase_report.get('blocked') else None)}
+            report["delivery_completion"] = completion(report, delivery_contract)
+            # Consent-approved material stays in the protected element state;
+            # requests and answer values do not enter the general parent run log.
+            _write_run_report(work, report, profile_root_source, profile_root)
+            report["blocked"] = phase_report.get("blocked")
+            report["next_action"] = phase_report.get("next_action")
+            if report["next_action"]:
+                report["next_action"]["resume_command"] = resume_command
+            return report
+        request = write_request(engine, work / "requests", slug=project_slug, title=project_title, research_root=research_data_root)
+        record("research-request", {"status": "PASSED", "request_count": 1})
+    else:
+        record("candidates", _run_tool([
+            "tools/candidate_space.py", "--fixture", str(signals), "--output", str(work / "candidates.json"),
+        ], python))
 
-    record("gates", _run_tool([
-        "tools/candidate_gates.py", "--candidates", str(work / "candidates.json"),
-        "--fixture", str(signals), "--output", str(work / "gates.json"),
-    ], python))
+        record("gates", _run_tool([
+            "tools/candidate_gates.py", "--candidates", str(work / "candidates.json"),
+            "--fixture", str(signals), "--output", str(work / "gates.json"),
+        ], python))
 
-    selection_args = [
-        "tools/candidate_selection.py", "--candidates", str(work / "candidates.json"),
-        "--fixture", str(signals), "--project-id", project_slug, "--limit", str(limit),
-        "--output", str(work / "selection.json"),
-    ]
-    if intent is not None:
-        selection_args.extend(["--intent", intent])
-    record("selection", _run_tool(selection_args, python))
+        selection_args = [
+            "tools/candidate_selection.py", "--candidates", str(work / "candidates.json"),
+            "--fixture", str(signals), "--project-id", project_slug, "--limit", str(limit),
+            "--output", str(work / "selection.json"),
+        ]
+        if intent is not None:
+            selection_args.extend(["--intent", intent])
+        record("selection", _run_tool(selection_args, python))
 
-    record("propositions", _run_tool([
-        "tools/proposition_provenance.py", "--selection", str(work / "selection.json"),
-        "--candidates", str(work / "candidates.json"), "--gates", str(work / "gates.json"),
-        "--fixture", str(signals), "--output", str(work / "propositions.json"),
-    ], python))
+        record("propositions", _run_tool([
+            "tools/proposition_provenance.py", "--selection", str(work / "selection.json"),
+            "--candidates", str(work / "candidates.json"), "--gates", str(work / "gates.json"),
+            "--fixture", str(signals), "--output", str(work / "propositions.json"),
+        ], python))
 
-    request_args = [
-        "tools/build_research_request.py", "--propositions", str(work / "propositions.json"),
-        "--signals", str(signals), "--title", project_title,
-        "--requested-at", requested_at, "--output", str(work / "requests"),
-    ]
-    if research_root is not None:
-        request_args.extend(["--research-root", str(research_root)])
-    request_args += ["--all", "--slug", project_slug] if limit > 1 else ["--slug", project_slug]
-    record("research-request", _run_tool(request_args, python))
+        request_args = [
+            "tools/build_research_request.py", "--propositions", str(work / "propositions.json"),
+            "--signals", str(signals), "--title", project_title,
+            "--requested-at", requested_at, "--output", str(work / "requests"),
+        ]
+        if research_root is not None:
+            request_args.extend(["--research-root", str(research_root)])
+        request_args += ["--all", "--slug", project_slug] if limit > 1 else ["--slug", project_slug]
+        record("research-request", _run_tool(request_args, python))
+
 
     requests = sorted((work / "requests").glob("RR*.yaml"))
     request = requests[-1]
@@ -1496,6 +1575,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    if report.get("status") == "BLOCKED":
+        return 2
     projection = report.get("public_projection") if isinstance(report, Mapping) else None
     projection_status = projection.get("status") if isinstance(projection, Mapping) else None
     if projection_status in {"BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}:

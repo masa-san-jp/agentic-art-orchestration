@@ -180,11 +180,12 @@ class PortableSelfExportTests(unittest.TestCase):
             path.write_text(json.dumps(portable()))
             (root / "state/receiver").mkdir(parents=True)
             (root / "state/receiver/hearing.json").write_text('{"outcome":"answered"}')
-            stop = run.StepFailure("candidate probe")
+            stop = run.StepFailure("element probe")
             with patch.object(run, "_prepare_runtime_workspace", return_value=({"status": "PASSED"}, root)), \
                     patch.object(run, "_manifest_runtime_roots", return_value=(root / "research", root / "production")), \
-                    patch.object(run, "_run_tool", side_effect=[{"status": "PASSED", "self_export": {"export_id": "probe"}}, stop]) as tool:
-                with self.assertRaisesRegex(run.StepFailure, "candidate probe"):
+                    patch.object(run, "_run_tool", return_value={"status": "PASSED", "self_export": {"export_id": "probe"}}) as tool, \
+                    patch("tools.theme_elements.start", side_effect=stop):
+                with self.assertRaisesRegex(run.StepFailure, "element probe"):
                     run._run_orchestration(None, root, root / "state", "receiver", "artistic-research", None, None, "now", sys.executable, self_export=path)
             receipt = json.loads((root / "state/receiver/self-export-receipt.json").read_text())
             self.assertEqual("probe", receipt["self_export"]["export_id"])
@@ -193,6 +194,7 @@ class PortableSelfExportTests(unittest.TestCase):
             args = tool.call_args_list[0].args[0]
             self.assertIn("--self-export", args)
             self.assertNotIn("--profile-root", args)
+            self.assertEqual(1, tool.call_count)
             command = run._resume_command(python=sys.executable, run_id="receiver", workspace_root=root, state_root=root, research_root=None, production_root=None, research_work_root=None, profile_root=None, self_export=path, purpose="artistic-research", intent=None, slug=None, title=None, offline_fixture=False)
             self.assertEqual(str(path), command[command.index("--self-export") + 1])
 

@@ -41,14 +41,26 @@ def build_inputs(bindings: dict, answers: dict, context: dict) -> dict:
     return {key: resolve(binding) for key, binding in bindings.items()}
 
 
+def _has_private_elements(sequence: object) -> bool:
+    return (isinstance(sequence, dict) and isinstance(sequence.get('elements'), list)
+            and any(isinstance(item, dict) and item.get('private') is True
+                    for item in sequence['elements']))
+
+
 class Engine:
-    def __init__(self, run_id: str, state_root: Path):
+    def __init__(self, run_id: str, state_root: Path, *, project_root: Path | None = None):
         if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,127}', run_id):
             raise ValueError('Unsafe run ID')
         root = state_root.expanduser().resolve()
         if not state_root.expanduser().is_absolute() or root == Path(root.anchor):
             raise ValueError('Use a dedicated absolute Git-external state root')
-        if root == ROOT or ROOT in root.parents or any((p / '.git').exists() for p in (root, *root.parents)):
+        if project_root is not None:
+            from tools.repo_local_destinations import resolve_project_root
+            resolution = resolve_project_root(project_root, run_id=run_id)
+            permitted = Path(resolution['destinations']['state_root']['path']).resolve()
+            if root != permitted:
+                raise ValueError('Element state differs from the validated Project destination')
+        elif root == ROOT or ROOT in root.parents or any((p / '.git').exists() for p in (root, *root.parents)):
             raise ValueError('Element state must stay outside Git checkouts')
         self.directory = root / run_id
         # Reject run-local symlinks rather than follow them into another run.
@@ -95,10 +107,17 @@ class Engine:
             os.close(fd)
 
     def _request(self, state: dict) -> None:
+        if state['index'] == len(state['sequence']['elements']) and state['sequence'].get('driver') == 'phase-a':
+            from tools.theme_elements import advance
+            advance(state)
+            if state['status'] == 'BLOCKED':
+                return
         if state['index'] == len(state['sequence']['elements']):
             state.update(status='COMPLETED', pending=None)
             return
         item = state['sequence']['elements'][state['index']]
+        if item.get('private'):
+            raise ValueError('Private requests must stay in the owner relay')
         request = {'contract_version': f"{item['kind']}-request/v1", 'run_id': self.run_id,
                    'element_id': item['element_id'], 'attempt': state['attempt'],
                    'previous_failure': state['previous_failure']}
@@ -119,6 +138,8 @@ class Engine:
         if context is not None and not isinstance(context, dict):
             raise ValueError('Context must be an object')
         if sequence is not None:
+            if _has_private_elements(sequence):
+                raise ValueError('Private requests must be relayed to the owner without parent persistence')
             sequence = deepcopy(sequence)
             if isinstance(sequence, dict):
                 sequence.setdefault('max_attempts', 5)
@@ -131,6 +152,8 @@ class Engine:
                     raise ValueError('Context differs from the saved run')
             else:
                 sequence = deepcopy(sequence if sequence is not None else load_sequence(registry))
+                if _has_private_elements(sequence):
+                    raise ValueError('Private requests must stay in the owner relay')
                 errors = validate_sequence(sequence)
                 if errors:
                     raise ValueError('; '.join(errors))
@@ -216,7 +239,10 @@ class Engine:
                     if fmt['type'] == 'url' and not valid_url(value):
                         failures.append({'check': 'url_shape', 'reason': 'Return a valid HTTP(S) URL without credentials.'})
                 failures.extend(check_value(value, request['checks'], inputs=request['inputs'],
-                                            ledger=state['ledger'], previous_answers=state['answers']))
+                                            ledger=state['ledger'], previous_answers={**state['answers'], **{
+                                                f'prior-operation-{i}': word for i, word in enumerate(
+                                                    state['context'].get('phase_a', {}).get('prior_operations', [])
+                                                    if request['element_id'] == 'A3.operation' else [])}}))
             state['history'].append({'element_id': request['element_id'], 'attempt': request['attempt'],
                                      'answer_sha256': hashlib.sha256(canonical(answer).encode()).hexdigest(),
                                      'failures': failures})
@@ -255,12 +281,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=('next', 'answer', 'status'))
     parser.add_argument('--run-id', required=True)
-    parser.add_argument('--state-root', type=Path, required=True)
+    destinations = parser.add_mutually_exclusive_group(required=True)
+    destinations.add_argument('--state-root', type=Path)
+    destinations.add_argument('--project-root', type=Path, help='explicit Project checkout; validate its repo-local state destination')
     parser.add_argument('--registry', type=Path, default=DEFAULT_REGISTRY,
                         help='declarative sequence used only when initializing a run')
     args = parser.parse_args(argv)
     try:
-        engine = Engine(args.run_id, args.state_root)
+        state_root = args.state_root
+        if args.project_root is not None:
+            from tools.repo_local_destinations import resolve_project_root
+            resolution = resolve_project_root(args.project_root, run_id=args.run_id)
+            state_root = Path(resolution['destinations']['state_root']['path'])
+        engine = Engine(args.run_id, state_root, project_root=args.project_root)
         if args.command == 'answer':
             report = engine.answer(json.load(sys.stdin))
         elif args.command == 'next':

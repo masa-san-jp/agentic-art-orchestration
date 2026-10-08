@@ -173,7 +173,7 @@ run.jsonには従来どおり`git_write_credentials: absent|present|unknown`だ�
   --state-root <external-state-root>
 ~~~
 
-この入口はpin済みsignal snapshotからgate通過候補を決定的に選び、安定したproject identityを生成し、Research requestをGit外へ出力する。結果の`theme_proposal.mode`は`REPOSITORY_DERIVED`であり、`creative_question`が候補から導出した作業テーマである。エージェントはそのrequestを読み、宣言された調査を実行し、既存のhandoff・Production手順を継続して`PLAN_READY`まで進める。明示`--intent`は任意の順位付けであり、必須ではない。
+この入口はpin済みsignalから本人の素材を一件選び、段階Aの要素を一件ずつ依頼する。答えを受理して同じrunを再開すると、中心の問いをResearch requestへ渡す。`theme_proposal.source: phase-a-elements`がこの経路の出所である。Research以降は宣言された調査と既存のhandoff・Production手順を継続する。旧候補空間・gate・ハッシュ選定は通常runで使わない。`--intent`は任意の素材順位づけです。使用回数が同じ素材の本文との語の重なりだけに使い、素材選定stateには生文を保存せずhashを保持します。素材が固定された後のresume commandにも生文を残しません。中心の問いはA7が作ります。
 
 新規の通常runは`delivery-contract/v1`を生成してrun stateへ保存する。明示したProject checkoutを
 `--project-root`または`AGENTIC_ART_PROJECT_ROOT`で選ぶ場合のtargetは`project-local`であり、
@@ -419,7 +419,7 @@ checkpointにはtask、repo、branch、HEAD、dirty state、checks、未完了ac
 
 ## Intent付き実行
 
-候補順位へ人のintentを反映する場合は `.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- .venv/bin/python tools/run.py --intent` を使う。intentは
+旧bundle互換APIで候補順位へ人のintentを反映する場合は `.venv/bin/python tools/credential_free.py --state-root <external-state-root> -- .venv/bin/python tools/run.py --intent` を使う。intentは
 hard filterではなく、既存の安全・鮮度・根拠gateを通過した候補の順位付けだけに使う。
 実行は `intent-rank/v1` のローカル決定的処理で、Unicode NFKC、casefold、空白圧縮を
 行った文字bigramのmultiset weighted Jaccardを計算する。intentがない実行は既存の
@@ -435,7 +435,7 @@ kind別score、total scoreだけを残す。CLIの実行結果とselectionのdig
   --seed-input <seed> --intent <intent-text> --output <run.json> --check
 ~~~
 
-intentがない実行でも、候補空間から最初のgate-passing候補を選び、Research requestの
+旧bundle互換APIと明示offline fixtureでは、候補空間からgate-passing候補を選び、Research requestの
 `intent.creative_question`をテーマ提案として扱う。したがって制作計画の開始に、利用者のテーマ・
 slug・titleは不要である。
 
@@ -520,7 +520,7 @@ clone/fork利用者は、明示した`agentic-art-project` checkoutを次のよ�
 要素ハーネスは、短い指示と、その答えに必要な材料だけを一件ずつ渡します。
 答える人・エージェント・ローカルモデルは、一つの値だけを返してください。
 次の要素へ進めるかどうかはプログラムが確認します。現在はデモ専用の入口で、
-既存の候補生成・選定・研究・制作の工程はこの入口へ置き換えていません。
+このデモ入口は合成の短い列です。通常の制作runのテーマ生成は下の段階Aへ置き換えています。Research以降の段階B〜Dは子ownerの既存経路を使います。
 
 まず、Git checkoutの外に専用の保存場所を作り、同じrun IDで始めます。
 以下の`EXTERNAL_STATE_ROOT`は、その保存場所の絶対pathを表します。
@@ -619,3 +619,96 @@ adapter自体も`credential_free.py`経由で起動します。モデルの起�
 閾値と同じ比も拒否します。文字数と引用は正規化せず元の文字列で判定します。
 booleanの検査は理由文へ適用します。不明な検査や入力参照は黙って無視しません。
 材料・答え・取得本文の保存先は外部stateのみで、親のGit証跡へ転記しません。
+
+
+## 段階Aの要素
+
+通常のテーマ未指定runは、同意済みexportの全content項目から空でない素材を一件選びます。
+consent/scope/opaque raw locatorは素材ではありません。同じ外部state rootのA3を受理済みのrunで
+使用回数の少ない素材を優先し、同率なら項目・本文・signal ID順に選びます。
+同じrunの再開では入力・素材・照合順を固定します。
+
+`next_action.kind: element`なら、共通ハーネスの依頼を読んで一つの値を返します。
+A3は短い操作語一つ、A5は素材と参照一件ごとのbooleanと理由一文、A7は三つの素材を
+含む120字以内の問い一文です。各依頼のrun ID・element ID・attemptをそのまま答えへ写します。
+以下は合成例で、実行では返された識別子と自分の答えに置き換えます。
+
+~~~bash
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/element.py answer \
+  --run-id "$RUN_ID" --state-root "$EXTERNAL_STATE_ROOT" <<'JSON'
+{"contract_version":"element-answer/v1","run_id":"<returned-run-id>","element_id":"A3.operation","attempt":1,"value":"先送り"}
+JSON
+~~~
+
+回答後は最初の`run.py`または返された`resume_command`を同じcredential-free入口で実行します。
+A5の「はい」が足りない領域は次の5件へ照合順に広げ、既に受理した答えは捨てません。
+全件で接続がない場合はA6でBLOCKEDとなり、否定理由を保持します。
+A7受理後の要素列`COMPLETED`はテーマ段階の完了で、制作・納品の完了ではありません。
+
+RRの`creative_question`はA7の答えそのものです。`requests/phase-a-provenance.json`は
+素材・選んだsignal・それぞれのA5理由を構造化して保持し、既存RRの
+`source.artifact_uri`と`references`のhash付きURNから参照します。子の閉じたRR schemaへ
+独自fieldを追加しません。両artifactはcreate-onlyで、再開時も同じbyteを再利用します。
+回答待ちの`run.json`は依頼本文・A3/A5の答えを保存せず、保護された要素stateに同意済み派生素材を保持します。受理した中心の問いはテーマ出力として保存します。
+明示offline fixtureと旧bundle APIは互換経路であり、実段階Aの完了証拠ではありません。
+
+### privateな子ヒアリング
+
+pin済みSelf Modelが`growth_tasks.py element`を持つ場合、`run.py`と`self_hearing.py`のopen/next操作が
+その依頼を`private: true`としてstdoutへ中継します。旧pinは従来のhearingへ戻ります。
+子の`agent_runtime.py`を経由し、同じ`--run-id`を各操作へ渡します。複数Subjectの場合は
+`self_hearing.py`各操作の`--subject subject/<id>`で対象を明示します。
+private依頼は`element.py`の永続Engineへ渡さず、子ownerへ直接答えます。
+
+~~~bash
+.venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
+  .venv/bin/python tools/self_hearing.py answer \
+  --run-id "$RUN_ID" --state-root "$EXTERNAL_STATE_ROOT" \
+  --workspace-root "$WORKSPACE_ROOT" <<'JSON'
+{"contract_version":"element-answer/v1","run_id":"<child-run-id>","element_id":"<child-element-id>","attempt":1,"value":"<one-owner-answer>"}
+JSON
+~~~
+
+親が保存するのはprivate/status/識別子/attemptだけです。本人のEvent、質問、packet、回答本文、
+子の診断文は親のstate・log・Issue・PR・handoffに保存しません。ヒアリングのoutcomeに
+かかわらず、子の完了・skip・利用不可の後は同じ制作runを継続します。待機中は同じrunを
+再実行すると現在の私的依頼を取り直します。本人の実profileで意味のある問いかを確認するオーナー判定は、
+合成テスト・要素形式検査・PLAN_READYで代用しません。
+
+追加検査 `one_sentence` は改行・複数文を拒否します。
+`contains_source_terms:self,signal` は各入力本文と理由の共通content語を要求します。
+語はLatin単語・日本語2/3字shingle（単独のcontent文字も可）で決定的に抽出し、汎用の接続語を除外します。
+`not_similar_to:material` は入力素材と語が類似しすぎる場合に拒否します（bigram Jaccard 0.8）。
+
+
+Project repo-local契約で始めたrunの要素回答は、入口側の外部rootを維持し、
+`element.py answer --run-id <run> --project-root <selected-project-checkout>`へ渡します。
+`--state-root`と`--project-root`は同時指定せず、Project validatorとGit境界を再検証して
+同じrepo-local rootを導出します。パスの形だけでProject保存を許可しません。
+
+
+privateヒアリングで断り・無応答を受けた場合、同じ入口から
+`self_hearing.py`のskip操作（reasonはskippedまたはno-response）（同じrun/state/workspace指定、task ID不要）を
+呼びます。`HEARING`・`CONFIRMATION`・`SEED_REQUIRED`でのみ子のskipを実行し、
+子が返した進行metadataを保存します。要素待機`WAITING`へのskipは子が拒否します。
+拒否された操作は`next`で現在位置を取り直し、依頼を捨てません。
+
+`HEARING`・`SEED_REQUIRED`の`next_action.kind: hearing`は、`question`一つだけを本人に
+示し、Event blockを`self_hearing.py respond`のstdinへ直接渡します。
+`CONFIRMATION`は過去runの主張について本人に一問だけ確認し、
+`self_hearing.py confirm --owner-answer yes|no`で本人の選択を渡します。
+`answer`は推論要素専用です。`respond`・`confirm`にも同じrun/state/workspace指定を使います。
+`COMPLETED`の推論draftはそのrunでは本人確認済みにならず、次runの確認後にのみexportへ進みます。
+`BLOCKED`は理由をstdoutへ返してexit 2になり、親は本文を保存せず状態だけを保持します。
+
+Researchの受入契約はfile URI・絶対パスを拒否するため、sidecarはRRの隣にcreate-onlyで保存し、名前とhash付きURNで結びます。研究を担うエージェントはその出所artifactも参照します。
+
+通常の段階Aで返すtheme_proposalのmodeは`ELEMENT_INFERRED`です。明示offline fixtureでintent未指定の場合は、従来の`REPOSITORY_DERIVED`を維持します。
+
+通常runは一つの素材・中心の問いを扱うため、`--limit`は1です。複数テーマは同じstate rootに独立run IDで起動します。旧bundle APIの複数選定は維持します。
+
+実在する公開参照URLのpath内に`ark:/`のような表記がある場合、native receiverが絶対パスと
+誤認するため、当該参照だけhash URNにします。元URLとRRのURNの対応はsidecarの
+`reference_aliases`に保持し、権利状態は変えません。query/fragment付きURLはこの変換をせず、
+既存のnative検査へ渡します。素材固定後は任意intentの生文をrun reportにも残しません。
