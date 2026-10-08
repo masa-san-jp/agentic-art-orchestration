@@ -4,7 +4,7 @@
     {
       "evidence_id": "evidence:self-model:claim-001",
       "repository": "self-model",
-      "source_commit": "429ff1a955972466919848a3a960c6a90dc4972b",
+      "source_commit": "7b2425ed313163d36707e7404e324d9ce12bac30",
       "locator": "entities/claim-001",
       "evidence_kind": "observed",
       "freshness_status": "current",

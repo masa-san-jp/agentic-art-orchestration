@@ -8,7 +8,7 @@ repositories:
     role: input-kb
     authority: self-model entities, evidence, claims, patterns, and export policy
     default_branch: main
-    observed_commit: 429ff1a955972466919848a3a960c6a90dc4972b
+    observed_commit: 7b2425ed313163d36707e7404e324d9ce12bac30
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/self-model-notes/issues/1
     quality_gates:

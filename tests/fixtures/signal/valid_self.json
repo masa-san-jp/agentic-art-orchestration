@@ -4,7 +4,7 @@
   "signal_kind": "self",
   "source": {
     "repository": "self-model",
-    "commit": "429ff1a955972466919848a3a960c6a90dc4972b",
+    "commit": "7b2425ed313163d36707e7404e324d9ce12bac30",
     "entity_ids": ["self-entity-001"],
     "locators": ["derived/self-entity-001"]
   },
