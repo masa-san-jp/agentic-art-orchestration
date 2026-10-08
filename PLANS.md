@@ -1,3 +1,7 @@
+## Issue 283 — sourced content matching
+
+[Implementation and matching evidence](docs/issue-283-content-matching.md). Owner-native bounded excerpts, content-only A4 scores with lexical breakdown, and single-element A3 retries on zero matches. Local commits only; no lease or remote mutation. The supplied authorized material is checked against the actual child export; full validation and exact origin/main failure comparison are recorded in execution/issue-283-verification.json.
+
 Open-Issue autonomous implementation: [docs/20260914-open-issues-autonomous-implementation-plan.md](docs/20260914-open-issues-autonomous-implementation-plan.md). This ExecPlan connects the unqueued inspiration/prototype Issues and their owner tasks into one dependency-ordered completion path while preserving Production #10 and the Self Model #82 human gate.
 
 ## Issue #250 S4 — Credential-free production entry

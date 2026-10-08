@@ -197,7 +197,7 @@ def adapt_art_history_signal(record: dict) -> dict:
             f"art-history required input field(s) missing: {missing!r}",
             "provide stable entity, relation, evidence, and graph locator fields",
         )
-    if not isinstance(record["relations"], list) or (not record["relations"] and "method" not in record):
+    if not isinstance(record["relations"], list) or (not record["relations"] and "method" not in record and not record.get("content")):
         raise _fail(
             "relations must be a non-empty list",
             "include each exported relation with its stable target ID, evidence, and certainty",
@@ -273,7 +273,7 @@ def adapt_art_history_signal(record: dict) -> dict:
         },
     }
     art_history = signal["domain"]["art_history"]
-    for field in ("method", "source_refs"):
+    for field in ("method", "source_refs", "content", "entity_labels"):
         if field in record:
             art_history[field] = copy.deepcopy(record[field])
     if "method" in record and isinstance(record.get("source_refs"), list):
@@ -281,6 +281,17 @@ def adapt_art_history_signal(record: dict) -> dict:
             signal["evidence_refs"].append({
                 "locator": locator, "kind": record["evidence_kind"], "entity_id": record["entity_id"],
             })
+    if isinstance(record.get("content"), list):
+        for item in record["content"]:
+            if isinstance(item, dict) and isinstance(item.get("source_refs"), list):
+                for locator in item["source_refs"]:
+                    signal["evidence_refs"].append({"locator": locator, "kind": record["evidence_kind"],
+                                                    "entity_id": record["entity_id"]})
+    unique_refs = []
+    for ref in signal["evidence_refs"]:
+        if ref not in unique_refs:
+            unique_refs.append(ref)
+    signal["evidence_refs"] = unique_refs
     errors = validate_signal(signal, "art-history adapter output")
     if errors:
         raise AdapterError("\n".join(errors))

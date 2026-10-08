@@ -19,6 +19,45 @@ def load_input() -> dict:
 
 
 class ArtHistoryAdapterTests(unittest.TestCase):
+    def content_record(self):
+        record = load_input()
+        record['relations'] = []
+        record['content'] = [{'text': '先送りと時間', 'source_refs': ['https://example.test/source'],
+                              'source_locator': record['source_locator'] + '#定義'}]
+        record['entity_labels'] = ['合成運動']
+        return record
+
+    def test_content_only_signal_retains_native_locator_sources_and_uncertainty(self):
+        record = self.content_record()
+        record['validity']['status'] = 'unknown'
+        before = copy.deepcopy(record)
+        signal = adapt_art_history_signal(record)
+        self.assertEqual(before, record)
+        self.assertEqual(record['content'], signal['domain']['art_history']['content'])
+        self.assertEqual('unknown', signal['validity']['status'])
+        self.assertIn('https://example.test/source', [ref['locator'] for ref in signal['evidence_refs']])
+        signal['domain']['art_history']['content'][0]['text'] = '変更'
+        self.assertEqual(before, record)
+
+    def test_content_rejects_missing_sources_wrong_locator_and_over_limit(self):
+        for field, value in (('source_refs', []), ('source_refs', ['not-a-source']),
+                             ('source_locator', 'another.md#定義'), ('text', 'x' * 2401), ('text', ' ')):
+            with self.subTest(field=field, value=str(value)[:30]):
+                record = self.content_record()
+                record['content'][0][field] = value
+                with self.assertRaises(AdapterError):
+                    adapt_art_history_signal(record)
+        record = self.content_record()
+        record['content'] *= 2
+        record['content'][0]['text'] = 'x' * 1201
+        with self.assertRaises(AdapterError):
+            adapt_art_history_signal(record)
+
+    def test_content_urls_must_be_retained_in_normalized_evidence(self):
+        signal = adapt_art_history_signal(self.content_record())
+        signal['evidence_refs'] = [ref for ref in signal['evidence_refs'] if ref['locator'] != 'https://example.test/source']
+        self.assertTrue(validate_signal(signal, 'content-evidence'))
+
     def test_entity_relation_and_provenance_export_without_graph_copy(self):
         record = load_input()
         before = copy.deepcopy(record)

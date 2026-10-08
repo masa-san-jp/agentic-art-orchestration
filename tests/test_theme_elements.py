@@ -23,8 +23,13 @@ def signals():
     rows[0]['domain']['self_model'].update(seeks=[], protects=[], avoids=[], traits=[], states=[], contexts=[],
                                          recurring_patterns=[], tensions=['決定を後に回す'])
     rows[1]['statement'] = '時間をずらす作品'
+    rows[1]['domain']['art_history']['content'] = [{
+        'text': '先送りによって時間をずらす作品',
+        'source_refs': ['https://example.test/art'],
+        'source_locator': rows[1]['source']['locators'][0] + '#定義'}]
+    rows[1]['evidence_refs'].append({'locator': 'https://example.test/art', 'kind': 'primary', 'entity_id': 'art-entity-001'})
     rows[2]['statement'] = '余白を求める動き'
-    rows[2]['certainty']['basis'] = '時間をかけて選択したいという観測'
+    rows[2]['certainty']['basis'] = '先送りして時間をかけて選択したいという観測'
     return rows
 
 
@@ -102,12 +107,14 @@ class ThemeElementsTests(unittest.TestCase):
         self.assertEqual(2, report['next_action']['request']['attempt'])
         self.assertIn('not_similar:0.8', [f['check'] for f in report['next_action']['request']['previous_failure']])
 
-    def test_matching_reads_full_methods_relations_and_market_basis(self):
+    def test_matching_reads_sourced_method_content_and_market_basis(self):
         rows = signals()
+        del rows[1]['domain']['art_history']['content']
         rows[1]['domain']['art_history']['method'] = {'fixes': ['先送り'], 'varies': ['待機'], 'requires': ['準備']}
+        rows[1]['domain']['art_history']['source_refs'] = ['https://example.test/art']
         rows[1]['domain']['art_history']['relations'][0]['target_entity_id'] = '未来'
         self.assertIn('準備', signal_body(rows[1]))
-        self.assertIn('未来', signal_body(rows[1]))
+        self.assertNotIn('未来', signal_body(rows[1]))
         self.assertGreater(ranked('先送り', rows, 'art-history')[0]['score'], 0)
         self.assertGreater(ranked('選択', rows, 'marketing')[0]['score'], 0)
 
@@ -118,6 +125,91 @@ class ThemeElementsTests(unittest.TestCase):
         rows.append(clone)
         ranked_rows = ranked('先送り', rows, 'art-history')
         self.assertEqual(sorted(row['signal_id'] for row in ranked_rows), [row['signal_id'] for row in ranked_rows])
+
+    def test_names_ids_urls_and_boilerplate_do_not_score(self):
+        rows = signals()
+        art = rows[1]
+        art['statement'] = '保留という名前'
+        art['source']['entity_ids'] = ['movement/保留']
+        art['domain']['art_history']['entity_labels'] = ['保留主義']
+        art['domain']['art_history']['content'][0]['text'] = '保留主義 [資料](https://example.test/保留)'
+        art['domain']['art_history']['relations'][0]['target_entity_id'] = '保留'
+        self.assertEqual(0, ranked('保留', rows, 'art-history')[0]['score'])
+        del art['domain']['art_history']['content']
+        self.assertEqual('', signal_body(art))
+        self.assertEqual(0, ranked('保留', rows, 'art-history')[0]['score'])
+
+    def test_content_orders_movement_and_method_with_score_breakdown(self):
+        rows = signals()
+        method = deepcopy(rows[1])
+        method['signal_id'] = 'z-method'
+        method['domain']['art_history']['entity_kind'] = 'concept'
+        method['domain']['art_history']['content'][0]['text'] = '先送りと準備'
+        rows[1]['signal_id'] = 'a-movement'
+        rows.append(method)
+        result = ranked('先送りと準備', rows, 'art-history')
+        self.assertEqual(['z-method', 'a-movement'], [r['signal_id'] for r in result])
+        for row in result:
+            self.assertEqual(row['matched_terms'], sorted(row['score_breakdown']))
+            self.assertEqual(row['score'], sum(row['score_breakdown'].values()))
+        self.assertEqual(result, ranked('先送りと準備', list(reversed(rows)), 'art-history'))
+
+    def test_zero_scores_request_one_more_operation_and_resume_same_material(self):
+        report = self.answer(self.open(), '保留')
+        request = report['next_action']['request']
+        self.assertEqual('A3.operation.2', request['element_id'])
+        self.assertEqual('決定を後に回す', request['inputs']['material'])
+        self.assertEqual('保留', request['inputs']['prior_operations'])
+        self.assertEqual('content_match_required', request['previous_failure'][0]['check'])
+        self.assertEqual(report, self.engine.next())
+        state = json.loads(self.engine.path.read_text())
+        phase = state['context']['phase_a']
+        self.assertEqual({}, phase['rankings'])
+        self.assertEqual('NO_CONTENT_TERM_OVERLAP', phase['matching_history'][0]['reason'])
+        self.assertEqual({}, phase['judgements'])
+        # Duplicates fail only this additional element, not the accepted A3.
+        report = self.answer(report, '保留')
+        self.assertEqual(2, report['next_action']['request']['attempt'])
+        report = self.answer(report, '先送り')
+        self.assertEqual('A5.art-history.1', report['next_action']['request']['element_id'])
+        phase = json.loads(self.engine.path.read_text())['context']['phase_a']
+        self.assertEqual(2, len(phase['matching_history']))
+        self.assertEqual(['保留', '先送り'], phase['matching_history'][-1]['operations'])
+        self.assertEqual([], phase['matching_history'][-1]['zero_score_domains'])
+
+    def test_zero_score_rounds_block_at_finite_limit_without_a5(self):
+        report = self.open()
+        for operation in ('保留', '凍結', '遅延', '停滞', '沈黙'):
+            self.assertTrue(report['next_action']['request']['element_id'].startswith('A3.operation'))
+            report = self.answer(report, operation)
+        self.assertEqual('BLOCKED', report['status'])
+        self.assertEqual('A4.matching', report['blocked']['element_id'])
+        self.assertEqual(5, report['accepted_count'])
+        self.assertEqual(report, self.engine.next())
+        self.assertEqual(5, len(json.loads(self.engine.path.read_text())['context']['phase_a']['matching_history']))
+
+    def test_zero_art_scores_retry_even_when_market_has_content_overlap(self):
+        rows = signals()
+        del rows[1]['domain']['art_history']['content']
+        report = self.answer(self.open(rows), '先送り')
+        self.assertEqual('A3.operation.2', report['next_action']['request']['element_id'])
+        phase = json.loads(self.engine.path.read_text())['context']['phase_a']
+        self.assertEqual(['art-history'], phase['matching_history'][0]['zero_score_domains'])
+
+    def test_unsourced_legacy_method_does_not_score(self):
+        rows = signals()
+        del rows[1]['domain']['art_history']['content']
+        rows[1]['domain']['art_history']['method'] = {'fixes': ['先送り']}
+        self.assertEqual(0, ranked('先送り', rows, 'art-history')[0]['score'])
+
+    def test_matching_does_not_reward_particle_boundary_shingles(self):
+        rows = signals()
+        rows[1]['domain']['art_history']['content'][0]['text'] = '国の言語に関する資料'
+        row = ranked('概念の言語化待ち', rows, 'art-history')[0]
+        self.assertNotIn('の言', row['matched_terms'])
+        self.assertNotIn('の言語', row['matched_terms'])
+        self.assertEqual(['言語'], row['matched_terms'])
+        self.assertEqual(2, row['score'])
 
     def test_later_definitions_are_frozen_in_the_same_run(self):
         report = self.open()
@@ -312,6 +404,16 @@ class ThemeElementsTests(unittest.TestCase):
 
 
 class ThemeUncertaintyTests(unittest.TestCase):
+    def test_sourced_draft_content_is_retained_but_stale_content_is_excluded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rows = signals()
+            rows[1]['validity']['status'] = 'unknown'
+            context = initial_context(rows, Path(directory).resolve(), 'draft-content', requested_at=NOW)
+            self.assertEqual('unknown', context['phase_a']['signals'][1]['validity']['status'])
+            rows[1]['freshness']['status'] = 'stale'
+            with self.assertRaises(ValueError):
+                initial_context(rows, Path(directory).resolve(), 'stale-content', requested_at=NOW)
+
     def test_native_self_unknown_freshness_is_retained(self):
         with tempfile.TemporaryDirectory() as directory:
             rows = signals()
@@ -353,7 +455,7 @@ class ThemeRequestBudgetTests(unittest.TestCase):
             self.assertLess(len(canonical(request['inputs']).encode()), 4096)
             state = json.loads(engine.path.read_text())
             self.assertEqual(full, state['context']['phase_a']['material']['text'])
-            report = engine.answer(reply(request, '保留'))
+            report = engine.answer(reply(request, '先送り'))
             while report.get('next_action') and report['next_action']['request']['element_id'].startswith('A5.'):
                 request = report['next_action']['request']
                 self.assertLess(len(canonical(request['inputs']).encode()), 4096)

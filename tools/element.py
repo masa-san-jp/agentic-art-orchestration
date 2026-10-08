@@ -242,7 +242,7 @@ class Engine:
                                             ledger=state['ledger'], previous_answers={**state['answers'], **{
                                                 f'prior-operation-{i}': word for i, word in enumerate(
                                                     state['context'].get('phase_a', {}).get('prior_operations', [])
-                                                    if request['element_id'] == 'A3.operation' else [])}}))
+                                                    if request['element_id'] == 'A3.operation' or request['element_id'].startswith('A3.operation.') else [])}}))
             state['history'].append({'element_id': request['element_id'], 'attempt': request['attempt'],
                                      'answer_sha256': hashlib.sha256(canonical(answer).encode()).hexdigest(),
                                      'failures': failures})

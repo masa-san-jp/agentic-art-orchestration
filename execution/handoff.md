@@ -1,3 +1,38 @@
+# Issue #283 — local content matching implementation
+
+Assigned branches: `agent/283-content-matching` and `agent/283-export-entity-content`.
+The orchestrator owns push, PR, merge, Issue closure and qualified child pin adoption.
+No lease acquired; none held. No remote write or private profile access.
+
+Child candidate: `360eb99bc8c5deab45c9e607653f61decc17dceb`.
+Parent candidate is the final local branch HEAD; inspect `git show --stat HEAD`.
+Source paragraphs and attached quotes are extracted deterministically with native
+citations and a 2400-character aggregate bound. A4 scores cited content, excludes
+names/IDs/URLs and grammatical-boundary shingles, retains matched terms and points,
+and asks for one additional distinct A3 operation on zero content overlap.
+Matching retries preserve accepted work and stop at the shared finite limit.
+
+Evidence: `execution/issue-283-verification.json`, `execution/issue-283-matching.json`
+and `docs/issue-283-content-matching.md`. The supplied authorized material is not
+stored: only its hash is retained. It produced automatism at 9 points for the
+agent-authored operation 意識的な決定を留保; other positive candidates score 2.
+Actual owner export has 182 records, 162 with prose and 4 methods; 176 eligible
+candidates enter matching. This is an A3/A4 probe, not a full Production run or A5
+approval. Uncited prose remains absent and unknown/draft evidence stays unknown.
+
+Parent validator/core 52/related 183/security/compile/diff pass. Full 845 tests
+has exactly pristine origin/main's six named failures (1 failure, 5 errors, 5
+skips; baseline 834 tests); none added or removed. Run-related 36 tests retains
+its same existing failure. Child canonical verification passes all 190 tests
+without skips, graph/context checks, source audits and generated-file diff;
+child focused 19 and agent-related 27 tests pass. Acceptance: 4/4 scoped issue
+conditions. Audit warnings remain nonblocking, including the intentional local
+unpushed SSOT. No Drive artifact or inferred feedback was created.
+
+Next operation: review both local branch HEADs and evidence, then orchestrator
+publication and qualification of the new Art History pin. Existing Issue-280
+owner confirmation remains separately BLOCKED; no next task has been claimed.
+
 # Issue #250 S4 — local credential-free entry
 
 Assigned repository: agentic-art-orchestration; branch: `agent/250-credential-free-run-entry`.

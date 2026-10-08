@@ -2818,7 +2818,7 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
     if signal_kind == "art-history" and isinstance(domain, dict):
         art_history = domain.get("art_history")
         if isinstance(art_history, dict):
-            if not art_history.get("relations") and "method" not in art_history:
+            if not art_history.get("relations") and "method" not in art_history and not art_history.get("content"):
                 errors.append(_signal_error(
                     source, "art-history requires sourced relations or a method",
                     "retain relation evidence or export a sourced method concept",
@@ -2837,6 +2837,21 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
                     ))
             elif "source_refs" in art_history:
                 errors.append(_signal_error(source, "source_refs requires a method", "retain the method description"))
+            content = art_history.get("content", [])
+            if isinstance(content, list):
+                evidence = {ref.get("locator") for ref in data.get("evidence_refs", [])
+                            if isinstance(ref, dict) and isinstance(ref.get("locator"), str)}
+                if sum(len(item.get("text", "")) for item in content if isinstance(item, dict) and isinstance(item.get("text"), str)) > 2400:
+                    errors.append(_signal_error(source, "art-history content exceeds 2400 characters", "export bounded native excerpts"))
+                for item in content:
+                    if not isinstance(item, dict):
+                        continue
+                    refs = item.get("source_refs", [])
+                    if isinstance(refs, list) and any(not isinstance(ref, str) or ref not in evidence for ref in refs):
+                        errors.append(_signal_error(source, "content source_refs missing from evidence_refs", "retain each excerpt's source URLs"))
+                    locator = item.get("source_locator")
+                    if isinstance(locator, str) and isinstance(source_data, dict) and locator.split('#', 1)[0] not in source_data.get("locators", []):
+                        errors.append(_signal_error(source, "content locator differs from source", "retain the native entity locator"))
             source_entity_ids = source_data.get("entity_ids", []) if isinstance(source_data, dict) else []
             for index, relation in enumerate(art_history.get("relations", [])):
                 if isinstance(relation, dict) and relation.get("target_entity_id") in source_entity_ids:

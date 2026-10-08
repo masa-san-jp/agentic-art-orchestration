@@ -10,6 +10,7 @@ from copy import deepcopy
 from datetime import datetime
 import hashlib
 import json
+import re
 import unicodedata
 from pathlib import Path
 
@@ -55,20 +56,21 @@ def materials(signals: list[dict]) -> list[dict]:
 
 
 def signal_body(signal: dict, targets: dict | None = None, public: dict | None = None) -> str:
-    parts = [signal['statement']]
     if signal['signal_kind'] == 'art-history':
         domain = signal['domain']['art_history']
+        content = domain.get('content', [])
+        if content:
+            return '\n'.join(item['text'] for item in content)
+        # Legacy method pins already carry sourced operational descriptions.
+        # Names, ID strings, relation labels and envelope boilerplate are never
+        # substitutes for the missing historical content.
+        parts = []
         method = domain.get('method', {})
-        for key in ('fixes', 'varies', 'requires'):
-            parts.extend(method.get(key, []))
-        for relation in domain.get('relations', []):
-            target_id = relation.get('target_entity_id', '')
-            parts.append(target_id)
-            if public and target_id in public.get('targets', {}):
-                parts.append(public['targets'][target_id]['text'])
-            elif targets and target_id in targets:
-                parts.append(targets[target_id]['statement'])
+        if domain.get('source_refs'):
+            for key in ('fixes', 'varies', 'requires'):
+                parts.extend(method.get(key, []))
     else:
+        parts = [signal['statement']]
         # The envelope's basis is the exported evidence summary, not a locator.
         if public and signal['signal_id'] in public.get('evidence', {}):
             parts.append(public['evidence'][signal['signal_id']]['text'])
@@ -80,8 +82,15 @@ def excerpt(body: str, limit=900) -> str:
     return body.encode('utf-8')[:limit].decode('utf-8', errors='ignore')
 
 
-def ranked(operation: str, signals: list[dict], kind: str, public: dict | None = None) -> list[dict]:
-    terms = source_terms(operation)
+def matching_terms(value: str) -> set[str]:
+    """Do not reward shingles spanning common Japanese grammatical boundaries."""
+    text = unicodedata.normalize('NFKC', value)
+    return set().union(*(source_terms(part) for part in re.split(r'まで|から|[のをがにはとでな]', text)))
+
+
+def ranked(operation: str | list[str], signals: list[dict], kind: str, public: dict | None = None) -> list[dict]:
+    operations = [operation] if isinstance(operation, str) else operation
+    terms = set().union(*(matching_terms(word) for word in operations))
     targets = {entity: signal for signal in sorted(signals, key=lambda s: s['signal_id'], reverse=True)
                if signal['signal_kind'] == 'art-history' for entity in signal['source']['entity_ids']}
     rows = []
@@ -98,10 +107,19 @@ def ranked(operation: str, signals: list[dict], kind: str, public: dict | None =
             public_refs.extend(public['targets'][rel['target_entity_id']]['source'] for rel in relations if rel['target_entity_id'] in public.get('targets', {}))
             if signal['signal_id'] in public.get('evidence', {}):
                 public_refs.append(public['evidence'][signal['signal_id']]['source'])
-        overlap = terms & source_terms(body)
+        # URL slugs and Markdown link targets identify evidence, not content.
+        scoring_body = re.sub(r'\[([^\]]+)\]\([^\n)]*\)', r'\1', body)
+        scoring_body = re.sub(r'https?://[^\s<>]+', ' ', scoring_body)
+        if kind == 'art-history':
+            scoring_body = unicodedata.normalize('NFKC', scoring_body).casefold()
+            for label in signal['domain']['art_history'].get('entity_labels', []):
+                scoring_body = scoring_body.replace(unicodedata.normalize('NFKC', label).casefold(), ' ')
+        overlap = terms & matching_terms(scoring_body)
         evidence = {(ref['locator'], ref['kind']) for ref in signal['evidence_refs']}
         rows.append({'signal_id': signal['signal_id'], 'text': body,
                      'score': sum(len(term) for term in overlap),
+                     'matched_terms': sorted(overlap),
+                     'score_breakdown': {term: len(term) for term in sorted(overlap)},
                      'evidence_strength': sum(kind == 'primary' for _, kind in evidence),
                      'evidence_count': len(evidence), 'relation_sources': relation_sources, 'public_source_refs': public_refs})
     return sorted(rows, key=lambda row: (-row['score'], row['signal_id']))
@@ -125,7 +143,11 @@ def initial_context(signals: list[dict], state_root: Path, run_id: str, *, k=5,
         sourced_draft_method = (signal['signal_kind'] == 'art-history' and isinstance(method, dict)
                                 and signal['validity']['status'] == 'unknown'
                                 and signal['freshness']['status'] == 'current' and bool(signal['evidence_refs']))
-        if (signal['validity']['status'] != 'valid' and not sourced_draft_method) or (signal['signal_kind'] == 'marketing' and signal['freshness']['status'] != 'current') or (signal['signal_kind'] == 'art-history' and signal['freshness']['status'] != 'current'):
+        sourced_draft_content = (signal['signal_kind'] == 'art-history'
+                                 and bool(signal['domain']['art_history'].get('content'))
+                                 and signal['validity']['status'] == 'unknown'
+                                 and signal['freshness']['status'] == 'current')
+        if (signal['validity']['status'] != 'valid' and not sourced_draft_method and not sourced_draft_content) or (signal['signal_kind'] == 'marketing' and signal['freshness']['status'] != 'current') or (signal['signal_kind'] == 'art-history' and signal['freshness']['status'] != 'current'):
             excluded.append({'signal_id': signal['signal_id'], 'reason': 'SIGNAL_NOT_CURRENT_OR_VALID'})
             continue
         if signal['signal_kind'] == 'marketing':
@@ -149,8 +171,8 @@ def initial_context(signals: list[dict], state_root: Path, run_id: str, *, k=5,
         phase = previous.get('context', {}).get('phase_a')
         if isinstance(phase, dict) and 'A3.operation' in previous.get('answers', {}):
             usage[phase['material']['material_id']] += 1
-            if 'A3.operation' in previous['answers']:
-                operations.append(previous['answers']['A3.operation'])
+            operations.extend(value for key, value in previous['answers'].items()
+                              if key == 'A3.operation' or key.startswith('A3.operation.'))
     normalized_intent = None
     if intent is not None:
         if not isinstance(intent, str):
@@ -192,7 +214,35 @@ def advance(state: dict) -> None:
     if 'A7.central-question' in answers:
         return
     if not phase['rankings']:
-        phase['rankings'] = {kind: ranked(answers['A3.operation'], phase['signals'], kind, phase.get('public_sources')) for kind in DOMAINS}
+        operations = [value for key, value in answers.items() if key == 'A3.operation' or key.startswith('A3.operation.')]
+        rankings = {kind: ranked(operations, phase['signals'], kind, phase.get('public_sources')) for kind in DOMAINS}
+        zero = [kind for kind, rows in rankings.items() if not any(row['score'] > 0 for row in rows)]
+        history = phase.setdefault('matching_history', [])
+        history.append({'operations': operations, 'zero_score_domains': zero,
+                        'diagnostics': {kind: {'candidate_count': len(rows),
+                                              'content_count': sum(bool(row['text']) for row in rows),
+                                              'reason': ('MISSING_SOURCED_CONTENT' if not any(row['text'] for row in rows)
+                                                         else 'NO_CONTENT_TERM_OVERLAP') if kind in zero else None}
+                                        for kind, rows in rankings.items()},
+                        'reason': 'NO_CONTENT_TERM_OVERLAP' if zero else None,
+                        'rankings': {kind: [{key: row[key] for key in ('signal_id', 'score', 'matched_terms', 'score_breakdown')}
+                                            for row in rows] for kind, rows in rankings.items()}})
+        if zero:
+            failure = [{'check': 'content_match_required',
+                        'reason': 'All content scores are zero in: ' + ', '.join(zero)}]
+            if len(operations) >= state['sequence']['max_attempts']:
+                state.update(status='BLOCKED', pending=None, blocked={
+                    'element_id': 'A4.matching', 'attempt': len(operations), 'last_failure': failure})
+                return
+            template = phase.get('operation_template', state['sequence']['elements'][0])
+            added = _definition({'operation': template}, 'operation', f'A3.operation.{len(operations) + 1}', {
+                'material': excerpt(phase['material']['text']),
+                'prior_operations': '、'.join(operations)})
+            added['instruction'] = '本文との一致が全件0点でした。本人の素材から、前の語とは異なる操作・状態を表す短い語をもう一つ返してください。'
+            state['previous_failure'] = failure
+            state['sequence']['elements'].append(added)
+            return
+        phase['rankings'] = {kind: [row for row in rows if row['score'] > 0] for kind, rows in rankings.items()}
     for kind in DOMAINS:
         rows = phase['rankings'][kind]
         # Complete this window before making any selection; preserve no reasons too.
@@ -247,6 +297,7 @@ def start(engine, signals: list[dict], *, requested_at: str, k=5, workspace_root
     sequence['elements'] = [sequence['elements'][0]]
     context = initial_context(signals, engine.directory.parent, engine.run_id, k=k, requested_at=requested_at, intent=intent)
     context['phase_a']['templates'] = templates
+    context['phase_a']['operation_template'] = deepcopy(sequence['elements'][0])
     if workspace_root is not None:
         from tools.theme_sources import projections
         context['phase_a']['public_sources'] = projections(context['phase_a']['signals'], workspace_root)
@@ -260,9 +311,13 @@ def provenance(state: dict) -> dict:
     return {'contract_version': 'phase-a-provenance/v1', 'run_id': state['run_id'],
             'source_repository': state['source_repository'], 'source_commit': state['source_commit'],
             'material': deepcopy(phase['material']), 'material_selection': deepcopy(phase['material_selection']), 'operation': state['answers']['A3.operation'],
+            'operations': [value for key, value in state['answers'].items() if key == 'A3.operation' or key.startswith('A3.operation.')],
+            'matching_history': deepcopy(phase.get('matching_history', [])),
             'creative_question': state['answers']['A7.central-question'],
             'selected': {kind: {'signal': deepcopy(signals[row['signal_id']]),
                                 'matching_text': row['text'], 'public_source_refs': deepcopy(row['public_source_refs']), 'relation_sources': deepcopy(row['relation_sources']),
+                                'score': row['score'], 'matched_terms': deepcopy(row.get('matched_terms', [])),
+                                'score_breakdown': deepcopy(row.get('score_breakdown', {})),
                                 'connection': deepcopy(state['answers'][row['judgement_id']])}
                          for kind, row in selected.items()}}
 
