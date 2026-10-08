@@ -1,7 +1,7 @@
 version: 324
-updated_at: '2026-10-08T12:23:04.805398+00:00'
-active_task: null
-active_repository: null
+updated_at: '2026-10-08T16:41:52.108988+00:00'
+active_task: ISSUE-284
+active_repository: agentic-art-orchestration
 issue283_checkpoint:
   task: ISSUE-283
   repositories: [agentic-art-orchestration, art-history-notes]
@@ -26,6 +26,39 @@ issue283_checkpoint:
   lease: NOT_ACQUIRED_ASSIGNED_ISOLATED_CLONES
   remote_sync: NOT_RUN_BY_INSTRUCTION
   next_operation: Review both local branch HEADs and verification evidence; orchestrator owns publication and qualified pin adoption.
+issue284_checkpoint:
+  task: ISSUE-284
+  repositories:
+  - agentic-art-orchestration
+  - art-history-notes
+  status: BLOCKED
+  code_status: CODE_VERIFIED
+  start_point: 03b0c4f5cc992ea5fde5bbd3fd7bd3384d997b6d
+  child_start_point: d5bd9bc544343fad551bda87bfe1b5623fda6061
+  child_candidate: 3c2b53d487cd5afdcf3bdc46e03bc00697cfe683
+  expected_changes: Owner operation vocabulary and individual tags; choice A3 with
+    separate exact evidence; real-material matching probe.
+  evidence: execution/issue-284-verification.json
+  acceptance: 5/5 observable implementation conditions; native defer yields 184 zero-score
+    art candidates; separate exact evidence and explicit no-more accepted. Owner output
+    recognition PENDING.
+  checks:
+    parent_validator: PASS
+    parent_related: PASS; 100 tests
+    parent_full: BASELINE_MATCHED; 862 tests; 9 failures, 35 errors, 5 skips; zero
+      added or removed named failures
+    child_canonical: PASS; 198 tests without skips; graph, context, tags, audit and
+      generated diff
+  sensitive_data: Parent stores actual material and excerpt hashes only; no profile
+    or credentials
+  external_artifact: No external service write
+  feedback: Explicit supplement only; no identity or consent inferred
+  unresolved: Owner output review, separate qualified pin adoption, and existing parent
+    baseline failures
+  lease: NOT_ACQUIRED_ASSIGNED_ISOLATED_CLONES
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  next_operation: Orchestrator reviews both local branch commits and the evidence
+    before publication and pin adoption.
 lease:
   status: available
   owner: null

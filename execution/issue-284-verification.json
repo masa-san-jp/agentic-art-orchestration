@@ -1,0 +1,372 @@
+{
+  "acceptance": {
+    "observable_implementation_conditions": 5,
+    "owner_recognition": "PENDING",
+    "qualified_pin_adoption": "NOT_RUN",
+    "verified": 5
+  },
+  "baseline_comparison": {
+    "added": [],
+    "named_failures": [
+      [
+        "ERROR",
+        "test_agent_ui_captures_and_settles_inspiration (test_inspiration.InspirationTests.test_agent_ui_captures_and_settles_inspiration)"
+      ],
+      [
+        "ERROR",
+        "test_artifact_is_reference_only_and_recovery_preserves_execution (test_interaction_e2e.InteractionE2ETests.test_artifact_is_reference_only_and_recovery_preserves_execution)"
+      ],
+      [
+        "ERROR",
+        "test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays (test_public_projection.PublicProjectionContractTests.test_automatic_batch_projects_one_hundred_plans_through_repo_local_v2_and_replays)"
+      ],
+      [
+        "ERROR",
+        "test_child_gate_blocked_state_is_preserved (test_v12_e2e.V12E2ETests.test_child_gate_blocked_state_is_preserved)"
+      ],
+      [
+        "ERROR",
+        "test_clean_golden_scenario_is_complete_and_traceable (test_e2e.EndToEndEvaluationTests.test_clean_golden_scenario_is_complete_and_traceable)"
+      ],
+      [
+        "ERROR",
+        "test_critical_audit_finding_blocks (test_startup_audit.StartupAuditTests.test_critical_audit_finding_blocks)"
+      ],
+      [
+        "ERROR",
+        "test_each_failure_injection_has_terminal_state_and_recovery (test_e2e.EndToEndEvaluationTests.test_each_failure_injection_has_terminal_state_and_recovery)"
+      ],
+      [
+        "ERROR",
+        "test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight (test_repo_local_destinations.RepoLocalDestinationTests.test_environment_and_cli_are_mutually_exclusive_and_no_write_preflight)"
+      ],
+      [
+        "ERROR",
+        "test_forced_tracking_and_symlink_are_rejected (test_repo_local_destinations.RepoLocalDestinationTests.test_forced_tracking_and_symlink_are_rejected)"
+      ],
+      [
+        "ERROR",
+        "test_four_repository_failure_fixture_is_complete_and_deterministic (test_fixture_builder.FixtureBuilderTests.test_four_repository_failure_fixture_is_complete_and_deterministic)"
+      ],
+      [
+        "ERROR",
+        "test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_flow_proves_startup_pinned_answer_drive_replay_and_issue_reuse)"
+      ],
+      [
+        "ERROR",
+        "test_networkless_result_is_deterministic_and_reference_only (test_initial_operations_e2e.InitialOperationsE2ETests.test_networkless_result_is_deterministic_and_reference_only)"
+      ],
+      [
+        "ERROR",
+        "test_networkless_scenario_connects_all_frontstage_and_backstage_stages (test_interaction_e2e.InteractionE2ETests.test_networkless_scenario_connects_all_frontstage_and_backstage_stages)"
+      ],
+      [
+        "ERROR",
+        "test_no_artifact_mode_does_not_emit_provider_reference (test_agent_ui_contract.AgentUIContractTests.test_no_artifact_mode_does_not_emit_provider_reference)"
+      ],
+      [
+        "ERROR",
+        "test_noncritical_findings_are_ready_with_deduplicated_issue_candidates (test_startup_audit.StartupAuditTests.test_noncritical_findings_are_ready_with_deduplicated_issue_candidates)"
+      ],
+      [
+        "ERROR",
+        "test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan (test_agent_ui_contract.AgentUIContractTests.test_offline_command_composes_startup_retrieval_and_metadata_only_issue_plan)"
+      ],
+      [
+        "ERROR",
+        "test_offline_startup_reports_all_pins_without_mutating_snapshot (test_startup_repository_updates.StartupRepositoryUpdateTests.test_offline_startup_reports_all_pins_without_mutating_snapshot)"
+      ],
+      [
+        "ERROR",
+        "test_output_is_deterministic (test_e2e.EndToEndEvaluationTests.test_output_is_deterministic)"
+      ],
+      [
+        "ERROR",
+        "test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary (test_v12_e2e.V12E2ETests.test_pipeline_connects_all_v12_stages_and_preserves_v11_boundary)"
+      ],
+      [
+        "ERROR",
+        "test_privacy_audit_finding_is_critical (test_startup_audit.StartupAuditTests.test_privacy_audit_finding_is_critical)"
+      ],
+      [
+        "ERROR",
+        "test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content (test_v12_e2e.V12E2ETests.test_repeated_pipeline_is_deterministic_and_does_not_expose_raw_content)"
+      ],
+      [
+        "ERROR",
+        "test_resolution_evidence_is_create_only_and_private (test_repo_local_destinations.RepoLocalDestinationTests.test_resolution_evidence_is_create_only_and_private)"
+      ],
+      [
+        "ERROR",
+        "test_result_is_deterministic_and_does_not_contain_content (test_agent_ui_contract.AgentUIContractTests.test_result_is_deterministic_and_does_not_contain_content)"
+      ],
+      [
+        "ERROR",
+        "test_result_is_deterministic_and_inputs_are_not_exposed (test_interaction_e2e.InteractionE2ETests.test_result_is_deterministic_and_inputs_are_not_exposed)"
+      ],
+      [
+        "ERROR",
+        "test_safety_and_contract_failures_are_blocking_states (test_e2e.EndToEndEvaluationTests.test_safety_and_contract_failures_are_blocking_states)"
+      ],
+      [
+        "ERROR",
+        "test_security_finding_blocks_and_restricts_all_capabilities (test_startup_audit.StartupAuditTests.test_security_finding_blocks_and_restricts_all_capabilities)"
+      ],
+      [
+        "ERROR",
+        "test_startup_uses_selected_run_portfolio_without_test_fixture_freshness (test_startup_audit.StartupAuditTests.test_startup_uses_selected_run_portfolio_without_test_fixture_freshness)"
+      ],
+      [
+        "ERROR",
+        "test_theme_free_normal_entry_derives_a_question_without_manual_fallback (test_autonomous_plan_entrypoints.AutonomousPlanEntrypointTests.test_theme_free_normal_entry_derives_a_question_without_manual_fallback)"
+      ],
+      [
+        "ERROR",
+        "test_two_clone_paths_have_the_same_fixed_relative_layout (test_repo_local_destinations.RepoLocalDestinationTests.test_two_clone_paths_have_the_same_fixed_relative_layout)"
+      ],
+      [
+        "ERROR",
+        "test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates (test_v12_e2e.V12E2ETests.test_validated_child_gate_evidence_can_be_reused_without_rerunning_gates)"
+      ],
+      [
+        "ERROR",
+        "test_validator_rejects_incomplete_or_remote_mutation (test_v12_e2e.V12E2ETests.test_validator_rejects_incomplete_or_remote_mutation)"
+      ],
+      [
+        "ERROR",
+        "test_validator_rejects_raw_query_and_mismatched_source (test_agent_ui_contract.AgentUIContractTests.test_validator_rejects_raw_query_and_mismatched_source)"
+      ],
+      [
+        "ERROR",
+        "test_validator_rejects_remote_mutation_and_incomplete_acceptance (test_interaction_e2e.InteractionE2ETests.test_validator_rejects_remote_mutation_and_incomplete_acceptance)"
+      ],
+      [
+        "ERROR",
+        "test_validator_rejects_remote_operation_or_lost_provenance (test_initial_operations_e2e.InitialOperationsE2ETests.test_validator_rejects_remote_operation_or_lost_provenance)"
+      ],
+      [
+        "ERROR",
+        "test_workspace_guard_failure_is_critical_and_report_is_metadata_only (test_startup_audit.StartupAuditTests.test_workspace_guard_failure_is_critical_and_report_is_metadata_only)"
+      ],
+      [
+        "FAIL",
+        "test_e2e_check_has_deterministic_run_evidence (test_release_check.ReleaseCheckTests.test_e2e_check_has_deterministic_run_evidence)"
+      ],
+      [
+        "FAIL",
+        "test_initial_operations_check_proves_three_deterministic_networkless_runs (test_release_check.ReleaseCheckTests.test_initial_operations_check_proves_three_deterministic_networkless_runs)"
+      ],
+      [
+        "FAIL",
+        "test_interaction_e2e_check_proves_v11_boundaries (test_release_check.ReleaseCheckTests.test_interaction_e2e_check_proves_v11_boundaries)"
+      ],
+      [
+        "FAIL",
+        "test_live_confirmation_is_required_and_fixture_live_is_create_read_only (test_agent_ui_contract.AgentUIContractTests.test_live_confirmation_is_required_and_fixture_live_is_create_read_only)"
+      ],
+      [
+        "FAIL",
+        "test_offline_cli_ignores_unavailable_profile_and_real_workspace (test_run.RequestForwardingTests.test_offline_cli_ignores_unavailable_profile_and_real_workspace)"
+      ],
+      [
+        "FAIL",
+        "test_offline_cli_reaches_theme_proposal_without_any_theme_input (test_auto_plan.AutomaticPlanEntryTests.test_offline_cli_reaches_theme_proposal_without_any_theme_input)"
+      ],
+      [
+        "FAIL",
+        "test_plan_alias_is_supported (test_github_issue_adapter.GithubIssueAdapterTests.test_plan_alias_is_supported)"
+      ],
+      [
+        "FAIL",
+        "test_real_run_missing_profile_blocks_before_state_or_child_invocation (test_run.RequestForwardingTests.test_real_run_missing_profile_blocks_before_state_or_child_invocation)"
+      ],
+      [
+        "FAIL",
+        "test_v12_check_blocks_when_child_gate_is_not_passed (test_release_check.ReleaseCheckTests.test_v12_check_blocks_when_child_gate_is_not_passed)"
+      ]
+    ],
+    "removed": [],
+    "same_as_origin_main": true
+  },
+  "checks": [
+    {
+      "command": "python tools/validate.py --check",
+      "exit_code": 0,
+      "log_sha256": "1a60c9eadb0458bc14af4f328673c87fde8519db5a908cfc8b33d895d28d93f2",
+      "summary": null,
+      "test_count": null
+    },
+    {
+      "command": "python -m unittest tests.test_operation_vocabulary tests.test_theme_elements tests.test_element tests.test_adapter_art_history tests.test_signal_contract -q",
+      "exit_code": 0,
+      "log_sha256": "5509d5b106bf5ca84c57f2e59dc76e1b9c146129acd2bd7049dc61d806140021",
+      "summary": "OK",
+      "test_count": 100
+    },
+    {
+      "command": "python -m unittest tests.test_docs tests.test_project_status -q",
+      "exit_code": 0,
+      "log_sha256": "7307a666e118092b3793999c29cd4547f17d7770ac9cdf3a66bfe2f549643f70",
+      "summary": "OK",
+      "test_count": 22
+    },
+    {
+      "command": "python -m unittest discover -s tests -v (origin/main baseline)",
+      "exit_code": 1,
+      "log_sha256": "f5567e898fb08282b993dea570e85f1dccfa48043eb80bced4d3fc3840c5feab",
+      "summary": "FAILED (failures=9, errors=35, skipped=5)",
+      "test_count": 852
+    },
+    {
+      "command": "python -m unittest discover -s tests -v (changed parent)",
+      "exit_code": 1,
+      "log_sha256": "1e9bc614fb0adb8f028b7f1464b31609980ce30fc1ca1663323185b0d1b32209",
+      "summary": "FAILED (failures=9, errors=35, skipped=5)",
+      "test_count": 862
+    },
+    {
+      "command": "python tools/build_graph.py --check",
+      "exit_code": 0,
+      "log_sha256": "1b9cf3266843390ed4eb5d9ba2825322be36593f4c5045f74ce0154170c6b830",
+      "summary": null,
+      "test_count": null
+    },
+    {
+      "command": "python tools/build_context_vectors.py --check",
+      "exit_code": 0,
+      "log_sha256": "529a0692cd2d000da5a0b771199879423a1cdc48524028fe13e48ee34f4011fc",
+      "summary": null,
+      "test_count": null
+    },
+    {
+      "command": "python tools/operation_tags.py check",
+      "exit_code": 0,
+      "log_sha256": "447f1b06371a8c78c77791131ab537b7bef6a209fe19f316d6502bd2e430cfb4",
+      "summary": null,
+      "test_count": null
+    },
+    {
+      "command": "python tools/verify.py (clean child)",
+      "exit_code": 0,
+      "log_sha256": "a98c5e724e74bce9be7f7776943a9bc0bf0087995909397b40763e9592b1bf68",
+      "summary": "OK",
+      "test_count": 198
+    },
+    {
+      "command": "python -m unittest discover -s tests -v (clean child)",
+      "exit_code": 0,
+      "log_sha256": "c83a17afcf2836137fad2890053b663d0b691771b4d54f4d48a3771d5dd32a85",
+      "summary": "OK",
+      "test_count": 198
+    },
+    {
+      "command": "git diff --check (each repository)",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --exit-code -- data/ overviews/coverage.md (child)",
+      "exit_code": 0
+    },
+    {
+      "command": "Native Engine A3 choice / evidence / no-more probe",
+      "evidence": "execution/issue-284-matching.json",
+      "exit_code": 0,
+      "native_status": "BLOCKED"
+    },
+    {
+      "command": "git merge-base --is-ancestor 360eb99bc8c5deab45c9e607653f61decc17dceb HEAD (child)",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/export_signals.py --purpose artistic-research --output <Git-external-output> (clean child)",
+      "exit_code": 0,
+      "signal_count": 185
+    }
+  ],
+  "contract_version": "issue-284-verification/v1",
+  "decisions": [
+    "All items means the 181 movements and four sourced method concepts in the matching inventory; no tags inferred from people, places or movement names.",
+    "Owner KB body is tagging evidence. Source refs identify registered document sources, not independently fetched primary-source passages. The existing cited content export is unchanged.",
+    "A3 selection follows material only. defer has no art tag overlap; zero matches are preserved instead of forcing another operation.",
+    "Previously pinned exports keep legacy free-text and literal matching. Mixed owner vocabularies fail closed; no pin is silently adopted.",
+    "Merged #283 code supplies the prerequisite; its separately pending real-output owner acceptance is preserved."
+  ],
+  "external_artifacts": {
+    "create_only": "No external artifact created or modified",
+    "opaque_references": [],
+    "writes": 0
+  },
+  "feedback": {
+    "explicit": "Assigned Issue 284 supplement and supplied possibility statement",
+    "inferred": "None promoted to identity, consent or publication authority"
+  },
+  "git": {
+    "lease": "NOT_ACQUIRED_ASSIGNED_ISOLATED_CLONES",
+    "local_commits_only": true,
+    "remote_sync": "NOT_RUN_BY_INSTRUCTION"
+  },
+  "next_operation": "Review local branch commits and evidence; orchestrator owns publication and owner qualification",
+  "privacy": {
+    "absolute_local_paths_in_record": false,
+    "credential_retention": false,
+    "parent_retains_actual_material_or_child_body": false,
+    "private_profile_access": false
+  },
+  "repositories": {
+    "agentic-art-orchestration": {
+      "branch": "agent/284-operation-vocabulary",
+      "candidate_code_sha256": {
+        "schemas/normalized-research-signal.schema.json": "26cee19a0159f5c9b96b20e13e44b8ab45aaf0dc8143e5c499c6a1e9339aee40",
+        "tests/test_operation_vocabulary.py": "3d4c918421dd0b7c49ba1f1ab8692b2225a1cec5d3f46aff2be0708760c435bf",
+        "tools/adapters.py": "0819219b29be5549161b93d09974b8ab2465c9dcb3e851487517b1dbc86c1986",
+        "tools/element_checks.py": "47ec8b040648e79423f73c749851528e77c7104bb8e6e7803952964ea58739fb",
+        "tools/element_contracts.py": "f2ffdf8cf086457a463c446bdb0b8bb47d763bcacb9e1c42ffa362b4fdcef721",
+        "tools/theme_elements.py": "10601680a39b3fddfafaeff50cfdda6e21a803821601355d7d26135319e170a1",
+        "tools/validate.py": "d4586c341cab43ffd3ea7a24a3a46e5c13e9791b39d9fe754cac0a48794b6281"
+      },
+      "start_commit": "03b0c4f5cc992ea5fde5bbd3fd7bd3384d997b6d"
+    },
+    "art-history-notes": {
+      "branch": "agent/284-operation-tags",
+      "candidate_commit": "3c2b53d487cd5afdcf3bdc46e03bc00697cfe683",
+      "clean_quality_gates": true,
+      "start_commit": "d5bd9bc544343fad551bda87bfe1b5623fda6061"
+    }
+  },
+  "status": "CODE_VERIFIED_OWNER_REVIEW_PENDING",
+  "tagging": {
+    "completed_count": 185,
+    "empty_tag_count": 76,
+    "individual_answer_count": 511,
+    "method_operations": {
+      "concept/automatism": [
+        "release-control",
+        "gesture"
+      ],
+      "concept/frottage": [
+        "transfer-texture"
+      ],
+      "concept/iterated-boundary-generation": [
+        "iterate",
+        "observe-boundary",
+        "vary-conditions"
+      ],
+      "concept/poured-painting": [
+        "pour"
+      ]
+    },
+    "one_choice_then_one_exact_excerpt": true,
+    "operation_count": 30,
+    "rejected_answers": 0,
+    "tag_count": 163,
+    "tags_file_sha256": "37a4bb049568e5148ddcf2a864e6681589e3e5578ecef52ed48881af7ddbc1a1",
+    "target_count": 185,
+    "vocabulary_sha256": "228125ca1c67fb8917ff4685b074e74e9b34c231a7366c9b0089b245d25bc2b2"
+  },
+  "task": "ISSUE-284",
+  "unresolved": [
+    "Owner recognition of the native real-material output",
+    "Qualified owner-pin adoption and publication by orchestrator",
+    "Existing parent baseline failures"
+  ]
+}

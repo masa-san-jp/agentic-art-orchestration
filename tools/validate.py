@@ -2818,7 +2818,7 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
     if signal_kind == "art-history" and isinstance(domain, dict):
         art_history = domain.get("art_history")
         if isinstance(art_history, dict):
-            if not art_history.get("relations") and "method" not in art_history and not art_history.get("content"):
+            if not art_history.get("relations") and "method" not in art_history and not art_history.get("content") and not art_history.get("operation_tags"):
                 errors.append(_signal_error(
                     source, "art-history requires sourced relations or a method",
                     "retain relation evidence or export a sourced method concept",
@@ -2897,6 +2897,22 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
                         "retain anecdotal evidence status and require non-anecdotal corroboration",
                     )
                 )
+    art = domain.get('art_history', {}) if isinstance(domain, dict) else {}
+    vocab = art.get('operation_vocabulary') if isinstance(art, dict) else None
+    if isinstance(vocab, dict):
+        operations = vocab.get('operations', [])
+        operations = operations if isinstance(operations, list) else []
+        identifiers = [row['id'] for row in operations if isinstance(row, dict) and isinstance(row.get('id'), str)]
+        if len(identifiers) != len(set(identifiers)):
+            errors.append(_signal_error(source, 'duplicate operation ID', 'repair the owner vocabulary'))
+        tags = art.get('operation_tags', [])
+        tags = tags if isinstance(tags, list) else []
+        tag_ids = [tag['operation_id'] for tag in tags if isinstance(tag, dict) and isinstance(tag.get('operation_id'), str)]
+        if len(tag_ids) != len(set(tag_ids)) or not set(tag_ids) <= set(identifiers):
+            errors.append(_signal_error(source, 'unknown or duplicate operation tag', 'repair owner tags'))
+        if any(not isinstance(tag.get('evidence'), str) or not tag['evidence'].strip() for tag in tags if isinstance(tag, dict)):
+            errors.append(_signal_error(source, 'empty operation evidence', 'supply native verified evidence'))
+
     return errors
 
 

@@ -1,3 +1,36 @@
+# Issue #284 — operation choice and individual owner tags
+
+Local implementation is CODE_VERIFIED. Stage owner recognition remains pending;
+the orchestrator owns push, PR, merge, Issue closure and qualified pin adoption.
+Parent branch: `agent/284-operation-vocabulary`; child branch: `agent/284-operation-tags`.
+Child candidate: `3c2b53d487cd5afdcf3bdc46e03bc00697cfe683`.
+No lease acquired or held; no remote write or private profile access.
+
+Owner vocabulary has 30 one-sentence definitions. All 185 inventory items
+(181 movements and four methods) were answered individually: 511 accepted
+answers, 163 tags, 76 explicitly empty tag lists. Each operation choice is
+followed by a separate mechanically exact excerpt and ends with no-more.
+Coverage, vocabulary/body hashes and accepted-answer history verify. Existing
+#283 cited content semantics remain intact; owner KB prose and its registered
+sources are not claimed to be freshly fetched primary sources.
+
+The supplied material selected defer through native choice A3. A separate
+verbatim excerpt passed; all 184 eligible art candidates score zero. No other
+operation is supported, so the next choice explicitly stopped the native run.
+The evidence is A3/A4 only with synthetic self/market transport envelopes,
+not a complete real-profile or Production delivery. No favorable result was
+invented. Actual material and excerpt are retained only in Git-external state;
+parent records hashes and outcomes.
+
+Parent validator and 100 related tests pass. Full 862 tests exactly match the
+origin/main baseline named failure set: nine failures, 35 errors, five skips.
+Child clean verify and full 198 tests pass without skips; generated files are
+unchanged. Evidence: `execution/issue-284-verification.json` and
+`execution/issue-284-matching.json`. Start with local commit/evidence review;
+leave #283's separate owner-output acceptance and the pin adoption gate intact.
+
+---
+
 # Issue #283 — review correction and actual accepted-A3 evidence
 
 Only orchestration changed in this review. The approved child candidate remains

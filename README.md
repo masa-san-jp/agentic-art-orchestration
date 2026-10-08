@@ -241,7 +241,7 @@ cloneしたこのrepoのルートで、1 → 2の順に実行すれば、実デ�
      --state-root "$EXTERNAL_STATE_ROOT"
    ```
 
-   通常runは本人の素材を一件選び、操作語 → 接続判定 → 中心の問いを`next_action.kind: element`で一件ずつ依頼します。答えを`tools/element.py answer`のstdinへ渡して同じrunを再開すると、中心の問いをResearchの`creative_question`へ渡します。答え方とprivateヒアリング中継は [段階Aの要素](docs/agent-runtime-guide.md#段階aの要素)を参照してください。返された`next_action`を外部エージェントが実行し、保存済み`resume_command`も同じ入口の`--`後へ渡して継続します。入口はLLM/daemonを内蔵せず、最初のコマンドだけで実Researchを完了するわけではありません。`--live-private`の資格確認も [purpose E2E runbook](docs/purpose-e2e-runbook.md#live-private-qualification)の入口を使います。
+   通常runは本人の素材を一件選び、操作語 → 接続判定 → 中心の問いを`next_action.kind: element`で一件ずつ依頼します。答えを`tools/element.py answer`のstdinへ渡して同じrunを再開すると、中心の問いをResearchの`creative_question`へ渡します。答え方とprivateヒアリング中継は [段階Aの要素](docs/agent-runtime-guide.md#段階aの要素)を参照してください。 ownerが操作語彙とタグをexportする新pinでは、[選択式A3と根拠の照合](docs/issue-284-operation-vocabulary.md)を使います。返された`next_action`を外部エージェントが実行し、保存済み`resume_command`も同じ入口の`--`後へ渡して継続します。入口はLLM/daemonを内蔵せず、最初のコマンドだけで実Researchを完了するわけではありません。`--live-private`の資格確認も [purpose E2E runbook](docs/purpose-e2e-runbook.md#live-private-qualification)の入口を使います。
 
 4. **出力と完了を確認する。** offline出力は2の`$OFFLINE_ROOT`、通常runのcheckpointは`$EXTERNAL_STATE_ROOT/$RUN_ID/run.json`、Production出力は`$EXTERNAL_STATE_ROOT/production/production/<slug>/`です。Projectへの納品を求める場合は初回runから`--project-root <absolute agentic-art-project checkout>`を指定し、上のrun側の`--state-root`を省略します（入口側は外部一時rootのまま）。resolver検証後にProject配下の`.agentic-art/state`・`.agentic-art/internal`・`.agentic-art/staging`を導出し、公開projectionだけをcatalogへ渡します。v1出力profileとの混在は拒否されます。
 

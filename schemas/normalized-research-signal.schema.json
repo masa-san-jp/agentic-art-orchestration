@@ -300,10 +300,12 @@
       }
     },
     "art_history": {
+      "dependentRequired": {"operation_vocabulary": ["operation_tags"], "operation_tags": ["operation_vocabulary"]},
       "type": "object",
       "additionalProperties": false,
       "required": ["entity_kind", "time", "geo", "relations", "canonical_graph_locator"],
       "anyOf": [
+        {"required": ["operation_vocabulary", "operation_tags"]},
         {"required": ["content"]},
         {"required": ["method", "source_refs"]},
         {"properties": {"relations": {"minItems": 1}, "method": {"type": "null"}, "source_refs": {"type": "null"}}}
@@ -383,6 +385,8 @@
             }
           }
         },
+        "operation_vocabulary": {"type":"object","additionalProperties":false,"required":["contract_version","operations"],"properties":{"contract_version":{"const":"operation-vocabulary/v1"},"operations":{"type":"array","minItems":1,"maxItems":40,"items":{"type":"object","additionalProperties":false,"required":["id","label","definition"],"properties":{"id":{"type":"string","minLength":1,"maxLength":100},"label":{"type":"string","minLength":1,"maxLength":100},"definition":{"type":"string","minLength":1,"maxLength":100}}}}}},
+        "operation_tags": {"type":"array","items":{"type":"object","additionalProperties":false,"required":["operation_id","evidence","source_locator","source_refs"],"properties":{"operation_id":{"type":"string","minLength":1},"evidence":{"type":"string","minLength":1,"maxLength":600},"source_locator":{"type":"string","minLength":1},"source_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","pattern":"^https?://[^\\s/]+(?:/[^\\s]*)?$"}}}}},
         "canonical_graph_locator": {
           "type": "string",
           "minLength": 1

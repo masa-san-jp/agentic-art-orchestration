@@ -57,7 +57,7 @@ def validate_sequence(sequence: dict) -> list[str]:
                 name, arg = parse_check(check)
                 if name == 'contains_source_terms' and any(key not in item['inputs'] for key in arg.split(',')):
                     errors.append(f'{element_id}: contains_source_terms requires declared input keys')
-                if name in {'reference_exists', 'exact_excerpt', 'not_similar_to'} and arg not in item['inputs']:
+                if name in {'reference_exists', 'exact_excerpt', 'exact_input_excerpt', 'not_similar_to'} and arg not in item['inputs']:
                     errors.append(f'{element_id}: {name} requires a declared input key')
             except ValueError as exc:
                 errors.append(f'{element_id}: {exc}')

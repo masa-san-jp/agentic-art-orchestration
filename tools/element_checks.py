@@ -40,7 +40,7 @@ def parse_check(spec: str) -> tuple[str, str]:
     name, _, arg = spec.partition(':')
     plain = {'non_empty', 'ends_with_question', 'url_shape', 'url_in_ledger', 'one_sentence'}
     lists = {'contains_terms', 'contains_source_terms', 'forbidden', 'one_of'}
-    keyed = {'reference_exists', 'exact_excerpt', 'not_similar_to'}
+    keyed = {'reference_exists', 'exact_excerpt', 'exact_input_excerpt', 'not_similar_to'}
     if name in plain and not arg and ':' not in spec:
         return name, arg
     if name in lists and arg and all(item.strip() for item in arg.split(',')):
@@ -144,6 +144,10 @@ def check_value(value: object, checks: list[str], *, inputs: dict,
             # A quotation is an exact contiguous substring; no normalization.
             ok = bool(body) and text in body
             reason = 'Copy an exact contiguous passage from the retrieved body.'
+        elif name == 'exact_input_excerpt':
+            body = inputs.get(arg)
+            ok = isinstance(body, str) and bool(body) and text in body
+            reason = 'Copy an exact contiguous passage from the supplied body.'
         elif name == 'not_similar_to':
             prior = inputs.get(arg)
             prior = prior if isinstance(prior, list) else [prior]

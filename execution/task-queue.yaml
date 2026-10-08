@@ -3474,3 +3474,29 @@ tasks:
     blocker: The next actual A3 answer is not available; do not invent it to improve the observed ranking.
     verification_result: Parent 852 tests exactly matches pristine origin/main 834 tests six-failure set, with five skips; related 190 and core 59 tests pass; unchanged child canonical 190 tests pass without skips.
     completion: Local review fixes implemented; real matching waits for one more A3 value. No profile access, publication, pin adoption, held lease or remote write. Existing parent failures remain explicit.
+
+  - id: ISSUE-284
+    milestone: ELEMENT-HARNESS
+    title: Select shared operations and match individually verified owner tags
+    status: BLOCKED
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/284
+    target_repositories: [agentic-art-orchestration, art-history]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-278]
+    acceptance: Owner vocabulary with one-sentence definitions; movement/method inventory individually tagged by choice and separate exact excerpt; choice A3 with exact material evidence; ID-based art matching; honest supplied-material native probe. Merged #283 code is confirmed at parent origin/main 03b0c4f5cc992ea5fde5bbd3fd7bd3384d997b6d and child ancestor 360eb99bc8c5deab45c9e607653f61decc17dceb; its separate real-output acceptance is not overridden.
+    checks:
+    - python tools/validate.py --check
+    - python -m unittest tests.test_operation_vocabulary tests.test_theme_elements tests.test_element tests.test_adapter_art_history tests.test_signal_contract -q
+    - python -m unittest discover -s tests -v
+    - python tools/build_graph.py --check
+    - python tools/build_context_vectors.py --check
+    - python tools/operation_tags.py check
+    - python tools/verify.py
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge, pin adoption and Issue closure; local commits only. Stage output recognition remains an owner review under the design, not a manual approval added to the automatic plan lane.
+    code_status: CODE_VERIFIED
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    evidence: execution/issue-284-verification.json
+    acceptance_result: Five observable implementation conditions verified; owner recognition of the supplied-material output remains PENDING. The chosen defer has zero owner tag overlaps, and the native run honestly stops after a separate exact excerpt and an explicit no-more choice.
+    blocker: Owner output review and separately qualified owner-pin adoption remain with the orchestrator.
+    completion: Local implementation and evidence ready for review; no inferred consent, private profile access, held lease or remote write.
