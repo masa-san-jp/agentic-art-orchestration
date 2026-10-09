@@ -1,7 +1,14 @@
 {
+  "a3_operation_labels": [
+    "決定の先送り"
+  ],
+  "a3_operations": [
+    "defer"
+  ],
+  "a3_stop": "これ以上なし",
   "a5_judgements_created": false,
-  "art_export_sha256": "94176094dc9658f726e6186354ebf599653a00903bf5c827afc79938e9d6dbcf",
-  "art_source_commit": "3c2b53d487cd5afdcf3bdc46e03bc00697cfe683",
+  "art_export_sha256": "ab8ea15058bcc4024a330ed3a7844e60b13a262f0667b2ba3b605e736fed843a",
+  "art_source_commit": "144a88268422d07a29060042c849ec3d5281391d",
   "blocked": {
     "attempt": 2,
     "element_id": "A3.operation",
@@ -12,1164 +19,206 @@
       }
     ]
   },
+  "blocked_cause": "marketing (unchanged synthetic fixture) had NO_CONTENT_TERM_OVERLAP; art-history had 4 relation-linked candidates. The marketing fixture was not altered to make the stage pass.",
   "candidate_count": 184,
-  "candidate_kinds": {
-    "method": 4,
-    "movement": 180
-  },
-  "candidate_scores": [
-    {
-      "entity_id": "movement/an-gyeon-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/art-nouveau",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/arts-and-crafts",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/baroque",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bauhaus",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/chola-bronzes",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/constructivism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/de-stijl",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/expressionism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/fauvism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/golden-horde-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/gothic-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/italian-divisionism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mamluk-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ndop",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/neoclassicism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/realism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/renaissance",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/rococo",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/srivijaya-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/suzani",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/symbolism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mavo",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bark-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mewar-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/yamato-e",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kanga",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/indigenismo",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/nihonga",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/literati-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/songjiang-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/safavid-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/cusco-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/khyenri-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/menri-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/karma-gardri",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mannerism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/zanabazar-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mandalay-style",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/company-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/tanjore-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/utagawa-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/harlem-renaissance",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mingei",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/antropofagia",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/negritude",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/thirteen-moderns",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/pita-maha",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/art-et-liberte",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/arte-madi",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bombay-progressive-artists-group",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ecole-de-tunis",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/baghdad-modern-art-group",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/poto-poto-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/gutai",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/zaria-art-society",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/neoconcretismo",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ecole-de-dakar",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mono-ha",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/shanghai-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ai-bigeiken",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/cubism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/lingnan-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bengal-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/qajar-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/computer-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/dada",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/surrealism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/conceptual-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/pala-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/talavera-poblana",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/vijayanagara-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kongo-christian-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/sukhothai-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/marquesan-tiki",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/basohli-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/inca-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/colonial-limner-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kangra-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/sienese-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/venetian-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bandung-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kamasan-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/asmat-carving",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/gondarine-church-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/papunya-tula",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/shiraz-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/quito-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/makonde-carving",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/herat-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kowhaiwhai",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ngati-tarawhai-whakairo",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/newar-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/iatmul-carving",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/dong-ho-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/benin-court-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/barroco-mineiro",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bamana-sculpture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mexican-muralism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/zimbabwe-stone-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/cubo-futurism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/novgorod-school-icon-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/zhe-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/wu-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ottoman-miniature",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/santero",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/barbizon-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/neo-impressionism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/group-of-seven",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/dansaekhwa",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kano-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/tosa-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/nanga",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/impressionism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/hudson-river-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/jain-manuscript-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "concept/frottage",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/deccan-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mughal-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "concept/automatism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/northwest-coast-carving",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/song-academy-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/post-impressionism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "concept/iterated-boundary-generation",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/indochina-lacquer-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/suprematism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "concept/poured-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/maruyama-shijo-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/rinpa",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/futurism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/byzantine-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/peredvizhniki",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/lapita-pottery",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/yangzhou-eccentrics",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/nok-sculpture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ife-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/goryeo-buddhist-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/abstract-expressionism",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/jinling-eight-masters",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mapuche-silverwork",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kalighat-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/sudano-sahelian-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/southeastern-ceremonial-complex",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/tarnovo-artistic-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/missao-artistica-francesa",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/khmer-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/akan-goldweights",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ukrainian-baroque",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/brancovenesc-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/coffin-portrait",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/mongol-zurag",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/rai-stones",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/champa-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/stroganov-school",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/moai",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/baghdad-school-of-illustration",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/hoysala-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kilwa-swahili-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/early-ottoman-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/gujarat-sultanate-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/igbo-ukwu-bronze",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kakatiya-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/bamum-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kisalian-culture-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/lan-xang-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/latte-stone-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/malacca-sultanate-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/alaouite-imperial-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/melayu-mauli-buddhist-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/tongan-langi-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/moscow-school-icon-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/muhammad-ali-mosque-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/east-javanese-kawi-inscriptions",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/kokand-khanate-art",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/pa-fortification-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/nan-madol-architecture",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/tongan-ngatu",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/serbian-baroque-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/ottoman-westernization-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/hawaiian-featherwork",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/four-wangs",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/rattanakosin-mural-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/joseon-genre-painting",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    },
-    {
-      "entity_id": "movement/jingyeong-sansuhwa",
-      "matched_operation_ids": [],
-      "matching_mode": "operation-tags/v1",
-      "score": 0
-    }
-  ],
-  "contract_version": "issue-284-matching-evidence/v1",
+  "contract_version": "issue-284-matching-evidence/v2",
   "diagnostic": {
-    "below_minimum_count": 0,
-    "candidate_count": 184,
-    "content_count": 162,
-    "positive_score_count": 0,
-    "reason": "NO_OPERATION_TAG_OVERLAP"
+    "art-history": {
+      "below_minimum_count": 0,
+      "candidate_count": 184,
+      "content_count": 4,
+      "positive_score_count": 4,
+      "reason": null
+    },
+    "marketing": {
+      "below_minimum_count": 0,
+      "candidate_count": 1,
+      "content_count": 1,
+      "positive_score_count": 0,
+      "reason": "NO_CONTENT_TERM_OVERLAP"
+    }
   },
+  "engine_status": "BLOCKED",
   "evidence_is_exact_substring": true,
-  "evidence_sha256": "0b2a3e2f159180ab0425a804e17588133f1686f250c72a584ecd0a488922fc09",
-  "excluded_signals": [
+  "export_count": 185,
+  "matched_candidates": [
     {
-      "reason": "SIGNAL_NOT_CURRENT_OR_VALID",
-      "signal_id": "art-history:bagan-art"
+      "candidate_kind": "movement",
+      "entity_id": "movement/conceptual-art",
+      "evidence_length": 84,
+      "matched_operation_ids": [
+        "impose-constraints"
+      ],
+      "operation_connections": [
+        {
+          "material_operation_id": "defer",
+          "relation": "complement",
+          "tag_operation_id": "impose-constraints"
+        }
+      ],
+      "operation_evidence": [
+        {
+          "evidence": "The process is mechanical and should not be tampered with. It should run its course.",
+          "operation_id": "impose-constraints",
+          "source_locator": "entities/movements/conceptual-art.md#定義と範囲",
+          "source_refs": [
+            "http://www.multimedialab.be/doc/citations/sol_lewitt_sentences.pdf",
+            "https://henryflynt.org/aesthetics/conart.html",
+            "https://www.documenta.de/en/retrospective/documenta_5",
+            "https://www.getty.edu/vow/AATFullDisplay?find=&logic=AND&note=&english=Y&subjectid=300264827",
+            "https://www.kim-cohen.com/Assets/CourseAssets/Texts/LeWitt_Paragraphs%20(1967).pdf",
+            "https://www.wikidata.org/wiki/Q203209"
+          ]
+        }
+      ],
+      "relation_kind": "complement",
+      "relation_priority": 1,
+      "score": 1
+    },
+    {
+      "candidate_kind": "movement",
+      "entity_id": "movement/kamasan-painting",
+      "evidence_length": 50,
+      "matched_operation_ids": [
+        "impose-constraints"
+      ],
+      "operation_connections": [
+        {
+          "material_operation_id": "defer",
+          "relation": "complement",
+          "tag_operation_id": "impose-constraints"
+        }
+      ],
+      "operation_evidence": [
+        {
+          "evidence": "規則によって厳格に定められ、目の形（3〜4種）、\n姿勢（5〜6種）、被り物、手の位置による意味の区別",
+          "operation_id": "impose-constraints",
+          "source_locator": "entities/movements/kamasan-painting.md#定義と範囲",
+          "source_refs": [
+            "http://balitourismjournal.org/ojs/index.php/btj/article/view/74",
+            "https://artsofbali.com/kamasan-painting-bali/",
+            "https://balitra.com/en/cultures/bali-painting",
+            "https://e-museum.klungkungkab.go.id/history-of-klungkung/",
+            "https://en.wikipedia.org/wiki/Kamasan",
+            "https://en.wikipedia.org/wiki/Mangku_Muriati",
+            "https://journal.binus.ac.id/index.php/Humaniora/article/view/3599",
+            "https://wovensouls.com/pages/wovensouls-guide-where-can-one-see-kamasan-paintings",
+            "https://www.endlessjoy.co.uk/journal/kamasan-painting",
+            "https://www.kk-advocates.com/news/read/balinese-kamasan-classical-paintings-registered-as-a-geographical-indication-product",
+            "https://www.michaelbackmanltd.com/archived_objects/balinese-temple-textile-ider-ider/",
+            "https://www.wikidata.org/wiki/Q6356113"
+          ]
+        }
+      ],
+      "relation_kind": "complement",
+      "relation_priority": 1,
+      "score": 1
+    },
+    {
+      "candidate_kind": "movement",
+      "entity_id": "movement/lapita-pottery",
+      "evidence_length": 44,
+      "matched_operation_ids": [
+        "impose-constraints"
+      ],
+      "operation_connections": [
+        {
+          "material_operation_id": "defer",
+          "relation": "complement",
+          "tag_operation_id": "impose-constraints"
+        }
+      ],
+      "operation_evidence": [
+        {
+          "evidence": "文様は器面の特定の帯（ゾーン）ごとに限られた種類の意匠を組み合わせて配置する規則性を持ち",
+          "operation_id": "impose-constraints",
+          "source_locator": "entities/movements/lapita-pottery.md#定義と範囲",
+          "source_refs": [
+            "http://www.ioa.ucla.edu/talepakemalai",
+            "https://en.wikipedia.org/wiki/Lapita_culture",
+            "https://en.wiktionary.org/wiki/Lapita",
+            "https://human.libretexts.org/Bookshelves/Art/SmartHistory/10:_Oceania/10.01:_Terracotta_fragments_Lapita_people",
+            "https://www.getty.edu/vow/AATFullDisplay?find=&logic=AND&note=&english=Y&subjectid=300264776",
+            "https://www.metmuseum.org/art/collection/search/314214",
+            "https://www.metmuseum.org/art/collection/search/314215",
+            "https://www.metmuseum.org/art/collection/search/314216",
+            "https://www.wikidata.org/wiki/Q1021436"
+          ]
+        }
+      ],
+      "relation_kind": "complement",
+      "relation_priority": 1,
+      "score": 1
+    },
+    {
+      "candidate_kind": "movement",
+      "entity_id": "movement/arte-madi",
+      "evidence_length": 28,
+      "matched_operation_ids": [
+        "impose-constraints"
+      ],
+      "operation_connections": [
+        {
+          "material_operation_id": "defer",
+          "relation": "complement",
+          "tag_operation_id": "impose-constraints"
+        }
+      ],
+      "operation_evidence": [
+        {
+          "evidence": "表現・再現・意味作用という現象のあらゆる介入は排される。",
+          "operation_id": "impose-constraints",
+          "source_locator": "entities/movements/arte-madi.md#定義と範囲",
+          "source_refs": [
+            "https://en.wikipedia.org/wiki/Carmelo_Arden_Quin",
+            "https://en.wikipedia.org/wiki/Mad%C3%AD",
+            "https://kosice.com.ar/el-artista/linea-de-tiempo/",
+            "https://kosice.com.ar/otros-recursos/los-textos/de-kosice/manifiesto-madi/",
+            "https://masdearte.com/movimientos/madi/",
+            "https://www.mfah.org/blogs/inside-mfah/gyula-kosice-and-rise-argentinean-avant-garde",
+            "https://www.museoreinasofia.es/en/exhibitions/arte-madi",
+            "https://www.tate.org.uk/art/art-terms/a/arte-madi",
+            "https://www.wikidata.org/wiki/Q692924"
+          ]
+        }
+      ],
+      "relation_kind": "complement",
+      "relation_priority": 1,
+      "score": 1
     }
   ],
-  "matched_candidates": [],
-  "matching_root_evidence": [],
+  "matched_count_by_relation": {
+    "complement": 4
+  },
   "material_origin": "Explicit orchestrator supplement; no profile access",
   "material_sha256": "0b2a3e2f159180ab0425a804e17588133f1686f250c72a584ecd0a488922fc09",
-  "native_element_answers": [
-    {
-      "answer_sha256": "bc95d96aeabd9cf39766a9975f4bed6fce91fb6b374b815a2b2bf8ccdd822039",
-      "attempt": 1,
-      "element_id": "A3.operation",
-      "failures": []
-    },
-    {
-      "answer_sha256": "c3c6951a7640d09ed2a364eff668a45f9937285a2f202760e2ad9e39cea7e284",
-      "attempt": 1,
-      "element_id": "A3.evidence.1",
-      "failures": []
-    },
-    {
-      "answer_sha256": "6a244a3c8cd1ec9d4a6eb9dbf4b6a4f22a05793d95336cf8f841ce2fc18a88b7",
-      "attempt": 1,
-      "element_id": "A3.operation.2",
-      "failures": []
-    }
-  ],
-  "operation": "defer",
-  "operation_label": "決定の先送り",
+  "native_answers": {
+    "A3.evidence.1": "費用の確定を先に進めることを避ける",
+    "A3.operation": "defer",
+    "A3.operation.2": "これ以上なし"
+  },
   "owner_acceptance": "PENDING",
-  "parent_runtime": "Local implementation under review; source_commit is the start point, not an attestation of uncommitted code",
-  "parent_source_commit": "03b0c4f5cc992ea5fde5bbd3fd7bd3384d997b6d",
-  "remaining_choice": "これ以上なし",
-  "scope": "Actual supplied material; real owner art export; synthetic self and market transport fixtures; A3/A4 only",
-  "state_retention": "Native checkpoint is Git-external; repository retains hashes and mechanical outcomes only",
-  "status": "BLOCKED"
+  "previous_result_without_relations": "Zero candidates (NO_OPERATION_TAG_OVERLAP) at parent 7b4dd66 / child 3c2b53d.",
+  "relation_expanded_operations": {
+    "complement": [
+      "impose-constraints"
+    ],
+    "contrast": [
+      "decide-in-action",
+      "present-unfinished"
+    ]
+  },
+  "scope": "Actual supplied material; real owner art export at the new child commit; synthetic self and market transport fixtures; A3/A4 only",
+  "tag_counts_in_export_by_operation": {
+    "complement": {
+      "impose-constraints": 4
+    },
+    "contrast": {
+      "decide-in-action": 0,
+      "present-unfinished": 0
+    },
+    "same": {
+      "defer": 0
+    }
+  }
 }

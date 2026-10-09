@@ -2913,6 +2913,13 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
         if any(not isinstance(tag.get('evidence'), str) or not tag['evidence'].strip() for tag in tags if isinstance(tag, dict)):
             errors.append(_signal_error(source, 'empty operation evidence', 'supply native verified evidence'))
 
+    if isinstance(art, dict) and 'operation_relations' in art:
+        from tools.operation_relations import validate_edges
+        try:
+            validate_edges(art['operation_relations'], vocab)
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
+            errors.append(_signal_error(source, str(exc), 'repair the owner relation projection'))
+
     return errors
 
 

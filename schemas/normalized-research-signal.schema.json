@@ -300,7 +300,7 @@
       }
     },
     "art_history": {
-      "dependentRequired": {"operation_vocabulary": ["operation_tags"], "operation_tags": ["operation_vocabulary"]},
+      "dependentRequired": {"operation_vocabulary": ["operation_tags"], "operation_tags": ["operation_vocabulary"], "operation_relations": ["operation_vocabulary", "operation_tags"]},
       "type": "object",
       "additionalProperties": false,
       "required": ["entity_kind", "time", "geo", "relations", "canonical_graph_locator"],
@@ -385,6 +385,7 @@
             }
           }
         },
+        "operation_relations": {"type":"object","additionalProperties":false,"required":["contract_version","vocabulary_sha256","source_sha256","edges"],"properties":{"contract_version":{"const":"operation-relation-edges/v1"},"vocabulary_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"source_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"edges":{"type":"object","additionalProperties":false,"required":["contrast","complement"],"properties":{"contrast":{"type":"object","additionalProperties":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string"}}},"complement":{"type":"object","additionalProperties":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string"}}}}}}},
         "operation_vocabulary": {"type":"object","additionalProperties":false,"required":["contract_version","operations"],"properties":{"contract_version":{"const":"operation-vocabulary/v1"},"operations":{"type":"array","minItems":1,"maxItems":40,"items":{"type":"object","additionalProperties":false,"required":["id","label","definition"],"properties":{"id":{"type":"string","minLength":1,"maxLength":100},"label":{"type":"string","minLength":1,"maxLength":100},"definition":{"type":"string","minLength":1,"maxLength":100}}}}}},
         "operation_tags": {"type":"array","items":{"type":"object","additionalProperties":false,"required":["operation_id","evidence","source_locator","source_refs"],"properties":{"operation_id":{"type":"string","minLength":1},"evidence":{"type":"string","minLength":1,"maxLength":600},"source_locator":{"type":"string","minLength":1},"source_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","pattern":"^https?://[^\\s/]+(?:/[^\\s]*)?$"}}}}},
         "canonical_graph_locator": {

@@ -363,6 +363,23 @@
     "target_count": 185,
     "vocabulary_sha256": "228125ca1c67fb8917ff4685b074e74e9b34c231a7366c9b0089b245d25bc2b2"
   },
+  "round_2_relations": {
+    "child_commit": "144a88268422d07a29060042c849ec3d5281391d",
+    "operation_count": 36,
+    "added_operations": ["decide-in-action", "follow-procedure", "accept-chance", "delegate", "present-unfinished", "impose-constraints"],
+    "relation_selections": 72,
+    "extension_targets": 23,
+    "extension_tags": {"follow-procedure": 5, "impose-constraints": 4, "delegate": 2},
+    "operations_without_any_tag": ["decide-in-action", "accept-chance", "present-unfinished"],
+    "checks": [
+      {"command": "python tools/validate.py --check", "exit_code": 0},
+      {"command": "python -m unittest tests.test_operation_vocabulary tests.test_operation_relations tests.test_theme_elements tests.test_element tests.test_adapter_art_history tests.test_signal_contract -q", "exit_code": 0, "test_count": 105},
+      {"command": "python -m unittest discover -s tests -v", "exit_code": 1, "test_count": 867, "failures": 9, "errors": 35, "skipped": 5, "same_failure_set_as_origin_main_03b0c4f": true, "origin_main_test_count": 852},
+      {"command": "child: tools/operation_relations.py check; tools/operation_tags.py check; tools/build_graph.py --check; tools/build_context_vectors.py --check; tools/verify.py", "exit_code": 0},
+      {"command": "child: python -m unittest discover -s tests", "exit_code": 0, "test_count": 207, "skipped": 11}
+    ],
+    "field_check": "see issue-284-matching.json (contract issue-284-matching-evidence/v2)"
+  },
   "task": "ISSUE-284",
   "unresolved": [
     "Owner recognition of the native real-material output",

@@ -21,6 +21,7 @@ from tools.element import canonical
 from tools.element_contracts import load_sequence
 from tools.element_checks import source_terms, valid_url
 from tools.validate import validate_signal
+from tools.operation_relations import validate_edges
 
 REGISTRY = Path(__file__).resolve().parents[1] / 'config/elements/phase-a.yaml'
 METADATA = {'consent_scope', 'export_permitted', 'raw_voice_locator'}
@@ -202,6 +203,9 @@ def matching_diagnostic(rows: list[dict]) -> dict:
                        else 'BELOW_MINIMUM_CONTENT_MATCH' if below else 'NO_OPERATION_TAG_OVERLAP' if tag_mode else 'NO_CONTENT_TERM_OVERLAP')}
 
 
+CONNECTION_FIELDS = ('operation_evidence', 'matching_mode', 'operation_connections',
+                     'relation_priority', 'relation_kind', 'evidence_length')
+
 STOP_OPERATION = 'これ以上なし'
 
 
@@ -216,6 +220,16 @@ def operation_vocabulary(signals: list[dict]) -> dict | None:
     return deepcopy(declared[0])
 
 
+
+def operation_relations(signals, vocab):
+    values = [signal['domain']['art_history'].get('operation_relations') for signal in signals
+              if signal['signal_kind'] == 'art-history']
+    if not any(value is not None for value in values):
+        return None
+    if not vocab or any(value != values[0] for value in values):
+        raise ValueError('MIXED_OPERATION_RELATIONS')
+    return deepcopy(validate_edges(values[0], vocab))
+
 def operation_choice(vocab: dict, material: str, operations: list[str], number: int) -> dict:
     remaining = [row for row in vocab['operations'] if row['id'] not in operations]
     return {'kind': 'element', 'element_id': 'A3.operation' if number == 1 else f'A3.operation.{number}',
@@ -227,14 +241,37 @@ def operation_choice(vocab: dict, material: str, operations: list[str], number: 
 
 
 def tag_matches(operations: list[str], domain: dict) -> dict:
-    tags = [tag for tag in domain.get('operation_tags', []) if tag['operation_id'] in operations]
+    relation_map = domain.get('operation_relations')
+    connections = []
+    for tag in domain.get('operation_tags', []):
+        for source in sorted(set(operations)):
+            if tag['operation_id'] == source:
+                connections.append({'material_operation_id': source, 'tag_operation_id': tag['operation_id'], 'relation': 'same'})
+            elif relation_map:
+                for kind in ('complement', 'contrast'):
+                    if tag['operation_id'] in relation_map['edges'][kind].get(source, []):
+                        connections.append({'material_operation_id': source, 'tag_operation_id': tag['operation_id'], 'relation': kind})
+    priorities = {'same': 0, 'complement': 1, 'contrast': 2}
+    priority = min((priorities[row['relation']] for row in connections), default=3)
+    strongest = [row for row in connections if priorities[row['relation']] == priority]
+    wanted = {row['tag_operation_id'] for row in strongest}
+    tags = [tag for tag in domain.get('operation_tags', []) if tag['operation_id'] in wanted]
     ids = sorted({tag['operation_id'] for tag in tags})
-    return {'score': len(ids), 'raw_score': len(ids), 'matched_terms': ids,
+    result = {'score': len(ids), 'raw_score': len(ids), 'matched_terms': ids,
             'score_breakdown': {key: 1 for key in ids}, 'raw_score_breakdown': {key: 1 for key in ids},
             'matches': [], 'matched_word_count': len(ids), 'matched_operation_count': len(ids),
             'operation_coverage': len(ids) / len(set(operations)) if operations else 0,
             'longest_match': 0, 'match_status': 'MATCHED' if ids else 'NO_OPERATION_TAG_OVERLAP',
             'operation_evidence': deepcopy(tags), 'matching_mode': 'operation-tags/v1'}
+
+    if relation_map:
+        all_ids = {row['tag_operation_id'] for row in connections}
+        result.update(operation_connections=connections, relation_priority=priority,
+                      relation_kind=next((key for key, value in priorities.items() if value == priority), None),
+                      evidence_length=sum(len(tag['evidence']) for tag in tags),
+                      operation_evidence=deepcopy([tag for tag in domain.get('operation_tags', []) if tag['operation_id'] in all_ids]),
+                      matching_mode='operation-relations/v1')
+    return result
 
 
 def ranked(operation: str | list[str], signals: list[dict], kind: str, public: dict | None = None) -> list[dict]:
@@ -242,6 +279,7 @@ def ranked(operation: str | list[str], signals: list[dict], kind: str, public: d
     targets = {entity: signal for signal in sorted(signals, key=lambda s: s['signal_id'], reverse=True)
                if signal['signal_kind'] == 'art-history' for entity in signal['source']['entity_ids']}
     vocab = operation_vocabulary(signals)
+    relation_map = operation_relations(signals, vocab)
     labels = {row['id']: row['label'] for row in vocab['operations']} if vocab else {}
     rows = []
     for signal in signals:
@@ -267,12 +305,18 @@ def ranked(operation: str | list[str], signals: list[dict], kind: str, public: d
         matching = (tag_matches(operations, signal['domain']['art_history'])
                     if vocab and kind == 'art-history' else
                     content_matches([labels.get(value, value) for value in operations], scoring_body))
+        if relation_map and kind == 'art-history':
+            body = '\n\n'.join(tag['evidence'] for tag in matching['operation_evidence'])
         evidence = {(ref['locator'], ref['kind']) for ref in signal['evidence_refs']}
         rows.append({'signal_id': signal['signal_id'], 'text': body,
+                     **({'entity_id': min(signal['source']['entity_ids'])} if relation_map and kind == 'art-history' else {}),
                      **matching, '_content_order': unicodedata.normalize('NFKC', scoring_body).casefold(),
                      'evidence_strength': sum(kind == 'primary' for _, kind in evidence),
                      'evidence_count': len(evidence), 'relation_sources': relation_sources, 'public_source_refs': public_refs})
-    rows.sort(key=lambda row: (-row['score'], -row['matched_operation_count'],
+    if relation_map and kind == 'art-history':
+        rows.sort(key=lambda row: (row['relation_priority'], -row['score'], -row['evidence_length'], row['entity_id']))
+    else:
+        rows.sort(key=lambda row: (-row['score'], -row['matched_operation_count'],
                                -row['operation_coverage'], -row['longest_match'],
                                -row['matched_word_count'], row['_content_order']))
     for row in rows:
@@ -397,7 +441,7 @@ def advance(state: dict) -> None:
         reason = next(iter(reasons)) if len(reasons) == 1 else 'MULTIPLE_CONTENT_MATCH_FAILURES' if reasons else None
         history.append({'operations': operations, 'zero_score_domains': zero,
                         'diagnostics': diagnostics, 'reason': reason,
-                        'rankings': {kind: [{key: row[key] for key in (*MATCHING_FIELDS, 'operation_evidence', 'matching_mode') if key in row}
+                        'rankings': {kind: [{key: row[key] for key in (*MATCHING_FIELDS, *CONNECTION_FIELDS) if key in row}
                                             for row in rows] for kind, rows in rankings.items()}})
         if zero:
             failure = [{'check': 'content_match_required',
@@ -442,8 +486,14 @@ def advance(state: dict) -> None:
         if start == stop:
             exhausted.append(kind)
         for index in range(start, stop):
-            added.append(_definition(phase['templates'], 'A5.connection', f'A5.{kind}.{index + 1}', {
-                'self': excerpt(phase['material']['text']), 'signal': excerpt(rows[index]['text'])}))
+            row = rows[index]
+            inputs = {'self': excerpt(phase['material']['text']), 'signal': excerpt(row['text'])}
+            if 'operation_connections' in row:
+                inputs['operation_connections'] = deepcopy(row['operation_connections'])
+            element = _definition(phase['templates'], 'A5.connection', f'A5.{kind}.{index + 1}', inputs)
+            if 'operation_connections' in row:
+                element['instruction'] += ' 操作の接続種別（同じ・補完・対比）を区別して判断してください。'
+            added.append(element)
         phase['offsets'][kind] = stop
     if exhausted:
         state.update(status='BLOCKED', pending=None, blocked={
@@ -474,6 +524,7 @@ def start(engine, signals: list[dict], *, requested_at: str, k=5, workspace_root
     vocab = operation_vocabulary(context['phase_a']['signals'])
     if vocab:
         context['phase_a']['operation_vocabulary'] = vocab
+        context['phase_a']['operation_relations'] = operation_relations(context['phase_a']['signals'], vocab)
         sequence['elements'] = [operation_choice(vocab, context['material'], [], 1)]
     context['phase_a']['templates'] = templates
     context['phase_a']['operation_template'] = deepcopy(sequence['elements'][0])
@@ -493,13 +544,14 @@ def provenance(state: dict) -> dict:
             'operations': [value for key, value in state['answers'].items() if key == 'A3.operation' or key.startswith('A3.operation.')],
             'operation_evidence': {key: value for key, value in state['answers'].items() if key.startswith('A3.evidence.')},
             'operation_vocabulary': deepcopy(phase.get('operation_vocabulary')),
+            'operation_relations': deepcopy(phase.get('operation_relations')),
             'matching_history': deepcopy(phase.get('matching_history', [])),
             'creative_question': state['answers']['A7.central-question'],
             'selected': {kind: {'signal': deepcopy(signals[row['signal_id']]),
                                 'matching_text': row['text'], 'public_source_refs': deepcopy(row['public_source_refs']), 'relation_sources': deepcopy(row['relation_sources']),
                                 'score': row['score'], 'matched_terms': deepcopy(row.get('matched_terms', [])),
                                 'score_breakdown': deepcopy(row.get('score_breakdown', {})),
-                                **{key: deepcopy(row[key]) for key in (*MATCHING_FIELDS, 'operation_evidence', 'matching_mode')
+                                **{key: deepcopy(row[key]) for key in (*MATCHING_FIELDS, *CONNECTION_FIELDS)
                                    if key not in ('signal_id', 'score', 'matched_terms', 'score_breakdown') and key in row},
                                 'connection': deepcopy(state['answers'][row['judgement_id']])}
                          for kind, row in selected.items()}}

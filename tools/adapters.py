@@ -273,7 +273,7 @@ def adapt_art_history_signal(record: dict) -> dict:
         },
     }
     art_history = signal["domain"]["art_history"]
-    for field in ("method", "source_refs", "content", "entity_labels", "operation_vocabulary", "operation_tags"):
+    for field in ("method", "source_refs", "content", "entity_labels", "operation_vocabulary", "operation_tags", "operation_relations"):
         if field in record:
             art_history[field] = copy.deepcopy(record[field])
     if "method" in record and isinstance(record.get("source_refs"), list):
