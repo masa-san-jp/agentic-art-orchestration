@@ -58,19 +58,18 @@ class OperationVocabularyTests(unittest.TestCase):
         self.assertEqual(2, report['next_action']['request']['attempt'])
         self.assertEqual({}, report['answers'])
 
-    def test_no_tag_match_keeps_evidence_and_requests_remaining_choices(self):
+    def test_untagged_candidates_are_ordered_not_dropped(self):
         rows = tagged()
         rows[1]['domain']['art_history']['operation_tags'] = []
         report = start(self.engine, rows, requested_at=NOW)
         report = self.answer(report, 'defer')
         report = self.answer(report, '決定を後に回す')
         request = report['next_action']['request']
-        self.assertEqual('A3.operation.2', request['element_id'])
-        self.assertNotIn('defer', request['answer_format']['choices'])
-        self.assertEqual('choice', request['answer_format']['type'])
-        report = self.answer(report, 'これ以上なし')
-        self.assertEqual('BLOCKED', report['status'])
+        # No tag overlap used to re-ask A3; now the candidate still reaches A5.
+        self.assertEqual('A5.art-history.1', request['element_id'])
+        self.assertEqual('先送りによって時間をずらす作品', request['inputs']['signal'])
         self.assertEqual('決定を後に回す', report['answers']['A3.evidence.1'])
+        self.assertNotIn('A3.operation.2', report['answers'])
 
     def test_stop_first_blocks_without_empty_evidence_or_a5(self):
         report = start(self.engine, tagged(), requested_at=NOW)

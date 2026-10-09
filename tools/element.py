@@ -248,7 +248,12 @@ class Engine:
                                      'failures': failures})
             if failures:
                 state['previous_failure'] = failures
-                if state['attempt'] >= state['sequence']['max_attempts']:
+                cap = state['context'].get('phase_a', {}).get('max_inferences')
+                over_budget = cap is not None and len(state['history']) >= cap
+                if state['attempt'] >= state['sequence']['max_attempts'] or over_budget:
+                    if over_budget:
+                        failures = [*failures, {'check': 'inference_budget',
+                                                'reason': f'The run reached its inference limit ({cap}); retries are counted.'}]
                     state.update(status='BLOCKED', pending=None,
                                  blocked={'element_id': request['element_id'], 'attempt': state['attempt'],
                                           'last_failure': failures})

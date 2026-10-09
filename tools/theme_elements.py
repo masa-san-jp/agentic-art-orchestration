@@ -24,8 +24,27 @@ from tools.validate import validate_signal
 from tools.operation_relations import validate_edges
 
 REGISTRY = Path(__file__).resolve().parents[1] / 'config/elements/phase-a.yaml'
+WINDOWING = Path(__file__).resolve().parents[1] / 'config/phase-a-windowing.yaml'
 METADATA = {'consent_scope', 'export_permitted', 'raw_voice_locator'}
 DOMAINS = ('art-history', 'marketing')
+
+
+def best_case_inferences(k: int) -> int:
+    """A3 choice + evidence, one full window per domain, A7."""
+    return 2 + 2 * k + 1
+
+
+def windowing_config(path: Path = WINDOWING) -> dict:
+    """Window size and the inference cap; the cap must admit the best case."""
+    value = yaml.safe_load(path.read_text(encoding='utf-8'))
+    if not isinstance(value, dict) or set(value) != {'version', 'window_size', 'max_inferences'} or value['version'] != 1:
+        raise ValueError('Invalid Phase A windowing config')
+    size, cap = value['window_size'], value['max_inferences']
+    if any(not isinstance(item, int) or isinstance(item, bool) for item in (size, cap)) or not 5 <= size <= 10:
+        raise ValueError('Phase A window_size must be an integer from 5 to 10')
+    if cap < best_case_inferences(size):
+        raise ValueError('Phase A max_inferences is below the best case')
+    return {'window_size': size, 'max_inferences': cap}
 
 
 def digest(value):
@@ -306,7 +325,10 @@ def ranked(operation: str | list[str], signals: list[dict], kind: str, public: d
                     if vocab and kind == 'art-history' else
                     content_matches([labels.get(value, value) for value in operations], scoring_body))
         if relation_map and kind == 'art-history':
-            body = '\n\n'.join(tag['evidence'] for tag in matching['operation_evidence'])
+            # Connected tag passages first, else the candidate's own sourced content,
+            # else any of its tag passages. Order is a hint, never a filter.
+            body = '\n\n'.join(tag['evidence'] for tag in matching['operation_evidence']) or body or '\n\n'.join(
+                tag['evidence'] for tag in signal['domain']['art_history'].get('operation_tags', []))
         evidence = {(ref['locator'], ref['kind']) for ref in signal['evidence_refs']}
         rows.append({'signal_id': signal['signal_id'], 'text': body,
                      **({'entity_id': min(signal['source']['entity_ids'])} if relation_map and kind == 'art-history' else {}),
@@ -406,6 +428,31 @@ def _definition(templates: dict, name: str, element_id: str, inputs: dict) -> di
     return template
 
 
+def _block_unconnected(state: dict, kinds: list[str], budget: bool = False) -> None:
+    """BLOCKED with the observed cause: which domain, how many candidates were judged."""
+    phase = state['context']['phase_a']
+    if 'candidate_counts' not in phase:  # legacy contract keeps its original wording
+        reason = 'No connected signal in: ' + ', '.join(kinds)
+        domains = None
+    else:
+        domains = {}
+        for kind in kinds:
+            counts = phase['candidate_counts'][kind]
+            judged = [value for key, value in phase['judgements'].items() if key.startswith(f'A5.{kind}.')]
+            domains[kind] = {'candidates': counts['candidates'], 'with_text': counts['with_text'],
+                             'without_text': counts['candidates'] - counts['with_text'],
+                             'judged': len(judged), 'yes': sum(bool(value['answer']) for value in judged),
+                             'windows_used': -(-phase['offsets'][kind] // phase['k'])}
+        parts = [f"{kind}: 候補{row['candidates']}件のうち本文あり{row['with_text']}件（本文なし{row['without_text']}件は判定できない）、"
+                 f"{row['judged']}件を{row['windows_used']}窓で判定し「はい」{row['yes']}件"
+                 + ('' if budget else '（本文のある全候補を見て「はい」なし）') for kind, row in domains.items()]
+        reason = ('推論数の上限(' + str(phase.get('max_inferences')) + ')に達した。 ' if budget else '') + '; '.join(parts)
+    state.update(status='BLOCKED', pending=None, blocked={
+        'element_id': 'A6.selection', 'attempt': 1,
+        'last_failure': [{'check': 'inference_budget' if budget else 'connected_pair_required', 'reason': reason}],
+        **({'domains': domains} if domains else {}), 'judgements': deepcopy(phase['judgements'])})
+
+
 def advance(state: dict) -> None:
     """Extend the common sequence only at an accepted checkpoint, under its lock."""
     phase = state['context']['phase_a']
@@ -443,7 +490,13 @@ def advance(state: dict) -> None:
                         'diagnostics': diagnostics, 'reason': reason,
                         'rankings': {kind: [{key: row[key] for key in (*MATCHING_FIELDS, *CONNECTION_FIELDS) if key in row}
                                             for row in rows] for kind, rows in rankings.items()}})
-        if zero:
+        if vocab:
+            # Ordering only: no candidate is dropped for lacking a tag or a literal
+            # overlap. Candidates without any sourced text cannot be put to A5.
+            phase['candidate_counts'] = {kind: {'candidates': len(rows), 'with_text': sum(bool(row['text'].strip()) for row in rows)}
+                                         for kind, rows in rankings.items()}
+            phase['rankings'] = {kind: [row for row in rows if row['text'].strip()] for kind, rows in rankings.items()}
+        elif zero:
             failure = [{'check': 'content_match_required',
                         'reason': '; '.join(f"{kind}: {diagnostics[kind]['reason']}" for kind in zero)}]
             if len(operations) >= state['sequence']['max_attempts']:
@@ -461,7 +514,8 @@ def advance(state: dict) -> None:
             state['previous_failure'] = failure
             state['sequence']['elements'].append(added)
             return
-        phase['rankings'] = {kind: [row for row in rows if row['score'] > 0] for kind, rows in rankings.items()}
+        else:
+            phase['rankings'] = {kind: [row for row in rows if row['score'] > 0] for kind, rows in rankings.items()}
     for kind in DOMAINS:
         rows = phase['rankings'][kind]
         # Complete this window before making any selection; preserve no reasons too.
@@ -477,6 +531,7 @@ def advance(state: dict) -> None:
             phase['selected'][kind] = {**row, 'judgement_id': f'A5.{kind}.{index + 1}'}
     added = []
     exhausted = []
+    windows = {}
     for kind in DOMAINS:
         if kind in phase['selected']:
             continue
@@ -485,6 +540,7 @@ def advance(state: dict) -> None:
         stop = min(start + phase['k'], len(rows))
         if start == stop:
             exhausted.append(kind)
+        windows[kind] = []
         for index in range(start, stop):
             row = rows[index]
             inputs = {'self': excerpt(phase['material']['text']), 'signal': excerpt(row['text'])}
@@ -493,15 +549,25 @@ def advance(state: dict) -> None:
             element = _definition(phase['templates'], 'A5.connection', f'A5.{kind}.{index + 1}', inputs)
             if 'operation_connections' in row:
                 element['instruction'] += ' 操作の接続種別（同じ・補完・対比）を区別して判断してください。'
-            added.append(element)
-        phase['offsets'][kind] = stop
+            windows[kind].append(element)
     if exhausted:
-        state.update(status='BLOCKED', pending=None, blocked={
-            'element_id': 'A6.selection', 'attempt': 1,
-            'last_failure': [{'check': 'connected_pair_required',
-                              'reason': 'No connected signal in: ' + ', '.join(exhausted)}],
-            'judgements': deepcopy(phase['judgements'])})
+        _block_unconnected(state, exhausted)
         return
+    # Reserve the final A7 inference; trim the windows round-robin to what is left.
+    cap = phase.get('max_inferences')
+    room = None if cap is None else cap - len(state['history']) - 1
+    taken = {kind: 0 for kind in windows}
+    for position in range(phase['k']):
+        for kind, elements in windows.items():
+            if position < len(elements) and (room is None or room > 0):
+                taken[kind] += 1
+                room = room if room is None else room - 1
+    if windows and not any(taken.values()):
+        _block_unconnected(state, list(windows), budget=True)
+        return
+    for kind, count in taken.items():
+        added.extend(windows[kind][:count])
+        phase['offsets'][kind] += count
     if not added:
         selected = phase['selected']
         added.append(_definition(phase['templates'], 'A7.central-question', 'A7.central-question', {
@@ -513,9 +579,16 @@ def advance(state: dict) -> None:
     state['sequence']['elements'].extend(added)
 
 
-def start(engine, signals: list[dict], *, requested_at: str, k=5, workspace_root: Path | None = None, intent: str | None = None) -> dict:
+def start(engine, signals: list[dict], *, requested_at: str, k=None, workspace_root: Path | None = None, intent: str | None = None,
+          max_inferences=None) -> dict:
     if engine.path.exists():
         return engine.next()
+    config = windowing_config()
+    k = config['window_size'] if k is None else k
+    max_inferences = config['max_inferences'] if max_inferences is None else max_inferences
+    if (not isinstance(k, int) or isinstance(k, bool) or k < 1 or not isinstance(max_inferences, int)
+            or isinstance(max_inferences, bool) or max_inferences < best_case_inferences(k)):
+        raise ValueError('Phase A max_inferences must admit the best case for the window size')
     sequence = load_sequence(REGISTRY)
     # A5/A7 definitions are templates registered and checked by the same validator.
     templates = {item['element_id']: deepcopy(item) for item in sequence['elements'][1:]}
@@ -526,6 +599,7 @@ def start(engine, signals: list[dict], *, requested_at: str, k=5, workspace_root
         context['phase_a']['operation_vocabulary'] = vocab
         context['phase_a']['operation_relations'] = operation_relations(context['phase_a']['signals'], vocab)
         sequence['elements'] = [operation_choice(vocab, context['material'], [], 1)]
+    context['phase_a']['max_inferences'] = max_inferences
     context['phase_a']['templates'] = templates
     context['phase_a']['operation_template'] = deepcopy(sequence['elements'][0])
     if workspace_root is not None:
