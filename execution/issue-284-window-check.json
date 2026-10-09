@@ -1,0 +1,280 @@
+{
+  "a3": {
+    "evidence_is_exact_substring": true,
+    "operation": "defer"
+  },
+  "answerer": "the implementing agent (Claude), judging from each candidate text only; no result was steered",
+  "art_export_sha256": "ab8ea15058bcc4024a330ed3a7844e60b13a262f0667b2ba3b605e736fed843a",
+  "art_source_commit": "144a88268422d07a29060042c849ec3d5281391d",
+  "contract_version": "issue-284-window-check/v1",
+  "domains": {
+    "art-history": {
+      "candidates": 184,
+      "judged": 5,
+      "selected": {
+        "entity_ids": [
+          "movement/kamasan-painting"
+        ],
+        "judgement_id": "A5.art-history.2",
+        "signal_id": "art-history:kamasan-painting"
+      },
+      "windows": [
+        {
+          "judgements": [
+            {
+              "answer": false,
+              "element_id": "A5.art-history.1",
+              "entity_ids": [
+                "movement/conceptual-art"
+              ],
+              "reason": "費用の確定を避ける素材に対し、この抜粋はprocessを変えず走らせると述べるだけで先送りに触れない。",
+              "relation_kind": "complement",
+              "signal_id": "art-history:conceptual-art"
+            },
+            {
+              "answer": true,
+              "element_id": "A5.art-history.2",
+              "entity_ids": [
+                "movement/kamasan-painting"
+              ],
+              "reason": "概念と表現の対応を言語化できない素材は、目の形や姿勢で意味を区別するこの規則の対応づけと同じ問題を扱う。",
+              "relation_kind": "complement",
+              "signal_id": "art-history:kamasan-painting"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.art-history.3",
+              "entity_ids": [
+                "movement/lapita-pottery"
+              ],
+              "reason": "概念と表現の対応という素材に対し、この抜粋は文様を帯ごとに配置する規則性のみを述べ、意味の対応も先送りも扱わない。",
+              "relation_kind": "complement",
+              "signal_id": "art-history:lapita-pottery"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.art-history.4",
+              "entity_ids": [
+                "movement/arte-madi"
+              ],
+              "reason": "素材の費用の確定を避ける態度と、表現や意味作用の介入を排するというこの抜粋は、先送りの点でつながる記述がない。",
+              "relation_kind": "complement",
+              "signal_id": "art-history:arte-madi"
+            },
+            {
+              "answer": true,
+              "element_id": "A5.art-history.5",
+              "entity_ids": [
+                "concept/automatism"
+              ],
+              "reason": "費用の確定を先に進めることを避ける素材は、あらかじめ主題を決めずに始める制作条件と、決定を保留する点で対応する。",
+              "relation_kind": null,
+              "signal_id": "art-history:method:automatism"
+            }
+          ],
+          "window": 1,
+          "yes": 2
+        }
+      ],
+      "with_text": 179
+    },
+    "marketing": {
+      "candidates": 65,
+      "judged": 15,
+      "selected": {
+        "entity_ids": [
+          "trend/creator-rights-compensation-transparency"
+        ],
+        "judgement_id": "A5.marketing.11",
+        "signal_id": "marketing:creator-rights-compensation-transparency"
+      },
+      "windows": [
+        {
+          "judgements": [
+            {
+              "answer": false,
+              "element_id": "A5.marketing.1",
+              "entity_ids": [
+                "trend/ai-visual-trust-expectation"
+              ],
+              "reason": "概念と表現の対応を言語化できない素材に対し、AI表現への信頼を求める視線は費用の確定や先送りとは関係がない。",
+              "relation_kind": null,
+              "signal_id": "marketing:ai-visual-trust-expectation"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.2",
+              "entity_ids": [
+                "trend/b2b-ecommerce-expansion"
+              ],
+              "reason": "素材の費用の確定を避ける態度と、BtoB電子商取引の拡大の記録の間につながる記述はない。",
+              "relation_kind": null,
+              "signal_id": "marketing:b2b-ecommerce-expansion"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.3",
+              "entity_ids": [
+                "trend/giga-learning-platform-renewal"
+              ],
+              "reason": "概念と表現の対応という素材に対し、GIGAスクール端末の更新運用は無関係な記録である。",
+              "relation_kind": null,
+              "signal_id": "marketing:giga-learning-platform-renewal"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.4",
+              "entity_ids": [
+                "trend/specificity-over-relatability-expectation"
+              ],
+              "reason": "概念と表現の対応を言語化できない素材と、共感より個別性を求める視線とのつながりは本文からは読み取れない。",
+              "relation_kind": null,
+              "signal_id": "marketing:specificity-over-relatability-expectation"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.5",
+              "entity_ids": [
+                "trend/algorithmic-trust-erosion"
+              ],
+              "reason": "素材の費用の確定を避ける態度と、おすすめ表示への不信感の高まりをつなぐ記述は本文にない。",
+              "relation_kind": null,
+              "signal_id": "marketing:algorithmic-trust-erosion"
+            }
+          ],
+          "window": 1,
+          "yes": 0
+        },
+        {
+          "judgements": [
+            {
+              "answer": false,
+              "element_id": "A5.marketing.6",
+              "entity_ids": [
+                "trend/online-game-spending-protection"
+              ],
+              "reason": "素材の費用の確定を避ける態度は個人の制作上の保留であり、オンラインゲーム課金と未成年者保護の運用強化とは結びつかない。",
+              "relation_kind": null,
+              "signal_id": "marketing:online-game-spending-protection"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.7",
+              "entity_ids": [
+                "trend/online-news-platform-dependence"
+              ],
+              "reason": "概念と表現の対応を言語化できない素材と、オンラインニュースプラットフォームへの依存の可視化の間につながる記述はない。",
+              "relation_kind": null,
+              "signal_id": "marketing:online-news-platform-dependence"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.8",
+              "entity_ids": [
+                "trend/online-marketplace-transparency"
+              ],
+              "reason": "素材の費用の確定を避ける態度と、オンラインモール取引の透明化の制度化は、本文上は別の話題である。",
+              "relation_kind": null,
+              "signal_id": "marketing:online-marketplace-transparency"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.9",
+              "entity_ids": [
+                "trend/online-medical-consultation-adoption"
+              ],
+              "reason": "概念と表現の対応という素材に対し、オンライン診療の制度対応と利用拡大の記録は関係がない。",
+              "relation_kind": null,
+              "signal_id": "marketing:online-medical-consultation-adoption"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.10",
+              "entity_ids": [
+                "trend/online-financial-crime-governance"
+              ],
+              "reason": "素材の費用の確定を先に進めない態度と、オンライン金融犯罪対策の高度化は本文からはつながらない。",
+              "relation_kind": null,
+              "signal_id": "marketing:online-financial-crime-governance"
+            }
+          ],
+          "window": 2,
+          "yes": 0
+        },
+        {
+          "judgements": [
+            {
+              "answer": true,
+              "element_id": "A5.marketing.11",
+              "entity_ids": [
+                "trend/creator-rights-compensation-transparency"
+              ],
+              "reason": "費用の確定を避ける素材は、クリエイターの権利と対価情報の透明化が進む動きと、制作の費用を決める場面でつながる。",
+              "relation_kind": null,
+              "signal_id": "marketing:creator-rights-compensation-transparency"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.12",
+              "entity_ids": [
+                "trend/creator-ad-disclosure"
+              ],
+              "reason": "素材の費用の確定を避ける態度と、クリエイター広告表示の可視化は、本文上は広告の開示の話でつながらない。",
+              "relation_kind": null,
+              "signal_id": "marketing:creator-ad-disclosure"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.13",
+              "entity_ids": [
+                "trend/gaming-digital-global-expansion"
+              ],
+              "reason": "概念と表現の対応を言語化できない素材と、ゲーム市場のデジタル・グローバル化の記録は無関係である。",
+              "relation_kind": null,
+              "signal_id": "marketing:gaming-digital-global-expansion"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.14",
+              "entity_ids": [
+                "trend/sustainable-fashion-behavior"
+              ],
+              "reason": "素材の費用の確定を避ける態度と、サステナブルファッションへの関心は、本文からはつながらない。",
+              "relation_kind": null,
+              "signal_id": "marketing:sustainable-fashion-behavior"
+            },
+            {
+              "answer": false,
+              "element_id": "A5.marketing.15",
+              "entity_ids": [
+                "trend/service-ecommerce-expansion"
+              ],
+              "reason": "概念と表現の対応という素材に対し、サービスECの拡大の記録は直接の関係がない。",
+              "relation_kind": null,
+              "signal_id": "marketing:service-ecommerce-expansion"
+            }
+          ],
+          "window": 3,
+          "yes": 1
+        }
+      ],
+      "with_text": 65
+    }
+  },
+  "engine_status": "WAITING",
+  "inference_count": 22,
+  "inference_count_by_stage": {
+    "A3": 2,
+    "A5": 20
+  },
+  "market_export_sha256": "f2a805fd83d116343219f92cb3854d1a4cbb8d806b95476e74e3548bbb34b8b4",
+  "market_export_signal_count": 65,
+  "market_source_commit": "1a02e5aaca120614cba5cd1bbb687a836706530f",
+  "material_sha256": "0b2a3e2f159180ab0425a804e17588133f1686f250c72a584ecd0a488922fc09",
+  "max_inferences": 60,
+  "next_pending_element": "A7.central-question",
+  "owner_acceptance": "PENDING",
+  "retries": 0,
+  "scope": "Actual supplied material; real owner art export; real marketing-trends export; synthetic self transport envelope; A3 through A5 only",
+  "window_size": 5
+}

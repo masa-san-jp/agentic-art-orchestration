@@ -1,0 +1,6 @@
+# Phase A: how the program splits candidates into windows for A5 inference.
+# The program only orders and slices; whether two items connect is decided by
+# one A5 inference per candidate (design: element-harness-design, A4-A6).
+version: 1
+window_size: 5        # candidates per domain per window; allowed 5..10
+max_inferences: 60    # hard cap on element answers (including retries) per run
