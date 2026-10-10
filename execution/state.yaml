@@ -1,7 +1,18 @@
-version: 324
-updated_at: '2026-10-08T12:23:04.805398+00:00'
+version: 325
+updated_at: '2026-10-10T12:00:00+00:00'
 active_task: null
 active_repository: null
+issue288_checkpoint:
+  task: ISSUE-288
+  repositories: [agentic-art-orchestration]
+  status: BLOCKED
+  code_status: CODE_VERIFIED
+  start_point: 946faed
+  evidence: execution/issue-288-verification.json
+  acceptance: Design chapters 3-8 and 9.1 implemented; criteria 1-10 verified with synthetic cards at the real scale; real-data confirmation waits for the card exports.
+  lease: NOT_ACQUIRED
+  remote_sync: NOT_RUN_BY_INSTRUCTION
+  next_operation: Orchestrator reviews and publishes; close L284 unmerged; run the real-data check once art-history-notes#403 and marketing-trends-notes#127 export cards.
 issue283_checkpoint:
   task: ISSUE-283
   repositories: [agentic-art-orchestration, art-history-notes]
@@ -146,9 +157,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: ISSUE-278
 resume_from:
-  task: ISSUE-283
+  task: ISSUE-288
   repository: agentic-art-orchestration
-  action: Review the corrected Issue-283 commit and the native A3.operation.2 checkpoint; obtain the next actual A3 answer in the real run before claiming meaningful ranked candidates. Orchestrator owns publication and pin adoption; no lease is held.
+  action: Review the Issue-288 local commits (Phase A v2); run the real-data check after the card exports exist. Orchestrator owns publication; no lease is held.
   command: git show --stat HEAD
 
 oi07_progress:
@@ -2235,10 +2246,10 @@ issue280_hearing_follow_up:
   lease: NOT_ACQUIRED
 
 checkpoint:
-  task: ISSUE-283
+  task: ISSUE-288
   repository: agentic-art-orchestration
   status: BLOCKED
   code_status: CODE_VERIFIED
-  start_point: 337c33211d6048d934b2db0dcf749cd25cb2e617
-  evidence: execution/issue-283-verification.json
-  next_operation: Review corrected code and actual accepted-A3 evidence; apply corrected A4 in the actual run and continue with its requested A3 addition. Publication and pin adoption remain orchestrator-owned.
+  start_point: 946faed
+  evidence: execution/issue-288-verification.json
+  next_operation: Orchestrator reviews and publishes; real-data confirmation after the card exports exist. Earlier note - review corrected code and actual accepted-A3 evidence; apply corrected A4 in the actual run and continue with its requested A3 addition. Publication and pin adoption remain orchestrator-owned.

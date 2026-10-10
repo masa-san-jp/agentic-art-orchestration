@@ -1,0 +1,29 @@
+{
+  "issue": "masa-san-jp/agentic-art-orchestration#288",
+  "base": "946faed",
+  "commands": [
+    {
+      "command": "python tools/validate.py --check",
+      "result": "OK"
+    },
+    {
+      "command": "python tools/project_status.py --check-readme",
+      "result": "OK"
+    },
+    {
+      "command": "python -m unittest discover -s tests",
+      "result": "Ran 871 tests; failures=9 errors=35 skipped=5",
+      "baseline": "origin/main: Ran 852 tests; failures=9 errors=35 skipped=5",
+      "failure_set": "identical (name-sorted checksums equal)"
+    }
+  ],
+  "criteria": {
+    "1-10": "synthetic cards at real scale",
+    "11": "request size and answer shape only; no local model run"
+  },
+  "not_run": [
+    "real-card data",
+    "real LLM run",
+    "local model run"
+  ]
+}

@@ -3474,3 +3474,27 @@ tasks:
     blocker: The next actual A3 answer is not available; do not invent it to improve the observed ranking.
     verification_result: Parent 852 tests exactly matches pristine origin/main 834 tests six-failure set, with five skips; related 190 and core 59 tests pass; unchanged child canonical 190 tests pass without skips.
     completion: Local review fixes implemented; real matching waits for one more A3 value. No profile access, publication, pin adoption, held lease or remote write. Existing parent failures remain explicit.
+
+  - id: ISSUE-288
+    milestone: ELEMENT-HARNESS
+    title: Implement Phase A v2 (AI judges links, code orders and checks)
+    status: BLOCKED
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/288
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-283]
+    acceptance: Design chapters 3-8 and 9.1 of docs/20261010-phase-a-v2-design.md; acceptance criteria 1-11 of chapter 10 confirmed on real data without rewriting fixtures; the first answerer is an LLM (switching the judgement model is Issue 287).
+    checks:
+    - python tools/validate.py --check
+    - python tools/project_status.py --check-readme
+    - python -m unittest tests.test_theme_elements tests.test_phase_a_checks tests.test_element tests.test_theme_sources tests.test_auto_plan -v
+    - python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge and Issue closure; L284 (agent/284-operation-vocabulary) is closed unmerged. This agent made local commits only and held no lease.
+    evidence: execution/issue-288-verification.json
+    code_status: CODE_VERIFIED
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    acceptance_result: Criteria 1-10 verified with synthetic cards at the real scale (179 art, 65 market, 23 and 9 windows, cap 120); criterion 11 verified for request size and answer shapes with a scripted answerer, not a local model.
+    blocker: Real cards are not exported yet (art-history-notes#403, marketing-trends-notes#127), so the criteria cannot be confirmed on real data, and no real LLM run was made.
+    verification_result: See execution/issue-288-verification.json for the focused and full-suite counts and the baseline comparison.
+    completion: Code is complete against chapters 3-8 and 9.1; the real-data confirmation waits for the two card exports.
