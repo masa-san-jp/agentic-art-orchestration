@@ -104,14 +104,51 @@ class CardSourceTests(unittest.TestCase):
         self.assertEqual(['CARD_SOURCE_MISMATCH'], [row['reason'] for row in rows])
         self.assertEqual(self.art['signal_id'], rows[0]['signal_id'])
 
-    def test_front_matter_is_not_the_body(self):
+    def test_front_matter_value_is_searched_like_art_history_does(self):
         path = self.item['source_locator'].split('#')[0]
-        raw = f"---\nnote: {self.item['text']}\n---\n別の本文である。\n".encode()
+        raw = f"---\nmethod:\n  fixes:\n    - \"{self.item['text']}\"\n---\n別の本文である。\n".encode()
+        self.blobs[('art-history', path)] = raw
+        self.item.update(source_locator=path + '#method.fixes', source_sha256=hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+        raw = b'---\nmethod:\n  fixes:\n    - "\xe5\x88\xa5\xe3\x81\xae\xe5\x80\xa4"\n---\n\xe5\x88\xa5\xe3\x81\xae\xe6\x9c\xac\xe6\x96\x87\n'
         self.blobs[('art-history', path)] = raw
         self.item['source_sha256'] = hashlib.sha256(raw).hexdigest()
         with self.assertRaises(PhaseABlocked) as caught:
             verify_card(self.art, self.item, blob_source(self.blobs))
         self.assertEqual('excerpt not in blob', caught.exception.details['detail'])
+
+    def test_marketing_card_follows_the_owner_rule_per_section(self):
+        market = next(signal for signal in self.signals if signal['signal_kind'] == 'marketing')
+        item = market['domain']['marketing']['card'][0]
+        path = item['source_locator'].split('#')[0]
+        read = blob_source(self.blobs)
+        self.assertEqual(item['text'], verify_card(market, item, read))
+        for locator in (path + '#見出している未来', path + '#別の節', path):
+            with self.assertRaises(PhaseABlocked) as caught:
+                verify_card(market, {**item, 'source_locator': locator}, read)
+            self.assertEqual('excerpt not in blob', caught.exception.details['detail'])
+        table = f"---\nid: x\n---\n## 足元の根拠\n\n| 列 |\n|---|\n| {item['text']} |\n".encode()
+        self.blobs[('marketing-trends', path)] = table
+        with self.assertRaises(PhaseABlocked):
+            verify_card(market, {**item, 'source_sha256': hashlib.sha256(table).hexdigest()}, read)
+
+    def test_load_signals_reads_a_directory_a_portfolio_and_one_file_and_never_zero_silently(self):
+        import json
+        from tools.card_sources import load_signals, main
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'art-history').mkdir()
+            names = []
+            for signal in self.signals[:3]:
+                name = f"art-history/{signal['signal_id'].replace(':', '_')}.json"
+                (root / name).write_text(json.dumps(signal), encoding='utf-8')
+                names.append(name)
+            (root / 'portfolio.json').write_text(json.dumps({'version': 1, 'signal_files': names, 'requirements': []}))
+            self.assertEqual(3, len(load_signals(root)))
+            self.assertEqual(3, len(load_signals(root / 'portfolio.json')))
+            self.assertEqual(1, len(load_signals(root / names[0])))
+            (root / 'empty').mkdir()
+            self.assertEqual(2, main(['--signals', str(root / 'empty'), '--workspace-root', str(root)]))
 
     def test_hash_missing_blob_and_unsafe_locator_each_block_with_their_cause(self):
         read = blob_source(self.blobs)

@@ -67,10 +67,11 @@ def market_signal(index, blobs, *, expires='2027-01-01T00:00:00+09:00', card=Tru
     domain.update(stage='growing', expires_at=expires, revalidate_at=signal['freshness']['revalidate_at'])
     domain['label_ja'] = f'市場{index}'
     if card:
-        excerpt, raw = _blob('market', index)
+        excerpt = f'tagm{index}は制作過程の記録として自発的に構成を決める実践'
+        raw = f'---\nid: market-{index}\n---\n# 題\n\n## 足元の根拠（完了した事実）\n\n**{excerpt}**である。\n'.encode()
         path = f'trends/m{index:02d}.md'
         blobs[('marketing-trends', path)] = raw
-        domain['card'] = [{'text': excerpt, 'source_locator': path + '#未来', 'source_sha256': hashlib.sha256(raw).hexdigest()}]
+        domain['card'] = [{'text': excerpt, 'source_locator': path + '#足元の根拠', 'source_sha256': hashlib.sha256(raw).hexdigest()}]
     return signal
 
 

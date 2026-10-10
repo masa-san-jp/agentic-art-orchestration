@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 from typing import Callable
 
-from tools.theme_sources import ROOT, _document, _git
+from tools.theme_sources import ROOT, _git
 from tools.validate import load_yaml
 
 MIN_EXCERPT, MAX_EXCERPT, MAX_EXCERPTS, MAX_CARD_BYTES = 12, 120, 2, 420
@@ -65,6 +65,68 @@ def excerpt_in(excerpt: str, paragraphs: list[str]) -> bool:
     return bool(excerpt) and '\n' not in excerpt and any(excerpt in p for p in paragraphs)
 
 
+# marketing-trends-notes ``tools/card_excerpts.py`` has its own fixed rule (``normalize_paragraphs`` /
+# ``extract_sections`` / ``locate``): only the two sections below are card text, emphasis marks and code
+# ticks are removed, list and heading marks are dropped, table rows are not prose, and the excerpt is
+# stored as it appears in one such paragraph. The locator fragment names the section it was taken from.
+MARKETING_SECTIONS = ('見出している未来', '足元の根拠')
+_MD_LINK = re.compile(r'\[([^\]]*)\]\([^)]*\)')
+_MD_URL = re.compile(r'https?://\S+')
+_MD_ID = re.compile(r'\b[PQ]\d+\b')
+_LIST_MARK = re.compile(r'^(?:[-*+]|\d+\.)\s+')
+_ASCII_EDGE = re.compile(r'[\x21-\x7e]')
+
+
+def marketing_section_paragraphs(markdown: str, section: str) -> list[str]:
+    if section not in MARKETING_SECTIONS:
+        return []
+    body = markdown
+    if markdown.startswith('---'):
+        end = markdown.find('\n---', 3)
+        body = markdown[end + 4:] if end != -1 else markdown
+    paragraphs: list[str] = []
+    current: list[str] = []
+    inside = False
+
+    def flush() -> None:
+        if current:
+            joined = ''
+            for line in current:
+                if joined and _ASCII_EDGE.fullmatch(joined[-1]) and _ASCII_EDGE.fullmatch(line[0]):
+                    joined += ' '
+                joined += line
+            if joined:
+                paragraphs.append(joined)
+            current.clear()
+
+    for raw_line in body.splitlines():
+        if raw_line.startswith('## '):
+            flush()
+            inside = raw_line[3:].strip().startswith(section)
+            continue
+        if not inside:
+            continue
+        stripped = raw_line.strip()
+        if stripped.startswith('|'):
+            flush()
+            continue
+        stripped = re.sub(r'^>+\s*', '', stripped)
+        starts_item = bool(_LIST_MARK.match(stripped)) or stripped.startswith('#')
+        stripped = _LIST_MARK.sub('', stripped).lstrip('#').strip()
+        cleaned = _MD_LINK.sub(r'\1', stripped)
+        cleaned = _MD_URL.sub('', cleaned)
+        cleaned = _MD_ID.sub('', cleaned)
+        cleaned = re.sub(r'[ \t]+', ' ', cleaned.replace('**', '').replace('`', '')).strip()
+        if not cleaned:
+            flush()
+            continue
+        if starts_item:
+            flush()
+        current.append(cleaned)
+    flush()
+    return paragraphs
+
+
 def git_blob_source(workspace_root: Path) -> BlobSource:
     """Read blobs at a pinned commit from the owner's checkout, never from its working tree."""
     owners = {item['id']: item for item in load_yaml(ROOT / 'config/repositories.yaml')['repositories']}
@@ -76,7 +138,11 @@ def git_blob_source(workspace_root: Path) -> BlobSource:
 
 
 def verify_card(signal: dict, item: dict, read: BlobSource) -> str:
-    """Return the normalized excerpt when the pinned blob contains it, else raise CARD_SOURCE_MISMATCH."""
+    """Return the normalized excerpt when the pinned blob contains it, else raise CARD_SOURCE_MISMATCH.
+
+    The whole blob is searched, front matter included, as art-history's ``build_cards`` does: a card
+    made from a front matter value (``#method.fixes``) is an excerpt of that same text.
+    """
     locator = item['source_locator']
     where = {'signal_id': signal['signal_id'], 'locator': locator}
     path = locator.split('#', 1)[0]
@@ -85,13 +151,18 @@ def verify_card(signal: dict, item: dict, read: BlobSource) -> str:
     source = signal['source']
     try:
         raw = read(source['repository'], source['commit'], path)
-        body = _document(raw)[1]
+        text = raw.decode('utf-8')
     except (OSError, ValueError, KeyError, UnicodeDecodeError):
         raise PhaseABlocked('CARD_SOURCE_MISMATCH', **where, detail='blob unreadable') from None
     if hashlib.sha256(raw).hexdigest() != item['source_sha256']:
         raise PhaseABlocked('CARD_SOURCE_MISMATCH', **where, detail='blob sha256 differs')
-    excerpt = normalize_text(item['text'])
-    if not excerpt_in(excerpt, normalized_paragraphs(body)):
+    if source['repository'] == 'marketing-trends':
+        excerpt = item['text']
+        found = excerpt_in(excerpt, marketing_section_paragraphs(text, locator.partition('#')[2]))
+    else:
+        excerpt = normalize_text(item['text'])
+        found = excerpt_in(excerpt, normalized_paragraphs(text))
+    if not found:
         raise PhaseABlocked('CARD_SOURCE_MISMATCH', **where, detail='excerpt not in blob')
     return excerpt
 
@@ -109,19 +180,37 @@ def check_all_cards(signals: list[dict], read: BlobSource) -> list[dict]:
     return rows
 
 
+def load_signals(source: Path) -> list[dict]:
+    """Signals from an ingest output directory, its ``portfolio.json`` (``signal_files``) or one signal file."""
+    import json
+
+    if source.is_dir():
+        portfolio = source / 'portfolio.json'
+        paths = ([source / name for name in json.loads(portfolio.read_text(encoding='utf-8'))['signal_files']]
+                 if portfolio.is_file() else sorted(source.glob('**/*.json')))
+    elif source.name == 'portfolio.json':
+        paths = [source.parent / name for name in json.loads(source.read_text(encoding='utf-8'))['signal_files']]
+    else:
+        paths = [source]
+    signals = [json.loads(path.read_text(encoding='utf-8')) for path in paths]
+    return [signal for signal in signals if isinstance(signal, dict) and 'signal_id' in signal]
+
+
 def main(argv: list[str] | None = None) -> int:
-    """``python -m tools.card_sources --signals <ingest output dir> --workspace-root <pinned workspace>``."""
+    """``python -m tools.card_sources --signals <ingest output dir | portfolio.json | signal file> --workspace-root <pinned workspace>``."""
     import argparse
     import json
     import sys
 
     parser = argparse.ArgumentParser(description='Verify every card excerpt against the pinned blobs.')
-    parser.add_argument('--signals', type=Path, required=True, help='directory written by tools/ingest_signals.py')
+    parser.add_argument('--signals', type=Path, required=True, help='ingest output directory, its portfolio.json, or one signal file')
     parser.add_argument('--workspace-root', type=Path, required=True)
     args = parser.parse_args(argv)
-    paths = sorted(args.signals.glob('*/*.json'))
-    signals = [json.loads(path.read_text(encoding='utf-8')) for path in paths]
-    signals = [signal for signal in signals if isinstance(signal, dict) and 'signal_id' in signal]
+    signals = load_signals(args.signals)
+    if not signals:
+        print(json.dumps({'status': 'FAILED', 'reason': 'NO_SIGNALS', 'input': str(args.signals)}, ensure_ascii=False),
+              file=sys.stderr)
+        return 2
     cards = sum(len(next(iter(s.get('domain', {}).values()), {}).get('card') or []) for s in signals)
     rows = check_all_cards(signals, git_blob_source(args.workspace_root))
     for row in rows:
