@@ -51,6 +51,8 @@ from tools.self_export import (read_export, external_path, SelfExportError,
 
 from tools.profile_root_config import REMEDIATION, redact
 
+SIGNAL_DOMAIN = {"art-history": "art_history", "marketing-trends": "marketing"}
+
 ADAPTERS = {
     "self-model": adapt_self_model_signal,
     "art-history": adapt_art_history_signal,
@@ -191,6 +193,11 @@ def ingest(workspace_root: Path, output: Path | None, purpose: str, python: str,
             signal_errors = validate_signal(signal, f"{identifier}:{signal['signal_id']}")
             if signal_errors:
                 raise IngestError(f"{identifier} record {signal['signal_id']!r} is invalid after adapting: {signal_errors[0]}")
+            before = len(record.get("card") or [])
+            after = len(signal["domain"].get(SIGNAL_DOMAIN.get(identifier, ""), {}).get("card") or [])
+            if after < before:
+                warnings.append(f"{signal['signal_id']}: dropped {before - after} card excerpt(s) empty after normalization"
+                                + ("; no card left" if after == 0 else ""))
             normalized.append(signal)
 
     output.mkdir(parents=True, exist_ok=True)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 
+from tools.card_sources import MIN_EXCERPT, normalize_text
 from tools.validate import validate_signal
 
 
@@ -158,10 +159,29 @@ def adapt_self_model_signal(record: dict) -> dict:
     return signal
 
 
+def with_usable_card(record: dict) -> dict:
+    """Drop card excerpts left with fewer than MIN_EXCERPT characters by the display rule (design 4.1, 4.3).
+
+    The stored text of the kept excerpts stays as exported so the blob check sees what the
+    owner wrote. When none is left the record has no card at all. Malformed items are kept
+    so the schema still reports them.
+    """
+    if not isinstance(record.get("card"), list):
+        return record
+    kept = [item for item in record["card"]
+            if not (isinstance(item, dict) and isinstance(item.get("text"), str)
+                    and len(normalize_text(item["text"]).strip()) < MIN_EXCERPT)]
+    record = {key: value for key, value in record.items() if key != "card"}
+    if kept:
+        record["card"] = kept
+    return record
+
+
 def adapt_art_history_signal(record: dict) -> dict:
     """Convert one art-history record without copying its canonical graph."""
     if not isinstance(record, dict):
         raise _fail("input must be an object", "pass one art-history entity record")
+    record = with_usable_card(record)
 
     leaked = sorted(_FORBIDDEN_GRAPH_FIELDS.intersection(record))
     if leaked:
@@ -302,6 +322,7 @@ def adapt_marketing_signal(record: dict) -> dict:
     """Convert one marketing trend record with explicit freshness metadata."""
     if not isinstance(record, dict):
         raise _fail("input must be an object", "pass one marketing trend record")
+    record = with_usable_card(record)
 
     required = {
         "signal_id",

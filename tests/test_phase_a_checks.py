@@ -181,6 +181,25 @@ class SignalContractTests(unittest.TestCase):
             self.assertEqual(domain['card'], adapted_domain['card'])
             self.assertEqual(domain['label_ja'], adapted_domain['label_ja'])
 
+    def test_card_excerpts_empty_after_normalization_are_dropped_not_fatal(self):
+        from tools.adapters import adapt_art_history_signal
+        signals, _ = world()
+        signal = next(s for s in signals if s['signal_kind'] == 'art-history')
+        domain = signal['domain']['art_history']
+        record = {'signal_id': signal['signal_id'], 'commit': signal['source']['commit'],
+                  'entity_id': signal['source']['entity_ids'][0], 'source_locator': signal['source']['locators'][0],
+                  'evidence_locator': signal['evidence_refs'][0]['locator'], 'evidence_kind': signal['evidence_refs'][0]['kind'],
+                  'statement': signal['statement'], 'certainty': signal['certainty'], 'unknowns': signal['unknowns'],
+                  'constraints': signal['constraints'], 'validity': signal['validity'],
+                  'generated_at': signal['generated_at'], 'adapter_version': '1.0.0', **domain,
+                  'freshness': signal['freshness']}
+        good = domain['card'][0]
+        empty = {**good, 'text': '[https://example.org/gold-weights](https://example.org/gold-weights) P571'}
+        kept = adapt_art_history_signal({**record, 'card': [empty, good]})
+        self.assertEqual([good], kept['domain']['art_history']['card'])
+        none = adapt_art_history_signal({**record, 'card': [empty]})
+        self.assertNotIn('card', none['domain']['art_history'])
+
     def test_a_card_only_art_entity_is_a_valid_signal(self):
         from tools.validate import validate_signal
         blobs = {}
