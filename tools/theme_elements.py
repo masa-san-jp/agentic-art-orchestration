@@ -1,252 +1,219 @@
-"""Phase A's deterministic material, matching and selection steps for the shared Engine.
+"""Phase A v2 driver (docs/20261010-phase-a-v2-design.md): the program orders and checks, the answerer judges.
 
-Only consent-approved derived exports enter this driver. Hearing packets and raw
-responses belong to the Self Model owner and never enter this context.
+The program never decides which card is related. It shows every eligible card to the answerer in a
+fixed, unbiased (sha256) order, window by window, and verifies every answer mechanically. Only
+consent-approved derived exports enter this driver; hearing packets and raw responses never do.
 """
 from __future__ import annotations
 
-from collections import Counter
 from copy import deepcopy
 from datetime import datetime
 import hashlib
 import json
-import re
-import unicodedata
 from pathlib import Path
-
-import yaml
 from urllib.parse import urlsplit
 
+import yaml
+
+from tools.card_sources import MAX_CARD_BYTES, MAX_EXCERPTS, PhaseABlocked, git_blob_source, normalize_text, verify_card
 from tools.element import canonical
 from tools.element_contracts import load_sequence
-from tools.element_checks import source_terms, valid_url
+from tools.element_checks import valid_url
 from tools.validate import validate_signal
 
 REGISTRY = Path(__file__).resolve().parents[1] / 'config/elements/phase-a.yaml'
-METADATA = {'consent_scope', 'export_permitted', 'raw_voice_locator'}
-DOMAINS = ('art-history', 'marketing')
+DOMAINS = ('art', 'market')
+SIGNAL_KIND = {'art': 'art-history', 'market': 'marketing'}
+WINDOW_SIZE = 8
+MAX_FINALISTS = 5
+RECENT_RUNS = 3
+BUDGET_SLACK = 45
+REQUEST_LIMIT = 4096
+NONE = 'なし'
+LINK_TYPES = {
+    '同じ': '同じやり方・態度が両方にある',
+    '逆': '一方がすることを、もう一方は反対のやり方でする',
+    '答え': '一方が抱える困りごとに、もう一方のやり方が手段を与える',
+    '背景': '一方が、もう一方の態度が生まれる時代や社会の条件になっている',
+}
+LINK_HINTS = {'同じ': '何が両方に共通するのか', '逆': '何が何に対して反対なのか',
+              '答え': 'どの困りごとにどの手段が応えるのか', '背景': 'どの条件がどの態度を生んだのか'}
+# Fixed table: the self model's own vocabulary never reaches an answerer.
+FIELD_JA = {'tensions': '引っ張り合っていること', 'recurring_patterns': '繰り返し出る形', 'seeks': '求めていること',
+            'avoids': '避けていること', 'protects': '守っていること', 'states': 'いまの状態', 'traits': 'ふだんの傾向'}
+STAGE_JA = {'growing': '伸びている', 'emerging': '出始め', 'peak': 'ピーク'}
+SELF_CONTEXTS = 'contexts'
+COUNTED_STOPS = ('NO_PICK:', 'NO_CONFIRMED_LINK:')
 
 
 def digest(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
 
 
+def seed(*parts) -> str:
+    return hashlib.sha256(':'.join(str(part) for part in parts).encode('utf-8')).hexdigest()
+
+
+def _size(inputs: dict) -> int:
+    return len(canonical(inputs).encode('utf-8'))
+
+
+def _parse_time(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace('Z', '+00:00'))
+
+
+# ---------------------------------------------------------------- 3. the self material
+
 def materials(signals: list[dict]) -> list[dict]:
-    """Every nonempty exported content item, excluding transport/consent metadata."""
+    """One material per self signal (a confirmed claim or pattern), never a fragment of a condition."""
     result = []
     for signal in signals:
         if signal['signal_kind'] != 'self':
             continue
         domain = signal['domain']['self_model']
         if domain['export_permitted'] is not True or not domain['consent_scope'].strip():
-            raise ValueError('SELF_EXPORT_NOT_PERMITTED')
-        for attribute, values in sorted(domain.items()):
-            if attribute in METADATA:
-                continue
-            for value in values if isinstance(values, list) else [values]:
-                if isinstance(value, str) and value.strip():
-                    result.append({'material_id': digest([signal['signal_id'], attribute, value]),
-                                   'signal_id': signal['signal_id'], 'attribute': attribute,
-                                   'text': value, 'source': deepcopy(signal['source']),
-                                   'evidence_refs': deepcopy(signal['evidence_refs']),
-                                   'consent_scope': domain['consent_scope']})
-    # Duplicated items in an export are one addressable piece of material.
-    return sorted({item['material_id']: item for item in result}.values(),
-                  key=lambda item: (item['attribute'], item['text'], item['signal_id']))
-
-
-def signal_body(signal: dict, targets: dict | None = None, public: dict | None = None) -> str:
-    if signal['signal_kind'] == 'art-history':
-        domain = signal['domain']['art_history']
-        content = domain.get('content', [])
-        if content:
-            return '\n'.join(item['text'] for item in content)
-        # Legacy method pins already carry sourced operational descriptions.
-        # Names, ID strings, relation labels and envelope boilerplate are never
-        # substitutes for the missing historical content.
-        parts = []
-        method = domain.get('method', {})
-        if domain.get('source_refs'):
-            for key in ('fixes', 'varies', 'requires'):
-                parts.extend(method.get(key, []))
-    else:
-        parts = [signal['statement']]
-        # The envelope's basis is the exported evidence summary, not a locator.
-        if public and signal['signal_id'] in public.get('evidence', {}):
-            parts.append(public['evidence'][signal['signal_id']]['text'])
-        parts.append(signal['certainty']['basis'])
-    return '\n'.join(part for part in parts if part.strip())
-
-
-def excerpt(body: str, limit=900) -> str:
-    return body.encode('utf-8')[:limit].decode('utf-8', errors='ignore')
-
-
-def matching_words(value: str) -> list[tuple[str, int, int]]:
-    """Literal words with offsets; particles separate Japanese lexical anchors."""
-    text = unicodedata.normalize('NFKC', value).casefold()
-    result = []
-    start = 0
-    boundaries = [*re.finditer(r'まで|から|[のをがにはとでな]', text)]
-    for stop, following in [(m.start(), m.end()) for m in boundaries] + [(len(text), len(text))]:
-        for match in re.finditer(r'[a-z][a-z0-9_-]*|[\u3040-\u30ff\u3400-\u9fff]+', text[start:stop]):
-            word = match.group()
-            if len(word) >= 2 and source_terms(word):
-                result.append((word, start + match.start(), start + match.end()))
-        start = following
-    return result
-
-
-def matching_terms(value: str) -> set[str]:
-    """Include longer literal fragments, without grammatical boundary shingles."""
-    terms = set()
-    for word, _, _ in matching_words(value):
-        if word.isascii():
-            terms.add(word)
-        else:
-            for size in range(2, len(word) + 1):
-                terms.update(word[start:start + size] for start in range(len(word) - size + 1)
-                             if (word[start:start + size] in source_terms(word[start:start + size])
-                                 or size > 3 and source_terms(word[start:start + size])))
-    return terms
-
-
-def content_matches(operations: list[str], body: str) -> dict:
-    """Longest non-overlapping literal anchors in both body and query words.
-
-    A repeated occurrence never increases the score. Query spans are reserved
-    too, so two fragments of one word cannot masquerade as independent words.
-    Offsets refer to normalized text, not to the exported original Markdown.
-    """
-    words = [(operation_index, word_index, word)
-             for operation_index, operation in enumerate(operations)
-             for word_index, (word, _, _) in enumerate(matching_words(operation))]
-    query = {}
-    for operation_index, word_index, word in words:
-        for term in matching_terms(word):
-            for match in re.finditer(r'(?=' + re.escape(term) + ')', word):
-                query.setdefault(term, []).append((operation_index, word_index, match.start(), match.start() + len(term)))
-    candidates = set()
-    for word, offset, _ in matching_words(body):
-        for term in query:
-            if word.isascii() and word != term:
-                continue
-            for match in re.finditer(r'(?=' + re.escape(term) + ')', word):
-                candidates.add((offset + match.start(), offset + match.start() + len(term), term))
-    occupied = []
-    covered = {}
-    matches = []
-    seen = set()
-    for start, end, term in sorted(candidates, key=lambda item: (-len(item[2]), item[0], item[2])):
-        if term in seen or any(start < right and left < end for left, right in occupied):
+            raise PhaseABlocked('SELF_EXPORT_NOT_PERMITTED')
+        sentences = [(field, value.strip()) for field in FIELD_JA for value in domain.get(field, [])
+                     if isinstance(value, str) and value.strip()]
+        if not sentences:
             continue
-        available = []
-        for operation_index, word_index, left, right in query[term]:
-            key = (operation_index, word_index)
-            spans = covered.get(key, [])
-            if not any(left < other_right and other_left < right for other_left, other_right in spans):
-                available.append((operation_index, word_index, left, right))
-        if not available:
-            continue
-        occupied.append((start, end))
-        seen.add(term)
-        # Multiple identical occurrences in one query word may overlap too.
-        accepted = []
-        assigned = set()
-        for operation_index, word_index, left, right in available:
-            key = (operation_index, word_index)
-            if key in assigned:
-                continue
-            assigned.add(key)
-            spans = covered.setdefault(key, [])
-            if any(left < other_right and other_left < right for other_left, other_right in spans):
-                continue
-            spans.append((left, right))
-            accepted.append({'operation_index': operation_index, 'word_index': word_index, 'span': [left, right]})
-        matches.append({'term': term, 'body_span': [start, end], 'operation_spans': accepted})
-    terms = sorted(seen)
-    longest = max(map(len, terms), default=0)
-    word_count = len({word for operation_index, word_index, word in words
-                      if (operation_index, word_index) in covered})
-    qualifies = longest >= 3 or len(terms) >= 2 and word_count >= 2
-    raw_breakdown = {term: len(term) for term in terms}
-    total = sum(len(word) for _, _, word in words)
-    coverage = sum(right - left for spans in covered.values() for left, right in spans)
-    return {'score': sum(raw_breakdown.values()) if qualifies else 0,
-            'raw_score': sum(raw_breakdown.values()),
-            'matched_terms': terms,
-            'score_breakdown': {term: len(term) if qualifies else 0 for term in terms},
-            'raw_score_breakdown': raw_breakdown,
-            'matches': sorted(matches, key=lambda match: match['body_span']),
-            'matched_word_count': word_count,
-            'matched_operation_count': len({index for index, _ in covered}),
-            'operation_coverage': coverage / total if total else 0,
-            'longest_match': longest,
-            'match_status': ('MATCHED' if qualifies else 'BELOW_MINIMUM_CONTENT_MATCH' if terms
-                             else 'NO_CONTENT_TERM_OVERLAP' if body.strip() else 'MISSING_SOURCED_CONTENT')}
+        field, statement = sentences[0]
+        conditions = [value.strip() for value in domain.get(SELF_CONTEXTS, []) if isinstance(value, str) and value.strip()]
+        text = f'本人の素材（{FIELD_JA[field]}）：{statement}'
+        if conditions:
+            text += f'\n条件：{"／".join(conditions)}'
+        result.append({'signal_id': signal['signal_id'], 'field': field, 'statement': statement,
+                       'condition': '／'.join(conditions) or None, 'text': text,
+                       'ignored_items': len(sentences) - 1, 'source': deepcopy(signal['source']),
+                       'evidence_refs': deepcopy(signal['evidence_refs']), 'consent_scope': domain['consent_scope']})
+    return sorted(result, key=lambda item: item['signal_id'])
 
 
-MATCHING_FIELDS = ('signal_id', 'score', 'raw_score', 'matched_terms', 'score_breakdown',
-                   'raw_score_breakdown', 'matches', 'matched_word_count',
-                   'matched_operation_count', 'operation_coverage', 'longest_match', 'match_status')
-
-
-def matching_diagnostic(rows: list[dict]) -> dict:
-    positive = sum(row['score'] > 0 for row in rows)
-    below = sum(row['match_status'] == 'BELOW_MINIMUM_CONTENT_MATCH' for row in rows)
-    content = sum(bool(row['text'].strip()) for row in rows)
-    return {'candidate_count': len(rows), 'content_count': content,
-            'positive_score_count': positive, 'below_minimum_count': below,
-            'reason': (None if positive else 'MISSING_SOURCED_CONTENT' if not content
-                       else 'BELOW_MINIMUM_CONTENT_MATCH' if below else 'NO_CONTENT_TERM_OVERLAP')}
-
-
-def ranked(operation: str | list[str], signals: list[dict], kind: str, public: dict | None = None) -> list[dict]:
-    operations = [operation] if isinstance(operation, str) else operation
-    targets = {entity: signal for signal in sorted(signals, key=lambda s: s['signal_id'], reverse=True)
-               if signal['signal_kind'] == 'art-history' for entity in signal['source']['entity_ids']}
+def past_runs(state_root: Path, run_id: str) -> list[dict]:
+    """Runs that used a material: completed ones and the two legitimate "no link" stops (7.4)."""
     rows = []
-    for signal in signals:
-        if signal['signal_kind'] != kind:
+    for path in sorted(state_root.glob('*/element-state.json')):
+        if path.parent.name == run_id or path.is_symlink() or path.parent.is_symlink():
             continue
-        body = signal_body(signal, targets, public)
-        relations = signal.get('domain', {}).get('art_history', {}).get('relations', [])
-        relation_sources = [{'signal_id': targets[rel['target_entity_id']]['signal_id'],
-                             'source': deepcopy(targets[rel['target_entity_id']]['source'])}
-                            for rel in relations if rel['target_entity_id'] in targets]
-        public_refs = []
-        if public:
-            public_refs.extend(public['targets'][rel['target_entity_id']]['source'] for rel in relations if rel['target_entity_id'] in public.get('targets', {}))
-            if signal['signal_id'] in public.get('evidence', {}):
-                public_refs.append(public['evidence'][signal['signal_id']]['source'])
-        # URL slugs and Markdown link targets identify evidence, not content.
-        scoring_body = re.sub(r'\[([^\]]+)\]\([^\n)]*\)', r'\1', body)
-        scoring_body = re.sub(r'https?://[^\s<>]+', ' ', scoring_body)
-        if kind == 'art-history':
-            scoring_body = unicodedata.normalize('NFKC', scoring_body).casefold()
-            for label in signal['domain']['art_history'].get('entity_labels', []):
-                scoring_body = scoring_body.replace(unicodedata.normalize('NFKC', label).casefold(), ' ')
-        matching = content_matches(operations, scoring_body)
-        evidence = {(ref['locator'], ref['kind']) for ref in signal['evidence_refs']}
-        rows.append({'signal_id': signal['signal_id'], 'text': body,
-                     **matching, '_content_order': unicodedata.normalize('NFKC', scoring_body).casefold(),
-                     'evidence_strength': sum(kind == 'primary' for _, kind in evidence),
-                     'evidence_count': len(evidence), 'relation_sources': relation_sources, 'public_source_refs': public_refs})
-    rows.sort(key=lambda row: (-row['score'], -row['matched_operation_count'],
-                               -row['operation_coverage'], -row['longest_match'],
-                               -row['matched_word_count'], row['_content_order']))
-    for row in rows:
-        del row['_content_order']
-    return rows
+        state = json.loads(path.read_text(encoding='utf-8'))
+        phase = state.get('context', {}).get('phase_a')
+        if not isinstance(phase, dict) or phase.get('version') != 'v2':
+            continue
+        reason = (state.get('blocked') or {}).get('reason', '')
+        if state.get('status') == 'COMPLETED' or (state.get('status') == 'BLOCKED' and reason.startswith(COUNTED_STOPS)):
+            rows.append({'run_id': state['run_id'], 'requested_at': phase['requested_at'],
+                         'signal_id': phase['material']['signal_id'], 'field': phase['material']['field'],
+                         'adopted': deepcopy(phase.get('adopted', {}))})
+    return sorted(rows, key=lambda row: (_parse_time(row['requested_at']), row['run_id']))
 
 
-def initial_context(signals: list[dict], state_root: Path, run_id: str, *, k=5,
-                    requested_at: str, intent: str | None = None) -> dict:
-    if not isinstance(k, int) or isinstance(k, bool) or k < 1:
-        raise ValueError('Phase A k must be a positive integer')
+def choose_material(options: list[dict], runs: list[dict], pinned: str | None) -> tuple[dict, dict]:
+    usage = {}
+    group_usage = {}
+    for row in runs:
+        usage[row['signal_id']] = usage.get(row['signal_id'], 0) + 1
+        group_usage[row['field']] = group_usage.get(row['field'], 0) + 1
+    if pinned is not None:
+        found = [item for item in options if item['signal_id'] == pinned]
+        if not found:
+            raise PhaseABlocked('SELF_SIGNAL_NOT_FOUND', signal_id=pinned)
+        return found[0], {'rule': 'owner-pinned', 'use_count': usage.get(pinned, 0)}
+    selected = min(options, key=lambda item: (usage.get(item['signal_id'], 0), group_usage.get(item['field'], 0),
+                                              seed(item['signal_id'], usage.get(item['signal_id'], 0))))
+    return selected, {'rule': 'least-used, least-used-group, sha256', 'use_count': usage.get(selected['signal_id'], 0)}
+
+
+# ---------------------------------------------------------------- 4. cards and windows
+
+def _label(signal: dict, kind: str) -> str | None:
+    domain = signal['domain'][SIGNAL_KIND[kind].replace('-', '_')]
+    label = domain.get('label_ja') or (domain.get('entity_labels') or [None])[0] if kind == 'art' else domain.get('label_ja')
+    return label.strip() if isinstance(label, str) and label.strip() else None
+
+
+def build_card(signal: dict, kind: str) -> dict | str:
+    """The deterministic card, or the exclusion reason that explains why there is none."""
+    domain = signal['domain'][SIGNAL_KIND[kind].replace('-', '_')]
+    items = domain.get('card')
+    if not items:
+        return 'no_card_text'
+    label = _label(signal, kind)
+    if label is None:
+        return 'no_label'
+    head = (f'{label}（{domain["time"]}・{domain["geo"]}）：' if kind == 'art'
+            else f'{label}（{STAGE_JA.get(domain["stage"], domain["stage"])}）：')
+    texts = [normalize_text(item['text']) for item in items[:MAX_EXCERPTS]]
+    while texts and len((head + ' / '.join(texts)).encode('utf-8')) > MAX_CARD_BYTES:
+        texts.pop()
+    if not texts:
+        return 'card_too_large'
+    source = signal['source']
+    return {'card_id': signal['signal_id'], 'domain': kind, 'label': label, 'text': head + ' / '.join(texts),
+            'excerpts': texts,
+            'sources': [{'repository': source['repository'], 'commit': source['commit'],
+                         'locator': item['source_locator'], 'blob_sha256': item['source_sha256']}
+                        for item in items[:len(texts)]]}
+
+
+def _eligibility(signal: dict, kind: str, requested_at: str) -> str | None:
+    """None when the signal may be a candidate; otherwise the exclusion reason (4.3)."""
+    method = signal.get('domain', {}).get('art_history', {}).get('method')
+    sourced_draft = (kind == 'art' and signal['validity']['status'] == 'unknown' and signal['freshness']['status'] == 'current'
+                     and (bool(signal['domain']['art_history'].get('content')) or bool(signal['domain']['art_history'].get('card'))
+                          or (isinstance(method, dict) and bool(signal['evidence_refs']))))
+    if signal['validity']['status'] != 'valid' and not sourced_draft:
+        return 'not_current_or_valid'
+    if signal['freshness']['status'] != 'current':
+        return 'not_current_or_valid'
+    if kind == 'market' and _parse_time(signal['domain']['marketing']['expires_at']) <= _parse_time(requested_at):
+        return 'expired'
+    return None
+
+
+def _fits(phase: dict, ids: list[str], size: int) -> bool:
+    return len(ids) <= size and _size(_card_inputs(phase, ids)) <= REQUEST_LIMIT
+
+
+def _card_inputs(phase: dict, ids: list[str]) -> dict:
+    return {'material': phase['material']['text'], 'link_types': LINK_TYPES,
+            'cards': {str(index): phase['cards'][identifier]['text'] for index, identifier in enumerate(ids, 1)}}
+
+
+def _chunks(phase: dict, ids: list[str], size: int) -> list[list[str]]:
+    """Consecutive groups of at most ``size`` cards whose request stays inside the byte limit."""
+    groups, current = [], []
+    for identifier in ids:
+        if current and not _fits(phase, [*current, identifier], size):
+            groups.append(current)
+            current = []
+        current.append(identifier)
+    return groups + ([current] if current else [])
+
+
+def rank_matches(count: int, size: int = WINDOW_SIZE) -> int:
+    """Upper bound of single-elimination matches among ``count`` picks (design 5.3)."""
+    if count <= 1:
+        return 0
+    if count <= size:
+        return 1
+    groups = -(-count // size)
+    return groups + rank_matches(groups, size)
+
+
+def budget_cap(windows: dict, max_finalists: int, rank_size: int = WINDOW_SIZE) -> tuple[int, dict]:
+    parts = {'screens': sum(len(rows) for rows in windows.values()),
+             'rank': sum(rank_matches(len(rows), rank_size) for rows in windows.values()),
+             'winner_replacements': 2 * (max_finalists - 1) * len(DOMAINS),
+             'verification': ((max_finalists - 1) + 5) * len(DOMAINS), 'a7': 2, 'retry_slack': BUDGET_SLACK}
+    return sum(parts.values()), parts
+
+
+def initial_context(signals: list[dict], state_root: Path, run_id: str, *, requested_at: str,
+                    workspace_root: Path | None = None, self_signal: str | None = None,
+                    blob_source=None, window_size: int = WINDOW_SIZE, rank_size: int = WINDOW_SIZE,
+                    max_finalists: int = MAX_FINALISTS,
+                    recent_runs: int = RECENT_RUNS, cap: int | None = None) -> dict:
     identifiers = set()
-    eligible = []
-    excluded = []
     for signal in signals:
         errors = validate_signal(signal, 'phase-a.signal')
         if errors:
@@ -254,187 +221,347 @@ def initial_context(signals: list[dict], state_root: Path, run_id: str, *, k=5,
         if signal['signal_id'] in identifiers:
             raise ValueError('DUPLICATE_SIGNAL_ID')
         identifiers.add(signal['signal_id'])
-        method = signal.get('domain', {}).get('art_history', {}).get('method')
-        sourced_draft_method = (signal['signal_kind'] == 'art-history' and isinstance(method, dict)
-                                and signal['validity']['status'] == 'unknown'
-                                and signal['freshness']['status'] == 'current' and bool(signal['evidence_refs']))
-        sourced_draft_content = (signal['signal_kind'] == 'art-history'
-                                 and bool(signal['domain']['art_history'].get('content'))
-                                 and signal['validity']['status'] == 'unknown'
-                                 and signal['freshness']['status'] == 'current')
-        if (signal['validity']['status'] != 'valid' and not sourced_draft_method and not sourced_draft_content) or (signal['signal_kind'] == 'marketing' and signal['freshness']['status'] != 'current') or (signal['signal_kind'] == 'art-history' and signal['freshness']['status'] != 'current'):
-            excluded.append({'signal_id': signal['signal_id'], 'reason': 'SIGNAL_NOT_CURRENT_OR_VALID'})
-            continue
-        if signal['signal_kind'] == 'marketing':
-            expires = signal['domain']['marketing']['expires_at']
-            if datetime.fromisoformat(expires.replace('Z', '+00:00')) <= datetime.fromisoformat(requested_at.replace('Z', '+00:00')):
-                excluded.append({'signal_id': signal['signal_id'], 'reason': 'MARKET_SIGNAL_EXPIRED'})
-                continue
-        eligible.append(signal)
-    signals = eligible
     options = materials(signals)
     if not options:
-        raise ValueError('SELF_MODEL_EMPTY')
-    if any(not any(s['signal_kind'] == kind for s in signals) for kind in DOMAINS):
-        raise ValueError('THEME_DOMAIN_EMPTY')
-    usage = Counter()
-    operations = []
-    for path in sorted(state_root.glob('*/element-state.json')):
-        if path.parent.name == run_id or path.is_symlink() or path.parent.is_symlink():
-            continue
-        previous = json.loads(path.read_text(encoding='utf-8'))
-        phase = previous.get('context', {}).get('phase_a')
-        if isinstance(phase, dict) and 'A3.operation' in previous.get('answers', {}):
-            usage[phase['material']['material_id']] += 1
-            operations.extend(value for key, value in previous['answers'].items()
-                              if key == 'A3.operation' or key.startswith('A3.operation.'))
-    normalized_intent = None
-    if intent is not None:
-        if not isinstance(intent, str):
-            raise ValueError('INTENT_MUST_BE_TEXT')
-        normalized_intent = ' '.join(unicodedata.normalize('NFKC', intent).casefold().split())
-        if not normalized_intent:
-            raise ValueError('INTENT_MUST_NOT_BE_EMPTY')
-    intent_terms = source_terms(normalized_intent) if normalized_intent else set()
-    def intent_score(item):
-        return sum(len(term) for term in intent_terms & source_terms(item['text']))
-    selected = min(options, key=lambda item: (usage[item['material_id']], -intent_score(item), item['attribute'], item['text'], item['signal_id']))
-    selection = {'rule': 'least-used, optional-intent-overlap, attribute/text/signal-ID',
-                 'use_count': usage[selected['material_id']], 'intent_score': intent_score(selected),
-                 'intent_sha256': hashlib.sha256(normalized_intent.encode()).hexdigest() if normalized_intent else None}
-    # Copy immutable normalized signals for same-run resume, remove even opaque
-    # raw voice references from the theme driver's retained context.
-    pinned = deepcopy(signals)
-    for signal in pinned:
-        if signal['signal_kind'] == 'self':
-            signal['domain']['self_model'].pop('raw_voice_locator', None)
-    return {'material': excerpt(selected['text']), 'phase_a': {
-        'material': selected, 'material_selection': selection, 'material_ids': [item['material_id'] for item in options],
-        'signals': pinned, 'k': k, 'requested_at': requested_at,
-        'prior_operations': operations, 'excluded_signals': excluded, 'rankings': {}, 'offsets': {kind: 0 for kind in DOMAINS},
-        'judgements': {}, 'selected': {}}}
+        raise PhaseABlocked('SELF_MODEL_EMPTY', next_action='self-model hearing (SEED_REQUIRED)')
+    runs = past_runs(state_root, run_id)
+    material, selection = choose_material(options, runs, self_signal)
+    recent = runs[-recent_runs:] if recent_runs else []
+
+    cards, order, exclusions, pinned = {}, {}, {}, []
+    for kind in DOMAINS:
+        counts = {}
+        candidates = []
+        recently = {row['adopted'].get(kind) for row in recent}
+        for signal in signals:
+            if signal['signal_kind'] != SIGNAL_KIND[kind]:
+                continue
+            reason = _eligibility(signal, kind, requested_at)
+            card = None
+            if reason is None:
+                card = build_card(signal, kind)
+                reason = card if isinstance(card, str) else None
+            if reason is None and signal['signal_id'] in recently:
+                reason = 'recently_adopted'
+            if reason:
+                counts[reason] = counts.get(reason, 0) + 1
+            else:
+                candidates.append((signal, card))
+        exclusions[kind] = {'eligible': len(candidates), 'excluded': dict(sorted(counts.items())),
+                            'recently_adopted_ids': sorted(i for i in recently if i)}
+        if not candidates:
+            raise PhaseABlocked(f'{kind.upper()}_NO_ELIGIBLE_CARDS', excluded=dict(sorted(counts.items())))
+        if blob_source is None and workspace_root is not None:
+            blob_source = git_blob_source(workspace_root)
+        for signal, card in candidates:
+            if blob_source is None:
+                raise PhaseABlocked('CARD_SOURCE_MISMATCH', signal_id=signal['signal_id'], detail='no pinned checkout to verify against')
+            for item in signal['domain'][SIGNAL_KIND[kind].replace('-', '_')]['card'][:len(card['excerpts'])]:
+                verify_card(signal, item, blob_source)
+            cards[card['card_id']] = card
+            pinned.append(deepcopy(signal))
+        order[kind] = sorted(cards_of(cards, kind), key=lambda identifier: seed(material['signal_id'], selection['use_count'], identifier))
+
+    phase = {'version': 'v2', 'requested_at': requested_at, 'material': material, 'material_selection': selection,
+             'cards': cards, 'order': order, 'exclusions': exclusions, 'window_size': window_size, 'rank_size': rank_size,
+             'max_finalists': max_finalists, 'windows': {}, 'window_of': {}, 'rank_matches': {kind: [] for kind in DOMAINS},
+             'finalists': {kind: {} for kind in DOMAINS}, 'trials': {}, 'adopted': {}}
+    for kind in DOMAINS:
+        phase['windows'][kind] = _chunks(phase, order[kind], window_size)
+        if any(not _fits(phase, [identifier], window_size) for identifier in order[kind]):
+            raise PhaseABlocked('REQUEST_TOO_LARGE', element_id=f'A4.{kind}.screen.01')
+        for index, window in enumerate(phase['windows'][kind]):
+            phase['window_of'].update({identifier: index for identifier in window})
+    total, parts = budget_cap(phase['windows'], max_finalists, rank_size)
+    phase['budget'] = {'cap': cap if cap is not None else total, 'computed': total, 'parts': parts,
+                       'override': cap is not None}
+    selected_self = [deepcopy(signal) for signal in signals if signal['signal_id'] == material['signal_id']]
+    for signal in selected_self:
+        signal['domain']['self_model'].pop('raw_voice_locator', None)
+    phase['signals'] = selected_self + pinned
+    return {'phase_a': phase}
 
 
-def _definition(templates: dict, name: str, element_id: str, inputs: dict) -> dict:
-    template = deepcopy(templates[name])
+def cards_of(cards: dict, kind: str) -> list[str]:
+    return [identifier for identifier, card in cards.items() if card['domain'] == kind]
+
+
+# ---------------------------------------------------------------- 5. the element sequence
+
+def _definition(phase: dict, name: str, element_id: str, inputs: dict, *, hidden=None, link_type=None, choices=None) -> dict:
+    template = deepcopy(phase['templates'][name])
     template['element_id'] = element_id
     template['inputs'] = {key: {'literal': value} for key, value in inputs.items()}
+    if hidden is not None:
+        template['hidden'] = hidden
+    if link_type is not None:
+        template['instruction'] = template['instruction'].replace('{link_type}', link_type)
+    if choices is not None:
+        template['answer_format'] = {'type': 'choice', 'choices': choices}
     return template
 
 
+def _attempts(state: dict, element_id: str) -> int:
+    return sum(1 for row in state['history'] if row['element_id'] == element_id)
+
+
+def _family(element_id: str) -> str:
+    parts = element_id.split('.')
+    return '.'.join(parts[:3] if parts[0] == 'A4' else parts[:2] if parts[0] == 'A5' else parts[:1])
+
+
+def _block(state: dict, reason: str, **details) -> None:
+    state.update(status='BLOCKED', pending=None, blocked={'reason': reason, **details})
+
+
+def _gate(state: dict) -> bool:
+    """The run budget (5.7); True when the run was stopped."""
+    budget = state['context']['phase_a']['budget']
+    if len(state['history']) < budget['cap']:
+        return False
+    breakdown = {}
+    for row in state['history']:
+        breakdown[_family(row['element_id'])] = breakdown.get(_family(row['element_id']), 0) + 1
+    _block(state, 'RUN_BUDGET_EXHAUSTED', cap=budget['cap'], used=len(state['history']), breakdown=dict(sorted(breakdown.items())))
+    return True
+
+
 def advance(state: dict) -> None:
-    """Extend the common sequence only at an accepted checkpoint, under its lock."""
-    phase = state['context']['phase_a']
+    """Enforce the budget before every request and extend the sequence only at an accepted checkpoint."""
+    if state['index'] < len(state['sequence']['elements']):
+        _gate(state)
+        return
+    step = _plan(state)
+    if step[0] == 'blocked':
+        _block(state, step[1], **step[2])
+        return
+    if step[0] == 'done' or _gate(state):
+        return
+    _, definition, meta = step
+    element_id = definition['element_id']
+    attempt = _attempts(state, element_id) + 1
+    if attempt > state['sequence']['max_attempts']:
+        _block(state, 'ELEMENT_ATTEMPTS_EXHAUSTED', element_id=element_id, attempt=attempt - 1,
+               last_failure=(meta or {}).get('previous_failure') or state.get('previous_failure') or [])
+        return
+    if _size({key: binding['literal'] for key, binding in definition['inputs'].items()}) > REQUEST_LIMIT:
+        _block(state, 'REQUEST_TOO_LARGE', element_id=element_id)
+        return
+    state['sequence']['elements'].append(definition)
+    state['attempt'] = attempt
+    state['previous_failure'] = (meta or {}).get('previous_failure')
+
+
+def _plan(state: dict):
     answers = state['answers']
-    if 'A7.central-question' in answers:
-        return
-    if not phase['rankings']:
-        operations = [value for key, value in answers.items() if key == 'A3.operation' or key.startswith('A3.operation.')]
-        rankings = {kind: ranked(operations, phase['signals'], kind, phase.get('public_sources')) for kind in DOMAINS}
-        zero = [kind for kind, rows in rankings.items() if not any(row['score'] > 0 for row in rows)]
-        history = phase.setdefault('matching_history', [])
-        diagnostics = {kind: matching_diagnostic(rows) for kind, rows in rankings.items()}
-        reasons = {diagnostics[kind]['reason'] for kind in zero}
-        reason = next(iter(reasons)) if len(reasons) == 1 else 'MULTIPLE_CONTENT_MATCH_FAILURES' if reasons else None
-        history.append({'operations': operations, 'zero_score_domains': zero,
-                        'diagnostics': diagnostics, 'reason': reason,
-                        'rankings': {kind: [{key: row[key] for key in MATCHING_FIELDS}
-                                            for row in rows] for kind, rows in rankings.items()}})
-        if zero:
-            failure = [{'check': 'content_match_required',
-                        'reason': '; '.join(f"{kind}: {diagnostics[kind]['reason']}" for kind in zero)}]
-            if len(operations) >= state['sequence']['max_attempts']:
-                state.update(status='BLOCKED', pending=None, blocked={
-                    'element_id': 'A4.matching', 'attempt': len(operations), 'last_failure': failure})
-                return
-            template = phase.get('operation_template', state['sequence']['elements'][0])
-            added = _definition({'operation': template}, 'operation', f'A3.operation.{len(operations) + 1}', {
-                'material': excerpt(phase['material']['text']),
-                'prior_operations': '、'.join(operations)})
-            added['instruction'] = '本文との一致が全件0点、または一致の下限未満でした。本人の素材から、前の語とは異なる操作・状態を表す短い語をもう一つ返してください。'
-            state['previous_failure'] = failure
-            state['sequence']['elements'].append(added)
-            return
-        phase['rankings'] = {kind: [row for row in rows if row['score'] > 0] for kind, rows in rankings.items()}
+    phase = state['context']['phase_a']
     for kind in DOMAINS:
-        rows = phase['rankings'][kind]
-        # Complete this window before making any selection; preserve no reasons too.
-        evaluated = []
-        for index, row in enumerate(rows[:phase['offsets'][kind]]):
-            identifier = f'A5.{kind}.{index + 1}'
-            if identifier in answers:
-                phase['judgements'][identifier] = {'signal_id': row['signal_id'], **answers[identifier]}
-                if answers[identifier]['answer']:
-                    evaluated.append((index, row))
-        if evaluated and kind not in phase['selected']:
-            index, row = min(evaluated, key=lambda pair: (-pair[1]['evidence_strength'], -pair[1]['evidence_count'], pair[0]))
-            phase['selected'][kind] = {**row, 'judgement_id': f'A5.{kind}.{index + 1}'}
-    added = []
-    exhausted = []
-    for kind in DOMAINS:
-        if kind in phase['selected']:
-            continue
-        rows = phase['rankings'][kind]
-        start = phase['offsets'][kind]
-        stop = min(start + phase['k'], len(rows))
-        if start == stop:
-            exhausted.append(kind)
-        for index in range(start, stop):
-            added.append(_definition(phase['templates'], 'A5.connection', f'A5.{kind}.{index + 1}', {
-                'self': excerpt(phase['material']['text']), 'signal': excerpt(rows[index]['text'])}))
-        phase['offsets'][kind] = stop
-    if exhausted:
-        state.update(status='BLOCKED', pending=None, blocked={
-            'element_id': 'A6.selection', 'attempt': 1,
-            'last_failure': [{'check': 'connected_pair_required',
-                              'reason': 'No connected signal in: ' + ', '.join(exhausted)}],
-            'judgements': deepcopy(phase['judgements'])})
-        return
-    if not added:
-        selected = phase['selected']
-        added.append(_definition(phase['templates'], 'A7.central-question', 'A7.central-question', {
-            'self': excerpt(phase['material']['text']),
-            'art_history': excerpt(selected['art-history']['text']),
-            'market': excerpt(selected['marketing']['text']),
-            'art_reason': answers[selected['art-history']['judgement_id']]['reason'],
-            'market_reason': answers[selected['marketing']['judgement_id']]['reason']}))
-    state['sequence']['elements'].extend(added)
+        step = _domain(state, kind)
+        if step[0] != 'adopted':
+            return step
+    parts = {kind: _quotes(state, kind) for kind in DOMAINS}
+    quotes = {'self_quote': parts['art']['self_quote'], 'art_card_quote': parts['art']['card_quote'],
+              'market_card_quote': parts['market']['card_quote']}
+    sentences = {kind: answers[f'A5.{kind}.{phase["adopted_k"][kind]}.sentence'] for kind in DOMAINS}
+    if 'A7.overlap' not in answers:
+        return ('element', _definition(phase, 'A7.overlap', 'A7.overlap', {
+            'material_statement': phase['material']['statement'], 'art_sentence': sentences['art'],
+            'market_sentence': sentences['market']}, hidden=quotes), None)
+    if 'A7.question' not in answers:
+        return ('element', _definition(phase, 'A7.question', 'A7.question', {
+            'overlap': answers['A7.overlap'], 'self_quote': quotes['self_quote'],
+            'art_card_quote': quotes['art_card_quote'], 'market_card_quote': quotes['market_card_quote']}), None)
+    return ('done',)
 
 
-def start(engine, signals: list[dict], *, requested_at: str, k=5, workspace_root: Path | None = None, intent: str | None = None) -> dict:
+def _quotes(state: dict, kind: str) -> dict:
+    k = state['context']['phase_a']['adopted_k'][kind]
+    return {'self_quote': state['answers'][f'A5.{kind}.{k}.self-quote'], 'card_quote': state['answers'][f'A5.{kind}.{k}.card-quote']}
+
+
+def _domain(state: dict, kind: str):
+    phase, answers = state['context']['phase_a'], state['answers']
+    windows = phase['windows'][kind]
+    picks = []
+    for number, window in enumerate(windows, 1):
+        element_id = f'A4.{kind}.screen.{number:02d}'
+        if element_id not in answers:
+            return ('element', _definition(phase, 'A4.screen', element_id, _card_inputs(phase, window),
+                                           choices=[str(index) for index in range(len(window) + 1)]), None)
+        if int(answers[element_id]):
+            picks.append(window[int(answers[element_id]) - 1])
+    if not picks:
+        return ('blocked', f'NO_PICK:{kind}', {'windows': len(windows), 'cards': len(phase['order'][kind])})
+    eliminated = []
+    for k in range(1, phase['max_finalists'] + 1):
+        if len(eliminated) == len(picks):
+            break
+        step = _winner(state, kind, picks, eliminated)
+        if step[0] != 'winner':
+            return step
+        winner = step[1]
+        phase['finalists'][kind][str(k)] = winner
+        verdict = _verify(state, kind, k, winner)
+        if verdict[0] == 'adopted':
+            phase.setdefault('adopted_k', {})[kind] = k
+            phase['adopted'][kind] = winner
+            return verdict
+        if verdict[0] != 'none':
+            return verdict
+        eliminated.append(winner)
+    return ('blocked', f'NO_CONFIRMED_LINK:{kind}', {
+        'finalists': [{'card_id': phase['finalists'][kind][str(k)], 'answer': answers.get(f'A5.{kind}.{k}.type')}
+                      for k in range(1, len(phase['finalists'][kind]) + 1)]})
+
+
+def _winner(state: dict, kind: str, picks: list[str], eliminated: list[str]):
+    """Single elimination over the picks.
+
+    The first-round groups are fixed by the original picks; a replaced winner only leaves its group,
+    so that group and the later rounds above it are replayed and every other match is reused.
+    """
+    phase, answers = state['context']['phase_a'], state['answers']
+    ledger = phase['rank_matches'][kind]
+    size = phase['rank_size']
+    position = {identifier: index for index, identifier in enumerate(phase['order'][kind])}
+    groups = [[identifier for identifier in group if identifier not in eliminated] for group in _chunks(phase, picks, size)]
+    groups = [group for group in groups if group]
+    round_number = 1
+    while not (len(groups) == 1 and len(groups[0]) == 1):
+        if round_number > 1 and len(groups) > 1 and all(len(group) == 1 for group in groups):
+            return ('blocked', 'REQUEST_TOO_LARGE', {'element_id': f'A4.{kind}.rank.{round_number}.1'})
+        advancing = []
+        for number, group in enumerate(groups, 1):
+            if len(group) == 1:
+                advancing.append(group[0])
+                continue
+            match = next((row for row in ledger if row['members'] == group), None)
+            if match is None:
+                base = f'A4.{kind}.rank.{round_number}.{number}'
+                taken = {row['element_id'] for row in ledger}
+                element_id = base if base not in taken else next(f'{base}.v{n}' for n in range(2, 99) if f'{base}.v{n}' not in taken)
+                match = {'element_id': element_id, 'members': list(group)}
+                ledger.append(match)
+            if match['element_id'] not in answers:
+                return ('element', _definition(phase, 'A4.rank', match['element_id'], _card_inputs(phase, group),
+                                               choices=[str(index) for index in range(1, len(group) + 1)]), None)
+            match['winner'] = group[int(answers[match['element_id']]) - 1]
+            advancing.append(match['winner'])
+        groups = _chunks(phase, sorted(advancing, key=position.__getitem__), size)
+        round_number += 1
+    return ('winner', groups[0][0])
+
+
+def _verify(state: dict, kind: str, k: int, winner: str):
+    phase, answers = state['context']['phase_a'], state['answers']
+    card, material = phase['cards'][winner], phase['material']
+    prefix = f'A5.{kind}.{k}'
+    if f'{prefix}.type' not in answers:
+        return ('element', _definition(phase, 'A5.type', f'{prefix}.type', {
+            'material': material['text'], 'card': card['text'], 'link_types': LINK_TYPES}), None)
+    link_type = answers[f'{prefix}.type']
+    if link_type == NONE:
+        return ('none',)
+    if f'{prefix}.card-quote' not in answers:
+        return ('element', _definition(phase, 'A5.card-quote', f'{prefix}.card-quote', {
+            'card_excerpts': ' / '.join(card['excerpts']), 'link_type': link_type},
+            hidden={'label': card['label']}, link_type=link_type), None)
+    if f'{prefix}.self-quote' not in answers:
+        return ('element', _definition(phase, 'A5.self-quote', f'{prefix}.self-quote', {
+            'material_statement': material['statement'], 'link_type': link_type}, link_type=link_type), None)
+    window = phase['windows'][kind][phase['window_of'][winner]]
+    if f'{prefix}.sentence' not in answers:
+        trials = phase['trials'].get(f'{kind}.{k}', [])
+        failure = None
+        if trials:
+            failure = [{'check': 'link_type_probe',
+                        'reason': f'この文は『{link_type}』の関係として読めませんでした。{LINK_HINTS[link_type]}を書いてください。'}]
+        return ('element', _definition(phase, 'A5.sentence', f'{prefix}.sentence', {
+            'self_quote': answers[f'{prefix}.self-quote'], 'card_quote': answers[f'{prefix}.card-quote'],
+            'card_label': card['label'], 'link_type': link_type, 'link_type_description': LINK_TYPES[link_type]},
+            hidden={'specificity': {'card': card['text'], 'others': [phase['cards'][i]['text'] for i in window if i != winner]}},
+            link_type=link_type), {'previous_failure': failure})
+    sentence = answers[f'{prefix}.sentence']
+    if f'{prefix}.sentence.probe' not in answers:
+        masked = sentence
+        for text in sorted({answers[f'{prefix}.card-quote'], card['label'], *card['excerpts']}, key=len, reverse=True):
+            masked = masked.replace(text, '＿＿')
+        return ('element', _definition(phase, 'A5.sentence.probe', f'{prefix}.sentence.probe', {
+            'sentence_masked': masked, 'link_types': LINK_TYPES}, hidden={'expected': link_type}), None)
+    from tools.element_checks import check_value
+    reading = answers[f'{prefix}.sentence.probe']
+    if not check_value(reading, ['expected_choice:expected'], inputs={'expected': link_type}, ledger={}, previous_answers={}):
+        return ('adopted', winner)
+    # The sentence, not the reading, failed: keep the trial and ask for the sentence again.
+    phase['trials'].setdefault(f'{kind}.{k}', []).append({'sentence': sentence, 'probe_answer': reading, 'expected': link_type})
+    answers.pop(f'{prefix}.sentence')
+    answers.pop(f'{prefix}.sentence.probe')
+    return _verify(state, kind, k, winner)
+
+
+def start(engine, signals: list[dict], *, requested_at: str, workspace_root: Path | None = None,
+          self_signal: str | None = None, blob_source=None, budget: int | None = None,
+          window_size: int = WINDOW_SIZE, rank_size: int = WINDOW_SIZE) -> dict:
     if engine.path.exists():
         return engine.next()
     sequence = load_sequence(REGISTRY)
-    # A5/A7 definitions are templates registered and checked by the same validator.
-    templates = {item['element_id']: deepcopy(item) for item in sequence['elements'][1:]}
-    sequence['elements'] = [sequence['elements'][0]]
-    context = initial_context(signals, engine.directory.parent, engine.run_id, k=k, requested_at=requested_at, intent=intent)
-    context['phase_a']['templates'] = templates
-    context['phase_a']['operation_template'] = deepcopy(sequence['elements'][0])
-    if workspace_root is not None:
-        from tools.theme_sources import projections
-        context['phase_a']['public_sources'] = projections(context['phase_a']['signals'], workspace_root)
+    templates = {item['element_id']: deepcopy(item) for item in sequence['elements']}
+    context = initial_context(signals, engine.directory.parent, engine.run_id, requested_at=requested_at,
+                              workspace_root=workspace_root, self_signal=self_signal, blob_source=blob_source,
+                              window_size=window_size, rank_size=rank_size, cap=budget)
+    phase = context['phase_a']
+    phase['templates'] = templates
+    first = phase['windows']['art'][0]
+    sequence['elements'] = [_definition(phase, 'A4.screen', 'A4.art.screen.01', _card_inputs(phase, first),
+                                        choices=[str(index) for index in range(len(first) + 1)])]
     return engine.next(sequence=sequence, context=context)
 
 
+# ---------------------------------------------------------------- 7. provenance
+
 def provenance(state: dict) -> dict:
-    phase = state['context']['phase_a']
-    selected = phase['selected']
+    phase, answers = state['context']['phase_a'], state['answers']
     signals = {signal['signal_id']: signal for signal in phase['signals']}
-    return {'contract_version': 'phase-a-provenance/v1', 'run_id': state['run_id'],
+    positions = {}
+    screens, ranks, checks = {}, {}, {}
+    for kind in DOMAINS:
+        screens[kind] = []
+        for number, window in enumerate(phase['windows'][kind], 1):
+            element_id = f'A4.{kind}.screen.{number:02d}'
+            choice = int(answers[element_id]) if element_id in answers else None
+            positions[str(choice)] = positions.get(str(choice), 0) + 1
+            screens[kind].append({'element_id': element_id, 'window': list(window), 'choice': choice,
+                                  'picked': window[choice - 1] if choice else None})
+        ranks[kind] = [{'element_id': row['element_id'], 'members': list(row['members']), 'winner': row.get('winner')}
+                       for row in phase['rank_matches'][kind]]
+        checks[kind] = {}
+        for k, card_id in phase['finalists'][kind].items():
+            prefix = f'A5.{kind}.{k}'
+            checks[kind][k] = {'card_id': card_id, 'type': answers.get(f'{prefix}.type'),
+                               'card_quote': answers.get(f'{prefix}.card-quote'), 'self_quote': answers.get(f'{prefix}.self-quote'),
+                               'sentence': answers.get(f'{prefix}.sentence'), 'probe': answers.get(f'{prefix}.sentence.probe'),
+                               'trials': deepcopy(phase['trials'].get(f'{kind}.{k}', [])),
+                               'attempts': {part: sum(1 for row in state['history'] if row['element_id'] == f'{prefix}.{part}')
+                                            for part in ('type', 'card-quote', 'self-quote', 'sentence', 'sentence.probe')}}
+    breakdown = {}
+    for row in state['history']:
+        breakdown[_family(row['element_id'])] = breakdown.get(_family(row['element_id']), 0) + 1
+    return {'contract_version': 'phase-a-provenance/v2', 'run_id': state['run_id'],
             'source_repository': state['source_repository'], 'source_commit': state['source_commit'],
-            'material': deepcopy(phase['material']), 'material_selection': deepcopy(phase['material_selection']), 'operation': state['answers']['A3.operation'],
-            'operations': [value for key, value in state['answers'].items() if key == 'A3.operation' or key.startswith('A3.operation.')],
-            'matching_history': deepcopy(phase.get('matching_history', [])),
-            'creative_question': state['answers']['A7.central-question'],
-            'selected': {kind: {'signal': deepcopy(signals[row['signal_id']]),
-                                'matching_text': row['text'], 'public_source_refs': deepcopy(row['public_source_refs']), 'relation_sources': deepcopy(row['relation_sources']),
-                                'score': row['score'], 'matched_terms': deepcopy(row.get('matched_terms', [])),
-                                'score_breakdown': deepcopy(row.get('score_breakdown', {})),
-                                **{key: deepcopy(row[key]) for key in MATCHING_FIELDS
-                                   if key not in ('signal_id', 'score', 'matched_terms', 'score_breakdown') and key in row},
-                                'connection': deepcopy(state['answers'][row['judgement_id']])}
-                         for kind, row in selected.items()}}
+            'material': deepcopy(phase['material']), 'material_selection': deepcopy(phase['material_selection']),
+            'exclusions': deepcopy(phase['exclusions']),
+            'cards': {identifier: {key: deepcopy(card[key]) for key in ('text', 'excerpts', 'sources')}
+                      for identifier, card in phase['cards'].items()},
+            'screens': screens, 'position_distribution': dict(sorted(positions.items())), 'rank': ranks,
+            'verification': checks, 'adopted': deepcopy(phase['adopted']),
+            'not_adopted': {kind: [{'card_id': row['card_id'], 'answer': row['type']} for row in checks[kind].values()
+                                   if row['card_id'] != phase['adopted'][kind]] for kind in DOMAINS},
+            'picked_not_finalist': {kind: [row['picked'] for row in screens[kind] if row['picked']
+                                           and row['picked'] not in phase['finalists'][kind].values()] for kind in DOMAINS},
+            'overlap': answers['A7.overlap'], 'creative_question': answers['A7.question'],
+            'inference': {'count': len(state['history']), 'cap': phase['budget']['cap'], 'breakdown': dict(sorted(breakdown.items())),
+                          'answerers': sorted({row['answerer_kind'] for row in state['history'] if 'answerer_kind' in row})},
+            'selected': {SIGNAL_KIND[kind]: {'signal': deepcopy(signals[phase['adopted'][kind]])} for kind in DOMAINS}}
 
 
 def reference_aliases(request: dict) -> list[dict]:
@@ -472,7 +599,7 @@ def write_request(engine, output: Path, *, slug: str, title: str, research_root:
         origin_path = output / 'phase-a-provenance.json'
         selected = origin['selected']
         source_signals = {signal['signal_id']: signal for signal in state['context']['phase_a']['signals']}
-        ids = [('self', origin['material']['signal_id'])] + [(kind, selected[kind]['signal']['signal_id']) for kind in DOMAINS]
+        ids = [('self', origin['material']['signal_id'])] + [(kind, selected[kind]['signal']['signal_id']) for kind in SIGNAL_KIND.values()]
         proposition = {'proposition_id': f"phase-a:{engine.run_id}", 'structured_output': {
             'template': origin['creative_question'],
             'slots': {kind: {'signal_kind': kind, 'signal_id': identifier} for kind, identifier in ids}}}
@@ -484,11 +611,13 @@ def write_request(engine, output: Path, *, slug: str, title: str, research_root:
                                 commit=state['source_commit'], deadline=None, creator_id=None, creative_question=origin['creative_question'])
         # Never invoke the legacy slot/template formatter on inferred question text.
         request['intent']['creative_question'] = origin['creative_question']
+        # The overlap sentence is the proposition candidate the question was derived from.
+        request['intent']['purpose'] += f" 命題の候補: {origin['overlap']}"
         origin['reference_aliases'] = reference_aliases(request)
         origin_bytes = canonical(origin)
         origin_uri = f"urn:orchestration:phase-a:{engine.run_id}:sha256:{digest(origin)}"
         request['source']['artifact_uri'] = origin_uri
-        request['references'].append({'label': 'phase-a-provenance.json: material, selected signals and connection reasons',
+        request['references'].append({'label': 'phase-a-provenance.json: material, cards, screening, verification and the question',
                                       'uri': origin_uri, 'rights_status': 'APPROVED_REFERENCE'})
 
         destination = output / f"{state['request_id']}.yaml"

@@ -219,6 +219,12 @@
               },
               "private": {
                 "type": "boolean"
+              },
+              "hidden": {
+                "type": "object"
+              },
+              "answer_context": {
+                "const": "fresh"
               }
             }
           },

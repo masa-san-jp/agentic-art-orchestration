@@ -2818,7 +2818,7 @@ def validate_signal(data: dict, source: str = "signal") -> list[str]:
     if signal_kind == "art-history" and isinstance(domain, dict):
         art_history = domain.get("art_history")
         if isinstance(art_history, dict):
-            if not art_history.get("relations") and "method" not in art_history and not art_history.get("content"):
+            if not art_history.get("relations") and "method" not in art_history and not art_history.get("content") and not art_history.get("card"):
                 errors.append(_signal_error(
                     source, "art-history requires sourced relations or a method",
                     "retain relation evidence or export a sourced method concept",

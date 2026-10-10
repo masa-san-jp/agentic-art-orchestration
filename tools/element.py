@@ -107,7 +107,9 @@ class Engine:
             os.close(fd)
 
     def _request(self, state: dict) -> None:
-        if state['index'] == len(state['sequence']['elements']) and state['sequence'].get('driver') == 'phase-a':
+        if state['sequence'].get('driver') == 'phase-a':
+            # The driver extends the sequence at a checkpoint and enforces the run budget
+            # before every request, including a retry of the same element.
             from tools.theme_elements import advance
             advance(state)
             if state['status'] == 'BLOCKED':
@@ -130,6 +132,8 @@ class Engine:
                 raise ValueError('Element inputs exceed the 4096-byte request budget')
             request.update(instruction=item['instruction'], inputs=inputs,
                            answer_format=item['answer_format'], checks=item['checks'])
+            if 'answer_context' in item:
+                request['answer_context'] = item['answer_context']
         require_message(request, f"{item['kind']}-request")
         state.update(status='WAITING', pending=canonical(request))
 
@@ -238,20 +242,23 @@ class Engine:
                         failures.append({'check': 'character_count', 'reason': 'Respect the requested character limits.'})
                     if fmt['type'] == 'url' and not valid_url(value):
                         failures.append({'check': 'url_shape', 'reason': 'Return a valid HTTP(S) URL without credentials.'})
-                failures.extend(check_value(value, request['checks'], inputs=request['inputs'],
-                                            ledger=state['ledger'], previous_answers={**state['answers'], **{
-                                                f'prior-operation-{i}': word for i, word in enumerate(
-                                                    state['context'].get('phase_a', {}).get('prior_operations', [])
-                                                    if request['element_id'] == 'A3.operation' or request['element_id'].startswith('A3.operation.') else [])}}))
+                # Values the checks need but the answerer must not see (the expected reading,
+                # the other cards of a window) live on the element, never in the request.
+                hidden = state['sequence']['elements'][state['index']].get('hidden', {})
+                failures.extend(check_value(value, request['checks'], inputs={**request['inputs'], **hidden},
+                                            ledger=state['ledger'], previous_answers=state['answers']))
             state['history'].append({'element_id': request['element_id'], 'attempt': request['attempt'],
                                      'answer_sha256': hashlib.sha256(canonical(answer).encode()).hexdigest(),
-                                     'failures': failures})
+                                     'failures': failures,
+                                     **({'answerer_kind': answer['answerer_kind']} if 'answerer_kind' in answer else {})})
             if failures:
                 state['previous_failure'] = failures
                 if state['attempt'] >= state['sequence']['max_attempts']:
-                    state.update(status='BLOCKED', pending=None,
-                                 blocked={'element_id': request['element_id'], 'attempt': state['attempt'],
-                                          'last_failure': failures})
+                    blocked = {'element_id': request['element_id'], 'attempt': state['attempt'],
+                               'last_failure': failures}
+                    if state['sequence'].get('driver') == 'phase-a':
+                        blocked['reason'] = 'ELEMENT_ATTEMPTS_EXHAUSTED'
+                    state.update(status='BLOCKED', pending=None, blocked=blocked)
                 else:
                     state['attempt'] += 1
                     self._request(state)

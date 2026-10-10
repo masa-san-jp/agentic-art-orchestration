@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -6,7 +7,15 @@ import unittest
 from unittest.mock import patch
 
 from tools.theme_sources import _document, _evidence, projections
-from tests.test_theme_elements import signals
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def signals():
+    rows = [json.loads((ROOT / 'tests/fixtures/signal' / name).read_text()) for name in
+            ('valid_self.json', 'valid_art_history.json', 'valid_marketing.json')]
+    rows[1]['evidence_refs'].append({'locator': 'https://example.test/art', 'kind': 'primary', 'entity_id': 'art-entity-001'})
+    return rows
 
 
 class PublicThemeSourceTests(unittest.TestCase):
@@ -60,17 +69,6 @@ class PublicThemeSourceTests(unittest.TestCase):
         with patch('tools.theme_sources._git') as git, self.assertRaisesRegex(ValueError, 'AMBIGUOUS'):
             projections(rows, Path('/not-used'))
         git.assert_not_called()
-
-    def test_source_matching_uses_actual_evidence_prose_and_excludes_target_label(self):
-        from tools.theme_elements import ranked
-        rows = signals()
-        public = {'evidence': {rows[2]['signal_id']: {'text': '保留の観測', 'source': {'commit': 'a' * 40}}},
-                  'targets': {'artist-entity-001': {'text': '合成対象', 'source': {'commit': 'c' * 40}}}}
-        market = ranked('保留の観測', rows, 'marketing', public)[0]
-        self.assertGreater(market['score'], 0)
-        art = ranked('合成対象', rows, 'art-history', public)[0]
-        self.assertEqual(art['score'], 0)
-        self.assertTrue(art['public_source_refs'])
 
 
 class ProjectElementDestinationTests(unittest.TestCase):

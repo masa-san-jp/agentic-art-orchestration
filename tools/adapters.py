@@ -197,7 +197,7 @@ def adapt_art_history_signal(record: dict) -> dict:
             f"art-history required input field(s) missing: {missing!r}",
             "provide stable entity, relation, evidence, and graph locator fields",
         )
-    if not isinstance(record["relations"], list) or (not record["relations"] and "method" not in record and not record.get("content")):
+    if not isinstance(record["relations"], list) or (not record["relations"] and "method" not in record and not record.get("content") and not record.get("card")):
         raise _fail(
             "relations must be a non-empty list",
             "include each exported relation with its stable target ID, evidence, and certainty",
@@ -273,7 +273,7 @@ def adapt_art_history_signal(record: dict) -> dict:
         },
     }
     art_history = signal["domain"]["art_history"]
-    for field in ("method", "source_refs", "content", "entity_labels"):
+    for field in ("method", "source_refs", "content", "entity_labels", "label_ja", "card"):
         if field in record:
             art_history[field] = copy.deepcopy(record[field])
     if "method" in record and isinstance(record.get("source_refs"), list):
@@ -400,6 +400,9 @@ def adapt_marketing_signal(record: dict) -> dict:
             }
         },
     }
+    for field in ("label_ja", "card"):
+        if field in record:
+            signal["domain"]["marketing"][field] = copy.deepcopy(record[field])
     errors = validate_signal(signal, "marketing adapter output")
     if errors:
         raise AdapterError("\n".join(errors))

@@ -21,10 +21,8 @@ from tools.run import (
     _theme_proposal,
 )
 import tools.run as run_module
-from tools.candidate_selection import load_fixture
+from tests.phase_a_world import Policy, blob_source, world
 from tools.element import Engine
-from tools.element_answerer import FakeAnswerer
-from tools.element_checks import source_terms
 
 
 class AutomaticPlanEntryTests(unittest.TestCase):
@@ -85,47 +83,23 @@ class AutomaticPlanEntryTests(unittest.TestCase):
                 if args[0].endswith("ingest_signals.py"):
                     output = Path(args[args.index("--output") + 1])
                     output.mkdir(parents=True, exist_ok=True)
-                    for signal in load_fixture(run_module.ROOT / "tests/fixtures/v12-candidates"):
-                        # Phase A requires cited content overlap; legacy v12
-                        # envelope names alone must not advance its A4 step.
-                        if signal['signal_kind'] == 'art-history':
-                            signal['domain']['art_history']['content'] = [{
-                                'text': '保留の構造を描く合成作品。',
-                                'source_locator': signal['source']['locators'][0] + '#定義',
-                                'source_refs': ['https://example.invalid/synthetic-art']}]
-                            signal['evidence_refs'].append({'locator': 'https://example.invalid/synthetic-art',
-                                'kind': 'primary', 'entity_id': signal['source']['entity_ids'][0]})
-                        elif signal['signal_kind'] == 'marketing':
-                            signal['certainty']['basis'] = '保留の選択についての合成観測。'
+                    for signal in signals:
                         destination = output / signal["signal_kind"]
                         destination.mkdir(exist_ok=True)
                         (destination / "signal.json").write_text(json.dumps(signal), encoding="utf-8")
                 return {"status": "PASSED"}
 
+            signals, blobs = world(art=3, market=2)
             with patch("tools.run._guard_pinned_workspace", return_value={"status": "PASSED"}), \
                     patch("tools.run._run_tool", side_effect=fake_tool), \
-                    patch("tools.theme_sources.projections", return_value={"evidence": {}, "targets": {}}):
+                    patch("tools.theme_elements.git_blob_source", return_value=blob_source(blobs)):
                 arguments = (None, root / "workspace", root / "state", "AUTO-PLAN-001",
                              "artistic-research", None, None, "2026-08-15T00:00:00+09:00", sys.executable)
                 report = _run_orchestration(*arguments, profile_root=root / "synthetic-profile")
-                self.assertEqual("A3.operation", report["next_action"]["request"]["element_id"])
+                self.assertEqual("A4.art.screen.01", report["next_action"]["request"]["element_id"])
                 engine = Engine("AUTO-PLAN-001", root / "state")
-                while (report.get("next_action") or {}).get("kind") == "element":
-                    request = report["next_action"]["request"]
-                    identifier = request["element_id"]
-                    def anchor(key):
-                        return min(source_terms(request["inputs"][key]), key=lambda term: (-len(term), term))
-                    if identifier == "A3.operation":
-                        value = "保留"
-                    elif identifier.startswith("A3.operation."):
-                        self.assertEqual("A3.operation.2", identifier)
-                        self.assertIn("BELOW_MINIMUM_CONTENT_MATCH", request["previous_failure"][0]["reason"])
-                        value = "構造と選択"
-                    elif identifier.startswith("A5."):
-                        value = {"answer": True, "reason": f"{anchor('self')}と{anchor('signal')}の関係を検討する。"}
-                    else:
-                        value = f"{anchor('self')}は、{anchor('art_history')}と{anchor('market')}の関係をどう変えるか？"
-                    report = engine.answer(FakeAnswerer({identifier: [value]}).answer(request))
+                report = Policy(engine).drive(report)
+                value = report["answers"]["A7.question"]
                 self.assertEqual("COMPLETED", report["status"])
                 report = _run_orchestration(*arguments, profile_root=root / "synthetic-profile")
                 request = yaml.safe_load((root / "state/AUTO-PLAN-001/requests/RR001.yaml").read_text())

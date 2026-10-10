@@ -47,6 +47,7 @@ class FakeAnswerer:
         value = deepcopy(values[min(request['attempt'] - 1, len(values) - 1)])
         return {'contract_version': f'{kind}-answer/v1',
                 **{key: request[key] for key in ('run_id', 'element_id', 'attempt')},
+                **({'answerer_kind': 'fake'} if kind == 'element' else {}),
                 'results' if kind == 'search' else 'value': value}
 
 
