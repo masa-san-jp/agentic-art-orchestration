@@ -17,11 +17,11 @@
   "source_snapshots": [
     {
       "repository": "self-model",
-      "commit": "7b2425ed313163d36707e7404e324d9ce12bac30"
+      "commit": "1f92e629589c945c840c025a2d08e6aa95e7bfa5"
     },
     {
       "repository": "art-history",
-      "commit": "d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7"
+      "commit": "372928427b3dcdb1921e7c2c9fe5ff2e305d51e9"
     }
   ],
   "signal_refs": ["signal:self:001", "signal:art:001"],

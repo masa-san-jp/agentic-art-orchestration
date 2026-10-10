@@ -1,6 +1,6 @@
 {
   "signal_id": "art-history:method:fixture",
-  "commit": "d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7",
+  "commit": "372928427b3dcdb1921e7c2c9fe5ff2e305d51e9",
   "entity_id": "concept/fixture-method",
   "source_locator": "entities/concepts/fixture-method.md",
   "evidence_locator": "entities/concepts/fixture-method.md#sources",

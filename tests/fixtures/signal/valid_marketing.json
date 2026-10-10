@@ -4,7 +4,7 @@
   "signal_kind": "marketing",
   "source": {
     "repository": "marketing-trends",
-    "commit": "1a02e5aaca120614cba5cd1bbb687a836706530f",
+    "commit": "1b62fb446f3eb93f4523d419b5830bb3d895ec80",
     "entity_ids": ["trend-entity-001"],
     "locators": ["trends/trend-entity-001"]
   },
