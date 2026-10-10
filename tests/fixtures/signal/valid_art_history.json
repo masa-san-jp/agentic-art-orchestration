@@ -4,7 +4,7 @@
   "signal_kind": "art-history",
   "source": {
     "repository": "art-history",
-    "commit": "d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7",
+    "commit": "372928427b3dcdb1921e7c2c9fe5ff2e305d51e9",
     "entity_ids": ["art-entity-001"],
     "locators": ["entities/art-entity-001"]
   },
