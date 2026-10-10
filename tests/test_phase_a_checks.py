@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from tests.phase_a_world import COMMITS, NOW, art_signal, blob_source, world
-from tools.card_sources import PhaseABlocked, git_blob_source, normalize_text, verify_card
+from tools.card_sources import PhaseABlocked, check_all_cards, git_blob_source, normalize_text, verify_card
 from tools.element_checks import CheckConfigurationError, check_value, parse_check, specific_to_window
 from tools.element_contracts import validate_sequence
 
@@ -14,14 +14,36 @@ def failures(value, checks, **inputs):
     return [row['check'] for row in check_value(value, checks, inputs=inputs, ledger={}, previous_answers={})]
 
 
+SHARED_VECTORS = [
+    ('> 引用された文章', '引用された文章'),
+    ('詳しくは[記事](https://example.test/a)を見る', '詳しくは記事を見る'),
+    ('制作過程の\n記録', '制作過程の記録'),
+    ('all of the\n  planning', 'all of the planning'),
+    ('作品の\nidea', '作品のidea'),
+    ('段落一\n\n段落二', '段落一段落二'),
+    ('画家 P571 の作品', '画家 の作品'),
+    ('> 定義と\n> 範囲 https://example.test/x を示す', '定義と範囲 を示す'),
+    ('a\r\nb', 'a b'),
+]
+
+
 class NormalizationTests(unittest.TestCase):
     def test_quote_markers_links_urls_and_ids_are_removed(self):
         self.assertEqual('引用された文章', normalize_text('> 引用された文章'))
         self.assertEqual('詳しくは記事を見る', normalize_text('詳しくは[記事](https://example.test/a)を見る'))
-        self.assertEqual('文  の後', normalize_text('文 https://example.test/x の後'))
-        self.assertEqual('画家  の作品', normalize_text('画家 P571 の作品'))
-        self.assertEqual('P57は残る', normalize_text('P57は残る'))
+        self.assertEqual('文 の後', normalize_text('文 https://example.test/x の後'))
+        self.assertEqual('画家 の作品', normalize_text('画家 P571 の作品'))
+        self.assertEqual('は残る', normalize_text('P57は残る'))
         self.assertEqual('P5710a', normalize_text('P5710a'))
+        self.assertEqual('図', normalize_text('![図](a.png)'))
+        self.assertEqual('作品の説明', normalize_text('作品（）の説明'))
+        self.assertEqual('運動の定義', normalize_text('movement/art-et-liberte 運動の定義'))
+
+    def test_vectors_shared_with_art_history_card_excerpts(self):
+        # The same (input, output) pairs are asserted by art-history tests/test_card_excerpts.py;
+        # if one side's rule changes, both suites must change together (design 4.1).
+        for raw, expected in SHARED_VECTORS:
+            self.assertEqual(expected, normalize_text(raw), raw)
 
     def test_line_breaks_join_japanese_and_space_latin(self):
         self.assertEqual('制作過程の記録', normalize_text('制作過程の\n記録'))
@@ -52,6 +74,35 @@ class CardSourceTests(unittest.TestCase):
         self.blobs[('art-history', path)] = raw.encode()
         self.item['source_sha256'] = hashlib.sha256(raw.encode()).hexdigest()
         self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+
+    def test_blob_with_quotes_links_urls_and_ids_matches_the_displayed_excerpt(self):
+        path = self.item['source_locator'].split('#')[0]
+        head, tail = self.item['text'].split('制作過程の記録として')
+        raw = (f'---\nid: x\n---\n# 定義\n> {head}[制作過程](https://example.test/a)の記録としてP571\n'
+               f'> {tail}（https://example.test/b）である。\n')
+        self.blobs[('art-history', path)] = raw.encode()
+        self.item['source_sha256'] = hashlib.sha256(raw.encode()).hexdigest()
+        self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+
+    def test_changed_body_with_an_old_excerpt_and_cross_paragraph_text_still_block(self):
+        path = self.item['source_locator'].split('#')[0]
+        words = self.item['text']
+        half = len(words) // 2
+        for raw in (f'---\nid: x\n---\n本文は書き換えられた。\n', f'---\nid: x\n---\n{words[:half]}\n\n{words[half:]}\n'):
+            self.blobs[('art-history', path)] = raw.encode()
+            self.item['source_sha256'] = hashlib.sha256(raw.encode()).hexdigest()
+            with self.assertRaises(PhaseABlocked) as caught:
+                verify_card(self.art, self.item, blob_source(self.blobs))
+            self.assertEqual(('CARD_SOURCE_MISMATCH', 'excerpt not in blob'), (caught.exception.reason, caught.exception.details['detail']))
+
+    def test_check_all_cards_reports_every_mismatch_and_passes_a_clean_set(self):
+        read = blob_source(self.blobs)
+        self.assertEqual([], check_all_cards(self.signals, read))
+        path = self.item['source_locator'].split('#')[0]
+        self.blobs[('art-history', path)] = b'---\nid: x\n---\nchanged\n'
+        rows = check_all_cards(self.signals, read)
+        self.assertEqual(['CARD_SOURCE_MISMATCH'], [row['reason'] for row in rows])
+        self.assertEqual(self.art['signal_id'], rows[0]['signal_id'])
 
     def test_front_matter_is_not_the_body(self):
         path = self.item['source_locator'].split('#')[0]
