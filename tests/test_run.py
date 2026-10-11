@@ -294,6 +294,27 @@ class ResearchPendingTests(unittest.TestCase):
         self.assertEqual("BLOCKED", report["status"])
         self.assertEqual("claim.CL001", report["blocked"]["element_id"])
 
+    def test_finished_engine_is_read_not_re_entered(self):
+        protocol, project = self._protocol(engine="raise SystemExit('must not run after Stage B finished')\n")
+        (project / "07_runtime").mkdir()
+        (project / "07_runtime" / "research-elements.json").write_text(json.dumps(
+            {"status": "COMPLETED", "answers": {"a": 1, "b": 2}, "completion": {"status": "INCOMPLETE"}}), encoding="utf-8")
+
+        elements = MODULE._research_elements(protocol, project, "RUN001", sys.executable)
+
+        self.assertEqual(("COMPLETED", 2), (elements["status"], elements["accepted_count"]))
+        report = MODULE._at_research(self.work, "RUN001", "調和", [], self.work, "harmony", elements=elements)
+        self.assertEqual("RESEARCH_PENDING", report["status"])
+        self.assertIn("段階 C", report["next_action"]["do"][0])
+
+    def test_parent_run_id_maps_to_the_research_engine_rule(self):
+        import re as _re
+        for run_id in ["RUN001", "run:001", "R" * 128, "a:" * 60]:
+            child = MODULE._research_run_id(run_id)
+            self.assertRegex(child, r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+            self.assertEqual(child, MODULE._research_run_id(run_id))
+        self.assertNotEqual(MODULE._research_run_id("run:001"), MODULE._research_run_id("run:002"))
+
     def test_legacy_route_or_old_research_checkout_keeps_the_task_instructions(self):
         protocol, project = self._protocol(route="legacy", engine="raise SystemExit('must not run')\n")
         self.assertIsNone(MODULE._research_elements(protocol, project, "RUN001", sys.executable))

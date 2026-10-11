@@ -645,6 +645,14 @@ def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool
 
 
 
+def _research_run_id(run_id: str) -> str:
+    """A stable child id within the research engine's rule ([A-Za-z0-9][A-Za-z0-9._-]{0,127})."""
+    safe = re.sub(r"[^A-Za-z0-9._-]", "-", run_id) + "-research"
+    if len(safe) > 128:
+        safe = safe[:100] + "-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:16] + "-research"
+    return safe
+
+
 def _research_elements(protocol_root: Path, project: Path, run_id: str, python: str) -> dict | None:
     """Stage B by elements (research #122): ask the research engine for its next single request.
 
@@ -658,7 +666,15 @@ def _research_elements(protocol_root: Path, project: Path, run_id: str, python: 
     route = (yaml.safe_load(plan.read_text(encoding="utf-8")) or {}).get("research_route", "research_elements")
     if route != "research_elements":
         return None
-    result = subprocess.run([python, str(tool), "next", "--project", str(project), "--run-id", f"{run_id}-research"],
+    checkpoint = project / "07_runtime" / "research-elements.json"
+    if checkpoint.is_file():
+        saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+        if saved.get("status") in {"COMPLETED", "BLOCKED"}:
+            # A finished engine refuses later project changes (Stage C writes); read, do not re-enter.
+            return {"status": saved["status"], "accepted_count": len(saved.get("answers", {})),
+                    "blocked": saved.get("blocked"), "completion": saved.get("completion"), "next_action": None,
+                    "answer_command": [python, str(tool), "answer", "--project", str(project)]}
+    result = subprocess.run([python, str(tool), "next", "--project", str(project), "--run-id", _research_run_id(run_id)],
                             cwd=protocol_root, capture_output=True, text=True, env=child_environment())
     try:
         report = json.loads(result.stdout)
