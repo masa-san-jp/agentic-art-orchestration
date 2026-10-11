@@ -1,0 +1,302 @@
+import hashlib
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+
+from tests.phase_a_world import COMMITS, NOW, art_signal, blob_source, world
+from tools.card_sources import PhaseABlocked, check_all_cards, git_blob_source, normalize_text, verify_card
+from tools.element_checks import CheckConfigurationError, check_value, parse_check, specific_to_window
+from tools.element_contracts import validate_sequence
+
+
+def failures(value, checks, **inputs):
+    return [row['check'] for row in check_value(value, checks, inputs=inputs, ledger={}, previous_answers={})]
+
+
+SHARED_VECTORS = [
+    ('> 引用された文章', '引用された文章'),
+    ('詳しくは[記事](https://example.test/a)を見る', '詳しくは記事を見る'),
+    ('制作過程の\n記録', '制作過程の記録'),
+    ('all of the\n  planning', 'all of the planning'),
+    ('作品の\nidea', '作品のidea'),
+    ('段落一\n\n段落二', '段落一段落二'),
+    ('画家 P571 の作品', '画家 の作品'),
+    ('> 定義と\n> 範囲 https://example.test/x を示す', '定義と範囲 を示す'),
+    ('a\r\nb', 'a b'),
+]
+
+
+class NormalizationTests(unittest.TestCase):
+    def test_quote_markers_links_urls_and_ids_are_removed(self):
+        self.assertEqual('引用された文章', normalize_text('> 引用された文章'))
+        self.assertEqual('詳しくは記事を見る', normalize_text('詳しくは[記事](https://example.test/a)を見る'))
+        self.assertEqual('文 の後', normalize_text('文 https://example.test/x の後'))
+        self.assertEqual('画家 の作品', normalize_text('画家 P571 の作品'))
+        self.assertEqual('は残る', normalize_text('P57は残る'))
+        self.assertEqual('P5710a', normalize_text('P5710a'))
+        self.assertEqual('図', normalize_text('![図](a.png)'))
+        self.assertEqual('作品の説明', normalize_text('作品（）の説明'))
+        self.assertEqual('運動の定義', normalize_text('movement/art-et-liberte 運動の定義'))
+
+    def test_vectors_shared_with_art_history_card_excerpts(self):
+        # The same (input, output) pairs are asserted by art-history tests/test_card_excerpts.py;
+        # if one side's rule changes, both suites must change together (design 4.1).
+        for raw, expected in SHARED_VECTORS:
+            self.assertEqual(expected, normalize_text(raw), raw)
+
+    def test_line_breaks_join_japanese_and_space_latin(self):
+        self.assertEqual('制作過程の記録', normalize_text('制作過程の\n記録'))
+        self.assertEqual('the idea is\nx'.replace('\n', ' '), normalize_text('the idea is\nx'))
+        self.assertEqual('all of the planning', normalize_text('all of the\n  planning'))
+        self.assertEqual('作品のidea', normalize_text('作品の\nidea'))
+        self.assertEqual('段落一段落二', normalize_text('段落一\n\n段落二'))
+        self.assertEqual('a b', normalize_text('a\r\nb'))
+
+    def test_the_rule_is_idempotent_on_already_normalized_text(self):
+        text = '制作過程の記録として立ち上がる自発的な構成 and the plan'
+        self.assertEqual(text, normalize_text(normalize_text(text)))
+
+
+class CardSourceTests(unittest.TestCase):
+    def setUp(self):
+        self.signals, self.blobs = world()
+        self.art = next(signal for signal in self.signals if signal['signal_kind'] == 'art-history')
+        self.item = self.art['domain']['art_history']['card'][0]
+
+    def test_verbatim_excerpt_in_the_pinned_blob_is_accepted(self):
+        self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+
+    def test_the_excerpt_is_checked_after_the_same_normalization_as_the_blob(self):
+        path = self.item['source_locator'].split('#')[0]
+        head, tail = self.item['text'].split('制作過程の記録として')
+        raw = f'---\nid: x\n---\n# 定義\n{head}制作過程の記録として\n{tail}である。\n'
+        self.blobs[('art-history', path)] = raw.encode()
+        self.item['source_sha256'] = hashlib.sha256(raw.encode()).hexdigest()
+        self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+
+    def test_blob_with_quotes_links_urls_and_ids_matches_the_displayed_excerpt(self):
+        path = self.item['source_locator'].split('#')[0]
+        head, tail = self.item['text'].split('制作過程の記録として')
+        raw = (f'---\nid: x\n---\n# 定義\n> {head}[制作過程](https://example.test/a)の記録としてP571\n'
+               f'> {tail}（https://example.test/b）である。\n')
+        self.blobs[('art-history', path)] = raw.encode()
+        self.item['source_sha256'] = hashlib.sha256(raw.encode()).hexdigest()
+        self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+
+    def test_changed_body_with_an_old_excerpt_and_cross_paragraph_text_still_block(self):
+        path = self.item['source_locator'].split('#')[0]
+        words = self.item['text']
+        half = len(words) // 2
+        for raw in (f'---\nid: x\n---\n本文は書き換えられた。\n', f'---\nid: x\n---\n{words[:half]}\n\n{words[half:]}\n'):
+            self.blobs[('art-history', path)] = raw.encode()
+            self.item['source_sha256'] = hashlib.sha256(raw.encode()).hexdigest()
+            with self.assertRaises(PhaseABlocked) as caught:
+                verify_card(self.art, self.item, blob_source(self.blobs))
+            self.assertEqual(('CARD_SOURCE_MISMATCH', 'excerpt not in blob'), (caught.exception.reason, caught.exception.details['detail']))
+
+    def test_check_all_cards_reports_every_mismatch_and_passes_a_clean_set(self):
+        read = blob_source(self.blobs)
+        self.assertEqual([], check_all_cards(self.signals, read))
+        path = self.item['source_locator'].split('#')[0]
+        self.blobs[('art-history', path)] = b'---\nid: x\n---\nchanged\n'
+        rows = check_all_cards(self.signals, read)
+        self.assertEqual(['CARD_SOURCE_MISMATCH'], [row['reason'] for row in rows])
+        self.assertEqual(self.art['signal_id'], rows[0]['signal_id'])
+
+    def test_front_matter_value_is_searched_like_art_history_does(self):
+        path = self.item['source_locator'].split('#')[0]
+        raw = f"---\nmethod:\n  fixes:\n    - \"{self.item['text']}\"\n---\n別の本文である。\n".encode()
+        self.blobs[('art-history', path)] = raw
+        self.item.update(source_locator=path + '#method.fixes', source_sha256=hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.item['text'], verify_card(self.art, self.item, blob_source(self.blobs)))
+        raw = b'---\nmethod:\n  fixes:\n    - "\xe5\x88\xa5\xe3\x81\xae\xe5\x80\xa4"\n---\n\xe5\x88\xa5\xe3\x81\xae\xe6\x9c\xac\xe6\x96\x87\n'
+        self.blobs[('art-history', path)] = raw
+        self.item['source_sha256'] = hashlib.sha256(raw).hexdigest()
+        with self.assertRaises(PhaseABlocked) as caught:
+            verify_card(self.art, self.item, blob_source(self.blobs))
+        self.assertEqual('excerpt not in blob', caught.exception.details['detail'])
+
+    def test_marketing_card_follows_the_owner_rule_per_section(self):
+        market = next(signal for signal in self.signals if signal['signal_kind'] == 'marketing')
+        item = market['domain']['marketing']['card'][0]
+        path = item['source_locator'].split('#')[0]
+        read = blob_source(self.blobs)
+        self.assertEqual(item['text'], verify_card(market, item, read))
+        for locator in (path + '#見出している未来', path + '#別の節', path):
+            with self.assertRaises(PhaseABlocked) as caught:
+                verify_card(market, {**item, 'source_locator': locator}, read)
+            self.assertEqual('excerpt not in blob', caught.exception.details['detail'])
+        table = f"---\nid: x\n---\n## 足元の根拠\n\n| 列 |\n|---|\n| {item['text']} |\n".encode()
+        self.blobs[('marketing-trends', path)] = table
+        with self.assertRaises(PhaseABlocked):
+            verify_card(market, {**item, 'source_sha256': hashlib.sha256(table).hexdigest()}, read)
+
+    def test_load_signals_reads_a_directory_a_portfolio_and_one_file_and_never_zero_silently(self):
+        import json
+        from tools.card_sources import load_signals, main
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'art-history').mkdir()
+            names = []
+            for signal in self.signals[:3]:
+                name = f"art-history/{signal['signal_id'].replace(':', '_')}.json"
+                (root / name).write_text(json.dumps(signal), encoding='utf-8')
+                names.append(name)
+            (root / 'portfolio.json').write_text(json.dumps({'version': 1, 'signal_files': names, 'requirements': []}))
+            self.assertEqual(3, len(load_signals(root)))
+            self.assertEqual(3, len(load_signals(root / 'portfolio.json')))
+            self.assertEqual(1, len(load_signals(root / names[0])))
+            (root / 'empty').mkdir()
+            self.assertEqual(2, main(['--signals', str(root / 'empty'), '--workspace-root', str(root)]))
+
+    def test_hash_missing_blob_and_unsafe_locator_each_block_with_their_cause(self):
+        read = blob_source(self.blobs)
+        bad_hash = {**self.item, 'source_sha256': '0' * 64}
+        with self.assertRaises(PhaseABlocked) as caught:
+            verify_card(self.art, bad_hash, read)
+        self.assertEqual(('CARD_SOURCE_MISMATCH', 'blob sha256 differs'), (caught.exception.reason, caught.exception.details['detail']))
+        with self.assertRaises(PhaseABlocked) as caught:
+            verify_card(self.art, {**self.item, 'source_locator': 'knowledge/missing.md#x'}, read)
+        self.assertEqual('blob unreadable', caught.exception.details['detail'])
+        for locator in ('../outside.md', '/etc/passwd', '#only-anchor'):
+            with self.assertRaises(PhaseABlocked) as caught:
+                verify_card(self.art, {**self.item, 'source_locator': locator}, read)
+            self.assertEqual('unsafe locator', caught.exception.details['detail'])
+
+    def test_git_blob_source_reads_the_pinned_commit_not_the_working_tree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            repo = workspace / 'art-history-notes'
+            repo.mkdir()
+            def git(*args):
+                return subprocess.run(['git', *args], cwd=repo, capture_output=True, text=True, check=True).stdout.strip()
+            git('init', '-q')
+            git('config', 'user.name', 'Synthetic')
+            git('config', 'user.email', 'synthetic@example.invalid')
+            path = self.item['source_locator'].split('#')[0]
+            (repo / 'knowledge').mkdir()
+            (repo / path).write_bytes(self.blobs[('art-history', path)])
+            git('add', '.')
+            git('commit', '-qm', 'pin')
+            commit = git('rev-parse', 'HEAD')
+            (repo / path).write_text('DIRTY WORKTREE')
+            signal = {**self.art, 'source': {**self.art['source'], 'commit': commit}}
+            self.assertEqual(self.item['text'], verify_card(signal, self.item, git_blob_source(workspace)))
+            with self.assertRaises(PhaseABlocked):
+                verify_card({**signal, 'source': {**signal['source'], 'commit': COMMITS['art-history']}}, self.item, git_blob_source(workspace))
+
+
+class CheckTests(unittest.TestCase):
+    def test_exact_input_excerpt_is_an_exact_contiguous_passage(self):
+        self.assertEqual([], failures('費用の確定', ['exact_input_excerpt:body'], body='本人は費用の確定を避ける'))
+        self.assertEqual(['exact_input_excerpt:body'], failures('費用を確定', ['exact_input_excerpt:body'], body='本人は費用の確定を避ける'))
+        self.assertEqual(['exact_input_excerpt:body'], failures('x', ['exact_input_excerpt:body']))
+
+    def test_not_label_rejects_the_name_or_a_part_of_it(self):
+        spec = ['not_label:label']
+        self.assertEqual(['not_label:label'], failures('抽象表現主義', spec, label='抽象表現主義'))
+        self.assertEqual(['not_label:label'], failures('抽象表現', spec, label='抽象表現主義'))
+        self.assertEqual([], failures('制作過程の記録', spec, label='抽象表現主義'))
+
+    def test_no_reference_tokens_rejects_urls_ids_and_source_notes(self):
+        for text in ('https://example.test/a', '詳細[1]を参照', '記事](x', 'P571の値', '未確認: 増えている', '出典はA社', 'B社は拡大と主張している'):
+            self.assertEqual(['no_reference_tokens'], failures(text, ['no_reference_tokens']), text)
+        for text in ('制作過程の記録として立ち上がる', 'Q4の売上ではなくP57', 'planning is done first'):
+            self.assertEqual([], failures(text, ['no_reference_tokens']), text)
+
+    def test_specific_to_window_needs_a_term_only_the_winner_has_and_the_largest_overlap(self):
+        spec = {'card': '空き家の増加：所有し続ける方向', 'others': ['不安の多重化：資産と貯蓄', 'デジタル利用：距離を置く意識']}
+        self.assertTrue(specific_to_window('空き家を所有し続ける', spec))
+        self.assertFalse(specific_to_window('確定の考え方が逆になっている', spec))
+        self.assertFalse(specific_to_window('資産と貯蓄と空き家', {**spec, 'others': ['資産と貯蓄と空き家の増加']}))
+        self.assertTrue(specific_to_window('空き家', {'card': '空き家の増加', 'others': []}))
+        self.assertFalse(specific_to_window('空き家', 'not a spec'))
+        self.assertEqual(['specific_to_window:spec'], failures('確定の考え方が逆', ['specific_to_window:spec'], spec=spec))
+
+    def test_expected_choice_open_question_and_not_question(self):
+        self.assertEqual([], failures('逆', ['expected_choice:expected'], expected='逆'))
+        self.assertEqual(['expected_choice:expected'], failures('同じ', ['expected_choice:expected'], expected='逆'))
+        self.assertEqual([], failures('どのように示せるか？', ['open_question']))
+        self.assertEqual(['open_question'], failures('示せるか？', ['open_question']))
+        for word in ('何', 'なぜ', 'どこまで', 'どんな', 'いかに'):
+            self.assertEqual([], failures(f'これは{word}か？', ['open_question']), word)
+        self.assertEqual([], failures('これは対比である。', ['not_question']))
+        self.assertEqual(['not_question'], failures('これは何か？', ['not_question']))
+        self.assertEqual(['not_question'], failures('これは何か?', ['not_question']))
+
+    def test_check_names_stay_closed_and_arguments_are_validated(self):
+        for spec in ('no_reference_tokens:x', 'open_question:x', 'not_label', 'specific_to_window:a b', 'expected_choice'):
+            with self.assertRaises(CheckConfigurationError):
+                parse_check(spec)
+
+    def test_hidden_keys_satisfy_a_sequence_but_a_missing_key_does_not(self):
+        element = {'kind': 'element', 'element_id': 'e.1', 'instruction': 'x', 'inputs': {'a': {'literal': 'x'}},
+                   'answer_format': {'type': 'text', 'max_chars': 10}, 'checks': ['expected_choice:expected'],
+                   'hidden': {'expected': 'x'}}
+        sequence = {'contract_version': 'element-sequence/v1', 'elements': [element]}
+        self.assertEqual([], validate_sequence(sequence))
+        del element['hidden']
+        self.assertEqual(['e.1: expected_choice requires a declared input key'], validate_sequence(sequence))
+
+
+class SignalContractTests(unittest.TestCase):
+    def test_cards_and_labels_are_part_of_the_normalized_signal(self):
+        from tools.validate import validate_signal
+        signals, _ = world()
+        self.assertEqual([], [error for signal in signals for error in validate_signal(signal, 'x')])
+        art = next(signal for signal in signals if signal['signal_kind'] == 'art-history')
+        art['domain']['art_history']['card'][0]['source_sha256'] = 'not-a-hash'
+        self.assertTrue(validate_signal(art, 'x'))
+        art['domain']['art_history']['card'] = []
+        self.assertTrue(validate_signal(art, 'x'))
+
+    def test_adapters_carry_label_ja_and_card_through(self):
+        from tools.adapters import adapt_art_history_signal, adapt_marketing_signal
+        signals, _ = world()
+        for signal, adapt in ((next(s for s in signals if s['signal_kind'] == 'art-history'), adapt_art_history_signal),
+                              (next(s for s in signals if s['signal_kind'] == 'marketing'), adapt_marketing_signal)):
+            domain = next(iter(signal['domain'].values()))
+            record = {'signal_id': signal['signal_id'], 'commit': signal['source']['commit'],
+                      'entity_id': signal['source']['entity_ids'][0], 'source_locator': signal['source']['locators'][0],
+                      'evidence_locator': signal['evidence_refs'][0]['locator'], 'evidence_kind': signal['evidence_refs'][0]['kind'],
+                      'statement': signal['statement'], 'certainty': signal['certainty'], 'unknowns': signal['unknowns'],
+                      'constraints': signal['constraints'], 'validity': signal['validity'],
+                      'generated_at': signal['generated_at'], 'adapter_version': '1.0.0', **domain,
+                      'freshness': signal['freshness']}
+            adapted = adapt(record)
+            adapted_domain = next(iter(adapted['domain'].values()))
+            self.assertEqual(domain['card'], adapted_domain['card'])
+            self.assertEqual(domain['label_ja'], adapted_domain['label_ja'])
+
+    def test_card_excerpts_empty_after_normalization_are_dropped_not_fatal(self):
+        from tools.adapters import adapt_art_history_signal
+        signals, _ = world()
+        signal = next(s for s in signals if s['signal_kind'] == 'art-history')
+        domain = signal['domain']['art_history']
+        record = {'signal_id': signal['signal_id'], 'commit': signal['source']['commit'],
+                  'entity_id': signal['source']['entity_ids'][0], 'source_locator': signal['source']['locators'][0],
+                  'evidence_locator': signal['evidence_refs'][0]['locator'], 'evidence_kind': signal['evidence_refs'][0]['kind'],
+                  'statement': signal['statement'], 'certainty': signal['certainty'], 'unknowns': signal['unknowns'],
+                  'constraints': signal['constraints'], 'validity': signal['validity'],
+                  'generated_at': signal['generated_at'], 'adapter_version': '1.0.0', **domain,
+                  'freshness': signal['freshness']}
+        good = domain['card'][0]
+        empty = {**good, 'text': '[https://example.org/gold-weights](https://example.org/gold-weights) P571'}
+        kept = adapt_art_history_signal({**record, 'card': [empty, good]})
+        self.assertEqual([good], kept['domain']['art_history']['card'])
+        none = adapt_art_history_signal({**record, 'card': [empty]})
+        self.assertNotIn('card', none['domain']['art_history'])
+
+    def test_a_card_only_art_entity_is_a_valid_signal(self):
+        from tools.validate import validate_signal
+        blobs = {}
+        art = art_signal(0, blobs)
+        art['domain']['art_history']['relations'] = []
+        self.assertEqual([], validate_signal(art, 'x'))
+        del art['domain']['art_history']['card']
+        self.assertTrue(validate_signal(art, 'x'))
+
+
+if __name__ == '__main__':
+    unittest.main()

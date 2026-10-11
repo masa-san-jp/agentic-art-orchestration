@@ -164,7 +164,7 @@ run.jsonには従来どおり`git_write_credentials: absent|present|unknown`だ�
 
 ## テーマ未指定の制作計画
 
-利用者はテーマ、作品slug、作品titleを指定しなくてよい。制作計画を作るよう依頼されたエージェントは、`--intent`、`--slug`、`--title`を付けずに次を実行する。
+利用者はテーマ、作品slug、作品titleを指定しなくてよい。制作計画を作るよう依頼されたエージェントは、`--intent`、`--slug`、`--title`を付けずに次を実行する（素材を固定したいときだけ`--self-signal`を付ける）。
 
 ~~~bash
 .venv/bin/python tools/credential_free.py --state-root <external-state-root> -- \
@@ -173,7 +173,7 @@ run.jsonには従来どおり`git_write_credentials: absent|present|unknown`だ�
   --state-root <external-state-root>
 ~~~
 
-この入口はpin済みsignalから本人の素材を一件選び、段階Aの要素を一件ずつ依頼する。答えを受理して同じrunを再開すると、中心の問いをResearch requestへ渡す。`theme_proposal.source: phase-a-elements`がこの経路の出所である。Research以降は宣言された調査と既存のhandoff・Production手順を継続する。旧候補空間・gate・ハッシュ選定は通常runで使わない。`--intent`は任意の素材順位づけです。使用回数が同じ素材の本文との語の重なりだけに使い、素材選定stateには生文を保存せずhashを保持します。素材が固定された後のresume commandにも生文を残しません。中心の問いはA7が作ります。
+この入口はpin済みsignalから本人の素材を一件選び、段階Aの要素を一件ずつ依頼する。答えを受理して同じrunを再開すると、中心の問いをResearch requestへ渡す。`theme_proposal.source: phase-a-elements`がこの経路の出所である。Research以降は宣言された調査と既存のhandoff・Production手順を継続する。旧候補空間・gate・ハッシュ選定は通常runで使わない。素材は使用回数の少ない記録を順に使い、`--self-signal`で固定できる。通常runに`--intent`は使えない（`PHASE_A_INTENT_REMOVED`）。中心の問いはA7が作ります。
 
 新規の通常runは`delivery-contract/v1`を生成してrun stateへ保存する。明示したProject checkoutを
 `--project-root`または`AGENTIC_ART_PROJECT_ROOT`で選ぶ場合のtargetは`project-local`であり、
@@ -623,34 +623,61 @@ booleanの検査は理由文へ適用します。不明な検査や入力参照�
 
 ## 段階Aの要素
 
-通常のテーマ未指定runは、同意済みexportの全content項目から空でない素材を一件選びます。
-consent/scope/opaque raw locatorは素材ではありません。同じ外部state rootのA3を受理済みのrunで
-使用回数の少ない素材を優先し、同率なら項目・本文・signal ID順に選びます。
-同じrunの再開では入力・素材・照合順を固定します。
+設計の正本は[段階A再設計v2](20261010-phase-a-v2-design.md)です。プログラムは「どれが関係あるか」を判定せず、
+全候補を公平な決まった順で答え手に見せ、答えを機械的に確かめます。関係の判定はすべて答え手が行います。
 
-`next_action.kind: element`なら、共通ハーネスの依頼を読んで一つの値を返します。
-A3は短い操作語一つ、A5は素材と参照一件ごとのbooleanと理由一文、A7は三つの素材を
-含む120字以内の問い一文です。各依頼のrun ID・element ID・attemptをそのまま答えへ写します。
+素材は、同意済みexportの**自己モデルの記録1件**（主張またはパターン1件。条件は別の行）です。
+consent/scope/opaque raw locatorは素材ではありません。同じ外部state rootで段階Aを最後まで進めたrunと、
+`NO_PICK` / `NO_CONFIRMED_LINK`で終わったrunを使用回数に数え、使用回数の少ない記録、同数なら使用回数の
+合計が少ない欄、まだ同数ならsha256順で選びます。`--self-signal <signal ID>`で明示的に固定でき、
+存在しないIDは`SELF_SIGNAL_NOT_FOUND`で止まります。同じrunの再開では素材・全カード・窓・上限を固定します。
+
+候補は美術史・市場の**カード**（名前・時代や段階と、固定commitのblobに一字一句ある抜き書き最大2つ、420バイト以内）です。
+カードは各KBの書き出し`card: [{text, source_locator, source_sha256}]`と`label_ja`から作り、run開始時に
+blobの一致とsha256を確かめます。一致しなければ`CARD_SOURCE_MISMATCH`で止まり、黙って捨てません。
+期限切れ・カードなし・直近3回のrunで採用した項目は候補から外し、除外の内訳を記録します。
+
+`next_action.kind: element`なら、共通ハーネスの依頼を読んで一つの値を返します。要素は次のとおりです。
+各依頼のrun ID・element ID・attemptをそのまま答えへ写し、`answerer_kind`（claude-code、local等）を任意で添えます。
+
+| 要素 | 答える内容 |
+| --- | --- |
+| `A4.<art\|market>.screen.NN` | 8件ずつの窓から、素材とはっきりした関係（同じ・逆・答え・背景）があるカードの番号。なければ`0` |
+| `A4.<art\|market>.rank.<回戦>.<組>` | 選ばれたカードどうしの勝ち抜きで、最も関係が具体的なものの番号 |
+| `A5.<領域>.<k>.type` | 勝者との関係の種類。どれにも当たらなければ`なし`（次の勝者へ） |
+| `A5.<領域>.<k>.card-quote` / `.self-quote` | 根拠をカードの抜き書き・素材の文から一字も変えずに抜く |
+| `A5.<領域>.<k>.sentence` | 種類の関係を述べる平叙文一文（2つの抜き書きの言葉を使い、他のカードにも言える文は不可） |
+| `A5.<領域>.<k>.sentence.probe` | 名前と抜き書きを隠した文がどの関係を述べるか（`answer_context: fresh`: 履歴を持たない別の作業者が答える） |
+| `A7.overlap` / `A7.question` | 三者が重なる一文、それを研究で確かめる開いた問い一文 |
+
 以下は合成例で、実行では返された識別子と自分の答えに置き換えます。
 
 ~~~bash
 .venv/bin/python tools/credential_free.py --state-root "$EXTERNAL_STATE_ROOT" -- \
   .venv/bin/python tools/element.py answer \
   --run-id "$RUN_ID" --state-root "$EXTERNAL_STATE_ROOT" <<'JSON'
-{"contract_version":"element-answer/v1","run_id":"<returned-run-id>","element_id":"A3.operation","attempt":1,"value":"先送り"}
+{"contract_version":"element-answer/v1","run_id":"<returned-run-id>","element_id":"A4.art.screen.01","attempt":1,"answerer_kind":"claude-code","value":"3"}
 JSON
 ~~~
 
 回答後は最初の`run.py`または返された`resume_command`を同じcredential-free入口で実行します。
-A5の「はい」が足りない領域は次の5件へ照合順に広げ、既に受理した答えは捨てません。
-全件で接続がない場合はA6でBLOCKEDとなり、否定理由を保持します。
+確かめの5（`.probe`）は答えを知っている答え手では意味がないため、Claude Codeでは会話の履歴を持たない
+別の作業者（サブエージェント）に渡します。正解は依頼に含まれません。文が別の種類として読まれたら、
+文の要素だけを`previous_failure`付きで再依頼し、試行は文と合わせて1要素5回までです。
+
+推論の回数はrun開始時に窓の数から上限を計算して記録します（今のデータ規模で120回）。止まる理由は
+実際の原因と一致する次のコードです: `SELF_EXPORT_NOT_PERMITTED`、`SELF_MODEL_EMPTY`、`SELF_SIGNAL_NOT_FOUND`、
+`ART_NO_ELIGIBLE_CARDS` / `MARKET_NO_ELIGIBLE_CARDS`、`CARD_SOURCE_MISMATCH`、`NO_PICK:<領域>`、
+`NO_CONFIRMED_LINK:<領域>`、`ELEMENT_ATTEMPTS_EXHAUSTED`、`RUN_BUDGET_EXHAUSTED`、`REQUEST_TOO_LARGE`。
+`NO_PICK`と`NO_CONFIRMED_LINK`は「この素材では今の候補とつながらなかった」という正当な結果で、素材の使用回数は数えます。
 A7受理後の要素列`COMPLETED`はテーマ段階の完了で、制作・納品の完了ではありません。
 
-RRの`creative_question`はA7の答えそのものです。`requests/phase-a-provenance.json`は
-素材・選んだsignal・それぞれのA5理由を構造化して保持し、既存RRの
-`source.artifact_uri`と`references`のhash付きURNから参照します。子の閉じたRR schemaへ
-独自fieldを追加しません。両artifactはcreate-onlyで、再開時も同じbyteを再利用します。
-回答待ちの`run.json`は依頼本文・A3/A5の答えを保存せず、保護された要素stateに同意済み派生素材を保持します。受理した中心の問いはテーマ出力として保存します。
+RRの`creative_question`はA7.questionの答えそのもの、`A7.overlap`は命題の候補として`intent.purpose`に添えます。
+`requests/phase-a-provenance.json`（`phase-a-provenance/v2`）は素材・カード・ふるい・勝ち抜き・確かめ・
+採用しなかった勝者・推論の回数を構造化して保持し、既存RRの`source.artifact_uri`と`references`のhash付きURNから参照します。
+子の閉じたRR schemaへ独自fieldを追加しません。両artifactはcreate-onlyで、再開時も同じbyteを再利用します。
+回答待ちの`run.json`は依頼本文・答えを保存せず、保護された要素stateに同意済み派生素材を保持します。ヒアリングの質問・答え・
+raw quote・`raw_voice_locator`は親のstate・ログ・出所に入りません。受理した中心の問いはテーマ出力として保存します。
 明示offline fixtureと旧bundle APIは互換経路であり、実段階Aの完了証拠ではありません。
 
 ### privateな子ヒアリング
@@ -711,4 +738,4 @@ Researchの受入契約はfile URI・絶対パスを拒否するため、sidecar
 実在する公開参照URLのpath内に`ark:/`のような表記がある場合、native receiverが絶対パスと
 誤認するため、当該参照だけhash URNにします。元URLとRRのURNの対応はsidecarの
 `reference_aliases`に保持し、権利状態は変えません。query/fragment付きURLはこの変換をせず、
-既存のnative検査へ渡します。素材固定後は任意intentの生文をrun reportにも残しません。
+既存のnative検査へ渡します。

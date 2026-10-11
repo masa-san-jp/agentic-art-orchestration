@@ -3,8 +3,9 @@
 
     python3 tools/run.py --workspace-root <実クローン> --profile-root <外部profile>
 
-An optional intent ranks equally used materials. The direct entry returns private
-owner hearing actions before ingest and common A3/A5/A7 element requests after it.
+An optional --self-signal pins the material; otherwise the least-used one is rotated in.
+The direct entry returns private owner hearing actions before ingest and common
+Phase A v2 element requests (A4 screening, A5 verification, A7) after it.
 The driving agent answers one action at a time and resumes the same run. Research
 and Production retain their native acceptance, provenance and delivery contracts.
 """
@@ -77,6 +78,11 @@ def _hearing_step(hearing: object) -> dict[str, object]:
     ):
         return {"status": "unavailable", "reason": "HEARING_UNAVAILABLE"}
     return {"status": outcome, "reason": reason}
+
+
+# Reason codes and counts of a stopped Phase A (docs/20261010-phase-a-v2-design.md 7.4); never prose or answers.
+BLOCKED_KEYS = {"element_id", "attempt", "last_failure", "detail", "reason", "excluded", "windows", "cards",
+                "finalists", "cap", "used", "breakdown", "signal_id", "locator", "next_action"}
 
 
 class StepFailure(RuntimeError):
@@ -231,7 +237,7 @@ def _resume_command(
     research_root: Path | None, production_root: Path | None, research_work_root: Path | None,
     profile_root: Path | None, purpose: str, intent: str | None, slug: str | None,
     title: str | None, offline_fixture: bool, project_root: Path | None = None,
-    self_export: Path | None = None,
+    self_export: Path | None = None, self_signal: str | None = None,
 ) -> list[str]:
     """Build the exact same-run invocation for a checkpoint report."""
     command = [python, str(ROOT / "tools/run.py"), "--run-id", run_id,
@@ -250,6 +256,8 @@ def _resume_command(
         command += ["--purpose", purpose]
     if intent is not None:
         command += ["--intent", intent]
+    if self_signal is not None:
+        command += ["--self-signal", self_signal]
     if slug is not None:
         command += ["--slug", slug]
     if title is not None:
@@ -714,7 +722,7 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         internal_output_root: Path | None = None,
         profile_root: Path | None = None, research_work_root: Path | None = None,
         delivery_contract: Mapping[str, object] | None = None,
-        self_export: Path | None = None) -> dict:
+        self_export: Path | None = None, self_signal: str | None = None) -> dict:
     options = locals().copy()
     root = profile_root
     source = "none"
@@ -755,8 +763,11 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         internal_output_root: Path | None = None,
         profile_root: Path | None = None, research_work_root: Path | None = None,
         delivery_contract: Mapping[str, object] | None = None,
-        self_export: Path | None = None, profile_root_source: str = "none") -> dict:
+        self_export: Path | None = None, profile_root_source: str = "none",
+        self_signal: str | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
+    if intent is not None and not offline_fixture:
+        raise StepFailure("PHASE_A_INTENT_REMOVED: the live Phase A pins a material with --self-signal, not --intent")
     if not offline_fixture and self_export is not None:
         from tools.self_export import read_export, SelfExportError
         if profile_root is not None:
@@ -800,7 +811,7 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 state_root=state_root, research_root=research_root,
                 production_root=production_root, research_work_root=research_work_root,
                 profile_root=profile_root, self_export=self_export, purpose=purpose, intent=intent,
-                slug=slug, title=title, offline_fixture=False,
+                self_signal=self_signal, slug=slug, title=title, offline_fixture=False,
                 project_root=(Path(destination_resolution["project_root"])
                               if isinstance(destination_resolution, Mapping)
                               and destination_resolution.get("contract_version") == "destination-resolution/v2"
@@ -858,7 +869,7 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         python=python, run_id=run_id, workspace_root=workspace_root, state_root=state_root,
         research_root=research_root, production_root=production_root,
         research_work_root=research_work_root, profile_root=profile_root, self_export=self_export,
-        purpose=purpose, intent=intent, slug=slug, title=title,
+        purpose=purpose, intent=intent, self_signal=self_signal, slug=slug, title=title,
         offline_fixture=offline_fixture,
         project_root=(Path(destination_resolution["project_root"])
                       if isinstance(destination_resolution, Mapping)
@@ -968,6 +979,7 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
     if not offline_fixture:
         if limit != 1:
             raise StepFailure("PHASE_A_SINGLE_THEME: use one independent run ID per theme")
+        from tools.card_sources import PhaseABlocked
         from tools.element import Engine
         from tools.theme_elements import start, write_request
         engine = Engine(run_id, state_root, project_root=(
@@ -975,16 +987,12 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             and destination_resolution.get('contract_version') == 'destination-resolution/v2' else None))
         try:
             rows = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(signals.glob("*/*.json"))] if not engine.path.exists() else []
-            phase_report = start(engine, rows, requested_at=requested_at, workspace_root=workspace_root, intent=intent)
+            phase_report = start(engine, rows, requested_at=requested_at, workspace_root=workspace_root, self_signal=self_signal)
+        except PhaseABlocked as exc:
+            phase_report = {"status": "BLOCKED", "blocked": {"element_id": "A2.material", "reason": exc.reason, **exc.details},
+                            "next_action": None}
         except ValueError as exc:
             phase_report = {"status": "BLOCKED", "blocked": {"element_id": "A2.material", "detail": str(exc)}, "next_action": None}
-        if engine.path.exists() and "--intent" in resume_command:
-            # Material selection is frozen; its hash/score suffice on resume.
-            # Keep the optional text out of subsequent parent run records.
-            position = resume_command.index("--intent")
-            del resume_command[position:position + 2]
-        if engine.path.exists():
-            intent = None  # Frozen selection retains only the optional input hash.
         record("theme-elements", {"status": phase_report["status"], "accepted_count": phase_report.get("accepted_count", 0)})
         if phase_report["status"] != "COMPLETED":
             report = {"run_id": run_id, "status": phase_report["status"], "run_status": "INCOMPLETE",
@@ -992,7 +1000,7 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                       "knowledge_status": "NOT_STARTED", "projection_status": "NOT_RUN", "steps": steps,
                       "git_write_credentials": git_write_credentials, "delivery_contract": dict(delivery_contract),
                       "resume_command": resume_command, "blocked": ({key: value for key, value in phase_report['blocked'].items()
-                          if key in {'element_id', 'attempt', 'last_failure', 'detail'}} if phase_report.get('blocked') else None)}
+                          if key in BLOCKED_KEYS} if phase_report.get('blocked') else None)}
             report["delivery_completion"] = completion(report, delivery_contract)
             # Consent-approved material stays in the protected element state;
             # requests and answer values do not enter the general parent run log.
@@ -1415,7 +1423,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--project-id")
     parser.add_argument("--seed-input")
     parser.add_argument("--selection-limit", type=int, default=1)
-    parser.add_argument("--intent", help="任意。指定しない場合は、pin済み候補からテーマを自動提案する")
+    parser.add_argument("--intent", help="旧bundle API・offline fixture互換経路のみ。実の段階Aでは使えない（--self-signal）")
+    parser.add_argument("--self-signal", help="任意。指定した自己モデルの記録（signal ID）を素材に固定する。省略時は使用回数の少ない記録を順に使い、pin済み候補からテーマを自動提案する")
     parser.add_argument("--rules", type=Path, default=DEFAULT_RULES_PATH)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--run-id", help="任意。省略時はこの実行の安定IDを生成する")
@@ -1566,7 +1575,8 @@ def main(argv: list[str] | None = None) -> int:
                                     args.research_root, args.production_root, args.limit, args.offline_fixture,
                                     destination_resolution=destination_resolution,
                                     internal_output_root=internal_output_root,
-                                    profile_root=args.profile_root, research_work_root=args.research_work_root, self_export=args.self_export)
+                                    profile_root=args.profile_root, research_work_root=args.research_work_root, self_export=args.self_export,
+                                    self_signal=args.self_signal)
     except BlockedPrecondition as exc:
         print(json.dumps(getattr(exc, "report", {"status": "BLOCKED", "detail": str(exc)}), ensure_ascii=False), file=sys.stderr)
         return 2

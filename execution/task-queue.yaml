@@ -3474,3 +3474,26 @@ tasks:
     blocker: The next actual A3 answer is not available; do not invent it to improve the observed ranking.
     verification_result: Parent 852 tests exactly matches pristine origin/main 834 tests six-failure set, with five skips; related 190 and core 59 tests pass; unchanged child canonical 190 tests pass without skips.
     completion: Local review fixes implemented; real matching waits for one more A3 value. No profile access, publication, pin adoption, held lease or remote write. Existing parent failures remain explicit.
+
+  - id: ISSUE-288
+    milestone: ELEMENT-HARNESS
+    title: Implement Phase A v2 (AI judges links, code orders and checks)
+    status: DONE
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/288
+    target_repositories: [agentic-art-orchestration]
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-283]
+    acceptance: Design chapters 3-8 and 9.1 of docs/20261010-phase-a-v2-design.md; acceptance criteria 1-11 of chapter 10 confirmed on real data without rewriting fixtures; the first answerer is an LLM (switching the judgement model is Issue 287).
+    checks:
+    - python tools/validate.py --check
+    - python tools/project_status.py --check-readme
+    - python -m unittest tests.test_theme_elements tests.test_phase_a_checks tests.test_element tests.test_theme_sources tests.test_auto_plan -v
+    - python -m unittest discover -s tests -v
+    - git diff --check
+    human_gate: Orchestrator owns push, PR, merge and Issue closure; L284 (agent/284-operation-vocabulary) is closed unmerged. This agent made local commits only and held no lease.
+    evidence: execution/issue-288-verification.json
+    code_status: CODE_VERIFIED
+    integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
+    acceptance_result: Live run LIVE-20261010-A7 on real pinned data completed Phase A (all 171 art and 64 market cards screened once, 47 of 116 inferences, privacy grep 0 hits); local-model run LIVE-20261011-L2 stopped with ELEMENT_ATTEMPTS_EXHAUSTED and per-element attempts recorded; criteria 5, 6, 8 and 10 by synthetic tests.
+    verification_result: See execution/issue-288-verification.json for the focused and full-suite counts and the baseline comparison.
+    completion: Merged by the orchestrator through PR 290; L284 closed unmerged.

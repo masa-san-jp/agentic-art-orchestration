@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-08T12:23:04.805398+00:00`.
+Source updated at: `2026-10-10T12:00:00+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 2 | 199 | 201 |
+| 0 | 0 | 0 | 2 | 200 | 202 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-283`.
-Next action: Review the corrected Issue-283 commit and the native A3.operation.2 checkpoint; obtain the next actual A3 answer in the real run before claiming meaningful ranked candidates. Orchestrator owns publication and pin adoption; no lease is held.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-288`.
+Next action: Review the Issue-288 local commits (Phase A v2); run the real-data check after the card exports exist. Orchestrator owns publication; no lease is held.
 Ready: none.
 Next task: `null`.
 Blocked:

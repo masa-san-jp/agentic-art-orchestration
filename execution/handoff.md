@@ -1,3 +1,16 @@
+# Issue #288 — Phase A v2 implemented (local commits only)
+
+Branch `agent/288-phase-a-v2`; no lease, no remote write. Implements chapters 3-8 and 9.1 of
+`docs/20261010-phase-a-v2-design.md`: one self record per material and rotation, cards verified against
+the pinned blob, hash-ordered windows, screening, single elimination, five-element verification with an
+independent probe, A7 in two elements, run budget, reason codes, provenance v2. #283 literal matching is
+removed; only `exact_input_excerpt` is taken from L284 (close L284 unmerged).
+
+Tests use synthetic cards (real exports: art-history-notes#403, marketing-trends-notes#127), including the
+real scale (179 art / 65 market, 23 and 9 windows, cap 120). No real LLM run was made, so criteria 1-11
+are not yet confirmed on real data. Full suite 871 tests: same 9 failures / 35 errors / 5 skips as
+origin/main (852 tests). Evidence: execution/issue-288-verification.json.
+
 # Issue #283 — review correction and actual accepted-A3 evidence
 
 Only orchestration changed in this review. The approved child candidate remains

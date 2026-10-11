@@ -38,9 +38,11 @@ def valid_url(value: object) -> bool:
 
 def parse_check(spec: str) -> tuple[str, str]:
     name, _, arg = spec.partition(':')
-    plain = {'non_empty', 'ends_with_question', 'url_shape', 'url_in_ledger', 'one_sentence'}
+    plain = {'non_empty', 'ends_with_question', 'url_shape', 'url_in_ledger', 'one_sentence',
+             'no_reference_tokens', 'open_question', 'not_question'}
     lists = {'contains_terms', 'contains_source_terms', 'forbidden', 'one_of'}
-    keyed = {'reference_exists', 'exact_excerpt', 'not_similar_to'}
+    keyed = {'reference_exists', 'exact_excerpt', 'exact_input_excerpt', 'not_similar_to',
+             'not_label', 'specific_to_window', 'expected_choice'}
     if name in plain and not arg and ':' not in spec:
         return name, arg
     if name in lists and arg and all(item.strip() for item in arg.split(',')):
@@ -83,6 +85,35 @@ def source_terms(value: str) -> set[str]:
     return {term for term in terms - stop if re.search(r'[A-Za-z\u30a0-\u30ff\u3400-\u9fff]', term)}
 
 
+OPEN_QUESTION_WORDS = ('どのように', '何', 'なぜ', 'どこまで', 'どんな', 'いかに')
+# URLs, Markdown links, entity IDs such as P571, and source-attribution notes are references, not content.
+REFERENCE_TOKENS = re.compile(r'https?://|\]\(|\[\d+\]|(?<![A-Za-z0-9])[PQ]\d{3,}(?![A-Za-z0-9])'
+                              r'|未確認|出典|参照|引用元|参考文献|と主張している')
+
+
+def _plain(value: str) -> str:
+    return ''.join(unicodedata.normalize('NFKC', value).casefold().split())
+
+
+def content_terms(value: str) -> set[str]:
+    """source_terms of two or more characters; the specificity check ignores lone characters."""
+    return {term for term in source_terms(value) if len(term) >= 2}
+
+
+def specific_to_window(sentence: str, spec: object) -> bool:
+    """The sentence names something only the winning card has, and shares more with it than with any other.
+
+    ``spec`` is {'card': text, 'others': [text, ...]}: the winner and the rest of its screening window.
+    """
+    if not isinstance(spec, dict) or not isinstance(spec.get('card'), str):
+        return False
+    others = [content_terms(item) for item in spec.get('others', []) if isinstance(item, str)]
+    used = content_terms(sentence)
+    shared = used & content_terms(spec['card'])
+    unique = shared.difference(*others)
+    return bool(unique) and len(shared) > max((len(used & other) for other in others), default=0)
+
+
 def too_similar(left: str, right: str, threshold: str) -> bool:
     """NFKC/casefold/space-normalized character-bigram Jaccard, exact decimal comparison."""
     a, b = _grams(left), _grams(right)
@@ -114,7 +145,11 @@ def check_value(value: object, checks: list[str], *, inputs: dict,
             ok = text.rstrip().endswith(('?', '？'))
             reason = 'End the question with ? or ？.'
         elif name == 'one_sentence':
-            ok = '\n' not in text.strip() and '\r' not in text.strip() and len(re.findall(r'[。!?！？]|(?<!\d)\.(?!\d)', text)) <= 1
+            # Quoted material (「」『』“”"") may carry its own sentence marks, e.g. an English
+            # excerpt ending in "work." inside a Japanese sentence; only the outer sentence counts.
+            outer = re.sub(r'「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"', '', text.strip())
+            enders = re.findall(r'[。!?！？]|(?<!\d)\.(?=\s+[A-Z]|\s*$)', outer)
+            ok = '\n' not in text.strip() and '\r' not in text.strip() and len(enders) <= 1
             reason = 'Return one sentence only.'
         elif name == 'contains_source_terms':
             groups = [inputs.get(key) for key in arg.split(',')]
@@ -144,6 +179,29 @@ def check_value(value: object, checks: list[str], *, inputs: dict,
             # A quotation is an exact contiguous substring; no normalization.
             ok = bool(body) and text in body
             reason = 'Copy an exact contiguous passage from the retrieved body.'
+        elif name == 'exact_input_excerpt':
+            body = inputs.get(arg)
+            ok = isinstance(body, str) and bool(body) and text in body
+            reason = 'Copy an exact contiguous passage from the supplied body.'
+        elif name == 'not_label':
+            label = inputs.get(arg)
+            ok = isinstance(label, str) and bool(_plain(text)) and _plain(text) not in _plain(label)
+            reason = 'Quote a passage of the description, not the name alone or a part of the name.'
+        elif name == 'no_reference_tokens':
+            ok = REFERENCE_TOKENS.search(text) is None
+            reason = 'Quote content itself, not a URL, an identifier or a source note.'
+        elif name == 'specific_to_window':
+            ok = specific_to_window(text, inputs.get(arg))
+            reason = 'Use words that belong to this candidate and not to the other candidates.'
+        elif name == 'expected_choice':
+            ok = text == inputs.get(arg)
+            reason = 'The answer did not match the expected reading.'
+        elif name == 'open_question':
+            ok = any(word in text for word in OPEN_QUESTION_WORDS)
+            reason = 'Ask an open question (どのように・何・なぜ・どこまで・どんな・いかに), not a yes/no question.'
+        elif name == 'not_question':
+            ok = not re.search(r'[?？]', text)
+            reason = 'State a declarative sentence, not a question.'
         elif name == 'not_similar_to':
             prior = inputs.get(arg)
             prior = prior if isinstance(prior, list) else [prior]

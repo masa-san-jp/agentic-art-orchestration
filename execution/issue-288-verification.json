@@ -1,0 +1,132 @@
+{
+  "issue": "masa-san-jp/agentic-art-orchestration#288",
+  "base": "946faed",
+  "commands": [
+    {
+      "command": "python tools/validate.py --check",
+      "result": "OK"
+    },
+    {
+      "command": "python tools/project_status.py --check-readme",
+      "result": "OK"
+    },
+    {
+      "command": "python -m unittest discover -s tests",
+      "result": "Ran 880 tests; failures=9 errors=35 skipped=5",
+      "baseline": "origin/main: Ran 852 tests; failures=9 errors=35 skipped=5",
+      "failure_set": "same counts; the added tests all pass"
+    }
+  ],
+  "criteria": {
+    "1": "real data reached Phase A completion; induced stop reasons by synthetic tests",
+    "2": "live: every eligible card screened once",
+    "3": "live: verbatim checks passed for both adopted links",
+    "4": "live question passes the checks",
+    "5-6,8,10": "synthetic tests",
+    "7": "distribution recorded (1 real full run so far; review rule applies from 3 runs)",
+    "9": "live grep 0 hits",
+    "11": "local model run stopped with a correct reason code (ELEMENT_ATTEMPTS_EXHAUSTED) and per-element attempts recorded; see local_run"
+  },
+  "not_run": [],
+  "live_run": {
+    "run_id": "LIVE-20261010-A7",
+    "data": "real pinned exports (art-history 3729284, marketing 1b62fb4, self-model 1f92e62); fixtures not rewritten",
+    "answerer": "llm-claude-sonnet-5-5, one fresh call per element",
+    "status": "RESEARCH_PENDING (Phase A complete)",
+    "coverage": {
+      "art": {
+        "eligible": 171,
+        "windows": 22,
+        "screened": 171,
+        "unique": 171
+      },
+      "market": {
+        "eligible": 64,
+        "windows": 8,
+        "screened": 64,
+        "unique": 64
+      }
+    },
+    "exclusions": {
+      "art": {
+        "no_card_text": 13,
+        "not_current_or_valid": 1
+      },
+      "market": {
+        "card_too_large": 1
+      }
+    },
+    "inference": {
+      "count": 47,
+      "cap": 116,
+      "breakdown": {
+        "A4.art.rank": 4,
+        "A4.art.screen": 22,
+        "A4.market.screen": 8,
+        "A5.art": 5,
+        "A5.market": 6,
+        "A7": 2
+      }
+    },
+    "adopted": {
+      "art": "art-history:conceptual-art (逆, probe 逆)",
+      "market": "marketing:specificity-over-relatability-expectation (逆, probe 逆; sentence retried once)"
+    },
+    "creative_question": "費用を先に確定したい側と対応の言語化を待つ側で、perfunctoryな実行と「特定の個人・状況に根ざした具体性」を分ける要因は何か?",
+    "position_distribution": {
+      "0": 10,
+      "2": 4,
+      "3": 5,
+      "4": 2,
+      "5": 4,
+      "6": 2,
+      "7": 1,
+      "8": 2
+    },
+    "privacy_grep": "raw_quote / raw_voice_locator: 0 hits in run.json, element-state.json and phase-a-provenance.json",
+    "fixes_found_by_the_run": [
+      "d6c2772 empty card excerpts",
+      "5a569ab/5bed6f4 excerpt display rule",
+      "dcf2ed4 one_sentence counted a period inside a quote"
+    ]
+  },
+  "local_run": {
+    "run_id": "LIVE-20261011-L2",
+    "answerer": "local-qwen3.8-27b via Ollama, one call per element",
+    "data": "same real pinned exports",
+    "result": "BLOCKED ELEMENT_ATTEMPTS_EXHAUSTED at A5.art.1.sentence.probe (attempt 5, last check: choice) — a designed stop reason that names the element and its last failed check",
+    "accepted_elements": 27,
+    "request_size": "every request is built under the 4096-byte limit by the harness (REQUEST_TOO_LARGE otherwise); none was raised",
+    "max_attempt_per_element": {
+      "A4.art.rank.1.1": 1,
+      "A4.art.screen.01": 1,
+      "A4.art.screen.02": 1,
+      "A4.art.screen.03": 1,
+      "A4.art.screen.04": 1,
+      "A4.art.screen.05": 1,
+      "A4.art.screen.06": 1,
+      "A4.art.screen.07": 1,
+      "A4.art.screen.08": 1,
+      "A4.art.screen.09": 1,
+      "A4.art.screen.10": 1,
+      "A4.art.screen.11": 1,
+      "A4.art.screen.12": 1,
+      "A4.art.screen.13": 1,
+      "A4.art.screen.14": 1,
+      "A4.art.screen.15": 1,
+      "A4.art.screen.16": 1,
+      "A4.art.screen.17": 1,
+      "A4.art.screen.18": 1,
+      "A4.art.screen.19": 1,
+      "A4.art.screen.20": 1,
+      "A4.art.screen.21": 1,
+      "A4.art.screen.22": 1,
+      "A5.art.1.card-quote": 1,
+      "A5.art.1.self-quote": 1,
+      "A5.art.1.sentence": 1,
+      "A5.art.1.sentence.probe": 5,
+      "A5.art.1.type": 1
+    },
+    "answerer_wrapper_notes": "two failures in the local wrapper, not the harness, were fixed during the run: object-wrapped string answers, and choice answers echoed with extra text"
+  }
+}

@@ -1,5 +1,7 @@
 # Issue 283: 出典付き本文による A4 照合（レビュー修正）
 
+> **置き換え済み（Issue 288）**: 字面の照合（`content_matches` ほか）は、全件0点だった実測を受けて廃止した。段階 A は [段階A再設計v2](20261010-phase-a-v2-design.md) に従い、全候補を公平な順で答え手に見せて関係を判定させる。以下は #283 時点の記録であり、`execution/issue-283-matching-probe.py` は削除した関数に依存するため実行できない。
+
 orchestration のローカル修正。承認済み art-history-notes commit `360eb99bc8c5deab45c9e607653f61decc17dceb` は変更していない。push / PR / merge / Issue 更新と owner pin の採用はオーケストレーターが担当する。execution lease は取得していない。
 
 ## 採点と診断
