@@ -647,10 +647,11 @@ def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool
 
 def _research_run_id(run_id: str) -> str:
     """A stable child id within the research engine's rule ([A-Za-z0-9][A-Za-z0-9._-]{0,127})."""
-    safe = re.sub(r"[^A-Za-z0-9._-]", "-", run_id) + "-research"
-    if len(safe) > 128:
-        safe = safe[:100] + "-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:16] + "-research"
-    return safe
+    safe = re.sub(r"[^A-Za-z0-9._-]", "-", run_id)
+    if safe == run_id and len(safe) <= 119:
+        return safe + "-research"
+    # Normalised or too long: a hash of the original keeps distinct parent ids distinct ("a:b" vs "a-b").
+    return safe[:94] + "-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:16] + "-research"
 
 
 def _research_elements(protocol_root: Path, project: Path, run_id: str, python: str) -> dict | None:
@@ -668,8 +669,11 @@ def _research_elements(protocol_root: Path, project: Path, run_id: str, python: 
         return None
     checkpoint = project / "07_runtime" / "research-elements.json"
     if checkpoint.is_file():
-        saved = json.loads(checkpoint.read_text(encoding="utf-8"))
-        if saved.get("status") in {"COMPLETED", "BLOCKED"}:
+        try:
+            saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            saved = {}  # let the engine report the damaged checkpoint
+        if saved.get("run_id") == _research_run_id(run_id) and saved.get("status") in {"COMPLETED", "BLOCKED"}:
             # A finished engine refuses later project changes (Stage C writes); read, do not re-enter.
             return {"status": saved["status"], "accepted_count": len(saved.get("answers", {})),
                     "blocked": saved.get("blocked"), "completion": saved.get("completion"), "next_action": None,

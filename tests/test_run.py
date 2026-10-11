@@ -298,7 +298,8 @@ class ResearchPendingTests(unittest.TestCase):
         protocol, project = self._protocol(engine="raise SystemExit('must not run after Stage B finished')\n")
         (project / "07_runtime").mkdir()
         (project / "07_runtime" / "research-elements.json").write_text(json.dumps(
-            {"status": "COMPLETED", "answers": {"a": 1, "b": 2}, "completion": {"status": "INCOMPLETE"}}), encoding="utf-8")
+            {"run_id": "RUN001-research", "status": "COMPLETED", "answers": {"a": 1, "b": 2},
+             "completion": {"status": "INCOMPLETE"}}), encoding="utf-8")
 
         elements = MODULE._research_elements(protocol, project, "RUN001", sys.executable)
 
@@ -307,13 +308,23 @@ class ResearchPendingTests(unittest.TestCase):
         self.assertEqual("RESEARCH_PENDING", report["status"])
         self.assertIn("段階 C", report["next_action"]["do"][0])
 
+    def test_another_runs_finished_checkpoint_is_not_trusted(self):
+        engine = "import json\nprint(json.dumps({'status': 'WAITING', 'next_action': {'kind': 'element', 'request': {}}}))\n"
+        protocol, project = self._protocol(engine=engine)
+        (project / "07_runtime").mkdir()
+        (project / "07_runtime" / "research-elements.json").write_text(json.dumps(
+            {"run_id": "other-research", "status": "COMPLETED", "answers": {}}), encoding="utf-8")
+
+        self.assertEqual("WAITING", MODULE._research_elements(protocol, project, "current", sys.executable)["status"])
+
     def test_parent_run_id_maps_to_the_research_engine_rule(self):
-        import re as _re
-        for run_id in ["RUN001", "run:001", "R" * 128, "a:" * 60]:
-            child = MODULE._research_run_id(run_id)
+        ids = ["RUN001", "run:001", "run:002", "a:b", "a-b", "R" * 119, "R" * 120, "R" * 128, "a:" * 60]
+        children = [MODULE._research_run_id(run_id) for run_id in ids]
+        for run_id, child in zip(ids, children):
             self.assertRegex(child, r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
             self.assertEqual(child, MODULE._research_run_id(run_id))
-        self.assertNotEqual(MODULE._research_run_id("run:001"), MODULE._research_run_id("run:002"))
+        self.assertEqual(len(ids), len(set(children)))
+        self.assertEqual("RUN001-research", children[0])
 
     def test_legacy_route_or_old_research_checkout_keeps_the_task_instructions(self):
         protocol, project = self._protocol(route="legacy", engine="raise SystemExit('must not run')\n")
