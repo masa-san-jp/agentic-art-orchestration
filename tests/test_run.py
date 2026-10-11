@@ -256,6 +256,83 @@ class ResearchPendingTests(unittest.TestCase):
         written = json.loads((self.work / "run.json").read_text(encoding="utf-8"))
         self.assertEqual("RESEARCH_PENDING", written["status"])
 
+    def _protocol(self, route: str | None = "research_elements", engine: str | None = None) -> tuple[Path, Path]:
+        protocol = self.work / "protocol"
+        (protocol / "tools").mkdir(parents=True)
+        if engine is not None:
+            (protocol / "tools" / "research_elements.py").write_text(engine, encoding="utf-8")
+        project = self.work / "projects" / "harmony"
+        (project / "01_planning").mkdir(parents=True)
+        plan = {"research_route": route} if route else {}
+        (project / "01_planning" / "research-plan.yaml").write_text(json.dumps(plan), encoding="utf-8")
+        return protocol, project
+
+    def test_element_route_hands_the_agent_one_research_request(self):
+        engine = ("import json, sys\n"
+                  "assert sys.argv[1:4] == ['next', '--project', sys.argv[3]] and sys.argv[4:] == ['--run-id', 'RUN001-research']\n"
+                  "print(json.dumps({'status': 'WAITING', 'accepted_count': 0, 'completion': None,\n"
+                  "  'next_action': {'kind': 'element', 'request': {'contract_version': 'element-request/v1', 'element_id': 'question.Q001'}}}))\n")
+        protocol, project = self._protocol(engine=engine)
+
+        elements = MODULE._research_elements(protocol, project, "RUN001", sys.executable)
+        report = MODULE._at_research(self.work, "RUN001", "調和", [], self.work, "harmony",
+                                     resume_command=["resume"], elements=elements)
+
+        action = report["next_action"]
+        self.assertEqual("RESEARCH_PENDING", report["status"])
+        self.assertEqual(("element", "research"), (action["kind"], action["stage"]))
+        self.assertEqual("question.Q001", action["request"]["element_id"])
+        self.assertEqual([sys.executable, str(protocol / "tools" / "research_elements.py"), "answer", "--project", str(project)],
+                         action["answer_command"])
+        self.assertEqual(["resume"], action["resume_command"])
+
+    def test_blocked_element_research_is_reported_as_blocked(self):
+        elements = {"status": "BLOCKED", "blocked": {"element_id": "claim.CL001", "last_failure": [{"check": "one_sentence"}]},
+                    "next_action": None, "answer_command": ["x"]}
+        report = MODULE._at_research(self.work, "RUN001", "調和", [], self.work, "harmony", elements=elements)
+
+        self.assertEqual("BLOCKED", report["status"])
+        self.assertEqual("claim.CL001", report["blocked"]["element_id"])
+
+    def test_finished_engine_is_read_not_re_entered(self):
+        protocol, project = self._protocol(engine="raise SystemExit('must not run after Stage B finished')\n")
+        (project / "07_runtime").mkdir()
+        (project / "07_runtime" / "research-elements.json").write_text(json.dumps(
+            {"run_id": "RUN001-research", "status": "COMPLETED", "answers": {"a": 1, "b": 2},
+             "completion": {"status": "INCOMPLETE"}}), encoding="utf-8")
+
+        elements = MODULE._research_elements(protocol, project, "RUN001", sys.executable)
+
+        self.assertEqual(("COMPLETED", 2), (elements["status"], elements["accepted_count"]))
+        report = MODULE._at_research(self.work, "RUN001", "調和", [], self.work, "harmony", elements=elements)
+        self.assertEqual("RESEARCH_PENDING", report["status"])
+        self.assertIn("段階 C", report["next_action"]["do"][0])
+
+    def test_another_runs_finished_checkpoint_is_not_trusted(self):
+        engine = "import json\nprint(json.dumps({'status': 'WAITING', 'next_action': {'kind': 'element', 'request': {}}}))\n"
+        protocol, project = self._protocol(engine=engine)
+        (project / "07_runtime").mkdir()
+        (project / "07_runtime" / "research-elements.json").write_text(json.dumps(
+            {"run_id": "other-research", "status": "COMPLETED", "answers": {}}), encoding="utf-8")
+
+        self.assertEqual("WAITING", MODULE._research_elements(protocol, project, "current", sys.executable)["status"])
+
+    def test_parent_run_id_maps_to_the_research_engine_rule(self):
+        ids = ["RUN001", "run:001", "run:002", "a:b", "a-b", "R" * 119, "R" * 120, "R" * 128, "a:" * 60]
+        children = [MODULE._research_run_id(run_id) for run_id in ids]
+        for run_id, child in zip(ids, children):
+            self.assertRegex(child, r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+            self.assertEqual(child, MODULE._research_run_id(run_id))
+        self.assertEqual(len(ids), len(set(children)))
+        self.assertEqual("RUN001-research", children[0])
+
+    def test_legacy_route_or_old_research_checkout_keeps_the_task_instructions(self):
+        protocol, project = self._protocol(route="legacy", engine="raise SystemExit('must not run')\n")
+        self.assertIsNone(MODULE._research_elements(protocol, project, "RUN001", sys.executable))
+        old = self.work / "old-protocol"
+        (old / "tools").mkdir(parents=True)
+        self.assertIsNone(MODULE._research_elements(old, project, "RUN001", sys.executable))
+
 
 class HandoverArgumentTests(unittest.TestCase):
     def test_completed_research_project_is_promoted_before_handoff(self):

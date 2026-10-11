@@ -645,6 +645,48 @@ def _run_child(root: Path, args: list[str], python: str, *, allow_conflict: bool
 
 
 
+def _research_run_id(run_id: str) -> str:
+    """A stable child id within the research engine's rule ([A-Za-z0-9][A-Za-z0-9._-]{0,127})."""
+    safe = re.sub(r"[^A-Za-z0-9._-]", "-", run_id)
+    if safe == run_id and len(safe) <= 119:
+        return safe + "-research"
+    # Normalised or too long: a hash of the original keeps distinct parent ids distinct ("a:b" vs "a-b").
+    return safe[:94] + "-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:16] + "-research"
+
+
+def _research_elements(protocol_root: Path, project: Path, run_id: str, python: str) -> dict | None:
+    """Stage B by elements (research #122): ask the research engine for its next single request.
+
+    None when the project uses the legacy task route or the research checkout predates the
+    element engine; the agent then gets the legacy instructions.
+    """
+    tool = protocol_root / "tools" / "research_elements.py"
+    plan = project / "01_planning" / "research-plan.yaml"
+    if not tool.is_file() or not plan.is_file():
+        return None
+    route = (yaml.safe_load(plan.read_text(encoding="utf-8")) or {}).get("research_route", "research_elements")
+    if route != "research_elements":
+        return None
+    checkpoint = project / "07_runtime" / "research-elements.json"
+    if checkpoint.is_file():
+        try:
+            saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+        except (OSError, ValueError):  # ValueError covers JSONDecodeError and UnicodeDecodeError
+            saved = {}  # let the engine report the damaged checkpoint
+        if saved.get("run_id") == _research_run_id(run_id) and saved.get("status") in {"COMPLETED", "BLOCKED"}:
+            # A finished engine refuses later project changes (Stage C writes); read, do not re-enter.
+            return {"status": saved["status"], "accepted_count": len(saved.get("answers", {})),
+                    "blocked": saved.get("blocked"), "completion": saved.get("completion"), "next_action": None,
+                    "answer_command": [python, str(tool), "answer", "--project", str(project)]}
+    result = subprocess.run([python, str(tool), "next", "--project", str(project), "--run-id", _research_run_id(run_id)],
+                            cwd=protocol_root, capture_output=True, text=True, env=child_environment())
+    try:
+        report = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        raise StepFailure(f"research_elements.py next failed: {(result.stderr.strip().splitlines() or ['no output'])[-1]}")
+    return {**report, "answer_command": [python, str(tool), "answer", "--project", str(project)]}
+
+
 def _at_research(
     work: Path,
     run_id: str,
@@ -658,6 +700,7 @@ def _at_research(
     delivery_contract: Mapping[str, object] | None = None,
     git_write_credentials: str | None = None,
     profile_root_source: str = "none", profile_root: Path | None = None,
+    elements: Mapping[str, Any] | None = None,
 ) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
@@ -694,6 +737,25 @@ def _at_research(
         },
         "state": str(work),
     }
+    if elements is not None:
+        # Stage B by elements: hand the agent one request at a time, exactly like Phase A.
+        report["research_elements"] = {"status": elements.get("status"), "accepted_count": elements.get("accepted_count"),
+                                       "completion": elements.get("completion")}
+        action = report["next_action"]
+        if elements.get("status") == "WAITING" and elements.get("next_action"):
+            report["next_action"] = {
+                "actor": "agent", "kind": "element", "stage": "research", "project": action["project"],
+                "request": elements["next_action"]["request"],
+                "answer_command": list(elements["answer_command"]),
+                "do": ["request に1つの値で答え、answer_command の標準入力に渡す。search-request/v1 には実際に取得した公開資料を返す"],
+                "resume_command": action["resume_command"], "manual_fallback": action["manual_fallback"],
+            }
+        elif elements.get("status") == "BLOCKED":
+            report["status"] = "BLOCKED"
+            report["blocked"] = elements.get("blocked")
+            action["do"] = ["blocked の要素と最後の検査から原因を直し、新しい外部 project で段階 B をやり直す"]
+        else:
+            action["do"] = ["段階 B の要素は完了。tools/complete.py の残り（段階 C の要件など）を進める"]
     if git_write_credentials is not None:
         report["git_write_credentials"] = git_write_credentials
     if delivery_contract is not None:
@@ -1093,10 +1155,11 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         record("research-complete", complete)
         if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
+            elements = _research_elements(research_root, research_data_root / "projects" / project_slug, run_id, python)
             return _at_research(
                 work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
                 destination_resolution, resume_command, delivery_contract, git_write_credentials,
-                profile_root_source, profile_root,
+                profile_root_source, profile_root, elements,
             )
 
         _promote_research_handoff(research_data_root, project_slug)
