@@ -3478,7 +3478,7 @@ tasks:
   - id: ISSUE-288
     milestone: ELEMENT-HARNESS
     title: Implement Phase A v2 (AI judges links, code orders and checks)
-    status: BLOCKED
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/288
     target_repositories: [agentic-art-orchestration]
     agent_terminal: EVIDENCE_READY
@@ -3494,7 +3494,6 @@ tasks:
     evidence: execution/issue-288-verification.json
     code_status: CODE_VERIFIED
     integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
-    acceptance_result: Criteria 1-10 verified with synthetic cards at the real scale (179 art, 65 market, 23 and 9 windows, cap 120); criterion 11 verified for request size and answer shapes with a scripted answerer, not a local model.
-    blocker: Real cards are not exported yet (art-history-notes#403, marketing-trends-notes#127), so the criteria cannot be confirmed on real data, and no real LLM run was made.
+    acceptance_result: Live run LIVE-20261010-A7 on real pinned data completed Phase A (all 171 art and 64 market cards screened once, 47 of 116 inferences, privacy grep 0 hits); local-model run LIVE-20261011-L2 stopped with ELEMENT_ATTEMPTS_EXHAUSTED and per-element attempts recorded; criteria 5, 6, 8 and 10 by synthetic tests.
     verification_result: See execution/issue-288-verification.json for the focused and full-suite counts and the baseline comparison.
-    completion: Code is complete against chapters 3-8 and 9.1; the real-data confirmation waits for the two card exports.
+    completion: Merged by the orchestrator through PR 290; L284 closed unmerged.

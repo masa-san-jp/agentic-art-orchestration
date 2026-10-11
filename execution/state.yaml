@@ -5,14 +5,14 @@ active_repository: null
 issue288_checkpoint:
   task: ISSUE-288
   repositories: [agentic-art-orchestration]
-  status: BLOCKED
+  status: DONE
   code_status: CODE_VERIFIED
   start_point: 946faed
   evidence: execution/issue-288-verification.json
-  acceptance: Design chapters 3-8 and 9.1 implemented; criteria 1-10 verified with synthetic cards at the real scale; real-data confirmation waits for the card exports.
+  acceptance: Design chapters 3-8 and 9.1 implemented; criteria confirmed on real data (LIVE-20261010-A7) and with a local model (LIVE-20261011-L2); see the evidence file.
   lease: NOT_ACQUIRED
   remote_sync: NOT_RUN_BY_INSTRUCTION
-  next_operation: Orchestrator reviews and publishes; close L284 unmerged; run the real-data check once art-history-notes#403 and marketing-trends-notes#127 export cards.
+  next_operation: Next is Issue 287 (judgement model switch).
 issue283_checkpoint:
   task: ISSUE-283
   repositories: [agentic-art-orchestration, art-history-notes]
@@ -2248,7 +2248,7 @@ issue280_hearing_follow_up:
 checkpoint:
   task: ISSUE-288
   repository: agentic-art-orchestration
-  status: BLOCKED
+  status: DONE
   code_status: CODE_VERIFIED
   start_point: 946faed
   evidence: execution/issue-288-verification.json
