@@ -671,7 +671,7 @@ def _research_elements(protocol_root: Path, project: Path, run_id: str, python: 
     if checkpoint.is_file():
         try:
             saved = json.loads(checkpoint.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, ValueError):  # ValueError covers JSONDecodeError and UnicodeDecodeError
             saved = {}  # let the engine report the damaged checkpoint
         if saved.get("run_id") == _research_run_id(run_id) and saved.get("status") in {"COMPLETED", "BLOCKED"}:
             # A finished engine refuses later project changes (Stage C writes); read, do not re-enter.
