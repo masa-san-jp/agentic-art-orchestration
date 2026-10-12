@@ -692,7 +692,7 @@ class RequestForwardingTests(unittest.TestCase):
 
 
 class ProductionHistoryTests(unittest.TestCase):
-    def _run_prototype_fixture(self, prototype_outcome: dict, *, element_checkpoint=False) -> tuple[dict, list[list[str]], object]:
+    def _run_prototype_fixture(self, prototype_outcome: dict, *, element_checkpoint=False, completed_work=False) -> tuple[dict, list[list[str]], object]:
         self.temporary = tempfile.TemporaryDirectory(prefix="run-prototype-stage-")
         self.addCleanup(self.temporary.cleanup)
         root = Path(self.temporary.name)
@@ -742,9 +742,14 @@ class ProductionHistoryTests(unittest.TestCase):
                 patch.object(MODULE, "_head", return_value="d" * 40), \
                 patch.object(MODULE, "_research_elements", return_value={"status": "COMPLETED"}), \
                 patch.object(MODULE, "_work_elements", return_value={
-                    "status": "WAITING", "accepted_count": 0, "completion": None,
+                    "status": "COMPLETED" if completed_work else "WAITING", "accepted_count": 0, "completion": None,
                     "next_action": {"request": {"element_id": "plan.PH001.title"}},
                     "answer_command": ["work-answer"],
+                }), \
+                patch.object(MODULE, "_stage_d_start", return_value={"allowed": True, "reasons": []}), \
+                patch.object(MODULE, "_plan_elements", return_value={
+                    "status": "WAITING", "accepted_count": 0, "abandoned": [],
+                    "next_action": {"request": {"element_id": "medium"}}, "answer_command": ["plan-answer"],
                 }):
             report = MODULE._run_orchestration(
                 "調和", root / "workspace", root / "state", "RUN-PROTOTYPE", "artistic-research",
@@ -758,6 +763,15 @@ class ProductionHistoryTests(unittest.TestCase):
         self.assertNotIn("tools/complete.py", [args[0] for args in captured])
         self.assertNotIn("tools/build_plan.py", [args[0] for args in captured])
         self.assertEqual(("element", "work"), (report['next_action']['kind'], report['next_action']['stage']))
+
+    def test_completed_stage_c_returns_stage_d_through_the_run_entry(self):
+        report, captured, _ = self._run_prototype_fixture(
+            {"status": "PASSED"}, element_checkpoint=True, completed_work=True)
+        self.assertNotIn("tools/complete.py", [args[0] for args in captured])
+        self.assertNotIn("tools/build_plan.py", [args[0] for args in captured])
+        self.assertEqual(("element", "production", "medium"),
+                         (report['next_action']['kind'], report['next_action']['stage'],
+                          report['next_action']['request']['element_id']))
 
     def test_normal_run_executes_prototype_before_owner_verification(self):
         report, captured, _ = self._run_prototype_fixture({"status": "PASSED"})
