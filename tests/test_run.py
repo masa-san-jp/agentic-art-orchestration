@@ -692,11 +692,15 @@ class RequestForwardingTests(unittest.TestCase):
 
 
 class ProductionHistoryTests(unittest.TestCase):
-    def _run_prototype_fixture(self, prototype_outcome: dict) -> tuple[dict, list[list[str]], object]:
+    def _run_prototype_fixture(self, prototype_outcome: dict, *, element_checkpoint=False) -> tuple[dict, list[list[str]], object]:
         self.temporary = tempfile.TemporaryDirectory(prefix="run-prototype-stage-")
         self.addCleanup(self.temporary.cleanup)
         root = Path(self.temporary.name)
         captured: list[list[str]] = []
+        if element_checkpoint:
+            checkpoint = root / "state/research-work/projects/run-plan/07_runtime/research-elements.json"
+            checkpoint.parent.mkdir(parents=True)
+            checkpoint.write_text('{}')
 
         def fake_tool(args: list[str], python: str) -> dict:
             if args[0] == "tools/build_research_request.py":
@@ -735,13 +739,25 @@ class ProductionHistoryTests(unittest.TestCase):
                     "--generated-at", "2026-08-20T00:00:00+09:00", "--research-commit", "a" * 40,
                     "--handoff-id", "HO001", "--revision", "1",
                 ]), \
-                patch.object(MODULE, "_head", return_value="d" * 40):
+                patch.object(MODULE, "_head", return_value="d" * 40), \
+                patch.object(MODULE, "_research_elements", return_value={"status": "COMPLETED"}), \
+                patch.object(MODULE, "_work_elements", return_value={
+                    "status": "WAITING", "accepted_count": 0, "completion": None,
+                    "next_action": {"request": {"element_id": "plan.PH001.title"}},
+                    "answer_command": ["work-answer"],
+                }):
             report = MODULE._run_orchestration(
                 "調和", root / "workspace", root / "state", "RUN-PROTOTYPE", "artistic-research",
                 "run-plan", "Run plan", "2026-08-20T00:00:00+09:00", sys.executable,
                 research_root=root / "research", production_root=root / "production", offline_fixture=True,
             )
         return report, captured, root
+
+    def test_checkpoint_route_uses_stage_c_without_mutating_native_completion(self):
+        report, captured, _ = self._run_prototype_fixture({"status": "PASSED"}, element_checkpoint=True)
+        self.assertNotIn("tools/complete.py", [args[0] for args in captured])
+        self.assertNotIn("tools/build_plan.py", [args[0] for args in captured])
+        self.assertEqual(("element", "work"), (report['next_action']['kind'], report['next_action']['stage']))
 
     def test_normal_run_executes_prototype_before_owner_verification(self):
         report, captured, _ = self._run_prototype_fixture({"status": "PASSED"})

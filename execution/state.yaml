@@ -2253,3 +2253,12 @@ checkpoint:
   start_point: 946faed
   evidence: execution/issue-288-verification.json
   next_operation: Orchestrator reviews and publishes; real-data confirmation after the card exports exist. Earlier note - review corrected code and actual accepted-A3 evidence; apply corrected A4 in the actual run and continue with its requested A3 addition. Publication and pin adoption remain orchestrator-owned.
+
+issue296_checkpoint:
+  task: ISSUE-296
+  repository: agentic-art-orchestration
+  status: IN_PROGRESS
+  start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
+  expected_changes: Checkpoint-safe routing, child pin updates and integration qualification
+  lease: available; no other active owner observed
+  next_operation: Merge qualified child changes, update pins and run chain gates

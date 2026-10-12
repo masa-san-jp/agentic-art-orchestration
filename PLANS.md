@@ -1167,3 +1167,25 @@ A–D or authorize remote writes. Evidence and next operation are recorded in
 ## Issue 280: Phase A theme elements
 
 [Execution plan](docs/issue-280-execution-plan.md) and [verification](execution/issue-280-verification.json). Local code verified; real-profile owner acceptance remains BLOCKED.
+
+
+## Issue #296 — Stage C/D routing qualification
+
+### Purpose / Big Picture
+Qualify PR #297 against the real child element tools and preserve run resume contracts.
+
+### Progress
+- [x] Independent read-only Codex review; fix element checkpoint routing before mutating native completion.
+- [x] Add actual orchestration-branch regression; ProductionHistoryTests 8 PASS and ResearchPendingTests 12 PASS.
+- [x] Reject missing Stage D tool rather than falling back to whole-method authoring.
+- [ ] Update Research and Production qualified pins after dependent merges.
+- [ ] Full gates, fake B-C-D chain, real local output review, CI and merge.
+
+### Surprises & Discoveries
+The original pins predated Stage C and D. Complete.py must not change the manifest owned by element checkpoints.
+
+### Decision Log
+Identify element route from its checkpoint, then use the read-only child Stage D start rule. Keep legacy native completion only for projects without an element checkpoint.
+
+### Outcomes
+Checkpoint regression PASS; local evidence remains outside protocol Git. Final dependency pinning and validation pending.

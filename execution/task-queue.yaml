@@ -3497,3 +3497,16 @@ tasks:
     acceptance_result: Live run LIVE-20261010-A7 on real pinned data completed Phase A (all 171 art and 64 market cards screened once, 47 of 116 inferences, privacy grep 0 hits); local-model run LIVE-20261011-L2 stopped with ELEMENT_ATTEMPTS_EXHAUSTED and per-element attempts recorded; criteria 5, 6, 8 and 10 by synthetic tests.
     verification_result: See execution/issue-288-verification.json for the focused and full-suite counts and the baseline comparison.
     completion: Merged by the orchestrator through PR 290; L284 closed unmerged.
+
+  - id: ISSUE-296
+    milestone: ELEMENT-HARNESS
+    title: Continue B to C to D with one-value element actions
+    status: IN_PROGRESS
+    depends_on: [ISSUE-288]
+    target_repositories: [agentic-art-orchestration]
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/296
+    acceptance: Qualified child pins expose C/D tools, checkpoint route avoids native manifest mutation, fake chain and local real Stage D are verified.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest tests.test_run -v
+    - .venv/bin/python -m unittest discover -s tests -v

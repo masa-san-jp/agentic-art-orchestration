@@ -3281,3 +3281,7 @@ Local implementation: `f7099b1` and `5b29383`; publication remains orchestrator-
 was acquired. Issue 280 remains BLOCKED only on the real-profile meaningful
 question owner acceptance. Next: review this evidence and local commits, then
 arrange that owner acceptance without treating synthetic results as a substitute.
+
+
+## Issue 296 follow-up
+Read-only independent review found child pins lacking C/D tools and native complete.py mutating element-owned manifest. Checkpoint route now skips mutating completion and always advances C/D; missing D tool stops explicitly. Regression tests pass. Child pin adoption and final integration checks remain. No owner input or runtime is added to Git.

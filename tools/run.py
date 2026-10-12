@@ -1230,12 +1230,16 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             research_root, ["tools/accept_research_request.py", str(request), "--apply", "--root", str(research_data_root) if research_work_root else ".",
                             *research_protocol_args, "--accepted-at", requested_at], python, allow_conflict=True))
 
-        complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}", *(["--root", str(research_data_root)] if research_work_root else []), *research_protocol_args], python, allow_failure=True)
+        research_project = research_data_root / "projects" / project_slug
+        has_element_checkpoint = (research_project / "07_runtime/research-elements.json").is_file()
+        # Element checkpoints own the manifest. Native complete.py may mutate it;
+        # the Stage D rule evaluates the same core checks without that mutation.
+        complete = ({"status": "ELEMENT_ROUTE", "project_completed": False} if has_element_checkpoint else
+                    _run_child(research_root, ["tools/complete.py", f"project/{project_slug}", *(["--root", str(research_data_root)] if research_work_root else []), *research_protocol_args], python, allow_failure=True))
         record("research-complete", complete)
         element_route = False
-        if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
+        if has_element_checkpoint or str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
-            research_project = research_data_root / "projects" / project_slug
             elements = _research_elements(research_root, research_project, run_id, python)
             work_report = start = None
             if elements is not None and elements.get("status") == "COMPLETED":
@@ -1293,6 +1297,8 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         plan_path = persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"
         plan_elements = (_plan_elements(production_root, plan_path.parent.parent, run_id, python)
                          if element_route else None)
+        if element_route and plan_elements is None:
+            raise StepFailure("Stage D element tool is missing from the pinned production checkout; update its qualified commit")
         if plan_elements is not None:
             # Stage D by elements: the production method one value at a time; the engine writes the
             # method and rebuilds the plan itself once every element passed.
