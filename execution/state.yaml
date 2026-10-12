@@ -1,7 +1,7 @@
 version: 325
-updated_at: '2026-10-10T12:00:00+00:00'
-active_task: null
-active_repository: null
+updated_at: '2026-10-12T19:30:00+00:00'
+active_task: ISSUE-296
+active_repository: agentic-art-orchestration
 issue288_checkpoint:
   task: ISSUE-288
   repositories: [agentic-art-orchestration]
@@ -157,10 +157,10 @@ legacy_recovery_checkpoint:
 
 last_completed_task: ISSUE-278
 resume_from:
-  task: ISSUE-288
+  task: ISSUE-296
   repository: agentic-art-orchestration
-  action: Review the Issue-288 local commits (Phase A v2); run the real-data check after the card exports exist. Orchestrator owns publication; no lease is held.
-  command: git show --stat HEAD
+  action: Both child PRs are merged and pins updated; run parent gates and confirm PR297 CI.
+  command: git status --short
 
 oi07_progress:
   task: OI-07
@@ -2246,13 +2246,13 @@ issue280_hearing_follow_up:
   lease: NOT_ACQUIRED
 
 checkpoint:
-  task: ISSUE-288
+  task: ISSUE-296
   repository: agentic-art-orchestration
-  status: DONE
+  status: IN_PROGRESS
   code_status: CODE_VERIFIED
-  start_point: 946faed
-  evidence: execution/issue-288-verification.json
-  next_operation: Orchestrator reviews and publishes; real-data confirmation after the card exports exist. Earlier note - review corrected code and actual accepted-A3 evidence; apply corrected A4 in the actual run and continue with its requested A3 addition. Publication and pin adoption remain orchestrator-owned.
+  start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
+  evidence: https://github.com/masa-san-jp/agentic-art-orchestration/pull/297
+  next_operation: Both child PRs are merged; qualify parent checks and the exact-pinned B-C-D chain, then record final CI and merge PR297.
 
 issue296_checkpoint:
   task: ISSUE-296
@@ -2260,5 +2260,8 @@ issue296_checkpoint:
   status: IN_PROGRESS
   start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
   expected_changes: Checkpoint-safe routing, child pin updates and integration qualification
-  lease: available; no other active owner observed
-  next_operation: Merge qualified child changes, update pins and run chain gates
+  lease: NOT_ACQUIRED_ISOLATED_WORKTREE; no other active owner observed
+  next_operation: Confirm parent full checks and exact-pinned B-C-D CI; record final evidence and merge PR297
+  qualified_child_pins:
+    agentic-art-research: b493324d7223a8e0686f44702a55eb26e7155a48
+    agentic-art-production: c8fd2e34c9c419f8563eaa23a52133aee6cc4249

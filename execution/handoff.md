@@ -3285,3 +3285,7 @@ arrange that owner acceptance without treating synthetic results as a substitute
 
 ## Issue 296 follow-up
 Read-only independent review found child pins lacking C/D tools and native complete.py mutating element-owned manifest. Checkpoint route now skips mutating completion and always advances C/D; missing D tool stops explicitly. Regression tests pass. Child pin adoption and final integration checks remain. No owner input or runtime is added to Git.
+
+
+## Issue 296 qualified child pins
+Research PR138/136 and Production PR95 merged. Pin Research b493324 and Production c8fd2e3; Research fixture commit matches. Final Production 227 tests and evaluation pass on 3.11/3.12. Fresh local D2 accepts 62 values and reopens COMPLETED; missing VISUAL/METHOD refs keep the plan INCOMPLETE and prototype READY. Parent CI now requires fake B-C-D against exact manifest pins. Remaining: full parent checks, final CI evidence/state update and PR297 merge. No owner body/runtime/artifact is added to Git.

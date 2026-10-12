@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-10T12:00:00+00:00`.
+Source updated at: `2026-10-12T19:30:00+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 2 | 200 | 202 |
+| 0 | 0 | 1 | 2 | 200 | 203 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-288`.
-Next action: Review the Issue-288 local commits (Phase A v2); run the real-data check after the card exports exist. Orchestrator owns publication; no lease is held.
+Current task: `ISSUE-296`; repository: `agentic-art-orchestration`; checkpoint: `ISSUE-296`.
+Next action: Both child PRs are merged and pins updated; run parent gates and confirm PR297 CI.
 Ready: none.
 Next task: `null`.
 Blocked:

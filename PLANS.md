@@ -1189,3 +1189,9 @@ Identify element route from its checkpoint, then use the read-only child Stage D
 
 ### Outcomes
 Checkpoint regression PASS; local evidence remains outside protocol Git. Final dependency pinning and validation pending.
+
+
+### Qualified child pin adoption (Issue #296)
+Research main b493324d7223a8e0686f44702a55eb26e7155a48 includes scanner PR138 and Stage D handoff PR136. Production main c8fd2e34c9c419f8563eaa23a52133aee6cc4249 includes Stage D PR95 with final guards and 227-test CI. Both dependent PRs are merged and their issues closed. The Research retrieval fixture uses the same observed commit as the manifest.
+
+CI production-exchange now explicitly runs tests.test_stage_cd_chain with these exact pinned checkouts, rather than relying on the default full suite's optional environment skip. Independent read-only review approved the additional workflow. Native schemas and owner approvals remain child-owned; no actual project/runtime/private body is added to parent Git.

@@ -3502,6 +3502,7 @@ tasks:
     milestone: ELEMENT-HARNESS
     title: Continue B to C to D with one-value element actions
     status: IN_PROGRESS
+    agent_terminal: EVIDENCE_READY
     depends_on: [ISSUE-288]
     target_repositories: [agentic-art-orchestration]
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/296
