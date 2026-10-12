@@ -128,9 +128,11 @@ class Policy:
         if identifier == 'A7.overlap':
             quotes = [answers[f'A5.{kind}.{self.k(kind)}.{part}'] for kind, part in
                       (('art', 'self-quote'), ('art', 'card-quote'), ('market', 'card-quote'))]
-            return f'{quotes[0]}間と、{quotes[1]}ことと、{quotes[2]}ことは、決める時をどこに置くかで向き合っている'
+            label = f"{inputs['art_label']}では、" if 'art_label' in inputs else ''  # required by contains_terms:art_label
+            return f'{label}{quotes[0]}間と、{quotes[1]}ことと、{quotes[2]}ことは、決める時をどこに置くかで向き合っている'
         if identifier == 'A7.question':
-            return f"{inputs['self_quote']}間と{inputs['art_card_quote']}と{inputs['market_card_quote']}は、どのように向き合えるか？"
+            label = f"{inputs['art_label']}で、" if 'art_label' in inputs else ''
+            return f"{label}{inputs['self_quote']}間と{inputs['art_card_quote']}と{inputs['market_card_quote']}は、どのように向き合えるか？"
         raise AssertionError(identifier)
 
     def k(self, kind):

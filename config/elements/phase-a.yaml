@@ -72,24 +72,28 @@ elements:
     checks: [non_empty]
   - kind: element
     element_id: A7.overlap
-    instruction: 次の3つが重なるところを、平叙文の一文で書いてください。
+    instruction: 次の3つが重なるところを、平叙文の一文で書いてください。芸術の側の名前（art_label）を文に含めてください。
     inputs:
       material_statement: {literal: ''}
       art_sentence: {literal: ''}
       market_sentence: {literal: ''}
+      art_label: {literal: ''}
     hidden:
       self_quote: ''
       art_card_quote: ''
       market_card_quote: ''
     answer_format: {type: text, max_chars: 120}
-    checks: [non_empty, one_sentence, not_question, 'contains_source_terms:self_quote,art_card_quote,market_card_quote', 'not_similar_to:art_sentence', 'not_similar_to:market_sentence', 'forbidden:∩,無し,未記入']
+    # The art side must stay named: a two-character shingle such as 対応 satisfied the term check,
+    # and LeWitt's "perfunctory execution" was read as an office task downstream (#293).
+    checks: [non_empty, one_sentence, not_question, 'contains_source_terms:self_quote,art_card_quote,market_card_quote', 'contains_terms:art_label', 'not_similar_to:art_sentence', 'not_similar_to:market_sentence', 'forbidden:∩,無し,未記入']
   - kind: element
     element_id: A7.question
-    instruction: 重なりの文を、研究で確かめる問い一文にしてください。はい・いいえで答えられない開いた問いにしてください。
+    instruction: 重なりの文を、研究で確かめる問い一文にしてください。はい・いいえで答えられない開いた問いにしてください。芸術の側の名前（art_label）を問いに含めてください。
     inputs:
       overlap: {literal: ''}
       self_quote: {literal: ''}
       art_card_quote: {literal: ''}
       market_card_quote: {literal: ''}
-    answer_format: {type: text, max_chars: 120}
-    checks: [non_empty, one_sentence, ends_with_question, open_question, 'contains_source_terms:self_quote,art_card_quote,market_card_quote', 'forbidden:∩,無し,未記入']
+      art_label: {literal: ''}
+    answer_format: {type: text, max_chars: 140}
+    checks: [non_empty, one_sentence, ends_with_question, open_question, 'contains_source_terms:self_quote,art_card_quote,market_card_quote', 'contains_terms:art_label', 'forbidden:∩,無し,未記入']

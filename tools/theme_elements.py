@@ -363,14 +363,17 @@ def _plan(state: dict):
     quotes = {'self_quote': parts['art']['self_quote'], 'art_card_quote': parts['art']['card_quote'],
               'market_card_quote': parts['market']['card_quote']}
     sentences = {kind: answers[f'A5.{kind}.{phase["adopted_k"][kind]}.sentence'] for kind in DOMAINS}
+    # Runs started before #293 froze templates without art_label; give them the old inputs.
+    labelled = 'art_label' in phase['templates']['A7.question'].get('inputs', {})
+    label = {'art_label': phase['cards'][phase['adopted']['art']]['label']} if labelled else {}
     if 'A7.overlap' not in answers:
         return ('element', _definition(phase, 'A7.overlap', 'A7.overlap', {
             'material_statement': phase['material']['statement'], 'art_sentence': sentences['art'],
-            'market_sentence': sentences['market']}, hidden=quotes), None)
+            'market_sentence': sentences['market'], **label}, hidden=quotes), None)
     if 'A7.question' not in answers:
         return ('element', _definition(phase, 'A7.question', 'A7.question', {
             'overlap': answers['A7.overlap'], 'self_quote': quotes['self_quote'],
-            'art_card_quote': quotes['art_card_quote'], 'market_card_quote': quotes['market_card_quote']}), None)
+            'art_card_quote': quotes['art_card_quote'], 'market_card_quote': quotes['market_card_quote'], **label}), None)
     return ('done',)
 
 
