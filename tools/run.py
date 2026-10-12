@@ -687,6 +687,64 @@ def _research_elements(protocol_root: Path, project: Path, run_id: str, python: 
     return {**report, "answer_command": [python, str(tool), "answer", "--project", str(project)]}
 
 
+def _child_run_id(run_id: str, stage: str) -> str:
+    """The Stage B child id with the stage suffix swapped (Stage C: work, Stage D: plan)."""
+    return _research_run_id(run_id)[: -len("-research")] + "-" + stage
+
+
+def _element_report(tool: Path, args: list[str], cwd: Path, python: str, *, ok_codes: tuple[int, ...] = (0, 1)) -> dict:
+    """Run one child element command and return its JSON report (exit 1 is BLOCKED, still a report)."""
+    result = subprocess.run([python, str(tool), *args], cwd=cwd, capture_output=True, text=True, env=child_environment())
+    try:
+        report = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        report = None
+    if result.returncode not in ok_codes or not isinstance(report, dict):
+        raise StepFailure(f"{tool.name} {args[0]} failed: {(result.stderr.strip().splitlines() or ['no output'])[-1]}")
+    return report
+
+
+def _work_elements(protocol_root: Path, project: Path, run_id: str, python: str) -> dict | None:
+    """Stage C by elements (research #129): the next single request for the work's content.
+
+    None when the research checkout predates Stage C. Stage C only starts after Stage B is COMPLETED.
+    """
+    tool = protocol_root / "tools" / "work_elements.py"
+    if not tool.is_file():
+        return None
+    report = _element_report(tool, ["next", "--project", str(project), "--run-id", _child_run_id(run_id, "work")],
+                             protocol_root, python)
+    return {**report, "answer_command": [python, str(tool), "answer", "--project", str(project)]}
+
+
+def _stage_d_start(protocol_root: Path, project: Path, python: str) -> dict:
+    """The research-owned rule for when the production plan (Stage D) may start (research #134)."""
+    tool = protocol_root / "tools" / "work_elements.py"
+    return _element_report(tool, ["stage-d-start", "--project", str(project)], protocol_root, python)
+
+
+def _plan_elements(production_root: Path, project: Path, run_id: str, python: str) -> dict | None:
+    """Stage D by elements (production #94): the next single request for the production method."""
+    tool = production_root / "tools" / "plan_elements.py"
+    if not tool.is_file():
+        return None
+    report = _element_report(tool, ["next", "--project-root", str(project), "--run-id", _child_run_id(run_id, "plan")],
+                             production_root, python)
+    return {**report, "answer_command": [python, str(tool), "answer", "--project-root", str(project)]}
+
+
+def _element_action(stage: str, project: str, report: Mapping[str, Any], resume_command: list[str] | None,
+                    manual_fallback: str) -> dict:
+    """The same hand-out for every element stage: one request, and the command that takes its answer."""
+    return {
+        "actor": "agent", "kind": "element", "stage": stage, "project": project,
+        "request": report["next_action"]["request"],
+        "answer_command": list(report["answer_command"]),
+        "do": ["request に1つの値で答え、answer_command の標準入力に渡す。search-request/v1 には実際に取得した公開資料を返す"],
+        "resume_command": list(resume_command or []), "manual_fallback": manual_fallback,
+    }
+
+
 def _at_research(
     work: Path,
     run_id: str,
@@ -701,6 +759,8 @@ def _at_research(
     git_write_credentials: str | None = None,
     profile_root_source: str = "none", profile_root: Path | None = None,
     elements: Mapping[str, Any] | None = None,
+    work_elements: Mapping[str, Any] | None = None,
+    stage_d_start: Mapping[str, Any] | None = None,
 ) -> dict:
     """The run pauses for the agent, never for a person, and says exactly what is left."""
     report = {
@@ -756,6 +816,25 @@ def _at_research(
             action["do"] = ["blocked の要素と最後の検査から原因を直し、新しい外部 project で段階 B をやり直す"]
         else:
             action["do"] = ["段階 B の要素は完了。tools/complete.py の残り（段階 C の要件など）を進める"]
+    if work_elements is not None:
+        # Stage C by elements, handed out the same way as Stage B.
+        report["work_elements"] = {"status": work_elements.get("status"), "accepted_count": work_elements.get("accepted_count"),
+                                   "completion": work_elements.get("completion")}
+        action = report["next_action"]
+        if work_elements.get("status") == "WAITING" and work_elements.get("next_action"):
+            report["next_action"] = _element_action("work", str(action["project"]), work_elements,
+                                                    action.get("resume_command"), action["manual_fallback"])
+        elif work_elements.get("status") == "BLOCKED":
+            report["status"] = "BLOCKED"
+            report["blocked"] = work_elements.get("blocked")
+            action["do"] = ["blocked の要素と最後の検査から原因を直し、新しい外部 project で段階 B・C をやり直す"]
+    if stage_d_start is not None and not stage_d_start.get("allowed"):
+        # Stage C is finished but the production plan may not start; the reasons are the program's.
+        report["status"] = "BLOCKED"
+        report["stop_reason"] = "STAGE_D_NOT_READY"
+        report["stage_d_start"] = dict(stage_d_start)
+        report["next_action"]["do"] = ["段階 D を始める条件を満たしていない。reasons を直してから（多くは新しい外部 project で段階 B・C をやり直して）同じ入口へ戻る",
+                                       *[str(reason) for reason in stage_d_start.get("reasons", [])]]
     if git_write_credentials is not None:
         report["git_write_credentials"] = git_write_credentials
     if delivery_contract is not None:
@@ -1153,16 +1232,31 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
 
         complete = _run_child(research_root, ["tools/complete.py", f"project/{project_slug}", *(["--root", str(research_data_root)] if research_work_root else []), *research_protocol_args], python, allow_failure=True)
         record("research-complete", complete)
+        element_route = False
         if str(complete.get("status")) not in {"COMPLETE", "COMPLETE_WITH_GAPS"}:
             # 調査が済んでいない。人を待つのではなく、次に何をするかを返して同じ入口へ戻す。
-            elements = _research_elements(research_root, research_data_root / "projects" / project_slug, run_id, python)
-            return _at_research(
-                work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
-                destination_resolution, resume_command, delivery_contract, git_write_credentials,
-                profile_root_source, profile_root, elements,
-            )
+            research_project = research_data_root / "projects" / project_slug
+            elements = _research_elements(research_root, research_project, run_id, python)
+            work_report = start = None
+            if elements is not None and elements.get("status") == "COMPLETED":
+                # Stage B done: Stage C (the work's content), then the research-owned Stage D start rule.
+                work_report = _work_elements(research_root, research_project, run_id, python)
+                if work_report is not None and work_report.get("status") == "COMPLETED":
+                    start = _stage_d_start(research_root, research_project, python)
+                    record("stage-d-start", {"status": "PASSED" if start.get("allowed") else "NOT_READY",
+                                             "allowed": bool(start.get("allowed")), "reasons": start.get("reasons", [])})
+            if start is None or not start.get("allowed"):
+                return _at_research(
+                    work, run_id, intent, steps, research_data_root, project_slug, theme_proposal,
+                    destination_resolution, resume_command, delivery_contract, git_write_credentials,
+                    profile_root_source, profile_root, elements, work_report, start,
+                )
+            # The element route keeps the manifest its Stage B checkpoint owns; build_handoff applies the
+            # Stage D start rule instead of the workflow mode and carries the unmet research as open gaps.
+            element_route = True
 
-        _promote_research_handoff(research_data_root, project_slug)
+        if not element_route:
+            _promote_research_handoff(research_data_root, project_slug)
 
         handoff_args = _handoff_arguments(
             research_data_root, project_slug, requested_at, _head(research_root)
@@ -1196,10 +1290,44 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             "project": f"production/{project_slug}",
         })
         history_path = _record_production_run(state_root, run_id, project_slug, requested_at)
-        plan = _run_child(production_root, ["tools/build_plan.py", "--project-root",
-                                            str(persistent_production_root / "production" / project_slug)], python)
-        record("plan", plan)
         plan_path = persistent_production_root / "production" / project_slug / "03_plan/production-plan.md"
+        plan_elements = (_plan_elements(production_root, plan_path.parent.parent, run_id, python)
+                         if element_route else None)
+        if plan_elements is not None:
+            # Stage D by elements: the production method one value at a time; the engine writes the
+            # method and rebuilds the plan itself once every element passed.
+            record("plan-elements", {"status": plan_elements.get("status"),
+                                     "accepted_count": plan_elements.get("accepted_count"),
+                                     "completion": plan_elements.get("completion")})
+            if plan_elements.get("status") != "COMPLETED":
+                blocked = plan_elements.get("status") == "BLOCKED"
+                report = {
+                    "run_id": run_id, "intent": intent,
+                    "status": "BLOCKED" if blocked else "AT_PRODUCTION",
+                    "plan_status": "PLAN_BUILDING", "completion_status": "INCOMPLETE",
+                    "knowledge_status": "PENDING", "projection_status": "NOT_RUN", "run_status": "INCOMPLETE",
+                    "git_write_credentials": git_write_credentials, "steps": steps,
+                    "plan": str(plan_path), "production_project": str(plan_path.parent.parent),
+                    "plan_elements": {"status": plan_elements.get("status"),
+                                      "accepted_count": plan_elements.get("accepted_count"),
+                                      "abandoned": plan_elements.get("abandoned")},
+                    "delivery_contract": dict(delivery_contract), "state": str(work),
+                    "next_action": (_element_action("production", str(plan_path.parent.parent), plan_elements, resume_command,
+                                                    "FORBIDDEN: 要素の依頼に答えずに production-method.yaml を手で書かない")
+                                    if not blocked else
+                                    {"actor": "agent", "stage": "production", "project": str(plan_path.parent.parent),
+                                     "do": ["blocked の要素と最後の検査から原因を直し、新しい制作 project で段階 D をやり直す"],
+                                     "resume_command": resume_command}),
+                }
+                if blocked:
+                    report["blocked"] = plan_elements.get("blocked")
+                report["delivery_completion"] = completion(report, delivery_contract)
+                _write_run_report(work, report, profile_root_source, profile_root)
+                return report
+        else:
+            plan = _run_child(production_root, ["tools/build_plan.py", "--project-root",
+                                                str(persistent_production_root / "production" / project_slug)], python)
+            record("plan", plan)
         prototype = _run_child(
             production_root,
             ["tools/build_prototype.py", "--project-root",
