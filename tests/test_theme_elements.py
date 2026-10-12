@@ -72,6 +72,21 @@ class FullRunTests(PhaseATestCase):
         for key in ('A7.overlap', 'A7.question'):
             self.assertIn(key, report['answers'])
 
+    def test_overlap_and_question_name_the_adopted_art_card(self):
+        from tools.element_checks import check_value
+        signals, blobs = world()
+        engine, policy, report = self.run_to_end(signals, blobs)
+        phase = self.state(engine)['context']['phase_a']
+        label = phase['cards'][phase['adopted']['art']]['label']
+        for key in ('A7.overlap', 'A7.question'):
+            self.assertIn(label, report['answers'][key])
+        # Without the label the question is rejected even when a shingle of the art quote is present (#293).
+        template = phase['templates']['A7.question']
+        self.assertIn('contains_terms:art_label', template['checks'])
+        failures = check_value('費用を先に確定する側と対応を待つ側を分ける要因は何か？', ['contains_terms:art_label'],
+                               inputs={'art_label': label}, ledger={}, previous_answers={})
+        self.assertTrue(failures)
+
     def test_adopted_quotes_are_verbatim_in_card_material_and_pinned_blob(self):
         signals, blobs = world()
         engine, _, report = self.run_to_end(signals, blobs)
