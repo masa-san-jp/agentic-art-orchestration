@@ -1176,10 +1176,11 @@ Qualify PR #297 against the real child element tools and preserve run resume con
 
 ### Progress
 - [x] Independent read-only Codex review; fix element checkpoint routing before mutating native completion.
-- [x] Add actual orchestration-branch regression; ProductionHistoryTests 8 PASS and ResearchPendingTests 12 PASS.
+- [x] Add actual orchestration-branch regression; ProductionHistoryTests 9 PASS and ResearchPendingTests 12 PASS.
 - [x] Reject missing Stage D tool rather than falling back to whole-method authoring.
-- [ ] Update Research and Production qualified pins after dependent merges.
-- [ ] Full gates, fake B-C-D chain, real local output review, CI and merge.
+- [x] Update Research and Production qualified pins after dependent merges.
+- [x] Full gates, fake B-C-D chain, real local output review and code CI.
+- [ ] Final evidence-only head CI and PR297 merge.
 
 ### Surprises & Discoveries
 The original pins predated Stage C and D. Complete.py must not change the manifest owned by element checkpoints.
@@ -1188,10 +1189,12 @@ The original pins predated Stage C and D. Complete.py must not change the manife
 Identify element route from its checkpoint, then use the read-only child Stage D start rule. Keep legacy native completion only for projects without an element checkpoint.
 
 ### Outcomes
-Checkpoint regression PASS; local evidence remains outside protocol Git. Final dependency pinning and validation pending.
+Code qualification complete: CI run 38306095235 passes bootstrap (890 tests), production-exchange (including exact-pinned B-C-D), and real-chain. Local Production 227 tests in 1948.340s and evaluator PASS. Real D2 has 62 accepted values, no abandoned elements, and COMPLETED resume; plan remains INCOMPLETE for missing VISUAL/METHOD references. Original 51 files are unchanged. Independent read-only reviews found no remaining required changes. Local parent profile failures were reproduced on the baseline; they are not counted as passing. Final evidence-only head CI and merge remain.
 
 
 ### Qualified child pin adoption (Issue #296)
 Research main b493324d7223a8e0686f44702a55eb26e7155a48 includes scanner PR138 and Stage D handoff PR136. Production main c8fd2e34c9c419f8563eaa23a52133aee6cc4249 includes Stage D PR95 with final guards and 227-test CI. Both dependent PRs are merged and their issues closed. The Research retrieval fixture uses the same observed commit as the manifest.
 
 CI production-exchange now explicitly runs tests.test_stage_cd_chain with these exact pinned checkouts, rather than relying on the default full suite's optional environment skip. Independent read-only review approved the additional workflow. Native schemas and owner approvals remain child-owned; no actual project/runtime/private body is added to parent Git.
+
+Local parent full run: 894 tests in 1627.785s, failures=2/errors=5/skipped=6; not a clean full-suite PASS. Five errors were caused by an invalid old Project fixture; missing-profile failure was caused by discovered user configuration; initial-operations failure was caused by the old temporary fixture. All seven separately PASS (10.715s) with an isolated XDG config, a dedicated initial-operations fixture, and the historical Project workspace contract at 4ab9a85 (one-plan fixture matching the test). No assertions were changed or skipped; no personal configuration or existing fixtures were modified. CI independently passes the normal suite (890 tests).
