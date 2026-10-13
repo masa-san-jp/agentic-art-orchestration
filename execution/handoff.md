@@ -3331,3 +3331,6 @@ Qualified pin/SSOT f3b25c7 was pushed and the remote branch SHA verified before 
 
 ## Issue299 timeout contract test synchronized
 The initial parent bootstrap failed only the stale1800 assertion after the intended3600 budget change (903 tests,1 failure,8 skips); exact production-exchange passed. The strict expected value is now3600 and related4 tests pass. Old real-chain canceled as superseded, not reported PASS. Pin/runtime code is unchanged. Require all corrected-head CI jobs green before merge; source scope reclaimed for the test fix.
+
+
+The corrected timeout-contract SSOT ddd5189 was pushed and its remote SHA verified before releasing the reclaimed lease. No active implementation task remains; require all corrected final-head CI jobs green before publication merge.
