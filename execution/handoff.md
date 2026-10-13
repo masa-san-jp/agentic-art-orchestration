@@ -3323,3 +3323,7 @@ Production PR97 merged at ed18c8942df221524ce0b2a5adb0ade69cb1c4fa after final8e
 
 ## Issue299 local qualification complete
 Production ed18c89 is the merged, final-CI-qualified main and matches8e6fa06 tree; accepted875 ancestry verified. Researchfd remains unchanged. Exact merged-pin exchange PASSED, every acceptance true, no remote operations/child mutations; B-C-D1/158.420sPASS. Validator/readme/retrieval9 pass. Queue is DONE/EVIDENCE_READY; final independent SSOT review and all final parent CI jobs must pass before merge/Issue299 closure. Qualified SSOT is pushed before releasing the parent-only lease. No owner input/runtime/plan/image or child schema enters Git.
+
+
+## Issue299 lease released after verified push
+Qualified pin/SSOT f3b25c7 was pushed and the remote branch SHA verified before releasing the parent-only lease. No implementation task is active. Final independent SSOT review, all final parent CI jobs, authorized merge/Issue299 closure and parent patch release remain publication steps. Productionv1.1.1 is already published ated18c89 with tag/body/empty attachments verified.

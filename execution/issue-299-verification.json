@@ -47,7 +47,7 @@
   },
   "ci_timeout_seconds_per_command": 3600,
   "ci_timeout_reason": "Restored native F1–F6 full suite exceeded the old1800-second budget; all gates retained.",
-  "independent_review": "No required fixes; final SSOT review/publication CI remain gates.",
+  "independent_review": "Final independent read-only review reports no required fixes; final parent CI remains a publication gate.",
   "publication_gate": "Require all final parent CI jobs green before merge; no parent merge or current three-run gate is claimed.",
   "privacy": {
     "fixtures": "synthetic",
