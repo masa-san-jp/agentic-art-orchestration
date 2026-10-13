@@ -1,5 +1,5 @@
-version: 108
-updated_at: '2026-10-13T10:59:35.580440+00:00'
+version: 110
+updated_at: '2026-10-13T12:22:44.127188+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3523,7 +3523,7 @@ tasks:
   - id: ISSUE-287
     milestone: ELEMENT-HARNESS
     title: Configure choice answerers with permutation stability and compare judgement models
-    status: IN_PROGRESS
+    status: DONE
     agent_terminal: EVIDENCE_READY
     depends_on: [ISSUE-288]
     target_repositories: [agentic-art-orchestration]
@@ -3534,3 +3534,22 @@ tasks:
     - python -m unittest tests.test_choice_answerer tests.test_element -v
     - python -m unittest discover -s tests -v
     human_gate: Independent read-only review and green CI before merge, already authorized by the owner; private owner data stays on the Mac.
+    verification_result: Independent read-only review clear; new13 tests and local906/6skips PASS; CI38387443494 all three gates PASS; public KB comparison records stability, agreement, positions, time and API cost.
+    completion: Choice routing and judgement qualification complete; keep LLM default, judgement mode explicit opt-in.
+
+  - id: RESEARCH-REFERENCE-PIN-139
+    milestone: ELEMENT-HARNESS
+    title: Adopt qualified production reference source handling
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/139
+    human_gate: Independent read-only review and green final CI before merge; owner authorization already recorded in HANDOFF-codex.md.
+    status: DONE
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-287]
+    target_repositories: [agentic-art-orchestration, agentic-art-research]
+    acceptance: Research PR140 has green final CI; manifest and retrieval fixture use the same merged Research main; exact-pinned parent chain passes.
+    checks:
+    - python tools/validate.py --check
+    - python -m unittest tests.test_retrieval -v
+    - parent CI bootstrap, production-exchange and real-chain
+    verification_result: Research final CI38394650991 PASS and PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39; manifest/retrieval fixture agree; local B-C-D passes on equivalent final child trees and parent final CI remains a publication gate.
+    completion: Qualified source handling adopted; local C95/D58 PLAN_READY, source51 unchanged; no physical action or publication.

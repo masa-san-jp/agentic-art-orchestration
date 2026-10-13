@@ -1,7 +1,7 @@
-version: 327
-updated_at: '2026-10-13T10:59:35.580440+00:00'
-active_task: ISSUE-287
-active_repository: agentic-art-orchestration
+version: 329
+updated_at: '2026-10-13T12:22:44.127188+00:00'
+active_task: null
+active_repository: null
 issue288_checkpoint:
   task: ISSUE-288
   repositories: [agentic-art-orchestration]
@@ -157,11 +157,11 @@ legacy_recovery_checkpoint:
   disposition: Superseded by ISSUE-288 Phase A v2; old owner acceptance is not claimed.
 
 
-last_completed_task: ISSUE-296
+last_completed_task: RESEARCH-REFERENCE-PIN-139
 resume_from:
-  task: ISSUE-287
+  task: RESEARCH-REFERENCE-PIN-139
   repository: agentic-art-orchestration
-  action: Complete independent review and checks for choice stability, publish PR and require green CI before merge.
+  action: Require green final PR298 head CI, then merge and verify Issue287 closed. Pin implementation and local qualification complete.
   command: git status --short
 
 oi07_progress:
@@ -2250,11 +2250,10 @@ issue280_hearing_follow_up:
   lease: NOT_ACQUIRED
 
 checkpoint:
-  task: ISSUE-287
+  task: RESEARCH-REFERENCE-PIN-139
   repository: agentic-art-orchestration
-  status: IN_PROGRESS
-  start_point: ebc1e02c629b1d2f220e1a562f51982c5e544e08
-  next_operation: Review, local checks and CI for the choice answerer implementation.
+  status: DONE
+  next_operation: Require final PR298 CI green before merge; no code or pin changes remain.
 
 issue296_checkpoint:
   task: ISSUE-296
@@ -2263,7 +2262,7 @@ issue296_checkpoint:
   start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
   expected_changes: Checkpoint-safe routing, child pin updates and integration qualification
   lease: NOT_ACQUIRED_ISOLATED_WORKTREE; no other active owner observed
-  next_operation: Require final evidence-head CI green, then merge PR297
+  next_operation: PR297 merged at ebc1e02; Issue296 closed; historical qualification retained.
   qualified_child_pins:
     agentic-art-research: b493324d7223a8e0686f44702a55eb26e7155a48
     agentic-art-production: c8fd2e34c9c419f8563eaa23a52133aee6cc4249
@@ -2271,7 +2270,16 @@ issue296_checkpoint:
 
 issue287_checkpoint:
   task: ISSUE-287
-  status: IN_PROGRESS
+  status: DONE
   start_point: ebc1e02c629b1d2f220e1a562f51982c5e544e08
   lease: ISOLATED_CLONE; no other active writer observed
-  next_operation: Implement routing and stability evidence, run public-data comparison, review and green CI.
+  next_operation: Code qualification complete; final publication is combined with qualified Research reference pin adoption.
+  verification: CI38387443494 all gates PASS; local906 tests/6skips PASS; independent read-only review clear; public comparison recorded.
+
+reference_pin_139_checkpoint:
+  task: RESEARCH-REFERENCE-PIN-139
+  status: DONE
+  research_commit: fd43cb69edac47c4b8369ec5873465bedfaa4a39
+  production_commit: c8fd2e34c9c419f8563eaa23a52133aee6cc4249
+  verification: Research final CI38394650991 and local473 tests PASS; local parent native B-C-D PASS; fresh C95/D58 PLAN_READY, zero actionability findings, original51 unchanged.
+  next_operation: Final PR298 head CI must pass all3 gates before merge.

@@ -1209,8 +1209,14 @@ Purpose: retain the external worker boundary while allowing judgement models for
 - [x] Configure answer formats and two deterministic presentations, with engine-side stability validation.
 - [x] Regress numeric card remapping, categorical order, unstable answers, five-attempt stop and legacy configuration.
 - [x] Compare a bounded public real-KB sample; record agreement, bias, latency and token/cost measurements.
-- [ ] Independent read-only review, CI and merge.
+- [x] Independent read-only review and code CI. Final publication remains gated on final-head CI/merge.
 
 Decision: never send the owner material to the external comparison service. Use public KB content for measurement and keep runtime requests outside Git.
 
 Public KB comparison: 12 real-source requests (screen/rank/type/probe, 3 each); Jev-1.13.0 stability11/12, local Gemma4:e4b12/12, initial semantic agreement9/12. Jev24 calls29.051s/$0.00085722 input-token API estimate; local24 calls87.223s/no API charge, machine energy excluded. Keep default LLM; explicit choice adapter is available. Evidence: execution/issue-287-comparison.json.
+
+Issue287 code qualification complete: CI38387443494 all3 gates PASS, local906 tests/2167.853s (6 documented skips) PASS, new13 regressions and independent review clear. Final publication includes adoption of the qualified reference pipeline from ResearchPR140, whose fresh C95/D58 local copy reaches PLAN_READY/prototypeREADY/actionability0 without changing original51 inputs. Parent final CI and merge remain.
+
+
+## Final qualified Research reference adoption
+Research PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39 after final CI38394650991 PASS and independent read-only review. Manifest/retrieval fixture match; Production remains c8fd2e34. Local child full473 tests and parent native B-C-D chain PASS. Fresh owner-data copy C95/D58 completes/reopens, validator PASS, PLAN_READY/prototype READY/zero actionability findings; original51 inputs unchanged. Physical purchase, publication and execution remain unauthorised/unperformed; quantitative Research gaps are retained. Issue287 local906 tests/6skips and code CI38387443494 all3 PASS. Final PR298 publication requires all3 gates green on this final head. No owner body/runtime/plan/images or credentials published.
