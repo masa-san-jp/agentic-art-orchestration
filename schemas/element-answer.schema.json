@@ -55,6 +55,74 @@
           }
         }
       ]
+    },
+    "inference_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cost_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "choice_observations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order",
+          "value",
+          "request_sha256"
+        ],
+        "properties": {
+          "order": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 2,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "value": {
+            "type": "string"
+          },
+          "request_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "elapsed_seconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cost_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      }
     }
   }
 }

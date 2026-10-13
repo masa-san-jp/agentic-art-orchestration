@@ -228,6 +228,8 @@ class Engine:
             else:
                 value = answer['value']
                 fmt = request['answer_format']
+                from tools.choice_answerer import check_observations
+                failures.extend(check_observations(request, answer))
                 text = value.get('reason') if isinstance(value, dict) else value
                 if fmt['type'] == 'boolean_with_reason':
                     shape_ok = isinstance(value, dict)
@@ -250,6 +252,8 @@ class Engine:
             state['history'].append({'element_id': request['element_id'], 'attempt': request['attempt'],
                                      'answer_sha256': hashlib.sha256(canonical(answer).encode()).hexdigest(),
                                      'failures': failures,
+                                     **({'choice_observations': deepcopy(answer['choice_observations'])}
+                                        if 'choice_observations' in answer else {}),
                                      **({'answerer_kind': answer['answerer_kind']} if 'answerer_kind' in answer else {})})
             if failures:
                 state['previous_failure'] = failures

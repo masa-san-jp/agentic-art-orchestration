@@ -739,3 +739,7 @@ Researchの受入契約はfile URI・絶対パスを拒否するため、sidecar
 誤認するため、当該参照だけhash URNにします。元URLとRRのURNの対応はsidecarの
 `reference_aliases`に保持し、権利状態は変えません。query/fragment付きURLはこの変換をせず、
 既存のnative検査へ渡します。
+
+### 選択式だけを判断モデルへ切り替える
+
+[選択式の設定例](../config/element-answerer-choice.example.yaml)は、通常の答え手をdefaultにし、choiceを別の外部commandへ割り当てる。`judge-...`のchoice回答は順序を入れ替えた二つの新しいprocessで照合し、Engineが一致を確認してから受け取る。詳しい再依頼・履歴・比較方法は[Issue287の手順](issue-287-choice-answerers.md)を参照する。通常の制作runの本文はGit外に保ち、比較データの送信許可を設定から推測しない。

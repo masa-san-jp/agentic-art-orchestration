@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -86,6 +88,73 @@ class LocalAnswerer:
         return answer  # acceptance checks remain the Engine's responsibility
 
 
+class StableChoiceAnswerer:
+    def __init__(self, backend, answerer_kind):
+        self.backend = backend
+        self.answerer_kind = answerer_kind
+
+    def answer(self, request):
+        from tools.choice_answerer import orders, presentation, original_value
+        observations = []
+        for order in orders(request):
+            changed = presentation(request, order)
+            start = time.monotonic()
+            reply = self.backend.answer(changed)
+            elapsed = time.monotonic() - start
+            value = original_value(request, order, reply['value'])
+            observations.append({'order': order, 'value': reply['value'],
+                                 'request_sha256': hashlib.sha256(canonical(changed).encode()).hexdigest(),
+                                 'elapsed_seconds': elapsed,
+                                 'cost_usd': reply.get('inference_usage', {}).get('cost_usd')})
+            if len(observations) == 1:
+                first = value
+        # An unstable pair is still submitted: the Engine consumes the attempt
+        # and applies its existing five-attempt limit, rather than an unbounded worker retry.
+        return {'contract_version': 'element-answer/v1',
+                **{key: request[key] for key in ('run_id', 'element_id', 'attempt')},
+                'value': first, 'answerer_kind': self.answerer_kind,
+                'choice_observations': observations}
+
+
+class RoutingAnswerer:
+    """Versioned format dispatch; model commands remain external workers."""
+    def __init__(self, config):
+        route = {'type': 'object', 'additionalProperties': False,
+                 'required': ['command', 'timeout_seconds', 'answerer_kind'],
+                 'properties': {
+                     'command': {'type': 'array', 'minItems': 1, 'items': {'type': 'string', 'minLength': 1}},
+                     'timeout_seconds': {'type': 'integer', 'minimum': 1},
+                     'answerer_kind': {'type': 'string', 'pattern': '^[a-z0-9][a-z0-9._-]{0,39}$'}}}
+        contract = {'type': 'object', 'additionalProperties': False,
+                    'required': ['contract_version', 'default', 'formats'],
+                    'properties': {'contract_version': {'const': 'element-answerer/v2'},
+                                   'default': route,
+                                   'formats': {'type': 'object', 'additionalProperties': False,
+                                               'properties': {kind: route for kind in
+                                                              ['choice', 'text', 'url', 'boolean_with_reason', 'search']}}}}
+        if not Draft202012Validator(contract).is_valid(config):
+            raise ValueError('Invalid element-answerer/v2 configuration')
+        if config['default']['answerer_kind'].startswith('judge-'):
+            raise ValueError('A judgement-only backend cannot be the default text answerer')
+        if any(key != 'choice' and value['answerer_kind'].startswith('judge-')
+               for key, value in config['formats'].items()):
+            raise ValueError('Judgement backends only support choice answers')
+        self.config = deepcopy(config)
+
+    def answer(self, request):
+        kind = request_kind(request)
+        fmt = 'search' if kind == 'search' else request['answer_format']['type']
+        route = self.config['formats'].get(fmt, self.config['default'])
+        backend = LocalAnswerer({'contract_version': 'element-answerer/v1',
+                                'command': route['command'], 'timeout_seconds': route['timeout_seconds']})
+        if fmt == 'choice' and route['answerer_kind'].startswith('judge-'):
+            return StableChoiceAnswerer(backend, route['answerer_kind']).answer(request)
+        answer = backend.answer(request)
+        if kind == 'element':
+            answer['answerer_kind'] = route['answerer_kind']
+        return answer
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -93,7 +162,13 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument('--config', type=Path, help='local command argv and timeout, never a shell expression')
     args = parser.parse_args(argv)
     try:
-        answerer = FakeAnswerer() if args.fake else LocalAnswerer(yaml.safe_load(args.config.read_text(encoding='utf-8')))
+        if args.fake:
+            answerer = FakeAnswerer()
+        else:
+            config = yaml.safe_load(args.config.read_text(encoding='utf-8'))
+            if not isinstance(config, dict):
+                raise ValueError('Answerer configuration must be an object')
+            answerer = RoutingAnswerer(config) if config.get('contract_version') == 'element-answerer/v2' else LocalAnswerer(config)
         sys.stdout.write(canonical(answerer.answer(json.load(sys.stdin))))
         return 0
     except (OSError, ValueError, KeyError, IndexError, yaml.YAMLError) as exc:

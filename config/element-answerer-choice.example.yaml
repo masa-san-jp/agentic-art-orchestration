@@ -1,0 +1,13 @@
+# Local command wrappers, stdin request -> stdout element-answer/v1.
+# Both presentations run in fresh processes. Keep the default LLM until a
+# comparison on your permitted dataset supports switching choices.
+contract_version: element-answerer/v2
+default:
+  command: [python3, /absolute/path/to/local-llm-answer.py]
+  timeout_seconds: 300
+  answerer_kind: llm-local
+formats:
+  choice:
+    command: [python3, /absolute/path/to/judgement-answer.py]
+    timeout_seconds: 60
+    answerer_kind: judge-local
