@@ -1,5 +1,5 @@
-version: 112
-updated_at: '2026-10-13T17:04:11.266999+00:00'
+version: 113
+updated_at: '2026-10-13T18:08:15.875871+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3558,7 +3558,7 @@ tasks:
     milestone: ELEMENT-HARNESS
     title: Adopt the qualified Production restoration pin
     agent_terminal: EVIDENCE_READY
-    status: IN_PROGRESS
+    status: DONE
     depends_on: [RESEARCH-REFERENCE-PIN-139]
     target_repositories: [agentic-art-orchestration, agentic-art-production]
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/299
@@ -3571,3 +3571,6 @@ tasks:
     - parent CI bootstrap, production-exchange and real-chain
     human_gate: Owner already authorized completion and GitHub publication; independent read-only review and final green CI before merge/release. No owner artifacts or physical effects.
     intake_evidence: Issue299 supplies observable acceptance, target repositories, verification commands and explicit authority boundaries; child restoration remains owned by Production Issue96.
+    evidence: execution/issue-299-verification.json
+    verification_result: ProductionPR97 final4 checks PASS and merged ated18c89; historical875 ancestry and tree equality verified; parent validator/readme/retrieval9, exact merged-pin B-C-D1 and exchange PASS. Final parent CI remains publication gate.
+    completion: Candidate pin and runtime checks qualified; EVIDENCE_READY awaiting final CI and authorized merge. No owner artifact publication or physical work is claimed.

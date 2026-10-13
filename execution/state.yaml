@@ -1,7 +1,7 @@
-version: 331
-updated_at: '2026-10-13T17:04:11.266999+00:00'
-active_task: ISSUE-299
-active_repository: agentic-art-orchestration
+version: 333
+updated_at: '2026-10-13T18:08:15.892824+00:00'
+active_task: null
+active_repository: null
 issue288_checkpoint:
   task: ISSUE-288
   repositories: [agentic-art-orchestration]
@@ -147,11 +147,11 @@ legacy_recovery_checkpoint:
   disposition: Superseded by ISSUE-288 Phase A v2; old owner acceptance is not claimed.
 
 
-last_completed_task: RESEARCH-REFERENCE-PIN-139
+last_completed_task: ISSUE-299
 resume_from:
   task: ISSUE-299
   repository: agentic-art-orchestration
-  action: Wait for qualified Production PR97 final CI and merge; adopt its exact merged pin for Issue299, then run the exact-pinned chain and final parent CI.
+  action: Exact merged pin verified; require all final parent CI jobs green before authorized merge and Issue299 closure, then publish parent patch release.
   command: git status --short
 
 oi07_progress:
@@ -2242,8 +2242,8 @@ issue280_hearing_follow_up:
 checkpoint:
   task: ISSUE-299
   repository: agentic-art-orchestration
-  status: IN_PROGRESS
-  next_operation: Adopt Production PR97 merged SHA after final child qualification; then exact-pinned chain and final parent CI.
+  status: DONE
+  next_operation: Exact pin and local checks qualified; final independent review and all final parent CI gates must pass before merge.
 
 issue296_checkpoint:
   task: ISSUE-296
@@ -2276,7 +2276,12 @@ reference_pin_139_checkpoint:
 
 production_restore_pin_checkpoint:
   task: ISSUE-299
-  status: IN_PROGRESS
+  status: DONE
   start_point: 004ad87944b1e02cc8fdbf2bbd323026714a739b
   lease: HELD_ISOLATED_CLONE; no overlapping active writer observed
-  next_operation: Wait for qualified Production PR97 merge, then adopt its exact merged SHA; current pin unchanged.
+  next_operation: Exact pin, exchange and B-C-D qualified; final independent review/CI and publication merge remain.
+  production_commit: ed18c8942df221524ce0b2a5adb0ade69cb1c4fa
+  production_pr: https://github.com/masa-san-jp/agentic-art-production/pull/97
+  child_final_head: 8e6fa06f4ab26ebc94a27275d587d9e7cd86466d
+  agent_terminal: EVIDENCE_READY
+  evidence: execution/issue-299-verification.json

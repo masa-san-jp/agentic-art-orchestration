@@ -1,0 +1,58 @@
+{
+  "issue_url": "https://github.com/masa-san-jp/agentic-art-orchestration/issues/299",
+  "parent_base_commit": "004ad87944b1e02cc8fdbf2bbd323026714a739b",
+  "production_old_pin": "c8fd2e34c9c419f8563eaa23a52133aee6cc4249",
+  "production_pin": "ed18c8942df221524ce0b2a5adb0ade69cb1c4fa",
+  "research_pin": "fd43cb69edac47c4b8369ec5873465bedfaa4a39",
+  "child_final_head": "8e6fa06f4ab26ebc94a27275d587d9e7cd86466d",
+  "child_main_tree_equals_final_head": true,
+  "historical_875_is_main_ancestor": true,
+  "child_issue_96": "CLOSED",
+  "child_final_ci": {
+    "runs": [
+      38437443843,
+      38437437969
+    ],
+    "checks": 4,
+    "status": "PASS",
+    "full_test_count_per_interpreter": 247
+  },
+  "local_parent_checks": {
+    "validator": "PASS",
+    "readme_projection": "PASS",
+    "retrieval": {
+      "count": 9,
+      "seconds": 0.441,
+      "status": "PASS"
+    },
+    "candidate_bcd": {
+      "production_head": "8e6fa06f4ab26ebc94a27275d587d9e7cd86466d",
+      "count": 1,
+      "seconds": 58.828,
+      "status": "PASS"
+    },
+    "exact_merged_pin_bcd": {
+      "count": 1,
+      "seconds": 158.42,
+      "status": "PASS"
+    },
+    "exact_merged_pin_exchange": {
+      "status": "PASSED",
+      "all_acceptance": true,
+      "stage_count": 14,
+      "evidence_sha256": "sha256:009c2065ade0f420e9e1b733520bf63d5145cc580fa947e48d8e93417858f0a1",
+      "remote_operations": 0,
+      "child_mutations": 0
+    }
+  },
+  "ci_timeout_seconds_per_command": 3600,
+  "ci_timeout_reason": "Restored native F1–F6 full suite exceeded the old1800-second budget; all gates retained.",
+  "independent_review": "No required fixes; final SSOT review/publication CI remain gates.",
+  "publication_gate": "Require all final parent CI jobs green before merge; no parent merge or current three-run gate is claimed.",
+  "privacy": {
+    "fixtures": "synthetic",
+    "owner_artifacts_published": false,
+    "child_schema_copied": false,
+    "physical_effects_run": false
+  }
+}

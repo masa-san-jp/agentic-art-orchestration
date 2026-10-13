@@ -3315,3 +3315,11 @@ Production Issue96/PR97 restores an accepted implementation missing from its mai
 
 ## Issue299 claimed
 Isolated branch codex/production-restored-pin holds the parent-only scope; no overlapping writer is active. Production pin remains unchanged until PR97 final qualification and merge. Restored native evaluation increases the full-suite runtime (247 tests / 2261.451s locally), so real-chain retains every command and raises its per-command timeout from 1800 to 3600 seconds. No child schema or owner data is copied.
+
+
+## Issue299 merged Production pin adopted
+Production PR97 merged at ed18c8942df221524ce0b2a5adb0ade69cb1c4fa after final8e6fa06 CI and independent review. Historical875 accepted code is now restored in main ancestry. Manifest uses the exact merged Production SHA; Researchfd remains unchanged. Candidate B-C-D passes1/58.828s on8e6fa06, whose tree must match mergedmain. Synthetic exact-pin exchange and final parent CI remain gates; no owner data or child schema is copied.
+
+
+## Issue299 local qualification complete
+Production ed18c89 is the merged, final-CI-qualified main and matches8e6fa06 tree; accepted875 ancestry verified. Researchfd remains unchanged. Exact merged-pin exchange PASSED, every acceptance true, no remote operations/child mutations; B-C-D1/158.420sPASS. Validator/readme/retrieval9 pass. Queue is DONE/EVIDENCE_READY; final independent SSOT review and all final parent CI jobs must pass before merge/Issue299 closure. Qualified SSOT is pushed before releasing the parent-only lease. No owner input/runtime/plan/image or child schema enters Git.

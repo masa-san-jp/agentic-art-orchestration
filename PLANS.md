@@ -1233,8 +1233,8 @@ Adopt Production Issue96/PR97 after its final qualification and merge. Research 
 - [x] Parent validator PASS; retrieval 9 tests / 2.021s PASS.
 - [x] Prepare unchanged Research/Viewer exact pins through the credential-free public entry.
 - [x] Raise real-chain per-command timeout from 1800 to 3600 seconds; retain every check.
-- [ ] Production PR97 final qualification and merge.
-- [ ] Adopt merged Production SHA; exact-pinned synthetic exchange and B-C-D chain.
+- [x] Production PR97 final qualification and merge at ed18c8942df221524ce0b2a5adb0ade69cb1c4fa; final evidence-head CI green; accepted875 ancestry retained.
+- [x] Adopt ed18c89; exact merged-pin exchange PASSED and B-C-D1/158.420sPASS. Child final4 checks green, main treeeq8e and875 ancestry verified.
 - [ ] Independent read-only review and final parent CI before merge.
 - [ ] Patch releases and closure verification.
 
@@ -1242,4 +1242,11 @@ Adopt Production Issue96/PR97 after its final qualification and merge. Research 
 Historical accepted Production code 875692c was not in the old pinned main. The restored native F1–F6 evaluation increases full-suite runtime (247 tests / 2261.451s on the Mac). Increase the parent child-command time budget without removing or weakening tests. Historical acceptance, corrected local test failures and current CI evidence remain distinct.
 
 ### Outcomes / Next Start
-Production pin remains c8fd2e3 pending child final qualification. Branch codex/production-restored-pin holds the parent-only lease. Resume with PR97's final CI/merge, then its exact merged pin. No owner data, child schema, private runtime, generated plan/image or physical effect enters this change. Final head CI and independent review remain publication gates.
+Production pin is ed18c89 and local exact-pin checks pass. Branch codex/production-restored-pin holds the parent-only lease until qualified SSOT push is verified. Resume with final independent review and all final parent CI gates before merge. No owner data, child schema, private runtime, generated plan/image or physical effect enters this change. Final head CI and independent review remain publication gates.
+
+### Candidate B-C-D qualification
+Research fd43cb69edac47c4b8369ec5873465bedfaa4a39 plus Production candidate8e6fa06f4ab26ebc94a27275d587d9e7cd86466d passed the synthetic parent B-C-D chain: 1 test /58.828s, no skips. Parent routing code is unchanged; child candidate contains the final evidence metadata and qualified runtime. The manifest still pins c8 until child merge. This is candidate-tree evidence; final parent CI must independently exercise the exact merged manifest pin.
+
+
+### Issue299 qualified execution SSOT
+Child PR97 merged ated18c8942df221524ce0b2a5adb0ade69cb1c4fa after final4 CI checks PASS; Issue96 is CLOSED. Accepted875 is an ancestor and main tree equals8e6fa06. Parent validator/readme/retrieval9 PASS; actual merged-pin exchange PASSED with every acceptance true and zero remote operations/child mutations; exact B-C-D1/158.420sPASS. Queue is DONE/EVIDENCE_READY for qualified implementation, while final independent SSOT review, final parent CI and authorized publication merge remain. Evidence: execution/issue-299-verification.json. No owner artifact, child schema or physical effect is published.
