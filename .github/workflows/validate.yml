@@ -122,13 +122,15 @@ jobs:
           agentic-art-production|repos/agentic-art-production
           viewer-response-notes|repos/viewer-response-notes
           EOF
+      # Restored native F1–F6 evaluation adds substantial full-suite runtime.
+      # Keep every child gate and allow up to an hour per command.
       - name: Qualify the real immutable exchange chain
         run: |
           python3 tools/qualify_pin_update.py \
             --workspace-root repos \
             --output /tmp/pin-update-qualification.json \
             --run-id ci-real-chain \
-            --timeout 1800 \
+            --timeout 3600 \
             --python-root "$RUNNER_TEMP/child-python"
 
   # The bootstrap job validates against the offline fixture mirror. This job also

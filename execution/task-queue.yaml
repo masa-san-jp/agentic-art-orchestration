@@ -1,5 +1,5 @@
-version: 110
-updated_at: '2026-10-13T12:22:44.127188+00:00'
+version: 115
+updated_at: '2026-10-13T18:19:31.446572+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3553,3 +3553,24 @@ tasks:
     - parent CI bootstrap, production-exchange and real-chain
     verification_result: Research final CI38394650991 PASS and PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39; manifest/retrieval fixture agree; local B-C-D passes on equivalent final child trees and parent final CI remains a publication gate.
     completion: Qualified source handling adopted; local C95/D58 PLAN_READY, source51 unchanged; no physical action or publication.
+
+  - id: ISSUE-299
+    milestone: ELEMENT-HARNESS
+    title: Adopt the qualified Production restoration pin
+    agent_terminal: EVIDENCE_READY
+    status: DONE
+    depends_on: [RESEARCH-REFERENCE-PIN-139]
+    target_repositories: [agentic-art-orchestration, agentic-art-production]
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/299
+    acceptance: Production PR97 merged after independent review and final CI; its accepted historical implementation is in ancestry; exact merged pin passes parent validator, retrieval, B-C-D and final CI.
+    checks:
+    - python tools/validate.py --check
+    - python tools/project_status.py --check-readme
+    - python -m unittest tests.test_retrieval -v
+    - python -m unittest tests.test_stage_cd_chain -v
+    - parent CI bootstrap, production-exchange and real-chain
+    human_gate: Owner already authorized completion and GitHub publication; independent read-only review and final green CI before merge/release. No owner artifacts or physical effects.
+    intake_evidence: Issue299 supplies observable acceptance, target repositories, verification commands and explicit authority boundaries; child restoration remains owned by Production Issue96.
+    evidence: execution/issue-299-verification.json
+    verification_result: ProductionPR97 final4 checks PASS and merged ated18c89; historical875 ancestry and tree equality verified; parent validator/readme/retrieval9, exact merged-pin B-C-D1 and exchange PASS. Final parent CI remains publication gate.
+    completion: Candidate pin and runtime checks qualified; EVIDENCE_READY awaiting final CI and authorized merge. No owner artifact publication or physical work is claimed.

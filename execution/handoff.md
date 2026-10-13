@@ -3307,3 +3307,30 @@ Issue287 codee43b341 passes local906/2167.853s (6skips), new13 tests and CI38387
 
 ## Final qualified Research reference adoption
 Research PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39 after final CI38394650991 PASS and independent read-only review. Manifest/retrieval fixture match; Production remains c8fd2e34. Local child full473 tests and parent native B-C-D chain PASS. Fresh owner-data copy C95/D58 completes/reopens, validator PASS, PLAN_READY/prototype READY/zero actionability findings; original51 inputs unchanged. Physical purchase, publication and execution remain unauthorised/unperformed; quantitative Research gaps are retained. Issue287 local906 tests/6skips and code CI38387443494 all3 PASS. Final PR298 publication requires all3 gates green on this final head. No owner body/runtime/plan/images or credentials published.
+
+
+## Issue299 registered
+Production Issue96/PR97 restores an accepted implementation missing from its main ancestry. Parent Issue299 has observable pin/qualification acceptance and is registered READY. Current Production pin c8fd2e3 is unchanged until child final qualification and merge. Owner already authorized completion and GitHub publication; independent review/final CI remain gates. No owner artifact or schema is copied.
+
+
+## Issue299 claimed
+Isolated branch codex/production-restored-pin holds the parent-only scope; no overlapping writer is active. Production pin remains unchanged until PR97 final qualification and merge. Restored native evaluation increases the full-suite runtime (247 tests / 2261.451s locally), so real-chain retains every command and raises its per-command timeout from 1800 to 3600 seconds. No child schema or owner data is copied.
+
+
+## Issue299 merged Production pin adopted
+Production PR97 merged at ed18c8942df221524ce0b2a5adb0ade69cb1c4fa after final8e6fa06 CI and independent review. Historical875 accepted code is now restored in main ancestry. Manifest uses the exact merged Production SHA; Researchfd remains unchanged. Candidate B-C-D passes1/58.828s on8e6fa06, whose tree must match mergedmain. Synthetic exact-pin exchange and final parent CI remain gates; no owner data or child schema is copied.
+
+
+## Issue299 local qualification complete
+Production ed18c89 is the merged, final-CI-qualified main and matches8e6fa06 tree; accepted875 ancestry verified. Researchfd remains unchanged. Exact merged-pin exchange PASSED, every acceptance true, no remote operations/child mutations; B-C-D1/158.420sPASS. Validator/readme/retrieval9 pass. Queue is DONE/EVIDENCE_READY; final independent SSOT review and all final parent CI jobs must pass before merge/Issue299 closure. Qualified SSOT is pushed before releasing the parent-only lease. No owner input/runtime/plan/image or child schema enters Git.
+
+
+## Issue299 lease released after verified push
+Qualified pin/SSOT f3b25c7 was pushed and the remote branch SHA verified before releasing the parent-only lease. No implementation task is active. Final independent SSOT review, all final parent CI jobs, authorized merge/Issue299 closure and parent patch release remain publication steps. Productionv1.1.1 is already published ated18c89 with tag/body/empty attachments verified.
+
+
+## Issue299 timeout contract test synchronized
+The initial parent bootstrap failed only the stale1800 assertion after the intended3600 budget change (903 tests,1 failure,8 skips); exact production-exchange passed. The strict expected value is now3600 and related4 tests pass. Old real-chain canceled as superseded, not reported PASS. Pin/runtime code is unchanged. Require all corrected-head CI jobs green before merge; source scope reclaimed for the test fix.
+
+
+The corrected timeout-contract SSOT ddd5189 was pushed and its remote SHA verified before releasing the reclaimed lease. No active implementation task remains; require all corrected final-head CI jobs green before publication merge.
