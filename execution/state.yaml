@@ -1,7 +1,7 @@
-version: 326
-updated_at: '2026-10-13T09:46:23.942226+00:00'
-active_task: null
-active_repository: null
+version: 327
+updated_at: '2026-10-13T10:59:35.580440+00:00'
+active_task: ISSUE-287
+active_repository: agentic-art-orchestration
 issue288_checkpoint:
   task: ISSUE-288
   repositories: [agentic-art-orchestration]
@@ -16,7 +16,7 @@ issue288_checkpoint:
 issue283_checkpoint:
   task: ISSUE-283
   repositories: [agentic-art-orchestration, art-history-notes]
-  status: BLOCKED
+  status: DONE
   code_status: CODE_VERIFIED
   start_point: 337c33211d6048d934b2db0dcf749cd25cb2e617
   child_start_point: d5d4397752f3fb2d18c1bdbbdfd6962b00dbb8d7
@@ -33,10 +33,10 @@ issue283_checkpoint:
   sensitive_data: Material and owner prose hashes only; no private profile or credential
   external_artifact: No Drive or service write
   feedback: Explicit review provides actual accepted A3 確定の保留; no added operation inferred or answered.
-  unresolved: Actual A3 addition remains unanswered; positive real-material ranking not yet demonstrated; existing six parent failures and separate qualified owner-pin adoption.
+  historical_unresolved: Actual A3 addition remains unanswered; positive real-material ranking not yet demonstrated; existing six parent failures and separate qualified owner-pin adoption.
   lease: NOT_ACQUIRED_ASSIGNED_ISOLATED_CLONES
   remote_sync: NOT_RUN_BY_INSTRUCTION
-  next_operation: Review both local branch HEADs and verification evidence; orchestrator owns publication and qualified pin adoption.
+  historical_next_operation: Review both local branch HEADs and verification evidence; orchestrator owns publication and qualified pin adoption.
 lease:
   status: available
   owner: null
@@ -81,7 +81,7 @@ issue262_checkpoint:
   acceptance: 4/4 observable issue conditions achieved; parent full-suite baseline
     failures remain explicit
   remote_sync: NOT_RUN_BY_INSTRUCTION
-  next_operation: Review both local commits and verification evidence; orchestrator
+  historical_next_operation: Review both local commits and verification evidence; orchestrator
     owns push, PR, merge, issue closure and qualified owner-pin adoption.
 previous_issue250_checkpoint:
   task: ISSUE-250-S4
@@ -103,7 +103,7 @@ previous_issue250_checkpoint:
       absent'
     diff: PASS
   acceptance: 4/4 scoped S4 conditions achieved
-  next_operation: Review the local branch HEAD and verification evidence; orchestrator
+  historical_next_operation: Review the local branch HEAD and verification evidence; orchestrator
     owns push, PR, merge and issue closure; lease released for review.
 completed_checkpoint_oi13:
   task: OI-13
@@ -128,7 +128,7 @@ completed_checkpoint_oi13:
     child_diff_check: 'PASS: git diff --check'
     parent_diff_check: 'PASS: git diff --check'
     issue_close_readback: 'PASS: self-model-notes#82 CLOSED'
-  unresolved:
+  historical_unresolved:
     - 'Production #10 remains open as a persistent requirement SSOT.'
   issue_close_readback:
     closed:
@@ -154,12 +154,14 @@ legacy_recovery_checkpoint:
   private_old_output: .agentic-art/internal/production/recovery-superseded-20260911/
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
+  disposition: Superseded by ISSUE-288 Phase A v2; old owner acceptance is not claimed.
+
 
 last_completed_task: ISSUE-296
 resume_from:
-  task: ISSUE-296
+  task: ISSUE-287
   repository: agentic-art-orchestration
-  action: Stage C/D qualification complete; require final evidence-head CI green before merge PR297, then select the next dependency-complete READY task.
+  action: Complete independent review and checks for choice stability, publish PR and require green CI before merge.
   command: git status --short
 
 oi07_progress:
@@ -2214,7 +2216,7 @@ previous_issue278_checkpoint:
 issue280_checkpoint:
   task: ISSUE-280
   repository: agentic-art-orchestration
-  status: BLOCKED
+  status: DONE
   code_status: CODE_VERIFIED
   start_point: 5f7e186944cf2331ba9eb55dc02619d5f833b139
   branch: agent/280-phase-a-theme
@@ -2232,8 +2234,10 @@ issue280_checkpoint:
     restricts this task to synthetic profiles
   lease: NOT_ACQUIRED_ISOLATED_CLONE
   remote_sync: NOT_RUN_BY_INSTRUCTION
-  next_operation: git show --stat HEAD; orchestrator review, then arrange real-profile
+  historical_next_operation: git show --stat HEAD; orchestrator review, then arrange real-profile
     owner confirmation
+  disposition: Superseded by ISSUE-288 Phase A v2; old owner acceptance is not claimed.
+
 
 issue280_hearing_follow_up:
   status: CODE_VERIFIED_OWNER_GATE_PENDING
@@ -2246,13 +2250,11 @@ issue280_hearing_follow_up:
   lease: NOT_ACQUIRED
 
 checkpoint:
-  task: ISSUE-296
+  task: ISSUE-287
   repository: agentic-art-orchestration
-  status: DONE
-  code_status: CODE_VERIFIED
-  start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
-  evidence: https://github.com/masa-san-jp/agentic-art-orchestration/pull/297
-  next_operation: Require final evidence-head CI green, then merge PR297.
+  status: IN_PROGRESS
+  start_point: ebc1e02c629b1d2f220e1a562f51982c5e544e08
+  next_operation: Review, local checks and CI for the choice answerer implementation.
 
 issue296_checkpoint:
   task: ISSUE-296
@@ -2266,3 +2268,10 @@ issue296_checkpoint:
     agentic-art-research: b493324d7223a8e0686f44702a55eb26e7155a48
     agentic-art-production: c8fd2e34c9c419f8563eaa23a52133aee6cc4249
   verification: CI run 38306095235 all gates PASS; independent read-only reviews clear; no owner body or runtime in Git.
+
+issue287_checkpoint:
+  task: ISSUE-287
+  status: IN_PROGRESS
+  start_point: ebc1e02c629b1d2f220e1a562f51982c5e544e08
+  lease: ISOLATED_CLONE; no other active writer observed
+  next_operation: Implement routing and stability evidence, run public-data comparison, review and green CI.

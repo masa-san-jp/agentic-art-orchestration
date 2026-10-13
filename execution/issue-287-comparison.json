@@ -1,0 +1,257 @@
+{
+  "task": "ISSUE-287",
+  "observed_at": "2026-10-13T10:59:35.580440+00:00",
+  "source": {
+    "repository": "masa-san-jp/art-history-notes",
+    "commit": "372928427b3dcdb1921e7c2c9fe5ff2e305d51e9",
+    "source_file": "config/card-excerpts.json",
+    "sample_count": 12,
+    "owner_material_used": false,
+    "source_is_public": true,
+    "dataset_sha256": "20fcfa57aedf5e7677dc6843aeab3f60c535c8e6e3faac4820b4cc9ebb329bbb"
+  },
+  "models": {
+    "llm": "gemma4:e4b",
+    "judge": "jev-1.13.0"
+  },
+  "comparison": {
+    "backends": {
+      "judge": {
+        "cost_usd": 0.0008572200000000001,
+        "errors": 0,
+        "pairs": 12,
+        "position_counts": {
+          "1": 6,
+          "2": 6,
+          "3": 3,
+          "4": 5,
+          "5": 4
+        },
+        "seconds": 29.051413042470813,
+        "stability_rate": 0.9166666666666666,
+        "stable": 11
+      },
+      "llm": {
+        "cost_usd": 0,
+        "errors": 0,
+        "pairs": 12,
+        "position_counts": {
+          "1": 5,
+          "2": 6,
+          "3": 3,
+          "4": 7,
+          "5": 3
+        },
+        "seconds": 87.22267583478242,
+        "stability_rate": 1.0,
+        "stable": 12
+      }
+    },
+    "choice_agreement_rate": 0.75,
+    "comparable_count": 12,
+    "contract_version": "element-comparison/v1",
+    "decision": "KEEP_LLM_DEFAULT",
+    "reason": "Bounded comparison is not owner-run accuracy acceptance.",
+    "rows": [
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 9.290400000000002e-05,
+            "seconds": 1.2717555002309382,
+            "stable": false
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 39.20170345949009,
+            "stable": true
+          }
+        },
+        "request_sha256": "e81307621251634a4bfd3c92612e800b48d3afbbd9b89e2679b5e7b8379d3f38",
+        "same_original_choice": false
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 9.030000000000001e-05,
+            "seconds": 1.6372225829400122,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 2.697449041996151,
+            "stable": true
+          }
+        },
+        "request_sha256": "d774fe35b08a3ad120b14328fab04df952057bda0157cd27666b3e258648935d",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 5.191200000000001e-05,
+            "seconds": 2.3669832507148385,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 1.6490403758361936,
+            "stable": true
+          }
+        },
+        "request_sha256": "31cfd1e4702ea23fe12f6d3a45062eadca8fa2250979ca376a99b1e266696668",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 4.4688e-05,
+            "seconds": 2.3078179163858294,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 5.482742459513247,
+            "stable": true
+          }
+        },
+        "request_sha256": "402cc115dbc7d41cb1bf14c365e66c54ea657f3dbe22998039c3edbea6555e4d",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 0.000109704,
+            "seconds": 2.4186100414954126,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 6.953940458595753,
+            "stable": true
+          }
+        },
+        "request_sha256": "a9fb68d058e7332f2bf8982793e47cf4b15a7724911fa480df7bc55cf512ed89",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 0.00010710000000000001,
+            "seconds": 2.559227792546153,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 5.48602074990049,
+            "stable": true
+          }
+        },
+        "request_sha256": "77b3dd386f32db6c404bba3f5483d5252a780ba896ffc4e86e8cea821dc39f2c",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 6.2496e-05,
+            "seconds": 2.201412166003138,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 4.310715542174876,
+            "stable": true
+          }
+        },
+        "request_sha256": "57d03136fd46125d7a7e0291e51a1c6ec1f9627d49856fe3b57147869ddbc62a",
+        "same_original_choice": false
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 4.8888000000000004e-05,
+            "seconds": 2.798430750146508,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 3.74596787430346,
+            "stable": true
+          }
+        },
+        "request_sha256": "a7d6a3170e540e3fcd50b7c040a5b0ef720ad4c599cf0cf33dadc41a1026d7b9",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 7.9632e-05,
+            "seconds": 3.0495986249297857,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 5.496514125261456,
+            "stable": true
+          }
+        },
+        "request_sha256": "76a618315afb4721e8e144d7f8f1875d7b72ed3f4b8c175e9fa585641af99d80",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 7.702800000000001e-05,
+            "seconds": 2.8746926663443446,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 3.8892064159736037,
+            "stable": true
+          }
+        },
+        "request_sha256": "5937c1b95051277aa6053d5e3b98dd3695508c8d179eedd4ccaebe288f3c7255",
+        "same_original_choice": true
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 4.872000000000001e-05,
+            "seconds": 2.6256901249289513,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 3.9326829579658806,
+            "stable": true
+          }
+        },
+        "request_sha256": "3ebcf76defc7755b69165a71dbc3da8b617b8c2c9b4b208f1746dd79c34d3430",
+        "same_original_choice": false
+      },
+      {
+        "backends": {
+          "judge": {
+            "cost_usd": 4.3848000000000004e-05,
+            "seconds": 2.939971625804901,
+            "stable": true
+          },
+          "llm": {
+            "cost_usd": 0,
+            "seconds": 4.3766923737712204,
+            "stable": true
+          }
+        },
+        "request_sha256": "cf91d8d73a4d9b5f373bbd1c4df769df0e843387b288debff337b62b4b17b276",
+        "same_original_choice": true
+      }
+    ],
+    "sample_count": 12
+  },
+  "api_price_source": "https://docs.typesafe.ai/models",
+  "judge_input_usd_per_million_tokens": 0.042,
+  "cost_scope": "API only; local machine energy and depreciation excluded",
+  "decision": "KEEP_LLM_DEFAULT",
+  "decision_reason": "Jev was faster, but one of 12 pairs changed its semantic choice under permutation and initial LLM/Jev agreement was only 9/12. No ground-truth or owner-run accuracy acceptance is claimed. Judgement mode remains explicit opt-in.",
+  "private_owner_material_used": false
+}

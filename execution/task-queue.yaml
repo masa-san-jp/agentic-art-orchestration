@@ -1,5 +1,5 @@
-version: 107
-updated_at: '2026-10-13T09:46:23.942226+00:00'
+version: 108
+updated_at: '2026-10-13T10:59:35.580440+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3416,7 +3416,7 @@ tasks:
   - id: ISSUE-280
     milestone: ELEMENT-HARNESS
     title: Generate meaningful themes through shared Phase A elements
-    status: BLOCKED
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/280
     target_repositories:
     - agentic-art-orchestration
@@ -3437,7 +3437,7 @@ tasks:
     - git diff --check
     human_gate: Orchestrator owns push, PR, merge and closure. Real-profile owner confirmation
       remains required; synthetic-only task, local commits only.
-    blocker: Masa real-profile run and owner recognition of a meaningful question; supplement
+    historical_blocker: Masa real-profile run and owner recognition of a meaningful question; supplement
       restricts this task to synthetic profiles
     code_status: CODE_VERIFIED
     integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
@@ -3449,10 +3449,13 @@ tasks:
     completion: Implementation verified locally; Issue completion remains gated on the
       real owner. No child change, lease or remote write.
 
+    superseded_by: ISSUE-288
+    reconciliation: Closed legacy issue; obsolete A3/A4 matching replaced by merged Phase A v2 per docs/20261010-phase-a-v2-design.md section 9. Historical owner acceptance is not claimed.
+
   - id: ISSUE-283
     milestone: ELEMENT-HARNESS
     title: Match owner material against sourced movement and method content
-    status: BLOCKED
+    status: DONE
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/283
     target_repositories: [agentic-art-orchestration, art-history]
     agent_terminal: EVIDENCE_READY
@@ -3471,9 +3474,12 @@ tasks:
     code_status: CODE_VERIFIED
     integration_status: LOCAL_ONLY_ORCHESTRATOR_HANDOFF
     acceptance_result: Review code requirements implemented. Actual accepted 確定の保留 yields 176 zero-score candidates, including four below-minimum matches; native A3.operation.2 requested. Positive meaningful real-material ranking is not proven.
-    blocker: The next actual A3 answer is not available; do not invent it to improve the observed ranking.
+    historical_blocker: The next actual A3 answer is not available; do not invent it to improve the observed ranking.
     verification_result: Parent 852 tests exactly matches pristine origin/main 834 tests six-failure set, with five skips; related 190 and core 59 tests pass; unchanged child canonical 190 tests pass without skips.
     completion: Local review fixes implemented; real matching waits for one more A3 value. No profile access, publication, pin adoption, held lease or remote write. Existing parent failures remain explicit.
+
+    superseded_by: ISSUE-288
+    reconciliation: Closed legacy issue; obsolete A3/A4 matching replaced by merged Phase A v2 per docs/20261010-phase-a-v2-design.md section 9. Historical owner acceptance is not claimed.
 
   - id: ISSUE-288
     milestone: ELEMENT-HARNESS
@@ -3513,3 +3519,18 @@ tasks:
     - .venv/bin/python -m unittest discover -s tests -v
     verification_result: Independent read-only review clear; CI run 38306095235 all three gates PASS, bootstrap 890 tests and exact-pinned B-C-D chain PASS; Production 227 local tests and evaluator PASS.
     completion: Stage C/D routing and merged child pin adoption qualified; final evidence-only head requires green CI before PR297 merge.
+
+  - id: ISSUE-287
+    milestone: ELEMENT-HARNESS
+    title: Configure choice answerers with permutation stability and compare judgement models
+    status: IN_PROGRESS
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-288]
+    target_repositories: [agentic-art-orchestration]
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/287
+    acceptance: Route by answer format; compare two deterministic choice presentations before acceptance; record position, latency and cost; benchmark public real KB data and decide whether to switch.
+    checks:
+    - python tools/validate.py --check
+    - python -m unittest tests.test_choice_answerer tests.test_element -v
+    - python -m unittest discover -s tests -v
+    human_gate: Independent read-only review and green CI before merge, already authorized by the owner; private owner data stays on the Mac.
