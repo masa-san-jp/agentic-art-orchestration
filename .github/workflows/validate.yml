@@ -160,3 +160,8 @@ jobs:
             --workspace-root "$RUNNER_TEMP/pinned" \
             --output-root "$RUNNER_TEMP/exchange" \
             --evidence "$RUNNER_TEMP/exchange-evidence.json"
+      - name: Run the element B-C-D chain against the exact manifest pins
+        env:
+          AAO_CHAIN_RESEARCH_ROOT: ${{ runner.temp }}/pinned/agentic-art-research
+          AAO_CHAIN_PRODUCTION_ROOT: ${{ runner.temp }}/pinned/agentic-art-production
+        run: python3 -m unittest tests.test_stage_cd_chain -v

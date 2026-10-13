@@ -1,5 +1,5 @@
-version: 325
-updated_at: '2026-10-10T12:00:00+00:00'
+version: 326
+updated_at: '2026-10-13T09:46:23.942226+00:00'
 active_task: null
 active_repository: null
 issue288_checkpoint:
@@ -155,12 +155,12 @@ legacy_recovery_checkpoint:
   preexisting_unresolved: P0004 UNKNOWN_ATTRIBUTION; creator identity was not invented
   remote_sync: NOT_RUN
 
-last_completed_task: ISSUE-278
+last_completed_task: ISSUE-296
 resume_from:
-  task: ISSUE-288
+  task: ISSUE-296
   repository: agentic-art-orchestration
-  action: Review the Issue-288 local commits (Phase A v2); run the real-data check after the card exports exist. Orchestrator owns publication; no lease is held.
-  command: git show --stat HEAD
+  action: Stage C/D qualification complete; require final evidence-head CI green before merge PR297, then select the next dependency-complete READY task.
+  command: git status --short
 
 oi07_progress:
   task: OI-07
@@ -2246,10 +2246,23 @@ issue280_hearing_follow_up:
   lease: NOT_ACQUIRED
 
 checkpoint:
-  task: ISSUE-288
+  task: ISSUE-296
   repository: agentic-art-orchestration
   status: DONE
   code_status: CODE_VERIFIED
-  start_point: 946faed
-  evidence: execution/issue-288-verification.json
-  next_operation: Orchestrator reviews and publishes; real-data confirmation after the card exports exist. Earlier note - review corrected code and actual accepted-A3 evidence; apply corrected A4 in the actual run and continue with its requested A3 addition. Publication and pin adoption remain orchestrator-owned.
+  start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
+  evidence: https://github.com/masa-san-jp/agentic-art-orchestration/pull/297
+  next_operation: Require final evidence-head CI green, then merge PR297.
+
+issue296_checkpoint:
+  task: ISSUE-296
+  repository: agentic-art-orchestration
+  status: DONE
+  start_point: 275bd37e168dbb3e940363908d6f3abef973e5dd
+  expected_changes: Checkpoint-safe routing, child pin updates and integration qualification
+  lease: NOT_ACQUIRED_ISOLATED_WORKTREE; no other active owner observed
+  next_operation: Require final evidence-head CI green, then merge PR297
+  qualified_child_pins:
+    agentic-art-research: b493324d7223a8e0686f44702a55eb26e7155a48
+    agentic-art-production: c8fd2e34c9c419f8563eaa23a52133aee6cc4249
+  verification: CI run 38306095235 all gates PASS; independent read-only reviews clear; no owner body or runtime in Git.

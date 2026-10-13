@@ -3281,3 +3281,17 @@ Local implementation: `f7099b1` and `5b29383`; publication remains orchestrator-
 was acquired. Issue 280 remains BLOCKED only on the real-profile meaningful
 question owner acceptance. Next: review this evidence and local commits, then
 arrange that owner acceptance without treating synthetic results as a substitute.
+
+
+## Issue 296 follow-up
+Read-only independent review found child pins lacking C/D tools and native complete.py mutating element-owned manifest. Checkpoint route now skips mutating completion and always advances C/D; missing D tool stops explicitly. Regression tests pass. Child pin adoption and final integration checks remain. No owner input or runtime is added to Git.
+
+
+## Issue 296 qualified child pins
+Research PR138/136 and Production PR95 merged. Pin Research b493324 and Production c8fd2e3; Research fixture commit matches. Final Production 227 tests and evaluation pass on 3.11/3.12. Fresh local D2 accepts 62 values and reopens COMPLETED; missing VISUAL/METHOD refs keep the plan INCOMPLETE and prototype READY. Parent CI now requires fake B-C-D against exact manifest pins. Remaining: full parent checks, final CI evidence/state update and PR297 merge. No owner body/runtime/artifact is added to Git.
+
+
+## Issue 296 final code qualification
+CI run 38306095235 passes all three gates: bootstrap 890 tests, production-exchange with the explicit exact-pinned B-C-D chain, and real-chain. Independent read-only reviews are clear. Production local 227 tests (1948.340s), evaluator and D2 validator pass. Research interrupted harness cases were separately rerun: 2 tests PASS; the interrupted full run is not a clean full-suite result. Parent Mac profile failures reproduce on baseline. Real D2 accepts 62 values, no abandonment, and resumes COMPLETED; missing VISUAL/METHOD keeps plan INCOMPLETE. Original 51 files unchanged. Owner data and outputs remain on the Mac. Final action: require green CI on this evidence-only head, then merge PR297 and confirm issue296 closes.
+
+Local parent full run: 894 tests in 1627.785s, failures=2/errors=5/skipped=6; not a clean full-suite PASS. Five errors were caused by an invalid old Project fixture; missing-profile failure was caused by discovered user configuration; initial-operations failure was caused by the old temporary fixture. All seven separately PASS (10.715s) with an isolated XDG config, a dedicated initial-operations fixture, and the historical Project workspace contract at 4ab9a85 (one-plan fixture matching the test). No assertions were changed or skipped; no personal configuration or existing fixtures were modified. CI independently passes the normal suite (890 tests).

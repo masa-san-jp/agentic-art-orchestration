@@ -326,6 +326,69 @@ class ResearchPendingTests(unittest.TestCase):
         self.assertEqual(len(ids), len(set(children)))
         self.assertEqual("RUN001-research", children[0])
 
+    def test_stage_c_request_follows_a_completed_stage_b(self):
+        protocol, project = self._protocol(engine="raise SystemExit('Stage B is read from its checkpoint')\n")
+        (protocol / "tools" / "work_elements.py").write_text(
+            "import json, sys\n"
+            "assert sys.argv[1:] == ['next', '--project', sys.argv[3], '--run-id', 'RUN001-work'], sys.argv\n"
+            "print(json.dumps({'status': 'WAITING', 'accepted_count': 3, 'completion': None,\n"
+            "  'next_action': {'kind': 'element', 'request': {'contract_version': 'element-request/v1', 'element_id': 'plan.PH001.title'}}}))\n",
+            encoding="utf-8")
+        elements = {"status": "COMPLETED", "accepted_count": 159, "completion": {"status": "INCOMPLETE"}}
+
+        work = MODULE._work_elements(protocol, project, "RUN001", sys.executable)
+        report = MODULE._at_research(self.work, "RUN001", "調和", [], self.work, "harmony", resume_command=["resume"],
+                                     elements=elements, work_elements=work)
+
+        action = report["next_action"]
+        self.assertEqual("RESEARCH_PENDING", report["status"])
+        self.assertEqual(("element", "work"), (action["kind"], action["stage"]))
+        self.assertEqual("plan.PH001.title", action["request"]["element_id"])
+        self.assertEqual([sys.executable, str(protocol / "tools" / "work_elements.py"), "answer", "--project", str(project)],
+                         action["answer_command"])
+        self.assertEqual(["resume"], action["resume_command"])
+
+    def test_stage_d_start_rule_stops_with_its_reasons(self):
+        protocol, project = self._protocol()
+        (protocol / "tools" / "work_elements.py").write_text(
+            "import json, sys\nassert sys.argv[1] == 'stage-d-start'\n"
+            "print(json.dumps({'allowed': False, 'reasons': ['MECHANISM_MERELY_PLAINER: revise'], 'rule': 'r'}))\n"
+            "raise SystemExit(1)\n", encoding="utf-8")
+
+        start = MODULE._stage_d_start(protocol, project, sys.executable)
+        report = MODULE._at_research(self.work, "RUN001", "調和", [], self.work, "harmony",
+                                     elements={"status": "COMPLETED"}, work_elements={"status": "COMPLETED"},
+                                     stage_d_start=start)
+
+        self.assertEqual(("BLOCKED", "STAGE_D_NOT_READY"), (report["status"], report["stop_reason"]))
+        self.assertIn("MECHANISM_MERELY_PLAINER: revise", report["next_action"]["do"])
+
+    def test_stage_d_request_uses_the_same_hand_out(self):
+        production = self.work / "production-code"
+        (production / "tools").mkdir(parents=True)
+        (production / "tools" / "plan_elements.py").write_text(
+            "import json, sys\n"
+            "assert sys.argv[1:] == ['next', '--project-root', sys.argv[3], '--run-id', 'RUN001-plan'], sys.argv\n"
+            "print(json.dumps({'status': 'WAITING', 'accepted_count': 0, 'next_action': {'kind': 'element',\n"
+            "  'request': {'contract_version': 'element-request/v1', 'element_id': 'medium'}}}))\n", encoding="utf-8")
+        project = self.work / "production" / "harmony"
+
+        report = MODULE._plan_elements(production, project, "RUN001", sys.executable)
+        action = MODULE._element_action("production", str(project), report, ["resume"], "FORBIDDEN")
+
+        self.assertEqual(("element", "production", "medium"), (action["kind"], action["stage"], action["request"]["element_id"]))
+        self.assertEqual([sys.executable, str(production / "tools" / "plan_elements.py"), "answer", "--project-root", str(project)],
+                         action["answer_command"])
+        self.assertIsNone(MODULE._plan_elements(self.work / "old", project, "RUN001", sys.executable))
+
+    def test_child_stage_ids_follow_the_research_id_rule(self):
+        for run_id in ("RUN001", "a:b", "R" * 128):
+            for stage in ("work", "plan"):
+                child = MODULE._child_run_id(run_id, stage)
+                self.assertRegex(child, r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+                self.assertTrue(child.endswith("-" + stage))
+        self.assertEqual("RUN001-work", MODULE._child_run_id("RUN001", "work"))
+
     def test_legacy_route_or_old_research_checkout_keeps_the_task_instructions(self):
         protocol, project = self._protocol(route="legacy", engine="raise SystemExit('must not run')\n")
         self.assertIsNone(MODULE._research_elements(protocol, project, "RUN001", sys.executable))
@@ -629,11 +692,15 @@ class RequestForwardingTests(unittest.TestCase):
 
 
 class ProductionHistoryTests(unittest.TestCase):
-    def _run_prototype_fixture(self, prototype_outcome: dict) -> tuple[dict, list[list[str]], object]:
+    def _run_prototype_fixture(self, prototype_outcome: dict, *, element_checkpoint=False, completed_work=False) -> tuple[dict, list[list[str]], object]:
         self.temporary = tempfile.TemporaryDirectory(prefix="run-prototype-stage-")
         self.addCleanup(self.temporary.cleanup)
         root = Path(self.temporary.name)
         captured: list[list[str]] = []
+        if element_checkpoint:
+            checkpoint = root / "state/research-work/projects/run-plan/07_runtime/research-elements.json"
+            checkpoint.parent.mkdir(parents=True)
+            checkpoint.write_text('{}')
 
         def fake_tool(args: list[str], python: str) -> dict:
             if args[0] == "tools/build_research_request.py":
@@ -672,13 +739,39 @@ class ProductionHistoryTests(unittest.TestCase):
                     "--generated-at", "2026-08-20T00:00:00+09:00", "--research-commit", "a" * 40,
                     "--handoff-id", "HO001", "--revision", "1",
                 ]), \
-                patch.object(MODULE, "_head", return_value="d" * 40):
+                patch.object(MODULE, "_head", return_value="d" * 40), \
+                patch.object(MODULE, "_research_elements", return_value={"status": "COMPLETED"}), \
+                patch.object(MODULE, "_work_elements", return_value={
+                    "status": "COMPLETED" if completed_work else "WAITING", "accepted_count": 0, "completion": None,
+                    "next_action": {"request": {"element_id": "plan.PH001.title"}},
+                    "answer_command": ["work-answer"],
+                }), \
+                patch.object(MODULE, "_stage_d_start", return_value={"allowed": True, "reasons": []}), \
+                patch.object(MODULE, "_plan_elements", return_value={
+                    "status": "WAITING", "accepted_count": 0, "abandoned": [],
+                    "next_action": {"request": {"element_id": "medium"}}, "answer_command": ["plan-answer"],
+                }):
             report = MODULE._run_orchestration(
                 "調和", root / "workspace", root / "state", "RUN-PROTOTYPE", "artistic-research",
                 "run-plan", "Run plan", "2026-08-20T00:00:00+09:00", sys.executable,
                 research_root=root / "research", production_root=root / "production", offline_fixture=True,
             )
         return report, captured, root
+
+    def test_checkpoint_route_uses_stage_c_without_mutating_native_completion(self):
+        report, captured, _ = self._run_prototype_fixture({"status": "PASSED"}, element_checkpoint=True)
+        self.assertNotIn("tools/complete.py", [args[0] for args in captured])
+        self.assertNotIn("tools/build_plan.py", [args[0] for args in captured])
+        self.assertEqual(("element", "work"), (report['next_action']['kind'], report['next_action']['stage']))
+
+    def test_completed_stage_c_returns_stage_d_through_the_run_entry(self):
+        report, captured, _ = self._run_prototype_fixture(
+            {"status": "PASSED"}, element_checkpoint=True, completed_work=True)
+        self.assertNotIn("tools/complete.py", [args[0] for args in captured])
+        self.assertNotIn("tools/build_plan.py", [args[0] for args in captured])
+        self.assertEqual(("element", "production", "medium"),
+                         (report['next_action']['kind'], report['next_action']['stage'],
+                          report['next_action']['request']['element_id']))
 
     def test_normal_run_executes_prototype_before_owner_verification(self):
         report, captured, _ = self._run_prototype_fixture({"status": "PASSED"})

@@ -93,14 +93,14 @@ Productionで検証された正規の制作プランだけを、本文を変換�
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-10T12:00:00+00:00`.
+Source updated at: `2026-10-13T09:46:23.942226+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 2 | 200 | 202 |
+| 0 | 0 | 0 | 2 | 201 | 203 |
 
-Current task: `null`; repository: `null`; checkpoint: `ISSUE-288`.
-Next action: Review the Issue-288 local commits (Phase A v2); run the real-data check after the card exports exist. Orchestrator owns publication; no lease is held.
+Current task: `null`; repository: `null`; checkpoint: `ISSUE-296`.
+Next action: Stage C/D qualification complete; require final evidence-head CI green before merge PR297, then select the next dependency-complete READY task.
 Ready: none.
 Next task: `null`.
 Blocked:

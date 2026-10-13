@@ -1,5 +1,5 @@
-version: 106
-updated_at: '2026-10-08T12:23:04.805398+00:00'
+version: 107
+updated_at: '2026-10-13T09:46:23.942226+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3497,3 +3497,19 @@ tasks:
     acceptance_result: Live run LIVE-20261010-A7 on real pinned data completed Phase A (all 171 art and 64 market cards screened once, 47 of 116 inferences, privacy grep 0 hits); local-model run LIVE-20261011-L2 stopped with ELEMENT_ATTEMPTS_EXHAUSTED and per-element attempts recorded; criteria 5, 6, 8 and 10 by synthetic tests.
     verification_result: See execution/issue-288-verification.json for the focused and full-suite counts and the baseline comparison.
     completion: Merged by the orchestrator through PR 290; L284 closed unmerged.
+
+  - id: ISSUE-296
+    milestone: ELEMENT-HARNESS
+    title: Continue B to C to D with one-value element actions
+    status: DONE
+    agent_terminal: EVIDENCE_READY
+    depends_on: [ISSUE-288]
+    target_repositories: [agentic-art-orchestration]
+    issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/296
+    acceptance: Qualified child pins expose C/D tools, checkpoint route avoids native manifest mutation, fake chain and local real Stage D are verified.
+    checks:
+    - .venv/bin/python tools/validate.py --check
+    - .venv/bin/python -m unittest tests.test_run -v
+    - .venv/bin/python -m unittest discover -s tests -v
+    verification_result: Independent read-only review clear; CI run 38306095235 all three gates PASS, bootstrap 890 tests and exact-pinned B-C-D chain PASS; Production 227 local tests and evaluator PASS.
+    completion: Stage C/D routing and merged child pin adoption qualified; final evidence-only head requires green CI before PR297 merge.

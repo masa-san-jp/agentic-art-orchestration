@@ -103,6 +103,14 @@
 - プログラム: 工程・日程・予算・結線・実行可能性の判定・試作の描画（現行の `build_plan.py` と `actionability` を使う）。
 - 推論（1つずつ）: 仕様の値（寸法・素材など）→ 作業ごとの手順文 → 完了の確かめ方 → 不確実性の確かめ方。`actionability` の判定結果を、要素ごとの確認とやり直しに使う。
 
+> 2026-10-13 実装の記録（orchestration #296、research #134、production #94）: 段階 D は production の
+> `tools/plan_elements.py`（`docs/plan-elements.md`）。物理作業には材料・数量・道具も1つずつ聞き、method の
+> 提案として計画に登録する。段階 D を始めてよい条件は research の `work_elements.stage_d_start()` に置く
+> （段階 B・C が `COMPLETED`、要件が下限以上で受け入れテスト付き、仕掛けが `CEASES_TO_WORK`、`complete.py` の
+> 中核の検査が通ること）。数の下限・レビューの不足は止めずに handoff の止めない gap として制作へ渡す。
+> `tools/run.py` は段階 B と同じ渡し方（`next_action` の `kind: element`、`stage`、`request`、`answer_command`）で、
+> `stage: research`（B）→ `work`（C）→ `production`（D）の依頼を返す。
+
 ## 8. 進め方と完了の基準
 
 1. 共通の仕組み（3章）を orchestration に作る。偽の答え手（fake）でも全段階を回せるようにし、仕組みのテストを持つ。
