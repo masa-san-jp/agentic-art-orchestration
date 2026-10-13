@@ -3327,3 +3327,7 @@ Production ed18c89 is the merged, final-CI-qualified main and matches8e6fa06 tre
 
 ## Issue299 lease released after verified push
 Qualified pin/SSOT f3b25c7 was pushed and the remote branch SHA verified before releasing the parent-only lease. No implementation task is active. Final independent SSOT review, all final parent CI jobs, authorized merge/Issue299 closure and parent patch release remain publication steps. Productionv1.1.1 is already published ated18c89 with tag/body/empty attachments verified.
+
+
+## Issue299 timeout contract test synchronized
+The initial parent bootstrap failed only the stale1800 assertion after the intended3600 budget change (903 tests,1 failure,8 skips); exact production-exchange passed. The strict expected value is now3600 and related4 tests pass. Old real-chain canceled as superseded, not reported PASS. Pin/runtime code is unchanged. Require all corrected-head CI jobs green before merge; source scope reclaimed for the test fix.

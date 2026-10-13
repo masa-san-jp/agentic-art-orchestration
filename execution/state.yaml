@@ -1,5 +1,5 @@
-version: 334
-updated_at: '2026-10-13T18:10:33.279288+00:00'
+version: 336
+updated_at: '2026-10-13T18:19:31.446572+00:00'
 active_task: null
 active_repository: null
 issue288_checkpoint:
@@ -38,18 +38,18 @@ issue283_checkpoint:
   remote_sync: NOT_RUN_BY_INSTRUCTION
   historical_next_operation: Review both local branch HEADs and verification evidence; orchestrator owns publication and qualified pin adoption.
 lease:
-  status: available
-  owner: null
-  acquired_at: '2026-10-13T17:03:35.212793+00:00'
-  expires_at: '2026-10-13T21:03:35.212793+00:00'
-  released_at: '2026-10-13T18:10:33.279288+00:00'
-  release_reason: Qualified SSOT f3b25c7 pushed and remote verified; final CI and authorized merge remain publication gates.
+  status: held
+  owner: codex/root
+  acquired_at: '2026-10-13T18:19:31.446572+00:00'
+  expires_at: '2026-10-13T22:19:31.446572+00:00'
+  released_at: null
+  release_reason: null
   lane: QUALIFIED-PIN-RESTORATION
   execution_id: ISSUE299PRODUCTIONRESTORE
   scope:
     repository: agentic-art-orchestration
     branch: codex/production-restored-pin
-    paths: [config/repositories.yaml, .github/workflows/validate.yml, PLANS.md, README.md, execution/**]
+    paths: [config/repositories.yaml, .github/workflows/validate.yml, tests/test_real_chain_ci.py, PLANS.md, README.md, execution/**]
     child_repositories: []
 
 issue262_checkpoint:
@@ -2278,7 +2278,7 @@ production_restore_pin_checkpoint:
   task: ISSUE-299
   status: DONE
   start_point: 004ad87944b1e02cc8fdbf2bbd323026714a739b
-  lease: RELEASED_AFTER_VERIFIED_SSOT_PUSH; no overlapping active writer observed
+  lease: HELD_FOR_TIMEOUT_CONTRACT_TEST_FIX; no overlapping active writer observed
   next_operation: Exact pin, exchange and B-C-D qualified; final independent review/CI and publication merge remain.
   production_commit: ed18c8942df221524ce0b2a5adb0ade69cb1c4fa
   production_pr: https://github.com/masa-san-jp/agentic-art-production/pull/97

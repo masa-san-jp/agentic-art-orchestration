@@ -1254,3 +1254,7 @@ Child PR97 merged ated18c8942df221524ce0b2a5adb0ade69cb1c4fa after final4 CI che
 
 
 Qualified SSOT f3b25c7 was pushed and verified before releasing the lease. The source tree is ready for final independent SSOT review and final parent CI; publication merge is not yet claimed. Productionv1.1.1 tag/main/body and no attachments are verified.
+
+
+### Initial parent CI contract-test correction
+CI38444839018 on e8beca6 passed production-exchange but bootstrap ran903 tests and failed one stale timeout assertion (expected1800, configured3600), with8 existing skips. Keep the assertion and update its expected budget to3600; all checkout, permission, immutability, no-secret and no-apply checks remain. Related4 tests /0.090sPASS. The unfinished old real-chain was canceled as superseded; it is not PASS evidence. Final corrected-head CI remains required before merge. The parent-only scope was reclaimed for this test synchronization and is released only after the corrected SSOT push is verified.

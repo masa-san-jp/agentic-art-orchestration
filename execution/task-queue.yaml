@@ -1,5 +1,5 @@
-version: 113
-updated_at: '2026-10-13T18:08:15.875871+00:00'
+version: 115
+updated_at: '2026-10-13T18:19:31.446572+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:

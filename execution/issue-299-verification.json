@@ -43,16 +43,35 @@
       "evidence_sha256": "sha256:009c2065ade0f420e9e1b733520bf63d5145cc580fa947e48d8e93417858f0a1",
       "remote_operations": 0,
       "child_mutations": 0
+    },
+    "real_chain_ci_contract": {
+      "count": 4,
+      "seconds": 0.09,
+      "status": "PASS"
     }
   },
   "ci_timeout_seconds_per_command": 3600,
   "ci_timeout_reason": "Restored native F1–F6 full suite exceeded the old1800-second budget; all gates retained.",
   "independent_review": "Final independent read-only review reports no required fixes; final parent CI remains a publication gate.",
-  "publication_gate": "Require all final parent CI jobs green before merge; no parent merge or current three-run gate is claimed.",
+  "publication_gate": "Require all final parent CI jobs green on corrected head before merge; old failed/cancelled run is not a PASS.",
   "privacy": {
     "fixtures": "synthetic",
     "owner_artifacts_published": false,
     "child_schema_copied": false,
     "physical_effects_run": false
+  },
+  "initial_parent_ci": {
+    "run": 38444839018,
+    "head": "e8beca61dc73a5a9182cb4505112c591aee1f085",
+    "bootstrap": {
+      "status": "FAIL",
+      "count": 903,
+      "failures": 1,
+      "skipped": 8,
+      "reason": "Existing workflow contract asserted1800 after configured timeout changed to3600."
+    },
+    "production_exchange": "PASS",
+    "real_chain": "CANCELLED_SUPERSEDED",
+    "fix": "Keep the strict timeout assertion and update its expected value to3600; all other guard assertions retained."
   }
 }
