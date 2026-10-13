@@ -149,9 +149,9 @@ legacy_recovery_checkpoint:
 
 last_completed_task: RESEARCH-REFERENCE-PIN-139
 resume_from:
-  task: RESEARCH-REFERENCE-PIN-139
+  task: ISSUE-299
   repository: agentic-art-orchestration
-  action: Require green final PR298 head CI, then merge and verify Issue287 closed. Pin implementation and local qualification complete.
+  action: Wait for qualified Production PR97 final CI and merge; adopt its exact merged pin for Issue299, then run the exact-pinned chain and final parent CI.
   command: git status --short
 
 oi07_progress:
