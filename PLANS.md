@@ -1236,8 +1236,8 @@ Adopt Production Issue96/PR97 after its final qualification and merge. Research 
 - [x] Production PR97 final qualification and merge at ed18c8942df221524ce0b2a5adb0ade69cb1c4fa; final evidence-head CI green; accepted875 ancestry retained.
 - [x] Adopt ed18c89; exact merged-pin exchange PASSED and B-C-D1/158.420sPASS. Child final4 checks green, main treeeq8e and875 ancestry verified.
 - [x] Final independent read-only pin/SSOT review reports no required fixes.
-- [ ] All final parent CI gates must pass before authorized merge.
-- [ ] Patch releases and closure verification.
+- [x] Final CI38445971590 passed all three jobs before PR300 merge as bbf26ace7fc023811cb81e0cb69309e3101b036f.
+- [x] Production v1.1.1 and parent v1.5.1 published; PR97/PR300 merged, Issue96/Issue299 closed; tag commits and empty attachments verified.
 
 ### Surprises & Discoveries / Decision Log
 Historical accepted Production code 875692c was not in the old pinned main. The restored native F1–F6 evaluation increases full-suite runtime (247 tests / 2261.451s on the Mac). Increase the parent child-command time budget without removing or weakening tests. Historical acceptance, corrected local test failures and current CI evidence remain distinct.
@@ -1258,3 +1258,7 @@ Qualified SSOT f3b25c7 was pushed and verified before releasing the lease. The s
 
 ### Initial parent CI contract-test correction
 CI38444839018 on e8beca6 passed production-exchange but bootstrap ran903 tests and failed one stale timeout assertion (expected1800, configured3600), with8 existing skips. Keep the assertion and update its expected budget to3600; all checkout, permission, immutability, no-secret and no-apply checks remain. Related4 tests /0.090sPASS. The unfinished old real-chain was canceled as superseded; it is not PASS evidence. Final corrected-head CI remains required before merge. The parent-only scope was reclaimed for this test synchronization and is released only after the corrected SSOT push is verified.
+
+
+### Publication completed — 2026-10-14 03:59 JST
+Final corrected-head CI38445971590 passed bootstrap, production-exchange and real-chain. PR300 merged at bbf26ace7fc023811cb81e0cb69309e3101b036f; Issue299 is closed and v1.5.1 is published. Production v1.1.1 targets ed18c89; Research v1.3.0 remains fd43cb6. Earlier pending-publication notes above are historical. No implementation task remains. Production#10 and Marketing#96 remain continuing management SSOTs. No owner artifact or physical effect was published.
