@@ -97,12 +97,12 @@ Source updated at: `2026-10-13T12:22:44.127188+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 1 | 0 | 0 | 205 | 206 |
+| 0 | 0 | 1 | 0 | 205 | 206 |
 
-Current task: `null`; repository: `null`; checkpoint: `RESEARCH-REFERENCE-PIN-139`.
+Current task: `ISSUE-299`; repository: `agentic-art-orchestration`; checkpoint: `ISSUE-299`.
 Next action: Require green final PR298 head CI, then merge and verify Issue287 closed. Pin implementation and local qualification complete.
-Ready: `ISSUE-299`.
-Next task: `ISSUE-299`.
+Ready: none.
+Next task: `null`.
 Blocked:
 - none
 

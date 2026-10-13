@@ -3311,3 +3311,7 @@ Research PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39 after final CI
 
 ## Issue299 registered
 Production Issue96/PR97 restores an accepted implementation missing from its main ancestry. Parent Issue299 has observable pin/qualification acceptance and is registered READY. Current Production pin c8fd2e3 is unchanged until child final qualification and merge. Owner already authorized completion and GitHub publication; independent review/final CI remain gates. No owner artifact or schema is copied.
+
+
+## Issue299 claimed
+Isolated branch codex/production-restored-pin holds the parent-only scope; no overlapping writer is active. Production pin remains unchanged until PR97 final qualification and merge. Restored native evaluation increases the full-suite runtime (247 tests / 2261.451s locally), so real-chain retains every command and raises its per-command timeout from 1800 to 3600 seconds. No child schema or owner data is copied.

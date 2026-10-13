@@ -1,5 +1,5 @@
-version: 111
-updated_at: '2026-10-13T12:22:44.127188+00:00'
+version: 112
+updated_at: '2026-10-13T17:04:11.266999+00:00'
 selection_policy: lowest_id_ready_with_dependencies_done
 allowed_statuses: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
 tasks:
@@ -3558,7 +3558,7 @@ tasks:
     milestone: ELEMENT-HARNESS
     title: Adopt the qualified Production restoration pin
     agent_terminal: EVIDENCE_READY
-    status: READY
+    status: IN_PROGRESS
     depends_on: [RESEARCH-REFERENCE-PIN-139]
     target_repositories: [agentic-art-orchestration, agentic-art-production]
     issue_ssot: https://github.com/masa-san-jp/agentic-art-orchestration/issues/299

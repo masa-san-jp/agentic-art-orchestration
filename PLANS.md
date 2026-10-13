@@ -1220,3 +1220,26 @@ Issue287 code qualification complete: CI38387443494 all3 gates PASS, local906 te
 
 ## Final qualified Research reference adoption
 Research PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39 after final CI38394650991 PASS and independent read-only review. Manifest/retrieval fixture match; Production remains c8fd2e34. Local child full473 tests and parent native B-C-D chain PASS. Fresh owner-data copy C95/D58 completes/reopens, validator PASS, PLAN_READY/prototype READY/zero actionability findings; original51 inputs unchanged. Physical purchase, publication and execution remain unauthorised/unperformed; quantitative Research gaps are retained. Issue287 local906 tests/6skips and code CI38387443494 all3 PASS. Final PR298 publication requires all3 gates green on this final head. No owner body/runtime/plan/images or credentials published.
+
+
+## Issue299 — Adopt restored Production implementation
+
+### Purpose / Big Picture
+Adopt Production Issue96/PR97 after its final qualification and merge. Research remains fd43cb69edac47c4b8369ec5873465bedfaa4a39. Only parent pins, CI timeout and execution metadata change.
+
+### Progress
+- [x] Register Issue299 with observable acceptance, repository scope, checks and existing owner publication authorization (74f0db8).
+- [x] Claim isolated parent-only scope; no overlapping active writer.
+- [x] Parent validator PASS; retrieval 9 tests / 2.021s PASS.
+- [x] Prepare unchanged Research/Viewer exact pins through the credential-free public entry.
+- [x] Raise real-chain per-command timeout from 1800 to 3600 seconds; retain every check.
+- [ ] Production PR97 final qualification and merge.
+- [ ] Adopt merged Production SHA; exact-pinned synthetic exchange and B-C-D chain.
+- [ ] Independent read-only review and final parent CI before merge.
+- [ ] Patch releases and closure verification.
+
+### Surprises & Discoveries / Decision Log
+Historical accepted Production code 875692c was not in the old pinned main. The restored native F1–F6 evaluation increases full-suite runtime (247 tests / 2261.451s on the Mac). Increase the parent child-command time budget without removing or weakening tests. Historical acceptance, corrected local test failures and current CI evidence remain distinct.
+
+### Outcomes / Next Start
+Production pin remains c8fd2e3 pending child final qualification. Branch codex/production-restored-pin holds the parent-only lease. Resume with PR97's final CI/merge, then its exact merged pin. No owner data, child schema, private runtime, generated plan/image or physical effect enters this change. Final head CI and independent review remain publication gates.
