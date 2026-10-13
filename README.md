@@ -97,12 +97,12 @@ Source updated at: `2026-10-13T12:22:44.127188+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 | 205 | 205 |
+| 0 | 1 | 0 | 0 | 205 | 206 |
 
 Current task: `null`; repository: `null`; checkpoint: `RESEARCH-REFERENCE-PIN-139`.
 Next action: Require green final PR298 head CI, then merge and verify Issue287 closed. Pin implementation and local qualification complete.
-Ready: none.
-Next task: `null`.
+Ready: `ISSUE-299`.
+Next task: `ISSUE-299`.
 Blocked:
 - none
 

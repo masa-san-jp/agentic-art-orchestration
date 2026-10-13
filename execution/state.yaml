@@ -1,4 +1,4 @@
-version: 329
+version: 330
 updated_at: '2026-10-13T12:22:44.127188+00:00'
 active_task: null
 active_repository: null
@@ -2283,3 +2283,10 @@ reference_pin_139_checkpoint:
   production_commit: c8fd2e34c9c419f8563eaa23a52133aee6cc4249
   verification: Research final CI38394650991 and local473 tests PASS; local parent native B-C-D PASS; fresh C95/D58 PLAN_READY, zero actionability findings, original51 unchanged.
   next_operation: Final PR298 head CI must pass all3 gates before merge.
+
+production_restore_pin_checkpoint:
+  task: ISSUE-299
+  status: READY
+  start_point: 004ad87944b1e02cc8fdbf2bbd323026714a739b
+  lease: NOT_ACQUIRED_ISOLATED_CLONE; no overlapping active writer observed
+  next_operation: Wait for qualified Production PR97 merge, then adopt its exact merged SHA; current pin unchanged.

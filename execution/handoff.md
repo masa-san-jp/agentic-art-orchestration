@@ -3307,3 +3307,7 @@ Issue287 codee43b341 passes local906/2167.853s (6skips), new13 tests and CI38387
 
 ## Final qualified Research reference adoption
 Research PR140 merged at fd43cb69edac47c4b8369ec5873465bedfaa4a39 after final CI38394650991 PASS and independent read-only review. Manifest/retrieval fixture match; Production remains c8fd2e34. Local child full473 tests and parent native B-C-D chain PASS. Fresh owner-data copy C95/D58 completes/reopens, validator PASS, PLAN_READY/prototype READY/zero actionability findings; original51 inputs unchanged. Physical purchase, publication and execution remain unauthorised/unperformed; quantitative Research gaps are retained. Issue287 local906 tests/6skips and code CI38387443494 all3 PASS. Final PR298 publication requires all3 gates green on this final head. No owner body/runtime/plan/images or credentials published.
+
+
+## Issue299 registered
+Production Issue96/PR97 restores an accepted implementation missing from its main ancestry. Parent Issue299 has observable pin/qualification acceptance and is registered READY. Current Production pin c8fd2e3 is unchanged until child final qualification and merge. Owner already authorized completion and GitHub publication; independent review/final CI remain gates. No owner artifact or schema is copied.
