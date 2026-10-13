@@ -52,8 +52,8 @@
   },
   "ci_timeout_seconds_per_command": 3600,
   "ci_timeout_reason": "Restored native F1–F6 full suite exceeded the old1800-second budget; all gates retained.",
-  "independent_review": "Final independent read-only review reports no required fixes; final parent CI remains a publication gate.",
-  "publication_gate": "Require all final parent CI jobs green on corrected head before merge; old failed/cancelled run is not a PASS.",
+  "independent_review": "Final independent read-only review reports no required fixes.",
+  "publication_gate": "SATISFIED: corrected final-head CI38445971590 all three jobs succeeded before PR300 merge and v1.5.1 publication.",
   "privacy": {
     "fixtures": "synthetic",
     "owner_artifacts_published": false,
@@ -73,5 +73,28 @@
     "production_exchange": "PASS",
     "real_chain": "CANCELLED_SUPERSEDED",
     "fix": "Keep the strict timeout assertion and update its expected value to3600; all other guard assertions retained."
+  },
+  "publication": {
+    "status": "COMPLETE",
+    "pr": 300,
+    "issue": 299,
+    "pr_state": "MERGED",
+    "issue_state": "CLOSED",
+    "merge_commit": "bbf26ace7fc023811cb81e0cb69309e3101b036f",
+    "release": "https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.5.1",
+    "production_release": "https://github.com/masa-san-jp/agentic-art-production/releases/tag/v1.1.1",
+    "final_ci": {
+      "run": 38445971590,
+      "head": "fa3f75eb30950373f9c057cd71e64fd7408d0a4f",
+      "bootstrap": "SUCCESS",
+      "production_exchange": "SUCCESS",
+      "real_chain": "SUCCESS",
+      "tests": 903,
+      "existing_skips": 8
+    },
+    "tag_commit_verified": true,
+    "draft": false,
+    "prerelease": false,
+    "assets": []
   }
 }

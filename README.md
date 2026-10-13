@@ -87,20 +87,28 @@ agentic-art-projectへ公開用レコードをexport
 
 Productionで検証された正規の制作プランだけを、本文を変換せず `agentic-art-project` へ投影します。公開の受入条件、attestation、移行、rollbackの詳細は [`docs/issue-193-execution.md`](docs/issue-193-execution.md) と [`docs/operator-runbook.md`](docs/operator-runbook.md) を参照してください。
 
+## 公開済みの最新版
+
+- [Orchestration v1.5.1](https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.5.1): 復元済みProductionの固定参照と統合検証。
+- [Production v1.1.1](https://github.com/masa-san-jp/agentic-art-production/releases/tag/v1.1.1): handoff改訂、実行権限管理、リリース検証の再開を現行機能へ統合。
+- [Research v1.3.0](https://github.com/masa-san-jp/agentic-art-research/releases/tag/v1.3.0): 要素調査と制作参考の引き渡し。
+
+今回のコード作業とGitHub公開は完了しています。継続管理用のProduction#10とMarketing#96はopenで保持しています。
+
 ## 現在地
 
 <!-- project-status:start -->
 ## Project status
 
 Source of truth: `execution/task-queue.yaml` and `execution/state.yaml`.
-Source updated at: `2026-10-13T18:20:28.436897+00:00`.
+Source updated at: `2026-10-13T21:25:27.078025+00:00`.
 
 | BACKLOG | READY | IN_PROGRESS | BLOCKED | DONE | Total |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | 0 | 0 | 0 | 206 | 206 |
 
 Current task: `null`; repository: `null`; checkpoint: `ISSUE-299`.
-Next action: Exact merged pin verified; require all final parent CI jobs green before authorized merge and Issue299 closure, then publish parent patch release.
+Next action: Issue299 closed; PR300 merged and v1.5.1 published. No implementation task remains; await a new request.
 Ready: none.
 Next task: `null`.
 Blocked:

@@ -1,3 +1,24 @@
+# Latest status — 2026-10-14: code and GitHub publication complete
+
+PR300 merged as `bbf26ace7fc023811cb81e0cb69309e3101b036f`; Issue299 closed.
+Final CI38445971590 passed all three jobs (903 tests, eight existing skips).
+Production PR97 merged as `ed18c8942df221524ce0b2a5adb0ade69cb1c4fa`; Issue96 closed.
+Published releases: [Orchestration v1.5.1](https://github.com/masa-san-jp/agentic-art-orchestration/releases/tag/v1.5.1),
+[Production v1.1.1](https://github.com/masa-san-jp/agentic-art-production/releases/tag/v1.1.1),
+and unchanged [Research v1.3.0](https://github.com/masa-san-jp/agentic-art-research/releases/tag/v1.3.0).
+Tags remain bound to their verified release commits.
+
+No implementation task remains. At completion, all eight repositories had zero open PRs;
+Production#10 and Marketing#96 remain open as continuing management SSOTs.
+Owner inputs, production runs, plans and images were not changed or uploaded.
+Physical production and artwork publication are not part of this code completion.
+Evidence: `execution/issue-299-verification.json`.
+
+Earlier entries below are historical checkpoints. Their CI/merge/release waits are resolved;
+do not resume those operations. Await a new request.
+
+---
+
 # Issue #288 — Phase A v2 implemented (local commits only)
 
 Branch `agent/288-phase-a-v2`; no lease, no remote write. Implements chapters 3-8 and 9.1 of
