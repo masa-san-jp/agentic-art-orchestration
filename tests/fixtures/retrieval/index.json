@@ -26,7 +26,7 @@
     {
       "evidence_id": "evidence:marketing-trends:trend-001",
       "repository": "marketing-trends",
-      "source_commit": "1b62fb446f3eb93f4523d419b5830bb3d895ec80",
+      "source_commit": "0f8bceeebdefa6551398f82dd8d7ccfa2630d02e",
       "locator": "trends/trend-001",
       "evidence_kind": "secondary",
       "freshness_status": "stale",
