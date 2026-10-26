@@ -83,7 +83,7 @@ repositories:
     role: input-kb
     authority: marketing trends, practices, freshness, evidence, and graph
     default_branch: main
-    observed_commit: 1b62fb446f3eb93f4523d419b5830bb3d895ec80
+    observed_commit: 0f8bceeebdefa6551398f82dd8d7ccfa2630d02e
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/marketing-trends-notes/issues/1
     quality_gates:
