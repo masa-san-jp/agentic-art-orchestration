@@ -1157,5 +1157,29 @@ class PublicProjectionContractTests(unittest.TestCase):
         self.assertEqual(0, result["record_count"])
 
 
+class PlanIntroductionTests(unittest.TestCase):
+    PLAN = (
+        "# 統合制作計画書\n\n"
+        "## 1. 完成像\n\n| 項目 | 内容 |\n| --- | --- |\n"
+        "| experience sequence / encounter | 入口で足を止める。, 奥でしゃがみ込む。, ベンチで見分けている。 |\n\n"
+        "## 2. テーマ\n\n| 項目 | 内容 |\n| --- | --- |\n| field | 点描の分野 |\n\n"
+        "## 3. メッセージ\n\n| 項目 | 内容 |\n| --- | --- |\n| claim | 段階的に固められる。 |\n\n"
+        "## 4. コンセプト\n\n| 項目 | 内容 |\n| --- | --- |\n| mechanism | 点が目の中で混ざる。 |\n\n"
+        "## 5. 調査の要約\n\n| 項目 | 内容 |\n| --- | --- |\n| 仮説タイトル | 点描に学ぶ試し塗り |\n"
+    ).encode("utf-8")
+
+    def test_generic_run_title_gives_way_to_the_adopted_hypothesis_title(self) -> None:
+        self.assertEqual("点描に学ぶ試し塗り", projection.plan_record_title(projection.GENERIC_PLAN_TITLE, self.PLAN))
+        self.assertEqual("Named by the run", projection.plan_record_title("Named by the run", self.PLAN))
+        self.assertEqual(projection.GENERIC_PLAN_TITLE, projection.plan_record_title(projection.GENERIC_PLAN_TITLE, b"# plan\n"))
+
+    def test_introduction_lists_scenes_and_separates_field_from_mechanism(self) -> None:
+        readme = projection._generated_readme({"title": "点描に学ぶ試し塗り", "assets": "[]"}, "plan",
+                                              canonical_body=self.PLAN).decode("utf-8")
+        self.assertIn("- 入口で足を止める。\n- 奥でしゃがみ込む。\n- ベンチで見分けている。\n", readme)
+        self.assertIn("- 分野: 点描の分野\n- 制作の仕組み: 点が目の中で混ざる。\n", readme)
+        self.assertNotIn("制作機構は", readme)
+
+
 if __name__ == "__main__":
     unittest.main()

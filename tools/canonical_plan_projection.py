@@ -111,6 +111,7 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
             bundle = (_owner_bundle(item, internal, child_python)
                       if child_python is not None else _owner_bundle(item, internal))
             slug=item.get("project_slug",item.get("project_id"));title=item.get("project_title",item.get("title",slug))
+            if isinstance(title,str):title=p.plan_record_title(title,bundle["files"]["plan.md"])
             if not isinstance(slug,str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*",slug) or not isinstance(title,str) or not title.strip():raise ValueError("explicit safe project slug/title required")
             if p.scan_public_projection({"title":title,"body":bundle["files"]["plan.md"].decode()},"canonical-plan"):
                 raise ValueError("public content policy blocked canonical bytes")
