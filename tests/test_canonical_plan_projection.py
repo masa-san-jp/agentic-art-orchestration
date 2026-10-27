@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -13,7 +14,72 @@ import yaml
 from tests import test_public_projection as regression
 from tests.test_public_projection import synthetic_owner_boundary
 from tools import public_projection as p
-from tools.canonical_plan_projection import _owner_bundle
+from tools.canonical_plan_projection import _owner_bundle, ensure_automatic_attestation
+
+
+FAKE_ATTESTATION_TOOL = '''"""Fake Production attestation CLI: logs argv; a `reject` file rejects."""
+import hashlib, json, pathlib, sys
+args = sys.argv[1:]
+code = pathlib.Path(__file__).resolve().parents[1]
+with (code / "calls.jsonl").open("a", encoding="utf-8") as log:
+    log.write(json.dumps(args) + "\\n")
+if (code / "reject").exists():
+    print(json.dumps({"status": "REJECTED", "reason": (code / "reject").read_text().strip()})); sys.exit(1)
+project = pathlib.Path(args[args.index("--project-root") + 1])
+path = project / "03_plan/public-plan-attestation.json"
+body = "sha256:" + hashlib.sha256((project / "03_plan/production-plan.md").read_bytes()).hexdigest()
+if "--check" in args:
+    ok = json.loads(path.read_text())["human_plan"]["sha256"] == body
+    print(json.dumps({"status": "VERIFIED", "production_state": "PLANNING"} if ok else {"status": "REJECTED"}))
+    sys.exit(0 if ok else 1)
+document = {"project_id": project.name, "plan_id": "PL001", "plan_revision": 1,
+            "generated_at": args[args.index("--generated-at") + 1], "human_plan": {"sha256": body}, "assets": [],
+            "producer": {"repository": "masa-san-jp/agentic-art-production", "commit": args[args.index("--producer-commit") + 1]}}
+data = json.dumps(document, sort_keys=True) + "\\n"
+if path.exists() and path.read_text() != data:
+    print(json.dumps({"status": "REJECTED", "reason": "ATTESTATION_CONFLICT"})); sys.exit(1)
+path.write_text(data)
+print(json.dumps({"status": "ATTESTED"}))
+'''
+
+
+def write_fake_attestation_tool(code):
+    """Install the fake owner CLI below `code`; it writes like the real one (create-only)."""
+    tool = Path(code) / "tools" / "public_plan_attestation.py"
+    tool.parent.mkdir(parents=True, exist_ok=True)
+    tool.write_text(FAKE_ATTESTATION_TOOL, encoding="utf-8")
+    return tool
+
+
+class AutomaticAttestationTests(unittest.TestCase):
+    def setUp(self):
+        t = tempfile.TemporaryDirectory(); self.addCleanup(t.cleanup); self.root = Path(t.name)
+        self.code = self.root / "production-code"
+        write_fake_attestation_tool(self.code)
+        self.project = self.root / "internal" / "production" / "demo"
+        (self.project / "03_plan").mkdir(parents=True)
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Demo plan\n")
+
+    def attest(self, clock):
+        return ensure_automatic_attestation(python=sys.executable, code=self.code, project=self.project,
+                                            producer_commit="a" * 40, generated_at=clock)
+
+    def calls(self):
+        return [json.loads(line) for line in (self.code / "calls.jsonl").read_text().splitlines()]
+
+    def test_resume_with_a_verified_attestation_for_the_same_bytes_does_not_regenerate(self):
+        self.assertEqual("ATTESTED", self.attest("2026-10-27T00:00:00Z")["status"])
+        self.assertEqual("ALREADY_ATTESTED", self.attest("2026-10-28T00:00:00Z")["status"])
+        self.assertEqual([True, False], ["--automatic-plan" in call for call in self.calls()])
+
+    def test_changed_plan_bytes_are_reattested_and_owner_finding_is_returned(self):
+        self.attest("2026-10-27T00:00:00Z")
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        result = self.attest("2026-10-28T00:00:00Z")
+        self.assertEqual("REJECTED", result["status"])
+        self.assertEqual({"status": "REJECTED", "reason": "ATTESTATION_CONFLICT"}, result["finding"])
+        self.assertEqual("--automatic-plan", result["command"][4])
+        self.assertEqual(2, sum("--automatic-plan" in call for call in self.calls()))
 
 
 class CanonicalPlanProjectionTests(unittest.TestCase):
@@ -100,6 +166,27 @@ class CanonicalPlanProjectionTests(unittest.TestCase):
         before=p._tree_fingerprint(self.target)
         result=self.project()
         self.assertEqual('BLOCKED_POLICY',result['status']);self.assertEqual(before,p._tree_fingerprint(self.target))
+        finding=json.loads((self.root/'state'/self.report['run_id']/'public-projection-result.json').read_text())['findings'][0]
+        self.assertIn('reason: ',finding['remediation']);self.assertNotIn(str(self.root),finding['remediation'])
+
+    @patch('tools.canonical_plan_projection._owner_bundle',synthetic_owner_boundary)
+    def test_finding_keeps_the_fixed_reason_for_a_receiver_index_without_retired_ids(self):
+        index_path=self.target/'plans/index.yaml'
+        index=yaml.safe_load(index_path.read_text());del index['retired_ids']
+        index_path.write_text(yaml.safe_dump(index))
+        result=self.project()
+        self.assertEqual('BLOCKED_POLICY',result['status']);self.assertEqual(['FORBIDDEN_CONTENT'],result['finding_codes'])
+        evidence=json.loads((self.root/'state'/self.report['run_id']/'public-projection-result.json').read_text())
+        self.assertTrue(evidence['findings'][0]['remediation'].endswith('reason: receiver index contract required'))
+        self.assertEqual([],p.validate_result(evidence))
+
+    def test_reason_from_outside_this_module_is_reduced_to_its_type(self):
+        from tools.canonical_plan_projection import _failure_reason
+        try:
+            json.loads('{"secret": /private/path')
+        except ValueError as exc:
+            self.assertEqual('JSONDecodeError',_failure_reason(exc))
+        self.assertEqual('OSError',_failure_reason(OSError('/private/path')))
 
     @unittest.skipUnless(os.environ.get('AAK_PRODUCTION_CODE_ROOT'), 'requires explicit qualified Production checkout')
     def test_actual_production_validator_exact_bytes_and_tamper(self):

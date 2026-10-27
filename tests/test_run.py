@@ -18,6 +18,7 @@ from tools.input_pipeline import run_input_pipeline
 from tools.output_destinations import resolve_destinations
 from tools.run import run
 from tools.signal_bundle import build_signal_bundle
+from tests.test_canonical_plan_projection import write_fake_attestation_tool
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -918,10 +919,11 @@ class ProductionHistoryTests(unittest.TestCase):
         self.assertEqual([False, True], [item["previously_materialized"] for item in accepts])
         self.assertEqual([True, True], [item["prior_records_visible"] for item in plans])
 
-    def test_profiled_plan_ready_run_invokes_the_single_public_candidate_producer(self):
-        with tempfile.TemporaryDirectory(prefix="run-public-prepare-") as temporary:
-            root = Path(temporary)
-            target = root / "public-target"
+    def _profiled_plan_ready(self, root: Path, run_id: str = "RUN-PROJECTION-001", *, runs: int = 1) -> list[dict]:
+        """Reach PLAN_READY with fake workers and a fake Production attestation CLI."""
+        write_fake_attestation_tool(root / "production")
+        target = root / "public-target"
+        if not target.exists():
             subprocess.run(["git", "init", "-q", "-b", "main", str(target)], check=True, capture_output=True)
             public_projection.init_target(target, apply=True)
             subprocess.run(["git", "-C", str(target), "add", "public-project.yaml", "README.md", "plans", "works"], check=True, capture_output=True)
@@ -936,57 +938,124 @@ class ProductionHistoryTests(unittest.TestCase):
                     "public_projection_root": str(target),
                 },
             }, sort_keys=False), encoding="utf-8")
-            resolution = resolve_destinations(profile, repository_root=ROOT, run_id="RUN-PROJECTION-001")
+        resolution = resolve_destinations(root / "destinations.yaml", repository_root=ROOT, run_id=run_id)
 
-            def fake_tool(args: list[str], python: str) -> dict:
-                if args[0] == "tools/build_research_request.py":
-                    output = Path(args[args.index("--output") + 1])
-                    output.mkdir(parents=True, exist_ok=True)
-                    (output / "RR001.yaml").write_text(
-                        "request_id: RR001\nintent:\n  creative_question: derived\n", encoding="utf-8",
-                    )
-                return {"status": "PASSED"}
+        def fake_tool(args: list[str], python: str) -> dict:
+            if args[0] == "tools/build_research_request.py":
+                output = Path(args[args.index("--output") + 1])
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "RR001.yaml").write_text(
+                    "request_id: RR001\nintent:\n  creative_question: derived\n", encoding="utf-8",
+                )
+            return {"status": "PASSED"}
 
-            def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
-                if args[0] == "tools/complete.py":
-                    return {"status": "COMPLETE"}
-                if args[0] == "tools/new_production.py":
-                    project = Path(args[args.index("--output-root") + 1]) / "production" / "run-plan"
-                    (project / "05_execution").mkdir(parents=True, exist_ok=True)
-                    (project / "05_execution" / "output-versions.yaml").write_text("version: 1\n", encoding="utf-8")
-                if args[0] == "tools/build_plan.py":
-                    project = Path(args[args.index("--project-root") + 1])
-                    (project / "03_plan").mkdir(parents=True, exist_ok=True)
-                    (project / "03_plan" / "production-plan.md").write_text("# plan\n", encoding="utf-8")
-                return {"status": "PASSED"}
+        def fake_child(root_path: Path, args: list[str], python: str, **kwargs) -> dict:
+            if args[0] == "tools/complete.py":
+                return {"status": "COMPLETE"}
+            if args[0] == "tools/new_production.py":
+                project = Path(args[args.index("--output-root") + 1]) / "production" / "run-plan"
+                (project / "05_execution").mkdir(parents=True, exist_ok=True)
+                (project / "05_execution" / "output-versions.yaml").write_text("version: 1\n", encoding="utf-8")
+            if args[0] == "tools/build_plan.py":
+                project = Path(args[args.index("--project-root") + 1])
+                (project / "03_plan").mkdir(parents=True, exist_ok=True)
+                (project / "03_plan" / "production-plan.md").write_text("# plan\n", encoding="utf-8")
+            return {"status": "PASSED"}
 
-            with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
-                    patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
-                    patch.object(MODULE, "_run_child", side_effect=fake_child), \
-                    patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
-                    patch.object(MODULE, "verify_plan", return_value={"plan_status": "PLAN_READY"}), \
-                    patch.object(MODULE, "_head", return_value="d" * 40):
-                report = MODULE._run_orchestration(
-                    "調和", root / "workspace", root / "state", "RUN-PROJECTION-001", "artistic-research",
-                    "run-plan", "Run plan", "2026-09-04T00:00:00+09:00", sys.executable,
+        reports = []
+        with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+                patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
+                patch.object(MODULE, "_run_child", side_effect=fake_child), \
+                patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
+                patch.object(MODULE, "verify_plan", return_value={"plan_status": "PLAN_READY"}), \
+                patch.object(MODULE, "_head", return_value="d" * 40):
+            for attempt in range(runs):
+                # A resumed run gets a new clock; the attestation must not collide.
+                reports.append(MODULE._run_orchestration(
+                    "調和", root / "workspace", root / "state", run_id, "artistic-research",
+                    "run-plan", "Run plan", f"2026-09-04T00:0{attempt}:00+09:00", sys.executable,
                     research_root=root / "research", production_root=root / "production",
                     offline_fixture=True, destination_resolution=resolution,
                     internal_output_root=root / "internal",
-                )
+                ))
+        return reports
 
+    @staticmethod
+    def _attestation_calls(root: Path) -> list[list[str]]:
+        log = root / "production" / "calls.jsonl"
+        return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()] if log.exists() else []
+
+    def test_profiled_plan_ready_run_attests_then_invokes_the_single_public_candidate_producer(self):
+        with tempfile.TemporaryDirectory(prefix="run-public-prepare-") as temporary:
+            root = Path(temporary)
+            target = root / "public-target"
+            report, = self._profiled_plan_ready(root)
+
+            # The closed automatic lane ran with the pinned Production commit
+            # before source_fields read the attestation it wrote.
+            calls = self._attestation_calls(root)
+            self.assertEqual(1, len(calls))
+            self.assertIn("--automatic-plan", calls[0])
+            self.assertNotIn("--native-review", calls[0])
+            self.assertEqual("d" * 40, calls[0][calls[0].index("--producer-commit") + 1])
+            self.assertEqual("2026-09-04T00:00:00+09:00", calls[0][calls[0].index("--generated-at") + 1])
+            self.assertEqual("ATTESTED", report["automatic_plan_attestation"]["status"])
+            self.assertTrue(report["public_plan_attestation"].endswith("03_plan/public-plan-attestation.json"))
             self.assertEqual("PLAN_READY", report["status"])
             self.assertEqual("BLOCKED_POLICY", report["projection_status"])
             self.assertEqual("automatic-plan-projection-authority/v1", report["automatic_plan_authority"]["contract_version"])
             self.assertEqual("tools/run.py", report["automatic_plan_authority"]["producer"])
             self.assertEqual("BLOCKED_POLICY", report["public_projection"]["status"])
             self.assertEqual("AUTOMATIC_PLAN", report["public_projection"]["projection_mode"])
-            # Fake worker success is not owner attestation or public consent.
+            # A fake attestation CLI is not the qualified owner checkout.
             self.assertIsNone(report["public_projection"]["request_locator"])
             self.assertFalse((target / "plans/P0001-run-plan/plan.md").exists())
             self.assertTrue(Path(report["plan"]).is_file())
             evidence = root / "state" / "RUN-PROJECTION-001" / "public-projection-result.json"
             self.assertTrue(evidence.is_file())
-            self.assertEqual("AUTOMATIC_PLAN", json.loads(evidence.read_text(encoding="utf-8"))["projection_mode"])
+            result = json.loads(evidence.read_text(encoding="utf-8"))
+            self.assertEqual("AUTOMATIC_PLAN", result["projection_mode"])
+            self.assertIn("reason: ", result["findings"][0]["remediation"])
+            # A blocked projection after PLAN_READY names what to repair.
+            action = report["next_action"]
+            self.assertEqual(("agent", "projection"), (action["actor"], action["stage"]))
+            self.assertEqual("RUN-PROJECTION-001/public-projection-result.json", action["result_locator"])
+            self.assertEqual(report["public_projection"]["finding_codes"], action["finding_codes"])
+            self.assertIn("--run-id", action["resume_command"])
+            self.assertEqual("PUBLIC_PROJECTION_PENDING", report["stop_reason"])
+
+    def test_rejected_automatic_attestation_blocks_before_projection(self):
+        with tempfile.TemporaryDirectory(prefix="run-attest-reject-") as temporary:
+            root = Path(temporary)
+            write_fake_attestation_tool(root / "production")
+            (root / "production" / "reject").write_text("PUBLIC_URL_BLOCKED\n", encoding="utf-8")
+            report, = self._profiled_plan_ready(root, "RUN-ATTEST-REJECT")
+
+            self.assertEqual("PLAN_READY", report["plan_status"])
+            self.assertEqual("BLOCKED", report["projection_status"])
+            self.assertEqual("PRODUCTION_AUTOMATIC_ATTESTATION_FAILED", report["stop_reason"])
+            finding = {"status": "REJECTED", "reason": "PUBLIC_URL_BLOCKED"}
+            self.assertEqual(finding, report["automatic_plan_attestation"]["finding"])
+            action = report["next_action"]
+            self.assertEqual(("agent", "attestation"), (action["actor"], action["stage"]))
+            self.assertEqual(finding, action["finding"])
+            self.assertIn("--automatic-plan", action["command"])
+            self.assertIn("--run-id", action["resume_command"])
+            self.assertNotIn("public_projection", report)
+            self.assertFalse((root / "state" / "RUN-ATTEST-REJECT" / "public-projection-result.json").exists())
+            self.assertFalse((root / "public-target" / "plans/P0001-run-plan").exists())
+
+    def test_resume_reuses_a_verified_attestation_for_identical_plan_bytes(self):
+        with tempfile.TemporaryDirectory(prefix="run-attest-resume-") as temporary:
+            root = Path(temporary)
+            first, second = self._profiled_plan_ready(root, "RUN-ATTEST-RESUME", runs=2)
+
+            calls = self._attestation_calls(root)
+            self.assertEqual(1, sum("--automatic-plan" in call for call in calls))
+            self.assertEqual(1, sum("--check" in call for call in calls))
+            self.assertEqual("ATTESTED", first["automatic_plan_attestation"]["status"])
+            self.assertEqual("ALREADY_ATTESTED", second["automatic_plan_attestation"]["status"])
+            self.assertEqual(first["public_plan_attestation_sha256"], second["public_plan_attestation_sha256"])
 
 
 if __name__ == "__main__":

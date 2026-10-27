@@ -28,6 +28,63 @@ def source_fields(plan, code):
     return result
 
 
+def ensure_automatic_attestation(*, python, code, project, producer_commit, generated_at):
+    """Run Production's closed AUTOMATIC_PLAN attestation before projection.
+
+    This is the mechanical owner check for a canonical plan record: no human
+    approval, no external effect.  An attestation that the pinned owner still
+    verifies for the identical plan bytes and producer commit is reused, so a
+    resumed run (with a new clock) does not collide with its own earlier file.
+    """
+    code, project = Path(code), Path(project)
+    tool = str(code / "tools/public_plan_attestation.py")
+    command = [str(python), tool, "--project-root", str(project), "--automatic-plan",
+               "--producer-commit", str(producer_commit), "--generated-at", str(generated_at)]
+    existing = project / "03_plan/public-plan-attestation.json"
+    plan = project / "03_plan/production-plan.md"
+    if existing.is_file() and not existing.is_symlink() and plan.is_file():
+        try:
+            current = json.loads(existing.read_bytes())
+            same = (current["producer"]["commit"] == producer_commit
+                    and current["human_plan"]["sha256"] == "sha256:" + digest(plan.read_bytes()))
+        except (ValueError, KeyError, TypeError, OSError):
+            same = False
+        if same:
+            checked = subprocess.run([str(python), tool, "--project-root", str(project), "--check"],
+                                     cwd=code, capture_output=True, text=True, timeout=120)
+            try:
+                verified = checked.returncode == 0 and json.loads(checked.stdout).get("status") == "VERIFIED"
+            except (ValueError, AttributeError):
+                verified = False
+            if verified:
+                return {"status": "ALREADY_ATTESTED", "command": command}
+    result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
+    if result.returncode:
+        try:
+            finding = json.loads(result.stdout)
+        except ValueError:
+            finding = {"status": "REJECTED", "reason": result.stderr.strip() or "automatic attestation failed"}
+        return {"status": "REJECTED", "command": command, "finding": finding}
+    return {"status": "ATTESTED", "command": command}
+
+
+def _failure_reason(exc):
+    """Name why projection stopped without copying paths, bytes or secrets.
+
+    Only the fixed messages raised by this module are kept verbatim; anything
+    raised elsewhere (YAML/JSON parsers, the filesystem, owner CLIs) is reduced
+    to its exception type.
+    """
+    trace = exc.__traceback__
+    while trace is not None and trace.tb_next is not None:
+        trace = trace.tb_next
+    message = str(exc)
+    if (type(exc) is ValueError and trace is not None and trace.tb_frame.f_code.co_filename == __file__
+            and re.fullmatch(r"[A-Za-z0-9_ ./-]{1,120}", message)):
+        return message
+    return type(exc).__name__
+
+
 def _owner_bundle(item, internal, child_python=None):
     from tools import public_projection as p
     code = Path(str(item.get("production_code_root", "")))
@@ -226,7 +283,9 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
         else:status="ALREADY_PROJECTED"
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError, p.PreparationError) as exc:
         code="TARGET_CONFLICT" if status=="BLOCKED_CONFLICT" else "CONFIGURATION_MISSING" if status=="BLOCKED_CONFIGURATION" else "FORBIDDEN_CONTENT"
-        findings=[p._projection_finding(code,"canonical-plan-projection/v2","Require qualified owner attestation, stable identity/revision and reviewed receiver layout; preserve existing data. "+("REVISION_CONFLICT" if str(exc)=="REVISION_CONFLICT" else ""))]
+        # Keep the fixed reason so an agent can tell a missing attestation from
+        # a receiver index defect; see _failure_reason for what is never kept.
+        findings=[p._projection_finding(code,"canonical-plan-projection/v2","Require qualified owner attestation, stable identity/revision and reviewed receiver layout; preserve existing data. reason: "+_failure_reason(exc))]
         changed=[];after=p._automatic_safe_target_fingerprint(target)
     result=p._automatic_terminal_result(projection_id=run_id,generated_at=p._automatic_safe_generated_at(source),request_hash=p.sha256_hex({"contract_version":"canonical-plan-projection/v2","mode":"AUTOMATIC_PLAN","canonical_artifact":"production-plan.md","body_transform":"none","refs":refs}),source_refs=refs,status=status,findings=findings,before=before,after=after,public_ids=public_ids,planned_paths=planned,changed_paths=changed)
     previous_path=state_root/run_id/'public-projection-result.json'
