@@ -1640,6 +1640,23 @@ def _plan_bullet_value(body: bytes | None, label: str) -> str | None:
     return None
 
 
+# tools/run.py names a run it was not given a title for this way; it says nothing about the work.
+GENERIC_PLAN_TITLE = "Repository-derived production proposal"
+
+
+def plan_record_title(title: str, canonical_body: bytes | None) -> str:
+    """The adopted hypothesis title from the canonical plan when the run only had the generic name."""
+    if title != GENERIC_PLAN_TITLE:
+        return title
+    return _plan_table_value(canonical_body, "5. 調査の要約", ("仮説タイトル",)) or title
+
+
+def _intro_scenes(experience: str) -> str:
+    """Production joins the encounter scenes with ", "; give each scene its own line."""
+    scenes = [scene.strip() for scene in re.split(r"(?<=[。．])\s*,\s+", experience) if scene.strip()]
+    return experience if len(scenes) < 2 else "\n".join(f"- {scene}" for scene in scenes)
+
+
 def _generated_readme(record: Mapping[str, object], kind: str, *, canonical_body: bytes | None = None) -> bytes:
     body_name = "plan.md" if kind == "plan" else "record.md"
     title = str(record["title"]).replace(chr(10), " ").replace(chr(13), " ")
@@ -1652,7 +1669,7 @@ def _generated_readme(record: Mapping[str, object], kind: str, *, canonical_body
     field = _plan_table_value(canonical_body, "2. テーマ", ("field",))
     format_value = _plan_bullet_value(canonical_body, "format")
     resolution = _plan_bullet_value(canonical_body, "resolution")
-    experience = experience or "具体的な体験順序は [plan.md](plan.md) の「完成像」に記載されています。"
+    experience = _intro_scenes(experience) if experience else "具体的な体験順序は [plan.md](plan.md) の「完成像」に記載されています。"
     claim = claim or "主張と反証条件は [plan.md](plan.md) の「メッセージ」に記載されています。"
     mechanism = mechanism or "制作機構と差分は [plan.md](plan.md) の「コンセプト」に記載されています。"
     field = field or "Production が受理した handoff と調査から導かれた制作上の問いです。"
@@ -1684,7 +1701,8 @@ def _generated_readme(record: Mapping[str, object], kind: str, *, canonical_body
         "## 主張\n\n"
         f"{claim}\n\n"
         "## 発想の由来\n\n"
-        f"{field} 制作機構は {mechanism}\n\n"
+        f"- 分野: {field}\n"
+        f"- 制作の仕組み: {mechanism}\n\n"
         "## 素材・形式\n\n"
         f"形式: {format_line}。正本の本文と、受入済み attestation が列挙する asset を参照します。\n\n"
         + "\n".join(asset_links)
