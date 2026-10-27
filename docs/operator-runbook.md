@@ -234,7 +234,8 @@ targetのGit/layout/index/markerをpreflightし、合格後に`plans/Pxxxx-<slug
 
 `tools/run.py`はその前に、pin済みProductionの機械的なattestation（`--automatic-plan`、人の承認なし）を実行し、
 同じplan bytesの検証済みattestationがあれば再利用する。拒否や投影の`BLOCKED_*`は、ownerのfindingまたは
-result locator・finding codeと`resume_command`を`next_action`に入れて返す。
+result locator・finding codeと`resume_command`を`next_action`に入れて返す。投影が通ったあとは、
+公開先のProject自身の`tools/catalog_sync.py`と`tools/validate.py --check`を実行し、派生catalogまで揃えて残す。
 
 batchは全件を先にstagingしてから反映するため、100件以上でもID・順序・bytesが決定的である。
 一件でもpolicy違反、未許諾素材、target conflict、無関係なdirty変更、契約不適合があれば
