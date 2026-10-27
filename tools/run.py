@@ -700,13 +700,18 @@ def _sync_public_catalog(target: Path, python: str) -> dict:
     Project's validator, the same way the knowledge cycle's project-local delivery does.
     """
     from tools.project_local_delivery import sync_catalog
+    # The target's tools/ are not a pinned checkout: run them without write credentials.
+    env = child_environment()
     try:
-        sync_catalog(target, python, target)
+        sync_catalog(target, python, target, env=env)
+    except subprocess.CalledProcessError as exc:
+        return {"status": "FAILED", "step": "catalog_sync", "reason": type(exc).__name__,
+                "findings": (exc.stderr or "").strip().splitlines()[-5:]}
     except (OSError, subprocess.SubprocessError) as exc:
         return {"status": "FAILED", "step": "catalog_sync", "reason": type(exc).__name__}
     try:
         checked = subprocess.run([python, "tools/validate.py", "--check", "--root", str(target)], cwd=target,
-                                 capture_output=True, text=True, timeout=300)
+                                 capture_output=True, text=True, timeout=300, env=env)
     except (OSError, subprocess.SubprocessError) as exc:
         return {"status": "FAILED", "step": "validate", "reason": type(exc).__name__}
     if checked.returncode:

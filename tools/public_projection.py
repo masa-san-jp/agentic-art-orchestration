@@ -2878,6 +2878,9 @@ def _replay_dirty_target_allowed(target: Path, plan_data: Mapping[str, object]) 
             managed.add(f"{collection}/README.md")
     if plan_data.get("root_catalog_enabled") is True:
         managed.add("README.md")
+    # Rewritten by the Project's own catalog generator after a projection (tools/run.py).
+    if (target / "plans/lineage-index.json").is_file():
+        managed.add("plans/lineage-index.json")
     return set(observed).issubset(managed)
 
 

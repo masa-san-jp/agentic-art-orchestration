@@ -144,7 +144,7 @@ Path(output).write_bytes(catalog_lineage.canonical(value))
         encoding="utf-8")
 
 
-def sync_catalog(project_code: Path, python: str, root: Path) -> None:
+def sync_catalog(project_code: Path, python: str, root: Path, *, env: dict | None = None) -> None:
     """Regenerate the target catalog with the Project's native generator."""
     script = r'''
 import sys
@@ -156,7 +156,7 @@ for path, content in catalog_sync.expected_files(root).items():
     path.write_text(content, encoding="utf-8")
 '''
     subprocess.run([python, "-c", script, str(root)], cwd=project_code,
-                   capture_output=True, text=True, check=True, timeout=120)
+                   capture_output=True, text=True, check=True, timeout=120, env=env)
 
 
 def verify(root: Path, project_code: Path, python: str, expected_path: Path,

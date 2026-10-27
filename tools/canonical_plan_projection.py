@@ -274,6 +274,9 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
         if root_update and root_update[0]!=root_update[1]:updates["README.md"]=root_update
         expected_paths.update({"plans/index.yaml","plans/README.md"})
         if root_update is not None:expected_paths.add("README.md")
+        # The Project's own catalog generator (run.py runs it after a projection) rewrites this
+        # derived file; a resumed run must not read that as an unrelated change.
+        if (target/"plans/lineage-index.json").is_file():expected_paths.add("plans/lineage-index.json")
         dirty=p._git_target_status_paths(target)
         if dirty is None or set(dirty)-(expected_paths|set(updates)):
             status="BLOCKED_CONFLICT";raise ValueError("unrelated dirty target paths")
