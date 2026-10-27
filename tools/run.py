@@ -1420,6 +1420,34 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         production_source_commit = _head(production_root)
         if re.fullmatch(r"[0-9a-f]{40}", production_source_commit):
             report["production_source_commit"] = production_source_commit
+        destination_items = destination_resolution.get("destinations", {}) if destination_resolution is not None else {}
+        public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
+        public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
+        if isinstance(public_root, str) and plan_path.is_file():
+            # Canonical projection requires Production's own attestation.  Use
+            # the closed AUTOMATIC_PLAN lane, as knowledge_cycle_run does: no
+            # human review and no external effect.  A rejection is an agent
+            # repair; PLAN_READY stays, and nothing is projected.
+            from tools.canonical_plan_projection import ensure_automatic_attestation
+
+            attested = ensure_automatic_attestation(
+                python=python, code=production_root, project=plan_path.parent.parent,
+                producer_commit=production_source_commit, generated_at=requested_at,
+            )
+            report["automatic_plan_attestation"] = {"status": attested["status"]}
+            if attested["status"] == "REJECTED":
+                report["automatic_plan_attestation"]["finding"] = attested["finding"]
+                report.update(projection_status="BLOCKED", stop_reason="PRODUCTION_AUTOMATIC_ATTESTATION_FAILED")
+                report["next_action"] = {
+                    "actor": "agent", "stage": "attestation", "finding": attested["finding"],
+                    "command": attested["command"], "resume_command": resume_command,
+                    "do": "Repair the reported Production plan, renderer, asset, or provenance finding and resume the identical run.",
+                }
+                if destination_resolution is not None:
+                    report["destination_resolution"] = dict(destination_resolution)
+                report["delivery_completion"] = completion(report, delivery_contract)
+                _write_run_report(work, report, profile_root_source, profile_root)
+                return report
         if plan_path.is_file():
             report["production_plan_sha256"] = _sha256_file(plan_path)
             from tools.canonical_plan_projection import source_fields
@@ -1440,9 +1468,6 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 )
 
             try:
-                destination_items = destination_resolution.get("destinations", {})
-                public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
-                public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
                 projection = project_plan_automatic(
                     report,
                     internal_output_root=internal_output_root,
@@ -1463,6 +1488,19 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                     report["projection_status"] = "FAILED"
                 elif isinstance(projection_status, str) and projection_status:
                     report["projection_status"] = projection_status
+                if isinstance(projection_status, str) and projection_status.startswith("BLOCKED_"):
+                    # The summary carries codes only; the reason sits in the
+                    # owner result's findings at result_locator.
+                    report.update(stop_reason="PUBLIC_PROJECTION_PENDING")
+                    report["next_action"] = {
+                        "actor": "agent", "stage": "projection",
+                        "result_locator": projection.get("result_locator"),
+                        "result": str(state_root / str(projection.get("result_locator"))),
+                        "finding_codes": list(projection.get("finding_codes", [])),
+                        "resume_command": resume_command,
+                        "do": "Read the findings' remediation reason, repair the attestation, receiver layout or index it names, "
+                              "and resume the identical run. Preserve explicit rights, consent and human gates.",
+                    }
             except (OSError, TypeError, ValueError, KeyError) as exc:
                 raise StepFailure("automatic public plan projection failed") from exc
         _write_run_report(work, report, profile_root_source, profile_root)
@@ -1782,7 +1820,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
-    if report.get("status") == "BLOCKED":
+    if report.get("status") == "BLOCKED" or report.get("stop_reason") == "PRODUCTION_AUTOMATIC_ATTESTATION_FAILED":
         return 2
     projection = report.get("public_projection") if isinstance(report, Mapping) else None
     projection_status = projection.get("status") if isinstance(projection, Mapping) else None

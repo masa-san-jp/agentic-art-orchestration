@@ -293,6 +293,12 @@ source hash、`record_kind: plan`を拘束する。source report/summaryの
 させる。手書きrequest、任意ファイル、work recordをこの入口へ
 渡して公開可にすることはできない。
 
+`tools/run.py`は投影の前に、pin済みProductionの`tools/public_plan_attestation.py --automatic-plan --producer-commit <pin> --generated-at <clock>`
+（人の承認なし・外部効果なし）を実行する。同じplan bytesに対する検証済みattestationがあれば再生成せず再開する。
+拒否されたら投影せず`projection_status: BLOCKED`とし、ownerのfinding、実行command、`resume_command`を
+`next_action`（`stage: attestation`）で返す。投影が`BLOCKED_*`の場合も`next_action`（`stage: projection`）に
+result locatorとfinding codeを返し、resultのfinding `remediation`末尾の`reason:`に止まった理由（固定文言だけ）を残す。
+
 preflightは公開境界、機密情報、権利・同意、path safety、target Git/layout/index/markerを全件検査
 してから、`plans/Pxxxx-<slug>/`の`README.md`、`plan.md`、`metadata.yaml`と`plans/index.yaml`、
 管理対象catalog markerを更新する。batchは全件を先にstagingし、100件以上でも決定的なID・順序・bytes
