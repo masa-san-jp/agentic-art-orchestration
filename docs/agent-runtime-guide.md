@@ -298,6 +298,9 @@ source hash、`record_kind: plan`を拘束する。source report/summaryの
 拒否されたら投影せず`projection_status: BLOCKED`とし、ownerのfinding、実行command、`resume_command`を
 `next_action`（`stage: attestation`）で返す。投影が`BLOCKED_*`の場合も`next_action`（`stage: projection`）に
 result locatorとfinding codeを返し、resultのfinding `remediation`末尾の`reason:`に止まった理由（固定文言だけ）を残す。
+投影が通ると、公開先のProject自身の`tools/catalog_sync.py`で派生catalog（`plans/lineage-index.json`など）を
+作り直し、`tools/validate.py --check`で確かめ、結果をreportの`public_catalog_sync`に残す。失敗したら
+`stop_reason: PUBLIC_CATALOG_SYNC_FAILED`と`next_action`（`stage: catalog`）を返す。
 
 preflightは公開境界、機密情報、権利・同意、path safety、target Git/layout/index/markerを全件検査
 してから、`plans/Pxxxx-<slug>/`の`README.md`、`plan.md`、`metadata.yaml`と`plans/index.yaml`、

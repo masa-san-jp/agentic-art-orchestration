@@ -1057,6 +1057,35 @@ class ProductionHistoryTests(unittest.TestCase):
             self.assertEqual("ALREADY_ATTESTED", second["automatic_plan_attestation"]["status"])
             self.assertEqual(first["public_plan_attestation_sha256"], second["public_plan_attestation_sha256"])
 
+    @staticmethod
+    def _fake_project(root: Path, *, valid: bool) -> Path:
+        """A Project checkout whose native generator writes one derived file and whose validator checks it."""
+        target = root / "project"
+        (target / "tools").mkdir(parents=True)
+        (target / "plans").mkdir()
+        (target / "tools" / "__init__.py").write_text("", encoding="utf-8")
+        (target / "tools" / "catalog_sync.py").write_text(
+            "def expected_files(root):\n    return {root / 'plans' / 'lineage-index.json': '{}\\n'}\n", encoding="utf-8")
+        check = "sys.exit(0 if (root / 'plans/lineage-index.json').exists() else 1)" if valid else \
+            "print('ERROR: plans/index.yaml: indexed plan directories differ'); sys.exit(1)"
+        (target / "tools" / "validate.py").write_text(
+            "import sys\nfrom pathlib import Path\nroot = Path(sys.argv[sys.argv.index('--root') + 1])\n" + check + "\n",
+            encoding="utf-8")
+        return target
+
+    def test_projected_catalog_is_regenerated_by_the_project_and_validated(self):
+        with tempfile.TemporaryDirectory(prefix="run-catalog-sync-") as temporary:
+            target = self._fake_project(Path(temporary), valid=True)
+            self.assertEqual({"status": "PASSED"}, MODULE._sync_public_catalog(target, sys.executable))
+            self.assertEqual("{}\n", (target / "plans" / "lineage-index.json").read_text(encoding="utf-8"))
+
+    def test_invalid_projected_catalog_is_reported_with_the_validator_lines(self):
+        with tempfile.TemporaryDirectory(prefix="run-catalog-invalid-") as temporary:
+            target = self._fake_project(Path(temporary), valid=False)
+            result = MODULE._sync_public_catalog(target, sys.executable)
+            self.assertEqual(("FAILED", "validate"), (result["status"], result["step"]))
+            self.assertEqual(["ERROR: plans/index.yaml: indexed plan directories differ"], result["findings"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -692,6 +692,34 @@ def _child_run_id(run_id: str, stage: str) -> str:
     return _research_run_id(run_id)[: -len("-research")] + "-" + stage
 
 
+def _sync_public_catalog(target: Path, python: str) -> dict:
+    """Leave the projected Project valid: its own generator owns the derived catalog files.
+
+    The projection writes the record, the index and the README blocks; plans/lineage-index.json
+    and any other generated block belong to the Project's tools/catalog_sync.py. Run it, then the
+    Project's validator, the same way the knowledge cycle's project-local delivery does.
+    """
+    from tools.project_local_delivery import sync_catalog
+    # The target's tools/ are not a pinned checkout: run them without write credentials.
+    env = child_environment()
+    try:
+        sync_catalog(target, python, target, env=env)
+    except subprocess.CalledProcessError as exc:
+        return {"status": "FAILED", "step": "catalog_sync", "reason": type(exc).__name__,
+                "findings": (exc.stderr or "").strip().splitlines()[-5:]}
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "FAILED", "step": "catalog_sync", "reason": type(exc).__name__}
+    try:
+        checked = subprocess.run([python, "tools/validate.py", "--check", "--root", str(target)], cwd=target,
+                                 capture_output=True, text=True, timeout=300, env=env)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "FAILED", "step": "validate", "reason": type(exc).__name__}
+    if checked.returncode:
+        # Validator lines name catalog paths and rule codes, not record bodies.
+        return {"status": "FAILED", "step": "validate", "findings": (checked.stdout + checked.stderr).strip().splitlines()[-5:]}
+    return {"status": "PASSED"}
+
+
 def _element_report(tool: Path, args: list[str], cwd: Path, python: str, *, ok_codes: tuple[int, ...] = (0, 1)) -> dict:
     """Run one child element command and return its JSON report (exit 1 is BLOCKED, still a report)."""
     result = subprocess.run([python, str(tool), *args], cwd=cwd, capture_output=True, text=True, env=child_environment())
@@ -1484,6 +1512,16 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 projection_status = projection.get("status") if isinstance(projection, Mapping) else None
                 if projection_status in {"APPLIED", "ALREADY_PROJECTED"}:
                     report["projection_status"] = "PROJECTED"
+                    report["public_catalog_sync"] = _sync_public_catalog(Path(str(public_root)), python)
+                    if report["public_catalog_sync"]["status"] != "PASSED":
+                        report.update(stop_reason="PUBLIC_CATALOG_SYNC_FAILED")
+                        report["next_action"] = {
+                            "actor": "agent", "stage": "catalog",
+                            "catalog_sync": report["public_catalog_sync"],
+                            "resume_command": resume_command,
+                            "do": "Run the Project's tools/catalog_sync.py --write and tools/validate.py --check in the public "
+                                  "projection root, repair what the validator names, and resume the identical run.",
+                        }
                 elif projection_status == "FAILED":
                     report["projection_status"] = "FAILED"
                 elif isinstance(projection_status, str) and projection_status:

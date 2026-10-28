@@ -157,6 +157,15 @@ class CanonicalPlanProjectionTests(unittest.TestCase):
         self.assertEqual(self.report['production_plan_sha256'], hashlib.sha256((record / 'plan.md').read_bytes()).hexdigest())
         self.assertEqual([], p.validate_result(json.loads((self.root / 'state' / self.report['run_id'] / 'public-projection-result.json').read_text())))
 
+    @patch('tools.canonical_plan_projection._owner_bundle', synthetic_owner_boundary)
+    def test_resume_after_the_project_regenerated_its_lineage_index_is_already_projected(self):
+        self.assertEqual('APPLIED', self.project()['status'])
+        # tools/run.py runs the Project's catalog generator after a projection.
+        (self.target / 'plans/lineage-index.json').write_text('{"records":[]}\n', encoding='utf-8')
+        self.assertEqual('ALREADY_PROJECTED', self.project()['status'])
+        (self.target / 'plans/unrelated.txt').write_text('x\n', encoding='utf-8')
+        self.assertEqual('BLOCKED_CONFLICT', self.project()['status'])
+
     def next_run(self, suffix):
         self.report['run_id']='RUN-REVISION-'+suffix
         self.report['destination_resolution']=self.helper._profile_resolution(self.root,self.report['run_id'],public=True)
