@@ -18,6 +18,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -42,6 +43,7 @@ from tools.output_destinations import (
     manifest_child_roots,
     resolve_destinations,
     resolve_run_destination,
+    selected_plan_view_command,
     write_resolution_evidence,
 )
 from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
@@ -238,6 +240,7 @@ def _resume_command(
     profile_root: Path | None, purpose: str, intent: str | None, slug: str | None,
     title: str | None, offline_fixture: bool, project_root: Path | None = None,
     self_export: Path | None = None, self_signal: str | None = None,
+    plan_view: Mapping[str, object] | None = None,
 ) -> list[str]:
     """Build the exact same-run invocation for a checkpoint report."""
     command = [python, str(ROOT / "tools/run.py"), "--run-id", run_id,
@@ -264,6 +267,12 @@ def _resume_command(
         command += ["--title", title]
     if offline_fixture:
         command += ["--offline-fixture"]
+    if isinstance(plan_view, Mapping):
+        # A profile command is read again from the profile; a CLI command must be repeated.
+        if plan_view.get("source") == "cli":
+            command += ["--plan-view-command", shlex.join(plan_view["command"])]
+        if plan_view.get("timeout") is not None:
+            command += ["--plan-view-timeout", str(plan_view["timeout"])]
     return command
 
 
@@ -720,6 +729,28 @@ def _sync_public_catalog(target: Path, python: str) -> dict:
     return {"status": "PASSED"}
 
 
+def _plan_view_step(target: Path, projection: Mapping[str, Any], plan_view: Mapping[str, object] | None, python: str,
+                    work: Path, resume_command: list[str]) -> dict:
+    """Attach one installation view to the projected record when a generator is configured.
+
+    Optional: an unconfigured generator is SKIPPED and a failure leaves the
+    successful projection (and the restored, valid catalog) in place.
+    """
+    from tools import plan_view as view
+
+    command = plan_view.get("command") if isinstance(plan_view, Mapping) else None
+    timeout = plan_view.get("timeout") if isinstance(plan_view, Mapping) else None
+    result = view.run_step(target, list(projection.get("public_ids", [])), command=command, python=python, work=work,
+                           sync=_sync_public_catalog, timeout=int(timeout or view.DEFAULT_TIMEOUT_SECONDS))
+    if result["status"] == "FAILED":
+        result["next_action"] = {
+            "actor": "agent", "stage": "plan_view", "reason": result["reason"], "resume_command": resume_command,
+            "do": "The projection stays. Repair the generator (plan_view_command: prompt on stdin, JPEG to the path "
+                  "argument, identity JSON on stdout, exit 0) or the record the reason names, and resume the identical run.",
+        }
+    return result
+
+
 def _element_report(tool: Path, args: list[str], cwd: Path, python: str, *, ok_codes: tuple[int, ...] = (0, 1)) -> dict:
     """Run one child element command and return its JSON report (exit 1 is BLOCKED, still a report)."""
     result = subprocess.run([python, str(tool), *args], cwd=cwd, capture_output=True, text=True, env=child_environment())
@@ -891,7 +922,8 @@ def _run_orchestration(intent: str | None, workspace_root: Path, state_root: Pat
         internal_output_root: Path | None = None,
         profile_root: Path | None = None, research_work_root: Path | None = None,
         delivery_contract: Mapping[str, object] | None = None,
-        self_export: Path | None = None, self_signal: str | None = None) -> dict:
+        self_export: Path | None = None, self_signal: str | None = None,
+        plan_view: Mapping[str, object] | None = None) -> dict:
     options = locals().copy()
     root = profile_root
     source = "none"
@@ -933,7 +965,7 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         profile_root: Path | None = None, research_work_root: Path | None = None,
         delivery_contract: Mapping[str, object] | None = None,
         self_export: Path | None = None, profile_root_source: str = "none",
-        self_signal: str | None = None) -> dict:
+        self_signal: str | None = None, plan_view: Mapping[str, object] | None = None) -> dict:
     """Execute every step the repositories can do alone, in order, and record each one."""
     if intent is not None and not offline_fixture:
         raise StepFailure("PHASE_A_INTENT_REMOVED: the live Phase A pins a material with --self-signal, not --intent")
@@ -1039,7 +1071,7 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         research_root=research_root, production_root=production_root,
         research_work_root=research_work_root, profile_root=profile_root, self_export=self_export,
         purpose=purpose, intent=intent, self_signal=self_signal, slug=slug, title=title,
-        offline_fixture=offline_fixture,
+        offline_fixture=offline_fixture, plan_view=plan_view,
         project_root=(Path(destination_resolution["project_root"])
                       if isinstance(destination_resolution, Mapping)
                       and destination_resolution.get("contract_version") == "destination-resolution/v2"
@@ -1513,7 +1545,12 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 if projection_status in {"APPLIED", "ALREADY_PROJECTED"}:
                     report["projection_status"] = "PROJECTED"
                     report["public_catalog_sync"] = _sync_public_catalog(Path(str(public_root)), python)
-                    if report["public_catalog_sync"]["status"] != "PASSED":
+                    if report["public_catalog_sync"]["status"] == "PASSED":
+                        report["plan_view"] = _plan_view_step(Path(str(public_root)), projection, plan_view, python, work,
+                                                              resume_command)
+                        if report["plan_view"]["status"] == "FAILED":
+                            report["next_action"] = report["plan_view"].pop("next_action")
+                    else:
                         report.update(stop_reason="PUBLIC_CATALOG_SYNC_FAILED")
                         report["next_action"] = {
                             "actor": "agent", "stage": "catalog",
@@ -1685,6 +1722,19 @@ def run(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _run_orchestration(*args, **kwargs)
 
 
+def _plan_view_option(args: argparse.Namespace) -> dict[str, object] | None:
+    """The CLI command wins over the selected profile's plan_view_command; neither means SKIPPED."""
+    if args.plan_view_command:
+        command, source = shlex.split(args.plan_view_command), "cli"
+    elif destinations_profile_selected(args.destinations_file):
+        command, source = selected_plan_view_command(args.destinations_file), "profile"
+    else:
+        command, source = None, None
+    if not command:
+        return None
+    return {"command": command, "source": source, "timeout": args.plan_view_timeout}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--element-demo", action="store_true",
@@ -1722,6 +1772,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--limit", type=int, default=1,
                         help="選定する命題の件数。2以上でバッチになる")
     parser.add_argument("--child-python", default=sys.executable)
+    parser.add_argument("--plan-view-command",
+                        help="任意。投影後に設置の想定図を作る生成コマンド（指示文は標準入力、出力JPEGのパスを最後の引数に足す）。"
+                             "省略時は destinations プロファイルの plan_view_command。どちらも無ければこの段は SKIPPED")
+    parser.add_argument("--plan-view-timeout", type=int, help="生成コマンドの制限時間（秒）")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args(argv)
 
@@ -1849,7 +1903,8 @@ def main(argv: list[str] | None = None) -> int:
                                     destination_resolution=destination_resolution,
                                     internal_output_root=internal_output_root,
                                     profile_root=args.profile_root, research_work_root=args.research_work_root, self_export=args.self_export,
-                                    self_signal=args.self_signal)
+                                    self_signal=args.self_signal,
+                                    plan_view=_plan_view_option(args))
     except BlockedPrecondition as exc:
         print(json.dumps(getattr(exc, "report", {"status": "BLOCKED", "detail": str(exc)}), ensure_ascii=False), file=sys.stderr)
         return 2

@@ -239,10 +239,25 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 metadata={k:v for k,v in prior.items() if k!="path"};entry=prior
             files=dict(b["files"],**{"metadata.yaml":p._request_yaml_bytes(metadata),"README.md":readme_bytes})
             if prior:
-                files["README.md"]=p._target_regular(target/directory/"README.md","record.README")[0]
+                # The same revision keeps its README (and the introduction hash bound to it in the
+                # index); a new revision gets the README generated for it, which metadata binds.
+                if int(prior["plan_revision"])==b["revision"]:
+                    files["README.md"]=p._target_regular(target/directory/"README.md","record.README")[0]
                 existing={x.relative_to(target).as_posix() for x in (target/directory).rglob('*') if x.is_file()}
                 allowed={directory+'/'+name for name in files}
-                obsolete=existing-allowed
+                # README-only supplemental media (tools/plan_view.py) belongs to the README of this
+                # revision: keep it on a replay, remove it with the README a new revision replaces.
+                from tools.plan_view import PlanViewError, supplemental_files
+                try:
+                    supplemental=supplemental_files(target,directory,public_id)
+                except PlanViewError:
+                    status="BLOCKED_CONFLICT";raise ValueError("supplemental media manifest was modified")
+                if int(prior["plan_revision"])==b["revision"]:
+                    allowed|=set(supplemental);expected_paths.update(supplemental)
+                else:
+                    for relative,raw in supplemental.items():
+                        if relative not in allowed:removals[relative]=raw;expected_paths.add(relative)
+                obsolete=existing-allowed-set(removals)
                 if obsolete:
                     old_attestation=json.loads((target/directory/'public-plan-attestation.json').read_bytes())
                     old_assets={directory+'/'+a['path'][8:]:a['sha256'] for a in old_attestation.get('assets',[]) if a['path'].startswith('03_plan/media/') and '..' not in Path(a['path']).parts}

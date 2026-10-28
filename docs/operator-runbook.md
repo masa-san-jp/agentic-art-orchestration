@@ -237,6 +237,14 @@ targetのGit/layout/index/markerをpreflightし、合格後に`plans/Pxxxx-<slug
 result locator・finding codeと`resume_command`を`next_action`に入れて返す。投影が通ったあとは、
 公開先のProject自身の`tools/catalog_sync.py`と`tools/validate.py --check`を実行し、派生catalogまで揃えて残す。
 
+設置の想定図を自動で足すには、destinations profileに`plan_view_command`（argvの配列。shellは通さない）を書くか、
+`--plan-view-command`を渡す。Codexを使う場合は
+`plan_view_command: ["python3", "<orchestration>/tools/plan_view_codex.py"]`。未設定ならこの段は
+`plan_view: {status: SKIPPED}`で、runは失敗しない。生成コマンドは書き込み用credentialを外した環境と制限時間
+（既定1800秒、`--plan-view-timeout`）で動く。READMEの説明には道具、日付、指示文sha256の先頭12桁と
+「寸法は正確ではなく、制作した現物の写真ではありません」を書く。`FAILED`のときは投影をそのまま残し、
+`next_action`の`reason`を直して同じrunを再開する。
+
 batchは全件を先にstagingしてから反映するため、100件以上でもID・順序・bytesが決定的である。
 一件でもpolicy違反、未許諾素材、target conflict、無関係なdirty変更、契約不適合があれば
 `BLOCKED_POLICY`または`BLOCKED_CONFLICT`としてtargetを変更しない。途中I/O失敗もtransactionが

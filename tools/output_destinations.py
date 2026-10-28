@@ -145,6 +145,16 @@ def _selected_profile(
     return None, "legacy-defaults", _sha256_bytes(b"legacy-defaults\n")
 
 
+def selected_plan_view_command(
+    destinations_file: str | Path | None,
+    environment: Mapping[str, str] | None = None,
+) -> list[str] | None:
+    """Return the optional ``plan_view_command`` argv of the selected profile."""
+    profile, _source, _digest = _selected_profile(destinations_file, os.environ if environment is None else environment)
+    command = profile.get("plan_view_command") if profile is not None else None
+    return list(command) if isinstance(command, list) and command else None
+
+
 def _validate_direct(direct: Mapping[str, object] | None) -> dict[str, object]:
     if direct is None:
         return {}

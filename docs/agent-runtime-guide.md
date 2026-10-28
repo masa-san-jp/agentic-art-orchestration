@@ -302,6 +302,19 @@ result locatorとfinding codeを返し、resultのfinding `remediation`末尾の
 作り直し、`tools/validate.py --check`で確かめ、結果をreportの`public_catalog_sync`に残す。失敗したら
 `stop_reason: PUBLIC_CATALOG_SYNC_FAILED`と`next_action`（`stage: catalog`）を返す。
 
+catalogが通ったあと、生成コマンドが設定されていれば（destinations profileの`plan_view_command`、または
+`--plan-view-command`）、`tools/plan_view.py`が投影したレコードに設置の想定図を一枚だけ足す。指示文は公開
+`plan.md`の§1完成像（position、first_seconds）、§4コンセプトの`mechanism`、§8の寸法・素材・組み立て・設置から
+決まった手順で組み立て、生成コマンドには標準入力で渡す（出力JPEGのパスを最後の引数に足し、最終行に
+`{"adapter", "tool", "version"}`のJSONを返し、exit 0）。Codex用は`tools/plan_view_codex.py`。結果は
+`media/prototype-whole.jpg`、`supplemental-media.json`（`project-supplemental-public-media/v1`）、READMEの
+`prototype-visualization`ブロック、`introduction_sha256`の付け直しで、`plan.md`とattestationは変えない。
+Projectのcatalog syncとvalidatorをもう一度通し、通らなければ元に戻す。reportの`plan_view.status`は
+`SKIPPED`（未設定）、`ALREADY_PRESENT`（すでにある）、`ATTACHED`、`FAILED`（`reason`と`next_action`の
+`stage: plan_view`。投影は残す）のどれか。指示文の全文と出力hashはprivateなrun reportにだけ残す。
+同じrevisionの再開では投影が想定図を自分のものとして受け入れて`ALREADY_PROJECTED`のままになり、
+新しいrevisionの投影は古い想定図をREADMEと一緒に外し、この段が新しいrevisionの想定図を作る。
+
 preflightは公開境界、機密情報、権利・同意、path safety、target Git/layout/index/markerを全件検査
 してから、`plans/Pxxxx-<slug>/`の`README.md`、`plan.md`、`metadata.yaml`と`plans/index.yaml`、
 管理対象catalog markerを更新する。batchは全件を先にstagingし、100件以上でも決定的なID・順序・bytes
