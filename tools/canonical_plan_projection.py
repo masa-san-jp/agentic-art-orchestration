@@ -239,10 +239,43 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 metadata={k:v for k,v in prior.items() if k!="path"};entry=prior
             files=dict(b["files"],**{"metadata.yaml":p._request_yaml_bytes(metadata),"README.md":readme_bytes})
             if prior:
-                files["README.md"]=p._target_regular(target/directory/"README.md","record.README")[0]
+                from tools.plan_view import PlanViewError, generated_view_files, strip_block, supplemental_files
+                same=int(prior["plan_revision"])==b["revision"]
+                current_readme=p._target_regular(target/directory/"README.md","record.README")[0]
+                if same:
+                    # The same revision keeps its README and the README-only supplemental media
+                    # (tools/plan_view.py) bound to it, so a resumed run stays ALREADY_PROJECTED.
+                    files["README.md"]=current_readme
+                    try:
+                        supplemental=supplemental_files(target,directory,public_id)
+                    except PlanViewError:
+                        status="BLOCKED_CONFLICT";raise ValueError("supplemental media manifest was modified")
+                else:
+                    # A new revision gets the README generated for it.  It may drop only what this
+                    # harness made: its own generated view, and a README equal to the generated one
+                    # for the prior revision.  Curated media or text needs an explicit migration.
+                    try:
+                        supplemental=generated_view_files(target,directory,public_id)
+                    except PlanViewError as exc:
+                        status="BLOCKED_CONFLICT"
+                        raise ValueError("curated supplemental media requires migration" if str(exc)=="CURATED_SUPPLEMENTAL_MEDIA"
+                                         else "supplemental media manifest was modified")
+                    prior_body=p._target_regular(target/directory/"plan.md","record.plan")[0]
+                    generated=p._generated_readme({k:v for k,v in prior.items() if k!="path"},"plan",canonical_body=prior_body)
+                    try:
+                        current_text=current_readme.decode("utf-8")
+                    except UnicodeDecodeError:
+                        current_text=""
+                    if (strip_block(current_text) if supplemental else current_text).encode("utf-8")!=generated:
+                        status="BLOCKED_CONFLICT";raise ValueError("curated README requires migration")
                 existing={x.relative_to(target).as_posix() for x in (target/directory).rglob('*') if x.is_file()}
                 allowed={directory+'/'+name for name in files}
-                obsolete=existing-allowed
+                if same:
+                    allowed|=set(supplemental);expected_paths.update(supplemental)
+                else:
+                    for relative,raw in supplemental.items():
+                        if relative not in allowed:removals[relative]=raw;expected_paths.add(relative)
+                obsolete=existing-allowed-set(removals)
                 if obsolete:
                     old_attestation=json.loads((target/directory/'public-plan-attestation.json').read_bytes())
                     old_assets={directory+'/'+a['path'][8:]:a['sha256'] for a in old_attestation.get('assets',[]) if a['path'].startswith('03_plan/media/') and '..' not in Path(a['path']).parts}

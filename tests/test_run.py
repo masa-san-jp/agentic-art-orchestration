@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import nullcontext, redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
 import yaml
@@ -19,6 +19,8 @@ from tools.output_destinations import resolve_destinations
 from tools.run import run
 from tools.signal_bundle import build_signal_bundle
 from tests.test_canonical_plan_projection import write_fake_attestation_tool
+from tests.test_plan_view import PLAN, generator_calls, passing_sync, receiver_check, write_fake_generator
+from tests.test_public_projection import synthetic_owner_boundary
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -919,8 +921,13 @@ class ProductionHistoryTests(unittest.TestCase):
         self.assertEqual([False, True], [item["previously_materialized"] for item in accepts])
         self.assertEqual([True, True], [item["prior_records_visible"] for item in plans])
 
-    def _profiled_plan_ready(self, root: Path, run_id: str = "RUN-PROJECTION-001", *, runs: int = 1) -> list[dict]:
-        """Reach PLAN_READY with fake workers and a fake Production attestation CLI."""
+    def _profiled_plan_ready(self, root: Path, run_id: str = "RUN-PROJECTION-001", *, runs: int = 1,
+                             plan_view: dict | None = None, owner_boundary: bool = False) -> list[dict]:
+        """Reach PLAN_READY with fake workers and a fake Production attestation CLI.
+
+        ``owner_boundary`` swaps the qualified owner check for the transaction-only test double, so the
+        projection applies; the Project's catalog sync is then the fake in tests/test_plan_view.py.
+        """
         write_fake_attestation_tool(root / "production")
         target = root / "public-target"
         if not target.exists():
@@ -959,11 +966,17 @@ class ProductionHistoryTests(unittest.TestCase):
             if args[0] == "tools/build_plan.py":
                 project = Path(args[args.index("--project-root") + 1])
                 (project / "03_plan").mkdir(parents=True, exist_ok=True)
-                (project / "03_plan" / "production-plan.md").write_text("# plan\n", encoding="utf-8")
+                (project / "03_plan" / "production-plan.md").write_text(PLAN if owner_boundary else "# plan\n",
+                                                                       encoding="utf-8")
             return {"status": "PASSED"}
 
         reports = []
-        with patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
+        owner = (patch("tools.canonical_plan_projection._owner_bundle",
+                       lambda item, internal, child_python=None: synthetic_owner_boundary(item, internal))
+                 if owner_boundary else nullcontext())
+        sync = patch.object(MODULE, "_sync_public_catalog", side_effect=passing_sync) if owner_boundary else \
+            nullcontext()
+        with owner, sync, patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
                 patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
                 patch.object(MODULE, "_run_child", side_effect=fake_child), \
                 patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
@@ -976,7 +989,7 @@ class ProductionHistoryTests(unittest.TestCase):
                     "run-plan", "Run plan", f"2026-09-04T00:0{attempt}:00+09:00", sys.executable,
                     research_root=root / "research", production_root=root / "production",
                     offline_fixture=True, destination_resolution=resolution,
-                    internal_output_root=root / "internal",
+                    internal_output_root=root / "internal", plan_view=plan_view,
                 ))
         return reports
 
@@ -1056,6 +1069,73 @@ class ProductionHistoryTests(unittest.TestCase):
             self.assertEqual("ATTESTED", first["automatic_plan_attestation"]["status"])
             self.assertEqual("ALREADY_ATTESTED", second["automatic_plan_attestation"]["status"])
             self.assertEqual(first["public_plan_attestation_sha256"], second["public_plan_attestation_sha256"])
+
+    def test_projected_record_gets_one_installation_view_and_the_resume_stays_projected(self):
+        with tempfile.TemporaryDirectory(prefix="run-plan-view-") as temporary:
+            root = Path(temporary)
+            command = write_fake_generator(root / "generator")
+            first, second = self._profiled_plan_ready(root, "RUN-PLAN-VIEW", runs=2, owner_boundary=True,
+                                                      plan_view={"command": command, "source": "env"})
+
+            self.assertEqual("APPLIED", first["public_projection"]["status"])
+            self.assertEqual(("PROJECTED", "PASSED"), (first["projection_status"], first["public_catalog_sync"]["status"]))
+            self.assertEqual("ATTACHED", first["plan_view"]["status"], first["plan_view"])
+            self.assertEqual({"status": "PASSED"}, first["plan_view"]["catalog_sync"])
+            record = next((root / "public-target" / "plans").glob("P0001-*"))
+            metadata = yaml.safe_load((record / "metadata.yaml").read_text(encoding="utf-8"))
+            entry = yaml.safe_load((record.parent / "index.yaml").read_text(encoding="utf-8"))["records"][0]
+            receiver_check(record, metadata, entry)
+            # The full prompt stays in the private run report.
+            self.assertEqual(generator_calls(root / "generator")[0]["prompt"], first["plan_view"]["prompt"])
+
+            self.assertEqual("ALREADY_PROJECTED", second["public_projection"]["status"])
+            self.assertEqual("ALREADY_PRESENT", second["plan_view"]["status"])
+            self.assertEqual(1, len(generator_calls(root / "generator")))
+            self.assertNotIn("next_action", second)
+
+    def test_unconfigured_installation_view_is_skipped(self):
+        with tempfile.TemporaryDirectory(prefix="run-plan-view-skip-") as temporary:
+            report, = self._profiled_plan_ready(Path(temporary), "RUN-PLAN-VIEW-SKIP", owner_boundary=True)
+            self.assertEqual("APPLIED", report["public_projection"]["status"])
+            self.assertEqual({"status": "SKIPPED", "reason": "NOT_CONFIGURED"}, report["plan_view"])
+            self.assertNotIn("next_action", report)
+
+    def test_failed_installation_view_keeps_the_projection_and_names_the_repair(self):
+        with tempfile.TemporaryDirectory(prefix="run-plan-view-fail-") as temporary:
+            root = Path(temporary)
+            command = write_fake_generator(root / "generator")
+            (root / "generator" / "fail").write_text("", encoding="utf-8")
+            report, = self._profiled_plan_ready(root, "RUN-PLAN-VIEW-FAIL", owner_boundary=True,
+                                                plan_view={"command": command, "source": "cli", "timeout": 30})
+            self.assertEqual(("APPLIED", "PROJECTED"), (report["public_projection"]["status"], report["projection_status"]))
+            self.assertEqual(("FAILED", "GENERATOR_FAILED"), (report["plan_view"]["status"], report["plan_view"]["reason"]))
+            action = report["next_action"]
+            self.assertEqual(("agent", "plan_view", "GENERATOR_FAILED"), (action["actor"], action["stage"], action["reason"]))
+            resume = action["resume_command"]
+            self.assertEqual(command, MODULE.shlex.split(resume[resume.index("--plan-view-command") + 1]))
+            self.assertEqual("30", resume[resume.index("--plan-view-timeout") + 1])
+            self.assertTrue(next((root / "public-target" / "plans").glob("P0001-*")).joinpath("plan.md").is_file())
+
+    def test_plan_view_command_comes_from_the_cli_or_the_environment_not_the_hashed_profile(self):
+        namespace = lambda **values: MODULE.argparse.Namespace(**{"plan_view_command": None, "plan_view_timeout": None,
+                                                                  "destinations_file": None, **values})
+        environment = {"AGENTIC_ART_PLAN_VIEW_COMMAND": "python3 tools/plan_view_codex.py"}
+        self.assertEqual({"command": ["python3", "tools/plan_view_codex.py"], "source": "env", "timeout": None},
+                         MODULE._plan_view_option(namespace(), environment))
+        self.assertEqual({"command": ["gen", "--x"], "source": "cli", "timeout": 5},
+                         MODULE._plan_view_option(namespace(plan_view_command="gen --x", plan_view_timeout=5), environment))
+        self.assertIsNone(MODULE._plan_view_option(namespace(), {}))
+        # The destinations profile stays closed: a generator there is rejected, so it never enters config_sha256.
+        with tempfile.TemporaryDirectory(prefix="run-plan-view-option-") as temporary:
+            root = Path(temporary)
+            profile = root / "destinations.yaml"
+            profile.write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1", "profile": "plan-view",
+                "destinations": {"state_root": str(root / "state"), "internal_output_root": str(root / "internal")},
+                "plan_view_command": ["python3", "tools/plan_view_codex.py"],
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "profile is invalid"):
+                resolve_destinations(profile, repository_root=ROOT, run_id="RUN-OPTION")
 
     @staticmethod
     def _fake_project(root: Path, *, valid: bool) -> Path:

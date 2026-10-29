@@ -2881,6 +2881,13 @@ def _replay_dirty_target_allowed(target: Path, plan_data: Mapping[str, object]) 
     # Rewritten by the Project's own catalog generator after a projection (tools/run.py).
     if (target / "plans/lineage-index.json").is_file():
         managed.add("plans/lineage-index.json")
+    # A verified README-only installation view attached after the projection (tools/plan_view.py).
+    from tools.plan_view import PlanViewError, supplemental_files
+    for directory in {"/".join(path.split("/")[:2]) for path in managed if path.count("/") >= 2}:
+        try:
+            managed.update(supplemental_files(target, directory))
+        except (PlanViewError, OSError):
+            return False
     return set(observed).issubset(managed)
 
 
