@@ -167,7 +167,7 @@ stateと内部成果物を会話やGitへ依存させないため、fresh clone�
 絶対パスへ置き換える。`state_root`と`internal_output_root`は必須で、各rootはfilesystem root、
 親repo、child checkout、他roleの配下に置かない。`public_projection_root`を設定した場合は、
 正規runの`PLAN_READY`とbatchの`PASSED`で完成制作プランがそのlocal public-project worktreeへ
-自動投影される。未設定なら内部成果物を保持して`BLOCKED_CONFIGURATION`で停止する。work recordと
+自動投影される。未設定のprofileは内部専用で、`tools/run.py`は`PLAN_READY`、`tools/batch_run.py`は`PASSED`をそのまま正常な終わりとする（投影しない。runのreportは`projection_status: SKIPPED`、`projection_skip_reason: INTERNAL_ONLY_PROFILE`で、`stop_reason`も`next_action`も付けない）。`project_plan_automatic`/`project_batch_automatic`を公開rootなしで直接呼んだときは、内部成果物を保持して`BLOCKED_CONFIGURATION`を返す。work recordと
 手動requestの`project --apply`は引き続き`public_share` human gateを必要とし、remote公開や
 Git操作までは行わない。
 
@@ -233,7 +233,7 @@ targetのGit/layout/index/markerをpreflightし、合格後に`plans/Pxxxx-<slug
 一つのtransactionで更新する。
 
 `tools/run.py`はその前に、pin済みProductionの機械的なattestation（`--automatic-plan`、人の承認なし）を実行し、
-同じplan bytesの検証済みattestationがあれば再利用する。拒否や投影の`BLOCKED_*`は、ownerのfindingまたは
+同じplan bytesの検証済みattestationがあれば再利用する。審査の道具が時間切れ（120秒）や起動失敗（OSError）で答えないときは、1秒・2秒の間隔で最大3回まで自動で試し直す。3回とも答えなければtracebackで落ちず、`automatic_plan_attestation.status: UNAVAILABLE`とfindingを入れた`projection_status: BLOCKED`のreportを返す。既存のattestationが別のplan bytes、別のproducer commit、またはProductionの`--check`で検証できないもの（古いもの）なら、Productionの書き込みはcreate-onlyで置き換えの経路が無い（違うファイルがあると`ATTESTATION_CONFLICT`）ため、そのファイルをbytesのままrunのstate配下`superseded-attestations/<project>/public-plan-attestation.<sha256>.json`へ移して退け、同じ`--automatic-plan`で作り直す（reportは`REATTESTED`と`retired`）。attestationもplan.mdも手で書き換えない。batchの`project_batch_automatic`の前にも、PASSEDの各planへ同じ審査を行う。拒否や投影の`BLOCKED_*`は、ownerのfindingまたは
 result locator・finding codeと`resume_command`を`next_action`に入れて返す。投影が通ったあとは、
 公開先のProject自身の`tools/catalog_sync.py`と`tools/validate.py --check`を実行し、派生catalogまで揃えて残す。
 
@@ -253,8 +253,8 @@ batchは全件を先にstagingしてから反映するため、100件以上で�
 `BLOCKED_POLICY`または`BLOCKED_CONFLICT`としてtargetを変更しない。途中I/O失敗もtransactionが
 作ったpathだけをrollbackし、無関係な変更は削除しない。結果はstate rootの
 `<projection-id>/public-projection-result.json`に`projection_mode: AUTOMATIC_PLAN`、hash、target
-fingerprint、finding codeだけを残し、human approvalは`NOT_REQUIRED`とする。公開root未設定は
-`BLOCKED_CONFIGURATION`であり、成功したかのように扱わない。
+fingerprint、finding codeだけを残し、human approvalは`NOT_REQUIRED`とする。投影関数を公開rootなしで呼んだ結果は
+`BLOCKED_CONFIGURATION`であり、成功したかのように扱わない（内部専用profileの入口はそもそも投影しない）。
 
 自動経路はlocal worktreeへのファイル投影までで、`git add`、commit、branch操作、push、PR、merge、
 release、repository visibility変更、実際のremote公開は行わない。local投影後のGit操作とremoteでの

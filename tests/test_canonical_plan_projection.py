@@ -17,19 +17,24 @@ from tools import public_projection as p
 from tools.canonical_plan_projection import _owner_bundle, ensure_automatic_attestation
 
 
-FAKE_ATTESTATION_TOOL = '''"""Fake Production attestation CLI: logs argv; a `reject` file rejects."""
-import hashlib, json, pathlib, sys
+FAKE_ATTESTATION_TOOL = '''"""Fake Production attestation CLI: logs argv; a `reject` file rejects.
+
+A `check-fail` file makes --check reject; a `hang` file makes every call sleep past a short timeout.
+"""
+import hashlib, json, pathlib, sys, time
 args = sys.argv[1:]
 code = pathlib.Path(__file__).resolve().parents[1]
 with (code / "calls.jsonl").open("a", encoding="utf-8") as log:
     log.write(json.dumps(args) + "\\n")
+if (code / "hang").exists():
+    time.sleep(float((code / "hang").read_text() or "5"))
 if (code / "reject").exists():
     print(json.dumps({"status": "REJECTED", "reason": (code / "reject").read_text().strip()})); sys.exit(1)
 project = pathlib.Path(args[args.index("--project-root") + 1])
 path = project / "03_plan/public-plan-attestation.json"
 body = "sha256:" + hashlib.sha256((project / "03_plan/production-plan.md").read_bytes()).hexdigest()
 if "--check" in args:
-    ok = json.loads(path.read_text())["human_plan"]["sha256"] == body
+    ok = json.loads(path.read_text())["human_plan"]["sha256"] == body and not (code / "check-fail").exists()
     print(json.dumps({"status": "VERIFIED", "production_state": "PLANNING"} if ok else {"status": "REJECTED"}))
     sys.exit(0 if ok else 1)
 document = {"project_id": project.name, "plan_id": "PL001", "plan_revision": 1,
@@ -60,9 +65,12 @@ class AutomaticAttestationTests(unittest.TestCase):
         (self.project / "03_plan").mkdir(parents=True)
         (self.project / "03_plan/production-plan.md").write_bytes(b"# Demo plan\n")
 
-    def attest(self, clock):
+    def attest(self, clock, commit="a" * 40, **kwargs):
         return ensure_automatic_attestation(python=sys.executable, code=self.code, project=self.project,
-                                            producer_commit="a" * 40, generated_at=clock)
+                                            producer_commit=commit, generated_at=clock, **kwargs)
+
+    def superseded(self):
+        return self.root / "state" / "superseded-attestations"
 
     def calls(self):
         return [json.loads(line) for line in (self.code / "calls.jsonl").read_text().splitlines()]
@@ -72,14 +80,147 @@ class AutomaticAttestationTests(unittest.TestCase):
         self.assertEqual("ALREADY_ATTESTED", self.attest("2026-10-28T00:00:00Z")["status"])
         self.assertEqual([True, False], ["--automatic-plan" in call for call in self.calls()])
 
-    def test_changed_plan_bytes_are_reattested_and_owner_finding_is_returned(self):
+    def test_owner_rejection_is_returned_as_its_finding(self):
+        (self.code / "reject").write_text("PUBLIC_URL_BLOCKED\n", encoding="utf-8")
+        result = self.attest("2026-10-27T00:00:00Z")
+        self.assertEqual("REJECTED", result["status"])
+        self.assertEqual({"status": "REJECTED", "reason": "PUBLIC_URL_BLOCKED"}, result["finding"])
+        self.assertEqual("--automatic-plan", result["command"][4])
+        self.assertEqual(1, len(self.calls()))
+
+    def _assert_retired(self, result, old_bytes, reason):
+        retired = result["retired"]
+        self.assertEqual(reason, retired["reason"])
+        self.assertEqual(hashlib.sha256(old_bytes).hexdigest(), retired["sha256"])
+        kept = Path(retired["path"])
+        self.assertEqual(self.superseded() / "demo", kept.parent)
+        self.assertEqual(old_bytes, kept.read_bytes())
+
+    def test_changed_plan_bytes_retire_the_stale_attestation_and_reattest(self):
         self.attest("2026-10-27T00:00:00Z")
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        result = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        self.assertEqual("REATTESTED", result["status"])
+        self._assert_retired(result, old, "PLAN_BYTES_CHANGED")
+        new = json.loads(attestation.read_text())
+        self.assertEqual("sha256:" + hashlib.sha256(b"# Changed plan\n").hexdigest(), new["human_plan"]["sha256"])
+        self.assertEqual("2026-10-28T00:00:00Z", new["generated_at"])
+        # Stale bytes need no --check: the owner CLI only generated twice.
+        self.assertEqual([True, True], ["--automatic-plan" in call for call in self.calls()])
+        # The plan itself is never touched.
+        self.assertEqual(b"# Changed plan\n", (self.project / "03_plan/production-plan.md").read_bytes())
+
+    def test_changed_plan_bytes_without_a_superseded_root_name_the_stale_attestation(self):
+        self.attest("2026-10-27T00:00:00Z")
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
         (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
         result = self.attest("2026-10-28T00:00:00Z")
         self.assertEqual("REJECTED", result["status"])
-        self.assertEqual({"status": "REJECTED", "reason": "ATTESTATION_CONFLICT"}, result["finding"])
-        self.assertEqual("--automatic-plan", result["command"][4])
-        self.assertEqual(2, sum("--automatic-plan" in call for call in self.calls()))
+        self.assertEqual({"status": "REJECTED", "reason": "ATTESTATION_STALE: PLAN_BYTES_CHANGED"}, result["finding"])
+        self.assertEqual(old, attestation.read_bytes())
+        self.assertEqual(1, len(self.calls()))
+
+    def test_existing_attestation_for_another_producer_commit_is_reattested(self):
+        self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
+        result = self.attest("2026-10-28T00:00:00Z", commit="b" * 40, superseded_root=self.superseded())
+        self.assertEqual("REATTESTED", result["status"])
+        self._assert_retired(result, old, "PRODUCER_COMMIT_CHANGED")
+        self.assertEqual("b" * 40, json.loads(attestation.read_text())["producer"]["commit"])
+        self.assertEqual([True, True], ["--automatic-plan" in call for call in self.calls()])
+
+    def test_existing_attestation_that_fails_the_owner_check_is_reattested(self):
+        self.attest("2026-10-27T00:00:00Z")
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
+        (self.code / "check-fail").write_text("", encoding="utf-8")
+        result = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        self.assertEqual("REATTESTED", result["status"])
+        self._assert_retired(result, old, "CHECK_FAILED")
+        self.assertEqual(["--automatic-plan", "--check", "--automatic-plan"],
+                         [call[2] for call in self.calls()])
+        self.assertNotEqual(old, attestation.read_bytes())
+
+    def test_retiring_the_same_stale_bytes_twice_keeps_one_copy(self):
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        self.attest("2026-10-27T00:00:00Z")
+        old = attestation.read_bytes()
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        first = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        # Something put the identical stale bytes back; retiring them again is harmless.
+        attestation.write_bytes(old)
+        second = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        self.assertEqual(first["retired"]["path"], second["retired"]["path"])
+        self.assertEqual(1, len(list((self.superseded() / "demo").iterdir())))
+        self.assertEqual("REATTESTED", second["status"])
+
+    def test_timeouts_are_retried_with_backoff_then_reported_unavailable(self):
+        waits = []
+        timeout = subprocess.TimeoutExpired(["python"], 120)
+        with patch("tools.canonical_plan_projection.subprocess.run", side_effect=timeout) as run:
+            result = self.attest("2026-10-27T00:00:00Z", sleep=waits.append)
+        self.assertEqual(3, run.call_count)
+        self.assertEqual([1, 2], waits)
+        self.assertEqual("UNAVAILABLE", result["status"])
+        self.assertEqual(3, result["attempts"])
+        self.assertEqual("UNAVAILABLE", result["finding"]["status"])
+        self.assertTrue(result["finding"]["reason"].startswith("TimeoutExpired: "))
+        self.assertIn("--automatic-plan", result["command"])
+
+    def test_os_error_is_retried_and_a_later_answer_is_used(self):
+        waits = []
+        real = subprocess.run
+        outcomes = [OSError("busy"), None]
+
+        def flaky(*args, **kwargs):
+            outcome = outcomes.pop(0)
+            if outcome is not None:
+                raise outcome
+            return real(*args, **kwargs)
+
+        with patch("tools.canonical_plan_projection.subprocess.run", side_effect=flaky):
+            result = self.attest("2026-10-27T00:00:00Z", sleep=waits.append)
+        self.assertEqual("ATTESTED", result["status"])
+        self.assertEqual([1], waits)
+        self.assertEqual(1, len(self.calls()))
+
+    def test_os_error_on_every_attempt_is_reported_unavailable(self):
+        with patch("tools.canonical_plan_projection.subprocess.run", side_effect=OSError("no interpreter")):
+            result = self.attest("2026-10-27T00:00:00Z", sleep=lambda seconds: None)
+        self.assertEqual("UNAVAILABLE", result["status"])
+        self.assertTrue(result["finding"]["reason"].startswith("OSError: "))
+
+    def test_a_timed_out_check_is_retried_before_it_is_trusted(self):
+        self.attest("2026-10-27T00:00:00Z")
+        real = subprocess.run
+        outcomes = [subprocess.TimeoutExpired(["python"], 120), None]
+
+        def flaky(*args, **kwargs):
+            outcome = outcomes.pop(0)
+            if outcome is not None:
+                raise outcome
+            return real(*args, **kwargs)
+
+        with patch("tools.canonical_plan_projection.subprocess.run", side_effect=flaky):
+            result = self.attest("2026-10-28T00:00:00Z", sleep=lambda seconds: None)
+        self.assertEqual("ALREADY_ATTESTED", result["status"])
+
+    def test_relative_code_and_project_paths_are_resolved(self):
+        previous = os.getcwd()
+        self.addCleanup(os.chdir, previous)
+        os.chdir(self.root)
+        result = ensure_automatic_attestation(
+            python=sys.executable, code=Path("production-code"), project=Path("internal/production/demo"),
+            producer_commit="a" * 40, generated_at="2026-10-27T00:00:00Z")
+        self.assertEqual("ATTESTED", result["status"])
+        self.assertTrue(Path(result["command"][1]).is_absolute())
+        project = Path(result["command"][result["command"].index("--project-root") + 1])
+        self.assertEqual(self.project.resolve(), project)
+        self.assertTrue((self.project / "03_plan/public-plan-attestation.json").is_file())
 
 
 class CanonicalPlanProjectionTests(unittest.TestCase):

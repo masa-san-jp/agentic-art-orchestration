@@ -381,7 +381,7 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
 
 
 def _public_completion(context, profile, resolution, bindings, project, state, run_root):
-    from tools.canonical_plan_projection import ensure_automatic_attestation, source_fields
+    from tools.canonical_plan_projection import ATTESTATION_BLOCKED, ensure_automatic_attestation, source_fields
     from tools.public_projection import build_automatic_plan_authority, project_plan_automatic
     run_id = context['run_id']
     # A canonical PLAN_READY record uses the closed automatic-plan authority.
@@ -393,9 +393,10 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
     binding = bindings['agentic-art-production']
     code = checked_code(binding['code_root'], binding['code_commit'])
     attested = ensure_automatic_attestation(python=binding.get('python', sys.executable), code=code, project=project,
-        producer_commit=binding['code_commit'], generated_at=context['clock'])
+        producer_commit=binding['code_commit'], generated_at=context['clock'],
+        superseded_root=run_root / 'superseded-attestations')
     command = attested['command']
-    if attested['status'] == 'REJECTED':
+    if attested['status'] in ATTESTATION_BLOCKED:
         packet = run_root / 'automatic-plan-attestation.json'
         save(packet, attested['finding'])
         state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_AUTOMATIC_ATTESTATION_FAILED',

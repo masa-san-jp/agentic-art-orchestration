@@ -560,6 +560,75 @@ def validate_batch_run(data: object, source: str = "batch-run") -> list[str]:
     return errors
 
 
+def _public_root(destination_resolution: Mapping[str, object] | None) -> str | None:
+    destination_items = destination_resolution.get("destinations", {}) if destination_resolution is not None else {}
+    public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
+    public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
+    return public_root if isinstance(public_root, str) else None
+
+
+def _attest_batch_projects(
+    projects: list[dict[str, Any]], *, child_python: str, generated_at: str, superseded_root: Path,
+) -> dict[str, Any]:
+    """Run Production's automatic plan attestation for every PASSED project.
+
+    The same closed AUTOMATIC_PLAN lane as tools/run.py: without it the batch
+    projection has no owner attestation to verify.  Each project's attestation
+    locator and hash are refreshed in place from what Production wrote.
+    """
+    from tools.canonical_plan_projection import ATTESTATION_BLOCKED, ensure_automatic_attestation, source_fields
+
+    results: list[dict[str, Any]] = []
+    for project in projects:
+        if project.get("status") != "PASSED":
+            continue
+        plan = Path(str(project.get("plan", "")))
+        code = Path(str(project.get("production_code_root", "")))
+        attested = ensure_automatic_attestation(
+            python=child_python, code=code, project=plan.parent.parent,
+            producer_commit=str(project.get("production_source_commit")), generated_at=generated_at,
+            superseded_root=superseded_root,
+        )
+        entry = {"project_id": project.get("project_id"),
+                 **{key: attested[key] for key in ("status", "retired", "attempts", "finding") if key in attested}}
+        results.append(entry)
+        if attested["status"] in ATTESTATION_BLOCKED:
+            return {"status": "BLOCKED", "stop_reason": "PRODUCTION_AUTOMATIC_ATTESTATION_FAILED",
+                    "projects": results, "command": attested["command"]}
+        project.update(source_fields(plan, code))
+    return {"status": "PASSED", "projects": results}
+
+
+def _project_passed_batch(
+    summary: dict[str, Any], *, destination_resolution: Mapping[str, object], state_root: Path, run_id: str,
+    generated_at: str, child_python: str, attestation: dict[str, Any] | None = None,
+) -> tuple[dict[str, object] | None, dict[str, Any] | None]:
+    """Attest, then project one PASSED batch; an internal-only profile projects nothing.
+
+    Returns ``(public_projection, automatic_plan_attestation)``.  A profile
+    without ``public_projection_root`` is the internal delivery target, so the
+    batch ends normally without a projection result.
+    """
+    public_root = _public_root(destination_resolution)
+    if public_root is None:
+        return None, None
+    if attestation is None:
+        attestation = _attest_batch_projects(
+            summary["projects"], child_python=child_python, generated_at=generated_at,
+            superseded_root=state_root / run_id / "superseded-attestations",
+        )
+    if attestation["status"] != "PASSED":
+        return None, attestation
+    projection = project_batch_automatic(
+        summary,
+        internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
+        public_projection_root=Path(public_root),
+        state_root=state_root,
+        projection_id=run_id,
+    )
+    return projection, attestation
+
+
 def run_batch(
     manifest: dict[str, Any],
     workspace_root: Path,
@@ -603,24 +672,21 @@ def run_batch(
             raise BatchRunError("existing batch summary is invalid")
         if destination_resolution is not None and existing.get("destination_resolution") != dict(destination_resolution):
             raise BatchRunError("existing batch summary has different destination resolution")
-        public_projection = None
+        public_projection = attestation = None
         if destination_resolution is not None:
             write_resolution_evidence(state_root, run_id, destination_resolution)
             if existing.get("status") == "PASSED" and existing.get("output_root_locator"):
                 try:
-                    destination_items = destination_resolution.get("destinations", {})
-                    public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
-                    public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
-                    public_projection = project_batch_automatic(
-                        existing,
-                        internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
-                        public_projection_root=Path(public_root) if isinstance(public_root, str) else None,
-                        state_root=state_root,
-                        projection_id=run_id,
+                    # Attest on the resumed copy: a plan changed since the
+                    # summary was written is re-attested, not a conflict.
+                    public_projection, attestation = _project_passed_batch(
+                        copy.deepcopy(existing), destination_resolution=destination_resolution,
+                        state_root=state_root, run_id=run_id, generated_at=generated_at, child_python=child_python,
                     )
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise BatchRunError("automatic public plan projection failed while resuming") from exc
-        return {"status": "ALREADY_COMPLETED", "summary": existing, "summary_path": summary_path, "public_projection": public_projection}
+        return {"status": "ALREADY_COMPLETED", "summary": existing, "summary_path": summary_path,
+                "public_projection": public_projection, "automatic_plan_attestation": attestation}
     state_dir = state_root / run_id
     if state_dir.exists() and any(path.name != "destination-resolution.json" for path in state_dir.iterdir()):
         raise BatchRunError("partial batch state exists without a valid summary; use a new run_id after inspection")
@@ -783,6 +849,17 @@ def run_batch(
                     source_sha256=sha256_hex({"projects": authority_plans}),
                     destination_resolution=destination_resolution,
                 )
+    attestation = None
+    if destination_resolution is not None and status == "PASSED" and _public_root(destination_resolution) is not None:
+        # Attest before the summary is written, so it records the owner
+        # attestation locator and hash that the projection will verify.
+        try:
+            attestation = _attest_batch_projects(
+                summary["projects"], child_python=child_python, generated_at=generated_at,
+                superseded_root=state_dir / "superseded-attestations",
+            )
+        except (OSError, TypeError, ValueError, KeyError) as exc:
+            raise BatchRunError("automatic plan attestation failed") from exc
     errors = validate_batch_run(summary)
     if errors:
         raise BatchRunError("generated batch summary is invalid")
@@ -790,19 +867,14 @@ def run_batch(
     public_projection = None
     if destination_resolution is not None and status == "PASSED":
         try:
-            destination_items = destination_resolution.get("destinations", {})
-            public_item = destination_items.get("public_projection_root") if isinstance(destination_items, Mapping) else None
-            public_root = public_item.get("path") if isinstance(public_item, Mapping) else None
-            public_projection = project_batch_automatic(
-                summary,
-                internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
-                public_projection_root=Path(public_root) if isinstance(public_root, str) else None,
-                state_root=state_root,
-                projection_id=run_id,
+            public_projection, attestation = _project_passed_batch(
+                summary, destination_resolution=destination_resolution, state_root=state_root, run_id=run_id,
+                generated_at=generated_at, child_python=child_python, attestation=attestation,
             )
         except (OSError, TypeError, ValueError, KeyError) as exc:
             raise BatchRunError("automatic public plan projection failed") from exc
-    return {"status": status, "summary": summary, "summary_path": summary_path, "acceptance_detail": acceptance_detail, "public_projection": public_projection}
+    return {"status": status, "summary": summary, "summary_path": summary_path, "acceptance_detail": acceptance_detail,
+            "public_projection": public_projection, "automatic_plan_attestation": attestation}
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -894,7 +966,17 @@ def main(argv: Iterable[str] | None = None) -> int:
     projection_status = projection.get("status") if isinstance(projection, Mapping) else None
     if projection_status is not None:
         output["public_projection_status"] = projection_status
+    attestation = result.get("automatic_plan_attestation")
+    if isinstance(attestation, Mapping):
+        output["automatic_plan_attestation"] = dict(attestation)
+        if attestation.get("status") == "BLOCKED":
+            output["stop_reason"] = attestation.get("stop_reason")
+            output["next_action"] = ("Production's automatic plan attestation did not pass; read the project's "
+                                     "finding, repair it (or, for UNAVAILABLE, the Production checkout) and resume "
+                                     "the identical batch run.")
     print(json.dumps(output, ensure_ascii=False, sort_keys=True))
+    if isinstance(attestation, Mapping) and attestation.get("status") == "BLOCKED":
+        return 2
     if projection_status in {"BLOCKED_CONFIGURATION", "BLOCKED_POLICY", "BLOCKED_CONFLICT", "FAILED"}:
         return 2
     return 0 if result["status"] in {"PASSED", "ALREADY_COMPLETED"} else 1
