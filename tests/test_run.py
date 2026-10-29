@@ -1075,7 +1075,7 @@ class ProductionHistoryTests(unittest.TestCase):
             root = Path(temporary)
             command = write_fake_generator(root / "generator")
             first, second = self._profiled_plan_ready(root, "RUN-PLAN-VIEW", runs=2, owner_boundary=True,
-                                                      plan_view={"command": command, "source": "profile"})
+                                                      plan_view={"command": command, "source": "env"})
 
             self.assertEqual("APPLIED", first["public_projection"]["status"])
             self.assertEqual(("PROJECTED", "PASSED"), (first["projection_status"], first["public_catalog_sync"]["status"]))
@@ -1116,7 +1116,16 @@ class ProductionHistoryTests(unittest.TestCase):
             self.assertEqual("30", resume[resume.index("--plan-view-timeout") + 1])
             self.assertTrue(next((root / "public-target" / "plans").glob("P0001-*")).joinpath("plan.md").is_file())
 
-    def test_plan_view_command_comes_from_the_cli_or_the_selected_profile(self):
+    def test_plan_view_command_comes_from_the_cli_or_the_environment_not_the_hashed_profile(self):
+        namespace = lambda **values: MODULE.argparse.Namespace(**{"plan_view_command": None, "plan_view_timeout": None,
+                                                                  "destinations_file": None, **values})
+        environment = {"AGENTIC_ART_PLAN_VIEW_COMMAND": "python3 tools/plan_view_codex.py"}
+        self.assertEqual({"command": ["python3", "tools/plan_view_codex.py"], "source": "env", "timeout": None},
+                         MODULE._plan_view_option(namespace(), environment))
+        self.assertEqual({"command": ["gen", "--x"], "source": "cli", "timeout": 5},
+                         MODULE._plan_view_option(namespace(plan_view_command="gen --x", plan_view_timeout=5), environment))
+        self.assertIsNone(MODULE._plan_view_option(namespace(), {}))
+        # The destinations profile stays closed: a generator there is rejected, so it never enters config_sha256.
         with tempfile.TemporaryDirectory(prefix="run-plan-view-option-") as temporary:
             root = Path(temporary)
             profile = root / "destinations.yaml"
@@ -1125,16 +1134,8 @@ class ProductionHistoryTests(unittest.TestCase):
                 "destinations": {"state_root": str(root / "state"), "internal_output_root": str(root / "internal")},
                 "plan_view_command": ["python3", "tools/plan_view_codex.py"],
             }), encoding="utf-8")
-            namespace = lambda **values: MODULE.argparse.Namespace(**{"plan_view_command": None, "plan_view_timeout": None,
-                                                                      "destinations_file": None, **values})
-            with patch.dict(MODULE.os.environ, {}, clear=False):
-                MODULE.os.environ.pop("AGENTIC_ART_DESTINATIONS_FILE", None)
-                self.assertEqual({"command": ["python3", "tools/plan_view_codex.py"], "source": "profile", "timeout": None},
-                                 MODULE._plan_view_option(namespace(destinations_file=profile)))
-                self.assertEqual({"command": ["gen", "--x"], "source": "cli", "timeout": 5},
-                                 MODULE._plan_view_option(namespace(destinations_file=profile, plan_view_command="gen --x",
-                                                                    plan_view_timeout=5)))
-                self.assertIsNone(MODULE._plan_view_option(namespace()))
+            with self.assertRaisesRegex(ValueError, "profile is invalid"):
+                resolve_destinations(profile, repository_root=ROOT, run_id="RUN-OPTION")
 
     @staticmethod
     def _fake_project(root: Path, *, valid: bool) -> Path:

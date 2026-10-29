@@ -302,18 +302,34 @@ result locatorとfinding codeを返し、resultのfinding `remediation`末尾の
 作り直し、`tools/validate.py --check`で確かめ、結果をreportの`public_catalog_sync`に残す。失敗したら
 `stop_reason: PUBLIC_CATALOG_SYNC_FAILED`と`next_action`（`stage: catalog`）を返す。
 
-catalogが通ったあと、生成コマンドが設定されていれば（destinations profileの`plan_view_command`、または
-`--plan-view-command`）、`tools/plan_view.py`が投影したレコードに設置の想定図を一枚だけ足す。指示文は公開
-`plan.md`の§1完成像（position、first_seconds）、§4コンセプトの`mechanism`、§8の寸法・素材・組み立て・設置から
-決まった手順で組み立て、生成コマンドには標準入力で渡す（出力JPEGのパスを最後の引数に足し、最終行に
-`{"adapter", "tool", "version"}`のJSONを返し、exit 0）。Codex用は`tools/plan_view_codex.py`。結果は
-`media/prototype-whole.jpg`、`supplemental-media.json`（`project-supplemental-public-media/v1`）、READMEの
+catalogが通ったあと、生成コマンドが設定されていれば（`--plan-view-command`、または環境変数
+`AGENTIC_ART_PLAN_VIEW_COMMAND`。どちらもshell式ではなく引数列として分割する）、`tools/plan_view.py`が投影した
+レコードに設置の想定図を一枚だけ足す。生成コマンドはhash対象のdestinations profileに入れない。入れると
+`config_sha256`、run の destination resolution、PLAN_READY の authority が変わり、途中のrunを再開できなくなるため。
+CLIで渡した値は`resume_command`に引き継ぐ。指示文は公開`plan.md`の§1完成像（position、first_seconds）、
+§4コンセプトの`mechanism`、§8の寸法・素材・組み立て・設置から決まった手順で組み立て、生成コマンドには標準入力で渡す
+（出力JPEGのパスを最後の引数に足し、最終行に`{"adapter", "tool", "version"}`のJSONを返し、exit 0）。
+生成コマンドは自分のprocess groupで動き、制限時間（既定1800秒、`--plan-view-timeout`）を過ぎるとgroupごと止める。
+Codex用の`tools/plan_view_codex.py`は`codex exec --json`のthread idで、そのthreadの
+`generated_images/<thread id>/`にできたPNGがちょうど一枚のときだけ受け取る（codexのexit 0も必要。
+内側の制限時間は既定1500秒で外側より短い）。`tools/credential_free.py`はHOMEを空にするので、その入口の中では
+Codexにloginがなく、この段は`FAILED`（`GENERATOR_FAILED`）になる。モデルの認証をその入口へ持ち込む
+決まった方法は無く、このadapterも作らない。結果は`media/prototype-whole.jpg`、`supplemental-media.json`
+（`project-supplemental-public-media/v1`、rights_refは`<adapter>-image-generation/<id>/plan-view/v1`）、READMEの
 `prototype-visualization`ブロック、`introduction_sha256`の付け直しで、`plan.md`とattestationは変えない。
-Projectのcatalog syncとvalidatorをもう一度通し、通らなければ元に戻す。reportの`plan_view.status`は
-`SKIPPED`（未設定）、`ALREADY_PRESENT`（すでにある）、`ATTACHED`、`FAILED`（`reason`と`next_action`の
-`stage: plan_view`。投影は残す）のどれか。指示文の全文と出力hashはprivateなrun reportにだけ残す。
-同じrevisionの再開では投影が想定図を自分のものとして受け入れて`ALREADY_PROJECTED`のままになり、
-新しいrevisionの投影は古い想定図をREADMEと一緒に外し、この段が新しいrevisionの想定図を作る。
+画像とmanifestを先に、README・index・metadataを最後に、それぞれ置き換えで書く。Projectのcatalog syncと
+validatorをもう一度通し、通らなければ元に戻して同期し直す（同期し直しも通ったときだけ`restored: true`）。
+reportの`plan_view.status`は`SKIPPED`（未設定）、`ALREADY_PRESENT`（manifest・READMEのリンク・metadataと
+indexの`introduction_sha256`がすべて揃っている）、`ATTACHED`、`FAILED`（`reason`と`next_action`の
+`stage: plan_view`。投影は残す）のどれか。指示文の全文と出力hash・出力pathはprivateなrun reportにだけ残す。
+途中で止まった取り付け（揃っていない状態）は、投影の前に`repair_partial`がこの道具の分だけ元に戻し、この段が
+付け直す。手で入れた（rights_refが違う）媒体は触らず報告する。同じrevisionの再開では投影が想定図を
+自分のものとして受け入れて`ALREADY_PROJECTED`のままになる。新しいrevisionの投影は、この道具が作った想定図だけを
+READMEと一緒に外し、この段が新しいrevisionの想定図を作る。それ以外の補足媒体や、生成したものと違うREADMEが
+あれば、消さずに`BLOCKED_CONFLICT`（`curated supplemental media requires migration` /
+`curated README requires migration`）で止まる。manifestの`source.commit`は、記録の今の`plan.md`を含む
+最新のcommit。run.pyは投影をcommitしないので、初回はまだ無く、公開先のHEADを使って
+`source_commit_contains_record: false`と報告する。
 
 preflightは公開境界、機密情報、権利・同意、path safety、target Git/layout/index/markerを全件検査
 してから、`plans/Pxxxx-<slug>/`の`README.md`、`plan.md`、`metadata.yaml`と`plans/index.yaml`、

@@ -28,8 +28,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
+import signal
 import subprocess
 from typing import Any, Callable, Mapping
 
@@ -44,6 +46,7 @@ VIEW_PATH = "media/prototype-whole.jpg"
 BLOCK_START = "<!-- prototype-visualization:start -->"
 BLOCK_END = "<!-- prototype-visualization:end -->"
 README_ANCHOR = "## 制作入口"
+BLOCK_PATTERN = re.compile(re.escape(BLOCK_START) + r"\n.*?" + re.escape(BLOCK_END) + r"\n\n", re.DOTALL)
 DEFAULT_TIMEOUT_SECONDS = 1800
 ADAPTER = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9 ._+()/-]{0,63}")
@@ -135,6 +138,25 @@ def _regular(path: Path) -> bytes:
     return path.read_bytes()
 
 
+def _write(path: Path, data: bytes) -> None:
+    """Replace one file atomically so a killed process leaves the old or the new bytes."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.plan-view.tmp")
+    with temporary.open("wb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+
+
+def _remove(path: Path) -> None:
+    if path.exists() or path.is_symlink():
+        path.unlink()
+    media = path.parent
+    if media.name == "media" and media.is_dir() and not any(media.iterdir()):
+        media.rmdir()
+
+
 def _safe_media(path: object) -> str:
     if (not isinstance(path, str) or not re.fullmatch(r"media/[A-Za-z0-9._/-]+", path)
             or any(part in {".", ".."} for part in path.split("/")) or str(PurePosixPath(path)) != path):
@@ -142,19 +164,16 @@ def _safe_media(path: object) -> str:
     return path
 
 
-def supplemental_files(target: Path, record_path: str, record_id: str | None = None) -> dict[str, bytes]:
-    """Return the target-relative files of a record's verified supplemental media.
+def generated_rights_ref(record_id: str) -> re.Pattern[str]:
+    """rights_ref of a view this tool produced; any other supplemental asset is curated."""
+    return re.compile(rf"[a-z0-9]+(?:-[a-z0-9]+)*-image-generation/{re.escape(record_id)}/plan-view/v1")
 
-    The canonical projection calls this so that a resumed run accepts the view
-    this module attached (and removes it when a new plan revision replaces the
-    README it was linked from).  An absent manifest is ``{}``; a manifest whose
-    bytes, identity or asset hashes do not match raises.
-    """
-    directory = target / record_path
-    manifest_path = directory / MANIFEST
-    if not manifest_path.exists() and not manifest_path.is_symlink():
-        return {}
-    raw = _regular(manifest_path)
+
+def _manifest(directory: Path, record_id: str | None) -> tuple[bytes, dict[str, Any]] | None:
+    path = directory / MANIFEST
+    if not path.exists() and not path.is_symlink():
+        return None
+    raw = _regular(path)
     try:
         manifest = json.loads(raw)
     except ValueError as exc:
@@ -162,12 +181,26 @@ def supplemental_files(target: Path, record_path: str, record_id: str | None = N
     if (not isinstance(manifest, dict) or raw != _canonical(manifest) + b"\n"
             or manifest.get("contract_version") != CONTRACT_VERSION
             or (record_id is not None and manifest.get("record_id") != record_id)
-            or not isinstance(manifest.get("assets"), list) or not manifest["assets"]):
+            or not isinstance(manifest.get("assets"), list) or not manifest["assets"]
+            or not all(isinstance(asset, dict) for asset in manifest["assets"])):
         raise PlanViewError("SUPPLEMENTAL_MEDIA_INVALID")
+    return raw, manifest
+
+
+def supplemental_files(target: Path, record_path: str, record_id: str | None = None) -> dict[str, bytes]:
+    """Return the target-relative files of a record's verified supplemental media.
+
+    The canonical projection calls this so that a resumed run accepts the view
+    this module attached.  An absent manifest is ``{}``; a manifest whose bytes,
+    identity or asset hashes do not match raises.
+    """
+    directory = target / record_path
+    found = _manifest(directory, record_id)
+    if found is None:
+        return {}
+    raw, manifest = found
     files = {f"{record_path}/{MANIFEST}": raw}
     for asset in manifest["assets"]:
-        if not isinstance(asset, dict):
-            raise PlanViewError("SUPPLEMENTAL_MEDIA_INVALID")
         relative = _safe_media(asset.get("path"))
         data = _regular(directory / relative)
         if asset.get("sha256") != "sha256:" + _sha256(data):
@@ -176,9 +209,38 @@ def supplemental_files(target: Path, record_path: str, record_id: str | None = N
     return files
 
 
-def _record(target: Path, record_id: str) -> tuple[str, dict[str, Any]]:
+def generated_view_files(target: Path, record_path: str, record_id: str) -> dict[str, bytes]:
+    """The supplemental files a new plan revision may drop: only views this tool generated.
+
+    Raises CURATED_SUPPLEMENTAL_MEDIA when the manifest lists any other asset,
+    so curated media from an earlier process is migrated explicitly, never
+    deleted silently.
+    """
+    files = supplemental_files(target, record_path, record_id)
+    if not files:
+        return {}
+    _raw, manifest = _manifest(target / record_path, record_id)  # type: ignore[misc]
+    ours = generated_rights_ref(record_id)
+    if not all(isinstance(asset.get("rights_ref"), str) and ours.fullmatch(asset["rights_ref"])
+               for asset in manifest["assets"]):
+        raise PlanViewError("CURATED_SUPPLEMENTAL_MEDIA")
+    return files
+
+
+def strip_block(readme: str) -> str:
+    """The README without this tool's block (the exact inverse of the insertion)."""
+    return BLOCK_PATTERN.sub("", readme, count=1)
+
+
+def _index(target: Path) -> dict[str, Any]:
     index = yaml.safe_load(_regular(target / "plans/index.yaml").decode("utf-8"))
-    rows = [row for row in (index or {}).get("records", []) if isinstance(row, dict) and row.get("id") == record_id]
+    if not isinstance(index, dict) or not isinstance(index.get("records"), list):
+        raise PlanViewError("RECEIVER_INDEX_INVALID")
+    return index
+
+
+def _record(target: Path, record_id: str) -> tuple[str, dict[str, Any]]:
+    rows = [row for row in _index(target)["records"] if isinstance(row, dict) and row.get("id") == record_id]
     if len(rows) != 1 or not isinstance(rows[0].get("path"), str) or not RECORD_PATH.fullmatch(rows[0]["path"]):
         raise PlanViewError("RECORD_NOT_INDEXED")
     directory = target / rows[0]["path"]
@@ -187,11 +249,117 @@ def _record(target: Path, record_id: str) -> tuple[str, dict[str, Any]]:
     return rows[0]["path"], rows[0]
 
 
-def already_present(directory: Path) -> bool:
-    if (directory / MANIFEST).exists():
-        return True
-    readme = directory / "README.md"
-    return readme.is_file() and BLOCK_START in readme.read_text(encoding="utf-8")
+def _metadata_hash(directory: Path) -> object:
+    metadata = yaml.safe_load(_regular(directory / "metadata.yaml").decode("utf-8"))
+    return metadata.get("introduction_sha256") if isinstance(metadata, dict) else None
+
+
+def view_state(target: Path, record_path: str, record_id: str, entry: Mapping[str, Any]) -> str:
+    """PRESENT, ABSENT or PARTIAL.
+
+    PRESENT needs the whole receiver contract: a valid manifest whose assets
+    match, every asset linked from the README, and the README hash bound in
+    both metadata.yaml and plans/index.yaml.  ABSENT needs no manifest, no
+    view file, no block and a bound README.  Anything else (an interrupted
+    attachment, or a later edit) is PARTIAL.
+    """
+    directory = target / record_path
+    readme_bytes = _regular(directory / "README.md")
+    readme = readme_bytes.decode("utf-8")
+    bound = _sha256(readme_bytes) == _metadata_hash(directory) == entry.get("introduction_sha256")
+    try:
+        files = supplemental_files(target, record_path, record_id)
+    except PlanViewError:
+        return "PARTIAL"
+    if files:
+        linked = all(f"]({name[len(record_path) + 1:]})" in readme
+                     for name in files if not name.endswith("/" + MANIFEST))
+        return "PRESENT" if linked and bound else "PARTIAL"
+    stray_view = (directory / VIEW_PATH).exists() and VIEW_PATH not in _owner_media(directory)
+    absent = not stray_view and BLOCK_START not in readme and BLOCK_END not in readme
+    return "ABSENT" if absent and bound else "PARTIAL"
+
+
+def _rebind_text(text: str, new: str, prefix: str, allowed: set[str]) -> str:
+    pattern = re.compile(rf'^{re.escape(prefix)}"introduction_sha256": "([0-9a-f]{{64}})"$', re.MULTILINE)
+    matches = [match for match in pattern.finditer(text) if match.group(1) in allowed]
+    if len(matches) != 1:
+        raise PlanViewError("INTRODUCTION_HASH_NOT_BOUND")
+    match = matches[0]
+    return text[:match.start(1)] + new + text[match.end(1):]
+
+
+def remove_view(target: Path, record_path: str, record_id: str) -> None:
+    """Put a record whose own generated view is partial or unwanted back to its projected state.
+
+    Only a view this tool generated is removed (manifest absent or every asset
+    carrying its rights_ref); curated media raises.  The introduction hash is
+    rebound only from a value this tool could have written.
+    """
+    directory = target / record_path
+    found = _manifest(directory, record_id)
+    ours = generated_rights_ref(record_id)
+    assets = []
+    if found is not None:
+        if not all(isinstance(a.get("rights_ref"), str) and ours.fullmatch(a["rights_ref"]) for a in found[1]["assets"]):
+            raise PlanViewError("CURATED_SUPPLEMENTAL_MEDIA")
+        assets = [_safe_media(asset.get("path")) for asset in found[1]["assets"]]
+    owner_paths = _owner_media(directory)
+    readme_bytes = _regular(directory / "README.md")
+    readme = readme_bytes.decode("utf-8")
+    stripped = strip_block(readme)
+    if BLOCK_START in stripped or BLOCK_END in stripped:
+        raise PlanViewError("README_BLOCK_UNRECOGNIZED")
+    stripped_bytes = stripped.encode("utf-8")
+    allowed = {_sha256(readme_bytes), _sha256(stripped_bytes)}
+    new = _sha256(stripped_bytes)
+    index_path, metadata_path = target / "plans/index.yaml", directory / "metadata.yaml"
+    index_text = _rebind_text(_regular(index_path).decode("utf-8"), new, "  ", allowed)
+    metadata_text = _rebind_text(_regular(metadata_path).decode("utf-8"), new, "", allowed)
+    _write(metadata_path, metadata_text.encode("utf-8"))
+    _write(index_path, index_text.encode("utf-8"))
+    _write(directory / "README.md", stripped_bytes)
+    _remove(directory / MANIFEST)
+    for relative in {*assets, VIEW_PATH} - owner_paths:
+        _remove(directory / relative)
+
+
+def _owner_media(directory: Path) -> set[str]:
+    try:
+        attestation = json.loads(_regular(directory / "public-plan-attestation.json"))
+    except ValueError as exc:
+        raise PlanViewError("ATTESTATION_UNREADABLE") from exc
+    assets = attestation.get("assets", []) if isinstance(attestation, dict) else []
+    return {asset["path"][len("03_plan/"):] for asset in assets
+            if isinstance(asset, dict) and isinstance(asset.get("path"), str) and asset["path"].startswith("03_plan/media/")}
+
+
+def repair_partial(target: Path) -> list[dict[str, str]]:
+    """Before a projection, undo any interrupted attachment of this tool's view (never raises).
+
+    A run killed between the record writes can leave metadata.yaml and
+    plans/index.yaml disagreeing, which the projection would refuse as a
+    conflict.  Only records in PARTIAL state whose view is this tool's are
+    touched; curated or unrecognised states are reported and left alone.
+    """
+    results: list[dict[str, str]] = []
+    try:
+        rows = [row for row in _index(target)["records"] if isinstance(row, dict)]
+    except Exception as exc:  # noqa: BLE001 - this is a best-effort pre-projection check
+        return [{"status": "SKIPPED", "reason": type(exc).__name__}]
+    for row in rows:
+        record_id, record_path = row.get("id"), row.get("path")
+        if not isinstance(record_id, str) or not isinstance(record_path, str) or not RECORD_PATH.fullmatch(record_path):
+            continue
+        try:
+            if not (target / record_path).is_dir() or view_state(target, record_path, record_id, row) != "PARTIAL":
+                continue
+            remove_view(target, record_path, record_id)
+            results.append({"record_id": record_id, "status": "REPAIRED"})
+        except Exception as exc:  # noqa: BLE001
+            reason = str(exc) if isinstance(exc, PlanViewError) else type(exc).__name__
+            results.append({"record_id": record_id, "status": "LEFT", "reason": reason})
+    return results
 
 
 def _media_policy(target: Path) -> tuple[int, set[str]]:
@@ -202,13 +370,28 @@ def _media_policy(target: Path) -> tuple[int, set[str]]:
     return policy["max_file_bytes"], set(policy.get("allowed_extensions") or [])
 
 
-def _head(target: Path) -> str:
-    completed = subprocess.run(["git", "-C", str(target), "rev-parse", "HEAD"], capture_output=True, text=True,
-                               timeout=60, env=child_environment())
-    commit = completed.stdout.strip()
-    if completed.returncode or not re.fullmatch(r"[0-9a-f]{40}", commit):
+def _git(target: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(["git", "-C", str(target), *args], capture_output=True, timeout=60, env=child_environment())
+
+
+def source_commit(target: Path, record_path: str) -> tuple[str, bool]:
+    """The newest commit that holds this record's plan.md as it is now, else HEAD.
+
+    tools/run.py projects into the working tree and does not commit, so on the
+    first run no commit contains the record yet; then the target's HEAD (the
+    public record the projection was applied to) is used and reported.
+    """
+    plan = _regular(target / record_path / "plan.md")
+    found = _git(target, "log", "-1", "--format=%H", "--", f"{record_path}/plan.md")
+    commit = found.stdout.decode().strip()
+    if found.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", commit):
+        held = _git(target, "show", f"{commit}:{record_path}/plan.md")
+        if held.returncode == 0 and held.stdout == plan:
+            return commit, True
+    head = _git(target, "rev-parse", "HEAD").stdout.decode().strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", head):
         raise PlanViewError("TARGET_HEAD_MISSING")
-    return commit
+    return head, False
 
 
 # --- generation -------------------------------------------------------------
@@ -229,23 +412,42 @@ def _identity(stdout: str) -> dict[str, str]:
     return {"adapter": adapter, "tool": tool, "version": version}
 
 
+def _stop_group(process: subprocess.Popen[str]) -> None:
+    """Stop the generator and everything it started (it runs in its own process group)."""
+    for signum, wait in ((signal.SIGTERM, 10), (signal.SIGKILL, 5)):
+        try:
+            os.killpg(process.pid, signum)
+        except ProcessLookupError:
+            return
+        try:
+            process.wait(timeout=wait)
+            return
+        except subprocess.TimeoutExpired:
+            continue
+
+
 def generate(command: list[str], prompt: str, output: Path, *, timeout: int) -> dict[str, str]:
     """Run the configured generator without write credentials and check what it wrote."""
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.exists() or output.is_symlink():
         output.unlink()
     try:
-        completed = subprocess.run([*command, str(output)], input=prompt, capture_output=True, text=True,
-                                   timeout=timeout, cwd=output.parent, env=child_environment())
-    except subprocess.TimeoutExpired as exc:
-        raise PlanViewError("GENERATOR_TIMEOUT") from exc
+        process = subprocess.Popen([*command, str(output)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, text=True, cwd=output.parent, env=child_environment(),
+                                   start_new_session=True)
     except OSError as exc:
         raise PlanViewError("GENERATOR_NOT_RUNNABLE") from exc
-    if completed.returncode:
+    try:
+        stdout, stderr = process.communicate(prompt, timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        _stop_group(process)
+        process.communicate()
+        raise PlanViewError("GENERATOR_TIMEOUT") from exc
+    if process.returncode:
         error = PlanViewError("GENERATOR_FAILED")
-        error.detail = (completed.stderr or "").strip().splitlines()[-5:]
+        error.detail = (stderr or "").strip().splitlines()[-5:]
         raise error
-    identity = _identity(completed.stdout)
+    identity = _identity(stdout)
     if output.is_symlink() or not output.is_file():
         raise PlanViewError("GENERATOR_WROTE_NO_IMAGE")
     data = output.read_bytes()
@@ -272,27 +474,23 @@ def readme_block(*, title: str, identity: Mapping[str, str], generated_at: str, 
     )
 
 
-def _rebind(text: str, old: str, new: str, prefix: str) -> str:
-    line = f'{prefix}"introduction_sha256": "{old}"'
-    if text.count(line) != 1:
-        raise PlanViewError("INTRODUCTION_HASH_NOT_BOUND")
-    return text.replace(line, f'{prefix}"introduction_sha256": "{new}"')
-
-
 def attach(target: Path, record_path: str, record_id: str, *, image: bytes, identity: Mapping[str, str],
            generated_at: str, prompt_sha256: str, source_commit: str, title: str) -> dict[Path, bytes | None]:
-    """Write the view, manifest, README block and rebound hashes; return the prior bytes for rollback."""
+    """Write the view, then the manifest, then README, index and metadata; return the prior bytes.
+
+    Every file is replaced atomically and the README/index/metadata come last,
+    so an interrupted attachment is a PARTIAL state that remove_view undoes.
+    """
     directory = target / record_path
     readme_path, metadata_path, index_path = directory / "README.md", directory / "metadata.yaml", target / "plans/index.yaml"
     view, manifest_path = directory / VIEW_PATH, directory / MANIFEST
     if view.exists() or view.is_symlink() or manifest_path.exists() or manifest_path.is_symlink():
         raise PlanViewError("VIEW_PATH_OCCUPIED")
+    if VIEW_PATH in _owner_media(directory):
+        raise PlanViewError("VIEW_PATH_OWNED_BY_PRODUCTION")
     readme_bytes = _regular(readme_path)
     readme = readme_bytes.decode("utf-8")
-    metadata_text, index_text = _regular(metadata_path).decode("utf-8"), _regular(index_path).decode("utf-8")
-    old_hash = (yaml.safe_load(metadata_text) or {}).get("introduction_sha256")
-    if old_hash != _sha256(readme_bytes):
-        raise PlanViewError("INTRODUCTION_MISMATCH")
+    old_hash = _sha256(readme_bytes)
     if readme.count(README_ANCHOR) != 1:
         raise PlanViewError("README_ANCHOR_MISSING")
     from tools.security import scan_public_projection
@@ -310,18 +508,18 @@ def attach(target: Path, record_path: str, record_id: str, *, image: bytes, iden
         "source": {"basis": "existing-public-record", "commit": source_commit, "locator": record_path,
                    "repository": "agentic-art-project"},
     }
-    writes = {
-        view: image,
-        manifest_path: _canonical(manifest) + b"\n",
-        readme_path: new_readme,
-        metadata_path: _rebind(metadata_text, old_hash, new_hash, "").encode("utf-8"),
-        index_path: _rebind(index_text, old_hash, new_hash, "  ").encode("utf-8"),
-    }
-    prior: dict[Path, bytes | None] = {path: (None if path in {view, manifest_path} else path.read_bytes()) for path in writes}
+    writes = [
+        (view, image),
+        (manifest_path, _canonical(manifest) + b"\n"),
+        (readme_path, new_readme),
+        (index_path, _rebind_text(_regular(index_path).decode("utf-8"), new_hash, "  ", {old_hash}).encode("utf-8")),
+        (metadata_path, _rebind_text(_regular(metadata_path).decode("utf-8"), new_hash, "", {old_hash}).encode("utf-8")),
+    ]
+    prior: dict[Path, bytes | None] = {path: (None if path in {view, manifest_path} else path.read_bytes())
+                                       for path, _data in writes}
     try:
-        for path, data in writes.items():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(data)
+        for path, data in writes:
+            _write(path, data)
     except OSError:
         restore(prior)
         raise
@@ -329,15 +527,12 @@ def attach(target: Path, record_path: str, record_id: str, *, image: bytes, iden
 
 
 def restore(prior: Mapping[Path, bytes | None]) -> None:
-    for path, data in prior.items():
+    """Restore exact prior bytes; metadata, index and README first, the new files last."""
+    for path, data in reversed(list(prior.items())):
         if data is None:
-            if path.exists() or path.is_symlink():
-                path.unlink()
+            _remove(path)
         else:
-            path.write_bytes(data)
-    for path in prior:
-        if path.parent.name == "media" and path.parent.is_dir() and not any(path.parent.iterdir()):
-            path.parent.rmdir()
+            _write(path, data)
 
 
 # --- run step ---------------------------------------------------------------
@@ -348,8 +543,10 @@ def run_step(target: Path, public_ids: list[str], *, command: list[str] | None, 
     """Create and attach one installation view for the projected record; never raise.
 
     SKIPPED when no generator is configured, ALREADY_PRESENT when the record
-    already carries supplemental media, ATTACHED after the Project's catalog
-    sync and validator pass again, FAILED (with the target restored) otherwise.
+    already carries consistent supplemental media, ATTACHED after the Project's
+    catalog sync and validator pass again, FAILED (with the target restored
+    where possible) otherwise.  A PARTIAL view of this tool is removed and made
+    again; a partial curated state is reported, not touched.
     """
     if not command:
         return {"status": "SKIPPED", "reason": "NOT_CONFIGURED"}
@@ -361,9 +558,16 @@ def run_step(target: Path, public_ids: list[str], *, command: list[str] | None, 
     try:
         record_path, entry = _record(target, record_id)
         result["record_path"] = record_path
-        directory = target / record_path
-        if already_present(directory):
+        state = view_state(target, record_path, record_id, entry)
+        if state == "PRESENT":
             return dict(result, status="ALREADY_PRESENT")
+        if state == "PARTIAL":
+            remove_view(target, record_path, record_id)
+            record_path, entry = _record(target, record_id)
+            if view_state(target, record_path, record_id, entry) != "ABSENT":
+                raise PlanViewError("PARTIAL_VIEW_NOT_REPAIRED")
+            result["repaired_partial_view"] = True
+        directory = target / record_path
         plan = _regular(directory / "plan.md")
         prompt = build_prompt(plan.decode("utf-8"))
         prompt_sha256 = _sha256(prompt.encode("utf-8"))
@@ -371,25 +575,24 @@ def run_step(target: Path, public_ids: list[str], *, command: list[str] | None, 
         max_bytes, extensions = _media_policy(target)
         if ".jpg" not in extensions:
             raise PlanViewError("RECEIVER_REJECTS_JPEG")
-        source_commit = _head(target)
+        commit, contains_record = source_commit(target, record_path)
         generated_at = (now or (lambda: datetime.now(timezone.utc)))().isoformat(timespec="seconds")
         output = work / "plan-view" / f"{record_id}.jpg"
         identity = generate(list(command), prompt, output, timeout=timeout)
         image = output.read_bytes()
         if len(image) > max_bytes:
             raise PlanViewError("RECEIVER_MEDIA_LIMIT")
-        result.update(generator=identity, generated_at=generated_at, output_sha256=_sha256(image),
-                      byte_length=len(image), source_commit=source_commit,
+        result.update(generator=identity, generated_at=generated_at, output=str(output), output_sha256=_sha256(image),
+                      byte_length=len(image), source_commit=commit, source_commit_contains_record=contains_record,
                       rights_ref=f"{identity['adapter']}-image-generation/{record_id}/plan-view/v1")
         prior = attach(target, record_path, record_id, image=image, identity=identity, generated_at=generated_at,
-                       prompt_sha256=prompt_sha256, source_commit=source_commit, title=str(entry.get("title", "")))
+                       prompt_sha256=prompt_sha256, source_commit=commit, title=str(entry.get("title", "")))
         synced = dict(sync(target, python))
         result["catalog_sync"] = synced
         if synced.get("status") != "PASSED":
             raise PlanViewError("CATALOG_SYNC_FAILED")
         return dict(result, status="ATTACHED", path=f"{record_path}/{VIEW_PATH}")
-    except (PlanViewError, OSError, UnicodeError, ValueError, TypeError, KeyError, yaml.YAMLError,
-            subprocess.SubprocessError) as exc:
+    except Exception as exc:  # noqa: BLE001 - an optional step after a successful projection never raises
         reason = str(exc) if isinstance(exc, PlanViewError) else type(exc).__name__
         result.update(status="FAILED", reason=reason)
         if getattr(exc, "detail", None):
@@ -397,9 +600,11 @@ def run_step(target: Path, public_ids: list[str], *, command: list[str] | None, 
         if prior is not None:
             try:
                 restore(prior)
-                result["restored"] = True
-                result["catalog_resync"] = dict(sync(target, python))
-            except (OSError, subprocess.SubprocessError) as restore_exc:
-                result["restored"] = False
-                result["restore_error"] = type(restore_exc).__name__
+                resync = dict(sync(target, python))
+            except Exception as restore_exc:  # noqa: BLE001
+                result.update(restored=False, restore_error=type(restore_exc).__name__)
+            else:
+                result["catalog_resync"] = resync
+                # Restored only when the record bytes are back and the Project validates again.
+                result["restored"] = resync.get("status") == "PASSED"
         return result

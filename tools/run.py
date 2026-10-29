@@ -43,7 +43,6 @@ from tools.output_destinations import (
     manifest_child_roots,
     resolve_destinations,
     resolve_run_destination,
-    selected_plan_view_command,
     write_resolution_evidence,
 )
 from tools.repo_local_destinations import ENVIRONMENT as PROJECT_ROOT_ENV, resolve_project_root
@@ -268,7 +267,7 @@ def _resume_command(
     if offline_fixture:
         command += ["--offline-fixture"]
     if isinstance(plan_view, Mapping):
-        # A profile command is read again from the profile; a CLI command must be repeated.
+        # An environment command is read again from the environment; a CLI command must be repeated.
         if plan_view.get("source") == "cli":
             command += ["--plan-view-command", shlex.join(plan_view["command"])]
         if plan_view.get("timeout") is not None:
@@ -1527,6 +1526,14 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                     destination_resolution=destination_resolution,
                 )
 
+            if isinstance(public_root, str) and Path(public_root).is_dir():
+                # An attachment of tools/plan_view.py killed between its record writes would make
+                # the projection refuse the record as a conflict; undo only that harness state first.
+                from tools.plan_view import repair_partial
+
+                repaired = repair_partial(Path(public_root))
+                if repaired:
+                    report["plan_view_repair"] = repaired
             try:
                 projection = project_plan_automatic(
                     report,
@@ -1722,12 +1729,21 @@ def run(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _run_orchestration(*args, **kwargs)
 
 
-def _plan_view_option(args: argparse.Namespace) -> dict[str, object] | None:
-    """The CLI command wins over the selected profile's plan_view_command; neither means SKIPPED."""
+PLAN_VIEW_ENV = "AGENTIC_ART_PLAN_VIEW_COMMAND"
+
+
+def _plan_view_option(args: argparse.Namespace, environment: Mapping[str, str] | None = None) -> dict[str, object] | None:
+    """--plan-view-command wins over AGENTIC_ART_PLAN_VIEW_COMMAND; neither means SKIPPED.
+
+    The generator is deliberately not part of the hashed destinations profile:
+    adding it must not change config_sha256, the run's resolution evidence or
+    the PLAN_READY authority binding of runs already in flight.
+    """
+    environment = os.environ if environment is None else environment
     if args.plan_view_command:
         command, source = shlex.split(args.plan_view_command), "cli"
-    elif destinations_profile_selected(args.destinations_file):
-        command, source = selected_plan_view_command(args.destinations_file), "profile"
+    elif environment.get(PLAN_VIEW_ENV):
+        command, source = shlex.split(environment[PLAN_VIEW_ENV]), "env"
     else:
         command, source = None, None
     if not command:
@@ -1774,7 +1790,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--child-python", default=sys.executable)
     parser.add_argument("--plan-view-command",
                         help="任意。投影後に設置の想定図を作る生成コマンド（指示文は標準入力、出力JPEGのパスを最後の引数に足す）。"
-                             "省略時は destinations プロファイルの plan_view_command。どちらも無ければこの段は SKIPPED")
+                             "省略時は環境変数 AGENTIC_ART_PLAN_VIEW_COMMAND。どちらも無ければこの段は SKIPPED")
     parser.add_argument("--plan-view-timeout", type=int, help="生成コマンドの制限時間（秒）")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args(argv)
