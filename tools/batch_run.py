@@ -569,6 +569,7 @@ def _public_root(destination_resolution: Mapping[str, object] | None) -> str | N
 
 def _attest_batch_projects(
     projects: list[dict[str, Any]], *, child_python: str, generated_at: str, superseded_root: Path,
+    public_projection_root: Path | None = None,
 ) -> dict[str, Any]:
     """Run Production's automatic plan attestation for every PASSED project.
 
@@ -587,10 +588,11 @@ def _attest_batch_projects(
         attested = ensure_automatic_attestation(
             python=child_python, code=code, project=plan.parent.parent,
             producer_commit=str(project.get("production_source_commit")), generated_at=generated_at,
-            superseded_root=superseded_root,
+            superseded_root=superseded_root, public_projection_root=public_projection_root,
         )
         entry = {"project_id": project.get("project_id"),
-                 **{key: attested[key] for key in ("status", "retired", "attempts", "finding") if key in attested}}
+                 **{key: attested[key] for key in ("status", "retired", "attempts", "finding", "public_record")
+                    if key in attested}}
         results.append(entry)
         if attested["status"] in ATTESTATION_BLOCKED:
             return {"status": "BLOCKED", "stop_reason": "PRODUCTION_AUTOMATIC_ATTESTATION_FAILED",
@@ -616,6 +618,7 @@ def _project_passed_batch(
         attestation = _attest_batch_projects(
             summary["projects"], child_python=child_python, generated_at=generated_at,
             superseded_root=state_root / run_id / "superseded-attestations",
+            public_projection_root=Path(public_root),
         )
     if attestation["status"] != "PASSED":
         return None, attestation
@@ -857,6 +860,7 @@ def run_batch(
             attestation = _attest_batch_projects(
                 summary["projects"], child_python=child_python, generated_at=generated_at,
                 superseded_root=state_dir / "superseded-attestations",
+                public_projection_root=Path(str(_public_root(destination_resolution))),
             )
         except (OSError, TypeError, ValueError, KeyError) as exc:
             raise BatchRunError("automatic plan attestation failed") from exc

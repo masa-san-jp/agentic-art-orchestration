@@ -1501,9 +1501,10 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 python=python, code=production_root, project=plan_path.parent.parent,
                 producer_commit=production_source_commit, generated_at=requested_at,
                 superseded_root=work / "superseded-attestations",
+                public_projection_root=Path(public_root),
             )
             report["automatic_plan_attestation"] = {
-                key: attested[key] for key in ("status", "retired", "attempts") if key in attested
+                key: attested[key] for key in ("status", "retired", "attempts", "public_record") if key in attested
             }
             if attested["status"] in ATTESTATION_BLOCKED:
                 report["automatic_plan_attestation"]["finding"] = attested["finding"]

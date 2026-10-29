@@ -209,6 +209,38 @@ class AutomaticAttestationTests(unittest.TestCase):
             result = self.attest("2026-10-28T00:00:00Z", sleep=lambda seconds: None)
         self.assertEqual("ALREADY_ATTESTED", result["status"])
 
+    def publish(self, body=b"# Demo plan\n", revision="1"):
+        """A receiver index that already holds demo#PL001 at `revision` for `body`."""
+        public = self.root / "public"
+        (public / "plans").mkdir(parents=True, exist_ok=True)
+        (public / "plans/index.yaml").write_text(yaml.safe_dump({"version": 1, "retired_ids": [], "records": [{
+            "id": "P0001", "slug": "demo", "path": "plans/P0001-demo", "source_identity": "demo#PL001",
+            "plan_revision": revision, "content_sha256": hashlib.sha256(body).hexdigest(),
+            "attestation_sha256": "0" * 64, "production_commit": "a" * 40}]}), encoding="utf-8")
+        return public
+
+    def test_only_the_producer_commit_changed_for_published_bytes_is_not_reattested(self):
+        self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
+        result = self.attest("2026-10-28T00:00:00Z", commit="b" * 40, superseded_root=self.superseded(),
+                             public_projection_root=self.publish())
+        self.assertEqual("ALREADY_PUBLISHED", result["status"])
+        self.assertEqual("P0001", result["public_record"])
+        self.assertNotIn("retired", result)
+        self.assertEqual(old, attestation.read_bytes())
+        self.assertFalse(self.superseded().exists())
+        self.assertEqual(1, len(self.calls()))
+
+    def test_changed_bytes_are_reattested_even_when_an_older_body_is_published(self):
+        self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
+        public = self.publish()
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        result = self.attest("2026-10-28T00:00:00Z", commit="b" * 40, superseded_root=self.superseded(),
+                             public_projection_root=public)
+        self.assertEqual("REATTESTED", result["status"])
+        self.assertEqual("PLAN_BYTES_CHANGED", result["retired"]["reason"])
+
     def test_relative_code_and_project_paths_are_resolved(self):
         previous = os.getcwd()
         self.addCleanup(os.chdir, previous)
@@ -423,6 +455,46 @@ check_envelope(record, metadata, entry)
         self.report['plan_revision']=1
         self.next_run('ROLLBACK')
         self.assertEqual('BLOCKED_CONFLICT',self.project()['status'])
+
+    def test_identical_bytes_after_a_producer_commit_change_are_already_projected(self):
+        """Only the commit changed: keep the record and its public attestation, write nothing."""
+        with patch('tools.canonical_plan_projection._owner_bundle', synthetic_owner_boundary):
+            self.assertEqual('APPLIED', self.project()['status'])
+        record = yaml.safe_load((self.target/'plans/index.yaml').read_text())['records'][0]
+        public_attestation = (self.target/record['path']/'public-plan-attestation.json').read_bytes()
+        before = p._tree_fingerprint(self.target)
+        # The internal attestation now names another commit; the pinned owner
+        # would not verify it for this receiver record, and need not.
+        # source_fields reports the resolved canonical locator, as run.py does.
+        self.report.update(production_source_commit='c'*40, source_identity=record['source_identity'], plan_revision=1,
+                           plan=str(Path(self.report['plan']).resolve()))
+        self.next_run('COMMIT')
+        def owner_must_not_run(item, internal, child_python=None):
+            raise AssertionError('owner verification is not needed for an unchanged record')
+        with patch('tools.canonical_plan_projection._owner_bundle', owner_must_not_run):
+            result = self.project()
+        self.assertEqual('ALREADY_PROJECTED', result['status'])
+        self.assertEqual(['P0001'], result['public_ids'])
+        self.assertEqual(before, p._tree_fingerprint(self.target))
+        self.assertEqual(public_attestation, (self.target/record['path']/'public-plan-attestation.json').read_bytes())
+        kept = yaml.safe_load((self.target/'plans/index.yaml').read_text())['records'][0]
+        self.assertEqual('a'*40, kept['production_commit'])
+
+    def test_changed_bytes_at_the_same_revision_still_need_a_new_revision(self):
+        """Production has no revision bump: changed bytes at revision 1 are a REVISION_CONFLICT."""
+        with patch('tools.canonical_plan_projection._owner_bundle', synthetic_owner_boundary):
+            self.assertEqual('APPLIED', self.project()['status'])
+            record = yaml.safe_load((self.target/'plans/index.yaml').read_text())['records'][0]
+            plan = Path(self.report['plan']); plan.write_bytes(plan.read_bytes() + b'\nNew version\n')
+            self.report.update(production_plan_sha256=p._sha256_bytes(plan.read_bytes()),
+                               source_identity=record['source_identity'], plan_revision=1, plan=str(plan.resolve()))
+            self.next_run('BYTES')
+            before = p._tree_fingerprint(self.target)
+            result = self.project()
+        self.assertEqual('BLOCKED_CONFLICT', result['status'])
+        self.assertEqual(before, p._tree_fingerprint(self.target))
+        evidence = json.loads((self.root/'state'/self.report['run_id']/'public-projection-result.json').read_text())
+        self.assertTrue(evidence['findings'][0]['remediation'].endswith('reason: REVISION_CONFLICT'))
 
     @patch('tools.canonical_plan_projection._owner_bundle',synthetic_owner_boundary)
     def test_high_revision_failure_restores_prior_body_and_catalog(self):

@@ -394,7 +394,8 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
     code = checked_code(binding['code_root'], binding['code_commit'])
     attested = ensure_automatic_attestation(python=binding.get('python', sys.executable), code=code, project=project,
         producer_commit=binding['code_commit'], generated_at=context['clock'],
-        superseded_root=run_root / 'superseded-attestations')
+        superseded_root=run_root / 'superseded-attestations',
+        public_projection_root=Path(resolution['destination_resolution']['destinations']['public_projection_root']['path']))
     command = attested['command']
     if attested['status'] in ATTESTATION_BLOCKED:
         packet = run_root / 'automatic-plan-attestation.json'
