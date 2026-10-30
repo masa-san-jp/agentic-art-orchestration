@@ -214,7 +214,31 @@ def _public_record_files(target, record, project, body):
         if "sha256:" + digest(data) != asset["sha256"] or internal_media.read_bytes() != data:
             return None
         files[relative[8:]] = data
+    # A medium added under 03_plan/media since the public attestation is new
+    # attested content too: the attested set must be the whole current set.
+    if _attestable_media(project) != {asset["path"] for asset in attestation.get("assets", [])}:
+        return None
     return attestation, files
+
+
+ATTESTABLE_MEDIA_SUFFIXES = frozenset({".svg", ".png", ".jpg", ".jpeg"})
+
+
+def _attestable_media(project):
+    """Every file under ``03_plan/media`` that Production can attest, as project-relative paths.
+
+    The suffixes are the media types Production's public plan attestation
+    accepts.  Symlinks are listed too, so their presence is a difference.
+    """
+    root = Path(project)
+    media = root / "03_plan/media"
+    if not media.is_dir() or media.is_symlink():
+        return set()
+    return {
+        path.relative_to(root).as_posix()
+        for path in media.rglob("*")
+        if path.suffix.lower() in ATTESTABLE_MEDIA_SUFFIXES and (path.is_symlink() or path.is_file())
+    }
 
 
 def _published_bundle(item, internal, target):

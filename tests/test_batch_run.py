@@ -26,6 +26,7 @@ from tools.batch_run import (
     run_batch,
     validate_batch_run,
 )
+from tools.delivery_completion import completion
 from tools.output_destinations import resolve_destinations
 from tests.test_canonical_plan_projection import write_fake_attestation_tool
 from tests.test_plan_view import PLAN
@@ -104,6 +105,18 @@ class BatchRunContractTests(unittest.TestCase):
         invalid = copy.deepcopy(self._summary())
         invalid["acceptance"]["g4_no_human_authority"] = False
         self.assertTrue(validate_batch_run(invalid))
+
+    def test_a_blocked_summary_must_meet_the_passed_counts_and_acceptance(self) -> None:
+        blocked = self._summary()
+        blocked.update(status="BLOCKED", stop_reason="PRODUCTION_AUTOMATIC_ATTESTATION_FAILED",
+                       automatic_plan_attestation={"status": "BLOCKED", "projects": []})
+        self.assertEqual([], validate_batch_run(blocked))
+        failing = copy.deepcopy(blocked)
+        failing["acceptance"]["g7_prototype_output_ready"] = False
+        self.assertIn("BLOCKED run must satisfy every acceptance boolean", " ".join(validate_batch_run(failing)))
+        short = copy.deepcopy(blocked)
+        short.update(completed_count=0, failed_count=1)
+        self.assertIn("BLOCKED run counts are inconsistent", " ".join(validate_batch_run(short)))
 
     def test_append_only_events_are_idempotent_and_conflicts_fail(self) -> None:
         with tempfile.TemporaryDirectory(prefix="batch-run-test-") as temporary:
@@ -441,12 +454,60 @@ class BatchResumeProjectionTests(unittest.TestCase):
         self.assertEqual("PLAN_BYTES_CHANGED", attestation["projects"][0]["retired"]["reason"])
         self.assertEqual("APPLIED", result["public_projection"]["status"], result["public_projection"])
         self.assertEqual(changed, self.public_plan())
-        # The PASSED summary on disk is left as the batch wrote it.
-        self.assertEqual(written, json.loads(self.summary_path().read_text(encoding="utf-8")))
+        # The PASSED summary on disk now carries the attested hash and authority.
+        saved = json.loads(self.summary_path().read_text(encoding="utf-8"))
+        self.assertEqual(saved, result["summary"])
+        self.assertEqual(hashlib.sha256(changed).hexdigest(), saved["projects"][0]["production_plan_markdown_sha256"])
+        self.assertNotEqual(written["automatic_plan_authority"], saved["automatic_plan_authority"])
+        self.assertEqual([], validate_batch_run(saved))
+        self.assertEqual([], [path.name for path in self.summary_path().parent.iterdir() if path.name.endswith(".tmp")])
         # A second resume is idempotent: the attestation is reused and nothing is written.
+        before = self.summary_path().read_bytes()
         again = self.run_batch()
         self.assertEqual("ALREADY_ATTESTED", again["automatic_plan_attestation"]["projects"][0]["status"])
         self.assertEqual("ALREADY_PROJECTED", again["public_projection"]["status"])
+        self.assertEqual(before, self.summary_path().read_bytes())
+
+    def prepare_from_summary(self) -> tuple[int, dict]:
+        """`public_projection.py prepare --batch-summary` on the summary file on disk."""
+        profile = self.root / "destinations.yaml"
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            status = public_projection.main([
+                "prepare", "--batch-summary", str(self.summary_path()), "--projection-id", self.RUN_ID,
+                "--destinations-file", str(profile),
+            ])
+        return status, json.loads(stdout.getvalue())
+
+    def test_a_later_projection_from_the_resumed_summary_file_verifies_the_attested_plan(self) -> None:
+        """The rewritten batch-run.json is what a later batch-summary projection reads."""
+        self.write_attested_summary()
+        changed = PLAN.replace("# 制作プラン", "# 制作プラン（改訂）", 1).encode("utf-8")
+        report = self.output_root / "production" / "batch-001" / "03_plan" / "production-plan.md"
+        for path in (self.plan, report):
+            path.write_bytes(changed)
+        # The stale summary names the old plan hash, so it cannot be projected.
+        stale_status, _stale = self.prepare_from_summary()
+        self.assertEqual(2, stale_status)
+
+        result = self.run_batch()
+        self.assertEqual("APPLIED", result["public_projection"]["status"], result["public_projection"])
+
+        status, output = self.prepare_from_summary()
+        self.assertEqual(0, status, output)
+        self.assertEqual(1, output["record_count"])
+
+    def test_a_resumed_blocked_summary_that_breaks_the_counts_is_not_attested(self) -> None:
+        (self.code / "reject").write_text("PUBLIC_URL_BLOCKED\n", encoding="utf-8")
+        self.fresh_batch()
+        (self.code / "reject").unlink()
+        calls = len(self.calls())
+        saved = json.loads(self.summary_path().read_text(encoding="utf-8"))
+        saved["acceptance"]["g7_prototype_output_ready"] = False
+        self.summary_path().write_text(json.dumps(saved), encoding="utf-8")
+        with self.assertRaises(BatchRunError):
+            self.run_batch()
+        self.assertEqual(calls, len(self.calls()))
 
     def test_fresh_batch_with_a_rejected_attestation_is_recorded_blocked_and_resumes(self) -> None:
         (self.code / "reject").write_text("PUBLIC_URL_BLOCKED\n", encoding="utf-8")
@@ -461,11 +522,16 @@ class BatchResumeProjectionTests(unittest.TestCase):
                          saved["automatic_plan_attestation"]["projects"][0]["finding"])
         self.assertNotIn("automatic_plan_authority", saved)
         self.assertEqual([], validate_batch_run(saved))
+        # delivery_completion describes the BLOCKED summary, not the PASSED one it was.
+        self.assertEqual(completion(saved, saved["delivery_contract"]), saved["delivery_completion"])
+        self.assertIn("PRODUCTION_PLAN", saved["delivery_completion"]["missing"])
 
         # A resume that is still rejected keeps the honest BLOCKED summary.
         still = self.run_batch()
         self.assertEqual("BLOCKED", still["automatic_plan_attestation"]["status"])
-        self.assertEqual("BLOCKED", json.loads(self.summary_path().read_text(encoding="utf-8"))["status"])
+        blocked = json.loads(self.summary_path().read_text(encoding="utf-8"))
+        self.assertEqual("BLOCKED", blocked["status"])
+        self.assertIn("PRODUCTION_PLAN", blocked["delivery_completion"]["missing"])
 
         (self.code / "reject").unlink()
         resumed = self.run_batch()
@@ -476,6 +542,8 @@ class BatchResumeProjectionTests(unittest.TestCase):
         self.assertNotIn("stop_reason", saved)
         self.assertEqual("tools/batch_run.py", saved["automatic_plan_authority"]["producer"])
         self.assertEqual([], validate_batch_run(saved))
+        self.assertEqual(completion(saved, saved["delivery_contract"]), saved["delivery_completion"])
+        self.assertNotIn("PRODUCTION_PLAN", saved["delivery_completion"]["missing"])
         self.assertEqual(PLAN.encode("utf-8"), self.public_plan())
 
     def test_an_unexpected_os_error_in_attestation_leaves_a_resumable_blocked_summary(self) -> None:
