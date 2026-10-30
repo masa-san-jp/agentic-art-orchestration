@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -922,7 +923,9 @@ class ProductionHistoryTests(unittest.TestCase):
         self.assertEqual([True, True], [item["prior_records_visible"] for item in plans])
 
     def _profiled_plan_ready(self, root: Path, run_id: str = "RUN-PROJECTION-001", *, runs: int = 1,
-                             plan_view: dict | None = None, owner_boundary: bool = False) -> list[dict]:
+                             plan_view: dict | None = None, owner_boundary: bool = False,
+                             public: bool = True, head: str = "d" * 40,
+                             production_root: Path | None = None) -> list[dict]:
         """Reach PLAN_READY with fake workers and a fake Production attestation CLI.
 
         ``owner_boundary`` swaps the qualified owner check for the transaction-only test double, so the
@@ -930,7 +933,14 @@ class ProductionHistoryTests(unittest.TestCase):
         """
         write_fake_attestation_tool(root / "production")
         target = root / "public-target"
-        if not target.exists():
+        if not public and not (root / "destinations.yaml").exists():
+            # An internal-only profile: state and internal output, no public root.
+            (root / "destinations.yaml").write_text(yaml.safe_dump({
+                "contract_version": "output-destinations/v1",
+                "profile": "run-internal-test",
+                "destinations": {"state_root": str(root / "state"), "internal_output_root": str(root / "internal")},
+            }, sort_keys=False), encoding="utf-8")
+        if public and not target.exists():
             subprocess.run(["git", "init", "-q", "-b", "main", str(target)], check=True, capture_output=True)
             public_projection.init_target(target, apply=True)
             subprocess.run(["git", "-C", str(target), "add", "public-project.yaml", "README.md", "plans", "works"], check=True, capture_output=True)
@@ -981,13 +991,14 @@ class ProductionHistoryTests(unittest.TestCase):
                 patch.object(MODULE, "_run_child", side_effect=fake_child), \
                 patch.object(MODULE, "_theme_proposal", return_value={"status": "PROPOSED"}), \
                 patch.object(MODULE, "verify_plan", return_value={"plan_status": "PLAN_READY"}), \
-                patch.object(MODULE, "_head", return_value="d" * 40):
+                patch.object(MODULE, "_head", return_value=head):
             for attempt in range(runs):
                 # A resumed run gets a new clock; the attestation must not collide.
                 reports.append(MODULE._run_orchestration(
                     "調和", root / "workspace", root / "state", run_id, "artistic-research",
                     "run-plan", "Run plan", f"2026-09-04T00:0{attempt}:00+09:00", sys.executable,
-                    research_root=root / "research", production_root=root / "production",
+                    research_root=root / "research" if production_root is None else Path("research"),
+                    production_root=root / "production" if production_root is None else production_root,
                     offline_fixture=True, destination_resolution=resolution,
                     internal_output_root=root / "internal", plan_view=plan_view,
                 ))
@@ -1036,6 +1047,79 @@ class ProductionHistoryTests(unittest.TestCase):
             self.assertEqual(report["public_projection"]["finding_codes"], action["finding_codes"])
             self.assertIn("--run-id", action["resume_command"])
             self.assertEqual("PUBLIC_PROJECTION_PENDING", report["stop_reason"])
+
+    def test_internal_only_profile_ends_at_plan_ready_without_a_projection_stop(self):
+        with tempfile.TemporaryDirectory(prefix="run-internal-only-") as temporary:
+            root = Path(temporary)
+            report, = self._profiled_plan_ready(root, "RUN-INTERNAL-001", public=False)
+
+            self.assertEqual("PLAN_READY", report["status"])
+            self.assertEqual("SKIPPED", report["projection_status"])
+            self.assertEqual("INTERNAL_ONLY_PROFILE", report["projection_skip_reason"])
+            self.assertNotIn("stop_reason", report)
+            self.assertNotIn("next_action", report)
+            self.assertNotIn("public_projection", report)
+            self.assertNotIn("automatic_plan_attestation", report)
+            self.assertEqual("internal", report["delivery_contract"]["target"])
+            self.assertEqual("internal", report["delivery_completion"]["target"])
+            self.assertEqual([], self._attestation_calls(root))
+            self.assertFalse((root / "state" / "RUN-INTERNAL-001" / "public-projection-result.json").exists())
+
+    def test_resume_after_a_producer_commit_change_reattests_instead_of_conflicting(self):
+        with tempfile.TemporaryDirectory(prefix="run-attest-stale-") as temporary:
+            root = Path(temporary)
+            first, = self._profiled_plan_ready(root, "RUN-ATTEST-STALE")
+            attestation = Path(first["public_plan_attestation"])
+            old = attestation.read_bytes()
+            second, = self._profiled_plan_ready(root, "RUN-ATTEST-STALE", head="e" * 40)
+
+            self.assertEqual("ATTESTED", first["automatic_plan_attestation"]["status"])
+            self.assertEqual("REATTESTED", second["automatic_plan_attestation"]["status"])
+            retired = second["automatic_plan_attestation"]["retired"]
+            self.assertEqual("PRODUCER_COMMIT_CHANGED", retired["reason"])
+            kept = Path(retired["path"])
+            self.assertEqual(root / "state" / "RUN-ATTEST-STALE" / "superseded-attestations" / "run-plan", kept.parent)
+            self.assertEqual(old, kept.read_bytes())
+            self.assertEqual("e" * 40, json.loads(attestation.read_text())["producer"]["commit"])
+            self.assertNotEqual("PRODUCTION_AUTOMATIC_ATTESTATION_FAILED", second.get("stop_reason"))
+
+    def test_relative_production_root_still_finds_the_attestation_tool(self):
+        with tempfile.TemporaryDirectory(prefix="run-relative-root-") as temporary:
+            root = Path(temporary).resolve()
+            previous = os.getcwd()
+            self.addCleanup(os.chdir, previous)
+            os.chdir(root)
+            report, = self._profiled_plan_ready(root, "RUN-RELATIVE-001", production_root=Path("production"))
+
+            self.assertEqual("ATTESTED", report["automatic_plan_attestation"]["status"])
+            self.assertEqual(1, len(self._attestation_calls(root)))
+            self.assertIn(str(root / "production"), report["next_action"]["resume_command"])
+
+    def test_attestation_cli_timeouts_end_in_a_blocked_report_not_a_traceback(self):
+        with tempfile.TemporaryDirectory(prefix="run-attest-timeout-") as temporary:
+            root = Path(temporary)
+            write_fake_attestation_tool(root / "production")
+            (root / "production" / "hang").write_text("5", encoding="utf-8")
+            waits = []
+            with patch("tools.canonical_plan_projection.ATTESTATION_TIMEOUT_SECONDS", 0.5), \
+                    patch("tools.canonical_plan_projection._backoff", side_effect=waits.append):
+                report, = self._profiled_plan_ready(root, "RUN-ATTEST-TIMEOUT")
+
+            self.assertEqual([1, 2], waits)
+            self.assertEqual(3, len(self._attestation_calls(root)))
+            self.assertEqual("PLAN_READY", report["plan_status"])
+            self.assertEqual("BLOCKED", report["projection_status"])
+            self.assertEqual("PRODUCTION_AUTOMATIC_ATTESTATION_FAILED", report["stop_reason"])
+            self.assertEqual("UNAVAILABLE", report["automatic_plan_attestation"]["status"])
+            self.assertEqual(3, report["automatic_plan_attestation"]["attempts"])
+            action = report["next_action"]
+            self.assertEqual(("agent", "attestation"), (action["actor"], action["stage"]))
+            self.assertEqual("UNAVAILABLE", action["finding"]["status"])
+            self.assertIn("did not answer", action["do"])
+            self.assertIn("--run-id", action["resume_command"])
+            saved = json.loads((root / "state" / "RUN-ATTEST-TIMEOUT" / "run.json").read_text(encoding="utf-8"))
+            self.assertEqual("PRODUCTION_AUTOMATIC_ATTESTATION_FAILED", saved["stop_reason"])
+            self.assertNotIn("public_projection", report)
 
     def test_rejected_automatic_attestation_blocks_before_projection(self):
         with tempfile.TemporaryDirectory(prefix="run-attest-reject-") as temporary:

@@ -3,10 +3,21 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import os
 import re
+import shutil
 import subprocess
 import sys
+import time
 import yaml
+
+
+# Production's attestation CLI is a local subprocess; a slow disk or a busy
+# machine can make one call time out.  Retry those, never a verdict.
+ATTESTATION_ATTEMPTS = 3
+ATTESTATION_TIMEOUT_SECONDS = 120
+# Statuses of ensure_automatic_attestation that must stop before projection.
+ATTESTATION_BLOCKED = frozenset({"REJECTED", "UNAVAILABLE"})
 
 
 def digest(data):
@@ -28,44 +39,231 @@ def source_fields(plan, code):
     return result
 
 
-def ensure_automatic_attestation(*, python, code, project, producer_commit, generated_at):
+def _backoff(seconds):
+    time.sleep(seconds)
+
+
+class _OwnerUnavailable(Exception):
+    """Production's CLI did not answer within the bounded attempts."""
+
+
+def _owner_cli(command, code, *, attempts, sleep):
+    """Run one Production CLI call, retrying only a timeout or an OS error.
+
+    A non-zero exit is the owner's verdict and is returned as is; only a call
+    that produced no verdict is retried, with 1 s, 2 s, ... backoff.
+    """
+    last = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return subprocess.run(command, cwd=code, capture_output=True, text=True,
+                                  timeout=ATTESTATION_TIMEOUT_SECONDS)
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            last = exc
+            if attempt < attempts:
+                sleep(2 ** (attempt - 1))
+    raise _OwnerUnavailable(type(last).__name__)
+
+
+def _retire_attestation(existing, superseded_root):
+    """Move a stale attestation aside, byte for byte; never edit or delete it.
+
+    Production's writer is create-only: a different existing file is
+    ATTESTATION_CONFLICT, and its contract has no replace mode.  The stale file
+    no longer verifies, so it is kept under the run's state, named by its own
+    hash, and the canonical path is left empty for the sanctioned
+    ``--automatic-plan`` generation to write a fresh one.
+    """
+    if existing.is_symlink():
+        raw = os.readlink(existing).encode("utf-8", "surrogateescape")
+        name = "symlink-" + digest(raw) + ".json"
+    else:
+        raw = existing.read_bytes()
+        name = "public-plan-attestation." + digest(raw) + ".json"
+    destination = Path(superseded_root) / existing.parent.parent.name / name
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists() or destination.is_symlink():
+        # Content-addressed: the same bytes were already kept by an earlier retirement.
+        existing.unlink()
+    else:
+        shutil.move(str(existing), str(destination))
+    return {"path": str(destination), "sha256": digest(raw)}
+
+
+def _stale_reason(existing, plan, producer_commit):
+    """Say why an existing attestation cannot be reused, or None if it might be."""
+    if existing.is_symlink() or not existing.is_file():
+        return "ATTESTATION_NOT_A_FILE"
+    try:
+        current = json.loads(existing.read_bytes())
+        if current["human_plan"]["sha256"] != "sha256:" + digest(plan.read_bytes()):
+            return "PLAN_BYTES_CHANGED"
+        if current["producer"]["commit"] != producer_commit:
+            return "PRODUCER_COMMIT_CHANGED"
+    except (ValueError, KeyError, TypeError, OSError):
+        return "ATTESTATION_UNREADABLE"
+    return None
+
+
+RECORD_PATH = re.compile(r"plans/P[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*")
+
+
+def published_record(target, identity, revision, body_hash):
+    """Return the receiver's record for these exact plan bytes, or None.
+
+    A record that the public target already holds for the same source
+    identity, the same plan_revision and the same plan.md bytes needs nothing
+    new: a later producer commit that renders identical bytes is a no-op, not
+    a new revision.  Anything unreadable or unexpected is simply "not
+    published"; the normal owner-verified path then decides.
+    """
+    if target is None or not isinstance(identity, str) or not isinstance(revision, int):
+        return None
+    try:
+        index = yaml.safe_load((Path(target) / "plans/index.yaml").read_text(encoding="utf-8"))
+        records = index.get("records") if isinstance(index, dict) else None
+        for record in records if isinstance(records, list) else []:
+            if (isinstance(record, dict) and record.get("source_identity") == identity
+                    and str(record.get("plan_revision")) == str(revision)
+                    and record.get("content_sha256") == body_hash
+                    and RECORD_PATH.fullmatch(str(record.get("path", "")))):
+                return record
+    except (OSError, ValueError, yaml.YAMLError, AttributeError):
+        return None
+    return None
+
+
+def _published_bundle(item, internal, target):
+    try:
+        return _published_bundle_or_none(item, internal, target)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+
+
+def _published_bundle_or_none(item, internal, target):
+    """Reuse an already projected record whose plan bytes did not change.
+
+    The bundle carries the receiver's existing public attestation, commit and
+    media, so the transaction writes nothing and ends ALREADY_PROJECTED.  The
+    internal plan and every attested medium must still equal the public bytes;
+    otherwise None is returned and the owner-verified path runs.
+    """
+    source = Path(str(item.get("plan", "")))
+    if (not source.is_absolute() or source.resolve() != source or internal not in source.parents
+            or source.name != "production-plan.md" or not source.is_file()):
+        return None
+    body = source.read_bytes()
+    if digest(body) != item.get("production_plan_markdown_sha256", item.get("production_plan_sha256")):
+        return None
+    record = published_record(target, item.get("source_identity"), item.get("plan_revision"), digest(body))
+    if record is None:
+        return None
+    directory = Path(target) / record["path"]
+    plan_path, attestation_path = directory / "plan.md", directory / "public-plan-attestation.json"
+    if any(path.is_symlink() or not path.is_file() for path in (plan_path, attestation_path)):
+        return None
+    public_body, raw = plan_path.read_bytes(), attestation_path.read_bytes()
+    if public_body != body or digest(raw) != record.get("attestation_sha256"):
+        return None
+    attestation = json.loads(raw)
+    files = {"plan.md": body, "public-plan-attestation.json": raw}
+    project = source.parent.parent
+    for asset in attestation.get("assets", []):
+        relative = asset["path"]
+        if not relative.startswith("03_plan/media/") or ".." in Path(relative).parts:
+            return None
+        public_media, internal_media = directory / relative[8:], project / relative
+        if any(path.is_symlink() or not path.is_file() for path in (public_media, internal_media)):
+            return None
+        data = public_media.read_bytes()
+        if "sha256:" + digest(data) != asset["sha256"] or internal_media.read_bytes() != data:
+            return None
+        files[relative[8:]] = data
+    return {"identity": record["source_identity"], "revision": int(record["plan_revision"]), "body_hash": digest(body),
+            "attestation_hash": record["attestation_sha256"], "production_commit": record["production_commit"],
+            "production_state": record.get("production_state"), "assets": attestation.get("assets", []),
+            "files": files, "reused_public_record": record["id"]}
+
+
+def ensure_automatic_attestation(*, python, code, project, producer_commit, generated_at,
+                                 superseded_root=None, attempts=ATTESTATION_ATTEMPTS, sleep=None,
+                                 public_projection_root=None):
     """Run Production's closed AUTOMATIC_PLAN attestation before projection.
 
     This is the mechanical owner check for a canonical plan record: no human
     approval, no external effect.  An attestation that the pinned owner still
     verifies for the identical plan bytes and producer commit is reused, so a
     resumed run (with a new clock) does not collide with its own earlier file.
+
+    An existing attestation for other plan bytes, another producer commit, or
+    one the owner's ``--check`` no longer verifies is stale.  With
+    ``superseded_root`` it is retired (see ``_retire_attestation``) and the
+    plan is attested again through the same sanctioned command; without it the
+    result is REJECTED with ``ATTESTATION_STALE`` instead of the owner's
+    conflict.  A CLI call that times out or cannot start is retried up to
+    ``attempts`` times; if none answers, the result is UNAVAILABLE with a
+    finding.  This function never raises for those cases.
+
+    When only the producer commit changed, the plan bytes are identical and
+    ``public_projection_root`` already holds a record for them at the same
+    plan_revision, nothing is re-attested (ALREADY_PUBLISHED): the projection
+    keeps that record and its public attestation.
     """
-    code, project = Path(code), Path(project)
+    # Resolve before running with cwd=code, so a relative --production-root
+    # does not name the tool (or the project) twice.
+    code, project = Path(code).resolve(), Path(project).resolve()
+    sleep = sleep or _backoff
     tool = str(code / "tools/public_plan_attestation.py")
     command = [str(python), tool, "--project-root", str(project), "--automatic-plan",
                "--producer-commit", str(producer_commit), "--generated-at", str(generated_at)]
     existing = project / "03_plan/public-plan-attestation.json"
     plan = project / "03_plan/production-plan.md"
-    if existing.is_file() and not existing.is_symlink() and plan.is_file():
-        try:
-            current = json.loads(existing.read_bytes())
-            same = (current["producer"]["commit"] == producer_commit
-                    and current["human_plan"]["sha256"] == "sha256:" + digest(plan.read_bytes()))
-        except (ValueError, KeyError, TypeError, OSError):
-            same = False
-        if same:
-            checked = subprocess.run([str(python), tool, "--project-root", str(project), "--check"],
-                                     cwd=code, capture_output=True, text=True, timeout=120)
+    retired = None
+    try:
+        if (existing.exists() or existing.is_symlink()) and plan.is_file():
+            reason = _stale_reason(existing, plan, producer_commit)
+            if reason is None:
+                checked = _owner_cli([str(python), tool, "--project-root", str(project), "--check"], code,
+                                     attempts=attempts, sleep=sleep)
+                try:
+                    verified = checked.returncode == 0 and json.loads(checked.stdout).get("status") == "VERIFIED"
+                except (ValueError, AttributeError):
+                    verified = False
+                if verified:
+                    return {"status": "ALREADY_ATTESTED", "command": command}
+                reason = "CHECK_FAILED"
+            if reason == "PRODUCER_COMMIT_CHANGED" and public_projection_root is not None:
+                current = json.loads(existing.read_bytes())
+                record = published_record(public_projection_root, f'{current.get("project_id")}#{current.get("plan_id")}',
+                                          current.get("plan_revision"), digest(plan.read_bytes()))
+                if record is not None:
+                    return {"status": "ALREADY_PUBLISHED", "command": command, "public_record": record["id"]}
+            if superseded_root is None:
+                return {"status": "REJECTED", "command": command,
+                        "finding": {"status": "REJECTED", "reason": "ATTESTATION_STALE: " + reason}}
             try:
-                verified = checked.returncode == 0 and json.loads(checked.stdout).get("status") == "VERIFIED"
-            except (ValueError, AttributeError):
-                verified = False
-            if verified:
-                return {"status": "ALREADY_ATTESTED", "command": command}
-    result = subprocess.run(command, cwd=code, capture_output=True, text=True, timeout=120)
+                retired = dict(_retire_attestation(existing, superseded_root), reason=reason)
+            except OSError as exc:
+                return {"status": "REJECTED", "command": command,
+                        "finding": {"status": "REJECTED", "reason": "ATTESTATION_RETIRE_FAILED: " + type(exc).__name__}}
+        result = _owner_cli(command, code, attempts=attempts, sleep=sleep)
+    except _OwnerUnavailable as exc:
+        unavailable = {"status": "UNAVAILABLE", "command": command, "attempts": attempts,
+                       "finding": {"status": "UNAVAILABLE",
+                                   "reason": f"{exc}: Production attestation CLI did not answer in {attempts} attempts"}}
+        if retired is not None:
+            unavailable["retired"] = retired
+        return unavailable
+    outcome = {"command": command}
+    if retired is not None:
+        outcome["retired"] = retired
     if result.returncode:
         try:
             finding = json.loads(result.stdout)
         except ValueError:
             finding = {"status": "REJECTED", "reason": result.stderr.strip() or "automatic attestation failed"}
-        return {"status": "REJECTED", "command": command, "finding": finding}
-    return {"status": "ATTESTED", "command": command}
+        return {"status": "REJECTED", "finding": finding, **outcome}
+    return {"status": "REATTESTED" if retired is not None else "ATTESTED", **outcome}
 
 
 def _failure_reason(exc):
@@ -165,8 +363,12 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
             raise ValueError("all batch projects must be PASSED")
         bundles=[]
         for item in items:
-            bundle = (_owner_bundle(item, internal, child_python)
-                      if child_python is not None else _owner_bundle(item, internal))
+            # Identical bytes already projected at the same revision are kept
+            # as they are, with their public attestation (a no-op, not a revision).
+            bundle = _published_bundle(item, internal, target)
+            if bundle is None:
+                bundle = (_owner_bundle(item, internal, child_python)
+                          if child_python is not None else _owner_bundle(item, internal))
             slug=item.get("project_slug",item.get("project_id"));title=item.get("project_title",item.get("title",slug))
             if isinstance(title,str):title=p.plan_record_title(title,bundle["files"]["plan.md"])
             if not isinstance(slug,str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*",slug) or not isinstance(title,str) or not title.strip():raise ValueError("explicit safe project slug/title required")

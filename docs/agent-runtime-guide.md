@@ -235,8 +235,7 @@ fresh cloneのagentは、まず`config/output-destinations.example.yaml`をGit�
 コピーし、`state_root`、`internal_output_root`、任意の`public_projection_root`を、絶対かつ
 互いに重ならない外部パスへ置き換える。profile自体もrepoへ保存しない。`state_root`と
 `internal_output_root`は必須で、`public_projection_root`を設定した場合は正規runの`PLAN_READY`
-またはbatchの`PASSED`で完成制作プランを書き込むlocal public-project worktreeになる。未設定なら
-内部成果物を保持したまま`BLOCKED_CONFIGURATION`で停止する。`project --apply`はwork recordや
+またはbatchの`PASSED`で完成制作プランを書き込むlocal public-project worktreeになる。未設定のprofileは内部専用で、`tools/run.py`は`PLAN_READY`、`tools/batch_run.py`は`PASSED`をそのまま正常な終わりとする（投影しない。runのreportは`projection_status: SKIPPED`、`projection_skip_reason: INTERNAL_ONLY_PROFILE`で、`stop_reason`も`next_action`も付けない）。`project_plan_automatic`/`project_batch_automatic`を公開rootなしで直接呼んだときは、内部成果物を保持して`BLOCKED_CONFIGURATION`を返す。`project --apply`はwork recordや
 手動requestのhuman-gated laneとして残り、remote公開・Git操作は行わない。
 
 ~~~bash
@@ -295,6 +294,7 @@ source hash、`record_kind: plan`を拘束する。source report/summaryの
 
 `tools/run.py`は投影の前に、pin済みProductionの`tools/public_plan_attestation.py --automatic-plan --producer-commit <pin> --generated-at <clock>`
 （人の承認なし・外部効果なし）を実行する。同じplan bytesに対する検証済みattestationがあれば再生成せず再開する。
+審査の道具が時間切れ（120秒）や起動失敗（OSError）で答えないときは、1秒・2秒の間隔で最大3回まで自動で試し直す。3回とも答えなければtracebackで落ちず、`automatic_plan_attestation.status: UNAVAILABLE`とfindingを入れた`projection_status: BLOCKED`のreportを返す。既存のattestationが別のplan bytes、別のproducer commit、またはProductionの`--check`で検証できないもの（古いもの）なら、Productionの書き込みはcreate-onlyで置き換えの経路が無い（違うファイルがあると`ATTESTATION_CONFLICT`）ため、そのファイルをbytesのままrunのstate配下`superseded-attestations/<project>/public-plan-attestation.<sha256>.json`へ移して退け、同じ`--automatic-plan`で作り直す（reportは`REATTESTED`と`retired`）。attestationもplan.mdも手で書き換えない。batchの`project_batch_automatic`の前にも、PASSEDの各planへ同じ審査を行う。ただし変わったのがproducer commitだけで、plan.mdのbytesが同じで、公開先に同じ`plan_revision`の記録がすでにあるときは作り直さない（`ALREADY_PUBLISHED`）。投影もその記録と公開済みのattestationをそのまま残して`ALREADY_PROJECTED`とする（新しいrevisionではなく何もしない操作）。plan.mdのbytesが変わったのに`plan_revision`が同じなら`REVISION_CONFLICT`で止まる。Productionの`build_plan.py`は常に`plan_revision: 1`を書き、revisionを上げる正規の経路がまだ無いため。
 拒否されたら投影せず`projection_status: BLOCKED`とし、ownerのfinding、実行command、`resume_command`を
 `next_action`（`stage: attestation`）で返す。投影が`BLOCKED_*`の場合も`next_action`（`stage: projection`）に
 result locatorとfinding codeを返し、resultのfinding `remediation`末尾の`reason:`に止まった理由（固定文言だけ）を残す。

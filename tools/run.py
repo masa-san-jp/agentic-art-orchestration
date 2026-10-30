@@ -989,6 +989,12 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
         # Carrying on with one of the two would run a child tool in whatever directory
         # happens to be current, and report a step it did not take.
         raise StepFailure("--research-root and --production-root are given together or not at all")
+    # Child tools run with cwd set to their own checkout and are named by a
+    # path below it; a relative root would then be applied twice.
+    if research_root is not None:
+        research_root = Path(os.path.abspath(research_root))
+    if production_root is not None:
+        production_root = Path(os.path.abspath(production_root))
     if offline_fixture:
         preflight = {
             "status": "PASSED",
@@ -1487,20 +1493,30 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             # the closed AUTOMATIC_PLAN lane, as knowledge_cycle_run does: no
             # human review and no external effect.  A rejection is an agent
             # repair; PLAN_READY stays, and nothing is projected.
-            from tools.canonical_plan_projection import ensure_automatic_attestation
+            from tools.canonical_plan_projection import ATTESTATION_BLOCKED, ensure_automatic_attestation
 
+            # A stale attestation (other plan bytes or producer commit) is
+            # retired into this run's state and re-attested by Production.
             attested = ensure_automatic_attestation(
                 python=python, code=production_root, project=plan_path.parent.parent,
                 producer_commit=production_source_commit, generated_at=requested_at,
+                superseded_root=work / "superseded-attestations",
+                public_projection_root=Path(public_root),
             )
-            report["automatic_plan_attestation"] = {"status": attested["status"]}
-            if attested["status"] == "REJECTED":
+            report["automatic_plan_attestation"] = {
+                key: attested[key] for key in ("status", "retired", "attempts", "public_record") if key in attested
+            }
+            if attested["status"] in ATTESTATION_BLOCKED:
                 report["automatic_plan_attestation"]["finding"] = attested["finding"]
                 report.update(projection_status="BLOCKED", stop_reason="PRODUCTION_AUTOMATIC_ATTESTATION_FAILED")
                 report["next_action"] = {
                     "actor": "agent", "stage": "attestation", "finding": attested["finding"],
                     "command": attested["command"], "resume_command": resume_command,
-                    "do": "Repair the reported Production plan, renderer, asset, or provenance finding and resume the identical run.",
+                    "do": ("Production's attestation CLI did not answer after bounded retries; check that the pinned "
+                           "Production checkout and its interpreter start, then resume the identical run."
+                           if attested["status"] == "UNAVAILABLE" else
+                           "Repair the reported Production plan, renderer, asset, or provenance finding and resume "
+                           "the identical run."),
                 }
                 if destination_resolution is not None:
                     report["destination_resolution"] = dict(destination_resolution)
@@ -1511,7 +1527,13 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             report["production_plan_sha256"] = _sha256_file(plan_path)
             from tools.canonical_plan_projection import source_fields
             report.update(source_fields(plan_path, production_root))
-        if destination_resolution is not None:
+        if destination_resolution is not None and not isinstance(public_root, str):
+            # An internal-only profile names no public root: there is nothing
+            # to project, so PLAN_READY is this run's normal end (delivery
+            # target "internal"), not a configuration stop.
+            report["destination_resolution"] = dict(destination_resolution)
+            report.update(projection_status="SKIPPED", projection_skip_reason="INTERNAL_ONLY_PROFILE")
+        elif destination_resolution is not None:
             report["destination_resolution"] = dict(destination_resolution)
             if internal_output_root is None:
                 raise StepFailure("destination resolution has no internal output root for public projection preparation")
