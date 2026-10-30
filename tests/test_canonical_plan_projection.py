@@ -249,6 +249,22 @@ class AutomaticAttestationTests(unittest.TestCase):
         self.assertEqual("sha256:" + hashlib.sha256(b"<svg>new</svg>\n").hexdigest(), new["assets"][0]["sha256"])
         self.assertEqual("b" * 40, new["producer"]["commit"])
 
+    def test_a_medium_added_after_publication_is_reattested_not_already_published(self):
+        """Every attested medium still matching is not enough: the attested set must be the whole set."""
+        media = self.project / "03_plan/media"
+        media.mkdir()
+        (media / "figure.svg").write_bytes(b"<svg>same</svg>\n")
+        self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
+        public = self.publish()
+        (media / "added.svg").write_bytes(b"<svg>added</svg>\n")
+        result = self.attest("2026-10-28T00:00:00Z", commit="b" * 40, superseded_root=self.superseded(),
+                             public_projection_root=public)
+        self.assertEqual("REATTESTED", result["status"])
+        self.assertEqual("PRODUCER_COMMIT_CHANGED", result["retired"]["reason"])
+        new = json.loads((self.project / "03_plan/public-plan-attestation.json").read_text())
+        self.assertEqual(["03_plan/media/added.svg", "03_plan/media/figure.svg"],
+                         [asset["path"] for asset in new["assets"]])
+
     def test_published_bytes_and_media_after_a_commit_change_are_already_published(self):
         media = self.project / "03_plan/media"
         media.mkdir()

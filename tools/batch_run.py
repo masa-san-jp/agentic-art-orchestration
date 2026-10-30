@@ -544,12 +544,16 @@ def validate_batch_run(data: object, source: str = "batch-run") -> list[str]:
     if "delivery_completion" in data:
         from tools.delivery_completion import validate_completion
         errors.extend(f"{source}.delivery_completion: {error}" for error in validate_completion(data["delivery_completion"]))
-    if data.get("status") == "PASSED":
+    # A BLOCKED run is a PASSED batch whose owner attestation stopped; every
+    # project passed, so it must meet the same counts and acceptance (and a
+    # resume turns it back into PASSED without re-running the batch).
+    if data.get("status") in {"PASSED", "BLOCKED"}:
+        label = data.get("status")
         if data.get("completed_count") != data.get("requested_count") or data.get("failed_count") != 0:
-            errors.append(f"{source}: PASSED run counts are inconsistent")
+            errors.append(f"{source}: {label} run counts are inconsistent")
         acceptance = data.get("acceptance")
         if isinstance(acceptance, Mapping) and not all(value is True for value in acceptance.values()):
-            errors.append(f"{source}: PASSED run must satisfy every acceptance boolean")
+            errors.append(f"{source}: {label} run must satisfy every acceptance boolean")
     if data.get("status") == "BLOCKED":
         # Only a stopped owner attestation blocks a batch whose projects all passed.
         if data.get("stop_reason") != ATTESTATION_STOP_REASON or not isinstance(data.get("automatic_plan_attestation"), Mapping):
@@ -560,7 +564,8 @@ def validate_batch_run(data: object, source: str = "batch-run") -> list[str]:
         errors.append(f"{source}: only a BLOCKED run has a stop_reason")
     if data.get("selection", {}).get("selected_count") != data.get("requested_count"):
         errors.append(f"{source}: selected_count must equal requested_count")
-    if data.get("selection", {}).get("unique_signal_tuple_count") != data.get("completed_count") and data.get("status") == "PASSED":
+    if (data.get("selection", {}).get("unique_signal_tuple_count") != data.get("completed_count")
+            and data.get("status") in {"PASSED", "BLOCKED"}):
         errors.append(f"{source}: every completed project must have a unique signal tuple")
     rendered = json.dumps(data, ensure_ascii=False, sort_keys=True)
     if FORBIDDEN_MARKERS.search(rendered):
@@ -671,6 +676,19 @@ def _mark_attestation_blocked(summary: dict[str, Any], attestation: Mapping[str,
         ]
     summary["automatic_plan_attestation"] = record
     summary.pop("automatic_plan_authority", None)
+    _refresh_delivery_completion(summary)
+
+
+def _refresh_delivery_completion(summary: dict[str, Any]) -> None:
+    """Recompute ``delivery_completion`` from the summary's current status.
+
+    It is derived from the status, so whenever the status changes (PASSED to
+    BLOCKED, or a resumed BLOCKED back to PASSED) it must follow.
+    """
+    contract = summary.get("delivery_contract")
+    if isinstance(contract, Mapping):
+        from tools.delivery_completion import completion
+        summary["delivery_completion"] = completion(summary, contract)
 
 
 def _attestation_resumable(summary: Mapping[str, Any]) -> bool:
@@ -779,6 +797,11 @@ def run_batch(
                     resumed["status"] = "PASSED"
                     for key in ("stop_reason", "automatic_plan_attestation"):
                         resumed.pop(key, None)
+                    _refresh_delivery_completion(resumed)
+                # Never attest (or project) a summary that would not be a
+                # valid PASSED batch once the owner attests it.
+                if validate_batch_run(resumed, str(summary_path)):
+                    raise BatchRunError("resumed batch summary is invalid")
                 public_root = _public_root(destination_resolution)
                 if public_root is not None:
                     try:
@@ -789,18 +812,25 @@ def run_batch(
                         )
                     except (OSError, TypeError, ValueError, KeyError) as exc:
                         attestation = _unexpected_attestation_failure(exc)
-                    if blocked:
-                        # Rewrite the summary so it says what is now true:
-                        # PASSED once the owner attested, else the latest stop.
+                    # Rewrite the summary so it says what is now true: once the
+                    # owner attested, PASSED with the refreshed plan hashes and
+                    # authority (a later projection from this file verifies the
+                    # bytes that were attested); a still-blocked resume records
+                    # the latest stop.
+                    updated = None
+                    if attestation["status"] == "PASSED":
                         updated = copy.deepcopy(resumed)
-                        if attestation["status"] == "PASSED":
-                            _refresh_plan_authority(updated, destination_resolution)
-                        else:
-                            _mark_attestation_blocked(updated, attestation)
+                        _refresh_plan_authority(updated, destination_resolution)
+                        _refresh_delivery_completion(updated)
+                    elif blocked:
+                        updated = copy.deepcopy(resumed)
+                        _mark_attestation_blocked(updated, attestation)
+                    if updated is not None:
                         if validate_batch_run(updated):
                             raise BatchRunError("resumed batch summary is invalid")
-                        _write_summary(summary_path, updated)
-                        existing = updated
+                        if updated != existing:
+                            _write_summary(summary_path, updated)
+                        existing = resumed = updated
                 try:
                     public_projection, attestation = _project_passed_batch(
                         resumed, destination_resolution=destination_resolution,
