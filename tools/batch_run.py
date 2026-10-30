@@ -550,6 +550,14 @@ def validate_batch_run(data: object, source: str = "batch-run") -> list[str]:
         acceptance = data.get("acceptance")
         if isinstance(acceptance, Mapping) and not all(value is True for value in acceptance.values()):
             errors.append(f"{source}: PASSED run must satisfy every acceptance boolean")
+    if data.get("status") == "BLOCKED":
+        # Only a stopped owner attestation blocks a batch whose projects all passed.
+        if data.get("stop_reason") != ATTESTATION_STOP_REASON or not isinstance(data.get("automatic_plan_attestation"), Mapping):
+            errors.append(f"{source}: BLOCKED run must name its stop_reason and automatic_plan_attestation")
+        if "automatic_plan_authority" in data:
+            errors.append(f"{source}: BLOCKED run must not carry projection authority")
+    elif "stop_reason" in data or "automatic_plan_attestation" in data:
+        errors.append(f"{source}: only a BLOCKED run has a stop_reason")
     if data.get("selection", {}).get("selected_count") != data.get("requested_count"):
         errors.append(f"{source}: selected_count must equal requested_count")
     if data.get("selection", {}).get("unique_signal_tuple_count") != data.get("completed_count") and data.get("status") == "PASSED":
@@ -595,10 +603,92 @@ def _attest_batch_projects(
                     if key in attested}}
         results.append(entry)
         if attested["status"] in ATTESTATION_BLOCKED:
-            return {"status": "BLOCKED", "stop_reason": "PRODUCTION_AUTOMATIC_ATTESTATION_FAILED",
+            return {"status": "BLOCKED", "stop_reason": ATTESTATION_STOP_REASON,
                     "projects": results, "command": attested["command"]}
         project.update(source_fields(plan, code))
+        # The owner attested the plan bytes as they are now; a plan changed
+        # since the summary was written must be projected with its new hash.
+        project["production_plan_markdown_sha256"] = _sha256_file(plan)
     return {"status": "PASSED", "projects": results}
+
+
+ATTESTATION_STOP_REASON = "PRODUCTION_AUTOMATIC_ATTESTATION_FAILED"
+
+
+def _refresh_plan_authority(summary: dict[str, Any], destination_resolution: Mapping[str, object]) -> None:
+    """(Re)build the batch authority envelope from the projects' current plan hashes.
+
+    The envelope binds the set of plan.md hashes; whenever those hashes are
+    refreshed (a resumed batch whose plan changed), the envelope follows, so
+    the projection verifies the bytes that were actually attested.
+    """
+    passed = [project for project in summary["projects"] if project.get("status") == "PASSED"]
+    authority_plans = [
+        {"project_id": str(project["project_id"]),
+         "production_plan_markdown_sha256": project.get("production_plan_markdown_sha256")}
+        for project in passed
+    ]
+    if len(authority_plans) != summary.get("completed_count") or not all(
+        isinstance(item["production_plan_markdown_sha256"], str)
+        and HASH64.fullmatch(item["production_plan_markdown_sha256"]) is not None
+        for item in authority_plans
+    ):
+        summary.pop("automatic_plan_authority", None)
+        return
+    authority_plans.sort(key=lambda item: item["project_id"])
+    summary["automatic_plan_authority"] = build_automatic_plan_authority(
+        producer="tools/batch_run.py",
+        source_status="PASSED",
+        source_id=str(summary["run_id"]),
+        source_sha256=sha256_hex({"projects": authority_plans}),
+        destination_resolution=destination_resolution,
+    )
+
+
+def _unexpected_attestation_failure(exc: BaseException) -> dict[str, Any]:
+    """A BLOCKED attestation result for an error raised outside the owner CLI's verdict."""
+    finding = {"status": "UNAVAILABLE",
+               "reason": f"{type(exc).__name__}: automatic plan attestation did not finish"}
+    return {"status": "BLOCKED", "stop_reason": ATTESTATION_STOP_REASON,
+            "projects": [{"status": "UNAVAILABLE", "finding": finding}]}
+
+
+def _mark_attestation_blocked(summary: dict[str, Any], attestation: Mapping[str, Any]) -> None:
+    """Record a blocked owner attestation honestly: BLOCKED, never PASSED.
+
+    Every project still PASSED; only the owner attestation stopped.  The
+    summary keeps no projection authority (it may not be projected), and a
+    resume of the identical run re-attests (see ``run_batch``).
+    """
+    summary["status"] = "BLOCKED"
+    summary["stop_reason"] = ATTESTATION_STOP_REASON
+    record = {key: copy.deepcopy(attestation[key]) for key in ("status", "stop_reason", "projects") if key in attestation}
+    if FORBIDDEN_MARKERS.search(json.dumps(record, ensure_ascii=False, sort_keys=True)):
+        # The summary is metadata-only; keep the statuses, drop the owner's wording.
+        record["projects"] = [
+            {key: project[key] for key in ("project_id", "status") if key in project}
+            for project in record.get("projects", []) if isinstance(project, Mapping)
+        ]
+    summary["automatic_plan_attestation"] = record
+    summary.pop("automatic_plan_authority", None)
+
+
+def _attestation_resumable(summary: Mapping[str, Any]) -> bool:
+    return summary.get("status") == "BLOCKED" and summary.get("stop_reason") == ATTESTATION_STOP_REASON
+
+
+def _write_summary(path: Path, summary: Mapping[str, Any]) -> None:
+    """Write the summary whole or not at all (temporary file, fsync, rename)."""
+    temporary = path.with_name("." + path.name + "." + str(os.getpid()) + ".tmp")
+    try:
+        with open(temporary, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(summary, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def _project_passed_batch(
@@ -622,6 +712,7 @@ def _project_passed_batch(
         )
     if attestation["status"] != "PASSED":
         return None, attestation
+    _refresh_plan_authority(summary, destination_resolution)
     projection = project_batch_automatic(
         summary,
         internal_output_root=Path(destination_resolution["destinations"]["internal_output_root"]["path"]),
@@ -678,13 +769,43 @@ def run_batch(
         public_projection = attestation = None
         if destination_resolution is not None:
             write_resolution_evidence(state_root, run_id, destination_resolution)
-            if existing.get("status") == "PASSED" and existing.get("output_root_locator"):
+            blocked = _attestation_resumable(existing)
+            if (existing.get("status") == "PASSED" or blocked) and existing.get("output_root_locator"):
+                # Attest on the resumed copy: a plan changed since the summary
+                # was written is re-attested, and its hashes and authority are
+                # refreshed from the attested bytes, not a conflict.
+                resumed = copy.deepcopy(existing)
+                if blocked:
+                    resumed["status"] = "PASSED"
+                    for key in ("stop_reason", "automatic_plan_attestation"):
+                        resumed.pop(key, None)
+                public_root = _public_root(destination_resolution)
+                if public_root is not None:
+                    try:
+                        attestation = _attest_batch_projects(
+                            resumed["projects"], child_python=child_python, generated_at=generated_at,
+                            superseded_root=state_root / run_id / "superseded-attestations",
+                            public_projection_root=Path(public_root),
+                        )
+                    except (OSError, TypeError, ValueError, KeyError) as exc:
+                        attestation = _unexpected_attestation_failure(exc)
+                    if blocked:
+                        # Rewrite the summary so it says what is now true:
+                        # PASSED once the owner attested, else the latest stop.
+                        updated = copy.deepcopy(resumed)
+                        if attestation["status"] == "PASSED":
+                            _refresh_plan_authority(updated, destination_resolution)
+                        else:
+                            _mark_attestation_blocked(updated, attestation)
+                        if validate_batch_run(updated):
+                            raise BatchRunError("resumed batch summary is invalid")
+                        _write_summary(summary_path, updated)
+                        existing = updated
                 try:
-                    # Attest on the resumed copy: a plan changed since the
-                    # summary was written is re-attested, not a conflict.
                     public_projection, attestation = _project_passed_batch(
-                        copy.deepcopy(existing), destination_resolution=destination_resolution,
+                        resumed, destination_resolution=destination_resolution,
                         state_root=state_root, run_id=run_id, generated_at=generated_at, child_python=child_python,
+                        attestation=attestation,
                     )
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise BatchRunError("automatic public plan projection failed while resuming") from exc
@@ -769,6 +890,10 @@ def run_batch(
 
     completed = sum(result["status"] == "PASSED" for result in results)
     failed = len(results) - completed
+    project_summaries = [
+        {key: value for key, value in result.items() if key not in {"events", "error_type"}}
+        for result in results
+    ]
     checks, acceptance_detail = _acceptance_checks(
         output_root, report_path, selection_limit, len(tuples), project_summaries
     )
@@ -781,10 +906,6 @@ def run_batch(
             "record_count": sum(1 for record in bundle["records"] if record["source"]["repository"] == repository_id),
         }
         for repository_id in sorted(SOURCE_REPOSITORIES.values())
-    ]
-    project_summaries = [
-        {key: value for key, value in result.items() if key not in {"events", "error_type"}}
-        for result in results
     ]
     summary = {
         "contract_version": "batch-run/v1",
@@ -831,27 +952,7 @@ def run_batch(
             raise BatchRunError("output_root is outside the resolved internal_output_root") from exc
         summary["output_root_locator"] = output_relative.as_posix() or "."
         if status == "PASSED":
-            authority_plans = [
-                {
-                    "project_id": str(project["project_id"]),
-                    "production_plan_markdown_sha256": project.get("production_plan_markdown_sha256"),
-                }
-                for project in project_summaries
-                if project.get("status") == "PASSED"
-            ]
-            if len(authority_plans) == completed and all(
-                isinstance(item["production_plan_markdown_sha256"], str)
-                and HASH64.fullmatch(item["production_plan_markdown_sha256"]) is not None
-                for item in authority_plans
-            ):
-                authority_plans.sort(key=lambda item: item["project_id"])
-                summary["automatic_plan_authority"] = build_automatic_plan_authority(
-                    producer="tools/batch_run.py",
-                    source_status="PASSED",
-                    source_id=run_id,
-                    source_sha256=sha256_hex({"projects": authority_plans}),
-                    destination_resolution=destination_resolution,
-                )
+            _refresh_plan_authority(summary, destination_resolution)
     attestation = None
     if destination_resolution is not None and status == "PASSED" and _public_root(destination_resolution) is not None:
         # Attest before the summary is written, so it records the owner
@@ -863,11 +964,19 @@ def run_batch(
                 public_projection_root=Path(str(_public_root(destination_resolution))),
             )
         except (OSError, TypeError, ValueError, KeyError) as exc:
-            raise BatchRunError("automatic plan attestation failed") from exc
+            # The batch itself is done; only the owner check did not finish.
+            # Record that as a BLOCKED summary, so the identical run resumes
+            # into a fresh attestation instead of "partial batch state".
+            attestation = _unexpected_attestation_failure(exc)
+        if attestation["status"] == "PASSED":
+            _refresh_plan_authority(summary, destination_resolution)
+        else:
+            _mark_attestation_blocked(summary, attestation)
+            status = "BLOCKED"
     errors = validate_batch_run(summary)
     if errors:
         raise BatchRunError("generated batch summary is invalid")
-    summary_path.write_text(json.dumps(summary, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    _write_summary(summary_path, summary)
     public_projection = None
     if destination_resolution is not None and status == "PASSED":
         try:

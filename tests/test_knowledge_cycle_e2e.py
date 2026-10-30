@@ -15,6 +15,8 @@ from tools import native_knowledge
 from tools.autonomous_runner import _new_state, _apply_result, validate_autonomous_state
 from tools.knowledge_cycle import LocalOwner
 from tools.plan_completion import PlanCompletionError, verify_plan
+from tools.canonical_plan_projection import ATTESTATION_REJECTED_ACTION, ATTESTATION_UNAVAILABLE_ACTION
+from tests.test_canonical_plan_projection import write_fake_attestation_tool
 
 
 def git(root, *args):
@@ -237,6 +239,72 @@ raise SystemExit(0 if ok else 1)
         self.assertEqual('BLOCKED', state['projection_status'])
         self.assertEqual('PRODUCTION_AUTOMATIC_ATTESTATION_FAILED', state['stop_reason'])
         self.assertEqual('agent', state['next_action']['actor'])
+
+    def _attestation_case(self):
+        run_root = self.root / 'state' / 'knowledge-cycles' / 'run'
+        project = self.root / 'internal' / 'production' / 'proposal'
+        (project / '03_plan').mkdir(parents=True)
+        (project / '03_plan' / 'production-plan.md').write_bytes(b'# Proposal plan\n')
+        resolution = {'destination_resolution': {'destinations': {
+            'internal_output_root': {'path': str(self.root / 'internal')},
+            'public_projection_root': {'path': str(self.root / 'catalog')}}}}
+        context = {'run_id': 'run', 'clock': '2026-09-08T00:00:00Z'}
+        profile = {'creator_id': 'creator', 'instance_id': 'origin'}
+        code = self.root / 'code'
+        write_fake_attestation_tool(code)
+        bindings = {'agentic-art-production': {'code_commit': 'a' * 40, 'code_root': str(code),
+                                               'python': sys.executable}}
+        state = {'plan_status': 'PLAN_READY', 'knowledge_status': 'COMMITTED',
+                 'plan': {'artifacts': {'03_plan/production-plan.md': 'b' * 64}}}
+        return (context, profile, resolution, bindings, project, state, run_root), code
+
+    def test_attestation_is_given_the_runs_superseded_root_and_public_projection_root(self):
+        arguments, _ = self._attestation_case()
+        finding = {'status': 'REJECTED', 'reason': 'PUBLIC_CONTENT_BLOCKED'}
+        with patch.object(cycle, 'checked_code', side_effect=lambda root, commit: Path(root)), \
+                patch('tools.canonical_plan_projection.ensure_automatic_attestation',
+                      return_value={'status': 'REJECTED', 'command': ['attest'], 'finding': finding}) as attest:
+            cycle._public_completion(*arguments)
+        run_root, state = arguments[6], arguments[5]
+        kwargs = attest.call_args.kwargs
+        self.assertEqual(run_root / 'superseded-attestations', kwargs['superseded_root'])
+        self.assertEqual(self.root / 'catalog', kwargs['public_projection_root'])
+        self.assertEqual('a' * 40, kwargs['producer_commit'])
+        self.assertEqual(ATTESTATION_REJECTED_ACTION, state['next_action']['do'])
+
+    def test_unanswered_attestation_names_the_checkout_not_a_plan_repair(self):
+        arguments, code = self._attestation_case()
+        timeout = subprocess.TimeoutExpired(['python'], 120)
+        with patch.object(cycle, 'checked_code', side_effect=lambda root, commit: Path(root)), \
+                patch('tools.canonical_plan_projection.subprocess.run', side_effect=timeout), \
+                patch('tools.canonical_plan_projection._backoff'):
+            cycle._public_completion(*arguments)
+        state, run_root = arguments[5], arguments[6]
+        self.assertEqual('PRODUCTION_AUTOMATIC_ATTESTATION_FAILED', state['stop_reason'])
+        self.assertEqual('BLOCKED', state['projection_status'])
+        self.assertEqual(ATTESTATION_UNAVAILABLE_ACTION, state['next_action']['do'])
+        self.assertNotEqual(ATTESTATION_REJECTED_ACTION, state['next_action']['do'])
+        packet = json.loads((run_root / 'automatic-plan-attestation.json').read_text(encoding='utf-8'))
+        self.assertEqual('UNAVAILABLE', packet['status'])
+        self.assertTrue(packet['reason'].startswith('TimeoutExpired: '))
+
+    def test_stale_attestation_is_retired_into_the_run_and_reattested(self):
+        arguments, code = self._attestation_case()
+        context, profile, resolution, bindings, project, state, run_root = arguments
+        attestation = project / '03_plan' / 'public-plan-attestation.json'
+        subprocess.run([sys.executable, str(code / 'tools/public_plan_attestation.py'), '--project-root', str(project),
+                        '--automatic-plan', '--producer-commit', 'b' * 40, '--generated-at', '2026-09-07T00:00:00Z'],
+                       check=True, capture_output=True)
+        old = attestation.read_bytes()
+        receipt = {'status': 'BLOCKED_POLICY', 'result_locator': 'run/public-projection-result.json', 'public_ids': []}
+        with patch.object(cycle, 'checked_code', side_effect=lambda root, commit: Path(root)), \
+                patch('tools.public_projection.build_automatic_plan_authority', return_value={}), \
+                patch('tools.public_projection.project_plan_automatic', return_value=receipt):
+            cycle._public_completion(*arguments)
+        kept = list((run_root / 'superseded-attestations' / 'proposal').iterdir())
+        self.assertEqual([old], [path.read_bytes() for path in kept])
+        self.assertEqual('a' * 40, json.loads(attestation.read_text(encoding='utf-8'))['producer']['commit'])
+        self.assertEqual('PUBLIC_PROJECTION_PENDING', state['stop_reason'])
 
     def test_cache_parent_symlink_cannot_escape_the_selected_owner(self):
         outside=self.root/'outside';outside.mkdir()

@@ -925,11 +925,15 @@ class ProductionHistoryTests(unittest.TestCase):
     def _profiled_plan_ready(self, root: Path, run_id: str = "RUN-PROJECTION-001", *, runs: int = 1,
                              plan_view: dict | None = None, owner_boundary: bool = False,
                              public: bool = True, head: str = "d" * 40,
-                             production_root: Path | None = None) -> list[dict]:
+                             production_root: Path | None = None, real_owner: bool = False,
+                             media: bytes | None = None) -> list[dict]:
         """Reach PLAN_READY with fake workers and a fake Production attestation CLI.
 
         ``owner_boundary`` swaps the qualified owner check for the transaction-only test double, so the
         projection applies; the Project's catalog sync is then the fake in tests/test_plan_view.py.
+        ``real_owner`` keeps the real owner check (against a committed fake Production checkout, see
+        ``_committed_production``) with the same plan and catalog fake.  ``media`` is rendered as
+        03_plan/media/figure.svg, which the fake attestation CLI attests.
         """
         write_fake_attestation_tool(root / "production")
         target = root / "public-target"
@@ -976,16 +980,19 @@ class ProductionHistoryTests(unittest.TestCase):
             if args[0] == "tools/build_plan.py":
                 project = Path(args[args.index("--project-root") + 1])
                 (project / "03_plan").mkdir(parents=True, exist_ok=True)
-                (project / "03_plan" / "production-plan.md").write_text(PLAN if owner_boundary else "# plan\n",
-                                                                       encoding="utf-8")
+                (project / "03_plan" / "production-plan.md").write_text(
+                    PLAN if owner_boundary or real_owner else "# plan\n", encoding="utf-8")
+                if media is not None:
+                    (project / "03_plan" / "media").mkdir(exist_ok=True)
+                    (project / "03_plan" / "media" / "figure.svg").write_bytes(media)
             return {"status": "PASSED"}
 
         reports = []
         owner = (patch("tools.canonical_plan_projection._owner_bundle",
                        lambda item, internal, child_python=None: synthetic_owner_boundary(item, internal))
                  if owner_boundary else nullcontext())
-        sync = patch.object(MODULE, "_sync_public_catalog", side_effect=passing_sync) if owner_boundary else \
-            nullcontext()
+        sync = patch.object(MODULE, "_sync_public_catalog", side_effect=passing_sync) \
+            if owner_boundary or real_owner else nullcontext()
         with owner, sync, patch.object(MODULE, "_materialize_offline_signals", return_value={"status": "PASSED"}), \
                 patch.object(MODULE, "_run_tool", side_effect=fake_tool), \
                 patch.object(MODULE, "_run_child", side_effect=fake_child), \
@@ -1003,6 +1010,80 @@ class ProductionHistoryTests(unittest.TestCase):
                     internal_output_root=root / "internal", plan_view=plan_view,
                 ))
         return reports
+
+    @staticmethod
+    def _committed_production(root: Path, revision: str) -> str:
+        """Commit the fake Production checkout (clean, as the owner check requires); return HEAD."""
+        code = root / "production"
+        write_fake_attestation_tool(code)
+        (code / ".gitignore").write_text("calls.jsonl\n__pycache__/\n", encoding="utf-8")
+        (code / "REVISION").write_text(revision + "\n", encoding="utf-8")
+        if not (code / ".git").exists():
+            subprocess.run(["git", "init", "-q", "-b", "main", str(code)], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(code), "add", "-A"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(code), "-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "-q", "-m", revision], check=True, capture_output=True)
+        return subprocess.check_output(["git", "-C", str(code), "rev-parse", "HEAD"], text=True).strip()
+
+    def test_resume_after_a_producer_commit_change_is_already_published_then_already_projected(self):
+        """Through run.py: same plan and media, a new Production commit, the real owner check."""
+        with tempfile.TemporaryDirectory(prefix="run-already-published-") as temporary:
+            root = Path(temporary).resolve()
+            first_head = self._committed_production(root, "one")
+            first, = self._profiled_plan_ready(root, "RUN-ALREADY-PUBLISHED", head=first_head, real_owner=True,
+                                               media=b"<svg xmlns='http://www.w3.org/2000/svg'/>\n")
+            self.assertEqual("ATTESTED", first["automatic_plan_attestation"]["status"])
+            self.assertEqual("APPLIED", first["public_projection"]["status"], first.get("public_projection"))
+            self.assertEqual("PROJECTED", first["projection_status"])
+            attestation = Path(first["public_plan_attestation"])
+            internal_attestation = attestation.read_bytes()
+            target = root / "public-target"
+            record, = yaml.safe_load((target / "plans/index.yaml").read_text(encoding="utf-8"))["records"]
+            public_attestation = (target / record["path"] / "public-plan-attestation.json").read_bytes()
+
+            second_head = self._committed_production(root, "two")
+            second, = self._profiled_plan_ready(root, "RUN-ALREADY-PUBLISHED", head=second_head, real_owner=True,
+                                                media=b"<svg xmlns='http://www.w3.org/2000/svg'/>\n")
+
+            self.assertEqual("ALREADY_PUBLISHED", second["automatic_plan_attestation"]["status"])
+            self.assertEqual(record["id"], second["automatic_plan_attestation"]["public_record"])
+            self.assertEqual("ALREADY_PROJECTED", second["public_projection"]["status"])
+            self.assertEqual("PROJECTED", second["projection_status"])
+            self.assertNotIn("stop_reason", second)
+            # Nothing was re-attested or rewritten: the internal and public attestations stay.
+            self.assertEqual(1, sum("--automatic-plan" in call for call in self._attestation_calls(root)))
+            self.assertEqual(internal_attestation, attestation.read_bytes())
+            self.assertEqual(public_attestation,
+                             (target / record["path"] / "public-plan-attestation.json").read_bytes())
+            kept, = yaml.safe_load((target / "plans/index.yaml").read_text(encoding="utf-8"))["records"]
+            self.assertEqual(first_head, kept["production_commit"])
+
+    def test_resume_with_only_changed_media_names_the_revision_conflict_not_provenance(self):
+        """Same plan.md, re-rendered medium, new commit: re-attested, then an accurate stop."""
+        with tempfile.TemporaryDirectory(prefix="run-media-changed-") as temporary:
+            root = Path(temporary).resolve()
+            first_head = self._committed_production(root, "one")
+            first, = self._profiled_plan_ready(root, "RUN-MEDIA-CHANGED", head=first_head, real_owner=True,
+                                               media=b"<svg xmlns='http://www.w3.org/2000/svg'/>\n")
+            self.assertEqual("APPLIED", first["public_projection"]["status"], first.get("public_projection"))
+            target = root / "public-target"
+            before = public_projection._tree_fingerprint(target)
+
+            second_head = self._committed_production(root, "two")
+            second, = self._profiled_plan_ready(
+                root, "RUN-MEDIA-CHANGED-2", head=second_head, real_owner=True,
+                media=b"<svg xmlns='http://www.w3.org/2000/svg'><rect/></svg>\n")
+
+            self.assertEqual("REATTESTED", second["automatic_plan_attestation"]["status"])
+            self.assertEqual("PRODUCER_COMMIT_CHANGED", second["automatic_plan_attestation"]["retired"]["reason"])
+            self.assertEqual("BLOCKED_CONFLICT", second["public_projection"]["status"])
+            self.assertEqual("PUBLIC_PROJECTION_PENDING", second["stop_reason"])
+            result = json.loads(Path(second["next_action"]["result"]).read_text(encoding="utf-8"))
+            remediation = result["findings"][0]["remediation"]
+            self.assertTrue(remediation.endswith("reason: REVISION_CONFLICT media changed at the same plan revision"),
+                            remediation)
+            self.assertNotIn("owner provenance mismatch", remediation)
+            self.assertEqual(before, public_projection._tree_fingerprint(target))
 
     @staticmethod
     def _attestation_calls(root: Path) -> list[list[str]]:

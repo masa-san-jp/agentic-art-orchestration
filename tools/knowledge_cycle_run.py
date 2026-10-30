@@ -381,7 +381,9 @@ def _advance(context, profile, resolution, bindings, project, state, run_root):
 
 
 def _public_completion(context, profile, resolution, bindings, project, state, run_root):
-    from tools.canonical_plan_projection import ATTESTATION_BLOCKED, ensure_automatic_attestation, source_fields
+    from tools.canonical_plan_projection import (ATTESTATION_BLOCKED, ATTESTATION_REJECTED_ACTION,
+                                                 ATTESTATION_UNAVAILABLE_ACTION, ensure_automatic_attestation,
+                                                 source_fields)
     from tools.public_projection import build_automatic_plan_authority, project_plan_automatic
     run_id = context['run_id']
     # A canonical PLAN_READY record uses the closed automatic-plan authority.
@@ -402,7 +404,8 @@ def _public_completion(context, profile, resolution, bindings, project, state, r
         save(packet, attested['finding'])
         state.update(run_status='INCOMPLETE', projection_status='BLOCKED', stop_reason='PRODUCTION_AUTOMATIC_ATTESTATION_FAILED',
             next_action={'actor':'agent', 'stage':'attestation', 'receipt':str(packet), 'command':command,
-                         'do':'Repair the reported Production plan, renderer, asset, or provenance finding and resume the identical run.'})
+                         'do':(ATTESTATION_UNAVAILABLE_ACTION if attested['status'] == 'UNAVAILABLE'
+                               else ATTESTATION_REJECTED_ACTION)})
         return
     destinations = resolution['destination_resolution']
     internal = Path(destinations['destinations']['internal_output_root']['path'])

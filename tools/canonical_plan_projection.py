@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 import os
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -18,6 +17,13 @@ ATTESTATION_ATTEMPTS = 3
 ATTESTATION_TIMEOUT_SECONDS = 120
 # Statuses of ensure_automatic_attestation that must stop before projection.
 ATTESTATION_BLOCKED = frozenset({"REJECTED", "UNAVAILABLE"})
+# What an agent does next for each blocked status (run.py and knowledge_cycle_run.py).
+ATTESTATION_UNAVAILABLE_ACTION = (
+    "Production's attestation CLI did not answer after bounded retries; check that the pinned "
+    "Production checkout and its interpreter start, then resume the identical run.")
+ATTESTATION_REJECTED_ACTION = (
+    "Repair the reported Production plan, renderer, asset, or provenance finding and resume "
+    "the identical run.")
 
 
 def digest(data):
@@ -66,28 +72,73 @@ def _owner_cli(command, code, *, attempts, sleep):
 
 
 def _retire_attestation(existing, superseded_root):
-    """Move a stale attestation aside, byte for byte; never edit or delete it.
+    """Set a stale attestation aside, byte for byte; never edit or lose it.
 
     Production's writer is create-only: a different existing file is
     ATTESTATION_CONFLICT, and its contract has no replace mode.  The stale file
     no longer verifies, so it is kept under the run's state, named by its own
     hash, and the canonical path is left empty for the sanctioned
     ``--automatic-plan`` generation to write a fresh one.
+
+    The copy is made in the destination directory (a temporary file, fsynced,
+    then renamed into place), so a state root on another filesystem never
+    holds a partial file.  The original is unlinked only after the kept copy
+    is read back with the original's digest, and only if the original did not
+    change meanwhile; otherwise an OSError leaves the original where it was.
     """
-    if existing.is_symlink():
-        raw = os.readlink(existing).encode("utf-8", "surrogateescape")
-        name = "symlink-" + digest(raw) + ".json"
-    else:
-        raw = existing.read_bytes()
-        name = "public-plan-attestation." + digest(raw) + ".json"
+    symlink = existing.is_symlink()
+    raw = _retirement_bytes(existing, symlink)
+    sha = digest(raw)
+    name = ("symlink-" if symlink else "public-plan-attestation.") + sha + ".json"
     destination = Path(superseded_root) / existing.parent.parent.name / name
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.exists() or destination.is_symlink():
-        # Content-addressed: the same bytes were already kept by an earlier retirement.
-        existing.unlink()
-    else:
-        shutil.move(str(existing), str(destination))
-    return {"path": str(destination), "sha256": digest(raw)}
+    if not _kept_copy_matches(destination, symlink, sha):
+        # Content-addressed: an earlier retirement may already hold these
+        # bytes; anything else under this name is replaced by a full copy.
+        temporary = destination.with_name("." + name + "." + str(os.getpid()) + ".tmp")
+        try:
+            if symlink:
+                os.symlink(raw.decode("utf-8", "surrogateescape"), temporary)
+            else:
+                with open(temporary, "xb") as stream:
+                    stream.write(raw)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+            os.replace(temporary, destination)
+        finally:
+            if temporary.is_symlink() or temporary.exists():
+                temporary.unlink()
+        _fsync_directory(destination.parent)
+        if not _kept_copy_matches(destination, symlink, sha):
+            raise OSError("retired attestation copy does not match the original digest")
+    if existing.is_symlink() != symlink or digest(_retirement_bytes(existing, symlink)) != sha:
+        raise OSError("attestation changed while it was being retired")
+    existing.unlink()
+    _fsync_directory(existing.parent)
+    return {"path": str(destination), "sha256": sha}
+
+
+def _retirement_bytes(path, symlink):
+    return os.readlink(path).encode("utf-8", "surrogateescape") if symlink else path.read_bytes()
+
+
+def _kept_copy_matches(destination, symlink, sha):
+    if destination.is_symlink() != symlink or not (symlink or destination.is_file()):
+        return False
+    return digest(_retirement_bytes(destination, symlink)) == sha
+
+
+def _fsync_directory(directory):
+    try:
+        descriptor = os.open(directory, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(descriptor)
+    except OSError:
+        pass
+    finally:
+        os.close(descriptor)
 
 
 def _stale_reason(existing, plan, producer_commit):
@@ -133,6 +184,39 @@ def published_record(target, identity, revision, body_hash):
     return None
 
 
+def _public_record_files(target, record, project, body):
+    """Return ``(attestation, files)`` when a public record equals the internal plan.
+
+    Equal means: the public plan.md is ``body``, the public attestation is the
+    one the index names, and every medium that attestation lists has its
+    attested hash both in the record and under the internal ``project``.
+    Plan bytes alone are not enough: a re-rendered medium changes the
+    attested content even when plan.md is identical.  Raises only for
+    unreadable input; callers treat that as "not equal".
+    """
+    directory = Path(target) / record["path"]
+    plan_path, attestation_path = directory / "plan.md", directory / "public-plan-attestation.json"
+    if any(path.is_symlink() or not path.is_file() for path in (plan_path, attestation_path)):
+        return None
+    public_body, raw = plan_path.read_bytes(), attestation_path.read_bytes()
+    if public_body != body or digest(raw) != record.get("attestation_sha256"):
+        return None
+    attestation = json.loads(raw)
+    files = {"plan.md": body, "public-plan-attestation.json": raw}
+    for asset in attestation.get("assets", []):
+        relative = asset["path"]
+        if not relative.startswith("03_plan/media/") or ".." in Path(relative).parts:
+            return None
+        public_media, internal_media = directory / relative[8:], Path(project) / relative
+        if any(path.is_symlink() or not path.is_file() for path in (public_media, internal_media)):
+            return None
+        data = public_media.read_bytes()
+        if "sha256:" + digest(data) != asset["sha256"] or internal_media.read_bytes() != data:
+            return None
+        files[relative[8:]] = data
+    return attestation, files
+
+
 def _published_bundle(item, internal, target):
     try:
         return _published_bundle_or_none(item, internal, target)
@@ -158,31 +242,28 @@ def _published_bundle_or_none(item, internal, target):
     record = published_record(target, item.get("source_identity"), item.get("plan_revision"), digest(body))
     if record is None:
         return None
-    directory = Path(target) / record["path"]
-    plan_path, attestation_path = directory / "plan.md", directory / "public-plan-attestation.json"
-    if any(path.is_symlink() or not path.is_file() for path in (plan_path, attestation_path)):
+    matched = _public_record_files(target, record, source.parent.parent, body)
+    if matched is None:
         return None
-    public_body, raw = plan_path.read_bytes(), attestation_path.read_bytes()
-    if public_body != body or digest(raw) != record.get("attestation_sha256"):
-        return None
-    attestation = json.loads(raw)
-    files = {"plan.md": body, "public-plan-attestation.json": raw}
-    project = source.parent.parent
-    for asset in attestation.get("assets", []):
-        relative = asset["path"]
-        if not relative.startswith("03_plan/media/") or ".." in Path(relative).parts:
-            return None
-        public_media, internal_media = directory / relative[8:], project / relative
-        if any(path.is_symlink() or not path.is_file() for path in (public_media, internal_media)):
-            return None
-        data = public_media.read_bytes()
-        if "sha256:" + digest(data) != asset["sha256"] or internal_media.read_bytes() != data:
-            return None
-        files[relative[8:]] = data
+    attestation, files = matched
     return {"identity": record["source_identity"], "revision": int(record["plan_revision"]), "body_hash": digest(body),
             "attestation_hash": record["attestation_sha256"], "production_commit": record["production_commit"],
             "production_state": record.get("production_state"), "assets": attestation.get("assets", []),
             "files": files, "reused_public_record": record["id"]}
+
+
+def _already_published(existing, plan, project, target):
+    """The receiver's record when it already holds these plan bytes and media."""
+    try:
+        current = json.loads(existing.read_bytes())
+        body = plan.read_bytes()
+        record = published_record(target, f'{current.get("project_id")}#{current.get("plan_id")}',
+                                  current.get("plan_revision"), digest(body))
+        if record is None or _public_record_files(target, record, project, body) is None:
+            return None
+        return record
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
 
 
 def ensure_automatic_attestation(*, python, code, project, producer_commit, generated_at,
@@ -204,10 +285,11 @@ def ensure_automatic_attestation(*, python, code, project, producer_commit, gene
     ``attempts`` times; if none answers, the result is UNAVAILABLE with a
     finding.  This function never raises for those cases.
 
-    When only the producer commit changed, the plan bytes are identical and
-    ``public_projection_root`` already holds a record for them at the same
-    plan_revision, nothing is re-attested (ALREADY_PUBLISHED): the projection
-    keeps that record and its public attestation.
+    When only the producer commit changed, the plan bytes and every attested
+    medium are identical and ``public_projection_root`` already holds a record
+    for them at the same plan_revision, nothing is re-attested
+    (ALREADY_PUBLISHED): the projection keeps that record and its public
+    attestation.  A changed medium is re-attested like changed plan bytes.
     """
     # Resolve before running with cwd=code, so a relative --production-root
     # does not name the tool (or the project) twice.
@@ -233,9 +315,7 @@ def ensure_automatic_attestation(*, python, code, project, producer_commit, gene
                     return {"status": "ALREADY_ATTESTED", "command": command}
                 reason = "CHECK_FAILED"
             if reason == "PRODUCER_COMMIT_CHANGED" and public_projection_root is not None:
-                current = json.loads(existing.read_bytes())
-                record = published_record(public_projection_root, f'{current.get("project_id")}#{current.get("plan_id")}',
-                                          current.get("plan_revision"), digest(plan.read_bytes()))
+                record = _already_published(existing, plan, project, public_projection_root)
                 if record is not None:
                     return {"status": "ALREADY_PUBLISHED", "command": command, "public_record": record["id"]}
             if superseded_root is None:
@@ -337,6 +417,21 @@ def _owner_bundle(item, internal, child_python=None):
     return {"identity":identity,"revision":a["plan_revision"],"body_hash":digest(body),"attestation_hash":digest(raw),"production_commit":sha,"production_state":response["production_state"],"assets":a["assets"],"files":files}
 
 
+def _revision_conflict(prior, bundle, directory):
+    """The fixed reason for a same-or-lower revision that the receiver cannot take."""
+    if int(prior["plan_revision"]) != bundle["revision"] or prior["content_sha256"] != bundle["body_hash"]:
+        return "REVISION_CONFLICT"
+    try:
+        published = json.loads((directory / "public-plan-attestation.json").read_bytes()).get("assets", [])
+        published = sorted((a["path"], a["sha256"]) for a in published)
+        current = sorted((a["path"], a["sha256"]) for a in bundle["assets"])
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return "REVISION_CONFLICT"
+    if published != current:
+        return "REVISION_CONFLICT media changed at the same plan revision"
+    return "REVISION_CONFLICT attestation changed at the same plan revision"
+
+
 def _unbound_preflight(result):
     return (result.get('status') in {'BLOCKED_CONFIGURATION', 'BLOCKED_POLICY'}
             and result.get('source_refs') == [] and result.get('changed_paths') == []
@@ -414,7 +509,11 @@ def project_attested(source, *, internal_output_root, public_projection_root, st
                 if digest((old_directory/"plan.md").read_bytes())!=prior["content_sha256"] or digest((old_directory/"public-plan-attestation.json").read_bytes())!=prior["attestation_sha256"]:
                     status="BLOCKED_CONFLICT";raise ValueError("existing canonical record was modified")
                 if int(prior["plan_revision"])>b["revision"] or (int(prior["plan_revision"])==b["revision"] and (prior["content_sha256"]!=b["body_hash"] or prior["attestation_sha256"]!=b["attestation_hash"])):
-                    status="BLOCKED_CONFLICT";raise ValueError("REVISION_CONFLICT")
+                    status="BLOCKED_CONFLICT"
+                    # Production raises plan_revision only through a superseding handoff
+                    # (new_production.py --accept-revision); a re-render under the same
+                    # handoff keeps it.  Name the changed part so the stop is not misread.
+                    raise ValueError(_revision_conflict(prior, b, old_directory))
             else:
                 if next_id>9999:raise ValueError("public ID range exhausted")
                 public_id=f"P{next_id:04d}";next_id+=1

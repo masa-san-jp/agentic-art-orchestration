@@ -120,7 +120,7 @@ repositories:
     role: consumer-runtime
     authority: research projects, execution state, decisions, requirements, and outputs
     default_branch: main
-    observed_commit: e246a6a3d2635b85281eeb8e9688b9657c334363
+    observed_commit: 6bd5550aa22ab462095c3cfb79d0d89874854b49
     instructions: AGENTS.md
     requirement_ssot: https://github.com/masa-san-jp/agentic-art-research/issues/2
     quality_gates:
