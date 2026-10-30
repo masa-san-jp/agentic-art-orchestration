@@ -1493,7 +1493,10 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
             # the closed AUTOMATIC_PLAN lane, as knowledge_cycle_run does: no
             # human review and no external effect.  A rejection is an agent
             # repair; PLAN_READY stays, and nothing is projected.
-            from tools.canonical_plan_projection import ATTESTATION_BLOCKED, ensure_automatic_attestation
+            from tools.canonical_plan_projection import (
+                ATTESTATION_BLOCKED, ATTESTATION_REJECTED_ACTION, ATTESTATION_UNAVAILABLE_ACTION,
+                ensure_automatic_attestation,
+            )
 
             # A stale attestation (other plan bytes or producer commit) is
             # retired into this run's state and re-attested by Production.
@@ -1512,11 +1515,8 @@ def _run_orchestration_impl(intent: str | None, workspace_root: Path, state_root
                 report["next_action"] = {
                     "actor": "agent", "stage": "attestation", "finding": attested["finding"],
                     "command": attested["command"], "resume_command": resume_command,
-                    "do": ("Production's attestation CLI did not answer after bounded retries; check that the pinned "
-                           "Production checkout and its interpreter start, then resume the identical run."
-                           if attested["status"] == "UNAVAILABLE" else
-                           "Repair the reported Production plan, renderer, asset, or provenance finding and resume "
-                           "the identical run."),
+                    "do": (ATTESTATION_UNAVAILABLE_ACTION if attested["status"] == "UNAVAILABLE"
+                           else ATTESTATION_REJECTED_ACTION),
                 }
                 if destination_resolution is not None:
                     report["destination_resolution"] = dict(destination_resolution)

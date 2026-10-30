@@ -19,7 +19,7 @@ from tools.canonical_plan_projection import _owner_bundle, ensure_automatic_atte
 
 FAKE_ATTESTATION_TOOL = '''"""Fake Production attestation CLI: logs argv; a `reject` file rejects.
 
-A `check-fail` file makes --check reject; a `hang` file makes every call sleep past a short timeout.
+Files in 03_plan/media are attested as assets. A `check-fail` file makes --check reject; a `hang` file makes every call sleep past a short timeout.
 """
 import hashlib, json, pathlib, sys, time
 args = sys.argv[1:]
@@ -33,12 +33,16 @@ if (code / "reject").exists():
 project = pathlib.Path(args[args.index("--project-root") + 1])
 path = project / "03_plan/public-plan-attestation.json"
 body = "sha256:" + hashlib.sha256((project / "03_plan/production-plan.md").read_bytes()).hexdigest()
+media = project / "03_plan/media"
+assets = [{"path": "03_plan/media/" + item.name, "sha256": "sha256:" + hashlib.sha256(item.read_bytes()).hexdigest()}
+          for item in sorted(media.iterdir()) if item.is_file()] if media.is_dir() else []
 if "--check" in args:
-    ok = json.loads(path.read_text())["human_plan"]["sha256"] == body and not (code / "check-fail").exists()
+    current = json.loads(path.read_text())
+    ok = current["human_plan"]["sha256"] == body and current["assets"] == assets and not (code / "check-fail").exists()
     print(json.dumps({"status": "VERIFIED", "production_state": "PLANNING"} if ok else {"status": "REJECTED"}))
     sys.exit(0 if ok else 1)
 document = {"project_id": project.name, "plan_id": "PL001", "plan_revision": 1,
-            "generated_at": args[args.index("--generated-at") + 1], "human_plan": {"sha256": body}, "assets": [],
+            "generated_at": args[args.index("--generated-at") + 1], "human_plan": {"sha256": body}, "assets": assets,
             "producer": {"repository": "masa-san-jp/agentic-art-production", "commit": args[args.index("--producer-commit") + 1]}}
 data = json.dumps(document, sort_keys=True) + "\\n"
 if path.exists() and path.read_text() != data:
@@ -210,14 +214,100 @@ class AutomaticAttestationTests(unittest.TestCase):
         self.assertEqual("ALREADY_ATTESTED", result["status"])
 
     def publish(self, body=b"# Demo plan\n", revision="1"):
-        """A receiver index that already holds demo#PL001 at `revision` for `body`."""
+        """A receiver that already holds demo#PL001 at `revision` for `body`, with the current
+        internal attestation and media copied into the record as a projection would."""
         public = self.root / "public"
-        (public / "plans").mkdir(parents=True, exist_ok=True)
+        record = public / "plans/P0001-demo"
+        record.mkdir(parents=True, exist_ok=True)
+        (record / "plan.md").write_bytes(body)
+        attestation = (self.project / "03_plan/public-plan-attestation.json").read_bytes()
+        (record / "public-plan-attestation.json").write_bytes(attestation)
+        media = self.project / "03_plan/media"
+        for item in sorted(media.iterdir()) if media.is_dir() else []:
+            (record / "media").mkdir(exist_ok=True)
+            (record / "media" / item.name).write_bytes(item.read_bytes())
         (public / "plans/index.yaml").write_text(yaml.safe_dump({"version": 1, "retired_ids": [], "records": [{
             "id": "P0001", "slug": "demo", "path": "plans/P0001-demo", "source_identity": "demo#PL001",
             "plan_revision": revision, "content_sha256": hashlib.sha256(body).hexdigest(),
-            "attestation_sha256": "0" * 64, "production_commit": "a" * 40}]}), encoding="utf-8")
+            "attestation_sha256": hashlib.sha256(attestation).hexdigest(), "production_commit": "a" * 40}]}),
+            encoding="utf-8")
         return public
+
+    def test_published_bytes_with_changed_media_are_reattested_not_already_published(self):
+        """Identical plan.md is not enough: a re-rendered medium is new attested content."""
+        media = self.project / "03_plan/media"
+        media.mkdir()
+        (media / "figure.svg").write_bytes(b"<svg>old</svg>\n")
+        self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
+        public = self.publish()
+        (media / "figure.svg").write_bytes(b"<svg>new</svg>\n")
+        result = self.attest("2026-10-28T00:00:00Z", commit="b" * 40, superseded_root=self.superseded(),
+                             public_projection_root=public)
+        self.assertEqual("REATTESTED", result["status"])
+        self.assertEqual("PRODUCER_COMMIT_CHANGED", result["retired"]["reason"])
+        new = json.loads((self.project / "03_plan/public-plan-attestation.json").read_text())
+        self.assertEqual("sha256:" + hashlib.sha256(b"<svg>new</svg>\n").hexdigest(), new["assets"][0]["sha256"])
+        self.assertEqual("b" * 40, new["producer"]["commit"])
+
+    def test_published_bytes_and_media_after_a_commit_change_are_already_published(self):
+        media = self.project / "03_plan/media"
+        media.mkdir()
+        (media / "figure.svg").write_bytes(b"<svg>same</svg>\n")
+        self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
+        result = self.attest("2026-10-28T00:00:00Z", commit="b" * 40, superseded_root=self.superseded(),
+                             public_projection_root=self.publish())
+        self.assertEqual("ALREADY_PUBLISHED", result["status"])
+
+    def test_retirement_copies_inside_the_destination_directory_before_unlinking(self):
+        """A rename never crosses directories (or filesystems); the copy is verified first."""
+        from tools import canonical_plan_projection as module
+        self.attest("2026-10-27T00:00:00Z")
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        renames, real_replace = [], os.replace
+
+        def replace(source, destination):
+            renames.append((Path(source), Path(destination)))
+            self.assertTrue(attestation.exists(), "the original is kept until the copy is in place")
+            return real_replace(source, destination)
+
+        with patch.object(module.os, "replace", side_effect=replace):
+            result = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        self.assertEqual("REATTESTED", result["status"])
+        (source, destination), = renames
+        self.assertEqual(destination.parent, source.parent)
+        self.assertEqual(old, destination.read_bytes())
+        self.assertEqual([destination], list((self.superseded() / "demo").iterdir()))
+
+    def test_an_unverified_copy_keeps_the_original_and_reports_the_retirement_failure(self):
+        from tools import canonical_plan_projection as module
+        self.attest("2026-10-27T00:00:00Z")
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        old = attestation.read_bytes()
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        with patch.object(module, "_kept_copy_matches", return_value=False):
+            result = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        self.assertEqual("REJECTED", result["status"])
+        self.assertEqual("ATTESTATION_RETIRE_FAILED: OSError", result["finding"]["reason"])
+        self.assertEqual(old, attestation.read_bytes())
+        self.assertEqual([], [path for path in (self.superseded() / "demo").iterdir() if path.name.endswith(".tmp")])
+
+    def test_an_attestation_changed_during_retirement_is_not_unlinked(self):
+        from tools import canonical_plan_projection as module
+        self.attest("2026-10-27T00:00:00Z")
+        attestation = self.project / "03_plan/public-plan-attestation.json"
+        (self.project / "03_plan/production-plan.md").write_bytes(b"# Changed plan\n")
+        real_replace = os.replace
+
+        def replace_then_change(source, destination):
+            real_replace(source, destination)
+            attestation.write_bytes(b'{"changed": true}\n')
+
+        with patch.object(module.os, "replace", side_effect=replace_then_change):
+            result = self.attest("2026-10-28T00:00:00Z", superseded_root=self.superseded())
+        self.assertEqual("ATTESTATION_RETIRE_FAILED: OSError", result["finding"]["reason"])
+        self.assertEqual(b'{"changed": true}\n', attestation.read_bytes())
 
     def test_only_the_producer_commit_changed_for_published_bytes_is_not_reattested(self):
         self.attest("2026-10-27T00:00:00Z", commit="a" * 40)
